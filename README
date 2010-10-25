@@ -1,0 +1,16 @@
+Locarna: LOCal Alignment of RNA
+
+Copyright Sebastian Will, 2005, 2006
+
+
+Align two RNA molecules in the way of PMfold. However, we filter the
+structure-pairs by their probability in advance and thus increase
+efficiency. The algorithm selects the highest scoring nested
+structure of basepair-matches out of two crossing structures.
+
+The score evaluates basepair-matches by the probabilites of the
+two matched basepairs/arcs and a sequence contribution. For
+remaining part sequence similarity is scored.
+
+Complexity of the algorithm is O( n_1 n_2 |P_1| |P_2|)
+

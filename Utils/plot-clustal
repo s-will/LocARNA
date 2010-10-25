@@ -1,0 +1,174 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+## ----------------------------------------
+# parse arguments
+
+($#ARGV == 0) || die "USAGE: $0 <clustal file>\n";
+
+my $aln_file = $ARGV[0];
+
+#
+## ----------------------------------------
+
+my $consfile=$aln_file;
+$consfile =~ s/\.[^\.]*$//;
+$consfile .= ".consensus.fasta";
+
+open(IN,"$aln_file") || die "Cannot read $aln_file\n";
+
+my $line=<IN>;
+
+if ($line !~ /^CLUSTAL/) {
+    print STDERR "No clustal file.";
+    exit -1;
+}
+
+my %seqs;
+
+
+my $str_name1="structure1";
+my $str_name2="structure2";
+
+my $cur_str_name="";
+
+my $structure="";
+
+
+while ($line=<IN>) {
+    if ($line =~ /^(\S+)\s+(.+)$/) {
+	my $name=$1;
+	my $seq=$2;
+	chomp $seq;
+	$seqs{$name}.=$seq;
+    } elsif ($line =~ /^\s+(.+)$/) {
+	my $str=$1;
+	chomp $str;
+	if ($cur_str_name eq $str_name2) {
+	    $cur_str_name=$str_name1;
+	} else {
+	    $structure .= $str;
+	    $cur_str_name=$str_name2;
+	}
+    }
+}
+
+
+my $len=0;
+for my $name (keys %seqs) {
+    my $seq=$seqs{$name};
+    if ($len==0) {$len=length $seq;}
+    elsif (length $seq != $len) {
+	print STDERR "Sequence lengths do not fit.\n"; exit -1;
+    }
+}
+
+
+open (CONS,">$consfile");
+
+print CONS ">consensus of $aln_file\n";
+
+for (my $i=0; $i<$len; $i++) {
+    my %chars;
+    for my $name (keys %seqs) {
+	my $seq=$seqs{$name};
+	my $c=substr $seq,$i,1;
+	$c =~ s/~/-/g;
+	$chars{$c}++;
+    }
+    
+    my $iupac = get_iupac_code(%chars);
+    
+    print CONS $iupac;
+}
+
+print CONS "\n";
+
+
+$structure =~ s/[~-]/./g;
+print CONS "$structure\n";
+
+close CONS;
+
+system "RNAplot <$consfile";
+
+
+## ------------------------------------------------------------
+
+# given absolute freqs of AUGC characters,
+# return a reasonable iupac code (ignore very rare symbols)
+#
+sub get_iupac_code {
+    my (%absfreqs) = @_;
+    
+    my $threshold=0.1;
+
+    my @chars = ("A", "C", "U", "G","-");
+    
+    my $sum = 0;
+    for my $c ( @chars ) {
+	if (exists $absfreqs{$c}) {
+	    $sum += $absfreqs{$c};
+	}
+    }
+    
+    my $code="";
+    my %code_tab = (
+		    "A" => "A", 
+		    "C" => "C",
+		    "G" => "G", 
+		    "U" => "U",
+		    "-" => "-",
+		    
+		    "AC" => "M",
+		    "AG" => "R",
+		    "AU" => "W",
+
+		    "CA" => "M",
+		    "CG" => "S",
+		    "CU" => "Y",
+
+		    "GA" => "R",
+		    "GC" => "S",
+		    "GU" => "K",
+
+		    "UA" => "W",
+		    "UC" => "Y",
+		    "UG" => "K",
+
+		    ## codes for three nucleotides ommited
+		    
+		    "-A" => "_",
+		    "-C" => "_",
+		    "-G" => "_",
+		    "-U" => "_",
+		    "A-" => "_",
+		    "C-" => "_",
+		    "G-" => "_",
+		    "U-" => "_",
+		    "R-" => "_",
+		    "S-" => "_",
+		    "W-" => "_",
+		    "Y-" => "_",
+		    "M-" => "_",
+		    "K-" => "_",
+		    "N-" => "_"
+		    );
+
+
+    for my $c ( @chars ) {
+	if (exists $absfreqs{$c}) {
+	    my $p=$absfreqs{$c}/$sum;
+	    
+	    if ($p>$threshold) {
+		if (exists $code_tab{"$code$c"}) {
+		    $code = $code_tab{"$code$c"};
+		} else {
+		    $code = "N";
+		}
+	    }
+	}
+    }
+    return $code;
+}

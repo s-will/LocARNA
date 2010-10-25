@@ -1,0 +1,113 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+##------------------------------------------------------------
+## options
+use Getopt::Long;
+use Pod::Usage;
+
+my $help;
+my $man;
+my $quiet;
+my $verbose;
+
+my $outfile;
+
+## Getopt::Long::Configure("no_ignore_case");
+
+GetOptions(	   
+	   "verbose" => \$verbose,
+	   "quiet" => \$quiet,   
+	   "help"=> \$help,
+	   "man" => \$man
+	   ) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+($#ARGV>=0) || pod2usage(1);
+
+my $clustalfile = $ARGV[0];
+
+shift @ARGV;
+
+my $LOCARNA_OPTS = "@ARGV";
+
+if (!defined($outfile)) {
+    $outfile=$clustalfile;
+    $outfile =~ s/\.aln$//g;
+    $outfile .= ".fasta";
+}
+
+
+## ------------------------------------------------------------
+## subs
+
+sub read_clustal {
+    my ($file)=@_;
+
+    my %aln;
+    
+    local *IN;
+    
+    open(IN,$file) || die "Cannot read $!";
+    
+    <IN> =~ /^CLUSTAL/ || die "Not a clustal file: $file";
+    
+    while(my $line=<IN>) {
+	if ($line =~ /(\S+)\s+(\S+)/) {
+	    my $name=$1;
+	    my $seq=$2;
+	    if (! exists $aln{$name}) {
+		$aln{$name}="";
+	    }
+	    $aln{$name} .= $seq;
+	}
+    }
+
+    return %aln;
+}
+
+
+
+## ------------------------------------------------------------
+## main part
+
+my %aln = read_clustal($clustalfile);
+
+open(OUT,">$outfile");
+
+for my $name (keys %aln) {
+    my $seq=$aln{$name};
+    $seq =~ s/[~-]//g;
+    print OUT ">$name\n$seq\n";
+}
+
+close OUT;
+
+system("mlocarna $LOCARNA_OPTS $outfile");
+
+
+## ------------------------------------------------------------
+
+__END__
+
+=head1 NAME
+
+locarna-realign
+
+=head1 SYNOPSIS
+
+locarna-realign [options] <clustalfile> -- [locarna-options]
+
+Options:
+        --help           brief help message
+        --man            full documentation
+        --verbose        be verbose
+        --quiet          be quiet
+
+=head1 DESCRIPTION
+
+=cut
+

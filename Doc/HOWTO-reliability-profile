@@ -1,0 +1,86 @@
+HOWTO: Drawing Reliability Profiles
+===================================
+
+One of the benefits of probabilistic alignment with LocARNA
+(i.e. using LocARNA-P) is that probability profiles for alignments can
+be generated, which show the confidence in each single alignment
+column.  Here, the use of the script reliability-profile.pl for
+generating reliability profile plots is explained.
+
+As prerequisite for using the tool, you will need an installation of
+the statistics package R in addition to the usual requirements for
+LocARNA.
+
+Producing reliability profile plots is usually done in two steps.
+
+1) STEP
+-------
+Perform an alignment of a set of RNA sequences by mlocarna with
+the --probabilistic option. mlocarna produces output in a target
+directory. This directory contains, among other data, the information
+of the reliability profile. (If you already have such an mlocarna
+output directory, you may skip step 1.)
+
+An example call will look like this
+
+> mlocarna --probabilistic Examples/archaea.fa
+
+It writes data to the directory Examples/archaea.out. [ Actually you
+don't need to know: the sub-directory Examples/archaea.out/results/
+and in particular Examples/archaea.out/results/result.bmreliability
+contains the necessary information. ]
+
+Together with the mandatory option --probabilistic you may use almost
+all the other options of mlocarna for modifying your result and/or
+controlling the behavior of mlocarna. Call mlocarna --man for a brief
+overview.
+
+2) STEP
+-------
+Call the tool reliability-profile.pl for predicting signals in the
+reliability profile and drawing a plot of the profile output as pdf or
+png file. [Note that the script currently assumes a working
+installation of locarna somewhere in the execution path.]
+
+In the most simple form call
+
+> reliability-profile.pl <output directory>
+
+which produces a pdf-file rel.pdf containing the plot. Furthermore,
+the signal in the reliability profile is predicted and drawn as a
+green line in the output.
+
+In our example, one would call
+
+> reliability-profile.pl Examples/archaea.out
+
+
+Please call reliability-profile.pl [--help] for a list of all
+available options.
+
+First, one may turn off signal prediction by --dont-predict. (Usually, one
+wants this for most alignments!)
+
+The output format can be changed to "png", which is very useful for
+graphics on web-pages and such. Use the option --output-format="png"
+for that purpose.
+
+Option --title, let's you include a title in the plot (inset top-left).
+
+
+An argument --seqname can be given for specifying one of the sequences
+aligned when producing <output directory> by its name (or part of its
+name). Often there is a "sequence of interest" (suppose one is
+aligning RNA from several organisms, often one of them is the
+reference organism). If such a sequence name is specified, the profile
+is projected to this sequence (i.e. columns with gap in this
+sequence's row are delete).
+With projection for example call
+
+> reliability-profile.pl --seqname fruA Examples/archaea.out
+
+
+
+Most other options control prediction and related output. Furthermore,
+it's supported to give genomic offset (for x-values) and draw arbitrary
+signals as lines on top of the profile.

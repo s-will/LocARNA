@@ -1,0 +1,274 @@
+#include "basepairs_looptraversal.hh"
+#include "basepairs.hh"
+
+#include <list>
+
+#include<limits>
+
+<<<<<<< basepairs_looptraversal.cc
+=======
+// special handling of "constraints" in implementation:
+// 
+// Constraints are lists of base pairs that were explicitely deleted
+// left of the current position (in a left->right run).
+
+// A *special design decision* is based on this observation: For base
+// pairs with the same left end, we will either insert all of them
+// (actually, all that are compatible with outer_arc and are not
+// subsumed) or none of them as constraints. In consequence, we will
+// represent only the largest of such base pairs explicitely in the
+// constraints list.  The others are implicit members and get special
+// treatment. As a benefit, we will maintain less different constraint
+// lists. To achieve this, we will only delete those base pairs, when
+// we can delete the largest base pair. Keeping the others (including
+// also subsumed arcs) implicitely will be still correct and introduce
+// only small performance penalty, which should be outweighed by the
+// benefits.
+// 
+
+
+//ATTENTION: current implementation is not correct   
+bool
+BasePairsLoopTraversal::is_subsumed_basepair(const Arc &outer_arc, const Arc &arc, const constraint_list_t &constraints) {
+    
+    // search for a constraint that encloses the arc and has the same
+    // right crossing type
+    
+    // iterate over the explicitely represented base pairs in the
+    // constraints list
+    for (constraint_list_t::const_iterator exp_it=constraints.begin(); constraints.end() != exp_it; ++exp_it) {
+	assert(bps.arc(*exp_it).left()<=arc.left());
+	
+	// iterate over the implicit constraints implied by *exp_it
+	const BasePairs::LeftAdjList &adjl = bps.left_adjlist(bps.arc(*exp_it).left());	
+	
+	for (BasePairs::LeftAdjList::const_iterator it=adjl.begin();
+	     it!=adjl.end() && it->right() <= bps.arc(*exp_it).right()  ; ++it) {
+	    
+	    if (it->left()<arc.left() && it->right()>arc.right()) {
+		// *it encloses arc
+		
+		// arc is subsumed by *it, when the two arcs have the
+		// same right crossing type within the limits of
+		// outer_arc.  Because both right-crossing arc lists
+		// are sorted, we can run through both lists in
+		// parallel and compare
+		bool same_crossing_type=true;
+		
+		const arcidxvec_t & 
+		    crossing_arcs_of_arc = right_crossing_arcs(arc);
+		
+		const arcidxvec_t & 
+		    crossing_arcs_of_constraint  = right_crossing_arcs(*it);
+		
+		arcidxvec_t::const_iterator
+		    it_arc=crossing_arcs_of_arc.begin();
+		
+		arcidxvec_t::const_iterator 
+		    it_constraint=crossing_arcs_of_constraint.begin();
+		
+		while( same_crossing_type
+		       && crossing_arcs_of_arc.end()!=it_arc
+		       && crossing_arcs_of_constraint.end()!=it_constraint ) {
+		    
+		    // skip all crossing arcs that are incompatible
+		    // with outer_arc
+		    if ( bps.arc(*it_arc).right() >= outer_arc.right() ) {
+			++it_arc;
+			continue;
+		    }
+		    
+		    if ( bps.arc(*it_constraint).right() >= outer_arc.right() ) {
+			++it_constraint;
+			continue;
+		    }
+		    
+		    // comparing indices is sufficient
+		    same_crossing_type = (*it_arc == *it_constraint); 
+		    
+		    // next crossing arcs
+		    ++it_arc;
+		    ++it_constraint; 
+		}
+		
+		if (same_crossing_type) {
+		    // see whether the arc or the constraint have
+		    // unmatched arcs (that are compatible with
+		    // outer_arc)
+		    bool unmatched_constraint=false;
+		    for (; !unmatched_constraint
+			     && crossing_arcs_of_constraint.end()!=it_constraint; 
+			 it_constraint++ ) {
+			if ( bps.arc(*it_constraint).right() < outer_arc.right() )
+			    unmatched_constraint=true;
+		    }
+		    
+		    bool unmatched_arc=false;
+		    for (; !unmatched_arc && crossing_arcs_of_arc.end()!=it_arc; 
+			 ++it_arc ) {
+			if ( bps.arc(*it_arc).right() < outer_arc.right() ) 
+			    unmatched_arc=true;
+		    }
+		    
+		    // return true, when the crossing type is exactly
+		    // the same (within outer_arc)
+		    if (!unmatched_arc && !unmatched_constraint) return true;
+		}
+	    }
+	}
+    }
+    
+    return false;
+}
+
+
+// ATTENTION: current implementation is not correct
+bool
+BasePairsLoopTraversal::is_optional_basepair(const Arc &outer_arc, const Arc &arc, const constraint_list_t &constraints) {
+        
+    // the arc is optional iff there is a base pair arc2 that is right
+    // of arc and crosses the arc and all constraints that cross the
+    // arc
+    
+    
+    // search for a right crossing basepair that crosses all
+    // constraints
+
+    // first, get the leftmost right end of a constraint that is
+    // smaller or equal arc.right()
+    size_type min_right=arc.right()+1;
+
+    // iterate over the explicitely represented base pairs in the
+    // constraints list
+    for (constraint_list_t::const_iterator exp_it=constraints.begin(); constraints.end() != exp_it; ++exp_it) {
+		
+	// iterate over the implicit constraints implied by *exp_it
+	const BasePairs::LeftAdjList &adjl = bps.left_adjlist(bps.arc(*exp_it).left());	
+	for (BasePairs::LeftAdjList::const_iterator it=adjl.begin();
+	     it!=adjl.end() && it->right() <= bps.arc(*exp_it).right()  ; ++it) {
+	    
+	    if (it->right()<=arc.right()) {
+		if (it->right() < min_right) { min_right = it->right(); }
+	    }
+	}
+    }
+    
+
+    // because the crossing_arcs are sorted by ascending left end,
+    // just test the first one that is compatible with outer_arc for
+    // conflict with all constraints
+    const arcidxvec_t & crossing_arcs = right_crossing_arcs(arc);
+
+    bool optional = false;
+    for (arcidxvec_t::const_iterator it=crossing_arcs.begin(); !optional && crossing_arcs.end()!=it; ++it) {
+		
+	if ( bps.arc(*it).right()<outer_arc.right() ) {// no conflict with outer arc
+	    // arc is optional when there is a conflict with *it
+	    optional = bps.arc(*it).left()<=min_right;
+	}
+    }
+    
+    return optional;
+}
+    
+BasePairsLoopTraversal::size_type
+BasePairsLoopTraversal::add_constraint(size_type constraints_idx,const Arc & arc) {
+    
+    // make a copy of the last constraint list and add as new
+    // constraint
+    constraint_lists_tab.push_back(constraint_lists_tab[constraints_idx]);
+    last_loop_index.push_back(std::pair<size_type,size_type>(0,0));
+    
+    constraints_idx=constraint_lists_tab.size()-1;
+    
+    
+    constraint_list_t &constraints = constraint_lists_tab[constraints_idx];
+    
+    constraint_list_t::iterator it=constraints.begin();
+    
+    // skip all constraints with larger right end
+    for (; constraints.end() != it && (bps.arc(*it).right()>arc.right() || (bps.arc(*it).right()==arc.right() && bps.arc(*it).left()>arc.left())); ++it) {
+    }
+    
+    constraints.insert(it,arc.idx());
+    
+    return constraints_idx;
+}
+
+
+
+
+
+BasePairsLoopTraversal::size_type 
+BasePairsLoopTraversal::prune_constraints(size_type constraints_idx,size_type right) {
+    
+    // shortcut, if no constraints can be removed
+    if (constraint_lists_tab[constraints_idx].empty() 
+	|| bps.arc(constraint_lists_tab[constraints_idx].back()).right()>right) return constraints_idx;
+    
+    // generate the new list. NOTE: this could be done more
+    // efficiently without constructing the pruned list explicitly!!!
+    constraint_list_t constraints = constraint_lists_tab[constraints_idx];
+    
+    // erase all constraints with smaller right end
+    for (constraint_list_t::iterator it=constraints.begin(); constraints.end() != it ; ++it) {
+	if (bps.arc(*it).right()<=right) {
+	    constraints.erase(it,constraints.end());
+	    break;
+	}
+    }
+    
+    // find the index of the pruned constraint list
+    for (size_type i=0; i<constraint_lists_tab.size(); i++) {
+	if (constraints == constraint_lists_tab[i]) return i;
+    } 
+    
+    // if constraints list does not exist already, create new one
+    
+    constraint_lists_tab.push_back(constraints);
+    // for the new constraints index, we will need a last_loop_index entry
+    last_loop_index.push_back(std::pair<size_type,size_type>(0,0));
+    
+    return constraint_lists_tab.size()-1;
+    
+}
+
+
+bool BasePairsLoopTraversal::some_constraint_has_right_end(size_type x,const constraint_list_t &constraints) const {
+    for (constraint_list_t::const_iterator it=constraints.begin(); constraints.end() != it ; ++it) {
+	if (bps.arc(*it).right()==x) return true;
+    }
+    return false;
+}
+
+
+
+// constraints that end at the current position can be deleted as
+// constraints, only: distinguish whether new arcs to the right are
+// allowed or not (in cases where there are arcs to the right!)  In
+// the following example this means that at 159 all entries can be merged.
+// 
+// example:
+// (0:1,30) (14:149,160)
+// BasePairsLoopTraversal::process_loops of (14:149,160)
+// (8:150,154) (9:150,159) (7:151,159) (6:153,159) (2:154,158) (0:155,159)
+// -> 149-150_0 [(8:150,154) opt] [(9:150,159) opt] -> 150-151_1 [(7:151,159) opt] -> 151-152_2 -> 152-153_2 [(6:153,159) not opt] -> 150-154_0 -> 154-155_0 [(0:155,159) not opt] -> 153-159_2 . -> 150-159_0 . -> 151-159_1 . -> MERGE 155_0-159_0.
+// 1 150 0 149
+// 2 151 1 150
+// 3 152 2 151
+// 4 153 3 152
+// 5 154 1 150
+// 6 155 5 154
+// 7 159 4 153
+// 8 159 1 150
+// 9 159 2 151
+// 8 159 6 155
+
+
+
+>>>>>>> 1.14
+void
+BasePairsLoopTraversal::process_loops(const Arc &outer_arc) {
+    
+}
+

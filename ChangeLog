@@ -1,0 +1,222 @@
+CHANGES
+-------
+
+Mai, 2005: global alignment
+June, 2005: extension to local alignment (sequence+structure locality),
+	no_lonely_pairs option
+Nov, 2005: command line options
+Dez, 2005: recognize and read dot.ps files (in add to formerly used pp-files)
+
+Jan, 2006: add support for aligning alignments
+	(used for multiple progressive alignment)
+
+Aug, 2006: lessen memory consumption of locarna.
+	In particular important in case of
+	scanning (target against genome)
+
+	Add some options/features that are useful for scanning
+	option --kbest
+	option --max-diff-am
+	option --ungappedA
+	option --local-output
+	handling of nucleotide-symbol N for unknown in input
+
+
+Oct, 2006: add support for stacking alignment, not finished
+May, 2006 (0.991): small changes, rename mlocarna-p to mlocarna
+
+Sept, 2007 (1.0alpha)
+	refactoring; new classes Scoring, RnaData, ...
+	preparations for better scoring:
+	reading Ribosum-Data, new class Ribosum
+	computing match probabilities in sequence alignment (Gotoh):
+	   	Implemented methods: pairHMM, partition function, local pf
+		new class MatchProbs
+	improve option parser: introduce sections and section hiding
+	integrate new scoring scheme: maximum expected accuracy
+	significant speed-up due to re-organization of the recursion
+	equations:
+	        redefine D to already contain the score contribution of
+		the arcmatch. This reduces these computations by orders of
+		magnitude!
+
+Nov, 2007
+	add constraints to pairwise and multiple alignment. This means
+	for locarna: integrate anchor constraints
+	for mlocarna: read and pass structure constraints to RNAfold -p,
+	              read and pass sequence constraints to locarna
+        The pp-format is redefined in order to pass constraint information from
+	mlocarna to locarna.
+	New class for representing and calculating with infinite scores
+	changed default sequ-local=on to off
+	increased min_prob in mlocarna.pl
+
+	bug fix in computation of consensus probs
+
+	rewrite noLP
+	add (pseudo)affine gap penalties
+	make mea working
+	change default output width to 120
+	ribosum scoring for classic score
+	change handling of options in mlocarna
+
+	mlocarna learns iterative refinement
+	mlocarna learns conistency based transformation
+
+Dec, 2007
+	true affine gap cost (implemented using additional vectors E and F)
+	implemented stacking (v_1_2alpha)
+	removed bugs in traceback
+	cleaned options
+	include version name in output (v_1_2_1a)
+	add man pages
+	add Ribosum85-60 matrix in distribution
+	avoid writing to global /tmp directory (v_1_2_2a)
+	avoid potential file name conflicts in mlocarna
+	accept duplicate (or not prefix unique) names in mfasta input
+
+Feb, 2008
+	remove bug in anchor constraints
+	Ribosum-85-60 compiled in
+	changed default parameters to something reasonable
+
+Mar, 2008
+	remove bug in rna_data.cc reading dp.ps, v 1.2.4
+
+Jun, 2008
+	change char * to std::string in options module
+	(the g++-compiler does not like it anymore :))
+
+Jul, 2008
+	integrate locarnate - a tool for multiple alignment
+	that uses locarna in combination with tcoffee
+	(Version 1.3)
+
+Aug, 2008
+	partition function version of locarna (locarna_p)
+	experimental support for multiple alignment using
+	  basematch probabilities and probabilistic
+	  consistency transformation
+        (Version 1.3.2)
+
+	mlocarna can write basematch probabilities for plotting
+	plotting of basematch probs (Utils/plot-bmprobs)
+
+	mlocarna now correctly accepts input trees in newick-format that
+	are terminated by ";". However, it does not enforce the ";"-termination
+	mlocarna now writes the result.tree in ";"-terminated newick-format
+
+	use rounding (instead of truncate) in scoring module, when
+	converting from double to score_t. This fixes some inconsistency
+	between 32/64bit and is the correct thing to do anyway
+
+Oct, 2008
+	improve speed up gained from using anchor constraints
+
+Nov, 2008 (v1.4)
+	add probabilistic scoring with consistency transformation
+	with structural scoring in progressive alignment steps
+
+	change options of mlocarna for probabilistic/mea-type alignment
+
+Jan, 2009 (v1.42)
+	iterative alignment using SCI as optimization criterion
+
+Feb, 2009 (v1.4.4alpha)
+	cleanup mlocarna code
+	cleanup mlocarna output (inclusive output modes -v, --moreverbose)
+	improve reliability computation
+	multi-threaded mlocarna, new option --cpus <n>: use n threads
+	more structure for mlocarna output to file system (distribute
+	files to subdirs)
+	introduce --pf-scale parameter to locarna_p and mlocarna
+
+	precompute exp base match similarity and gap cost for partition
+	function => significant speed up of locarna_p
+	change handling of max_diff: guarantee at least |lenA-lenB|
+        improve outside algorithm in locarna_p (reduce sizes of Mrev-matrices)
+	=> with prior optimization massive speedup of locarna_p
+
+	add probability filtering after cbt
+	further improvement of outside (cheaper computation of certain
+	Mprime entries)
+	iteration with reliable structure as constraints
+	(option --it-reliable-structure)
+
+	support for non-threaded perl
+
+Mar, 2009
+	fix some problems with the option parsing
+	(e.g. now -p=0.1 is correct and -p=a throws an error)
+	fix bug in initialization for structure locality
+	change semantics of constraints in the context of locality:
+	anchor constraints (i,j) now enforce that edge (i,j) is part
+	of the local alignment (for sequence and structure locality)
+Apr, 2009
+	add missing options to mlocarna, fix bug in locarnate (thanks to Wolfgang)
+	fix bug with sharing/threads in mlocarna (v1.4.6)
+	locarna_p computes probabilities for matching fragments
+May, 2009
+	clean manpage of mlocarna
+Jun, 2009
+	offer large data type "long double" for partition function
+	computation.  this is available when configuring through option
+	--enable-large-pf. Use this in case of long alignments, where the
+	partition function exceeds the range of type "double". Although
+	--pf-scale sometimes provides a workaround, for multiple alignment
+	of large sequences it is often the only viable choice.
+
+Jul, 2009
+	add free endgaps via option --free-endgaps "----", for locarna
+	gaps at all for ends can be allowed for free independently.
+	For mlocarna, --free-endgaps will allow free end gaps at any end.
+
+Sep, 2009
+	fixed serious bugs concerning stacking: due to these bugs,
+	mlocarna did not profit from stacking and locarna could get wrong
+	results with stacking turned on.
+
+	Change base pair filtering by probability for stacking: ignore
+	stacking probability, filter only by base pair probability.
+
+	(locarna-1.4.9alpha)
+
+
+Jan, 2010
+	new tool Utils/reliability-profile.pl generates nice
+	profile plots from mlocarna --probabilistic output directories
+
+	stacking turned off, unless exp-prob option used
+
+	(locarna-1.5a)
+
+Mar, 2010
+	Add normalized local alignment, proof of concept
+	(locarna-1.5.1)
+	Combine normalized alignment and kbest
+	Introduce option better to enumerate suboptimal solution
+	better than given threshold
+	--kbest and --better can be used together
+	(locarna-1.5.2)
+	Fix build in separate build directory
+
+May, 2010
+	Introduce new representation of fasta data
+	Major restructuring/refactorization of mlocarna.in and MLocarna.pm
+	Move many functions of mlocarna.in to packages and
+	introduce several new packages to group functions thematically
+	(locarna-1.5.3)
+
+	Resolve a bug that made LocARNA handle Ts as unknown
+	characters. LocARNA now automatically transforms Ts to Us in input
+	sequences. The bug did not affect input sequences without Ts. For
+	matchs involving Ts, LocARNA wrongly used an ad-hoc score instead
+	of the ribosum score for matches involving 'U', as one would
+	expect.
+
+Oct, 2010
+	Add feature to constrain (max-diff-match) alignment relative
+	to a given alignment.
+	Change handling of max-diff-match in case of unequal length:
+	instead of relaxing constraint, change constraint to
+	|i*(lenB/lenA)-j|<=max-diff

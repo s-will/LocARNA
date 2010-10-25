@@ -1,0 +1,324 @@
+#!/usr/bin/perl -w
+
+############################################################
+##
+## scan for a match of a RNA "motif", given by a (multiple) alignment
+## in a possibly long stretch of D/RNA
+##
+## We use a sliding window, fold each window with RNALfold -p
+## and search for k-best locarna hits in the window
+## The K-best hits are recorded
+## 
+############################################################
+
+
+## TODO: aktualisiere Man-page
+
+use strict;
+use MLocarna;
+
+## ------------------------------------------------------------
+## parameters
+
+my $win_size=50000; ## size of windows
+my $tmpdir="/tmp";
+
+my $kbest = -1; ## how many best sequences per window are generated
+my $KBEST = 100; ## how many best sequences (in total) are reported
+
+my $max_diff_am = 10;
+my $pmin = 0.1;
+
+my $startpos=1; ## start and end position in sequences for the search
+my $endpos=-1;  ## end -1 means search until sequence ends
+## currently this is most reasonable if sequence_file contains one sequence
+
+my $opt_local_out=0;
+
+my $plot_file; ## output file for plots
+my $kbest_file; ## output file for kbest results
+
+my $fold_fraction=1.0; ## fraction of motif length used for restricting RNAplfold
+
+my $locarna="locarna"; # search for locarna in PATH
+
+##------------------------------------------------------------
+## options
+
+
+use Getopt::Long;
+use Pod::Usage;
+
+my $help;
+my $man;
+my $quiet;
+my $verbose;
+
+
+## Getopt::Long::Configure("no_ignore_case");
+
+GetOptions(
+	   "verbose" => \$verbose,
+	   "quiet" => \$quiet,   
+	   "help"=> \$help,
+	   "man" => \$man,
+	   "start=i" => \$startpos,
+	   "end=i" => \$endpos,
+	   "win-size=i" => \$win_size,
+	   "win-kbest=i" => \$kbest,
+	   "kbest=i" => \$KBEST,
+	   "local-output" => \$opt_local_out,
+	   "plot-file=s" => \$plot_file,
+	   "output=s" => \$kbest_file,
+	   "fold-fraction=f" => \$fold_fraction,
+	   "max-diff-am=i" => \$max_diff_am,
+	   "pmin=f" => \$pmin
+	   ) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+pod2usage(1) if ($#ARGV != 1);
+
+my $motif_file = $ARGV[0];
+my $seq_file = $ARGV[1];
+
+my $locarna_options="-p $pmin --max-diff-am $max_diff_am --sequ-local on";
+
+$locarna_options .= " --local-out" if ($opt_local_out);
+
+$kbest=$KBEST if ($kbest<=0);
+ 
+## ------------------------------------------------------------
+## sub-routines
+
+sub min {
+    my ($x,$y)=@_;
+    return $x if $x<=$y;
+    return $y;
+}
+
+sub c_times {
+    my ($user,$system,$cuser,$csystem) = times();
+    return $cuser;
+}
+
+## ------------------------------------------------------------
+## main part
+##
+## get the length of the motif
+##
+my $motif_len=0;
+open(IN,"$motif_file");
+while(my $line=<IN>) {
+    if ($line =~ /^([ACGUN]+)\\$/) {
+	$motif_len += length($1);
+    }
+}
+close IN;
+
+## print "Motif len: $motif_len\n";
+
+my $fold_max_bp_len=int($motif_len*$fold_fraction);
+
+my $win_step = $win_size - $motif_len; ## step size for sliding windows over sequene
+
+if ($win_step <= 0) {
+
+    print STDERR "Window size too small for motif size\n";
+    exit -1;
+}
+
+if (defined($plot_file)) {
+    open(PLOT_OUT,">$plot_file");
+}
+
+
+my $curdir=`pwd`;
+chomp $curdir;
+
+my %seqs = parse_mfasta("$seq_file");
+
+
+my @hitlist;
+
+chdir "$tmpdir";
+
+my $acc_fold_time=0;  ## accumulated time for RNAplfold
+my $acc_locarna_time=0;  ## accumulated time for LocARNA
+
+
+for my $name (keys %seqs) {
+    my $sequence = $seqs{$name};
+    
+    print "Search in $name\n";
+
+    my $seqlen=length($sequence);
+    if ($endpos >=0 ) { $seqlen = $endpos-1 }; ## limit search if endpos!=-1 is given
+    
+    ## handling of last window: 
+    ## if rest after all windows of full size is less than
+    ## 0.3*win_size then add to last window
+    ## else the rest is the last window
+    my  $finished=0;
+    for (my $i=$startpos-1; !$finished ; $i+=$win_step) {
+	print "--------------------\n";
+
+	my $subseq;
+	
+	my $rest = $seqlen-$i+1;
+	
+	if ($rest <= int(1.3*$win_size) ) {
+	    $subseq = substr $sequence, $i, $rest;
+	    $finished=1;
+	} else {
+	    $subseq = substr $sequence, $i, $win_size;
+	}
+	
+	print "Search window at pos ".($i+1)." size ".length($subseq);
+	
+	## generate fasta file with subsequence for RNAplfold
+	my $tmpname="loc$$";
+	open(FASTA,">$tmpname.fasta");
+	print FASTA ">$tmpname\n";
+	print FASTA "$subseq $i\n";
+	close FASTA;
+	
+	my $start_time=c_times();
+	
+	system("RNAplfold -c $pmin -W $fold_max_bp_len <$tmpname.fasta >/dev/null");
+	unlink "$tmpname.fasta";
+
+	print "\n"; ## show progress to the illuminated :)
+	
+	my $fold_time=c_times()-$start_time;
+	
+	$acc_fold_time+=$fold_time;
+
+	$start_time=c_times();
+	
+	my $dp="_dp.ps";
+	open(IN,"$locarna $locarna_options --kbest $kbest --pos-out $curdir/$motif_file $tmpname$dp | ");
+	
+	my $win_best_score=-10e10; ## - INFTY
+	my $win_best_startB;
+	
+	my $hit_info = ""; ## collect all output before a hit (after the previous one) as hit info
+
+	while (my $line=<IN>) {
+	    
+	    if ($line =~ /HIT (\d+) (\d+) (\d+) (\d+) (\d+)/) {
+		my $score=$1;
+		my $startA=$2+$i;
+		my $startB=$3+$i;
+		my $endA=$4+$i;
+		my $endB=$5+$i;
+		
+		# print "HIT $score $startA $startB $endA $endB\n"; 
+		
+		## add hit to hitlist
+		my @hit=($score,$startA,$startB,$endA,$endB,$hit_info);
+		push @hitlist, [ @hit ];
+
+		if (defined($plot_file)) {
+		    if ($score>$win_best_score) {
+			$win_best_score=$score;
+			$win_best_startB=$startB;
+		    }
+		}
+		$hit_info = ""; ## reset hit-info
+	    } else {
+		$hit_info .= $line;
+	    }
+	    
+	}
+	close IN;
+
+
+	my $locarna_time=c_times()-$start_time;
+	$acc_locarna_time += $locarna_time;
+
+	unlink "$tmpname";
+
+	my @sorted_hitlist = sort {@{ $b }[0] <=> @{ $a }[0]} @hitlist;
+		
+	@hitlist=();
+	for (my $j=0; $j<=$#sorted_hitlist && $j<$KBEST; $j++) {
+	    push @hitlist, $sorted_hitlist[$j];
+	}
+	
+	if (defined($kbest_file)) {
+	    open(KBEST_OUT,">$curdir/$kbest_file.$$.tmp");
+	}
+
+	foreach my $hit (@hitlist) {
+	    my ($score, $startA, $startB, $endA, $endB,$hit_info) = @{ $hit };
+	    print "HIT $score $startB\n$hit_info";
+	    if (defined($kbest_file)) {
+		print KBEST_OUT "HIT $score $startB\n$hit_info";
+	    }
+	}
+
+	if (defined($kbest_file)) {
+	    close KBEST_OUT;
+	    rename "$curdir/$kbest_file.$$.tmp", "$curdir/$kbest_file";
+	}
+	
+	    
+	if (defined($plot_file)) {
+	    my ($score, $startA, $startB, $endA, $endB, $hit_info) = @{ $hitlist[0] };
+	    print PLOT_OUT "$win_best_score $win_best_startB $score $startB\n";
+	}
+
+	if ($verbose) {
+	    ## print time statistics
+	    my $winlen=length($subseq);
+	    my $positions = $i - $startpos + $winlen;
+	    my $factor=1000;
+	    printf "Time in min: PLFold %.2f # %.2f; LocARNA %.2f # %.2f; Total %.2f # %.2f\n",$fold_time/60,$acc_fold_time/60,$locarna_time/60,$acc_locarna_time/60,($fold_time+$locarna_time)/60,($acc_fold_time+$acc_locarna_time)/60;
+	    printf "Time in s/$factor positions: PLFold %.2f # %.2f; LocARNA %.2f # %.2f; Total %.2f # %.2f\n",
+	    $factor*$fold_time/$winlen,$factor*$acc_fold_time/$positions,
+	    $factor*$locarna_time/$winlen,$factor*$acc_locarna_time/$positions,
+	    $factor*($fold_time+$locarna_time)/$winlen,$factor*($acc_fold_time+$acc_locarna_time)/$positions;
+	}
+
+    } ## end for windows ($i)
+} ## end for names
+
+
+if (defined($plot_file)) {
+    close PLOT_OUT;
+}
+
+## ------------------------------------------------------------
+
+__END__
+
+=head1 NAME
+
+locarna-motif-scan
+
+=head1 SYNOPSIS
+
+locarna-motif-scan [options] <motif> <seq>
+
+ATTENTION: some options undocumented
+
+Options:
+
+        --help           brief help message
+        --man            full documentation
+        --verbose        be verbose
+        --quiet          be quiet
+        <motif>          a dp file describing your motif
+        <seq>            a fasta file containing the sequence(s)
+
+=head1 DESCRIPTION
+
+The program scans for a match of a RNA "motif", given by a (multiple)
+alignment in a possibly long stretch of D/RNA
+
+We use a sliding window, fold each window with RNALfold -p and search
+for k-best locarna hits in the window The K-best hits are recorded
+
+=cut

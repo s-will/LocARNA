@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+#!/usr/bin/perl -w
+
+use strict;
+
+##------------------------------------------------------------
+## options
+use Getopt::Long;
+use Pod::Usage;
+
+my $help;
+my $man;
+my $quiet;
+my $verbose;
+
+
+## Getopt::Long::Configure("no_ignore_case");
+
+GetOptions(	   
+	   "verbose" => \$verbose,
+	   "quiet" => \$quiet,   
+	   "help"=> \$help,
+	   "man" => \$man
+	   ) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+my $in=$ARGV[0];
+my $out=$ARGV[1];
+
+if (!defined($out)) {pod2usage(-exitstatus => -1, -verbose => 1);}
+
+## ------------------------------------------------------------
+## main part
+
+# plot_bmprobs
+
+
+# convert from list
+# <i> <j> <p_ij>
+
+my @matrix;
+
+my $max_i=0;
+my $max_j=0;
+
+open(IN,$in) || die "Cannot read $in";
+
+my $tmp="$out.tmp";
+if ( -e "$tmp" ) {print "$tmp is in the way.\n"; exit -1;}
+open(OUT,">$tmp")  || die "Cannot write to $tmp";
+
+while(my $line=<IN>) {
+    if ( $line =~ /^(\d*) (\d*) ([\d.]*)$/ ) {
+	my $i=$1;
+	my $j=$2;
+	my $pij=$3;
+
+	$matrix[$i][$j]=$pij;
+    
+	if ($i>$max_i) {$max_i=$i;}
+	if ($j>$max_j) {$max_j=$j;}
+    }
+}
+
+for (my $i=1; $i<=$max_i; $i++) {
+    for (my $j=1; $j<=$max_j; $j++) {
+	my $pij=$matrix[$i][$j];
+	if (! defined($pij)) {$pij=0;}
+	print OUT "$pij ";
+    }
+    print OUT "\n";
+}
+
+close OUT;
+
+my $h=10;
+my $w=$h*$max_i/$max_j;
+
+my $scr="$out.scr";
+if ( -e "$scr" ) {print "$scr is in the way.\n"; exit -1;}
+open(SCR,">$scr")  || die "Cannot write to $scr";
+
+print SCR "t<-read.table(\"$tmp\");
+m<-as.matrix(t)
+
+gamma<-1
+
+colnum<-100
+#colors <- rgb(1-(0:colnum)/colnum,1-(0:colnum)/colnum,1)
+colors <- c(gray(1),rainbow(colnum,start=0.17));
+
+postscript(file=\"$out\",width=$w,height=$h,paper=\"special\")
+image(m^gamma,
+col=colors,
+x=seq(1,$max_i),y=seq(1,$max_j),xlab=\"\",ylab=\"\");
+
+lgd<-character(33)
+lgd[1]<-\"1.0\"
+#lgd[colnum/2]<-\"0.25\"
+lgd[colnum+1]<-\"0.0\"
+par(lend=2)
+legend(\"bottomright\",col=rev(colors),legend=lgd,lwd=(32*18)/colnum,y.i=29/colnum,inset=0.01,bg=\"white\")
+";
+
+#col=rgb(1-(0:32)/32,1-(0:32)/32,1),
+close SCR;
+
+system("cat $scr");
+system("R --vanilla < $scr");
+
+unlink "$tmp";
+unlink "$scr";
+
+## ------------------------------------------------------------
+
+__END__
+
+=head1 plot_bmprobs
+
+Read a file with base match probabilites and write plot as ps file.
+
+=head1 SYNOPSIS
+
+plot_bmprobs <in> <out>
+
+Read a file <in> with base match probabilites and write plot as ps file <out>.
+
+The in-file is supposed to contain lines of the form <i> <j> <p_ij>
+where i is a position in the first dimension (usually first sequence)
+and j a position in the second dimension (second sequence). p_ij is
+the probability to match the positions, i.e. we expect 0<=p_ij<=1.
+
+The script requires the statistic program R (must be in the search
+path) for generating the plot.
+
+Options:
+        --help           brief help message
+        --man            full documentation
+        --verbose        be verbose
+        --quiet          be quiet
+
+=head1 DESCRIPTION
+
+=cut
+

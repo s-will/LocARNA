@@ -1,0 +1,130 @@
+\documentclass{article}
+
+\usepackage{theorem}
+\usepackage{amsmath}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+
+\newcommand{\Begin}{\operatorname{Begin}}
+\newcommand{\End}{\operatorname{End}}
+
+\newcommand{\accbegin}{\operatorname{begin\_acc}}
+\newcommand{\accend}{\operatorname{end\_acc}}
+\newcommand{\expbeginacc}{\operatorname{exp\_begin\_acc}}
+\newcommand{\expendacc}{\operatorname{exp\_end\_acc}}
+
+\begin{document}
+
+It seems that the problem of local maximum expected accuracy alignment is not
+discussed thoroughly in the literature yet.
+
+One possible approach is to build on probabilities of local alignments and
+define local accuracy by introducing begin and end accuracy.
+
+\section{Preliminaries}
+
+\begin{definition}
+  A \emph{local alignment} of sequences $x$ and $y$ is an alignment of two
+  subsequences of $x$ and $y$ that begins and ends with a match (?).
+\end{definition}
+
+In the following we fix two sequences $x$ and $y$.
+\begin{definition}[Notation]
+  $Pr[A]$ denotes the probabilitiy of the local alignment $A$ of $x$ and $y$.
+  $Pr[x_i\sim y_j]$ denotes the probability of aligning $x_i$ to $y_j$ in a
+  local alignment of $x$ and $y$.
+  \\
+  $\Begin_\chi(A)$ is the first position of the subsequence of sequence
+  $\chi\in\{x,y\}$ in a local alignment $A$, $\End_\chi(A)$ the last one.
+  $\Begin_\chi$ and $\End_\chi$ denote the corresponding random variables.
+\end{definition}
+
+Probabilities of local alignments and local alignment edges can be computed
+efficiently using the local partition function variant of Gotoh's algorithm.
+Similarly we compute probabilities $Pr[\Begin_\xi=k]$ and $Pr[\End_\xi=l]$.
+
+Note that we should use a version of Gotoh that accounts to the above
+definition of local alignment (begin and end with match!). Currently, we have a
+version that defines local alignment just as an alignment of subsequences.
+
+\section{Begin and End Accuracy}
+\label{sec:beg-end-acc}
+
+\begin{definition}
+  \begin{align*}
+    \accbegin_\chi(A,A') &= 
+    \begin{cases}
+      -1 & \text{if $Begin_\xi(A)\neq \Begin_\xi(A')$}\\
+      0 & \text{otherwise.}
+    \end{cases}
+    \\
+    \expbeginacc_\chi(A) & = \sum_{A'} \accbegin_\chi(A,A') Pr[A']\\
+  \end{align*}
+\end{definition}
+
+\begin{proposition}
+  \begin{align*}
+    \expbeginacc_\chi(A)
+    & = \sum_{A': Begin_\chi(A)\neq \Begin_\chi(A')} -Pr[A']\\
+    & = \sum_{k\neq\Begin_\chi(A)} \sum_{\Begin_\chi(A')=k} -Pr[A']\\
+    & = \sum_{k\neq\Begin_\chi(A)} - Pr[\Begin_\chi=k]
+  \end{align*}
+\end{proposition}
+
+For the recursion, we add the position wise expected begin accuracy
+\begin{proposition}
+  \begin{align*}
+    D_{ij} = \max 
+    \begin{cases}
+      Pr[x_i\sim y_j] & \text{begin with match of i and j}\\
+      D_{i-1 j-1} + Pr[x_i\sim y_j] - Pr[\Begin_x=i] - Pr[\Begin_y=j] &\\
+      D_{i-1 j} - Pr[\Begin_x=i] &\\
+      D_{i j-1} - Pr[\Begin_y=j] &\\
+    \end{cases}
+  \end{align*}
+\end{proposition}
+
+
+
+\subsection{Improved version}
+
+Begin and end accuracy can be defined in a more general way that still allows
+efficient treatment.
+\begin{definition}
+  \begin{align*}
+    \accbegin_\chi(A,A') &= f(\Begin(A)_\chi,\Begin_\chi(A'))
+  \end{align*}
+\end{definition}
+
+Then,
+\begin{align*}
+    \expbeginacc_\chi(A) & = \sum_{A'} \accbegin_\chi(A,A') Pr[A']\\
+    & = \sum_{k} \sum_{\Begin_\chi(A')=k} Pr[A'] \\
+    & = \sum_{k} f(\Begin_\chi(A),k) \cdot ( \sum_{\Begin_\chi(A')=k}
+    Pr[A'] )\\
+    & = \sum_{k} f(\Begin_\chi(A),k) \cdot Pr[\Begin_\chi=k].
+\end{align*}
+
+In the recursion equation the term, which can be precomputed, is added at the
+beginning of the local alignment.
+\begin{proposition}
+  \begin{align*}
+    D_{ij} = \max 
+    \begin{cases}
+      Pr[x_i\sim y_j] + \sum_{k} f(i,k) \cdot Pr[\Begin_\chi=k] & \text{begin with match of i and j}\\
+      D_{i-1 j-1} + Pr[x_i\sim y_j]&\\
+      D_{i-1 j} &\\
+      D_{i j-1} &\\
+    \end{cases}
+  \end{align*}
+\end{proposition}
+
+
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

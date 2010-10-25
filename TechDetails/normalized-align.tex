@@ -1,0 +1,211 @@
+%%This is a very basic article template.
+%%There is just one section and two subsections.
+\documentclass{article}
+
+\usepackage{amsmath,amsthm}
+
+
+\begin{document}
+\title{Normalized Sequence-Structure Alignment for RNAs}
+\author{Steffen Heyne and Sebastian Will}
+\maketitle
+
+\section{Preliminaries}
+
+The idea for normalized local alignment (NLA) for RNAs is based on ideas of
+Arslan et \emph{al.} This approach make use of the Dinkelbach
+algorithm and fractional programming to get optimal normalized scores.
+
+\subsubsection*{Sequences}
+	
+Given pair of RNA sequences $A$ and
+$B$ of length $n=\vert A \vert$ and $m=\vert B \vert$. Subsequences are written
+as $a_i\dots a_j$ and $b_k\dots b_l$.
+
+\subsubsection*{Alignment Graph}
+
+An alignment graph $\mathcal{G}_{A,B}$ is a directed acyclic graph  having
+$(n+1)(m+1)$ lattice points $(u,v)$ for $0\leq u \leq n$ and $0\leq v \leq m$
+as vertices. Possible arcs in $\mathcal{G}_{A,B}$ are horizontal arcs, vertical
+arcs and diagonal arcs\ldots
+
+\subsubsection*{Alignment vector}
+
+We say that $(S,x,y,z)$ is an alignment vector for two subsequences $a_i\dots a_j$
+and $b_k\dots b_l$, if there exists an alignment path in
+the alignment graph $\mathcal{G}_{A,B}$ between the vertices $(i-1,k-1)$ and
+$(j,l)$ with $x$ matches that have a similarity of $S$ by using $y$ indels and
+$z$ gap openings.
+
+\subsubsection*{Alignment}
+
+The trace of an alignment vector $(S,x,y,z)$ in the alignment graph
+$\mathcal{G}_{A,B}$ is denoted by $\mathcal{A}_{i,j,k,l}$ and is called 
+alignment for the sequences $a_i\dots a_j$ and $b_k\dots b_l$. If $j-i+1 < n$
+or $l-k+1 < m$ the alignment $\mathcal{A}_{i,j,k,l}$ is called \emph{local}
+alignment in respect to $A$ and $B$. The alignment length is denoted by
+$\vert \mathcal{A}_{i,j,k,l}\vert$. The $i$th column in $\mathcal{A}$ is
+denoted by $(p,q)_i$ with $i\leq \vert \mathcal{A}\vert$.
+
+\subsubsection*{Scoring}
+
+In LocARNA, only similarity scores are used instead of match and mismatch
+scores. The similarity of two nucleotides $p=a_i$ and $q=b_j$ is
+denoted by $\sigma_{p,q}$.
+
+Indel penalty: $\gamma$
+
+Gap opening penalty: $\alpha$
+
+\subsubsection*{Similarity}
+
+The similarity $S$ of an alignment (path) is defined as follows. For each
+diagonal arc in the alignment path in $\mathcal{G}_{A,B}$ between the
+vertices $(u-1,v-1)$ and $(u,v)$ we have a match operation $\sigma_{p,q}$ with
+$p=a_u$ and $q=b_v$. With $f_{p,q}$ we indicate the frequency of the same match
+operation in the alignment (path) between the nucleotides $p$ and $q$.
+
+An alignment (path) has a similarity of
+
+\begin{equation}
+S = \sum\limits_{(p,q) \in \mathcal{A}}\sigma_{p,q}f_{p,q} 
+\end{equation}
+
+This is equal to sum over all similarity scores in match columns 
+
+\begin{equation}
+S = \sum\limits_{\substack{i\leq|\mathcal{A}|\\ (p,q)_i \in
+\mathcal{A}}}\sigma_{p,q}
+\end{equation}
+
+and the number of match columns (non gap) is equal to
+
+\begin{equation}
+x = \sum\limits_{(p,q) \in \mathcal{A}}f_{p,q} 
+\end{equation}
+
+\subsubsection*{Alignment Score}
+
+An alignment vector $(x,y,z)$ has a score defined by $\gamma$ and $\alpha$,
+which is defined as:
+
+\begin{equation}
+\textsl{SCORE}(x,y,z) = \sum_x \sigma_{p,q}(x) - \gamma \cdot y-
+\alpha\cdot z
+\end{equation}
+
+The alignment $\mathcal{A}$ contains $y$ indels over $z$ individual stretches
+of gaps.
+		
+The maximum score between subsequences $a_i \dots \a_j$ and $b_k \dots b_l$ is
+the maximum score of all alignment vectors for these two subsequences:
+
+\begin{equation} 
+S_{\sigma,\gamma,\alpha}(a_i \dots a_j, b_k \dots b_l) = \max \lbrace 
+\textsl{SCORE}(x,y,z) \vert (x,y,z) \text{ is alignment vector}\rbrace
+\end{equation}
+
+\subsubsection*{Length function}
+
+We define a length function with respect to some positive contant $L$ as
+
+\begin{equation}
+\textsl{LENGTH}_{L}(a_i \dots a_j,b_k \dots b_l)= (j-i+1)+(l-k+1)+L
+\end{equation}
+
+\subsubsection*{Local Alignment}
+
+Local Alignment (LA) problem is to find two subsequences with the highest
+similarity score LA* defined as:
+\begin{equation}
+\text{LA}^{*}_{\sigma,\gamma, \alpha}(a,b) = \max \lbrace
+\text{SCORE}(x,y,z)\ \vert \ (x,y,z) \text{ is align. vector }\rbrace
+\end{equation}
+
+\subsubsection*{Normalized Score}
+ 
+ A normalized score (with repect to L) $\text{NS}_L$ of two subsequences
+ $a_i\dots a_j, b_k \dots b_l$ is the ratio of their maximum score to the value
+ of $\text{LENGTH}_L$ for these subsequences 
+
+
+\begin{equation}
+\textsl{NS}_{\sigma,\gamma,\alpha,L}(a_i \dots a_j,b_k \dots b_l)  =
+\frac{S_{\sigma,\gamma,\alpha}(a_i \dots a_j, b_k \dots b_l)}
+{\textsl{LENGTH}_{L}(a_i \dots a_j,b_k \dots b_l)}
+\end{equation}
+
+\subsubsection*{Normalized Local Alignment}
+
+Normalized Local Alignment (NLA) is to find two subsequences $a_i \dots a_j$
+and $b_k \dots b_l$ which have the maximal normalized score for all possible
+subsequences:
+
+\begin{equation}
+\text{NLA}^{*}_{\sigma,\gamma,\alpha,L}(a,b) = \max \lbrace
+\textsl{NS}_{\sigma,\gamma,\alpha,L}(a_i \dots a_j,b_k \dots b_l) \rbrace
+\end{equation}
+
+\subsubsection*{Observations}
+
+if $(x,y,z)$ is an alignment vector, then
+
+\begin{equation}
+(j-i+1) + (l-k+1)= 2 x + y 
+\end{equation}
+
+and 
+\begin{equation}
+\textsl{LENGTH}_{L}(a_i \dots a_j,b_k \dots b_l) =
+2x + y + L
+\end{equation}
+
+\subsection{Algorithm}
+
+LA and NLA are optimzation problems. 
+
+\begin{equation}
+\text{LA}^{*}_{\sigma, \gamma, \alpha}(a,b): \text{maximize}\ \sum_x
+\sigma_{p,q}(x) -\gamma y - \alpha z
+\end{equation}
+
+\begin{equation}
+\text{NLA}_{\sigma,\gamma,\alpha,L}(a,b): \text{maximize}\ \frac{\sum_x
+\sigma_{p,q}(x)  - \gamma \cdot y- \alpha \cdot z}{2 x + y + L}
+\end{equation}
+
+For a given $\lambda$ we define the \emph{parametric local alignment} problem
+
+\begin{equation}
+\text{LA}_{\sigma,\gamma,\alpha,L}(\lambda)(a,b): \text{maximize}\ \sum_x
+\sigma_{p,q}(x) - \gamma\cdot y- \alpha\cdot z - \lambda\left( 2
+x +y + L \right)
+\end{equation}
+
+\begin{equation}
+\text{LA*}(\lambda) = max\lbrace\sum_x \sigma_{p,q}(x) -
+\gamma\cdot y- \alpha\cdot z - 2 \lambda x -\lambda y - \lambda
+L \rbrace
+\end{equation}
+
+
+
+\begin{equation}
+ = max \left\lbrace \left( \sum_x \sigma_{p,q}(x) -2 \lambda\right) x -(
+ \gamma +\lambda) y \right\rbrace - \alpha z  - \lambda L
+\end{equation}
+
+
+\begin{equation}
+\text{LA}^{*}_{\sigma',\gamma',\sigma'} (a,b) - \alpha z  - \lambda L
+\end{equation}
+
+\begin{equation}
+\text{where } \sigma'_{x,y} = \sigma_{x,y} - 2\lambda  \ \ \ \ \  \gamma' =
+\gamma -
+\lambda
+\end{equation}
+
+
+
+\end{document}

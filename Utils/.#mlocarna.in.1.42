@@ -1,0 +1,3633 @@
+#!@PERL@ -I @prefix@/lib/perl
+
+my $prefix = "@prefix@";
+my $exec_prefix = "@exec_prefix@";
+my $bindir = "@bindir@";
+
+
+### ============================================================================
+### MAN-PAGE
+###
+
+=head1 NAME
+
+MLocarna - local multiple alignment of RNA
+
+=head1 SYNOPSIS
+
+mlocarna [options] <file>
+
+=head2 Options:
+
+=over 1
+
+=item  B<--help>                        Brief help message
+
+=item  B<--man>                         Full documentation
+
+=item  B<-v, --verbose>                 Verbose
+
+=item  B<--moreverbose>                 Even more verbose
+
+=item  B<-q, --quiet>                   Quiet
+
+=item  B<-P, --tree-min-prob=<f>>       Minimal prob for constructing guide tree. This probability can be set separately
+for the all-2-all comparison for constructing the guide tree and the progressive/iterative alignment steps.
+
+=item  B<--noLP>                        Disallow lonely pairs (default).
+
+=item  B<--LP>                          Allow lonely pairs.
+
+=item  B<--treefile>                    
+Guide tree file. If given, the computation of the guide tree is skiped and the given one is used.
+
+=item  B<--tgtdir>                      
+Target directory. All output files are written to this directory.  Per
+default the target directory is generated from the input filename by
+replacing suffix fa by (or appending) out.
+
+=item  B<--skip-pp>                     
+Skip computation of pair probs if the probabilities are already existing. Non-existing ones are still computed.
+
+=item B<--iterate> 
+Refine iteratively after progressive alignment. Currently, iterative refinement optimizes the SCI (not the
+locarna score)! Iterative refinement realigns all binary splits along the guide tree.  
+
+=item  B<--iterations>                  Refine iteratively for given number of iterations (or stop at convergence).
+
+=item  B<--ignore-constraints>          Ignore constraints even if given.
+
+=item B<--probabilistic> Score alignments using match probabilities
+that are computed by a partition function approach. This makes
+possible to consistency-transform the probabilities (option
+--consistency-transform) and to compute reliabilities.  Reliabilities
+can also be used for iterating the alignment with reliably aligned
+base pairs as structural constraints (option --it-reliable-structure).
+
+=item  B<--write-bm-probs>              Write base match probabilities to files in target dir.
+
+=item  B<--write-am-probs>              Write base match probabilities to files in target dir.
+
+=item  B<--pf-only-basematch>           Use only base match probabilities (no base pair match probabilities).
+
+=item  B<--pf-scale=<scale>>            Scale of partition function; use for avoiding overflow in larger instances.
+
+=item  B<--fast-mea>                    Compute base match probabilities using Gotoh PF-algorithm.
+
+=item  B<--mea-alpha>                   Weight of unpaired probabilities in fast mea mode.
+
+=item  B<--mea-beta>                    Weight of base pair match contribution in probabilistic mode.
+
+=item  B<--mea-gamma>                   Reserved parameter for fast-mea mode.
+
+=item  B<--mea-gapcost>                 Turn on gap penalties in probabilistic/mea mode (default: off).
+
+=item B<--consistency-transformation> Apply probabilistic consistency
+transformation (only possible in probabilistic mode).
+
+=item  B<--dp-cache=<dir>>              Use directory <dir> as cache for dp files.
+
+=item  B<--only-dps>                    Compute only the missing dp files, don't align.
+
+=item  B<--rnafold-parameter=<file>>    Parameter file for RNAfold (RNAfold's -P option)       
+
+=item  B<--plfold-span=span>            Use RNAplfold with span
+
+=item  B<--plfold-winsize=ws>           Use RNAplfold with window of size ws (default=2*span)
+
+=item  B<--cpus=<num>>                  Use <num> cpus in parallel (support multicore/processor).
+
+=item  B<--it-reliable-structure=<num>> 
+Iterate alignment <num> times with reliable structure. This works only
+in probabilistic mode, when reliabilities can be computed.
+
+=item  B<--extlib>                      Use library extension for base pair probabilities (experimental/not functional).
+
+
+=back
+
+as well as most of the options of locarna (please see man page of locarna)
+    
+=head1 DESCRIPTION
+
+B<MLocarna> computes a multiple global or local sequence-structure
+alignment of the RNA molecules that are given in input file <file> in
+mfasta format.  Results are written to directory <dir>. If the file
+tree is given, contained tree (in NEWICK-tree format) is used as guide
+tree for the progressive alignment. The final results are collected in
+<tgtdir>/results. The final multiple alignment is
+<tgtdir>/results/result.aln.
+
+Whenever parameters are not specified explicitly, we use the locarna defaults 
+(please see locarna -h or the manpage of locarna).
+
+=head1 AUTHOR
+
+Sebastian Will
+
+=cut
+
+use MLocarna;
+use strict;
+
+use Cwd 'abs_path';
+
+use Config;
+
+my $THREADS_ENABLED = $Config{useithreads};
+
+if ($THREADS_ENABLED) {
+    require MLocarna_threaded;
+    import MLocarna_threaded;
+} else {
+    require MLocarna_unthreaded;
+    import MLocarna_unthreaded;
+}
+
+
+### ----------------------------------------
+## some subs
+my $verbosemode=3;
+
+## print message depending on verbosity-level
+## ## and write to protocol file
+##
+## ## level -1 = only protocol file
+## level 0  = print to screen only moreverbose
+## level 2  = print to screen for verbose
+## level 3  = print to screen
+sub printmsg($$) {
+    my ($verblevel, $message) = @_;
+    
+    ## print LOG "$message";
+
+    if ($verblevel>=$verbosemode) {
+	print "$message";
+    }
+}
+
+sub printerr($) {
+    my ($message) = @_;
+    
+    ## print LOG "$message";
+
+    print STDERR "$message";
+}
+
+##
+### ----------------------------------------
+
+## make systemcall and print call if verbose-mode
+sub systemverb($) {
+    my ($cmd)=@_;
+    printmsg 1,"$cmd\n";
+    printmsg 1,readpipe("$cmd");
+}
+
+## ------------------------------------------------------------
+## global constants
+my $input_dir="input";
+my $probs_dir="probs";
+my $intermediate_dir="intermediates";
+my $results_dir="results";
+
+
+##------------------------------------------------------------
+## options
+
+# we use the GetOpt module in a mode that allows
+# to pass a list of options quite easily to locarna
+# while handling other options explicitely
+
+use Getopt::Long;
+use Pod::Usage;
+
+my $help;
+my $man;
+
+my $version;
+
+my $quiet;
+my $verbose;
+
+my $noLP=1;
+my $no_lonely_pair;
+my $lonely_pair;
+
+my $tree_file;
+my $tgtdir;
+
+my $mfasta_file;
+
+my $skip_pp=0; ## skip the computation of pair probabilities for files
+               ## that exist already 
+
+my $ext_library;
+
+my $iterate;
+my $iterations;
+
+my $it_reliable_structure;
+
+my $min_prob=0.0005;
+my $tree_min_prob; #=0.01;
+
+my $mea_alpha;
+my $mea_beta;
+my $mea_gamma;
+my $mea_gapcost;
+
+my $stacking;
+
+my $dp_cache; ## use this directory as a cache for dotplot-files (used to avoid multiple computation)
+my $only_dps; # compute only the missing dp files (used to fill the cache!)
+
+my $moreverbose;
+
+my $exp_prob;
+
+my $ignore_constraints;
+
+
+my $consistency_transformation;
+
+my $opt_write_bm_probs;  ## get info about alignment edge probabilities
+my $opt_write_am_probs;  ## get info about alignment structural edge probabilities
+
+
+my $probabilistic;
+
+my $pf_scale;
+
+my $only_basematch_probs; # use only basematch probabilities, no base pair match probabilities
+
+my $fast_mea;
+
+my $min_bm_prob = 0.0005; # minimal prob of base match (used for pf alignment output)
+my $min_am_prob = 0.0005; # minimal prob of arc match (used for pf alignment output)
+
+my $scale_after_ct=1; # whether to scale probabilities after consistency transformation,
+                      # scaling compensates for ignoring transition via gaps in the trafo
+
+my $rnafold_parameter_file;
+
+my $plfold_span;
+my $plfold_winsize;
+
+my $cpu_number=1;
+
+Getopt::Long::Configure("no_ignore_case");
+
+my %options_hash=
+    (
+     "tree-min-prob" => \$tree_min_prob,
+     "noLP" => \$no_lonely_pair,
+     "LP" => \$lonely_pair,
+     
+     "min-prob" => \$min_prob,
+     "tree-min-prob" => \$tree_min_prob,
+
+     "stacking" => \$stacking,
+
+     "extlib" => \$ext_library,
+     
+     "skip-pp" => \$skip_pp,
+     
+
+     ## iterative alignment
+     "iterate" => \$iterate,
+     "iterations" => \$iterations,
+
+     "it-reliable-structure" => \$it_reliable_structure,
+
+     "ignore-constraints" => \$ignore_constraints,
+     
+     "treefile" => \$tree_file,
+     "outdir" => \$tgtdir,
+
+     # controlling the mode of operation
+     
+     "probabilistic" => \$probabilistic, ## turn on mea alignment, default: pf for arc and base match
+     
+     "pf-scale" => \$pf_scale,
+     
+     "only-basematch-probs" => \$only_basematch_probs, ## pf only for basematch
+     "fast_mea" => \$fast_mea,                         ## use heuristics for base match probabilities
+     
+     "min-bm-prob" => \$min_bm_prob, ## locarna_p option
+     "min-am-prob" => \$min_am_prob, ## locarna_p option
+     
+     
+     ## whether to apply (probabilistic) consistency transformation
+     "consistency-transformation" => \$consistency_transformation,
+     
+
+     ## mea weights
+     "mea-alpha" => \$mea_alpha,
+     "mea-beta" => \$mea_beta,
+     "mea-gamma" => \$mea_gamma,
+
+     "mea-gapcost" => \$mea_gapcost,
+
+     ## caching pair probabilities
+     "dp-cache" => \$dp_cache,
+     "only-dps" => \$only_dps,
+     
+     
+     "write-bm-probs" => \$opt_write_bm_probs,
+     "write-am-probs" => \$opt_write_am_probs,
+
+
+     ## energy parameter for RNA fold
+     "rnafold-parameter" => \$rnafold_parameter_file,
+
+
+     ## plfold
+     "plfold-span" => \$plfold_span,
+     "plfold-winsize" => \$plfold_winsize,
+
+     
+     ## parallel processing
+     "cpus" => \$cpu_number,
+     
+     ## "standard" options
+     
+     
+     "verbose" => \$verbose,
+     "moreverbose" => \$moreverbose,
+     
+     "quiet" => \$quiet,
+     
+     "version" => \$version,
+
+     "help"=> \$help,
+     "man" => \$man
+     
+    );
+
+
+my @options = #options that are not or not automatically passed to locarna
+    (
+     "noLP",
+     "LP",
+     
+     "min-prob|p=f",
+     "tree-min-prob|P=f",
+     
+     "stacking",
+     
+     "extlib",
+     
+     "skip-pp",
+     
+     "iterate",
+     "iterations=i",
+     
+     "it-reliable-structure=i",
+
+     "ignore-constraints",
+     "consistency-transformation",
+
+     "treefile=s",
+     "outdir|tgtdir=s",
+
+     "min-bm-prob=f",
+     "min-am-prob=f",
+
+     "write-bm-probs",
+     "write-am-probs",
+
+     "mea-alignment",
+     "mea-alpha=i",
+     "mea-beta=i",
+     "mea-gamma=i",
+     "mea-gapcost",
+
+     "probabilistic",
+     "pf-scale=f",
+     "only-basematch-probs",
+     "fast_mea",
+     
+     "dp-cache=s",
+     "only-dps",
+
+     "rnafold-parameter=s",
+
+     ## plfold
+     "plfold-span=i",
+     "plfold-winsize=i",
+
+     "cpus=i",
+
+     "verbose|v",
+     "moreverbose",
+     "quiet",
+     
+     "version",
+
+     "help",
+     "man"
+    );
+
+
+# options with argument that are passed to locarna
+# autopass options will always be passed to locarna for tree computation 
+# and progressive steps *and* to locarna_p
+#
+my @autopass_arg_options = 
+    (
+     "match|m=i",
+     "mismatch|M=i",
+     "indel|i=i",
+     "indel-open=i",
+     "ribosum-file=s",
+     "struct-weight|s=i",
+     "tau|t=i",
+     "exclusion|E=i",
+     "exp-prob|e=f",
+
+     "max-diff-am=i",
+     "max-diff-match=i",
+          
+     "struct-local=s",
+     "sequ-local=s",
+     "width=i",
+     
+     "probcons-file=s",
+     "match-prob-method=i",
+    
+     "temperature=i",
+     "pf-struct-weight=i"
+    );
+
+my @autopass_noarg_options = ( );
+
+# -----------------------------------
+# some default values
+$options_hash{"struct-weight"}=180;
+$options_hash{"max-diff-am"}=30;
+
+
+GetOptions( \%options_hash, @options, @autopass_arg_options, @autopass_noarg_options )
+    || pod2usage(2);
+
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+
+## ----------------------------------------
+# mfasta file
+
+if ($#ARGV == 0) {
+    $mfasta_file = $ARGV[0];
+}else {
+    pod2usage(1);
+}
+
+
+## ----------------------------------------
+## verbosity level
+if ($quiet) {
+    $verbosemode=4;
+}
+
+# mode 3 is 'normal' verbosity
+
+if ($verbose) {
+    $verbosemode=2;
+}
+
+if ($moreverbose) {
+    $verbose=1;
+    $verbosemode=1;
+}
+
+
+## option --version
+
+if ($version) {
+   system("$bindir/locarna --version");
+   exit(0);
+}
+
+## ------------------------------------------------------------
+## write header
+
+printmsg 3,"mLocARNA --- multiple Local (and global) Alignment of RNA --- ";
+printmsg 3,readpipe("locarna --version");
+printmsg 3,"Copyright Sebastian Will\n\n";
+
+
+if (defined($lonely_pair) && defined($no_lonely_pair)) {
+    printerr "Only one of the options --noLP and --LP can be defined at a time.\n";
+    pod2usage(1);
+}
+if (defined($lonely_pair)) {
+    $noLP=0;
+}
+if (defined($no_lonely_pair)) {
+    $noLP=1;
+}
+
+if (exists $options_hash{"exp-prob"}) {
+    $exp_prob=$options_hash{"exp-prob"};
+}
+
+## construct parameter string for locarna
+
+my $locarna_params="";
+my $locarna_params_tree="";
+
+my $locarna_p_params="";
+
+
+if (defined($only_basematch_probs)) { $locarna_p_params.=" --include-am-in-bm"; }
+
+
+if (defined($min_bm_prob)) { $locarna_p_params.=" --min-bm-prob=$min_bm_prob"; }
+if (defined($min_am_prob)) { $locarna_p_params.=" --min-am-prob=$min_am_prob"; }
+
+if (defined($pf_scale)) { $locarna_p_params.=" --pf-scale $pf_scale"; }
+
+## handle plfold
+if (defined($plfold_span)) {
+    printmsg 1,"Use plfold for local folding.\n";
+    if (!defined($plfold_winsize)) {
+	$plfold_winsize = 2*$plfold_span;
+    }
+    $ignore_constraints=1;
+    #printerr "Warning: can't use constraints with plfold\n";
+    if (defined($stacking)) {
+	printerr "Can't use stacking with plfold.\n";
+	exit -1;
+    }
+} elsif (defined($plfold_winsize)) {
+    printerr "Warning: winsize for plfold given, but no span. Winsize ignored.\n";
+}
+
+$locarna_params.=" -v" if ($verbose);
+
+# ----------------------------------------
+# handle autopass options
+#
+foreach my $opt (@autopass_arg_options) {
+    $opt =~ s/[|=].*//;
+    
+    if (exists $options_hash{$opt}) {
+	$locarna_params .= " --$opt $options_hash{$opt}";
+    }
+}
+
+foreach my $opt (@autopass_noarg_options) {
+    $opt =~ s/[|].*//;
+    
+    if (exists $options_hash{$opt}) {
+	$locarna_params .= " --$opt";
+    }
+}
+#
+# ----------------------------------------
+
+$locarna_p_params = $locarna_p_params. " " . $locarna_params;
+
+## options only passed to locarna (not to locarna_p)
+$locarna_params.=" --noLP" if ($noLP);
+
+if ($probabilistic) {
+    $locarna_params .= " --mea-alignment";
+
+    $locarna_params .= " --mea-gapcost" if $mea_gapcost;
+    
+    $locarna_params.=" --mea-beta $mea_beta" if defined($mea_beta);
+	
+    if ( defined($fast_mea) ) {
+	$locarna_params.=" --mea-alpha $mea_alpha" if defined($mea_alpha);
+	$locarna_params.=" --mea-gamma $mea_gamma" if defined($mea_gamma);
+    }
+}
+
+## copy to tree params
+$locarna_params_tree=$locarna_params;
+
+## special treatment of min-prob and tree-min-prob
+
+$locarna_p_params .= " --min-prob $min_prob" if (defined($min_prob));
+
+if ($probabilistic && $only_basematch_probs) {
+    # when using only basematch probabilities,
+    # turn off structural scoring for locarna
+    
+    $locarna_params .= " --min-prob 1";
+    $locarna_params_tree .= " --min-prob 1";
+} else {
+
+    $locarna_params .= " --min-prob $min_prob" if (defined($min_prob));
+    
+    if (defined($tree_min_prob)) {
+	$locarna_params_tree.=" --min-prob $tree_min_prob";
+    } else {
+	$locarna_params_tree.=" --min-prob $min_prob" if (defined($min_prob));
+    }
+}
+
+
+## no stacking for locarna_p
+$locarna_params .= " --stacking" if ($stacking);
+$locarna_params_tree .= " --stacking" if ($stacking);
+
+
+######## ------------------------------------------------------------
+#### do some consistency checks on the parameters
+##
+#
+#
+
+if ($consistency_transformation && !$probabilistic) {
+    printerr "Consistency transformation is supported only in probabilistic mode. Exit.";
+    exit -1;
+}
+
+if (!$probabilistic && ($opt_write_bm_probs || $opt_write_am_probs)) {
+    printerr "Writing of probabilities only possible in probabilistic mode. Exit.";
+    exit -1;
+}
+
+if (($fast_mea || $only_basematch_probs) && $opt_write_am_probs) {
+    printerr "Writing of arc match probabilities requested, but their computation is disabled. Exit.";
+    exit -1;
+}
+
+
+####
+## get full, absolute path for parameter file
+if (defined($rnafold_parameter_file)) {
+    $rnafold_parameter_file = abs_path($rnafold_parameter_file);
+}
+
+
+
+#### ------------------------------------------------------------
+
+if ($probabilistic && ! $fast_mea) {
+    printmsg 2,"Locarna-P parameters (for computing probabilities): $locarna_p_params\n";
+}
+printmsg 2,"Locarna parameter for progressive alignment: $locarna_params\n";
+printmsg 2,"Locarna parameter for guide tree construction: $locarna_params_tree\n";
+
+##------------------------------------------------------------
+
+
+## sub new_intermediate_name
+## returns a new name for intermediate files
+## uses counter 
+my $intermediate_name_counter=0;
+## and basename
+my $intermediate_name_base="intermediate";
+##
+sub new_intermediate_name {
+    $intermediate_name_counter++;
+    return "$intermediate_name_base$intermediate_name_counter";
+}
+
+my $node_sym="\$\$nodesym";
+
+my $global_tmpname="_tmp_"; # valid file name, at max 12 characters
+my $global_tmpprefix="$global_tmpname"; # could be a absolute path, but there's no need to
+
+
+###------------------------------------------------------------
+## Forward references for subs
+#
+#
+sub parse_tree;
+sub parse_dp_ps;
+sub subtract_list;
+sub compute_all_dotplots($$);
+sub compute_match_probs($$$$$$$);
+			
+### ============================================================================
+### ============================================================================
+### ============================================================================
+## ---------------------------------------------------------------------------
+# main program
+#
+			
+## GLOBAL VARS (since passing this arround is also ugly:))
+my %bmprobs; # base match probabilities
+my %amprobs; # arc match probabilities
+
+## use for storing untransformed probs 
+## in case of consistency-transformation
+my %bmprobs_nocbt; # untransformed base match probabilities
+my %amprobs_nocbt; # untransformed arc match probabilities
+			
+
+## CALL main
+main();
+
+sub main {
+    
+    ## target/output directory
+    if (!defined($tgtdir)) {
+	$tgtdir = $mfasta_file;
+	$tgtdir =~ s/\.mfasta$|\.fasta$|\.fa$//;
+	$tgtdir .= ".out";
+    }
+    
+    if (! -e $tgtdir) {
+	mkdir $tgtdir;
+	if (! -e $tgtdir ) {
+	    printerr "Cannot create target directory $tgtdir. Exit.";
+	    exit -1;
+	}
+    } else {
+	if ( -d $tgtdir ) {
+	    printerr "Warning: $tgtdir exists already.\n" if ($verbose);
+	} else {
+	    printerr "$tgtdir is not a directory. Exit.\n";
+	    exit -1;
+	} 
+    }
+    
+    ## ----------------------------------------
+    # read the mfasta input file
+    my %mfasta = parse_mfasta_constraints($mfasta_file);
+
+
+
+    ## ----------------------------------------
+    ## make target directory the current directory
+    ## and make paths to later used files absolute
+    ##
+    if (defined($tree_file)) { $tree_file = abs_path($tree_file); }
+    if (defined($dp_cache))  { $dp_cache  = abs_path($dp_cache);  }
+    
+    mkdir "$tgtdir/$input_dir";
+    mkdir "$tgtdir/$probs_dir";
+    mkdir "$tgtdir/$intermediate_dir";
+    mkdir "$tgtdir/$results_dir";
+
+    system "cp", $mfasta_file, "$tgtdir/$input_dir/input.fa";
+
+
+
+    perform_multiple_alignment(\%mfasta);
+    
+    ## ----------------------------------------
+    # compute reliabilities and print reliability plots
+    #
+    if ($probabilistic) {
+	
+        ## iterate $it_reliable_structure times using reliable structures as structure constraints 
+	for (my $it=0; $it<$it_reliable_structure; $it++) {
+	    my %aln = parse_aln("$tgtdir/$results_dir/result.aln");
+	    
+	    my %reliable_structures = compute_reliabilities(\%aln);
+	    
+	    printmsg 3, "\nIterate alignment with structure constraints from reliability information.\n";
+	    
+	    ## add constraints for new round of iteration
+	    %mfasta = constrain_mfasta(\%mfasta,\%reliable_structures);
+	    
+	    perform_multiple_alignment(\%mfasta);
+	}
+	
+	my %aln = parse_aln("$tgtdir/$results_dir/result.aln");
+	compute_reliabilities(\%aln);
+
+    } ## end if probabilistic
+    
+
+
+} ## end main
+
+## compute and print reliabilities
+##
+## @param %aln the multiple alignment
+##
+sub compute_reliabilities {
+    my ($aln_ref) = @_;
+    my %aln = %{$aln_ref};
+
+    my @names = keys %aln;
+    @names = grep {!/\#/} @names;
+
+    
+    my ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref);
+    
+    if ($consistency_transformation) {
+	($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
+	    = compute_reliability(\%aln,\%bmprobs_nocbt,\%amprobs_nocbt);
+    } else {
+	($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
+	    = compute_reliability(\%aln,\%bmprobs,\%amprobs);
+    }
+    
+    printmsg 3, "reliability\n";
+    
+    write_reliability_bars($bmrels_seq_ref, $bmrels_str_ref);
+    
+    write_bm_reliabilities("$tgtdir/$results_dir/result.bmreliability",$bmrels_seq_ref,$bmrels_str_ref);
+    write_am_reliabilities("$tgtdir/$results_dir/result.amreliability",$amrels_ref);
+    
+    if ($consistency_transformation) {
+	
+	my ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref) 
+	    = compute_reliability(\%aln,\%bmprobs,\%amprobs);
+	
+	if ($verbose) {
+	    printmsg 3, "reliability (cbt)\n";
+	    write_reliability_bars($bmrels_seq_ref, $bmrels_str_ref);
+	}
+	
+	write_bm_reliabilities("$tgtdir/$results_dir/result.bmreliability-cbt",$bmrels_seq_ref,$bmrels_str_ref);
+	write_am_reliabilities("$tgtdir/$results_dir/result.amreliability-cbt",$amrels_ref);
+    }
+    
+    
+    my %reliable_structures; ## hash for storing highly reliable structures (that will be used as constraints)
+    
+    ## compute reliability profiles for single sequences
+    for my $name (@names) {
+	printmsg 1,"Compute structure reliability profile for $name\n";
+	
+	my %name_pairprobs = parse_pp_file_pairprobs("$tgtdir/$input_dir/".$name);
+	
+	my $amrels_ref = compute_reliability_single_seq($name,\%aln,\%amprobs_nocbt,\%name_pairprobs);
+	
+	write_am_reliabilities("$tgtdir/$results_dir/$name.amreliability",$amrels_ref);
+	
+	my $rel_str=max_weight_structure($aln{$name},$amrels_ref,0.25);
+	
+	printmsg 3,sprintf("%-18s ",$name).$rel_str."\n";
+	
+	$rel_str = project_str_to_aln_seq($rel_str,$aln{$name});
+	
+	$reliable_structures{$name} = $rel_str;
+    }
+
+    return %reliable_structures;
+}
+
+
+
+## project structure string to alignment sequence
+## effectively remove all columns from structure string that
+## have a corresponding gap colunn in alignment sequence
+##
+sub project_str_to_aln_seq($$) {
+    my ($str,$seq)=@_;
+    my $res="";
+    for (my $i=0; $i<length($seq); $i++) {
+	if (substr($seq,$i,1) =~ /[a-zA-Z]/) {
+	    $res .= substr $str,$i,1;
+	}
+    }
+    return $res;
+}
+
+## perform the complete multiple alignment for the given mfasta hash
+##
+## performs the single steps:
+## * generate target dir
+## * compute of base pair probabilities
+## * in probabilistic mode: compute alignment edge probabilities
+## * optionally: consistency-transformation
+## * compute all-2-all alignments
+## * compute guide tree
+## * perform progressive steps
+## * optionally perform iterative refinement
+##
+##
+## @param \%mfasta reference to mfasta hash
+##
+## GLOBAL VARS: amprobs, bmprobs, amprobs_nocbt, bmprobs_nocbt (since we need this later)
+##
+sub perform_multiple_alignment($) {
+    my ($mfasta_ref) = @_;
+    my %mfasta = %{ $mfasta_ref };
+    
+    ## ----------------------------------------
+    ## get names of sequences in the mfasta file
+    #
+    # get all keys in the hash
+    # keep only the sequence names (without constraint strings)
+    #
+    my @names = keys %mfasta;
+    @names = grep {!/\#/} @names;
+
+    ## ----------------------------------------
+    ## get all sequence lengths
+    my %seq_lengths;
+    foreach my $name (@names) {
+	#   my %aln = parse_pp_file_aln($name);
+	#   $seq_lengths{$name} = aln_length(\%aln);
+	$seq_lengths{$name} = length($mfasta{$name});
+    }
+      
+    my $current_dir = abs_path(".");
+    
+    chdir $tgtdir;
+    
+    if ($cpu_number>1) {
+       printmsg 2,"Compute using $cpu_number threads.\n";
+    }
+
+    ## ----------------------------------------
+    # compute probability dot-plots
+    # (if wanted or if necessary)
+    #
+    printmsg 3,"Compute pair probs ...\n";
+    if ($cpu_number==1) {
+	compute_all_dotplots(\@names,\%mfasta);
+    } else  {
+	compute_all_dotplots_par($cpu_number,\@names,\%mfasta);
+    }
+
+    ## exit here if only dps shall be computed
+    if ($only_dps) {
+	printmsg 1,"Computed only the missing dotplots.\n";
+	exit 0;
+    }
+
+
+    ## ----------------------------------------
+    ## generate base match probabilities for all sequence pairs
+    #  (if required)
+    
+    if ($probabilistic) {
+	#
+	# for some strange reasons, later we get problems when using
+	# shared variables, where we actually don't need it.
+	# Therefore, use extra vars and copy back immediately after
+	# use.
+	#
+	my %bmprobs_shared; # shared for parallel computation
+	my %amprobs_shared; # shared for parallel computation
+	
+	share(\%bmprobs_shared);
+	share(\%amprobs_shared);
+	
+	
+	printmsg 3,"Compute match probabilities ...\n";
+	
+	# compute the base match probabilites
+	# either use full partition function locarna_p
+	# or use the Gotoh PF implementation in locarna (in fast-mea mode)
+	# compute arc match probs only if required 
+	#
+	#
+	if ($cpu_number==1) {
+	    compute_all_match_probs(\%seq_lengths,\@names, \%bmprobs_shared, \%amprobs_shared);
+	} else  {
+	    compute_all_match_probs_par($cpu_number,\%seq_lengths,\@names, \%bmprobs_shared, \%amprobs_shared);
+	}
+	
+	
+	# make unshared clone-copys of shared bmprobs/amprobs
+	#
+	%bmprobs_nocbt = %{ clone_hash(3, \%bmprobs_shared) };
+	%amprobs_nocbt = %{ clone_hash(5, \%amprobs_shared) };
+	
+	undef %bmprobs_shared; #not needed anymore
+	undef %amprobs_shared; #not needed anymore
+	
+	
+	if ($opt_write_bm_probs) {
+	    write_bm_probs("$probs_dir/bmprobs",%bmprobs_nocbt);
+	}
+	if ($opt_write_am_probs) {
+	    write_am_probs("$probs_dir/amprobs",%amprobs_nocbt);
+	}
+	
+	# print_k_dim_hash(\%bmprobs,4,"");
+
+	if ($consistency_transformation) {
+	    ## store untransformed probabilities
+	    
+	    printmsg 3, "Consistency transform match probabilities ...\n";
+
+	    %bmprobs = consistency_transform_bm(\%bmprobs_nocbt,\@names);	    
+	    %amprobs = consistency_transform_am(\%amprobs_nocbt,\@names);
+	    
+	    if ($opt_write_bm_probs) {
+		write_bm_probs("$probs_dir/bmprobs-ct",%bmprobs);
+	    }
+	    if ($opt_write_am_probs) {
+		write_am_probs("$probs_dir/amprobs-ct",%amprobs);
+	    }
+	} else {
+	    %bmprobs=%bmprobs_nocbt;
+	    %amprobs=%amprobs_nocbt;
+	}
+
+	#print_k_dim_hash(\%bmprobs,4,"");
+    }
+
+
+
+    ## ----------------------------------------
+    # generate guide tree (if not given)
+    #
+
+    my $tree;
+
+    if (defined($tree_file)) {
+	open(TREE,"$tree_file") || die "Cannot read $tree_file for reading tree\n";
+	$tree=<TREE>;
+	chomp($tree);
+	close TREE;
+    } elsif ($#names == 1) { # for only two sequences, tree is unique
+	$tree="($names[0],$names[1])";
+    } else {
+	# --------------------------------------------------
+	# compute score matrix for guide tree
+	# compute pairwise scores in @score_matrix
+	#
+	my @score_matrix;
+	
+	printmsg 3,"Compute pairwise alignments ... \n";
+
+	# store all pairwise alignments in @pairwise_alignments
+	my @pairwise_alns;
+	if ($cpu_number==1) {
+	    @pairwise_alns = compute_all_pairwise_alignments(\@names,\%bmprobs,\%amprobs);
+	} else  {
+	    @pairwise_alns = compute_all_pairwise_alignments_par($cpu_number,\@names,\%bmprobs,\%amprobs);
+	}
+	## fill score matrix
+	@score_matrix = compute_score_matrix(\@names,\@pairwise_alns);
+	
+	write_2D_matrix("$results_dir/result.matrix",\@score_matrix);
+	
+	if ($ext_library) {
+	    extend_library(\@pairwise_alns);
+	}
+	
+	$tree = compute_tree(\@names,\%mfasta,\@score_matrix);    
+	
+    } # end generation of tree
+
+    open(TREE,">$results_dir/result.tree")|| die "Cannot write to $tgtdir/result.tree";
+    print TREE "$tree\n";
+    close TREE;
+
+    my @tree_postorder = parse_tree($tree);
+
+    ## if we read the tree from a file, then we have to shorten the names,
+    ## and substitute special characters
+    if (defined($tree_file)) {
+	for (my $i=0; $i<=$#tree_postorder; $i++) {
+	    if ( $tree_postorder[$i] ne $node_sym ) {
+		$tree_postorder[$i] =  substr $tree_postorder[$i],0,16;
+		$tree_postorder[$i] =~ s/[^a-zA-Z\d]/_/g;
+	    }
+	}
+    }
+
+
+    ## ----------------------------------------
+    # progressive alignment along the guide tree
+    #
+    printmsg 3, "Perform progressive alignment ...\n";
+
+    my $current_alignment_name =
+	perform_progressive_steps(\@tree_postorder,\%bmprobs,\%amprobs);
+
+    ## ----------------------------------------
+    ## copy results to files result_prog.aln and result_prog.pp
+    ##
+    system "cp", "$current_alignment_name.aln", "$results_dir/result_prog.aln";
+    system "cp", "$current_alignment_name.pp", "$results_dir/result_prog.pp";
+
+
+    ### ============================================================
+    ### iterative refinement
+
+    ##
+    ## 1.) from the guide tree get all bi-partitionings of seq-names,
+    ##     that are separated by tree edges 
+    ## 2.) start with the final multiple alignment from the progressive phase
+    ##     as the current multiple alignment
+    ## 3.) for each partitioning
+    ##     a) extract the multiple alignments of both partitions out of the current ma
+    ##     b) generate new pp files with newly computed consensus pairprobs
+    ##     c) align both paritions in order to form a new, better ma
+    ##
+    ##
+    ## Details:
+    ## ad 3a) read the current ma and generate the two sub-alignments
+    ##        by projection, delete only-gap columns
+    ## ad 3b) read all pp files of the single sequences in the sub-alignment
+    ##        and compute consensus dot-plot by averaging probs
+    ##        (geometric or arithmetic mean).
+    ##        This requires two compute the projection of the single sequences
+    ##        to their lines in the alignment.
+    ##
+    ## Handling of constraints?
+    ## merge also constraint lines from the single pp files
+    ##
+
+
+    if (defined($iterate) && ! defined($iterations)) {
+	$iterations=1;
+    }
+
+    if (defined($iterations) && ($#names==1)) {
+	$iterations = 0;
+    }
+
+    if (defined($iterations) && ($iterations>0)) {
+ 	printmsg 3, "Perform iterative refinement ...\n";
+
+	$current_alignment_name = perform_iterative_refinement($current_alignment_name,\@tree_postorder,\@names,\%bmprobs,\%amprobs);
+    }
+    
+    ### DONE iterative refinement
+    ### ============================================================
+    
+    
+    ## ----------------------------------------
+    # copy results to files result.aln and result.pp
+    # (even for non-iterative alignment the result-files are written only here)
+    #
+    system "cp", "$current_alignment_name.aln", "$results_dir/result.aln";
+    system "cp", "$current_alignment_name.pp", "$results_dir/result.pp";
+    
+    
+
+    if (!$verbose) {
+	printmsg 3, readpipe("cat $results_dir/result.aln | grep -v '^CLUSTAL W --- LocARNA'");
+    }
+
+
+    ## ----------------------------------------
+    ## show alifold prediction
+
+    my @aliout =  readpipe("RNAalifold $results_dir/result.aln 2>/dev/null");
+
+    if ($#aliout>=1) {
+	if ($aliout[1] =~ /([().]+) /) {
+	    printmsg 3, "alifold            ".$aliout[1];
+	}
+    }
+    
+    rename "alirna.ps", "$results_dir/alirna.ps";
+
+    chdir $current_dir;
+}
+
+
+### ============================================================================
+### ============================================================================
+### ============================================================================
+### SUBS
+###
+
+
+## adds (or replaces) constraints to/in a mfasta hash
+# @param \%mfasta the mfasta hash
+# @param \%constraints hash of constraints (same names as in mfasta),
+#        all symbols different to '(' or ')' are replaced by '.'
+sub constrain_mfasta($$) {
+    my ($mfasta_ref,$constraints_ref) = @_;
+    
+    my %res = %{ $mfasta_ref };
+
+    my @names = grep !/#/, (keys %res);
+
+    foreach my $name (@names) {
+	if (exists $constraints_ref->{$name}) {
+	    my $constraint_string = $constraints_ref->{$name};
+	    $constraint_string =~ s/[^()]/\./g;	    
+	    $res{"$name\#S"} = $constraint_string;
+	    printmsg 3,"$name\#S: $constraint_string\n";
+	}
+    }
+
+    return %res;
+}
+
+## compute the alifold mfe for an aln file
+sub alifold_mfe {
+    my ($file) = @_;
+    
+    my @aliout =  readpipe("RNAalifold $file 2>/dev/null");
+
+    if ($#aliout>=1) {
+	if ($aliout[1] =~ /[().]+\s+\(\s*([\d.-]+)\s*=\s*([\d.-]+)\s*\+\s*([\d.-]+)\)/) {
+	    my $ali_mfe=$1;
+	    my $cons_mfe=$2;
+	    my $cov_term=$3;
+	    return $ali_mfe;
+	}
+    }
+    return 123456789;
+}
+
+
+
+## compute base and arc match probs for all pairs of names
+## we assume that for each name there is a pp file
+##
+## in fast-mea mode:
+## for computing the probabilities, locarna is called with
+## option --write-match-probs
+##
+## in pf mode 
+## for computing the probabilities, locarna is called with
+## option --write-basematch-probs and --write-arcmatch-probs
+##
+## returns a hash of "sparse matrices"
+sub compute_all_match_probs {
+    my ($seq_lengths_ref,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+
+    my %seq_lengths = %{ $seq_lengths_ref };
+    my @names = @{ $names_ref };
+    
+    my $a=0;
+
+    for my $nameA (@names) {
+	$a++;
+	my $b=0;
+	for my $nameB (@names) {
+	    $b++;
+	    if ($b!=$a) {
+		compute_match_probs($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$#names+1);
+	    }
+	}
+    }
+}
+
+sub compute_all_match_probs_par {
+    my ($cpu_num,$seq_lengths_ref,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+
+    # my %seq_lengths = %{ $seq_lengths_ref };
+    my @names = @{ $names_ref };
+    
+    my @arg_lists_par;
+    my @arg_lists_seq;
+    
+    my $a=0;
+    
+    ## collect argument lists
+    for my $nameA (@names) {
+	$a++;
+	my $b=0;
+	for my $nameB (@names) {
+	    $b++;
+	    if ($b!=$a) {
+		if ($a<$b) {
+		    push @arg_lists_par, [ ($a,$b,$nameA,$nameB) ];
+		} else {
+		    push @arg_lists_seq, [ ($a,$b,$nameA,$nameB) ];
+		}
+	    }
+	}
+    }
+    
+    share($bmprobs_ref);
+    share($amprobs_ref);
+    
+    ## perfom in parallel
+    foreach_par(
+	sub {
+	    my ($a,$b,$nameA,$nameB)=@_;
+	    compute_match_probs($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$#names+1);
+	},
+	\@arg_lists_par,
+	$cpu_num);
+
+    
+    ## symmetrical entries in sequence
+    foreach my $list (@arg_lists_seq) {
+	my ($a,$b,$nameA,$nameB)=@{ $list };
+	compute_match_probs($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$#names+1);
+    }
+
+}
+
+sub compute_match_probs($$$$$$$) {
+    my ($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$num_seqs) = @_;
+        
+    if (exists $bmprobs_ref->{chp($nameB,$nameA)}) {
+	# match probs are symmetric. So if we already have it then use it.
+	
+	my %subhash_bm = transpose_sparsematrix_2D( $bmprobs_ref->{chp($nameB,$nameA)} );
+	$bmprobs_ref->{chp($nameA,$nameB)} = clone_share_hash(2, \%subhash_bm);
+	
+	my %subhash_am = transpose_sparsematrix_4D( $amprobs_ref->{chp($nameB,$nameA)} );
+	$amprobs_ref->{chp($nameA,$nameB)} = clone_share_hash(4, \%subhash_am);
+	
+    } else {
+	# compute the match probabilities for the pair
+		
+	printmsg 2, sprintf(
+	    "PFAlign %d/%d : $nameA and %d/%d: $nameB\n",
+	    $a,$num_seqs-1,$b,$num_seqs);
+	
+	my $tmpprefix = threadsafe_name("$global_tmpprefix");
+	
+	my $tmpfile_bm="$tmpprefix.bmps";
+	my $tmpfile_am="$tmpprefix.amps";
+	
+	my $cmd;
+	if ($fast_mea) {
+	    $cmd = "$bindir/locarna $input_dir/$nameA $input_dir/$nameB $locarna_params --write-match-probs $tmpfile_bm";
+	} else {
+	    $cmd = "$bindir/locarna_p $input_dir/$nameA $input_dir/$nameB $locarna_p_params --write-basematch-probs $tmpfile_bm";
+	    
+	    if ( ! $only_basematch_probs ) {
+		$cmd .= " --write-arcmatch-probs $tmpfile_am";
+	    }
+	}
+	
+	$cmd .= " >/dev/null" unless $moreverbose;
+	printmsg 1, "$cmd\n";
+	system($cmd)==0 || die "Cannot compute match probabilities by $cmd";
+	
+	#if ($moreverbose) {
+	#    system("cat $tmpfile_bm");
+	#    system("cat $tmpfile_am");
+	#}
+	
+	my %mat_bm = read_sparse_matrix_2D($tmpfile_bm);
+	my %mat_am = read_sparse_matrix_4D($tmpfile_am);
+	
+
+	$bmprobs_ref->{chp($nameA,$nameB)} = clone_share_hash(2,\%mat_bm);
+	$amprobs_ref->{chp($nameA,$nameB)} = clone_share_hash(4,\%mat_am);
+	
+	unlink "$tmpfile_am";
+	unlink "$tmpfile_bm";
+    }
+}
+
+## make a shared copy of a hash
+##
+## (one could use ref as "typeof" to make this more generic,
+## however its not needed for the moment)
+sub clone_share_hash($$) {
+    my ($levels,$x) = @_;
+    my %y;
+
+    share(\%y);
+    
+    
+    if ($levels>1) {
+	foreach my $k (keys %{ $x }) {
+	    $y{$k} = clone_share_hash( $levels-1, $x->{$k} );
+	}
+    } else {
+	%y = %{ $x };
+    }
+    return \%y;
+}
+
+## make a non-shared copy of a hash
+##
+## (one could use ref as "typeof" to make this more generic,
+## however its not needed for the moment)
+sub clone_hash($$) {
+    my ($levels,$x) = @_;
+    my %y;
+	
+    if ($levels>1) {
+	foreach my $k (keys %{ $x }) {
+	    $y{$k} = clone_hash( $levels-1, $x->{$k} );
+	}
+    } else {
+	%y = %{ $x };
+    }
+    return \%y;
+}
+
+
+
+sub sum_paired_prob_bm {
+    my ($h_ref) = @_;
+    
+    my %h = %{ $h_ref };
+    
+    my @name_pairs = keys %h;
+    
+    my $sum=0;
+    
+    foreach my $name_pair (@name_pairs) {
+	foreach my $i ( keys %{ $h{$name_pair} } ) {
+	    foreach my $j ( keys %{ $h{$name_pair}{$i} } ) {
+		$sum += $h{$name_pair}{$i}{$j};
+	    }
+	}
+    }
+   
+    return $sum;
+}
+
+sub sum_paired_prob_am {
+    my ($h_ref) = @_;
+    
+    my %h = %{ $h_ref };
+    
+    my @name_pairs = keys %h;
+    
+    my $sum=0;
+    
+    foreach my $name_pair (@name_pairs) {
+	foreach my $i ( keys %{ $h{$name_pair} } ) {
+	    foreach my $j ( keys %{ $h{$name_pair}{$i} } ) {
+		foreach my $k ( keys %{ $h{$name_pair}{$i}{$j} } ) {
+		    foreach my $l ( keys %{ $h{$name_pair}{$i}{$j}{$k} } ) {
+			$sum += $h{$name_pair}{$i}{$j}{$k}{$l};
+		    }
+		}
+	    }
+	}
+    }
+
+    return $sum;
+}
+
+
+## get a hash indexed by name pairs of "sparse matrices" = match probs for all sequence pairs
+## and the list of sequence names @names
+## returns the transformed hash
+sub consistency_transform_bm {
+    my ( $h_ref,$names_ref ) = @_;
+    
+    my %h = %{ $h_ref };
+    my @names = @{ $names_ref };
+
+    my $num_seqs=$#names+1;
+
+    my $sum_paired_prob;
+
+    if ($scale_after_ct) {
+       $sum_paired_prob = sum_paired_prob_bm(\%h);
+    }
+
+    # print_k_dim_hash(\%h,4,"");
+    
+    my %th; ## transformed hash
+    
+    my @name_pairs = keys %h;
+    
+    foreach my $name_pair (@name_pairs) {
+	my ($nameA,$nameB) = dhp($name_pair);
+	if (exists $th{chp($nameB,$nameA)}) {
+	    my %subhash = transpose_sparsematrix_2D( $th{chp($nameB,$nameA)} );
+	    $th{$name_pair} = \%subhash;
+	} else {
+	    my %matrixAB;
+	    
+	    foreach my $nameC (@names) {
+		
+		# transform via $nameC and add to matrix AB
+		
+		my %matrixAB_add;
+		
+		if ($nameC eq $nameA || $nameC eq $nameB) {
+			    %matrixAB_add = %{ $h{$name_pair} }
+		} else {
+		    %matrixAB_add = consistency_transform_single_bm( $h{chp($nameC,$nameA)} , $h{chp($nameC,$nameB)} );
+		}
+		
+		%matrixAB = add_sparsematrix_2D ( \%matrixAB, \%matrixAB_add );
+	    }
+	
+	    %matrixAB = filter_sparsematrix_2D( \%matrixAB, $num_seqs * $min_bm_prob);
+	    
+	    %matrixAB = divide_sparsematrix_2D( \%matrixAB, $num_seqs );
+	    
+	    $th{$name_pair} = \%matrixAB;
+	}
+    }
+    
+    if ($scale_after_ct) {
+	my $paired_prob_ratio = $sum_paired_prob/sum_paired_prob_bm(\%th);
+	printmsg 1, "Sum paired prob bm ratio: $paired_prob_ratio\n";
+	
+	foreach my $name_pair (@name_pairs) {
+	    my %subhash = scale_sparsematrix_2D($th{$name_pair},$paired_prob_ratio);
+	    $th{$name_pair} = \%subhash;
+	}
+    }
+    
+    return %th;
+}
+
+
+## get a hash indexed by name pairs of "sparse matrices" = arc match probs for all sequence pairs
+## returns the transformed hash
+sub consistency_transform_am {
+    my ( $h_ref, $names_ref ) = @_;
+
+    my @names = @{ $names_ref };
+
+
+    my %h = %{ $h_ref };
+    
+    my $num_seqs=$#names+1;
+    
+    my $sum_paired_prob;
+    if ($scale_after_ct) {
+       $sum_paired_prob = sum_paired_prob_am(\%h);
+    }
+
+    my %th;
+    
+    my @name_pairs = keys %h;
+    
+    foreach my $name_pair (@name_pairs) {
+	my ($nameA,$nameB) = dhp($name_pair);
+	
+	if ($nameA eq $nameB) {
+	    $th{$name_pair} = $h{$name_pair};
+	} else {
+	    if (exists $th{chp($nameB,$nameA)}) {
+		my %subhash = transpose_sparsematrix_4D( $th{chp($nameB,$nameA)} );
+		$th{$name_pair} = \%subhash;
+	    } else {
+		
+		my %matrixAB;
+		
+		foreach my $nameC (@names) {
+		    
+		    # transform via $nameC and add to matrix AB
+		    
+		    my %matrixAB_add;
+		    
+		    if ($nameC eq $nameA || $nameC eq $nameB) {
+			%matrixAB_add = %{ $h{$name_pair}  };
+		    } else {
+			%matrixAB_add = consistency_transform_single_am( $h{chp($nameC,$nameA)} , $h{chp($nameC,$nameB)} );
+		    }
+		    
+		    %matrixAB = add_sparsematrix_4D ( \%matrixAB, \%matrixAB_add );
+		}
+		
+		%matrixAB = filter_sparsematrix_4D( \%matrixAB, $num_seqs * $min_am_prob);
+		
+		%matrixAB = divide_sparsematrix_4D( \%matrixAB, $num_seqs );
+		
+		$th{$name_pair} = \%matrixAB;
+	    }
+	}
+    }
+
+
+    if ($scale_after_ct) {
+	
+	my $paired_prob_ratio = $sum_paired_prob/sum_paired_prob_am(\%th);
+	printmsg 1, "Sum paired prob am ratio: $paired_prob_ratio\n";
+	
+	foreach my $name_pair (@name_pairs) {
+	    my %subhash = scale_sparsematrix_4D($th{$name_pair},$paired_prob_ratio);
+	    $th{$name_pair} = \%subhash; 
+	}
+    }
+    
+    return %th;
+}
+
+
+sub print_k_dim_hash($$$) {
+    my ($h_ref,$k,$s) = @_;
+    my %h = %{ $h_ref };
+    
+    foreach my $i (sort keys %h) {
+	print "$s$i:";
+	if ($k==1) {
+	    print "$h{$i}\n";
+	} else {
+	    print "\n";
+	    print_k_dim_hash( $h{$i},$k-1,"$s\t" );
+	}
+    }
+}
+
+## do the probabilistic consistency tranformation
+## of base matches for a single pair of sequences
+##
+## get refs to hashs of bsse match probabiliies
+## between sequences C,A and C,B
+## returns transformed probs for sequence pair A,B
+sub consistency_transform_single_bm($$) {
+    my ($mCA_ref,$mCB_ref) = @_;
+
+    my %mAB;
+    
+    my %mCA = %{ $mCA_ref };
+    my %mCB = %{ $mCB_ref };
+    
+    # ATTENTION: actually we need to traverse the cut set of lists keys mCA and keys mCB
+    foreach my $k (keys %mCA) {
+	if (exists $mCB{$k}) {
+	    my %hA = %{ $mCA{$k} };
+	    my %hB = %{ $mCB{$k} };
+	    
+	    foreach my $i (keys %hA) {
+		foreach my $j (keys %hB) {
+		    $mAB{$i}{$j} += $hA{$i} * $hB{$j}
+		}
+	    }
+	}
+    }
+    return %mAB;
+}
+
+sub consistency_transform_single_am($$) {
+    my ($mCA_ref,$mCB_ref) = @_;
+
+    my %mAB;
+    
+    my %mCA = %{ $mCA_ref };
+    my %mCB = %{ $mCB_ref };
+    
+    foreach my $p (keys %mCA) {
+	foreach my $q (keys %{ $mCA{$p} } ) {
+	
+	    if (exists $mCB{$p} && exists $mCB{$p}{$q}) {
+		
+		my %hA = %{ $mCA{$p}{$q} };
+		my %hB = %{ $mCB{$p}{$q} };
+		
+		foreach my $i (keys %hA) {
+		    foreach my $j (keys %{ $hA{$i} }) {
+			foreach my $k (keys %hB) {
+			    foreach my $l (keys %{ $hB{$k} }) {
+				$mAB{$i}{$j}{$k}{$l} += $hA{$i}{$j} * $hB{$k}{$l}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+    return %mAB;
+}
+
+
+sub add_sparsematrix_2D($$) {
+    my ($m1_ref,$m2_ref) = @_;
+        
+    my %m1 = %{ $m1_ref };
+    my %m2 = %{ $m2_ref };
+
+    my %m3 = %m1;
+
+    foreach my $i (keys %m2) {
+	foreach my $j (keys %{ $m2{$i} }) {
+	    $m3{$i}{$j} += $m2{$i}{$j};
+	}
+    }
+    
+    return %m3;
+}
+
+sub add_sparsematrix_4D($$) {
+    my ($m1_ref,$m2_ref) = @_;
+
+    my %m1 = %{ $m1_ref };
+    my %m2 = %{ $m2_ref };
+
+    my %m3 = %m1;
+
+
+    foreach my $i (keys %m2) {
+	foreach my $j (keys %{ $m2{$i} }) {
+	    foreach my $k (keys %{ $m2{$i}{$j} }) {
+		foreach my $l (keys %{ $m2{$i}{$j}{$k} }) {
+		    $m3{$i}{$j}{$k}{$l} += $m2{$i}{$j}{$k}{$l};
+		}
+	    }
+	}
+    }
+    
+    return %m3;
+}
+
+sub divide_sparsematrix_2D($$) {
+    my ($m_ref,$divisor) = @_;
+
+    my %m = %{ $m_ref };
+    my %r;
+
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    $r{$i}{$j} = $m{$i}{$j} / $divisor; 
+	}
+    }
+    
+    return %r;    
+}
+
+sub divide_sparsematrix_4D($$) {
+    my ($m_ref,$divisor) = @_;
+
+    my %m = %{ $m_ref };
+    my %r;
+
+
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    foreach my $k (keys %{ $m{$i}{$j} }) {
+		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+		    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} / $divisor; 
+		}
+	    }
+	}
+    }
+
+    return %r;    
+}
+
+sub filter_sparsematrix_2D($$) {
+    my ($m_ref,$threshold) = @_;
+
+    my %m = %{ $m_ref };
+    my %r;
+
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    if ( $m{$i}{$j} >= $threshold ) {
+		$r{$i}{$j} = $m{$i}{$j};
+	    }
+	}
+    }
+    
+    return %r;    
+}
+
+sub filter_sparsematrix_4D($$) {
+    my ($m_ref,$threshold) = @_;
+
+    my %m = %{ $m_ref };
+    my %r;
+
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    foreach my $k (keys %{ $m{$i}{$j} }) {
+		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+		    if ( $m{$i}{$j}{$k}{$l} >= $threshold ) {
+			$r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l};
+		    }
+		}
+	    }
+	}
+    }
+
+    return %r;    
+}
+
+
+sub scale_sparsematrix_2D($$) {
+    my ($m_ref,$scale) = @_;
+
+    my %m = %{ $m_ref };
+    my %r;
+
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    $r{$i}{$j} = $m{$i}{$j} * $scale; 
+	}
+    }
+    
+    return %r;    
+}
+
+sub scale_sparsematrix_4D($$) {
+    my ($m_ref,$scale) = @_;
+
+    my %m = %{ $m_ref };
+    my %r;
+
+
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    foreach my $k (keys %{ $m{$i}{$j} }) {
+		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+		    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} * $scale; 
+		}
+	    }
+	}
+    }
+
+    return %r;    
+}
+
+
+# read from a sparse matrix file as written by locarna --write-match-probs 
+sub read_sparse_matrix_2D($) {
+    my ($file) = @_;
+
+    local *SM_IN;
+    
+    open(SM_IN,$file);
+
+    my %h;
+    
+    while( my $line=<SM_IN> ) {
+	if ( $line =~ /(\d+) (\d+) ([\d.e-]+)/ ) {
+	    $h{$1}{$2} = $3;
+	}
+    }
+    
+    close SM_IN;
+
+    return %h;
+}
+
+# read from a sparse matrix file as written by locarna --write-match-probs 
+sub read_sparse_matrix_4D($) {
+    my ($file) = @_;
+
+    local *SM_IN;
+    
+    open(SM_IN,$file);
+
+    my %h;
+    
+    while( my $line=<SM_IN> ) {
+	if ( $line =~ /(\d+) (\d+) (\d+) (\d+) ([\d.e-]+)/ ) {
+	    $h{$1}{$2}{$3}{$4} = $5;
+	}
+    }
+    
+    close SM_IN;
+
+    return %h;
+}
+
+
+sub write_sparse_matrix_2D($$) {
+    my ($m_ref,$file)=@_;
+    my %m = %{ $m_ref };
+
+    local *SM_OUT;
+    
+    open(SM_OUT,">$file") || die "Cannot write to $file."; 
+
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    print SM_OUT "$i $j $m{$i}{$j}\n"; 
+	}
+    }
+    
+    close SM_OUT;
+}
+
+sub print_sparse_matrix_2D($$) {
+    my ($m_ref)=@_;
+    my %m = %{ $m_ref };
+
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    print "$i $j $m{$i}{$j}\n"; 
+	}
+    }
+}
+
+
+sub write_sparse_matrix_4D($$) {
+    my ($m_ref,$file)=@_;
+    my %m = %{ $m_ref };
+
+    local *SM_OUT;
+    
+    open(SM_OUT,">$file") || die "Cannot write to $file."; 
+
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    foreach my $k (keys %{ $m{$i}{$j} }) {
+		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+		    print SM_OUT "$i $j $k $l $m{$i}{$j}{$k}{$l}\n"; 
+		}
+	    }
+	}
+    }
+    
+    close SM_OUT;
+}
+
+
+# transpose a sparse matrix implemented as hash of hashs
+sub transpose_sparsematrix_2D($) {
+    my ($m_ref) = @_;
+
+    my %m = %{ $m_ref };
+    
+    my %r;
+    
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    $r{$j}{$i} = $m{$i}{$j}; 
+	}
+    }
+    
+    return %r;
+}
+
+# transpose a sparse matrix implemented as hash of hashs
+sub transpose_sparsematrix_4D($) {
+    my ($m_ref) = @_;
+
+    my %m = %{ $m_ref };
+    
+    my %r;
+    
+    foreach my $i (keys %m) {
+	foreach my $j (keys %{ $m{$i} }) {
+	    foreach my $k (keys %{ $m{$i}{$j} }) {
+		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+		    $r{$k}{$l}{$i}{$j} = $m{$i}{$j}{$k}{$l};
+		}
+	    }
+	}
+    }
+    
+    return %r;
+}
+
+
+
+## calls locarna on inA and inB and writes to $tgt.pp and $tgt.aln
+sub call_locarna($$$) {
+    my ($inA,$inB,$tgt) = @_;
+    
+    printmsg 2, "Align $inA + $inB --> $tgt\n";
+    my $cmd="$bindir/locarna $inA $inB $locarna_params --pp=$tgt.pp --clustal=$tgt.aln";
+    if (! $moreverbose) { $cmd.=">/dev/null"; }
+    
+    printmsg 1, "$cmd\n";
+    printmsg 1, "\n";
+    system($cmd)==0
+	|| die "Cannot execute locarna\n";
+    
+    system "cat $tgt.aln | grep -v '^CLUSTAL --- LocARNA'" if $verbose;
+}
+
+
+
+## calculate the average base match probabilities for
+## the alignment of the alignments alnA and alnB
+##
+sub average_basematch_probs($$$) {
+    my ($alnA_ref,$alnB_ref,$bmprobs_ref) = @_;
+
+    my %bmprobs = %{ $bmprobs_ref };
+
+    my %alnA = %{ $alnA_ref };
+    my %alnB = %{ $alnB_ref };
+    
+    my @namesA = grep !/#/, keys %alnA;
+    my @namesB = grep !/#/, keys %alnB;
+
+    my %r; # result matrix
+
+    for my $nameA (@namesA) {
+	for my $nameB (@namesB) {
+	    # projecterei
+
+	    my @posmapA = project_seq($alnA{$nameA});
+	    my @posmapB = project_seq($alnB{$nameB});
+	    
+	    my %m = %{ $bmprobs{chp($nameA,$nameB)} };
+
+	    # averagerei
+		
+	    foreach my $i (keys %m) {
+		foreach my $j (keys %{ $m{$i} }) {
+		    $r{$posmapA[$i]}{$posmapB[$j]} += $m{$i}{$j};
+		}
+	    }
+	}
+    }
+
+    my $nm = ($#namesA+1)*($#namesB+1);
+    
+    return divide_sparsematrix_2D(\%r,$nm);
+}
+
+
+## calculate the average arc match probabilities for
+## the alignment of the alignments alnA and alnB
+##
+sub average_arcmatch_probs($$$) {
+    my ($alnA_ref,$alnB_ref,$amprobs_ref) = @_;
+
+    my %alnA = %{ $alnA_ref };
+    my %alnB = %{ $alnB_ref };
+    
+    my @namesA = grep !/#/, keys %alnA;
+    my @namesB = grep !/#/, keys %alnB;
+
+    my %r; # result matrix
+
+    for my $nameA (@namesA) {
+	for my $nameB (@namesB) {
+	    # projecterei
+
+	    my @posmapA = project_seq($alnA{$nameA});
+	    my @posmapB = project_seq($alnB{$nameB});
+	    
+	    my %m = %{ $amprobs_ref->{chp($nameA,$nameB)} };
+	    
+	    # averagerei
+	    
+	    foreach my $i (keys %m) {
+		foreach my $j (keys %{ $m{$i} }) {
+		    foreach my $k (keys %{ $m{$i}{$j} }) {
+			foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+			    $r{$posmapA[$i]}{$posmapA[$j]}{$posmapB[$k]}{$posmapB[$l]} += $m{$i}{$j}{$k}{$l};
+			}
+		    }
+		}
+	    }
+	}
+    }
+	    
+    my $nm = ($#namesA+1)*($#namesB+1);
+    
+    return divide_sparsematrix_4D(\%r,$nm);
+}
+
+
+
+## call locarna for aligning alignments in pp files
+## pass averaged base and (if required) arc match probs to locarna
+## (unless in fast-mea mode, the pair probabilities in the pp files are ignored)
+##
+sub call_locarna_prob($$$$$) {
+    my ($inA,$inB,$tgt,$bmprobs_ref,$amprobs_ref) = @_;
+
+    ## extract the alignments from the pp files
+    #
+    my %alnA = parse_pp_file_aln($inA);
+    my %alnB = parse_pp_file_aln($inB);
+    
+    my $tmpprefix = threadsafe_name("$global_tmpprefix");
+    
+    # average the base match probabilities and write to tmpfile
+    my %m = average_basematch_probs( \%alnA, \%alnB, $bmprobs_ref );
+    my $tmpfile_bm="$tmpprefix.bmps";
+    write_sparse_matrix_2D(\%m,$tmpfile_bm);
+    my $readprob_args = "--read-match-probs=$tmpfile_bm";
+    
+    my $tmpfile_am="$tmpprefix.amps";
+    # if required, average the arc match probabilities and write to tmpfile
+    if (!$fast_mea && !$only_basematch_probs) {
+	my %m = average_arcmatch_probs( \%alnA, \%alnB, $amprobs_ref );
+	write_sparse_matrix_4D(\%m,$tmpfile_am);
+	
+	$readprob_args .= " --read-arcmatch-probs=$tmpfile_am";
+    }
+    
+    printmsg 2, "Align $inA + $inB --> $tgt\n";
+    my $cmd="$bindir/locarna $inA $inB $locarna_params --pp=$tgt.pp --clustal=$tgt.aln $readprob_args";
+    if (! $moreverbose) { $cmd.=" >/dev/null"; }
+    
+    printmsg 1, "$cmd\n\n";
+    
+    system($cmd)==0
+	|| die "Cannot execute locarna\n";
+    
+    system "cat $tgt.aln" if ($verbose);
+    
+    if (!$fast_mea && !$only_basematch_probs) {
+	unlink $tmpfile_am;
+    }
+    unlink $tmpfile_bm;
+}
+
+
+# read multiple alignment in aln format
+sub parse_aln($) {
+    my ($aln_filename) = @_;
+    local *ALN_IN;
+    
+    open(ALN_IN,$aln_filename) || die "Can not read aln file $aln_filename\n";
+    
+    my %aln;
+    
+    my $line;
+
+    if (($line=<ALN_IN>) !~ /CLUSTAL/) {
+	printerr "$aln_filename not in clustal aln-format.\n";
+	exit(-1);
+    }
+    
+    while ($line = <ALN_IN>) {
+	if ($line =~ /^([^\s]+)\s+(.+)/) {
+	    $aln{$1} .= $2;
+	}
+    }
+    
+    close ALN_IN;
+        
+    return %aln;
+}
+
+# project multiple alignment to subset of names
+# cleans only-gap columns
+sub project_aln {
+    my ($aln_ref,$names_ref) = @_;
+
+    my %aln = %{ $aln_ref };
+    my @names = @{ $names_ref };
+
+    my %alnP;
+
+    foreach my $name (@names) {
+	$alnP{$name} = $aln{$name};
+    }
+    
+    my $len = aln_length(\%alnP);
+    
+    for (my $i=0; $i<$len; ) {
+	my $allgap=1;
+	foreach my $name (keys %alnP) {
+	    my $row = $alnP{$name};
+	    # print "$name $row $i\n";
+	    if (! is_gap(substr($row,$i,1))) {
+		$allgap=0;
+		last;
+	    }
+	}
+	if ($allgap) {
+	    # remove alignment column i
+	    foreach my $name (keys %alnP) {
+		substr($alnP{$name},$i,1) = "";
+	    }
+	    $len--;
+	} else {
+	    $i++;
+	}
+    }
+
+    
+    return %alnP;
+}
+
+sub aln_length($) {
+    my ($aln_ref) = @_;
+    my %aln = %{ $aln_ref };
+    my @ks = keys %aln;
+    # print "$ks[0], len $aln{$ks[0]} " . length( $aln{$ks[0]} ). "\n";
+    return length( $aln{$ks[0]} );
+}
+
+sub aln_size($) {
+    my ($aln_ref) = @_;
+    my %aln = %{ $aln_ref };
+    my @ks = keys %aln;
+    @ks = grep !/#/,@ks;
+    return $#ks+1;
+}
+
+# write pp file from aln and consensus dp, write only probs >= min_prob
+sub write_pp($$$$) {
+    my ($file,$aln_ref, $cons_ref, $min_prob) = @_;
+    my %aln = %{ $aln_ref };
+    my @cons = @{ $cons_ref };
+    
+    local *OUT;
+    open(OUT, ">$file") || die "Cannot open $file for writing\n";
+
+    print OUT "SCORE: 0\n\n";
+    
+    foreach my $name (keys %aln) {
+	printf OUT "%-20s %s\n", $name, $aln{$name};
+    }
+    
+    
+    print OUT "\n#\n";
+
+    my $len = aln_length(\%aln);
+    
+    for (my $i=1; $i<=$len; $i++) {
+	for (my $j=$i+1; $j<=$len; $j++) {
+	    if (defined $cons[$i][$j]) {
+		my $p = $cons[$i][$j];
+		if ($p >= $min_prob) {
+		    print OUT "$i $j $p\n";
+		}
+	    }
+	}
+    }
+    
+    close OUT;
+}
+
+
+
+# write pp file out of the alignment projected to
+# the given names
+# generates consensus dotplot and constraints
+# out of single pp files
+sub write_pp_projected($$$) {
+    my ($aln_ref, $names_ref, $tgt_name) = @_;
+    my %aln = %{ $aln_ref };
+    my @names = @{ $names_ref };
+    
+    my %alnP = project_aln(\%aln,\@names);
+
+    ## compute the consensus dot plot
+    my @consensus_dp; # 2D array
+    my @size; # number of added values for pos $i,$j
+    
+    foreach my $name (@names) {
+	my @posmap = project_seq($alnP{$name});
+	my %name_aln = parse_pp_file_aln("$input_dir/".$name);	
+	my %name_pairprobs = parse_pp_file_pairprobs("$input_dir/".$name);	
+	
+	if ( exists $name_aln{"#C"} && (!$ignore_constraints)) {
+	    my $constraints = $name_aln{"#C"};
+	    printerr "WARNING: constraints ignored in iterative alignment.\n";
+	}
+	
+	# for computing the geometric mean, we don't allow 0 values,
+	# since this extinguishs the probability completely!
+	# therfore we use some very small 'background' probability
+	# if $p is too low.
+	#
+	# In principle, copy the magic spell from alignment.cc
+	#
+	my $minimal_p = $min_prob*0.75;
+	if (defined($exp_prob) && $exp_prob<$minimal_p ) {
+	    $minimal_p = $exp_prob;
+	}
+		
+	for my $pair (keys %name_pairprobs) {
+	    $pair =~ /(\d+) (\d+)/;
+	    my $i=$1;
+	    my $j=$2;
+	    my $p = $name_pairprobs{$pair};
+
+	    if ($p<$minimal_p) {$p=$minimal_p;}
+	    
+	    $consensus_dp[$posmap[$i]][$posmap[$j]] += log($p);
+	    $size[$posmap[$i]][$posmap[$j]] ++;
+	}
+    }
+    
+
+    # normalize consensus_dp
+    my $len  = aln_length(\%alnP);
+    
+    for (my $i=1; $i<=$len; $i++) {
+	for (my $j=$i+1; $j<=$len; $j++) {
+	    if (defined($consensus_dp[$i][$j])) {
+		$consensus_dp[$i][$j] = exp($consensus_dp[$i][$j] / $size[$i][$j]);
+	    }
+	}
+    }
+    
+    write_pp($tgt_name,\%alnP,\@consensus_dp,$min_prob);
+    
+    return;
+}
+
+# produce an array that yields for each sequence position the corresponding
+# position in the given alignment string
+# sequence positions in [1..seqlen], alignment positions in [1..alilen]
+sub project_seq($) {
+    my ($alig_str) = @_;
+    
+    my @posmap;
+    
+    my $len=length($alig_str);
+    
+    my $j=1;
+    for (my $i=1; $i<=$len; $i++) {
+	if ( ! is_gap(substr($alig_str,$i-1,1)) ) {
+	    $posmap[$j]=$i;
+	    $j++;
+	}
+    }
+    
+    return @posmap;
+}
+
+sub is_gap($) {
+    my ($s)=@_;
+    return ($s eq "-") || ($s eq "~"); 
+}
+
+
+sub subtract_list {
+    my ($l1ref, $l2ref) = @_;
+
+    my @l1 = @{ $l1ref };
+    my @l2 = @{ $l2ref };
+
+    my @res;
+    
+    foreach my $x (@l1) {
+	my $found=0;
+	foreach my $y (@l2) {
+	    if ($x eq $y) {
+		$found=1;
+		last;
+	    }
+	}
+	if ($found==0) { push @res, $x; }
+    }
+    return @res;
+}
+
+## generate the partitions out of the postorder tree
+sub tree_partitions(@) {
+    my @tree_postorder = @_;
+
+    my @result;
+    
+    my @stack;
+    
+    for my $item (@tree_postorder) {
+	if ($item eq $node_sym) {
+	    my @op1 = @{ $stack[-2] };
+	    my @op2 = @{ $stack[-1] };
+	    
+	    $#stack-=2;
+	    
+	    #push @result, \@op1;
+	    #push @result, \@op2;
+	    
+	    my @op12 = (@op1, @op2);
+	    
+	    push @stack, \@op12;
+	} else {
+	    push @stack, [ $item ];
+	}
+	push @result, $stack[-1];
+    }
+    $#result-=2; # the last is empty, the one before symmetric
+    return @result;
+}
+
+sub parse_tree {
+    my ($tree) = @_;
+
+    my @list;
+    
+    $tree =~ s/:[\d.e-]+//g;
+    
+    $tree =~ s/;$//; # allow that the tree string is terminated by ';'
+
+    printmsg 1, "Tree: $tree\n";
+    
+    my $brcount=0;
+    for (my $i=0; $i< length $tree; $i++) {
+	my $c=substr $tree,$i,1;
+	
+	if ($c eq "(") {
+	    $brcount++;
+	} elsif ($c eq ")") {
+	    $brcount--;
+	    if ($brcount<0) {
+		printerr "Parse error in tree.";
+		exit -1;
+	    }
+	    
+	    push @list, $node_sym;
+	} elsif ($c eq ",") {
+	    ## ignore, although we could do syntax checking
+	} else {
+	    my $rest=substr $tree,$i;
+	    $rest =~ /^([^(),]+)/;
+	    my $token = $1;
+	    $i+=(length $token)-1;
+	    push @list, $token;
+	}
+    }
+
+    return @list;
+}
+
+## compute a WPGMA-tree from the given mfasta-hash
+sub compute_tree ($$$) {
+    # print "Compute WPGMA-Tree ...\n";
+
+    my ($names_ref, $mfasta_ref, $score_matrix_ref) = @_;
+    
+    my @names = @$names_ref;
+    my %mfasta = %$mfasta_ref;
+    my @score_matrix = @$score_matrix_ref;
+    
+    
+    ## compute tree by wpgma applied to score matrix
+    
+    my @clusters; # a list of the clusters
+    my @trees; # a list of sub-trees
+    my @cluster_sizes;
+
+    for (my $i=0; $i<=$#names; $i++) {
+	$clusters[$i]=$i;
+	$trees[$i]=$names[$i];
+	$cluster_sizes[$i]=1;
+    }
+    
+    
+    my $NEG_INFINITY=-1e10;
+    
+    while ($#clusters>0) {
+	
+	#print "@clusters\n";
+	#print "@trees\n";
+	#print "@cluster_sizes\n";
+	
+        ## find the nearest two clusters
+	
+	my $max_i;
+	my $max_j;
+	my $max_score=$NEG_INFINITY;
+	for (my $i=0; $i<=$#clusters; $i++) {
+	    for (my $j=$i+1; $j<=$#clusters; $j++) {
+		my $score=$score_matrix[$clusters[$i]][$clusters[$j]];
+		if ($score > $max_score) {
+		    $max_i=$i; 
+		    $max_j=$j;
+		    $max_score=$score;
+		}
+	    }
+	}
+	
+	printmsg 0, "Merge $clusters[$max_i] $clusters[$max_j] --> $clusters[$max_i]\n";
+	
+	## recompute distances
+	my $cluster_i = $clusters[$max_i];
+	my $cluster_j = $clusters[$max_j];
+
+	$clusters[$max_j] = $clusters[$#clusters];
+	$clusters[$max_i] = $clusters[0];
+	$clusters[0] = $cluster_i;
+	
+	for (my $i=1; $i<$#clusters; $i++) {
+	    $score_matrix[$clusters[0]][$clusters[$i]]
+		= ($cluster_sizes[$cluster_i] * $score_matrix[$cluster_i][$clusters[$i]] + $cluster_sizes[$cluster_j] * $score_matrix[$cluster_j][$clusters[$i]]) / ($cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j]);
+	    $score_matrix[$clusters[$i]][$clusters[0]] = 
+		$score_matrix[$clusters[0]][$clusters[$i]];
+	}
+	
+	my $new_tree="($trees[$cluster_i],$trees[$cluster_j])";
+	printmsg 0, "Merge $trees[$cluster_i] $trees[$cluster_j] --> $new_tree\n";
+	
+	$trees[$clusters[0]]=$new_tree;
+	
+	#$trees[$clusters[$#clusters]]="undef";
+	#$cluster_sizes[$clusters[$#clusters]]=0;
+    
+	$cluster_sizes[$clusters[0]]=$cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j]; 
+	
+	$#clusters--;
+    }
+
+
+    return $trees[$clusters[0]].";";
+}
+
+
+
+sub seqpos_to_alipos {
+    my ($ali) = @_;
+    
+    my @res;
+
+    my $seqpos=0;
+    my $alipos=0;
+    
+    for my $c (split //, $ali) {
+	if ($c =~ /[ACGUT]/) {
+	    push @res,$alipos;
+	    $seqpos++;
+	}
+	$alipos++;
+    }
+
+    return @res;
+}
+
+sub alipos_to_seqpos {
+    my ($ali) = @_;
+    
+    my @res;
+
+    my $seqpos=0;
+    my $alipos=0;
+    
+    for my $c (split //, $ali) {
+	if ($c =~ /[ACGUT]/) {
+	    push @res,$seqpos;
+	    $seqpos++;
+	} else {
+	    push @res,-1;
+	}
+	$alipos++;
+    }
+
+    return @res;
+}
+
+
+sub parse_dp_ps {
+    my ($filename) = @_;
+    local *IN;
+    
+    open(IN,$filename) || die "Cannot read $filename for parsing as dp-ps file.\n";
+    
+    my $seq="";
+    my @pairprobs;
+    
+    while (my $line=<IN>) {
+	if ($line =~ /^\/sequence \{ \(/) {
+	    while (defined($line = <IN>) && ($line !~  /\} def/  ))  {
+		chomp $line;
+		$line =~ s/\\$//;
+		$seq .= $line;
+	    }
+	    #print "parse_dp_ps $filename: $seq\n";
+	}
+	
+	if ($line =~ /(\d+)\s+(\d+)\s+(\S+)\s+ubox/) {
+	    $pairprobs[$1-1][$2-1]=$3*$3;
+	}
+    }
+    
+    close IN;
+    
+    $seq ne "" || die "Empty sequence in dp.ps file $filename\n";
+    
+    return ($seq,\@pairprobs);
+}
+
+sub extend_library($$) {
+    my ($pairwise_alns_ref,$names_ref) = @_;
+    my @pairwise_alns = @{ $pairwise_alns_ref };
+    
+    my @names=@{ $names_ref };
+
+    ### ------------------------------------------------------------
+    ## compute "extended pairprobability library"
+    #
+    
+    my @pairprobs;
+    my @sequences;
+    
+    for (my $a=0; $a<=$#names; $a++) {
+	my $seqA;
+	my $pairprobsA_ref;
+	($seqA,$pairprobsA_ref) = parse_dp_ps("$names[$a]");
+	
+	$sequences[$a] = $seqA;
+	$pairprobs[$a] = [ @{ $pairprobsA_ref } ];
+    }
+    
+    printmsg 3, "Compute extended pairprobability library ...\n";
+    
+    ## make a deep copy of pair probabilities
+    #
+    my @ext_pairprobs;
+    for (my $a=0; $a<=$#names; $a++) {
+	my @eppA;
+	my @ppA = @{ $pairprobs[$a] };
+	for my $i ( 0..$#ppA ) {
+	    if (defined $ppA[$i]) {
+		my @ppAa = @{ $ppA[$i] };
+		for my $j ( 0..$#ppAa ) {
+		    if (defined $ppAa[$j]) {
+			$eppA[$i][$j] = $ppA[$i][$j];
+		    }
+		}
+	    }
+	}
+	$ext_pairprobs[$a] = [ @eppA ];
+    }
+    
+    for (my $a=0; $a<=$#names; $a++) {
+	printmsg 1, "Compute ext lib for $names[$a]\n";
+	
+	my @ext_pairprobsA = @{ $ext_pairprobs[$a] }; # we accummulate the extension!
+	
+	for (my $b=0; $b<=$#names; $b++) {
+	    if ($a != $b) {
+		
+		my $aliA; # alignment-string for sequence a
+		my $aliB; # alignment-string for sequence b
+		
+		if ($a>$b) {
+		    my @alnAB = @{ $pairwise_alns[$a][$b] };
+		    ($aliA,$aliB) = parse_alignment($names[$a],$names[$b],\@alnAB);
+		} else {
+		    my @alnBA = @{ $pairwise_alns[$b][$a] };
+		    ($aliB,$aliA) = parse_alignment($names[$b],$names[$a],\@alnBA);
+		}
+		
+		my @sp2apA = seqpos_to_alipos($aliA);
+		my @sp2apB = seqpos_to_alipos($aliB);
+		
+		my @ap2spA = alipos_to_seqpos($aliA);
+		my @ap2spB = alipos_to_seqpos($aliB);
+		
+		my $lengthA=$#sp2apA+1;
+		my $lengthB=$#sp2apB+1;
+		
+		printmsg 1, "  $a:$names[$a] ($lengthA) --- $b:$names[$b]\n";
+		
+		my @pairprobsB = @{ $pairprobs[$b] };
+		
+		for (my $iA=0; $iA<$lengthA; $iA++) {
+		    for (my $jA=$iA+1; $jA<$lengthA; $jA++) {
+			my $pA = (defined $ext_pairprobsA[$iA][$jA])?$ext_pairprobsA[$iA][$jA]:$min_prob;
+			if ($pA > $min_prob) {
+			    my $iB = $ap2spB[$sp2apA[$iA]];
+			    my $jB = $ap2spB[$sp2apA[$jA]];
+			    
+			    if ($iB != -1 && $jB != -1) {
+				# print "$iA,$jA <--> $sp2apA[$iA],$sp2apA[$jA] <--> $iB,$jB\n";
+				my $pB = (defined $pairprobsB[$iB][$jB])?$pairprobsB[$iB][$jB]:$min_prob;
+				if ($pB>$min_prob) {
+				    my $new_pA = exp( log($pA) * (1/(1+$pB)));
+				    $ext_pairprobsA[$iA][$jA] = $new_pA;
+				    my @orig_pairprobsA=@{ $pairprobs[$a] };
+				    my $orig_pA  = $orig_pairprobsA[$iA][$jA];
+				    printmsg 1, "Enhance ($iA,$jA):$pA by ($iA,$jB):$pB --> $new_pA/$orig_pA\n";
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+    
+    ## --------------------------------------------------
+    ## write pp files with extended probabilities
+    #
+    
+    for (my $a=0; $a<=$#names; $a++) {
+	# print "write extended probs for $names[$a]\n";
+
+	my $seq=$sequences[$a];
+	my $len=length($seq);
+	my @ext_pairprobs = @{ $ext_pairprobs[$a] }; # the extended probs
+	
+
+	open(PP_OUT, ">$names[$a].pp") || die "Cannot write to $names[$a].pp\n"; 
+	
+	print PP_OUT "$names[$a] $seq\n\n#\n";
+	
+	for (my $i=0; $i<$len; $i++) {
+	    for (my $j=$i+1; $j<$len; $j++) {
+		if (defined $ext_pairprobs[$i][$j]) {
+		    my $p = $ext_pairprobs[$i][$j];
+		    if ($p > $min_prob) {
+			print PP_OUT "$i $j $p\n";
+		    }
+		}
+	    }
+	}
+    }
+    
+    #
+    # print "\n\n";
+    #
+
+    for (my $a=0; $a<=$#names; $a++) {
+	rename "$names[$a].pp", "$names[$a]";
+    }
+    
+    #
+    ##
+    ## --------------------------------------------------
+}
+
+## compute alignment with given probabilities
+sub compute_alignment_from_dps_probs($$$$$) {
+    my ($seqA_dp,$seqB_dp,$locarna_params,$bmprobs_ref,$amprobs_ref) =  @_;
+    
+    # printerr "compute_alignment_from_dps_probs $seqA_dp $seqB_dp";
+    
+    local *CA_IN;
+    
+    my $tmpprefix = threadsafe_name("$global_tmpprefix");
+
+    my $tmpfile  = "$tmpprefix.clustal";
+    my $tmpfile2 = "$tmpprefix.bmprobs";
+    my $tmpfile3 = "$tmpprefix.amprobs";
+
+    write_sparse_matrix_2D($bmprobs_ref,$tmpfile2);
+    
+    $locarna_params .= " --clustal=$tmpfile --read-match-probs=$tmpfile2";
+    
+    if (!$fast_mea && !$only_basematch_probs) {
+	write_sparse_matrix_4D($amprobs_ref,$tmpfile3);
+   
+	$locarna_params .= " --read-arcmatch-probs=$tmpfile3";
+    }
+    
+    my $cmd="$bindir/locarna $seqA_dp $seqB_dp $locarna_params >/dev/null";
+    system $cmd || die "Command $cmd failed."; 
+   
+    open(CA_IN,"$tmpfile") || die "compute_alignment_from_dps_probs: Cannot read temporary file $tmpfile\n";
+
+    if (!$fast_mea && !$only_basematch_probs) {
+	unlink $tmpfile3;
+    }
+    unlink $tmpfile2;
+
+    
+    my @content=<CA_IN>;
+    
+    close CA_IN;
+    
+    unlink $tmpfile;
+        
+    return @content;
+}
+
+
+## write the basematch probabilities to files for later inspection by a user
+sub write_bm_probs($$) {
+    my ($dir,%bmprobs)=@_;
+    
+    local *MYOUT;
+    
+    mkdir "$dir" || die "Cannot make dir $dir"; 
+
+    my @name_pairs = keys %bmprobs;
+
+    for my $name_pair (@name_pairs) {
+	my ($nameA,$nameB) = dhp($name_pair);
+	my $outfile="$dir/$nameA-$nameB";
+	open(MYOUT,">$outfile") || die "Cannot write to $outfile";
+	
+	my %h = %{ $bmprobs{$name_pair} };
+	
+	for my $i (keys %h) {
+	    my %h2 = %{ $h{$i} };
+	    for my $j (keys %h2) {
+		print MYOUT "$i $j $h2{$j}\n";
+	    }
+	}
+	
+	close MYOUT;
+    }
+}
+
+## write the basematch probabilities to files for later inspection by a user
+sub write_am_probs($$) {
+    my ($dir,%amprobs)=@_;
+    
+    local *MYOUT;
+    
+    mkdir "$dir" || die "Cannot make dir $dir"; 
+
+    my @name_pairs = keys %amprobs;
+
+    for my $name_pair (@name_pairs) {
+	my ($nameA,$nameB) = dhp($name_pair);
+	my $outfile="$dir/$nameA-$nameB";
+	open(MYOUT,">$outfile") || die "Cannot write to $outfile";
+	
+	my %m = %{ $amprobs{$name_pair} };
+		
+	foreach my $i (keys %m) {
+	    foreach my $j (keys %{ $m{$i} }) {
+		foreach my $k (keys %{ $m{$i}{$j} }) {
+		    foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+			print MYOUT "$i $j $k $l ".$m{$i}{$j}{$k}{$l}."\n";
+		    }
+		}
+	    }
+	}
+	close MYOUT;
+    }
+}
+
+
+## compute mapping from alignment column to sequence position for
+## each sequence in a given multiple alignment
+## @param $names_ref ref to list only compute for given names
+## @param $aln_ref ref to hash, the multiple alignment
+##
+## @returns ref to mapping (hash of arrays)
+##
+## alignment cols are in [0..alilen-1]
+## sequence positions are in [1..seqlen]
+## the hash entries are only valid for non-gap positions
+sub alicol2seqpos($$) {
+    my ($names_ref, $aln_ref) = @_;
+    my @names = @{ $names_ref };
+    my $aln_length=length($aln_ref->{$names[0]});
+
+    my %col2pos;
+
+    for my $name (@names) {
+	my @clist;
+	my $c=0;
+	for (my $i=0; $i<$aln_length; $i++) {
+	    if ( substr($aln_ref->{$name},$i,1) =~ /[A-Za-z]/ ) {
+		$c++;
+	    }
+	    $clist[$i]=$c;
+	}
+	$col2pos{$name}=\@clist;
+    }
+    return \%col2pos;
+}
+
+
+## compute a reliability profile for the given sequence
+## in the given multiple alignment
+## @params $name compute reliabilities for sequence of this name
+##         (has to be in the multiple alignment)
+## @param $aln_ref the mulitple alignment
+## @param $amprobs_ref the am-probabilities for the sequences in the alignment
+sub compute_reliability_single_seq($$$) {
+    
+    my ($nameA,$aln_ref,$amprobs_ref,$pairprobs_ref) = @_;
+    my %amprobs = %{ $amprobs_ref };
+    
+    my %aln = %{ $aln_ref };
+
+    my %pairprobs = %{ $pairprobs_ref };
+    
+    my @names = grep !/#/, keys %aln;
+
+    my $aln_length=length($aln{$names[0]});
+
+    my %res_amrel; # result vector, am rel
+
+    my %col2pos = %{ alicol2seqpos(\@names,\%aln) }; ## mapping of alignment column to sequence position
+    
+    my @posmapA = project_seq($aln{$nameA});
+	    
+    for (my $i=0; $i<$aln_length; $i++) {
+	if (substr($aln{$nameA},$i,1) !~ /[A-Za-z]/ ) { next; } 
+	
+	for my $nameB (@names) {
+	    if ($nameA eq $nameB) { next; }
+		
+	    if (substr($aln{$nameB},$i,1) !~ /[A-Za-z]/ ) { next; }
+		
+	    my $pA=$col2pos{$nameA}[$i];
+	    my $pB=$col2pos{$nameB}[$i];
+	    
+	    my @posmapB = project_seq($aln{$nameB});
+	    
+	    for my $pA2 ( keys %{ $amprobs{chp($nameA,$nameB)}{$pA} } ) {
+		    
+		my $i2 = $posmapA[$pA2]-1;
+		
+		if ($i2<$i) { next; }
+		
+		if ( substr($aln{$nameA},$i2,1) !~ /[A-Za-z]/ ) { next; }
+		
+		if ( substr($aln{$nameB},$i2,1) !~ /[A-Za-z]/ ) { next; }
+		
+		my $pB2 =  $col2pos{$nameB}[$i2];
+		
+		#print STDERR "chp($nameA,$nameB) $pA $pA2 $pB $pB2\n";
+		if ( ! exists( $amprobs{chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+		
+		my $add_prob=$amprobs{chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+		
+		$res_amrel{($i+1)." ".($i2+1)} += $add_prob; 
+	    }
+	}
+    }
+    
+    ## now add the dot plot of the sequence alone
+    
+    foreach my $k (keys %pairprobs) {
+	$k =~ /(\S+) (\S+)/;
+	my $p1=$1; my $p2=$2;
+	
+	my $i1=$posmapA[$p1];
+	my $i2=$posmapA[$p2];
+	
+	$res_amrel{$i1." ".$i2} += $pairprobs{$k};
+    }
+	
+    ## finally average in res_amrel
+    my $numpairs = ($#names+1)*$#names/2 + 1;
+    
+    for my $k (keys %res_amrel) {
+	$res_amrel{$k} /= $numpairs;
+    }
+    
+    return \%res_amrel;
+}
+
+
+
+## compute reliabilities for the basematches in each column of a multiple alignment,
+## as well as reliabilities for structural match of each two alignment columns
+##
+## Distinguish structure and sequence match contribution to base match reliabilities
+## @returns triple \@res_bmrel_seq,\@res_bmrel_str, \%res_amrel
+##
+sub compute_reliability($$$) {
+    my ($aln_ref,$bmprobs_ref,$amprobs_ref) = @_;
+
+    my %bmprobs = %{ $bmprobs_ref };
+    my %amprobs = %{ $amprobs_ref };
+
+    my %aln = %{ $aln_ref };
+    
+    my @names = grep !/#/, keys %aln;
+    
+    if ($#names < 0) { die "basematch_reliability: empty alignment."; }
+
+    my $aln_length=length($aln{$names[0]});
+        
+    my @res_bmrel_seq; # result vector, bm contributions to bm rel
+    my @res_bmrel_str; # result vector, am contributions to bm rel
+    my %res_amrel; # result vector, am rel
+    
+    my %col2pos = %{ alicol2seqpos(\@names,\%aln) }; ## mapping of alignment column to sequence position
+    
+       
+    for (my $i=0; $i<$aln_length; $i++) {
+	for my $nameA (@names) {
+	    if (substr($aln{$nameA},$i,1) !~ /[A-Za-z]/ ) { next; } 
+	    my @posmapA = project_seq($aln{$nameA});
+	    
+	    for my $nameB (@names) {
+		if ($nameA le $nameB) { next; }
+		
+		if (substr($aln{$nameB},$i,1) !~ /[A-Za-z]/ ) { next; }
+		
+		my $pA=$col2pos{$nameA}[$i];
+		my $pB=$col2pos{$nameB}[$i];
+		
+		## 1.) contribution from base match
+		if (exists $bmprobs{chp($nameA,$nameB)}{$pA}{$pB}) {
+		    $res_bmrel_seq[$i] += $bmprobs{chp($nameA,$nameB)}{$pA}{$pB};
+		}
+		
+		## 2.) contribution from arc matchs
+		
+		my @posmapB = project_seq($aln{$nameB});
+		
+		for my $pA2 ( keys %{ $amprobs{chp($nameA,$nameB)}{$pA} } ) {
+		    
+		    my $i2 = $posmapA[$pA2]-1;
+		    
+		    if ($i2<$i) { next; }
+		    
+		    if ( substr($aln{$nameA},$i2,1) !~ /[A-Za-z]/ ) { next; }
+		    
+		    if ( substr($aln{$nameB},$i2,1) !~ /[A-Za-z]/ ) { next; }
+		    
+		    my $pB2 =  $col2pos{$nameB}[$i2];
+		    
+		    #print STDERR "chp($nameA,$nameB) $pA $pA2 $pB $pB2\n";
+		    if ( ! exists( $amprobs{chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+		    
+		    my $add_prob=$amprobs{chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+		    
+		    $res_amrel{($i+1)." ".($i2+1)} += $add_prob; 
+		    
+		    #print "add $nameA $nameB $i $i2 [ $pA $pA2 $pB $pB2 ] $add_prob\n";
+		    $res_bmrel_str[$i]  += $add_prob;
+		    $res_bmrel_str[$i2] += $add_prob;
+		}
+	    }
+	}
+    }
+
+
+    my $numpairs = ($#names+1)*$#names/2;
+
+    for (my $i=0; $i<$aln_length; $i++) {
+	$res_bmrel_seq[$i] /= $numpairs;
+	$res_bmrel_str[$i] /= $numpairs;
+    }
+    
+    for my $k (keys %res_amrel) {
+	$res_amrel{$k} /= $numpairs;
+    }
+
+    return (\@res_bmrel_seq,\@res_bmrel_str, \%res_amrel);
+}
+
+
+## ----------------------------------------
+## compute the dotplots of all sequences
+## of given names in a given mfasta hash
+## 
+## write to files in the current directory
+## (filenames equal the sequence names)
+##
+## ------------------------------
+## Dependency on GLOBAL VARIABLES
+##
+## $dp_cache   if defined, use as cache directory
+##             in order to avoid multiple computation of bp probs
+## $skip_pp    if true, skip computation of bp-probs for RNAs
+##             where the corresponding file already exists in
+##             the current directory
+## $rnafold_parameter_file
+##
+## $verbose
+## $plfold_span
+## $plfold_winsize
+##
+sub compute_all_dotplots($$) {
+    my ($names_ref,$mfasta_ref) = @_;
+    
+    my @names = @{ $names_ref };
+    
+    for my $name (@names) {
+	compute_dotplot($name,$mfasta_ref);
+    }    
+}
+
+
+sub compute_all_dotplots_par($$$) {
+    my ($cpu_num,$names_ref,$mfasta_ref) = @_;
+    
+    my @names = @{ $names_ref };
+
+    my @arg_list;
+    foreach my $name (@names) {
+	push @arg_list, [ ($name) ];
+    }
+
+    foreach_par(sub { my ($name)=@_; compute_dotplot($name,$mfasta_ref) },
+	    \@arg_list,
+	    $cpu_num);
+}
+
+sub compute_dotplot($$) {
+    my ($name,$mfasta_ref)=@_;
+    
+    my $RNAfold_args="";
+    
+    if (defined($rnafold_parameter_file)) {
+	$RNAfold_args.=" -P $rnafold_parameter_file";
+    }
+
+    my $tmpname = threadsafe_name("$global_tmpname");
+        
+    $RNAfold_args.=" >/dev/null" unless $verbose;
+	
+    if ( $skip_pp && -e $name ) {
+	# skip
+    } else {
+	## ----------------------------------------
+	# partition folding
+	#
+	
+	my $longname=$mfasta_ref->{"$name\#LONG"};
+	
+	$longname =~ s/[^a-zA-Z0-9]/_/g; # replace special characters by "_"
+	
+	my $dpname="$dp_cache/$longname";
+	
+	my $new_dp_computed=0; # whether a new dot plot was computed for $name
+	
+	if ( (!defined($dp_cache)) || (! -e "$dpname\_dp2.ps") ) {
+	    $new_dp_computed=1;
+	    
+	    if ((!$ignore_constraints) && exists $mfasta_ref->{"$name\#S"}) {
+		# if a structure constraint is defined do constraint folding
+		my $constraint_string = $mfasta_ref->{"$name\#S"};
+		systemverb "printf '>$tmpname\n$mfasta_ref->{$name}\n$constraint_string' | RNAfold -p2 $RNAfold_args -C";
+	    } else {
+		# else do normal pf
+		if (! defined($plfold_span)) {
+		    systemverb "printf '>$tmpname\n$mfasta_ref->{$name}' | RNAfold -p2 $RNAfold_args";
+		} else {
+		    ## use plfold
+		    systemverb "printf '>$tmpname\n$mfasta_ref->{$name}' | RNAplfold -L $plfold_span -W $plfold_winsize $RNAfold_args";
+		}
+	    }
+	    
+	    if (defined($dp_cache)) {
+		system "cp", "$tmpname\_dp.ps","$dpname\_dp.ps";
+		if ( -e "$tmpname\_dp2.ps" ) {system "cp", "$tmpname\_dp2.ps","$dpname\_dp2.ps";}
+	    }
+	    
+	    $dpname=$tmpname;
+	}
+	
+	my $constraints;
+	if (! $ignore_constraints) {
+	    $constraints = $mfasta_ref->{"$name\#C"};
+	}
+	
+	if ( -e "dpname\_dp2.ps" ) {
+	    convert_dp_to_pp_with_constraints("$dpname\_dp2.ps","$input_dir/$name",$name,$mfasta_ref->{$name},$constraints);
+	} else {
+	    convert_dp_to_pp_with_constraints("$dpname\_dp.ps","$input_dir/$name",$name,$mfasta_ref->{$name},$constraints);
+	}
+		
+	# convert was before a simple rename:
+	#rename "$shortname\_dp.ps", "$name"
+	#    || die "Cannot rename $shortname\_dp.ps to $name\n";
+	
+	if ($new_dp_computed) {
+	    unlink "$dpname\_ss.ps" || printerr "Cannot delete $tmpname\_ss.ps\n";
+	    unlink "$dpname\_dp.ps" || printerr "Cannot delete $tmpname\_dp.ps\n";
+	    if ( -e "$tmpname\_dp2.ps" )  { unlink "$dpname\_dp2.ps" || printerr "Cannot delete $tmpname\_dp2.ps\n"; }
+	}
+    }
+}
+
+
+## ----------------------------------------
+## compute all pairwise alignments for pairs
+## of sequences (given by @names)
+##
+## @returns 2D-array of alignments (indices are
+##          positions in list @names) 
+##
+## Dependencies on GLOBAL VARIABLES
+##
+## $probabilistic   flag for probabilistic alignment
+## %bmprobs         base match probs in case of probabilistic alignment
+## %amprobs         arc  match probs in case of probabilistic alignment 
+##
+sub compute_all_pairwise_alignments($$$) {
+    my ($names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+
+    my %bmprobs = %{ $bmprobs_ref };
+    my %amprobs = %{ $amprobs_ref };
+
+
+    my @names = @{ $names_ref };
+    
+    my @pairwise_alns;
+
+    my $num=0;
+    for (my $a=0; $a<=$#names; $a++) {
+	for (my $b=0; $b<$a; $b++) {
+	    $num++;
+	    
+	    printmsg 2, sprintf(
+		"Align %d/%d : $names[$a] and %d/%d: $names[$b] (%d/%d)\n",
+		$a+1,$#names+1,$b+1,$a,$num,($#names*($#names+1))/2);
+	    
+	    my @aln;
+	    if ( $probabilistic ) {
+		@aln =
+		    compute_alignment_from_dps_probs("$input_dir/".$names[$a],
+						     "$input_dir/".$names[$b],
+						     $locarna_params_tree,
+						     $bmprobs{chp($names[$a],$names[$b])},
+						     $amprobs{chp($names[$a],$names[$b])}
+		    );
+	    } else {
+		@aln = compute_alignment_from_dps($bindir,
+						  "$input_dir/".$names[$a],
+						  "$input_dir/".$names[$b],
+						  $locarna_params_tree,
+						  $global_tmpprefix
+		    );
+	    }
+	    
+	    $pairwise_alns[$a][$b] = [ @aln ];
+	}
+    }
+    return @pairwise_alns;
+}
+
+
+sub compute_all_pairwise_alignments_par($$$$) {
+    my ($cpu_num,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+
+    my %bmprobs = %{ $bmprobs_ref };
+    my %amprobs = %{ $amprobs_ref };
+
+
+    my @names = @{ $names_ref };
+    
+    my @argument_lists;
+    
+    my @pairwise_alns : shared;
+
+    ## collect arguments for function calls (=jobs)
+    my $num=0;
+    for (my $a=0; $a<=$#names; $a++) {
+	for (my $b=0; $b<$a; $b++) {
+	    $num++;
+	    
+	    if ( $probabilistic ) {
+		my @arg_list = ($num,$a,$b,
+				$names[$a],
+				$names[$b],
+				$bmprobs{chp($names[$a],$names[$b])},
+				$amprobs{chp($names[$a],$names[$b])});
+		push @argument_lists, [ @arg_list ];
+	    } else {
+		my @arg_list=($num,$a,$b,
+			      $names[$a],
+			      $names[$b]
+		    );
+		push @argument_lists, [ @arg_list ];
+	    }
+	}
+    }
+
+    ## perform jobs in parallel
+    foreach_par(
+	sub {
+	    my ($num,$a,$b,@arg_list)=@_;
+	    
+	    printmsg 2, sprintf(
+		"Align %d/%d : $names[$a] and %d/%d: $names[$b] (%d/%d)\n",
+		$a+1,$#names+1,$b+1,$a,$num,($#names*($#names+1))/2);
+	    
+	    my @aln;
+	    
+	    if ( $probabilistic ) {
+		my ($nameA,$nameB,$bmprobs,$amprobs) = @arg_list;
+		@aln = compute_alignment_from_dps_probs("$input_dir/".$nameA,
+							"$input_dir/".$nameB,
+							$locarna_params_tree,
+							$bmprobs,
+							$amprobs);
+	    } else {
+		my ($nameA,$nameB) = @arg_list;
+		@aln = compute_alignment_from_dps($bindir,
+						  "$input_dir/".$nameA,
+						  "$input_dir/".$nameB,
+						  $locarna_params_tree,
+						  threadsafe_name($global_tmpprefix));
+	    }
+	    
+	    $pairwise_alns[$a*($#names+1)+$b] = "@aln";
+	    
+	},
+	\@argument_lists,
+	$cpu_num
+	);
+    
+
+    ## convert result for returning
+    my @res;
+    
+    for (my $a=0; $a<=$#names; $a++) {
+	for (my $b=0; $b<$a; $b++) {
+	    my @aln =  split(/\n/, $pairwise_alns[$a*($#names+1)+$b]);
+	    $res[$a][$b] = [ @aln ];
+	}
+    }
+
+    return @res;
+}
+
+
+## ----------------------------------------
+## compute the score matrix from all pairwise alinments
+##
+## arg \@names         ref to list of sequence names
+## arg \@pairwise_aln  ref to 2D-array of all pairwise alignments
+##                     of sequences given by names
+##
+## returns 2D-array of scores (symmetric),
+##         indices are positions in name string
+##
+sub compute_score_matrix($$) {
+    my ($names_ref,$pairwise_alns_ref) = @_;
+    my @names         = @{ $names_ref };    
+    my @pairwise_alns = @{ $pairwise_alns_ref };
+    
+    my @score_matrix; ## result
+    
+
+    for (my $a=0; $a<=$#names; $a++) {
+	for (my $b=0; $b<$a; $b++) {
+	    
+	    my @aln = @{ $pairwise_alns[$a][$b] };
+		
+	    #print STDERR "Alig. of $names[$a] --- $names[$b]:\n@aln\n";
+	    
+	    $aln[0] =~ /Score: ([\d\.\-]+)/ || die "Cannot extract score from $aln[0].\n";
+	    my $score=$1;
+	    
+	    $score_matrix[$a][$b] = $score;
+	    $score_matrix[$b][$a] = $score;
+	}
+    }
+
+    return @score_matrix;
+}
+
+## write a matrix given by 2D-array to file
+##
+sub write_2D_matrix {
+    my ($file,$matrix_ref) = @_;
+    my @matrix = @{ $matrix_ref };
+    
+    open(MAT,">$file") || die "Cannot write matrix $file\n";
+    
+    my $size_x=$#matrix+1;
+    for (my $a=0; $a<$size_x; $a++) {
+	my @row = @{ $matrix[$a] };
+	my $size_y = $#row+1;
+	for (my $b=0; $b<$size_y; $b++) {
+	    if ($a==$b) {print MAT "     0 ";} else { 
+		printf MAT "%6d ",$matrix[$a][$b];
+	    }
+	}
+	print MAT "\n";
+    }
+    close MAT;
+}
+
+## ----------------------------------------
+## perform the progressive steps
+## for getting the multiple alignment
+##
+## args @tree_postorder defines the order of alignments (=guide tree)
+##
+## Dependencies
+##
+## needs pp files
+## needs bmprobs, amprobs in probabilistic mode
+##
+sub perform_progressive_steps($$$) {
+    my ($tree_postorder_ref,$bmprobs_ref,$amprobs_ref)=@_;    
+    my @tree_postorder = @{ $tree_postorder_ref };
+    
+    my @stack=();
+    
+    for my $item (@tree_postorder) {   
+	if ($item eq $node_sym) {
+	    # align two topmost stack entrys and push result
+	    my $op1 = $stack[$#stack-1];
+	    my $op2 = $stack[$#stack];
+	    
+	    $#stack -= 2;
+	    
+	    my $intermediate_name = new_intermediate_name();
+	    
+	    if ( $probabilistic ) {
+		call_locarna_prob($op1,$op2,"$intermediate_dir/".$intermediate_name,$bmprobs_ref,$amprobs_ref);
+	    } else {
+		call_locarna($op1,$op2,"$intermediate_dir/".$intermediate_name);
+	    }
+	    
+	    push @stack, "$intermediate_dir/$intermediate_name.pp";
+	    
+	} else {
+	    push @stack, "$input_dir/$item";
+	}
+    }
+    
+    if ($#stack!=0) {
+	printerr "Tree parsing failed. Exit.\n";
+	printerr "STACK: @stack\n";
+	exit -1;
+    }
+
+    (my $current_alignment_name = $stack[-1] ) =~ s/.pp$//;
+
+    return $current_alignment_name;
+}
+
+
+## ----------------------------------------
+## Perform iterative refinement
+##
+## @returns file name of result
+##
+sub perform_iterative_refinement {
+    my ($current_alignment_name,$tree_postorder_ref,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+    
+    my $current_alimfe = alifold_mfe("$current_alignment_name.aln");
+    
+    for (my $i=1; $i<=$iterations; $i++) {
+	printmsg 1, "--- Iterative Refinement ---\n";
+	printmsg 1, "--- Round $i\n";
+	
+	my $round_alimfe;
+	($current_alignment_name,$round_alimfe) =
+	    perform_iterative_refinement_one_round($current_alignment_name,$current_alimfe,$tree_postorder_ref,$names_ref,$bmprobs_ref,$amprobs_ref);
+	
+	if ($current_alimfe == $round_alimfe) {
+	    printmsg 2, "Converge after round $i\n\n";
+	    last;
+	}
+	$current_alimfe=$round_alimfe;
+    }
+    return $current_alignment_name;
+}
+
+## ----------------------------------------
+## Perform one round of iterative refinement
+## 
+## @returns file name of result and alignment quality
+##
+sub perform_iterative_refinement_one_round($$$$$) {
+    my ($current_alignment_name,$current_alimfe,$tree_postorder_ref,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+    
+    my $round_alimfe = $current_alimfe;
+    
+    my @names = @{ $names_ref };
+
+    my @tree_postorder = @{ $tree_postorder_ref };
+
+    my @partitions = tree_partitions(@tree_postorder);
+    
+    foreach my $namesA_ref (@partitions) {
+	my @namesA = @{ $namesA_ref };
+	my @namesB = subtract_list( \@names, \@namesA );
+	
+	printmsg 2, "Realign split @namesA --- @namesB\n";
+	
+	my %aln = parse_aln("$current_alignment_name.aln");
+	
+	my $intermediate_name = "$intermediate_dir/".new_intermediate_name();
+	
+	my $intermediate_nameA = "$intermediate_name.A.pp";
+	my $intermediate_nameB = "$intermediate_name.B.pp";
+	write_pp_projected(\%aln,\@namesA,$intermediate_nameA);
+	write_pp_projected(\%aln,\@namesB,$intermediate_nameB);
+	
+	
+	if ( $probabilistic ) {
+	    call_locarna_prob($intermediate_nameA,$intermediate_nameB,$intermediate_name,$bmprobs_ref,$amprobs_ref);
+	} else {
+	    call_locarna($intermediate_nameA,$intermediate_nameB,$intermediate_name);
+	}
+	
+	## ----------------------------------------
+	# test, whether new alignment is better than former
+	# 
+	my $new_alimfe = alifold_mfe("$intermediate_name.aln");
+	
+	if ($new_alimfe < $current_alimfe) {
+	    printmsg 0, "Accept new alignment (improves alifold-mfe: $current_alimfe ==> $new_alimfe)\n";
+	    $current_alimfe = $new_alimfe;
+	    $current_alignment_name = $intermediate_name;
+	} else {
+	    printmsg 0, "Reject new alignment (worse or equal alifold-mfe: $current_alimfe <= $new_alimfe)\n";
+	}
+	printmsg 0, "\n";
+    }
+    
+    return ($current_alignment_name,$current_alimfe);
+}
+
+
+## ------------------------------------------------------------
+## write reliabilities to files
+##
+sub write_bm_reliabilities {    
+    my ($file, $bmrels_seq_ref, $bmrels_str_ref) = @_;
+    
+    my @bmrels_seq = @{ $bmrels_seq_ref };
+    my @bmrels_str = @{ $bmrels_str_ref };
+
+    open(BMREL,">$file");
+    for (my $i=0; $i<=$#bmrels_seq; $i++) {
+	print BMREL ($i+1)." $bmrels_seq[$i] $bmrels_str[$i]\n";
+    }
+    close BMREL;
+}
+
+sub write_am_reliabilities {    
+    my ($file, $amrels_ref) = @_;
+    my %amrels = %{ $amrels_ref };
+
+    open(AMREL,">$file");
+    foreach my $k (keys %amrels) {
+	print AMREL "$k $amrels{$k}\n";
+    }
+    close AMREL;
+}
+
+## ------------------------------------------------------------
+## write reliability plot to the screen
+##
+sub write_reliability_bars {
+    my ($bmrels_seq_ref, $bmrels_str_ref) = @_;
+    
+    my @bmrels_seq = @{ $bmrels_seq_ref };
+    my @bmrels_str = @{ $bmrels_str_ref };
+
+    ## compute a sum of pairs of the base match probabilities for each alignment column in result.aln
+     
+    my $reso=10;
+    for (my $i=0;$i<$reso; $i++) {
+	printmsg 3, sprintf("-%3d\%              ",100*($i+1)/$reso);
+	for (my $j=0; $j<=$#bmrels_seq; $j++) {
+	    my $b=@bmrels_seq[$j];
+	    my $a=@bmrels_str[$j];# * ($mea_beta/100);
+
+	    if ($a>$i/$reso) {
+		printmsg 3, "#";
+	    } elsif ($a+$b>$i/$reso) {
+		printmsg 3, "*";
+	    } else {
+		printmsg 3, " ";
+	    }
+	}
+	printmsg 3, "\n";
+    }
+}
+
+
+## compose hash pair
+sub chp($$) {
+    my ($nameA,$nameB)=@_;
+    return "$nameA#$nameB";
+}
+
+## decompose hash pair
+sub dhp($) {
+    my ($name_pair)=@_;
+    $name_pair =~ /([^#]*)#([^#]*)/;
+    return ($1,$2);
+}
+
+
+
+
+## computes the structure with maximal sum of weights
+## @param $seq sequence (actually we only need its length)
+## @param $amweights_ref a hash of arc weights
+## @threshold consider only weights above threshold
+##
+sub max_weight_structure($$$) {
+    my ($seq,$arc_weights_ref,$threshold) = @_;
+    my $len = length($seq);
+    my %arc_weights = %{ $arc_weights_ref };
+    
+    my @Nmat; ## a Nussinov like DP-matrix
+    my @Tmat; ## Traceback matrix
+
+    my $d_min=4; ## minimal difference $j-$i for a basepair ($i,$j)
+    
+    for (my $d=$d_min-2; $d<$d_min; $d++) {
+	for (my $i=1; $i<=$len-$d; $i++) {
+	    $Nmat[$i][$i+$d]=0;
+	    $Tmat[$i][$i+$d]=0;
+	}
+    }
+    
+    for (my $d=$d_min;$d<$len;$d++) { ## difference $j-$i
+	for (my $i=1; $i<=$len-$d; $i++) {
+	    
+	    my $j=$i+$d;
+	    
+	    $Nmat[$i][$j] = $Nmat[$i][$j-1];
+	    $Tmat[$i][$j] = -1;
+	    
+	    for (my $k=$i; $k<=$j-$d_min; $k++) {
+		if ((exists $arc_weights{"$k $j"})) {
+		    my $score = (($k-1-$i>=$d_min)?$Nmat[$i][$k-1]:0)+$Nmat[$k+1][$j-1] + $arc_weights{"$k $j"};
+		    if ($score > $Nmat[$i][$j]) { 
+			$Nmat[$i][$j] = $score;
+			$Tmat[$i][$j] = $k;
+		    }
+		}
+	    }
+	}
+    }
+    
+    my @stack;
+    push @stack, (1,$len);
+
+    my @trace;
+    for (my $i=1; $i<=$len; $i++) {
+	$trace[$i]=".";
+    }
+
+    while ($#stack != -1) {
+		    
+	my $i=$stack[-2];
+	my $j=$stack[-1];
+	$#stack -= 2;
+	
+	if ($Tmat[$i][$j]==-1) {
+	    push @stack,($i,$j-1);
+	} elsif ($Tmat[$i][$j]>0) {
+	    my $k = $Tmat[$i][$j];
+	    if  ($arc_weights{"$k $j"}>=$threshold) {
+		$trace[$k]="(";
+		$trace[$j]=")";
+	    } elsif ($arc_weights{"$k $j"}>=$threshold/2) {
+		$trace[$k]="{";
+		$trace[$j]="}";
+	    } else {
+		$trace[$k]="`";
+		$trace[$j]="'";
+	    }
+
+	    push @stack,($i,$k-1);
+	    push @stack,($k+1,$j-1);
+	}
+    }
+    
+    return join('', @trace);
+}
+
+### ============================================================================
+### ============================================================================

@@ -1,0 +1,333 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+
+\begin{document}
+
+We study several variants of Gotoh's algorithm. We give the algorithm for two
+fixed sequences $a$ and $b$ with lengths $n$ and $m$ respectively.
+
+All algorithms are given in their similarity versions. In particular, we
+assume the (dis)similarity of a gap of length k is $\alpha+k\beta$, where
+$\alpha,\beta<0$.
+
+\section{Unambigous Gotoh}
+
+The usual version of Gotoh's algorithm is not unambigous, since one alignment
+can yield the optimal score for more than one matrix entry. 
+
+The idea of the algorithm is that the entries $i,j$ of the three matrices
+$M, A,$ and $B$ each represent maximal similarities of alignments of
+prefixes $a_1,\dots,a_i$ with $b_1,\dots,b_j$. For $M$ the alignments end in
+a match, for $A$ the alignments end in a gap in the second row, for $B$
+the alignments end in a gap in the first row.
+
+Note that $M_{0,0}$ is redefined to represent the empty alignment.
+
+The optimal score is now the maximum of $M_{n,m}$, $A_{n,m}$, and $B_{n,m}$ and
+not necessarily found in $M_{n,m}$ (anymore).
+
+\begin{align*}
+\intertext{Initialization}
+M_{0,0} = 0\\
+\forall i>0: M_{i,0} &= -\infty\\
+\forall j>0: M_{0,j} &= -\infty\\
+%
+\forall j\geq 0: A_{0,j} &= -\infty\\
+\forall i>0: A_{i,0} &= \alpha+i\cdot\beta\\
+%
+\forall i\geq 0: B_{i,0} &= -\infty\\
+\forall j>0: B_{0,j} &= \alpha+j\cdot\beta\\
+%
+\intertext{Recursion}
+  \forall i,j>0: M_{i,j} & = \max
+  \begin{cases}
+    M_{i-1,j-1} + \sigma(i,j) \\
+    A_{i-1,j-1} + \sigma(i,j) \\
+    B_{i-1,j-1} + \sigma(i,j) \\
+  \end{cases}
+\\
+  \forall i,j>0: A_{i,j} & = \max
+  \begin{cases}
+    M_{i-1,j} + \alpha + \beta \\
+    A_{i-1,j} + \beta \\
+    B_{i-1,j} + \alpha + \beta \\
+  \end{cases}
+\\
+  \forall i,j>0: B_{i,j} & = \max
+  \begin{cases}
+    M_{i,j-1} + \alpha + \beta \\
+    A_{i,j-1} + \alpha + \beta \\
+    B_{i,j-1} + \beta \\
+  \end{cases}
+\end{align*}
+
+Note that we allow alignments
+\begin{verbatim}
+...A-...
+...-B...
+\end{verbatim}
+and
+\begin{verbatim}
+...-A...
+...B-...
+\end{verbatim}
+Interestingly, these alignments are not supported in earlier versions of the
+partition variant of Gotoh's algorithm. ( As a side note: for computing edge
+probabilities, there is no difference whether we allow both symmetrical
+alignments or only one of them. However there is a difference, if we forbid
+these alignments. )
+
+\section{Partition Variant of Gotoh}
+
+The unambigous version of Gotoh can be directly translated into its partition
+variant. Let $T$ denote the temperature of the system.
+
+\newcommand{\ef}[1]{\bar#1}
+We define
+\begin{displaymath}
+  \ef{x} = \exp(x/T)
+\end{displaymath}
+%
+\begin{align*}
+\intertext{Initialization}
+Z^M_{0,0} = 1\\
+\forall i>0: Z^M_{i,0} &= 0\\
+\forall j>0: Z^M_{0,j} &= 0\\
+%
+\forall j\geq 0: Z^A_{0,j} &= 0\\
+\forall i>0: Z^A_{i,0} &= \ef{\alpha}\cdot\ef{\beta}^i\\
+%
+\forall i\geq 0: Z^B_{i,0} &= 0\\
+\forall j>0: Z^B_{0,j} &= \ef{\alpha}\cdot\ef{\beta}^j\\
+%
+\intertext{Recursion}
+  \forall i,j>0: Z^M_{i,j} & = \sum
+  \begin{cases}
+    Z^M_{i-1,j-1} \cdot \ef{\sigma(i,j)} \\
+    Z^A_{i-1,j-1} \cdot \ef{\sigma(i,j)} \\
+    Z^B_{i-1,j-1} \cdot \ef{\sigma(i,j)} \\
+  \end{cases}
+\\
+  \forall i,j>0: Z^A_{i,j} & = \sum
+  \begin{cases}
+    Z^M_{i-1,j} \cdot \ef{\alpha} \cdot \ef{\beta} \\
+    Z^A_{i-1,j} \cdot \ef{\beta} \\
+    Z^B_{i-1,j} \cdot \ef{\alpha} \cdot \ef{\beta} \\
+  \end{cases}
+\\
+  \forall i,j>0: Z^B_{i,j} & = \sum
+  \begin{cases}
+    Z^M_{i,j-1} \cdot \ef{\alpha} \cdot \ef{\beta} \\
+    Z^A_{i,j-1} \cdot \ef{\alpha} \cdot \ef{\beta} \\
+    Z^B_{i,j-1} \cdot \ef{\beta} \\
+  \end{cases}
+\end{align*}
+
+The partition sum is
+\begin{displaymath}
+  Z = Z^M_{n,m} + Z^A_{n,m} + Z^B_{n,m}
+\end{displaymath}
+
+
+Its now possible to compute the probabilities for single alignment edges in
+the essemble of all alignments (Boltzman-distributed according to their
+similarity scores). Therefore we define matrices $Z^M_r$, $Z^A_r$, $Z^B_r$
+analogously to the above matrices however on the reversed sequences.
+
+The probability of the edge $(i,j)$ is
+\begin{displaymath}
+  Pr(i,j) = \frac{1}{Z}[Z^M_{i,j} \cdot ({Z^M_r}_{n-i,m-j} + {Z^A_r}_{n-i,m-j} +
+  {Z^B_r}_{n-i,m-j})].
+\end{displaymath}
+
+\subsection{Local Unambiguous Gotoh}
+
+For making Gotoh's algorithm local and maintaining unambiguity, in particular
+we need to take care of treating the empty alignment and alignment including empty sequences properly.
+
+The key is again in definining the alignments that are taken into account in
+each matrix entry. 
+\begin{itemize}
+\item $M_{i,j}$: all (global) alignments of $a_{i'}\dots a_i$ $(i'<i)$ and
+  $b_{j'}\dots b_j$ $(j'\leq j)$ that end in the match of $a_i$ and $b_j$. 
+\item $A_{i,j}$: all (global) alignments of $a_{i'}\dots a_i$ $(i' \leq i)$ and
+  $b_{j'}\dots b_{j}$ $(j'\leq j+1)$ that end in the alignment of $a_i$ with a gap.
+\item $B_{i,j}$: all (global) alignments of $a_{i'}\dots a_{i}$
+  $(i'\leq i+1)$ and $b_{j'}\dots b_j$ $(j' \leq j)$ that end in the alignment of
+  a gap with $b_j$.
+\end{itemize}
+
+This definition still contains ambiguity, since for the entries $A_{i,j}$ there
+is the possibility to align with the empty word $b_{j+1}\dots b_j$. This means
+for a fixed $i$ the alignments with this empty word occur redundantly in all
+entries $A_{i,j}$. This can be cured by subtracting $A_{i,0}$ from all $A_{i,j}
+(j>0)$. (The matrix $B$ behaves symmetrically with $i$ and $j$ exchanged.)
+
+The empty alignment is not represented in the matrix.
+
+%
+\begin{align*}
+  \intertext{Initialization}
+%
+  M_{0,0}  &= -\infty\\
+  \forall i>0: M_{i,0} &= -\infty\\
+  \forall j>0: M_{0,j} &= -\infty\\
+%
+  \forall j\geq 0: A_{0,j} &= -\infty\\
+  \forall i>0: A_{i,0} &= \alpha+\beta\\
+%
+  \forall i\geq 0: B_{i,0} &= -\infty\\
+  \forall j>0: B_{0,j} &= \alpha+\beta\\
+%
+  \intertext{Recursion}
+  \forall i,j>0: M_{i,j} & = \max
+  \begin{cases}
+    \sigma(i,j) \\
+    M_{i-1,j-1} + \sigma(i,j) \\
+    A_{i-1,j-1} + \sigma(i,j) \\
+    B_{i-1,j-1} + \sigma(i,j) \\
+  \end{cases}
+\\
+  \forall i,j>0: A_{i,j} & = \max
+  \begin{cases}
+    \alpha+\beta \\
+    M_{i-1,j} + \alpha + \beta \\
+    A_{i-1,j} + \beta \\
+    B_{i-1,j} + \alpha + \beta \\
+  \end{cases}
+\\
+  \forall i,j>0: B_{i,j} & = \max
+  \begin{cases}
+    \alpha+\beta \\
+    M_{i,j-1} + \alpha + \beta \\
+    A_{i,j-1} + \alpha + \beta \\
+    B_{i,j-1} + \beta \\
+  \end{cases}
+\end{align*}
+
+\newpage
+\subsection*{Example: aligning ``1234'' and ``abc''}
+{\footnotesize
+\begin{verbatim}
+========================================================================
+ M
+     -                a                   b                 c
+
+-     
+      
+
+1                     1                   -1;1              --1 -1;1
+                      a                   ab b              abc bc c
+
+2                     12;2                12;-12 12;1-2;2
+                      -a a                ab a-b -b -ab b
+
+3                     123 23;3            123 23;123 -123 123 1-23 23;12-3 2-3;3
+                      --a -a a            -ab ab a-b a--b --b -a-b -b --ab -ab b
+
+4                     1234 234 34;4
+                      ---a --a -a a
+
+========================================================================
+ A
+     -                a                   b                 c
+
+-    
+     
+
+1    1                -1 1                --1 -1 1          ---1 --1 -1 1
+     -                a- -                ab- b- -          abc- bc- c- -
+
+2    12 2             12;-12 12;1-2;2     -12 12;--12 -12 12;1-2 -1-2 1-2 1--2 -2;2
+     -- -             a- a-- -- -a- -     ab- b- ab-- b-- -- ab- a-b- -b- ab-- b- -
+
+3    123 23 3         123 23;123 -123 123 1-23 23;3
+     --- -- -         -a- a- a-- a--- --- -a-- -- -
+
+4    1234 234 34 4    1234 234 34;1234 234 1234 -1234 1234 1-234 234 34;4
+     ---- --- -- -    --a- -a- a- -a-- a-- a--- a---- ---- -a--- --- -- -
+
+========================================================================
+ B
+     -                a                   b                 c
+
+-                     -                   -- -              --- -- -
+                      a                   ab b              abc bc c
+
+1                     1-                  1-;-1- 1-;1--;-
+                      -a                  ab a-b -b -ab b
+
+2                     12- 2-              12- 2-;12- -12- 12- 1-2- 2-;12-- 2--;-
+                      --a -a              -ab -b a-b a--b --b -a-b -b --ab -ab b
+
+3                     123- 23- 3-
+                      ---a --a -a 
+
+4                     1234- 234- 34- 4-
+                      ----a ---a --a -a
+\end{verbatim}
+}
+
+\section{Partition Variant of Local Gotoh}
+
+Again we can give a direct translation for computing the partition function.
+%
+\begin{align*}
+  \intertext{Initialization}
+%
+  Z^M_{0,0} &= 0\\
+  \forall i>0: Z^M_{i,0} &= 0\\
+  \forall j>0: Z^M_{0,j} &= 0\\
+%
+  \forall j\geq 0: Z^A_{0,j} &= 0\\
+  \forall i>0: Z^A_{i,0} &=  \sum_{1\leq i'\leq i} \ef{\alpha}\cdot \ef{\beta}^{i'}\\
+%
+  \forall i\geq 0: Z^B_{i,0} &= 0\\
+  \forall j>0: Z^B_{0,j} &= \sum_{1\leq j'\leq j}\ef{\alpha}\cdot \ef{\beta}^{j'}\\
+%
+  \intertext{Recursion}
+  \forall i,j>0: Z^M_{i,j} & = \sum
+  \begin{cases}
+    \ef{\sigma(i,j)} \\
+    Z^M_{i-1,j-1} \cdot \ef{\sigma(i,j)} \\
+    Z^A_{i-1,j-1} \cdot \ef{\sigma(i,j)} \\
+    Z^B_{i-1,j-1} \cdot \ef{\sigma(i,j)} \\
+  \end{cases}
+\\
+  \forall i,j>0: Z^A_{i,j} & = \sum
+  \begin{cases}
+    \ef{\alpha}\cdot \ef{\beta} \\
+    Z^M_{i-1,j} \cdot \ef{\alpha} \cdot \ef{\beta} \\
+    Z^A_{i-1,j} \cdot \ef{\beta} \\
+    Z^B_{i-1,j} \cdot \ef{\alpha} \cdot \ef{\beta} \\
+  \end{cases}
+\\
+  \forall i,j>0: Z^B_{i,j} & = \sum
+  \begin{cases}
+    \ef{\alpha}\cdot \ef{\beta} \\
+    Z^M_{i,j-1} \cdot \ef{\alpha} \cdot \ef{\beta} \\
+    Z^A_{i,j-1} \cdot \ef{\alpha} \cdot \ef{\beta} \\
+    Z^B_{i,j-1} \cdot \ef{\beta} \\
+  \end{cases}
+\end{align*}
+
+One can finally calculate the partition function $Z$ and edge probabilities
+$Pr(i,j)$ (where we again use the corresponding matrices $Z^M_r$, $Z^A_r$, and
+$Z^B_r$ for the reversed
+sequences) by
+\begin{align*}
+  Z &= 1 + \sum(Z^M_{i,j} + Z^A_{i,j} + Z^B_{i,j}) - m\sum Z^A_{i,0} - n\sum Z^B_{0,j}
+\intertext{and}
+  Pr(i,j) & = \frac{1}{Z}[Z^M_{i,j} \cdot ({Z^M_r}_{n-i,m-j} + {Z^A_r}_{n-i,m-j} +
+  {Z^B_r}_{n-i,m-j} + 1)].
+\end{align*}
+Note the additions of $1$ which correct for the empty alignment!
+
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

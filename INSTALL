@@ -1,0 +1,6 @@
+Install the program by
+
+./configure [--prefix=<path>]
+make
+make install
+

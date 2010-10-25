@@ -1,0 +1,51 @@
+With --probabilistic mlocarna will compute pairwise match
+probabilities for all your input sequences.  These probabilities are
+for base matches *and* for base pair matches.  They are technically
+defined as probability of such a match in the Boltzmann ensemble of
+alignment/consensus structure pairs.
+
+For constructing the multiple alignment mlocarna will perform a
+progressive alignment using MEA (maximum expected accuracy) alignments
+in each step.
+
+The main benefit for multiple alignment is that in probabilistic you
+can use probabilistic consistency transformation (flag
+--consistency-transformation), which will improve the alignment
+accuracy a la ProbCons/ProbAlign.
+
+I used the following call of mlocarna for good performance and speed
+on the Bralibase 2.1 benchmark set (assuming that in.fa contains your
+inut sequences). 
+
+mlocarna --probabilistic --consistency-transformation --max-diff-match=60 --mea-beta 400 in.fa --tgtdir out
+
+[ --max-diff-match restricts |k-i| for matches of i and k, --mea-beta
+controls the influence of structure in the mea alignments ]
+
+mlocarna in probabilistic mode with consistency-transformation should
+be more accurate. Because computation is more involved it is slightly
+slower than in non-probabilistic mode.
+
+The program writes the multiple alignment to out/results/result.aln
+and the base match probabilities to out/probs/bmprobs and the arc
+match probabilities to out/probs/bmprobs
+
+The pairwise match probabilities are used for computing reliabilities
+for the multiple alignment. results/result.bmreliability contains a
+confidence/reliability for each alignment column. A line consists of
+<column> <sequence reliability> <structural reliability>.  Sequence
+and structural reliability are for base match and base pair match
+respectively and are defined to be exclusive.
+results/result.amreliability contains reliabilities for base pairs in
+the consensus structure.
+
+Reliabilities can show local alignment quality and are therefore
+visualized as reliability profiles (Utils/reliability-profile.pl).
+
+The probabilities in the files in results/single_amreliabilities are
+projections of arc match reliabilities to single sequences and are
+reliabilities that a base pair exists in this sequence and is aligned
+to other base pairs in the alignment. So, it's kind of a structure
+prediction for each single sequence in the context of the
+alignment. In particular this feature is not very well studied yet.
+

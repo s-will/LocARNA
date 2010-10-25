@@ -1,0 +1,68 @@
+
+\documentclass{article}
+
+\usepackage{amsmath}
+
+\newcommand{\A}{\mathcal A}
+\newcommand{\C}{\mathcal C}
+
+\begin{document}
+
+In this text, I summarize and discuss some details about LocARNA's scoring.
+
+\section{MEA scoring}
+\label{sec:meascoring}
+
+The new mea score is a weighted sum of three components
+
+\begin{enumerate}
+\item alignment accuracy
+\item structural accuracy
+\item consensus accuracy
+\end{enumerate}
+
+\paragraph{ad 1.)} Alignment accuracy adds for each alignment edge
+\begin{displaymath}
+  Pr[i\sim j|A,B],
+\end{displaymath}
+which is the probability to align the sequence positions $i$ and $j$ in a
+sequence alignment of $A$ and $B$ (with affine gap penalty).  We compute these
+probabilities using a local partition variant of Gotoh's algorithm.
+
+\paragraph{ad 2.)} Structural accuracy has two components and contributes for each
+sequence. First, it adds for each arc-match/consensus basepair the
+corresponding basepair probability. Second, it adds for each non-structured
+edge the probability that the position is unpaired.
+
+\paragraph{ad 3.)} Consensus accuracy adds for each arc match/consensus basepair the term
+\begin{displaymath}
+  Pr[i\sim k|AB] \cdot Pr[j\sim l|AB] \cdot \frac{f'_{ijkl}}{f_{ij}f_{kl}}.
+\end{displaymath}
+
+\subsection{Weights and total score}
+
+For relating the components to each other we introduce weights $\alpha$,
+$\beta$, $\gamma$.
+
+The total score is then
+\begin{displaymath}
+  \sum_{ij\in\A} Pr[i\sim j|AB] + \alpha \sum_{i\not\in\C} ( \bar p^A_{\pi^1(i)} +  \bar
+  p^B_{\pi^2(i)} ) + \beta \sum_{(ij)\in\C} (p^A_{\pi^1(ij)} + p^B_{\pi^2(ij)})
+  +  \gamma \sum_{(ij)\in C} Pr[i\sim k|AB] \cdot Pr[j\sim l|AB] \cdot \frac{f'_{ijkl}}{f_{ij}f_{kl}}.
+\end{displaymath}
+{\bf die obige Formel stimmt mit den Projektionen nicht, man sollte dafuer mal eine bessere
+  Schreibweise finden.}
+
+The score can be divided into a contribution per basematch/alignment edge
+and a contribution per arcmatch/structural alignment edge/consensus basepair.
+
+
+
+\end{document}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

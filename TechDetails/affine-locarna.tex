@@ -1,0 +1,391 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+
+\newcommand{\N}[1]{\operatorname{Std}[#1]}
+
+\title{Affine Gap Cost for LocARNA}
+
+\begin{document}
+
+\maketitle
+
+This seems to be obsolete and has to be changed!
+
+In particular, there is only a scalar F in the implemenation.
+
+\section{Global with linear gapcost}
+\begin{align*}
+  M^{ab}_{ij} &= 
+  \max
+  \begin{cases}
+    M^{ab}_{i-1j} + \gamma\\
+    M^{ab}_{ij-1} + \gamma\\
+    M^{ab}_{i-1j-1} + \sigma_{ij}\\
+    \max_{(pi)\in P_X,(qj)\in P_Y} M^{ab}_{p-1q-1} + D_{(pi)(qj)}\\
+  \end{cases}
+  \\
+  D_{(ij)(kl)} &= M^{(ij)(kl)}_{j-1l-1} + \tau((ij)(kl))
+\end{align*}
+
+\section{Global with affine gap-cost}
+\begin{align*}
+  E^{ab}_{ij} &= 
+  \begin{cases}
+    E^{ab}_{i-1j} + \beta\\
+    M^{ab}_{i-1j} + \alpha + \beta
+  \end{cases}\\
+%
+  F^{ab}_{ij} &= 
+  \begin{cases}
+    F^{ab}_{ij-1} + \beta\\
+    M^{ab}_{ij-1} + \alpha + \beta
+  \end{cases}\\  
+%
+  M^{ab}_{ij} &= 
+  \max
+  \begin{cases}
+    E^{ab}_{i-1j}\\
+    F^{ab}_{ij-1}\\
+    M^{ab}_{i-1j-1} + \sigma_{ij}\\
+    \max_{(pi)\in P_X,(qj)\in P_Y} M^{ab}_{p-1q-1} + D_{(pi)(qj)}\\
+  \end{cases}
+  \\
+  D_{(ij)(kl)} &= M^{(ij)(kl)}_{j-1l-1} + \tau((ij)(kl))
+\end{align*}
+
+
+\section{Structure local with linear gap cost: current implementation}
+
+\paragraph{Semantic of states}
+\begin{itemize}
+\item NN: alignment without TLEs
+\item XN: alignment that has a TLE in A (which could have length 0!)
+\item NX: symmetric
+\item ON: alignment that ends in a TLE in A
+\item NO: symmetric
+\item OX: alignment that ends in a TLE in A and has a TLE in B
+\item XO: symmetric
+\item XX: alignment that has a TLE in A and has a TLE in B
+\end{itemize}
+
+\paragraph{Initialization}
+
+\begin{align*}
+  ^{xy}M^{ab}_{00}&=
+  \begin{cases}
+    \epsilon & \text{if $x=X$}\\
+    0 & \text{otherwise}
+  \end{cases}
+  +
+  \begin{cases}
+    \epsilon & \text{if $y=X$}\\
+    0 & \text{otherwise}
+  \end{cases}
+  \\
+  ^{xy}M^{ab}_{i0}&=
+  \begin{cases}
+    \alpha + i\beta & \text{if $x=N$}\\
+    \epsilon & \text{if x=X}\\
+    0 & \text{if $x=O$}\\
+  \end{cases} \\
+  ^{xy}M^{ab}_{0j}&=
+  \begin{cases}
+    \alpha + i\beta & \text{if $y=N$}\\
+    \epsilon & \text{if y=X}\\
+    0 & \text{if $y=O$}\\
+  \end{cases} \\
+\end{align*}
+
+
+\paragraph{Recursion}
+\begin{align*}
+  \N{M}^{ab}_{ij} &= 
+  \max
+  \begin{cases}
+    M^{ab}_{i-1j-1} + \sigma_{ij}\\
+    M^{ab}_{i-1j} + \gamma\\
+    M^{ab}_{ij-1} + \gamma\\
+    \max_{(pi)\in P_X,(qj)\in P_Y} M^{ab}_{p-1q-1} + D_{(pi)(qj)}\\
+  \end{cases}\\
+  %%
+  ^{NN}M &= \N{^{NN}M}\\
+  %%
+  ^{ON}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{ON}M^{ab}_{i-1j}\\
+    ^{NN}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{NO}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{NO}M^{ab}_{ij-1}\\
+    ^{NN}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{NX}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    \N{^{NX}M}^{ab}_{ij}\\
+    ^{NO}M^{ab}_{ij}+\epsilon
+  \end{cases}\\
+  %%
+  ^{XN}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    \N{^{XN}M}^{ab}_{ij}\\
+    ^{ON}M^{ab}_{ij}+\epsilon
+  \end{cases}\\
+  %%
+  ^{OX}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{OX}M^{ab}_{i-1j}\\
+    ^{NX}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{XO}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{XO}M^{ab}_{ij-1}\\
+    ^{XN}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{XX}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    \N{^{XX}M}^{ab}_{ij}\\
+    ^{OX}M^{ab}_{ij}+\epsilon\\
+    ^{XO}M^{ab}_{ij}+\epsilon
+  \end{cases}\\
+  %%
+%%
+  D_{(ij)(kl)} &= \max_{x,y\in\{N,X\}}\ ^{xy}M^{(ij)(kl)}_{j-1l-1} + \tau((ij)(kl))
+\end{align*}
+
+\section{Structure local with linear gap cost - more reasonable version}
+
+\paragraph{Semantic of states}
+\begin{itemize}
+\item NN: alignment without TLEs
+\item XN: alignment that has a TLE in A
+\item NX: symmetric
+\item ON: alignment that ends in a TLE in A
+\item NO: symmetric
+\item OX: alignment that ends in a TLE in A and has a TLE in B
+\item XO: symmetric
+\item XX: alignment that has a TLE in A and has a TLE in B
+\end{itemize}
+
+\paragraph{Initialization}
+
+\begin{align*}
+  ^{xy}M^{ab}_{00}&=
+  \begin{cases}
+    0 & \text{if $x=N$}\\
+    \epsilon & \text{otherwise}
+  \end{cases}
+  +
+  \begin{cases}
+    0 & \text{if $y=N$}\\
+    \epsilon & \text{otherwise}
+  \end{cases}
+  \\
+  ^{xy}M^{ab}_{i0}&=
+  \begin{cases}
+    \alpha + i\beta & \text{if $x=N$}\\
+    \epsilon & \text{otherwise}\\
+  \end{cases} \\
+  ^{xy}M^{ab}_{0j}&=
+  \begin{cases}
+    \alpha + i\beta & \text{if $y=N$}\\
+    \epsilon & \text{otherwise}\\
+  \end{cases} \\
+\end{align*}
+
+
+\paragraph{Recursion}
+\begin{align*}
+  \N{M}^{ab}_{ij} &= 
+  \max
+  \begin{cases}
+    M^{ab}_{i-1j-1} + \sigma_{ij}\\
+    M^{ab}_{i-1j} + \gamma\\
+    M^{ab}_{ij-1} + \gamma\\
+    \max_{(pi)\in P_X,(qj)\in P_Y} M^{ab}_{p-1q-1} + D_{(pi)(qj)}\\
+  \end{cases}\\
+  %%
+  ^{NN}M &= \N{^{NN}M}\\
+  %%
+  ^{ON}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{ON}M^{ab}_{i-1j}\\
+    ^{NN}M^{ab}_{i-1j} + \epsilon
+  \end{cases}\\
+  %%
+  ^{NO}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{NO}M^{ab}_{ij-1}\\
+    ^{NN}M^{ab}_{ij-1} + \epsilon
+  \end{cases}\\
+  %%
+  ^{NX}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    \N{^{NX}M}^{ab}_{ij}\\
+    ^{NO}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{XN}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    \N{^{XN}M}^{ab}_{ij}\\
+    ^{ON}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{OX}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{OX}M^{ab}_{i-1j}\\
+    ^{NX}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{XO}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{XO}M^{ab}_{ij-1}\\
+    ^{XN}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{XX}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    \N{^{XX}M}^{ab}_{ij}\\
+    ^{OX}M^{ab}_{ij}\\
+    ^{XO}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+%%
+  D_{(ij)(kl)} &= \max_{x,y\in\{N,X\}}\ ^{xy}M^{(ij)(kl)}_{j-1l-1} + \tau((ij)(kl))
+\end{align*}
+
+
+\section{Structure local with affine gap cost}
+
+\paragraph{Semantic of states}
+\begin{itemize}
+\item NN: alignment without TLEs
+\item XN: alignment that has a TLE in A
+\item NX: symmetric
+\item ON: alignment that ends in a TLE in A
+\item NO: symmetric
+\item OX: alignment that ends in a TLE in A and has a TLE in B
+\item XO: symmetric
+\item XX: alignment that has a TLE in A and has a TLE in B
+\end{itemize}
+
+\begin{itemize}
+\item M: any alignment
+\item E: alignment that ends in a gap with a symbol of A
+\item F: alignment that ends in a gap with a symbol of B
+\end{itemize}
+
+M exists in each of the states NN-XX.
+E exists for the states that do not end with an exclusion in A
+F exists for the states that do not end with an exclusion in B
+
+\paragraph{Initialization}
+
+\begin{align*}
+  ^{xy}M^{ab}_{00}&=0
+  \\
+  ^{xy}M^{ab}_{i0}&=
+  \begin{cases}
+    \alpha + i\beta & \text{if $x=N$}\\
+    -\infty & \text{otherwise}\\
+  \end{cases} \\
+  ^{xy}M^{ab}_{0j}&=
+  \begin{cases}
+    \alpha + i\beta & \text{if $y=N$}\\
+    -\infty & \text{otherwise}\\
+  \end{cases} \\
+\end{align*}
+
+\begin{align*}
+  ^{xy}E^{ab}_{i0} &= \alpha+i\beta\quad (i>0)\\
+  ^{xy}E^{ab}_{0j} &= -\infty\quad (j\geq 0)\\
+  %%
+  %%
+  ^{xy}F^{ab}_{i0} &= -\infty\quad (i\geq 0)\\
+  ^{xy}F^{ab}_{0j} &= \alpha+j\beta\quad (j>0)\\
+\end{align*}
+
+
+\paragraph{Recursion}
+\begin{align*}
+  \N{s}^{ab}_{ij} &= 
+  \max
+  \begin{cases}
+    ^sM^{ab}_{i-1j-1} + \sigma_{ij}\\
+    ^sE^{ab}_{ij}\\
+    ^sF^{ab}_{ij}\\
+    \max_{(pi)\in P_X,(qj)\in P_Y}\ ^sM^{ab}_{p-1q-1} + D_{(pi)(qj)}\\
+  \end{cases}\\
+  %%
+  ^{xy}E^{ab}_{ij} &= \max
+  \begin{cases}
+    ^{xy}E^{ab}_{i-1j}+\beta\\
+    ^{xy}M^{ab}_{i-1j}+\alpha+\beta\\
+  \end{cases}\\
+  %%
+  ^{xy}F^{ab}_{ij} &= \max
+  \begin{cases}
+    ^{xy}F^{ab}_{ij-1}+\beta\\
+    ^{xy}M^{ab}_{ij-1}+\alpha+\beta\\
+  \end{cases}\\
+  %%
+  ^{NN}M &= \N{NN}\\
+  %%
+  ^{ON}M^{ab}_{ij} &= \max
+  \begin{cases}
+    ^{ON}M^{ab}_{i-1j}\\
+    ^{NN}M^{ab}_{i-1j} + \epsilon
+  \end{cases}\\
+  %%
+  ^{NO}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{NO}M^{ab}_{ij-1}\\
+    ^{NN}M^{ab}_{ij-1} + \epsilon
+  \end{cases}\\
+  %%
+  ^{NX}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    \N{NX}^{ab}_{ij}\\
+    ^{NO}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{XN}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    \N{XN}^{ab}_{ij}\\
+    ^{ON}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+  ^{OX}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{OX}M^{ab}_{i-1j}\\
+    ^{NX}M^{ab}_{i-1j}+\epsilon\\
+  \end{cases}\\
+  %%
+  ^{XO}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    ^{XO}M^{ab}_{ij-1}\\
+    ^{XN}M^{ab}_{ij-1}+\epsilon\\
+  \end{cases}\\
+  %%
+  ^{XX}M^{ab}_{ij} &= \max 
+  \begin{cases}
+    \N{XX}^{ab}_{ij}\\
+    ^{OX}M^{ab}_{ij}\\
+    ^{XO}M^{ab}_{ij}
+  \end{cases}\\
+  %%
+%%
+  D_{(ij)(kl)} &= \max_{x,y\in\{N,X\}}\ ^{xy}M^{(ij)(kl)}_{j-1l-1} + \tau((ij)(kl))
+\end{align*}
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

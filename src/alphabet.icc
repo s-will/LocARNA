@@ -1,0 +1,18 @@
+template<class T>
+void Alphabet<T>::init(Alphabet<T>::vec_t a) {
+    alph_vec=a;
+    
+    for(typename Alphabet<T>::vec_t::size_type i=0; i < a.size() ; ++i) {
+	alph_hash[alph_vec[i]] = i;
+    }
+}
+
+template<class T>
+std::ostream & operator << (std::ostream &out ,Alphabet<T> a) {
+    for (typename Alphabet<T>::elem_vector_type::const_iterator it=a.begin();
+	 it!=a.end(); ++it ) {
+	out << (*it) << " ";
+    }
+    
+    return out;
+}
