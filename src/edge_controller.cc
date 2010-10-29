@@ -8,10 +8,68 @@
 
 #include <assert.h>
 
-EdgeController::size_type
-EdgeController::get_delta() const {
-    return delta;
+void
+EdgeController::constrain_wo_ref(size_type lenA, size_type delta) {
+    min_j_vector.resize(lenA+1);
+    max_j_vector.resize(lenA+1);
+    
+    // fill vectors for min_j and max_j
+    for (size_type i=1; i<=lenA; i++) {
+	min_j_vector[i] = std::max(delta+1, (size_type)(ceil(i*lenB/lenA)))-delta;
+	max_j_vector[i] = std::min(lenB, (size_type)(floor(i*lenB/lenA+delta)));
+    }
+
 }
+
+/* Construct from MultipleAlignment (as needed for progressive alignment) */
+
+EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta) {
+    
+    size_type lenA = seqA.length();
+    
+    // initialize vectors least constrained
+    min_j_vector.fill(lenA+1,1);
+    max_j_vector.fill(lenA+1,lenB);
+    
+    if ( delta == -1 ) { // no constraints!	
+	return;
+    }
+    
+    if ( ma == NULL ) { // constraints due to delta but no reference
+			// alignment
+	
+	constrain_wo_ref(lenA, (size_type)delta);
+	return;
+    }
+
+    // HERE: delta >= 0 and reference alignment ma is given 
+    
+    // ensure constraints for all pairs of sequences in seqA and seqB,
+    // therefore iterate over all name pairs
+    for (vector<string>::const_iterator itA=seqA.names().begin(); seqA.names().end()!=itA; ++itA) {
+	const nspA = ma.nameseqpair(*itA);
+	
+	for (vector<string>::const_iterator itB=seqB.names().begin(); seqB.names().end()!=itB; ++itB) {
+	    const nspB = ma.nameseqpair(*itB);
+	    
+	    for (size_type i=1; i<=lenA; ++i) {
+		size_type col_i = nspA.pos2col(i);
+		
+		pair<size_type,size_type> pos_j = nspB.col2pos(col_i);
+		
+		
+		
+	    }
+	    
+	    
+
+	}
+    }
+
+} 
+
+
+
 
 EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string &align, int d, bool print_maps) {
     
@@ -33,14 +91,8 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
     if ( d == -1 ) {
 	// no constraints!
 	
-	min_j_vector.resize(lenA+1);
-	max_j_vector.resize(lenA+1);
-
-	// min k is always 1 and max k is always lenB
-	for (size_type i=1; i<=lenA; i++) {
-	    min_j_vector[i] = 1;
-	    max_j_vector[i] = lenB;
-	}
+	min_j_vector.fill(lenA+1,1);
+	max_j_vector.fill(lenA+1,lenB);
 
 	return;
     }
@@ -48,14 +100,7 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
     if (align == "" ) {
 	// constraints due to delta but no reference alignment
 
-	min_j_vector.resize(lenA+1);
-	max_j_vector.resize(lenA+1);
-	
-	// fill vectors for min_j and max_j
-	for (size_type i=1; i<=lenA; i++) {
-	    min_j_vector[i] = std::max(delta+1, (size_type)(ceil(i*lenB/lenA)))-delta;
-	    max_j_vector[i] = std::min(lenB, (size_type)(floor(i*lenB/lenA+delta)));
-	}
+	constrain_wo_ref(lenA, (size_type)delta);
 
 	return;
     }
@@ -136,3 +181,5 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
 
     return;
 }
+
+

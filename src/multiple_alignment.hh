@@ -175,7 +175,28 @@ public:
     //! @returns index of name/sequence pair with given name
     size_type &
     index(const string &name) const {
+	assert(contains(name));
+	
 	return name2idx[name];
+    }
+
+    //! access name/sequence pair by index
+    //! @pre index in range 0..size()-1
+    //! @param index index of name/sequence pair (0-based)
+    //! @returns sequence (including gaps) with given index
+    const NameSeqPair &
+    nameseqpair(size_type index) const {
+	return alig[index];
+    }
+
+
+    //! access name/sequence pair by name
+    //! @pre index in range 0..size()-1
+    //! @param index index of name/sequence pair (0-based)
+    //! @returns sequence (including gaps) with given index
+    const NameSeqPair &
+    nameseqpair(const string &name) const {
+	return alig[index(name)];
     }
     
     //! access sequence by index

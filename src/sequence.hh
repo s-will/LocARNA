@@ -109,6 +109,13 @@ public:
     AliColumn &operator [](size_type i) {return seq_[i-1];}
     const AliColumn &operator [](size_type i) const {return seq_[i-1];}
 
+    // ------------------------------------------------------------
+    //! read-only access to names vector
+    const std::vector<std::string> &
+    names() const {
+	return names_;
+    }
+    
     // ----------------------------------------
     // get profile information
 
