@@ -59,8 +59,8 @@ public:
 	//! @returns whether c codes for a gap
 	static bool is_gap_symbol(char c) const;
 
-	const std::string name_;
-	const string1 seq_;
+	const std::string name_; //!< name of the sequence
+	const string1 seq_; //<! alignment string of the sequence 
 	
     public:
 	
@@ -78,7 +78,7 @@ public:
 	//! (read-only) access to seq
 	const string & 
 	seq() const {return seq_;}
-
+	
 	//****************************************
 	// projections
 	
@@ -86,7 +86,7 @@ public:
 	//! @time O(len)
 	//! @param pos position in sequence (without gaps)
 	size_type
-	pos2col(size_type pos) const;
+	pos_to_col(size_type pos) const;
 	
 	//! map alignment column -> sequence positions
 	//! @time O(len)
@@ -94,8 +94,8 @@ public:
 	//! @returns pair of positions (pos1,pos2)
 	//!   if column col contains a non-gap, then pos1=pos2 is the position of the gap
 	//!   if column col contains a gap, then pos1 is the sequence position left of the gap and pos2 the position right of the gap
-	pair<size_type,size_type>
-	col2pos(size_type col) const;
+	std::pair<size_type,size_type>
+	col_to_pos(size_type col) const;
     };
     
 private:

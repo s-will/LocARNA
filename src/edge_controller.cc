@@ -53,9 +53,9 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
 	    const nspB = ma.nameseqpair(*itB);
 	    
 	    for (size_type i=1; i<=lenA; ++i) {
-		size_type col_i = nspA.pos2col(i);
+		size_type col_i = nspA.pos_to_col(i);
 		
-		pair<size_type,size_type> pos_j = nspB.col2pos(col_i);
+		pair<size_type,size_type> pos_j = nspB.col_to_pos(col_i);
 		
 		
 		
