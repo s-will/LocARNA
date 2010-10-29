@@ -90,6 +90,11 @@ existing. Non-existing ones are still computed.
 
 =over 4
 
+=item B<--max-diff-aln=<file>> 
+
+Restrict maximal difference to the alignment in <file> in clustalw
+format (difference given by --max-diff-match). Use this option for
+constrained re-aligning.
 
 =item B<--probabilistic> 
 
@@ -413,6 +418,8 @@ my $opt_eval_fasta;
 
 my $width;
 
+my $max_diff_aln;
+
 Getopt::Long::Configure("no_ignore_case");
 
 my %options_hash=
@@ -431,7 +438,10 @@ my %options_hash=
      "extlib" => \$ext_library,
      
      "skip-pp" => \$skip_pp,
+
+     ## realigning
      
+     "max-diff-aln" => \$max_diff_aln,
 
      ## iterative alignment
      "iterate" => \$iterate,
@@ -539,6 +549,8 @@ my @options = #options that are not or not automatically passed to locarna
      
      "skip-pp",
      
+     "max-diff-aln=s",
+
      "iterate",
      "iterations=i",
      
@@ -620,7 +632,7 @@ my @autopass_arg_options =
 
      "max-diff-am=i",
      "max-diff-match=i",
-          
+           
      "struct-local=s",
      "sequ-local=s",
      
@@ -887,6 +899,21 @@ if (($fast_mea || $only_basematch_probs) && $opt_write_am_probs) {
 }
 
 
+##### ------------------------------------------------------------
+## realignment: max_diff_aln
+
+my $reference_aln;
+
+if (defined($max_diff_aln)) {
+    
+    ## read alignment from file
+    $reference_aln = read_aln("$max_diff_aln");
+    
+}
+
+##### ------------------------------------------------------------
+
+
 ##### ----------------------------------------
 #### Writing of probabilities
 
@@ -927,16 +954,16 @@ my $global_tmpprefix="$global_tmpname"; # could be a absolute path, but there's 
 ## Forward references for subs
 #
 #
-sub compute_all_dotplots($);
-sub compute_match_probs($$$$$$$);
-			
+sub compute_all_dotplots( $ );
+sub compute_match_probs( $$$$$$$ );
+
 ### ============================================================================
 ### ============================================================================
 ### ============================================================================
 ## ---------------------------------------------------------------------------
 # main program
 #
-			
+
 ## GLOBAL VARS (since passing this arround is ugly:))
 my %bmprobs; # base match probabilities
 my %amprobs; # arc match probabilities
@@ -949,6 +976,8 @@ my %amprobs_nocbt; # untransformed arc match probabilities
 
 ## CALL main
 main();
+
+exit(0);
 
 sub main {
         
@@ -981,8 +1010,14 @@ sub main {
 	exit(-1);
     }
 
-
+    
     check_constraints_in_fasta($seqs);
+    
+    ## check whether sequences and reference alignment are compatible
+    if (defined($reference_aln) && (! is_aln_of_seqs($seqs,$reference_aln)) ) {
+	print $STDERR "Inconsistent input: Given reference alignment ( --max-diff-aln \"$max_diff_aln\" ) does not match input sequences ( \"$seqs_file\" ).\n";
+	exit(-1);
+    }
     
     ## ----------------------------------------
     ## make target directory the current directory
@@ -998,8 +1033,6 @@ sub main {
 
     system "cp", $seqs_file, "$tgtdir/$input_dir/input.fa";
     
-
-
     perform_multiple_alignment($seqs);
 
     ## ----------------------------------------
@@ -1524,6 +1557,8 @@ sub compute_match_probs($$$$$$$) {
 	my $tmpfile_bm="$tmpprefix.bmps";
 	my $tmpfile_am="$tmpprefix.amps";
 	
+	my $ref_aln_option = pairwise_reference_alignment_option($nameA,$nameB,$reference_aln);
+	
 	my $cmd;
 	if ($fast_mea) {
 	    $cmd = "$bindir/locarna $input_dir/$nameA $input_dir/$nameB $locarna_params --write-match-probs $tmpfile_bm";
@@ -1534,6 +1569,8 @@ sub compute_match_probs($$$$$$$) {
 		$cmd .= " --write-arcmatch-probs $tmpfile_am";
 	    }
 	}
+	
+	$cmd .= " $ref_aln_option"; ## add option for reference alignment (potentially empty string)
 	
 	$cmd .= " >/dev/null" unless $moreverbose;
 	printmsg 1, "$cmd\n";
@@ -1584,8 +1621,8 @@ sub clone_share_hash {
 
 
 
-## calls locarna on inA and inB and writes to $tgt.pp and $tgt.aln
-sub call_locarna($$$) {
+## calls locarna on nameA and nameB in input_dir and writes to $tgt.pp and $tgt.aln
+sub call_locarna( $$$$ ) {
     my ($inA,$inB,$tgt) = @_;
     
     printmsg 2, "Align $inA + $inB --> $tgt\n";
@@ -1605,9 +1642,9 @@ sub call_locarna($$$) {
 ## pass averaged base and (if required) arc match probs to locarna
 ## (unless in fast-mea mode, the pair probabilities in the pp files are ignored)
 ##
-sub call_locarna_prob($$$$$) {
+sub call_locarna_prob( $$$$$$ ) {
     my ($inA,$inB,$tgt,$bmprobs_ref,$amprobs_ref) = @_;
-
+    
     ## extract the alignments from the pp files
     #
     my %alnA = read_pp_file_aln($inA);
@@ -1858,9 +1895,40 @@ sub extend_library($$) {
     ## --------------------------------------------------
 }
 
+
+## compute the alignment from dp-files or pp-files
+sub compute_alignment_from_dps( $$$$$ ) {
+    my ($input_dir,$nameA,$nameB,$locarna_params) =  @_;
+    
+    local *CA_IN;
+
+    my $tmpprefix = threadsafe_name("$global_tmpprefix");
+    
+    my $tmpfile="$tmpprefix.clustal";
+
+    my $seqA_dp="$input_dir/$nameA";
+    my $seqB_dp="$input_dir/$nameB";
+
+    my $cmd="$bindir/locarna $seqA_dp $seqB_dp $locarna_params --clustal=$tmpfile >/dev/null";
+    
+    $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$reference_aln);
+    
+    system $cmd || die "Command $cmd failed."; 
+    
+    open(CA_IN,"$tmpfile") || die "compute_alignment: Cannot read temporary file $tmpfile\n";
+    
+    my @content=<CA_IN>;
+   
+    close CA_IN;
+    
+    unlink $tmpfile;
+    
+    return @content;
+}
+
 ## compute alignment with given probabilities
-sub compute_alignment_from_dps_probs($$$$$) {
-    my ($seqA_dp,$seqB_dp,$locarna_params,$bmprobs_ref,$amprobs_ref) =  @_;
+sub compute_alignment_from_dps_probs( $$$$$$ ) {
+    my ($input_dir,$nameA,$nameB,$locarna_params,$bmprobs_ref,$amprobs_ref) =  @_;
     
     # printerr "compute_alignment_from_dps_probs $seqA_dp $seqB_dp";
     
@@ -1871,6 +1939,9 @@ sub compute_alignment_from_dps_probs($$$$$) {
     my $tmpfile  = "$tmpprefix.clustal";
     my $tmpfile2 = "$tmpprefix.bmprobs";
     my $tmpfile3 = "$tmpprefix.amprobs";
+
+    my $seqA_dp="$input_dir/$nameA";
+    my $seqB_dp="$input_dir/$nameB";
 
     write_sparsematrix_2D($bmprobs_ref,$tmpfile2);
     
@@ -1883,6 +1954,9 @@ sub compute_alignment_from_dps_probs($$$$$) {
     }
     
     my $cmd="$bindir/locarna $seqA_dp $seqB_dp $locarna_params >/dev/null";
+    
+    $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$reference_aln);
+    
     system $cmd || die "Command $cmd failed."; 
    
     open(CA_IN,"$tmpfile") || die "compute_alignment_from_dps_probs: Cannot read temporary file $tmpfile\n";
@@ -1947,6 +2021,11 @@ sub compute_all_dotplots_par($$$) {
 	    $cpu_num);
 }
 
+
+############################################################
+## compute_dotplot(i,seqs)
+## compute probability dotplot for the $ith sequence in $seqs (using RNAfold/RNAplfold)
+## 
 sub compute_dotplot($$) {
     my ($i,$seqs)=@_;
     
@@ -2066,18 +2145,18 @@ sub compute_all_pairwise_alignments($$$) {
 	    my @aln;
 	    if ( $probabilistic ) {
 		@aln =
-		    compute_alignment_from_dps_probs("$input_dir/".$names[$a],
-						     "$input_dir/".$names[$b],
+		    compute_alignment_from_dps_probs($input_dir,
+						     $names[$a],
+						     $names[$b],
 						     $locarna_params_tree,
 						     $bmprobs{MLocarna::chp($names[$a],$names[$b])},
 						     $amprobs{MLocarna::chp($names[$a],$names[$b])}
 		    );
 	    } else {
-		@aln = compute_alignment_from_dps($bindir,
-						  "$input_dir/".$names[$a],
-						  "$input_dir/".$names[$b],
-						  $locarna_params_tree,
-						  $global_tmpprefix
+		@aln = compute_alignment_from_dps($input_dir,
+						  $names[$a],
+						  $names[$b],
+						  $locarna_params_tree
 		    );
 	    }
 	    
@@ -2137,18 +2216,19 @@ sub compute_all_pairwise_alignments_par($$$$) {
 	    
 	    if ( $probabilistic ) {
 		my ($nameA,$nameB,$bmprobs,$amprobs) = @arg_list;
-		@aln = compute_alignment_from_dps_probs("$input_dir/".$nameA,
-							"$input_dir/".$nameB,
+		@aln = compute_alignment_from_dps_probs($input_dir,
+							$nameA,
+							$nameB,
 							$locarna_params_tree,
 							$bmprobs,
 							$amprobs);
 	    } else {
 		my ($nameA,$nameB) = @arg_list;
-		@aln = compute_alignment_from_dps($bindir,
-						  "$input_dir/".$nameA,
-						  "$input_dir/".$nameB,
-						  $locarna_params_tree,
-						  threadsafe_name($global_tmpprefix));
+		@aln = compute_alignment_from_dps($input_dir,
+						  $nameA,
+						  $nameB,
+						  $locarna_params_tree
+						  );
 	    }
 	    
 	    $pairwise_alns[$a*($#names+1)+$b] = "@aln";

@@ -26,7 +26,6 @@ check_constraints_in_fasta
 sequence_constraint_string
 
 compute_alignment_from_seqs
-compute_alignment_from_dps
 compute_alignment_score
 read_dp_ps
 read_pp_file_aln
@@ -542,28 +541,6 @@ sub compute_alignment($$$$$) {
     return @content;
 }
 
-
-## compute the alignment from dp-files or pp-files
-sub compute_alignment_from_dps($$$$$) {
-    my ($bindir,$seqA_dp,$seqB_dp,$locarna_params,$tmpprefix) =  @_;
-
-    local *CA_IN;
-
-    my $tmpfile="$tmpprefix.clustal";
-
-    my $cmd="$bindir/locarna $seqA_dp $seqB_dp $locarna_params --clustal=$tmpfile >/dev/null";
-    system $cmd || die "Command $cmd failed."; 
-    
-    open(CA_IN,"$tmpfile") || die "compute_alignment: Cannot read temporary file $tmpfile\n";
-    
-    my @content=<CA_IN>;
-   
-    close CA_IN;
-    
-    unlink $tmpfile;
-    
-    return @content;
-}
 
 
 sub compute_alignment_score($$$$$) {
