@@ -2,7 +2,6 @@
 #define MULTIPLE_ALIGNMENT_HH
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <vector>
 
@@ -18,13 +17,21 @@
       length method
 */
 
-class string1: string {
+class string1: std::string {
 public:
-    string1(const &std::string s);
-    explicit std::string operator std::string() const;
-    const char& operator [](size_t i) const;
-    char& operator [](size_t i);
-    size_t length() const;
+    string1(const &std::string s): std::string(" "+s) {}
+    explicit std::string operator std::string() const {
+	return std::string::substr(1,length());
+    };
+    const char& operator [](size_t i) const {
+	return std::string::operator [](i);
+    }
+    char& operator [](size_t i) {
+	return std::string::operator [](i);
+    }
+    size_t length() const {
+	return std::string::length()-1;
+    }
 }
 
 
@@ -51,18 +58,35 @@ public:
 	//! @param c character to be tested
 	//! @returns whether c codes for a gap
 	static bool is_gap_symbol(char c) const;
+
+	const std::string name_;
+	const string1 seq_;
 	
     public:
-	const std::string name;
-	const string1 seq;
 	
+	//! construct from strings name and seq
+	NameSeqPair(std::string name, std::string seq): name_(name), seq_((string1)seq) {}
+
+	//! construct from string name and 1-based string seq
+	NameSeqPair(std::string name, std::string1 seq): name_(name), seq_(seq) {}
+	
+	//access
+	//! (read-only) access to name
+	const string & 
+	name() const {return name_;}
+
+	//! (read-only) access to seq
+	const string & 
+	seq() const {return seq_;}
+
 	//****************************************
 	// projections
 	
 	//! map sequence position -> alignment column.
 	//! @time O(len)
 	//! @param pos position in sequence (without gaps)
-	size_type pos2col(size_type pos) const;
+	size_type
+	pos2col(size_type pos) const;
 	
 	//! map alignment column -> sequence positions
 	//! @time O(len)
@@ -70,7 +94,8 @@ public:
 	//! @returns pair of positions (pos1,pos2)
 	//!   if column col contains a non-gap, then pos1=pos2 is the position of the gap
 	//!   if column col contains a gap, then pos1 is the sequence position left of the gap and pos2 the position right of the gap
-	pair<size_type,size_type> col2pos(size_type col) const;
+	pair<size_type,size_type>
+	col2pos(size_type col) const;
     };
     
 private:
@@ -80,49 +105,65 @@ private:
     //! locate sequences by name in log time
     std::map<string,size_type> name2idx; 
     
-    //! read alignment from input stream, expect clustalw format
+    //! read alignment from input stream, expect clustalw-like format.
+    //! A header starting with CLUSTAL is ignored, but not required.
+    //! Lines can be empty or of the form <name> <seq>.
+    //! Names may occur multiple times. in this case seq strings <seq> are appended.
+    //! The order of first occurrences of names in the stream is preserved.
+    //!
     //! @param in input stream
     void
     read_aln_clustalw(std::istream &in);
     
 public:
 
-    //! read multiple alignment from file (clustalW format)
-    //! @param file file with alignment in clustalW format
+    //! read multiple alignment from file (clustalW-like format)
+    //! @param file file with alignment in clustalW-like format
     MultipleAlignment(const std::string &file);
     
     //! size of multiple aligment
     //! @returns number of name/sequence pairs in alignment
-    size_type size() const;
+    size_type
+    size() const { return alig.size(); }
     
     //! test whether alignment is proper
     //! @returns whether all sequences have the same length
-    bool is_proper() const;
+    bool
+    is_proper() const;
     
     //! length of multiple aligment.
     //! assumes proper alignment, method does not
     //! check, whether all sequences have the same length!  
     //! @returns length of first sequence in alignment
-    size_type length() const;
+    size_type 
+    length() const { return alig[0].seq().length(); }
     
     //! allow read-only traversal of name/sequence pairs
     //! @returns begin iterator
-    const std::vector<NameSeqPair>::const_iterator begin() const;
+    const std::vector<NameSeqPair>::const_iterator 
+    begin() const {
+	return alig.begin();
+    }
     
     //! allow read-only traversal of name/sequence pairs
     //! @returns end iterator
-    const std::vector<NameSeqPair>::const_iterator end() const;
+    const std::vector<NameSeqPair>::const_iterator
+    end() const {
+	return alig.end();
+    }
     
     //! test whether name exists
     //! @param name name of a sequence
     //! @returns whether sequence with given name exists in multiple alignment
-    bool contains(string name) const;
+    bool
+    contains(string name) const;
     
     //! access sequence by name
     //! @pre name exists
     //! @param name name of a sequence
     //! @returns sequence (including gaps) with given name
-    const string &sequence(const string &name) const {
+    const string &
+    sequence(const string &name) const {
 	return sequence(index(name));
     }
     
@@ -132,7 +173,8 @@ public:
     //! @pre name exists
     //! @param name name of a sequence
     //! @returns index of name/sequence pair with given name
-    size_type &index(const string &name) const {
+    size_type &
+    index(const string &name) const {
 	return name2idx[name];
     }
     
@@ -140,7 +182,8 @@ public:
     //! @pre index in range 0..size()-1
     //! @param index index of name/sequence pair (0-based)
     //! @returns sequence (including gaps) with given index
-    const string &sequence(size_type index) const {
+    const string &
+    sequence(size_type index) const {
 	return alig[index].seq;
     }
 
@@ -148,7 +191,8 @@ public:
     //! @pre index in range 0..size()-1
     //! @param index index of name/sequence pair (0-based)
     //! @returns name (including gaps) with given index
-    const string &name(size_type index) const {
+    const string &
+    name(size_type index) const {
 	return alig[index].name;
     }
 };
