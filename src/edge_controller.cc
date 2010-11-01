@@ -57,12 +57,7 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
 		
 		pair<size_type,size_type> pos_j = nspB.col_to_pos(col_i);
 		
-		
-		
 	    }
-	    
-	    
-
 	}
     }
 

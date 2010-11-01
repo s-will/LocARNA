@@ -153,7 +153,7 @@ option_def my_options[] = {
 
     {"max-diff-match",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment edges"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
-    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment,"","alignment","Maximal difference relativ to given alignment (delim=&)."},
+    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relativ to given pairwise alignment (delim=&)."},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Computed probabilities"},
     {"fragment-match-probs",0,0,O_ARG_STRING,&fragment_match_probs,"","\"i j k l\"",

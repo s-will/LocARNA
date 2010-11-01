@@ -72,7 +72,8 @@ int max_diff; // maximal difference for positions of alignment edges
 // (only used for ends of arcs)
 int max_diff_am; //maximal difference between two arc ends, -1 is off
 
-std::string max_diff_alignment; // reference alignment for max-diff-match heuristic
+std::string max_diff_pw_alignment; // pairwise reference alignment for max-diff-match heuristic, separator &
+std::string max_diff_alignment_file; // reference alignment for max-diff-match heuristic, name of clustalw format file
 
 // only consider arc matchs where
 //   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!! changed due to EdgeController/reference alignment
@@ -202,7 +203,8 @@ option_def my_options[] = {
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff-match",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment edges"},
-    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment,"","alignment","Maximal difference relativ to given alignment (delim=&)."},
+    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))."},
+    {"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)."},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
     
@@ -335,7 +337,7 @@ main(int argc, char **argv) {
     // ----------------------------------------  
     // Ribosum matrix
     //
-    RibosumFreq *ribosum=NULL;
+    std::auto_ptr<RibosumFreq> ribosum=NULL;
 	
     if (use_ribosum) {
 	if (ribosum_file == "RIBOSUM85_60") {
@@ -423,9 +425,39 @@ main(int argc, char **argv) {
     // }
     
     
-    // missing: proper error handling in case that lenA, lenB, and max_diff_alignment are incompatible 
+    // missing: proper error handling in case that lenA, lenB, and max_diff_pw_alignment/max_diff_alignment_file are incompatible 
+    
+    
+    // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
+    //
+    if (max_diff_pw_alignment!="" && max_diff_alignment_file!="") {
+	std::err <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
+	exit(-1);
+    }
 
-    EdgeController edge_controller(lenA,lenB,max_diff_alignment,max_diff);
+    // construct EdgeController and check inconsistency for with multiplicity of sequences
+    //
+
+    std::auto_ptr<EdgeController> edge_controller=NULL;
+    MultipleAligmnent *multiple_ref_alignment=NULL;
+    
+    if (max_diff_alignment_file!="") {
+	multiple_ref_alignment = new MultipleAlignment(max_diff_alignment_file);
+	
+    } else if (max_diff_pw_alignment!="") {
+	if ( seqA.get_rows()!=1 || seqB.get_rows()!=1 ) {
+	    std::err << "Cannot use --max-diff-pw-alignemnt for aligning of alignments."<<std:endl;
+	    exit(-1);
+	}
+	
+	edge_controller = new EdgeController(lenA,lenB,max_diff_pw_alignment,max_diff);
+    }
+    
+    edge_controller = new EdgeController(lenA,lenB,multiple_ref_alignment,max_diff);
+    
+    if (multiple_ref_alignment) {
+	delete multiple_ref_alignment;
+    }
     
     // ------------------------------------------------------------
     // Handle constraints (optionally)
@@ -466,7 +498,7 @@ main(int argc, char **argv) {
 				     arcmatch_scores_file,
 				     opt_read_arcmatch_probs?((mea_beta*probability_scale)/100):-1,
 				     (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
-				     edge_controller,
+				     *edge_controller,
 				     seq_constraints
 				     );
     } else {
@@ -475,7 +507,7 @@ main(int argc, char **argv) {
 				     rnadataB,
 				     min_prob,
 				     (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
-				     edge_controller,
+				     *edge_controller,
 				     seq_constraints
 				     );
     }
@@ -586,7 +618,7 @@ main(int argc, char **argv) {
 				 struct_local,
 				 sequ_local,
 				 free_endgaps,
-				 edge_controller,
+				 *edge_controller,
 				 max_diff_am,
 				 min_am_prob,
 				 min_bm_prob,
