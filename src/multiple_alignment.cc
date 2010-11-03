@@ -53,6 +53,56 @@ MultipleAligmnent::read_aln_clustalw(std::istream &in) {
     
     // store the name/sequence pairs in the vector alig
     for (std::vector<std::string>::const_iterator it=names.begin(); it!=names.end(); ++it) {
-	alig.push_back(NameSeqPair(*it,seq_map[*it]);
+    alig.push_back(NameSeqPair(*it,seq_map[*it]);
     }
+}
+
+MultipleAlignment::size_type
+MultipleAlignment::NamSeqPair::pos2col(size_type pos) const {
+	// iterate over the positions in the sequence until you've read pos number of non-gap characters
+    size_t curr_pos = 0; // the current position in the sequence (without gaps)
+    const string1 & seq_ = this.seq();
+    for (size_t i = 1 ; i <= seq_->length() ; i++) {
+	    if (! this.is_gap_symbol( (* seq_)[i])) {	curr_pos++; }
+	    if (curr_pos == pos) { 	return i;  }
+    }
+}
+
+std::pair<size_type,size_type>
+MultipleAlignment::NameSeqPair::col2pos(size_type col) const {
+	// iterate over the positions in the sequence until you've read pos number of non-gap characters
+    size_t curr_pos = 0;
+    const string1 & seq_ = this.seq();
+    for (size_t i = 1 ; i <= col ; i++) {
+	    if (! this.is_gap_symbol( (* seq_)[i])) {	curr_pos++; }
+    }
+
+    // if column col contains a gap, then return (curr_pos, curr_pos + 1)
+    // if column col contains a non-gap, then return (curr_pos, curr_pos)
+    if (this.is_gap_symbol( (* seq_)[i])) {
+    	return std::pair<size_type,size_type> pos_pair(curr_pos, curr_pos + 1);
+    } else {
+    	return std::pair<size_type,size_type> pos_pair(curr_pos, curr_pos);
+    }
+}
+
+bool
+MultipleAlignment::is_proper() const {
+	// Iterate through all sequences (with gaps) and check for equal lengths
+	bool proper = true;
+	std::vector<NameSeqPair>::const_iterator it = this.begin();
+	size_t length = (* it).length();
+	++it;
+	while (proper && (it != this.end())) {
+		proper = proper && (length == it->length());
+	}
+	return proper;
+}
+
+bool
+MultipleAlignment::contains(string name) const {
+	for (std::vector<NameSeqPair>::const_iterator it = this.begin(); it != this.end(); ++it) {
+		if (name == it->name()) { return true; }
+	}
+	return false;
 }
