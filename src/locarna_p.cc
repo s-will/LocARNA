@@ -60,7 +60,7 @@ int max_diff; // maximal difference for positions of alignment edges
 // (only used for ends of arcs)
 int max_diff_am; //maximal difference between two arc ends, -1 is off
 
-std::string max_diff_alignment; // reference alignment for max-diff-match heuristic
+std::string max_diff_pw_alignment; // reference alignment for max-diff-match heuristic
 
 double min_am_prob; // only matched arc-pair with a probability of at least min_am_prob are taken into account
 double min_bm_prob; // only matched base-pair with a probability of at least min_bm_prob are taken into account
@@ -248,7 +248,7 @@ main(int argc, char **argv) {
     
     // missing: proper error handling in case that lenA, lenB, and max_diff_alignment are incompatible 
 
-    EdgeController edge_controller(lenA,lenB,max_diff_alignment,max_diff);
+    EdgeController edge_controller(lenA,lenB,max_diff_pw_alignment,max_diff);
 
     // ----------------------------------------
     // construct set of relevant arc matches

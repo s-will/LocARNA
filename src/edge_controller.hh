@@ -4,6 +4,10 @@
 #include <vector>
 #include <assert.h>
 
+class Sequence;
+
+class MultipleAlignment;
+
 /***
  * For pairwise alignment between two sequences, EdgeController 
  * computes the range of positions in the first sequence which are within 
@@ -105,7 +109,7 @@ public:
 private:
     //! constrain the min/max j without reference alignemnt by delta only
     void
-    EdgeController::constrain_wo_ref(size_type lenA, size_type delta);
+    constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);
 };
 
 

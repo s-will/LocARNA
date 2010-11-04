@@ -3,13 +3,15 @@
 #include <string>
 #include <vector>
 #include "edge_controller.hh"
+#include "multiple_alignment.hh"
+#include "sequence.hh"
 
 #include <math.h>
 
 #include <assert.h>
 
 void
-EdgeController::constrain_wo_ref(size_type lenA, size_type delta) {
+EdgeController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delta) {
     min_j_vector.resize(lenA+1);
     max_j_vector.resize(lenA+1);
     
@@ -26,10 +28,11 @@ EdgeController::constrain_wo_ref(size_type lenA, size_type delta) {
 EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta) {
     
     size_type lenA = seqA.length();
+    size_type lenB = seqB.length();
     
     // initialize vectors least constrained
-    min_j_vector.fill(lenA+1,1);
-    max_j_vector.fill(lenA+1,lenB);
+    fill(min_j_vector.begin(), min_j_vector.end(),1);
+    fill(max_j_vector.begin(), max_j_vector.end(),lenB);
     
     if ( delta == -1 ) { // no constraints!	
 	return;
@@ -38,7 +41,7 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
     if ( ma == NULL ) { // constraints due to delta but no reference
 			// alignment
 	
-	constrain_wo_ref(lenA, (size_type)delta);
+	constrain_wo_ref(lenA, lenB, (size_type)delta);
 	return;
     }
 
@@ -46,16 +49,16 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
     
     // ensure constraints for all pairs of sequences in seqA and seqB,
     // therefore iterate over all name pairs
-    for (vector<string>::const_iterator itA=seqA.names().begin(); seqA.names().end()!=itA; ++itA) {
-	const nspA = ma.nameseqpair(*itA);
+    for (std::vector<std::string>::const_iterator itA=seqA.names().begin(); seqA.names().end()!=itA; ++itA) {
+	const MultipleAlignment::NameSeqPair & nspA = ma->nameseqpair(*itA);
 	
-	for (vector<string>::const_iterator itB=seqB.names().begin(); seqB.names().end()!=itB; ++itB) {
-	    const nspB = ma.nameseqpair(*itB);
+	for (std::vector<std::string>::const_iterator itB=seqB.names().begin(); seqB.names().end()!=itB; ++itB) {
+	    const MultipleAlignment::NameSeqPair &nspB = ma->nameseqpair(*itB);
 	    
 	    for (size_type i=1; i<=lenA; ++i) {
 		size_type col_i = nspA.pos_to_col(i);
 		
-		pair<size_type,size_type> pos_j = nspB.col_to_pos(col_i);
+		std::pair<size_type,size_type> pos_j = nspB.col_to_pos(col_i);
 		
 	    }
 	}
@@ -86,16 +89,16 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
     if ( d == -1 ) {
 	// no constraints!
 	
-	min_j_vector.fill(lenA+1,1);
-	max_j_vector.fill(lenA+1,lenB);
-
+	fill(min_j_vector.begin(), min_j_vector.end(),1);
+	fill(max_j_vector.begin(), max_j_vector.end(),lenB);
+    
 	return;
     }
     
     if (align == "" ) {
 	// constraints due to delta but no reference alignment
 
-	constrain_wo_ref(lenA, (size_type)delta);
+	constrain_wo_ref(lenA, lenB, (size_type)delta);
 
 	return;
     }

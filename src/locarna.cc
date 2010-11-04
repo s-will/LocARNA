@@ -12,6 +12,8 @@
 #include <fstream>
 #include <vector>
 
+#include <memory> // for auto_ptr
+
 //#include <math.h>
 
 #include "sequence.hh"
@@ -337,16 +339,16 @@ main(int argc, char **argv) {
     // ----------------------------------------  
     // Ribosum matrix
     //
-    std::auto_ptr<RibosumFreq> ribosum=NULL;
+    std::auto_ptr<RibosumFreq> ribosum(NULL);
 	
     if (use_ribosum) {
 	if (ribosum_file == "RIBOSUM85_60") {
 	    if (opt_verbose) {
 		std::cout <<"Use built-in ribosum."<<std::endl;
 	    }
-	    ribosum = new Ribosum85_60();
+	    ribosum = auto_ptr<RibosumFreq>(new Ribosum85_60);
 	} else {
-	    ribosum = new RibosumFreq(ribosum_file);
+	    ribosum = auto_ptr<RibosumFreq>(new RibosumFreq(ribosum_file));
 	}	
 	/*
 	std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
@@ -370,7 +372,7 @@ main(int argc, char **argv) {
 				 // for the case of mea alignment!
 				 (opt_mea_alignment && !opt_mea_gapcost)?0:indel_score * (opt_mea_gapcost?probability_scale/100:1),
 				 (opt_mea_alignment && !opt_mea_gapcost)?0:indel_opening_score * (opt_mea_gapcost?probability_scale/100:1),
-				 ribosum,
+				 ribosum.get(),
 				 struct_weight,
 				 tau_factor,
 				 exclusion_score,
@@ -431,29 +433,29 @@ main(int argc, char **argv) {
     // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
     //
     if (max_diff_pw_alignment!="" && max_diff_alignment_file!="") {
-	std::err <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
+	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
 	exit(-1);
     }
 
     // construct EdgeController and check inconsistency for with multiplicity of sequences
     //
 
-    std::auto_ptr<EdgeController> edge_controller=NULL;
-    MultipleAligmnent *multiple_ref_alignment=NULL;
+    std::auto_ptr<EdgeController> edge_controller(NULL);
+    MultipleAlignment *multiple_ref_alignment=NULL;
     
     if (max_diff_alignment_file!="") {
 	multiple_ref_alignment = new MultipleAlignment(max_diff_alignment_file);
 	
     } else if (max_diff_pw_alignment!="") {
 	if ( seqA.get_rows()!=1 || seqB.get_rows()!=1 ) {
-	    std::err << "Cannot use --max-diff-pw-alignemnt for aligning of alignments."<<std:endl;
+	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
 	    exit(-1);
 	}
 	
-	edge_controller = new EdgeController(lenA,lenB,max_diff_pw_alignment,max_diff);
+	edge_controller = std::auto_ptr<EdgeController>(new EdgeController(lenA,lenB,max_diff_pw_alignment,max_diff));
     }
     
-    edge_controller = new EdgeController(lenA,lenB,multiple_ref_alignment,max_diff);
+    edge_controller = std::auto_ptr<EdgeController>(new EdgeController(lenA,lenB,multiple_ref_alignment,max_diff));
     
     if (multiple_ref_alignment) {
 	delete multiple_ref_alignment;

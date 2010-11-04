@@ -4,6 +4,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
+
+#include <assert.h>
 
 /** simple 1-based string
     
@@ -17,22 +20,32 @@
       length method
 */
 
-class string1: std::string {
+class string1 {
+    std::string s_;
 public:
-    string1(const &std::string s): std::string(" "+s) {}
-    explicit std::string operator std::string() const {
-	return std::string::substr(1,length());
-    };
+    string1(const std::string &s): s_(" "+s) {}
+    
+    string1(const string1 &s): s_(s.s_) {}
+    
+    std::string to_string() const {
+	return s_.substr(1,length());
+    }
+    
     const char& operator [](size_t i) const {
-	return std::string::operator [](i);
+	return s_[i];
     }
+    
     char& operator [](size_t i) {
-	return std::string::operator [](i);
+	return s_[i];
     }
+    
     size_t length() const {
-	return std::string::length()-1;
+	return s_.length()-1;
     }
-}
+    
+    const string1 &operator =(const string1 &s) {s_ = s.s_; return *this;}
+    
+};
 
 
 /** Represents a multiple alignment as vector of name/sequence pairs.
@@ -52,31 +65,44 @@ public:
     //! pair of a name string and a sequence string
     //! support projections
     class NameSeqPair {
-	static const string gap_symbols="-.~"; //!< symbols considered gaps
+	typedef MultipleAlignment::size_type size_type;
+	typedef std::pair<size_type,size_type> pos_pair_t;
+
+	static const std::string gap_symbols; //!< symbols considered gaps
 	
 	//! definition of gap for this class
 	//! @param c character to be tested
 	//! @returns whether c codes for a gap
-	static bool is_gap_symbol(char c) const;
+	static bool is_gap_symbol(char c);
 
-	const std::string name_; //!< name of the sequence
-	const string1 seq_; //<! alignment string of the sequence 
+	std::string name_; //!< name of the sequence
+	string1 seq_; //<! alignment string of the sequence 
 	
     public:
 	
 	//! construct from strings name and seq
-	NameSeqPair(std::string name, std::string seq): name_(name), seq_((string1)seq) {}
-
+	NameSeqPair(const std::string &name, const std::string &seq): name_(name), seq_((string1)seq) {}
+	
 	//! construct from string name and 1-based string seq
-	NameSeqPair(std::string name, std::string1 seq): name_(name), seq_(seq) {}
+	NameSeqPair(const std::string &name, const string1 &seq): name_(name), seq_(seq) {}
+	
+	NameSeqPair(const NameSeqPair &nsp): name_(nsp.name_),seq_(nsp.seq_) {}
+	
+	/*
+	  const NameSeqPair &operator=(const NameSeqPair &nsp) {
+	    name_ = nsp.name_;
+	    seq_ = nsp.seq_;
+	    return *this;
+	}
+	*/
 	
 	//access
 	//! (read-only) access to name
-	const string & 
+	const std::string &
 	name() const {return name_;}
-
+	
 	//! (read-only) access to seq
-	const string & 
+	const string1 &
 	seq() const {return seq_;}
 	
 	//****************************************
@@ -94,7 +120,7 @@ public:
 	//! @returns pair of positions (pos1,pos2)
 	//!   if column col contains a non-gap, then pos1=pos2 is the position of the gap
 	//!   if column col contains a gap, then pos1 is the sequence position left of the gap and pos2 the position right of the gap
-	std::pair<size_type,size_type>
+	pos_pair_t
 	col_to_pos(size_type col) const;
     };
     
@@ -103,7 +129,7 @@ private:
     
     //! association between names and indices, use to 
     //! locate sequences by name in log time
-    std::map<string,size_type> name2idx; 
+    std::map<std::string,size_type> name2idx; 
     
     //! read alignment from input stream, expect clustalw-like format.
     //! A header starting with CLUSTAL is ignored, but not required.
@@ -156,14 +182,14 @@ public:
     //! @param name name of a sequence
     //! @returns whether sequence with given name exists in multiple alignment
     bool
-    contains(string name) const;
+    contains(std::string name) const;
     
     //! access sequence by name
     //! @pre name exists
     //! @param name name of a sequence
     //! @returns sequence (including gaps) with given name
-    const string &
-    sequence(const string &name) const {
+    const string1
+    sequence(const std::string &name) const {
 	return sequence(index(name));
     }
     
@@ -173,11 +199,11 @@ public:
     //! @pre name exists
     //! @param name name of a sequence
     //! @returns index of name/sequence pair with given name
-    size_type &
-    index(const string &name) const {
-	assert(contains(name));
-	
-	return name2idx[name];
+    size_type
+    index(const std::string &name) const {
+	std::map<std::string,size_type>::const_iterator it = name2idx.find(name);
+	assert(it!=name2idx.end());
+	return it->second;
     }
 
     //! access name/sequence pair by index
@@ -195,7 +221,7 @@ public:
     //! @param index index of name/sequence pair (0-based)
     //! @returns sequence (including gaps) with given index
     const NameSeqPair &
-    nameseqpair(const string &name) const {
+    nameseqpair(const std::string &name) const {
 	return alig[index(name)];
     }
     
@@ -203,18 +229,18 @@ public:
     //! @pre index in range 0..size()-1
     //! @param index index of name/sequence pair (0-based)
     //! @returns sequence (including gaps) with given index
-    const string &
+    const string1 &
     sequence(size_type index) const {
-	return alig[index].seq;
+	return alig[index].seq();
     }
 
     //! access name by index
     //! @pre index in range 0..size()-1
     //! @param index index of name/sequence pair (0-based)
     //! @returns name (including gaps) with given index
-    const string &
+    const std::string &
     name(size_type index) const {
-	return alig[index].name;
+	return alig[index].name();
     }
 };
 

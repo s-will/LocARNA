@@ -15,7 +15,8 @@ MYSOURCES=options.cc options.hh \
 	arc_matches.cc arc_matches.hh \
 	aligner_p.cc aligner_p.hh \
 	edge_controller.cc edge_controller.hh \
-	evaluator.cc evaluator.hh multiple_alignment.hh
+	evaluator.cc evaluator.hh \
+	multiple_alignment.hh multiple_alignment.cc
 
 
 dist_locarna_SOURCES = locarna.cc $(MYSOURCES)
