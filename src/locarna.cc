@@ -455,7 +455,7 @@ main(int argc, char **argv) {
 	edge_controller = std::auto_ptr<EdgeController>(new EdgeController(lenA,lenB,max_diff_pw_alignment,max_diff));
     }
     
-    edge_controller = std::auto_ptr<EdgeController>(new EdgeController(lenA,lenB,multiple_ref_alignment,max_diff));
+    edge_controller = std::auto_ptr<EdgeController>(new EdgeController(seqA,seqB,multiple_ref_alignment,max_diff));
     
     if (multiple_ref_alignment) {
 	delete multiple_ref_alignment;

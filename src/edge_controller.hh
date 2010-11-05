@@ -116,14 +116,14 @@ private:
 inline
 EdgeController::size_type
 EdgeController::min_j(size_type i) const {
-    assert(i>0);
+    assert(i>0 && i<min_j_vector.size());
     return min_j_vector[i];
 }
 
 inline
 EdgeController::size_type
 EdgeController::max_j(size_type i) const {
-    assert(i>0);
+    assert(i>0 && i<max_j_vector.size());
     return max_j_vector[i];
 }
 

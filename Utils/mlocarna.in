@@ -902,12 +902,15 @@ if (($fast_mea || $only_basematch_probs) && $opt_write_am_probs) {
 ##### ------------------------------------------------------------
 ## realignment: max_diff_aln
 
-my $reference_aln;
+my $refaln;
+my $refaln_filename;
 
 if (defined($max_diff_aln)) {
     
+    $refaln_filename=abs_path($max_diff_aln);
+    
     ## read alignment from file
-    $reference_aln = read_aln("$max_diff_aln");
+    $refaln = read_aln("$refaln_filename");
     
 }
 
@@ -1014,7 +1017,7 @@ sub main {
     check_constraints_in_fasta($seqs);
     
     ## check whether sequences and reference alignment are compatible
-    if (defined($reference_aln) && (! is_aln_of_seqs($seqs,$reference_aln)) ) {
+    if (defined($refaln) && (! is_aln_of_seqs($seqs,$refaln)) ) {
 	print $STDERR "Inconsistent input: Given reference alignment ( --max-diff-aln \"$max_diff_aln\" ) does not match input sequences ( \"$seqs_file\" ).\n";
 	exit(-1);
     }
@@ -1557,7 +1560,7 @@ sub compute_match_probs($$$$$$$) {
 	my $tmpfile_bm="$tmpprefix.bmps";
 	my $tmpfile_am="$tmpprefix.amps";
 	
-	my $ref_aln_option = pairwise_reference_alignment_option($nameA,$nameB,$reference_aln);
+	my $ref_aln_option = pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
 	
 	my $cmd;
 	if ($fast_mea) {
@@ -1622,11 +1625,15 @@ sub clone_share_hash {
 
 
 ## calls locarna on nameA and nameB in input_dir and writes to $tgt.pp and $tgt.aln
-sub call_locarna( $$$$ ) {
+sub call_locarna( $$$ ) {
     my ($inA,$inB,$tgt) = @_;
     
     printmsg 2, "Align $inA + $inB --> $tgt\n";
+    
     my $cmd="$bindir/locarna $inA $inB $locarna_params --pp=$tgt.pp --clustal=$tgt.aln";
+     
+    $cmd.=" ".reference_alignment_option($refaln_filename);
+   
     if (! $moreverbose) { $cmd.=">/dev/null"; }
     
     printmsg 1, "$cmd\n";
@@ -1642,7 +1649,7 @@ sub call_locarna( $$$$ ) {
 ## pass averaged base and (if required) arc match probs to locarna
 ## (unless in fast-mea mode, the pair probabilities in the pp files are ignored)
 ##
-sub call_locarna_prob( $$$$$$ ) {
+sub call_locarna_prob( $$$$$ ) {
     my ($inA,$inB,$tgt,$bmprobs_ref,$amprobs_ref) = @_;
     
     ## extract the alignments from the pp files
@@ -1669,6 +1676,9 @@ sub call_locarna_prob( $$$$$$ ) {
     
     printmsg 2, "Align $inA + $inB --> $tgt\n";
     my $cmd="$bindir/locarna $inA $inB $locarna_params --pp=$tgt.pp --clustal=$tgt.aln $readprob_args";
+
+    $cmd.=" ".reference_alignment_option($refaln_filename);
+
     if (! $moreverbose) { $cmd.=" >/dev/null"; }
     
     printmsg 1, "$cmd\n\n";
@@ -1897,7 +1907,7 @@ sub extend_library($$) {
 
 
 ## compute the alignment from dp-files or pp-files
-sub compute_alignment_from_dps( $$$$$ ) {
+sub compute_alignment_from_dps( $$$$ ) {
     my ($input_dir,$nameA,$nameB,$locarna_params) =  @_;
     
     local *CA_IN;
@@ -1911,8 +1921,8 @@ sub compute_alignment_from_dps( $$$$$ ) {
 
     my $cmd="$bindir/locarna $seqA_dp $seqB_dp $locarna_params --clustal=$tmpfile >/dev/null";
     
-    $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$reference_aln);
-    
+    $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
+        
     system $cmd || die "Command $cmd failed."; 
     
     open(CA_IN,"$tmpfile") || die "compute_alignment: Cannot read temporary file $tmpfile\n";
@@ -1955,7 +1965,7 @@ sub compute_alignment_from_dps_probs( $$$$$$ ) {
     
     my $cmd="$bindir/locarna $seqA_dp $seqB_dp $locarna_params >/dev/null";
     
-    $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$reference_aln);
+    $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
     
     system $cmd || die "Command $cmd failed."; 
    
@@ -2451,7 +2461,62 @@ sub run_evaluation_mode {
     
 }
 
+########################################
+## pairwise_reference_alignment_option($nameA,$nameB,$aln)
+##
+## generate option for pairwise reference alignment of sequences 
+## with names $nameA and $nameB in the multiple alignment $aln
+##
+## current implementation returns option for passing the whole
+## multiple alignment to the locarna executable. Instead, one could
+## pass only the pairwise alignment, avoiding some IO.
+##
+## @pre $aln contains sequences $nameA and $nameB 
+##
+## @param $nameA name of sequence A
+## @param $nameB name of sequence B
+## @param $refaln reference alignment
+## @param $refaln_filename name of file with reference alignment
+##
+## @returns option string or "" if $aln undefined
+sub pairwise_reference_alignment_option( $$$$ ) {
+    my ($nameA,$nameB,$refaln,$refaln_filename) = @_;
+    return reference_alignment_option($refaln_filename);
+}
 
+########################################
+## reference_alignment_option($aln)
+##
+## return option for passing the alignment $aln as reference alignment
+## to locarna
+##
+## @param $refaln_filename name of file with reference alignment
+##
+## @returns option string or "" if $refaln_filename undefined
+sub reference_alignment_option {
+    my ($refaln_filename) =@_;
+    if (defined( $refaln_filename )) {
+	return "--max-diff-aln=\"$refaln_filename\"";
+    } else {
+	return "";
+    }
+}
+
+########################################
+## is_aln_of_seqs($seqs,$reference_aln)
+##
+## check whether $reference_aln contains an alignment of the sequences $seq
+## 
+## @param $seqs list of sequences with names (as returned by read_fasta)
+## @param $reference_aln reference alignment in loh (as returned by read_aln)
+##
+## @returns boolean whether $reference_aln contains an alignment of the sequences $seq
+##
+sub is_aln_of_seqs {
+    my ($seqs,$reference_aln) = @_;
+  
+    print STDERR "is_aln_of_seqs: not implemented yet.\n";
+}
 
 ### ============================================================================
 ### ============================================================================

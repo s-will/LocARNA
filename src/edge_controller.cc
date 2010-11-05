@@ -12,9 +12,6 @@
 
 void
 EdgeController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delta) {
-    min_j_vector.resize(lenA+1);
-    max_j_vector.resize(lenA+1);
-    
     // fill vectors for min_j and max_j
     for (size_type i=1; i<=lenA; i++) {
 	min_j_vector[i] = std::max(delta+1, (size_type)(ceil(i*lenB/lenA)))-delta;
@@ -29,6 +26,9 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
     
     size_type lenA = seqA.length();
     size_type lenB = seqB.length();
+    
+    min_j_vector.resize(lenA+1);
+    max_j_vector.resize(lenA+1);
     
     // initialize vectors least constrained
     fill(min_j_vector.begin(), min_j_vector.end(),1);
@@ -60,6 +60,8 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
 		
 		std::pair<size_type,size_type> pos_j = nspB.col_to_pos(col_i);
 		
+		/* NOT IMPLEMENTED YET */
+
 	    }
 	}
     }
@@ -84,7 +86,9 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
     // because the beginning of the alignment only contains gaps in 
     // sequence 2, then aln_to_seq2[i] = -1
     std::vector<size_type> aln_to_seq2;
-    
+
+    min_j_vector.resize(lenA+1);
+    max_j_vector.resize(lenA+1);  
     
     if ( d == -1 ) {
 	// no constraints!
@@ -154,7 +158,10 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
 	std::cout << std::endl << std::endl;
     }
 	
-    
+    min_j_vector.resize(0);
+    max_j_vector.resize(0);
+
+
     min_j_vector.push_back(0); // entries at index 0 are undefined
     max_j_vector.push_back(0);
 
