@@ -215,8 +215,11 @@ May, 2010
 	expect.
 
 Oct, 2010
-	Add feature to constrain (max-diff-match) alignment relative
-	to a given alignment.
-	Change handling of max-diff-match in case of unequal length:
-	instead of relaxing constraint, change constraint to
-	|i*(lenB/lenA)-j|<=max-diff
+	Add EdgeController: adds feature to constrain (max-diff-match)
+	alignment relative to a given alignment.  Change handling of
+	max-diff-match in case of unequal length: instead of relaxing
+	constraint, change constraint to |i*(lenB/lenA)-j|<=max-diff
+	Add multiple alignment class to support construction of EdgeController.
+
+Nov, 2010
+	Change Copyright to GPL v2 and update README

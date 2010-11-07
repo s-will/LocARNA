@@ -1,0 +1,25 @@
+syntax: glob
+*~
+*.o
+Makefile.in
+Makefile
+.deps/
+doc/
+CVS/
+Utils/locarnate
+Utils/mlocarna
+config.log
+config.status
+autom4te.cache/
+man/locarna.1
+man/locarnate.1
+man/mlocarna.1
+src/fit
+src/locarna
+src/locarna_X
+src/locarna_p
+src/ribosum2cc
+src/ribosum85_60.icc
+
+syntax: regexp
+(.*/)?\#[^/]*\#$
