@@ -1,0 +1,37 @@
+# STOCKHOLM 1.0
+
+#=GF AC   RF00008
+#=GF ID   Hammerhead_3
+#=GF DE   Hammerhead ribozyme (type III)
+#=GF TP   Gene; ribozyme;
+#=GF CC   The hammerhead ribozyme is one of the smallest catalytic
+#=GF CC   RNAs. These RNAs have an endonuclease function, and most
+#=GF CC   often are autocatalytic. Structurally it is composed of
+#=GF CC   three base paired helices, separated by short linkers of
+#=GF CC   conserved sequence. These helices are called I, II and III.
+#=GF CC   We have classified hammerhead ribozymes into three types
+#=GF CC   based on which helix the 5' and 3' ends of the sequence
+#=GF CC   join. This family are the type III hammerheads.
+#=GF CC   The conserved uridine-turn links helix I
+#=GF CC   to helix II and usually has the sequence CUGA.  Helix II and
+#=GF CC   III are linked by a sequence CGAAA.  The cleavage reaction
+#=GF CC   occurs between helix III and I, and is usually a C.
+#=GF CC   Hammerhead ribozymes are found in plant viroids and other
+#=GF CC   small replicating satellite RNA species.  Hammerhead
+#=GF CC   ribozymes have been found in animals as well as plants.
+#=GF CC   This family includes a couple of false matches currently
+#=GF CC   these are EMBL:AC078923 and EMBL:BC050488. These animal
+#=GF CC   sequences are not expected to be hammerhead ribozymes.
+#=GF SQ   10
+S1_AJ295015.1/58-1        ACAGAGUCUGACAAA......CCGUCACUGAAGACGUUCAACUU....................GCGUUGAACAGAAACUCUGC
+S2_AF170503.1/280-333     GAAAGGUCUGUGCUU......AGCACACUGACGAGUUCCUGA........................AAUGGAACGAAACCUUUU
+S3_M83545.1/56-3          CAUAAGUCUGGGCUA......AGCCCACUGAUGAGUCGCUGA........................AAUGCGACGAAACUUAUG
+S4_D00685.1/1-46          ........GCCAGACGU.GGACCCGGCCUGAUGAGUCCGAAA............................GGACGAAACAGUA.
+S5_M17439.1/1-48          ........ACCGGAUGUGCUUUCCGGUCUGAUGAGUCCGU............................GAGGACGAAACAGGAC
+S6_AJ536620.1/206-152     CCACCGUCGGAAAGUG.UGCGCUUUCCCUGAUGAGCCCAA............................AAGGGCGAAACGGUAC
+S7_Y12833.1/339-285       CCGCUAUAUGGGGAUGUGUG.UCCCUACUGACGAGUUCAA............................AAGAACGAAAUAGUUA
+S8_J02439.1/42-95         UGUCCGUA.GUGGAUGUGUA.UCCACUCUGAUGAGUCCGA............................AAGGACGAAACGGAUG
+S9_AJ247113.1/134-53      .UCCAGUCGAGACCUGAAGUGGGUUUCCUGACGAGGCUGUGGAGAGAGCAAAUUGCUUUACUCCCGCACAAGCCGAAACUGGA.
+S10_Y14700.1/133-53       .UCCAGUCGAGACCUGAAGUGGGUUUCCUGAUGAGGCUGUGGAGAGAGCGAAAGCUUUACUCCCA.CACAAGCCGAAACUGGA.
+#=GC SS_cons              .<<<<<<.<<<<<.........>>>>>.......<<<<................................>>>>...>>>>>>.
+//

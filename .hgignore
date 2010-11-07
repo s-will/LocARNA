@@ -6,12 +6,14 @@ Makefile
 .deps/
 doc/
 CVS/
+Releases/
 Utils/locarnate
 Utils/mlocarna
 config.log
 config.status
 autom4te.cache/
 man/locarna.1
+man/locarna_p.1
 man/locarnate.1
 man/mlocarna.1
 src/fit
