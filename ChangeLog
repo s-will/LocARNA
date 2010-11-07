@@ -220,3 +220,6 @@ Oct, 2010
 	max-diff-match in case of unequal length: instead of relaxing
 	constraint, change constraint to |i*(lenB/lenA)-j|<=max-diff
 	Add multiple alignment class to support construction of EdgeController.
+
+Nov, 2010
+	Change Copyright to GPL v2 and update README

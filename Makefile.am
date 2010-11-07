@@ -1,7 +1,7 @@
 SUBDIRS = src Utils lib
 
 
-man_MANS=man/locarna.1 man/mlocarna.1 man/locarnate.1
+man_MANS=man/locarna.1 man/locarna_p.1 man/mlocarna.1 man/locarnate.1
 
 matrices_DATA=\
 Matrices/RIBOSUM85_60
@@ -64,11 +64,15 @@ EXTRA_DIST=Examples/archaea.fa Examples/ferritin.fa Examples/haca.snoRNA.fa Exam
 man/locarna.1: src/locarna man-subdir
 	-$(HELP2MAN) --output=$@ src/locarna
 
+man/locarna_p.1: src/locarna_p man-subdir
+	-$(HELP2MAN) --output=$@ src/locarna_p
+
 man/mlocarna.1: Utils/mlocarna man-subdir
 	-$(POD2MAN)  Utils/mlocarna >$@
 
 man/locarnate.1: Utils/locarnate man-subdir
-	-$(POD2MAN)  Utils/locarnate >$@
+	chmod +x Utils/locarnate
+	-$(HELP2MAN) --no-discard-stderr --output=$@ Utils/locarnate
 
 man-subdir:
 	if [ ! -d $(builddir)/man ] ; then mkdir $(builddir)/man ; fi

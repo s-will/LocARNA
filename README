@@ -1,16 +1,102 @@
-Locarna: LOCal Alignment of RNA
-
-Copyright Sebastian Will, 2005, 2006
+LocARNA: global and Local Alignment of RNA
 
 
-Align two RNA molecules in the way of PMfold. However, we filter the
-structure-pairs by their probability in advance and thus increase
-efficiency. The algorithm selects the highest scoring nested
-structure of basepair-matches out of two crossing structures.
+LocARNA is a collection of alignment tools for the structural analysis
+of RNA. Given a set of RNA sequences, LocARNA simultaneously aligns
+and predicts common structures for your RNAs. In this way, LocARNA
+performs Sankoff-like alignment and is in particular suited for
+analysing sets of related RNAs without known common structure.
 
-The score evaluates basepair-matches by the probabilites of the
-two matched basepairs/arcs and a sequence contribution. For
-remaining part sequence similarity is scored.
+LocARNA distinguishes itself from many other Sankoff-style multiple
+alignment programs by its performance and low memory complexity, high
+accuracy, and richness of features. As unique features, it offers
+structure-local alignment, flexibel structure and anchor constraints,
+and provides efficient computation of reliabilities in
+sequence-structure alignment. The package offers a robust core of
+features and is used as experimental platform for the incorporation of
+new features in RNA sequence-structure alignment.
 
-Complexity of the algorithm is O( n_1 n_2 |P_1| |P_2|)
 
+At its core, the package offers global and local multiple aligmnent of
+RNAs.
+
+Multiple alignment can be performed in one of several different ways:
+
+* progressive alignment using sequence-structure alignment of profiles
+
+* progressive alignment after consistency transformation using
+T-Coffee
+
+* progressive alignment using probabilistic consistency transformation
+  and sequence-structure profile alignments, optionally followed by
+  iterative refinement.
+
+
+Besides of global alignment, LocARNA supports two kinds of
+locality. Local alignment as it is known from sequence alignment,
+identifies and aligns the best matching subsequences. This form of
+locality is called sequence local to distinguish it from structural
+locality. When performing structure local alignment, LocARNA
+identifies and aligns the best matching substructures in the RNAs. The
+sequences of those substructures can be discontinous on the sequence
+level, but remain connected via structural bonds.
+
+Alignment Reliabilities (LocARNA-P). In this special, probabilistic
+mode of operation LocARNA supports the efficient computation of match
+probabilities, probabilistic consistency transformation for more
+accurate multiple alignment, and generates reliability profiles of
+multiple alignemnts.
+
+
+
+Installation
+------------
+For installation on GNU/Linux and other Unix-like systems, please see file INSTALL.
+
+
+Usage
+-----
+
+For instructions on the use of the tools, please see the man pages of
+the tools
+
+* mlocarna  --- for multiple alignment of RNAs. This program supports
+                most of the functionality of the package via a high level interface.
+
+* locarnate --- for multiple alignment of RNAs via T-Coffee. This script offers
+                multiple alignment of RNAs that is performed by sequence-structurally
+                aligning all pairs of RNAs and then using T-Coffee to construct
+                a common mulitple alignment out of all pairwise ones. 
+
+and the low level tools for pairwise comparison of RNAs
+
+* locarna   --- for pairwise alignment
+
+* locarna_p --- for pairwise computation of alignment partition
+                function and (sequence and structure) match
+                probabilities
+
+
+
+Online information, download and web server
+-------------------------------------------
+
+Further information is provided online at
+
+   http://www.bioinf.uni-freiburg.de/Software/LocARNA/
+
+The most recent versions of the package will be made available through
+this page.
+
+
+The core functionality of the package is accessible through a web
+interface at
+
+   http://rna.informatik.uni-freiburg.de
+
+
+
+Contact
+-------
+
+Main author and contact: Sebastian Will swill (at) csail.mit.edu
