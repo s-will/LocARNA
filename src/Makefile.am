@@ -1,3 +1,7 @@
+check_PROGRAMS = edge_controller_test
+edge_controller_test_SOURCES = edge_controller_test.cc
+TESTS = $(check_PROGRAMS)
+
 bin_PROGRAMS = locarna ribosum2cc locarna_p fit locarna_X
 
 BUILT_SOURCES=ribosum85_60.icc
