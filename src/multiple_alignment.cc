@@ -69,7 +69,7 @@ MultipleAlignment::NameSeqPair::is_gap_symbol(char c) {
 
 MultipleAlignment::size_type
 MultipleAlignment::NameSeqPair::pos_to_col(size_type pos) const {
-	// iterate over the positions in the sequence until you've read pos number of non-gap characters
+    // iterate over the positions in the sequence until you've read pos number of non-gap characters
     size_t curr_pos = 0; // the current position in the sequence (without gaps)
     for (size_t i = 1 ; i <= seq_.length() && curr_pos <= pos; i++) {
 	    if (! is_gap_symbol( seq_[i])) { curr_pos++; }
@@ -79,7 +79,7 @@ MultipleAlignment::NameSeqPair::pos_to_col(size_type pos) const {
 
 MultipleAlignment::NameSeqPair::pos_pair_t
 MultipleAlignment::NameSeqPair::col_to_pos(size_type col) const {
-	// iterate over the positions in the sequence until you've read pos number of non-gap characters
+    // iterate over the positions in the sequence until you've read pos number of non-gap characters
     size_t curr_pos = 0;
     
     for (size_t i = 1 ; i <= col ; i++) {
