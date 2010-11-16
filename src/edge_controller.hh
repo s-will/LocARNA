@@ -29,7 +29,7 @@ public:
 
 private:
     // The allowed distance in computing the min and max positions.
-    size_type delta;
+    size_type delta_;
 		
     // The gap character in an alignment
     static const char gap = '-';
@@ -47,7 +47,7 @@ public:
     
     /** construct from pairwise alignment for alignment of single sequences.
      * @param lenA length of sequence A
-     * @param lenB length of sqeuence B
+     * @param lenB length of sequence B
      * @param align A string "<S_1>&<S_2>" where 
      *             S_1 is sequence 1, S_2 is sequence 2, and & is the 
      *             delimiter character
@@ -61,13 +61,12 @@ public:
      *  Constructs an EdgeController object which can then be queried 
      *  for the minimal j and maximal j for each i.
      */
-    EdgeController(size_type lenA, size_type lenB, const std::string &align, int delta, bool print_maps=false);
+    EdgeController(size_type lenA, size_type lenB, const std::string & align, int delta);
     
-    
-    /** construct for the general case of alignment of aligments
+    /** construct for the general case of alignment of alignments
      * @param seqA sequence A
      * @param seqB sequence B
-     * @param align multiple reference alignemnt
+     * @param align multiple reference alignment
      * @param delta the allowed difference
      *  
      *  If delta == -1 then min_j is 1 and max_j is lenB
@@ -79,12 +78,11 @@ public:
      *  the delta constraint holds for all pairs of sequences in seqA and seqB.
      */
     EdgeController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta);
-    
-    
+
     /***
      * @returns delta
      **/
-    size_type get_delta() const {return delta;}
+    size_type get_delta() const {return delta_;}
     
     /***
      * @param i sequence position of first sequence in 1..lenA
@@ -107,7 +105,7 @@ public:
     is_valid_edge(size_type i, size_type j) const;
 
 private:
-    //! constrain the min/max j without reference alignemnt by delta only
+    //! constrain the min/max j without reference alignment by delta only
     void
     constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);
 };
@@ -135,4 +133,3 @@ EdgeController::is_valid_edge(size_type i, size_type j) const {
 
 
 #endif /* EDGE_CONTROLLER_HH */
-
