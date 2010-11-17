@@ -1,7 +1,3 @@
-check_PROGRAMS = edge_controller_test
-edge_controller_test_SOURCES = edge_controller_test.cc
-TESTS = $(check_PROGRAMS)
-
 bin_PROGRAMS = locarna ribosum2cc locarna_p fit locarna_X
 
 BUILT_SOURCES=ribosum85_60.icc
@@ -21,6 +17,10 @@ MYSOURCES=options.cc options.hh \
 	edge_controller.cc edge_controller.hh \
 	evaluator.cc evaluator.hh \
 	multiple_alignment.hh multiple_alignment.cc
+
+check_PROGRAMS = edge_controller_test
+edge_controller_test_SOURCES = edge_controller_test.cc $(MYSOURCES)
+TESTS = $(check_PROGRAMS)
 
 
 dist_locarna_SOURCES = locarna.cc $(MYSOURCES)

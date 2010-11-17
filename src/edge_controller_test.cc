@@ -25,29 +25,35 @@ int main() {
 //    const MultipleAlignment * ma;
 //    EdgeController(a,b,ma, delta);
 
-    // delta = -1
-    delta = -1;
-    EdgeController e(lenA, lenB, align, delta);
-    for (int i=1; i <=lenA; i++) {
-	if (e.min_j(i) != 1) {retVal = -1;};
-	if (e.max_j(i) != lenB) {retVal = -1;};
+    {
+	// delta = -1
+	delta = -1;
+	EdgeController e(lenA, lenB, align, delta);
+	for (int i=1; i <=lenA; i++) {
+	    if (e.min_j(i) != 1) {retVal = -1;};
+	    if (e.max_j(i) != lenB) {retVal = -1;};
+	}
     }
 
-    // delta = 1
-    delta = 1;
-    e(lenA, lenB, align, delta);
     int min_j_array [19] = {1,1,4,4,4,5,6,6,8,9,10,10,13,13,13,13,13,13,13};
     int max_j_array [19] = {2,3,5,5,6,7,7,7,10,11,11,12,13,13,13,13,13,13,13};
-
-    // delta = 3
-    delta = 3;
-    e(lenA, lenB, align, delta);
-    if (delta != e.get_delta()) { retVal = -1;}
-    for (int i=1; i <= lenA; i++) {
-	if (e.min_j(i) != min_j_array[i]) {retVal = -1;};
-	if (e.max_j(i) != max_j_array[i]) {retVal = -1;};
+    
+    {
+	// delta = 1
+	delta = 1;
+	EdgeController e(lenA, lenB, align, delta);
     }
-
+    
+    {
+	// delta = 3
+	delta = 3;
+	EdgeController e(lenA, lenB, align, delta);
+	if (delta != e.get_delta()) { retVal = -1;}
+	for (int i=1; i <= lenA; i++) {
+	    if (e.min_j(i) != min_j_array[i]) {retVal = -1;};
+	    if (e.max_j(i) != max_j_array[i]) {retVal = -1;};
+	}
+    }
 
 //    EdgeController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta);
 //	test cases:
