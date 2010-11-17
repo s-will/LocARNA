@@ -9,6 +9,7 @@ CVS/
 Releases/
 Utils/locarnate
 Utils/mlocarna
+configure
 config.log
 config.status
 autom4te.cache/

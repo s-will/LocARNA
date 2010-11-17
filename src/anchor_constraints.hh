@@ -24,6 +24,9 @@ public:
 	virtual ~failure() throw();
 	virtual const char* what() const throw();
     };
+
+    typedef size_pair_t range_t;
+    typedef std::vector<range_t> range_seq_t;
     
 private:
     typedef std::map<std::string,size_type> name_tab_t;
@@ -31,9 +34,6 @@ private:
     typedef std::vector<int> seq_t;
 
     typedef std::vector<std::string> name_seq_t;
-
-    typedef size_pair_t range_t;
-    typedef std::vector<range_t> range_seq_t;
 
     //! sequence of connected positions in seq B or seq A.
     //! a[i] = j (1<=j<=lenB) means there is an edge from A_i to B_j
@@ -172,6 +172,17 @@ public:
 	if (a[i]>0) return size_pair_t(i,a[i]);
       }
       return size_pair_t(a.size()+1,b.size()+1);
+    }
+
+    //! give acces to the array of ranges for sequence A. This method
+    //! is added for convenience in Carna, which can use this directly
+    //! for constraining its model variables.
+    //! The range sequence ar of sequence A is defined by:
+    //! a position i can be matched only to a position in ar[i].first..ar[i].second
+    //! without violating an anchor constraint (holds for arbitrary i: 1<=i<=lenA)
+    //! @returns range sequence ar
+    const range_seq_t &get_range_seqA() const {
+	return ar;
     }
 
 private:
