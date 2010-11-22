@@ -208,7 +208,7 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
 	size_type max_j_val = std::min( seq2_length, seq2_index + delta);
 	max_j_vector.push_back(max_j_val);
 	
-	size_type min_j_val = seq2_index - delta;
+	size_type min_j_val = std::max( (size_type)delta+1, seq2_index ) - delta;
 	if (seq2_index == aln_to_seq2[*it - 1]) {
 	    // column (*it) contains gap for sequence 2,
 	    // so aln_to_seq2[*it] is position of first non-gap to the LEFT of gap in sequence2
@@ -218,7 +218,7 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
 	min_j_vector.push_back(min_j_val);
     }
 
-    //print_debug(std::cout);
+    print_debug(std::cout);
 
     return;
 }
