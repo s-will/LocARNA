@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iterator>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -7,14 +8,13 @@
 #include "sequence.hh"
 
 #include <math.h>
-
 #include <assert.h>
 
 void
 EdgeController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delta) {
     // fill vectors for min_j and max_j
     for (size_type i=1; i<=lenA; i++) {
-	min_j_vector[i] = std::max(delta+1, (size_type)(ceil(i*lenB/lenA-delta)));
+	min_j_vector[i] = std::max((size_type)1, (size_type)(ceil(i*lenB/lenA-delta)));
 	max_j_vector[i] = std::min(lenB, (size_type)(floor(i*lenB/lenA+delta)));
     }
 
@@ -35,6 +35,7 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
     fill(max_j_vector.begin(), max_j_vector.end(),lenB);
     
     if ( delta == -1 ) { // no constraints!	
+	//print_debug(std::cout);
 	return;
     }
     
@@ -42,6 +43,9 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
 			// alignment
 	
 	constrain_wo_ref(lenA, lenB, (size_type)delta);
+	
+	//print_debug(std::cout);
+
 	return;
     }
 
@@ -100,6 +104,8 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
 	}
 
     }
+
+    //print_debug(std::cout);
 } 
 
 EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string & align, int delta) {
@@ -212,7 +218,18 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
 	min_j_vector.push_back(min_j_val);
     }
 
+    //print_debug(std::cout);
+
     return;
 }
 
 
+void
+EdgeController::print_debug(std::ostream & out) const {
+    out << "min_j_vector: ";
+    copy (min_j_vector.begin()+1, min_j_vector.end(), std::ostream_iterator<size_type> (out, " "));
+    out << std::endl;
+    out << "max_j_vector: ";
+    copy (max_j_vector.begin()+1, max_j_vector.end(), std::ostream_iterator<size_type> (out, " "));
+    out << std::endl;
+}

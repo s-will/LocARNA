@@ -21,16 +21,26 @@ public:
 
 
 bool ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
-  return
+  bool valid = 
       edge_controller.is_valid_edge(arcA.left(),arcB.left())
       &&
       edge_controller.is_valid_edge(arcA.right(),arcB.right())
       &&
-      (size_type)abs((int)(arcA.right()-arcA.left()) - (int)(arcB.right()-arcB.left())) <= max_length_diff	
+      ((size_type)abs((int)(arcA.right()-arcA.left()) - (int)(arcB.right()-arcB.left())) <= max_length_diff)
       &&
       constraints.allowed_edge(arcA.left(),arcB.left())
       &&
       constraints.allowed_edge(arcA.right(),arcB.right());	
+  
+  // std::cout << "ArcMatches::is_valid_arcmatch" << " " 
+  // 	    << arcA << " "
+  // 	    << arcB << " : " 
+  // 	    << edge_controller.is_valid_edge(arcA.left(),arcB.left()) << " "
+  // 	    << edge_controller.is_valid_edge(arcA.right(),arcB.right()) << " "
+  // 	    << valid << " "
+  // 	    << std::endl;
+  
+  return valid;
 }
 
 

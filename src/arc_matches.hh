@@ -10,6 +10,7 @@
 #include "basepairs.hh"
 #include "anchor_constraints.hh"
 
+#include <assert.h>
 
 /*
   wie funktioniert Pruning mit der neuen Struktur?  
@@ -90,10 +91,17 @@ private:
     
     const AnchorConstraints &constraints; //!< for constraints
     
+    
     //! decide according to constraints
-    //! and heuristics whether an arc match is valid
+    //! and heuristics whether an arc match is valid.
+    //! @param arcA arc (i,j) in first sequence
+    //! @param arcB arc (k.l) in second sequence
+    //! @returns whether match of arcA and arcB is valid
+    //! An arc match is valid, if and only if:
+    //! 1.) edges i~k and j~l are valid due to edge_controller (max-diff-match heuristic) and constraints (anchor constraints)
+    //! 2.) length difference of arcs <= max_length_diff
     bool is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const;
-        
+    
     /* END constraints and heuristics */
     
     bool maintain_explicit_scores; //!< whether scores are maintained explicitely or computed from pair probabilities
@@ -107,7 +115,7 @@ private:
 
     //! for each (i,j) maintain vector of the indices of the arc matchs that share the common right end (i,j) 
     Matrix<ArcMatchIdxVec> common_right_end_lists;
-        
+       
     
     //! for each (i,j) maintain vector of the indices of the arc matchs that share the common left end (i,j) 
     Matrix<ArcMatchIdxVec> common_left_end_lists;
@@ -147,9 +155,12 @@ private:
 public:
 
     //! construct from seqnames and explicit list of all scored arc
-    //! matches together with their score
+    //! matches together with their score.
+    //!
     //! @param probability_scale if >=0 read probabilities and multiply them by probability_scale 
     //!
+    //! registers constraints and heuristics and then calls read_arcmatch_scores.
+    //! The constructed object explicitely represents/maintains the scores of arc matchs. 
     ArcMatches(const Sequence &seqA_, 
 	       const Sequence &seqB_, 
 	       const std::string &arcmatch_scores_file,
@@ -160,9 +171,16 @@ public:
     
     
     //! construct from single base pair probabilities. In this case,
-    //! the object filters for relevant base pairs/arcs by min_prob
+    //! the object filters for relevant base pairs/arcs by min_prob.
+    //! Registers constraints and heuristics and then calls
+    //! read_arcmatch_scores.  Constructs BasePairs objects for each
+    //! single object and registers them.  Generates adjacency lists
+    //! of arc matches for internal use and sorts them. Lists contain
+    //! only valid arc matches according to constraints and heuristics
+    //! (see is_valid_arcmatch()). The constructed object does not
+    //! explicitely represent/maintain the scores of arc matchs.
     ArcMatches(const RnaData &rnadataA, 
-	       const RnaData &rnadataB, 
+	       const RnaData &rnadataB,
 	       double min_prob,
 	       size_type max_length_diff, 
 	       const EdgeController &edge_controller,
@@ -181,6 +199,8 @@ public:
     //! reads a list <i> <j> <k> <l> <score>, where
     //! score is the score for matching arcs (i,j) and (k,l).
     //! @param probability_scale if >=0 read probabilities and multiply them by probability_scale 
+    //!
+    //! All registered arc matches are valid (is_valid_arcmatch()).
     void read_arcmatch_scores(const std::string &arcmatch_scores_file, int probability_scale);
     
     
@@ -208,8 +228,12 @@ public:
     }
     
     //! get the score of an arc match
+    //! @param am arc match
+    //! @returns score of arc match
+    //! @pre object represents arc match scores explicitely
     score_t
     get_score(const ArcMatch &am) const {
+	assert(maintain_explicit_scores);
 	return scores[am.idx()];
     }
         
