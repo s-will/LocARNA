@@ -182,18 +182,6 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
 
     assert(seq2_length==lenB); // improve error handling later
     
-//    // (for debugging) prints seq1_to_aln and aln_to_seq2 to standard output
-//    if (print_maps) {
-//	std::cout << std::endl << "seq1_to_aln  ";;
-//	for (size_type i=0; i<seq1_to_aln.size(); i++) {
-//	    std::cout << seq1_to_aln[i] << " ";
-//	}
-//	std::cout << std::endl << "aln_to_seq2  ";
-//	for (size_type i=0; i<aln_to_seq2.size(); i++) {
-//	    std::cout << aln_to_seq2[i] << " ";
-//	}
-//	std::cout << std::endl << std::endl;
-//    }
 	
     min_j_vector.resize(0);
     max_j_vector.resize(0);
@@ -202,8 +190,8 @@ EdgeController::EdgeController(size_type lenA, size_type lenB, const std::string
     max_j_vector.push_back(0);
 
     // Calculate min_j and max_j
-    for (std::vector<size_type>::iterator it = seq1_to_aln.begin() ++ ; it != seq1_to_aln.end(); ++ it) {
-	seq2_index = aln_to_seq2[*it];
+    for (std::vector<size_type>::iterator it = ++ seq1_to_aln.begin() ; it != seq1_to_aln.end(); ++ it) {
+	seq2_index = *it;
 
 	size_type max_j_val = std::min( seq2_length, seq2_index + delta);
 	max_j_vector.push_back(max_j_val);
