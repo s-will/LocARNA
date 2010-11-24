@@ -102,7 +102,12 @@ public:
     size_type length() const {return seq_.size();}
     
     size_type get_rows() const {return rows_;}
-    
+
+    //! read access to name by index
+    //! @param i index in 1..number of rows
+    //! @returns i-th name
+    const std::string &get_name(size_type i) const {return names_[i-1];};
+
     //static const Alphabet<char> &alphabet() { return alphabet_; }
 
     //! look up alignment columns and sequence characters
