@@ -53,8 +53,8 @@ read_clustalw_alignment
 read_clustalw_alnloh
 read_clustalw_aln
 write_clustalw_alnloh
-loh_translate_names
-loh_associate_nnames_to_names
+%loh_translate_names
+%loh_associate_nnames_to_names
 loh_names 
 loh_sort
 
@@ -69,6 +69,13 @@ extract_score_matrix_from_alignments
 
 aln_reliability_beststruct_fromfile
 aln_reliability_fromfile
+
+register_normalized_seqname
+register_normalized_seqnames
+get_normalized_seqname
+forget_normalized_seqnames
+
+nnamepair
 
 );
 
@@ -89,6 +96,9 @@ our $RNAalifold_params="-r";
 our $RNAalifold = "RNAalifold";
 
 our $PACKAGE_STRING = "MLocarna";
+
+
+
 
 
 ########################################
@@ -130,7 +140,15 @@ sub new_intermediate_name {
 
 
 ########################################
-## make_normalized_seqname($name, @names list of existing names)
+## Sequence names in fasta and clustalw files can contain characters
+## that cannot be written to disk.  Therefore, we introduce name
+## normalization that removes special characters and restrict name
+## length in order to generate a nice filename.
+##
+
+
+########################################
+## normalize_seqname($name, @names list of existing names)
 ##
 ## generate a sequence name from $name that
 ## has at most a length of 16
@@ -138,7 +156,7 @@ sub new_intermediate_name {
 ## does not already exist in @names
 ## 
 ########################################
-sub make_normalized_seqname {
+sub normalize_seqname {
     my ($name, @names) = @_;
     
     my $maxlen=16;
@@ -162,6 +180,86 @@ sub make_normalized_seqname {
 }
 
 
+## global hash for storing the association of names to normalized names
+my %normalized_sequence_names_hash;
+
+########################################
+## register_normalized_seqname( $name )
+##
+## registers a normalized name for $name
+## if the name exists already, do nothing 
+##
+## @param $name a sequence name
+##
+sub register_normalized_seqname( $ ) {
+    my ( $name ) = @_;
+    
+    if ( ! exists $normalized_sequence_names_hash{$name} ) {
+	$normalized_sequence_names_hash{$name} = 
+	    normalize_seqname($name,values %normalized_sequence_names_hash);
+    }
+}
+
+########################################
+## register_normalized_seqnames( $loh )
+##
+## registers all normalized name for names in a loh with name entries
+## by calling register_normalized_seqname( $name )
+##
+## @param $loh list of hashs with entry name
+##
+sub register_normalized_seqnames( $ ) {
+    my ( $loh ) = @_;
+    
+    foreach my $h (@$loh) {
+	register_normalized_seqname($h->{name});
+    }
+}
+
+########################################
+## forget_normalized_seqnames()
+##
+## forget all normalized names
+##
+sub forget_normalized_names {
+    %normalized_sequence_names_hash=();
+}
+
+########################################
+## get_normalized_seqname( $name )
+## returns normalized name for the given name
+## if the name does not exist already, it will be registered
+##
+## @returns normalized name for $name
+##
+## if normalized name was not registered: prints error message and exits with error code -1.
+sub get_normalized_seqname( $ ){
+    my ( $name ) = @_;
+    
+    if (exists $normalized_sequence_names_hash{$name}) {
+	return $normalized_sequence_names_hash{$name};
+    } else {
+	print STDERR "ERROR: No normalized name was registered for the requested name $name.\n";
+	exit(-1);
+    }
+}
+
+##
+## generate a unique string from two sequence names
+## that can be used as a filename
+##
+## normalized names have to be registered
+##
+## normalized names do not containt '-' (see MLocarna::chp !)
+sub nnamepair {
+    my ($nameA,$nameB) = @_;
+    
+    my $nnameA=get_normalized_seqname($nameA);
+    my $nnameB=get_normalized_seqname($nameB);
+    
+    return MLocarna::chp($nnameA,$nnameB);
+}
+
 
 ########################################
 ## read_fasta($filename)
@@ -176,10 +274,6 @@ sub make_normalized_seqname {
 ## Each sequence is encoded as hash of features
 ##   name: id of sequence
 ##   descr: description of the sequence
-##   nname: normalized id of the sequence 
-##       (generated from id, 
-##        can be used as a filename which is unique for the set of
-##        sequences in the fasta file)
 ##   seq:  sequence string
 ##
 ## supports special annotation strings as used by locarna
@@ -201,7 +295,6 @@ sub read_fasta {
     }
  
     my @fasta = ();
-    my @names = ();
     
     my $line=<$fh>;
     while(defined($line)) {
@@ -209,12 +302,7 @@ sub read_fasta {
 	    my $name=$1;
 	    my $description=$2;
 	    
-	    my $nname = make_normalized_seqname $name,@names;
-	    
-	    push @names, $nname;
-	    
 	    my $seq = { name  => $name,
-			nname => $nname, 
 			descr => $description };
 	    
 	    while (defined($line=<$fh>) && ($line !~ /^>/)) {
@@ -632,7 +720,7 @@ sub read_pp_file_aln($) {
     my ($filename)=@_;
     local *PP_IN;
    
-    open(PP_IN,$filename) || die "Can not read $filename\n";
+    open(PP_IN,$filename) || die "MLocarna::read_pp_file_aln: Cannot read $filename\n";
     
     my %aln;
     my %pairprobs;
@@ -811,8 +899,8 @@ sub constrain_sequences($$) {
         
     foreach my $i (0..@$seqs-1) {
 	
-	if (exists $constraints->{$seqs->[$i]->{nname}}) {
-	    my $constraint_string = $constraints->{$seqs->[$i]->{nname}}->{"ANNO\#S"};
+	if (exists $constraints->{$seqs->[$i]->{name}}) {
+	    my $constraint_string = $constraints->{$seqs->[$i]->{name}}->{"ANNO\#S"};
 	    $constraint_string =~ s/[^()]/\./g;	    
 	    $seqs->[$i]->{"ANNO\#S"} = $constraint_string;
 	    printmsg 3,"ANNO\#S: $constraint_string\n";
@@ -853,14 +941,15 @@ sub print_k_dim_hash {
 ## Convert hash representation of alignment to list of hash
 ## representation, such that the resulting alignment representation
 ## contains an alignment row for each sequence in $seqs and alignment
-## rows are in the same order as in $seqs. The normalized names (nname)
-## of $seq have to occur as keys in the alignment hash.
+## rows are in the same order as in $seqs.
 ##
 ## The list of hash representation of an alignment is compatible to
 ## the internal alignment format of RNAz.pm
 ##
 ## $seqs ref of list of hash representation of alignment sequences
 ## $aln ref of alignment hash
+##
+## The names in $seqs have to occur as keys in $aln 
 ##
 ## @returns ref of alignment in list of hash representations
 ########################################
@@ -870,7 +959,7 @@ sub aln_to_alnloh($$) {
     my @resaln=();
     
     foreach my $seq (@$seqs) {
-       my $id = $seq->{nname}; ## the name of sequence as in the alignment 
+       my $id = $seq->{name}; ## the name of sequence as in the alignment 
        
        my %resseq= %{ $seq }; ## copy entries of $seqs
        $resseq{seq} = $aln->{$id};
@@ -890,12 +979,10 @@ sub aln_to_alnloh($$) {
 ##
 ## returns tuple of
 ##     * ref of alignment hash,
-##         which  associates normalized names to 
-##         alignment strings
+##         which  associates names to alignment strings
 ##     * ref of names list
 ##         giving information about order (first occurence) of names
 ##         in the input
-##     * ref of hash name=>nname
 ##     * flag, whether a clustal header was detected
 ##
 ########################################
@@ -904,8 +991,7 @@ sub read_clustalw_alignment {
     
     my %aln;
     
-    my %nnames=(); ## keep a hash as association name=>normalized name
-    my @names=(); ## keep a list of non-normalized names for order
+    my @names=(); ## keep a list of names for order
     
     my $line;
     
@@ -919,21 +1005,13 @@ sub read_clustalw_alignment {
 	if ($line =~ /^([^\s]+)\s+(.+)/) {
 	    my $name=$1;
 	    my $seq=$2;
-	    
-	    my $nname;
-	    if (exists $nnames{$name}) {
-		$nname = $nnames{$name};
-	    } else {
-		$nname = make_normalized_seqname $name,values %nnames;
-		$nnames{$name} = $nname;
-		push @names, $nname;
-	    }
-	    
-	    $aln{$nname} .= $seq;
+	       
+	    $aln{$name} .= $seq;
+	    push @names,$name;
 	}
     } while ($line = <$fh>);
     
-    return (\%aln,\@names,\%nnames,$clustal_header);
+    return (\%aln,\@names,$clustal_header);
 }
 
 
@@ -942,10 +1020,6 @@ sub read_clustalw_alignment {
 ## read_clustalw_alnloh($filename)
 ##
 ## read multiple alignment in CLUSTALW aln format from file $filename
-##
-## the names of sequences are converted to normalized names
-## NOTE that normalization of names depends on the order of names
-## in the alignment if some names are not unique in the first 16 characters
 ##
 ## returns ref of alignment list of hash
 ##
@@ -957,7 +1031,7 @@ sub read_clustalw_alnloh {
     
     open($fh, "$aln_filename") 
 	|| die "Can not read alignment file $aln_filename\n";
-    my ($aln, $names, $nnames, $header) = 
+    my ($aln, $names, $header) = 
 	read_clustalw_alignment($fh);
     close $fh;
     
@@ -967,9 +1041,8 @@ sub read_clustalw_alnloh {
     my @alnloh;
     
     for my $name (@$names) {
-	my $nname = $nnames->{$name};
-	my $seq = $aln->{$nname};
-	my $entry = { name=>$name, nname=>$nname, seq=>$seq};
+	my $seq = $aln->{$name};
+	my $entry = { name=>$name, seq=>$seq};
 	push @alnloh,$entry;
     }
     
@@ -981,11 +1054,7 @@ sub read_clustalw_alnloh {
 ##
 ## read multiple alignment in CLUSTALW aln format from file $filename
 ##
-## the names of sequences are converted to normalized names
-## NOTE that normalization of names depends on the order of names
-## in the alignment if some names are not unique in the first 16 characters
-##
-## the result hash associates normalized names to alignment strings
+## the result hash associates names to alignment strings
 ##
 ## returns ref of alignment list of hash
 ##
@@ -997,7 +1066,7 @@ sub read_clustalw_aln {
     
     open($fh, "$aln_filename") 
 	|| die "Can not read alignment file $aln_filename\n";
-    my ($aln, $names, $nnames, $header) = 
+    my ($aln, $names, $header) = 
 	read_clustalw_alignment($fh);
     close $fh;
     
@@ -1011,7 +1080,6 @@ sub read_clustalw_aln {
 ########################################
 ## write_clustalw_alnloh($fh, $seqs, $width)
 ## 
-## 
 ## Writes alignment $aln to filehandle $fh, where
 ## the alignment is given in list of hash format.
 ## Breaks lines to restrict maximal line width
@@ -1019,8 +1087,6 @@ sub read_clustalw_aln {
 ## $fh filehandle open for writing
 ## $seqs loh representation of alignment
 ## $width line width
-##
-## Writes non-normalized names
 ##
 ########################################
 sub write_clustalw_alnloh {
@@ -1062,57 +1128,63 @@ sub write_clustalw_alnloh {
     }
 }
 
-########################################
-## loh_translate_names($alnloh,$names)
-##
-## Translate names in $alnloh according to hash $names
-##
-## $alnloh alignment as list of hashs
-## $names  hash of names
-##
-## Example: 
-##    use 
-##       alnloh_translate_names($alnloh,loh_associate_nnames_to_names($seqs))
-##    to 'unnormalize' names in $alnloh
-##
-## returns ref to a copy of $alnloh where names are replaced by their
-## associated values in hash $names.
-##
-########################################
-sub loh_translate_names {
-    my ($alnloh,$names) = @_;
-    
-    my @res=();
 
-    for my $seq (@$alnloh) {
-	my %entry = %$seq;
-	$entry{name}=$names->{$seq->{name}};
-	push @res,\%entry;
-    }
+############################################################
+## Translation obsolete due to simpler handling of normalized names
+##
+##
+#
+# ########################################
+# ## loh_translate_names($alnloh,$names)
+# ##
+# ## Translate names in $alnloh according to hash $names
+# ##
+# ## $alnloh alignment as list of hashs
+# ## $names  hash of names
+# ##
+# ## Example: 
+# ##    use 
+# ##       alnloh_translate_names($alnloh,loh_associate_nnames_to_names($seqs))
+# ##    to 'unnormalize' names in $alnloh
+# ##
+# ## returns ref to a copy of $alnloh where names are replaced by their
+# ## associated values in hash $names.
+# ##
+# ########################################
+# sub loh_translate_names {
+#     my ($alnloh,$names) = @_;
     
-    return \@res;
-}
+#     my @res=();
 
-########################################
-## loh_associate_nnames_to_names($loh)
-##
-## Associate normalized names to their long names as in $loh.
-##
-## $loh sequences or alignment as list of hashs
-## 
-## returns ref to a hash that associates the names.
-##
-########################################
-sub loh_associate_nnames_to_names {
-    my $loh = shift;
+#     for my $seq (@$alnloh) {
+# 	my %entry = %$seq;
+# 	$entry{name}=$names->{$seq->{name}};
+# 	push @res,\%entry;
+#     }
     
-    my %names=();
-    for my $seq (@$loh) {
-	$names{$seq->{nname}}=$seq->{name};
-    }
+#     return \@res;
+# }
+
+# ########################################
+# ## loh_associate_nnames_to_names($loh)
+# ##
+# ## Associate normalized names to their long names as in $loh.
+# ##
+# ## $loh sequences or alignment as list of hashs
+# ## 
+# ## returns ref to a hash that associates the names.
+# ##
+# ########################################
+# sub loh_associate_nnames_to_names {
+#     my $loh = shift;
     
-    return \%names;
-}
+#     my %names=();
+#     for my $seq (@$loh) {
+# 	$names{$seq->{nname}}=$seq->{name};
+#     }
+    
+#     return \%names;
+# }
 
 ########################################ä
 ## loh_names($loh)
@@ -1157,7 +1229,7 @@ sub write_aln($) {
     my %aln=%{ $aln_ref };
     
     foreach my $name (sort(keys %aln)) {
-	printf "%-18s %s\n",$name,$aln{$name};
+	printf "%-26s %s\n",$name,$aln{$name};
     }
 }
 
@@ -1166,12 +1238,6 @@ sub write_aln($) {
 ##
 ## read multiple alignment in CLUSTALW aln format from file $filename
 ##
-## the names of sequences are converted to normalized names,
-## potential additional information in long names is lost
-##
-## NOTE that normalization of names depends on the order of names
-## in the alignment if some names are not unique in the first 16 characters
-##
 ## returns ref of alignment hash
 ##
 ########################################
@@ -1179,7 +1245,7 @@ sub read_aln($) {
     my ($aln_filename) = @_;
     local *ALN_IN;
     
-    open(ALN_IN,$aln_filename) || die "Can not read aln file $aln_filename\n";
+    open(ALN_IN,$aln_filename) || die "MLocarna::read_aln: Cannot read aln file $aln_filename\n";
     
     my %aln;
     
@@ -1197,20 +1263,12 @@ sub read_aln($) {
 	    my $name=$1;
 	    my $seq=$2;
 	    
-	    my $nname;
-	    if (exists $names{$name}) {
-		$nname = $names{$name};
-	    } else {
-		$nname = make_normalized_seqname $name,values %names;
-		$names{$name} = $nname;
-	    }
-	    	    
-	    $aln{$nname} .= $seq;
+	    $aln{$name} .= $seq;
 	}
     }
     
     close ALN_IN;
-        
+    
     return \%aln;
 }
 
@@ -1369,7 +1427,7 @@ sub write_pp($$$$) {
     print OUT "SCORE: 0\n\n";
     
     foreach my $name (keys %aln) {
-	printf OUT "%-20s %s\n", $name, $aln{$name};
+	printf OUT "%-26s %s\n", $name, $aln{$name};
     }
     
     

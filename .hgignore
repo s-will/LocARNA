@@ -1,6 +1,7 @@
 syntax: glob
 *~
 *.o
+configure
 Makefile.in
 Makefile
 .deps/

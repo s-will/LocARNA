@@ -151,8 +151,8 @@ sub average_basematch_probs($$$) {
 	    my @posmapB = project_seq($alnB->{$nameB});
 	    
 	    my  @bmprobkeys=keys %$bmprobs;
-	    
-	    my %m = %{ $bmprobs->{MLocarna::chp($nameA,$nameB)} };
+
+	    my %m = %{ $bmprobs->{MLocarna::nnamepair($nameA,$nameB)} };
 
 	    # compute sum over all sequence pairs
 	    
@@ -195,7 +195,7 @@ sub average_arcmatch_probs($$$) {
 	    my @posmapA = project_seq($alnA->{$nameA});
 	    my @posmapB = project_seq($alnB->{$nameB});
 	    
-	    my %m = %{ $amprobs->{MLocarna::chp($nameA,$nameB)} };
+	    my %m = %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)} };
 	    
 	    # averagerei
 	    
@@ -432,6 +432,7 @@ sub write_bm_probs($$) {
 
     for my $name_pair (@name_pairs) {
 	my ($nameA,$nameB) = MLocarna::dhp($name_pair);
+
 	my $outfile="$dir/$nameA-$nameB";
 	open(MYOUT,">$outfile") || die "Cannot write to $outfile";
 	
@@ -504,6 +505,7 @@ sub write_am_probs($$) {
 
     for my $name_pair (@name_pairs) {
 	my ($nameA,$nameB) = MLocarna::dhp($name_pair);
+	
 	my $outfile="$dir/$nameA-$nameB";
 	open(MYOUT,">$outfile") || die "Cannot write to $outfile";
 	
@@ -579,15 +581,15 @@ sub compute_bmreliabilities_single_seq {
 	    my $pB=$col2pos{$nameB}[$i];
 	    
 	    ## 1.) contribution from base match
-	    if (exists $bmprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pB}) {
-		$res_bmrel_seq[$i] += $bmprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pB};
+	    if (exists $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB}) {
+		$res_bmrel_seq[$i] += $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB};
 	    }
 	    
 	    ## 2.) contribution from arc matchs
 	    
 	    my @posmapB = @{ $posmaps{$nameB} };
 	    
-	    for my $pA2 ( keys %{ $amprobs->{MLocarna::chp($nameA,$nameB)}{$pA} } ) {
+	    for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
 		
 		my $i2 = $posmapA[$pA2];
 		
@@ -599,9 +601,9 @@ sub compute_bmreliabilities_single_seq {
 		
 		my $pB2 =  $col2pos{$nameB}[$i2];
 		
-		if ( ! exists( $amprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+		if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 		
-		my $add_prob=$amprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+		my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
 		
 		$res_bmrel_str[$i]  += $add_prob;
 		$res_bmrel_str[$i2] += $add_prob;
@@ -666,7 +668,7 @@ sub compute_amreliabilities_single_seq($$$$) {
 	    
 	    my @posmapB = project_seq($aln->{$nameB});
 	    
-	    for my $pA2 ( keys %{ $amprobs->{MLocarna::chp($nameA,$nameB)}{$pA} } ) {
+	    for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
 		    
 		my $i2 = $posmapA[$pA2];
 		
@@ -678,9 +680,9 @@ sub compute_amreliabilities_single_seq($$$$) {
 		
 		my $pB2 =  $col2pos{$nameB}[$i2];
 		
-		if ( ! exists( $amprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+		if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 		
-		my $add_prob=$amprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+		my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
 		
 		$res_amrel{"$i $i2"} += $add_prob; 
 	    }
@@ -774,15 +776,15 @@ sub compute_reliability($$$) {
 		my $pB=$col2pos{$nameB}[$i];
 		
 		## 1.) contribution from base match
-		if (exists $bmprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pB}) {
-		    $res_bmrel_seq[$i] += $bmprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pB};
+		if (exists $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB}) {
+		    $res_bmrel_seq[$i] += $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB};
 		}
 		
 		## 2.) contribution from arc matchs
 		
 		my @posmapB = @{ $posmaps{$nameB} };
 	    		
-		for my $pA2 ( keys %{ $amprobs->{MLocarna::chp($nameA,$nameB)}{$pA} } ) {
+		for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
 		    
 		    my $i2 = $posmapA[$pA2];
 		    
@@ -794,10 +796,10 @@ sub compute_reliability($$$) {
 		    
 		    my $pB2 =  $col2pos{$nameB}[$i2];
 		    
-		    #print STDERR "MLocarna::chp($nameA,$nameB) $pA $pA2 $pB $pB2\n";
-		    if ( ! exists( $amprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+		    #print STDERR "MLocarna::nnamepair($nameA,$nameB) $pA $pA2 $pB $pB2\n";
+		    if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 		    
-		    my $add_prob=$amprobs->{MLocarna::chp($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+		    my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
 		    
 		    $res_amrel{"$i $i2"} += $add_prob; 
 		    

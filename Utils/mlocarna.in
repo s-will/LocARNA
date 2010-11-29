@@ -910,7 +910,7 @@ if (defined($max_diff_aln)) {
     $refaln_filename=abs_path($max_diff_aln);
     
     ## read alignment from file
-    $refaln = read_aln("$refaln_filename");
+    $refaln = read_clustalw_alnloh("$refaln_filename");
     
 }
 
@@ -1002,7 +1002,9 @@ sub main {
     ## ----------------------------------------
     # read input sequences from mfasta file
     my $seqs = read_fasta($seqs_file); ## input sequences
-
+    
+    register_normalized_seqnames($seqs); ## register normalized names for them that can be used as filenames
+    
     ## check input: we need at least two input sequences
     if (@$seqs == 0) {
 	printerr("No input sequences found in $seqs_file.\n");
@@ -1018,7 +1020,7 @@ sub main {
     
     ## check whether sequences and reference alignment are compatible
     if (defined($refaln) && (! is_aln_of_seqs($seqs,$refaln)) ) {
-	print $STDERR "Inconsistent input: Given reference alignment ( --max-diff-aln \"$max_diff_aln\" ) does not match input sequences ( \"$seqs_file\" ).\n";
+	print STDERR "Inconsistent input: Given reference alignment ( --max-diff-aln \"$max_diff_aln\" ) does not match input sequences ( \"$seqs_file\" ).\n";
 	exit(-1);
     }
     
@@ -1065,6 +1067,7 @@ sub main {
 
 
 } ## end main
+
 
 ## compute and print reliabilities
 ##
@@ -1129,21 +1132,22 @@ sub compute_and_write_reliabilities {
 	    my ($bmrels_seq,$bmrels_str) = 
 		compute_bmreliabilities_single_seq($name,\%aln,\%bmprobs_nocbt,\%amprobs_nocbt);
 	    
-	    write_bm_reliabilities("$tgtdir/$results_dir/$single_reliabilities_dir/$name.bmreliability",
+	    my $nname = get_normalized_seqname($name);
+	    write_bm_reliabilities("$tgtdir/$results_dir/$single_reliabilities_dir/$nname.bmreliability",
 				   $bmrels_seq, $bmrels_str);
 	    
 	    
             ## compute and write arc match reliabilities for the single sequences
-	    my %name_pairprobs = read_pp_file_pairprobs("$tgtdir/$input_dir/".$name);
+	    my %name_pairprobs = read_pp_file_pairprobs("$tgtdir/$input_dir/$nname");
 	    
 	    my $amrels_ref = compute_amreliabilities_single_seq($name,\%aln,\%amprobs_nocbt,\%name_pairprobs);
-	    write_am_reliabilities("$tgtdir/$results_dir/$single_reliabilities_dir/$name.amreliability",$amrels_ref);
-	    write_dotplot("$tgtdir/$results_dir/$single_reliabilities_dir/$name"."_reldot.ps",$aln{$name},$amrels_ref);
+	    write_am_reliabilities("$tgtdir/$results_dir/$single_reliabilities_dir/$nname.amreliability",$amrels_ref);
+	    write_dotplot("$tgtdir/$results_dir/$single_reliabilities_dir/$nname"."_reldot.ps",$aln{$name},$amrels_ref);
 	    
 	    my @empty=();
 	    my ($score,$rel_str)=max_weight_structure(length($aln{$name}),\@empty,$amrels_ref,1,0.125);
 	    
-	    printmsg 3,sprintf("%-18s ",$name).$rel_str."\n";
+	    printmsg 3,sprintf("%-26s ",$name).$rel_str."\n";
 	    
 	    $rel_str = project_str_to_aln_seq($rel_str,$aln{$name});
 	    
@@ -1180,7 +1184,7 @@ sub perform_multiple_alignment($) {
     ## ----------------------------------------
     ## get names of sequences in seqs
     #
-    my @names = map { $_->{nname} } @$seqs;
+    my @names = map { $_->{name} } @$seqs;
     
     my $current_dir = abs_path(".");
     
@@ -1411,12 +1415,10 @@ sub perform_multiple_alignment($) {
     system "cp", "$current_alignment_name.pp", "$results_dir/result.pp";
     
     ########################################
-    ## rewrite the result alignment result.aln (extend names, sort)
+    ## rewrite the result alignment result.aln: sort
     ##
     my $aln = read_clustalw_alnloh("$results_dir/result.aln");
     
-    $aln =loh_translate_names($aln,loh_associate_nnames_to_names($seqs));
-
     if ($keep_sequence_order) {
 	$aln = loh_sort($aln,loh_names $seqs);
     }
@@ -1539,14 +1541,14 @@ sub compute_all_match_probs_par {
 sub compute_match_probs($$$$$$$) {
     my ($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$num_seqs) = @_;
         
-    if (exists $bmprobs_ref->{MLocarna::chp($nameB,$nameA)}) {
+    if (exists $bmprobs_ref->{nnamepair($nameB,$nameA)}) {
 	# match probs are symmetric. So if we already have it then use it.
 	
-	my %subhash_bm = transpose_sparsematrix_2D( $bmprobs_ref->{MLocarna::chp($nameB,$nameA)} );
-	$bmprobs_ref->{MLocarna::chp($nameA,$nameB)} = clone_share_hash(2, \%subhash_bm);
+	my %subhash_bm = transpose_sparsematrix_2D( $bmprobs_ref->{nnamepair($nameB,$nameA)} );
+	$bmprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(2, \%subhash_bm);
 	
-	my %subhash_am = transpose_sparsematrix_4D( $amprobs_ref->{MLocarna::chp($nameB,$nameA)} );
-	$amprobs_ref->{MLocarna::chp($nameA,$nameB)} = clone_share_hash(4, \%subhash_am);
+	my %subhash_am = transpose_sparsematrix_4D( $amprobs_ref->{nnamepair($nameB,$nameA)} );
+	$amprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(4, \%subhash_am);
 	
     } else {
 	# compute the match probabilities for the pair
@@ -1562,11 +1564,14 @@ sub compute_match_probs($$$$$$$) {
 	
 	my $ref_aln_option = pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
 	
+	my $nnameA=get_normalized_seqname($nameA);
+	my $nnameB=get_normalized_seqname($nameB);
+
 	my $cmd;
 	if ($fast_mea) {
-	    $cmd = "$bindir/locarna $input_dir/$nameA $input_dir/$nameB $locarna_params --write-match-probs $tmpfile_bm";
+	    $cmd = "$bindir/locarna $input_dir/$nnameA $input_dir/$nnameB $locarna_params --write-match-probs $tmpfile_bm";
 	} else {
-	    $cmd = "$bindir/locarna_p $input_dir/$nameA $input_dir/$nameB $locarna_p_params --write-basematch-probs $tmpfile_bm";
+	    $cmd = "$bindir/locarna_p $input_dir/$nnameA $input_dir/$nnameB $locarna_p_params --write-basematch-probs $tmpfile_bm";
 	    
 	    if ( ! $only_basematch_probs ) {
 		$cmd .= " --write-arcmatch-probs $tmpfile_am";
@@ -1588,8 +1593,8 @@ sub compute_match_probs($$$$$$$) {
 	my %mat_am = read_sparsematrix_4D($tmpfile_am);
 	
 
-	$bmprobs_ref->{MLocarna::chp($nameA,$nameB)} = clone_share_hash(2,\%mat_bm);
-	$amprobs_ref->{MLocarna::chp($nameA,$nameB)} = clone_share_hash(4,\%mat_am);
+	$bmprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(2,\%mat_bm);
+	$amprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(4,\%mat_am);
 	
 	unlink "$tmpfile_am";
 	unlink "$tmpfile_bm";
@@ -1712,8 +1717,8 @@ sub write_pp_projected($$$) {
     
     foreach my $name (@names) {
 	my @posmap = project_seq($alnP{$name});
-	my %name_aln = read_pp_file_aln("$input_dir/".$name);	
-	my %name_pairprobs = read_pp_file_pairprobs("$input_dir/".$name);	
+	my %name_aln = read_pp_file_aln("$input_dir/".get_normalized_seqname($name));	
+	my %name_pairprobs = read_pp_file_pairprobs("$input_dir/".get_normalized_seqname($name));	
 	
 	if ( exists $name_aln{"#C"} && (!$ignore_constraints)) {
 	    my $constraints = $name_aln{"#C"};
@@ -1916,8 +1921,8 @@ sub compute_alignment_from_dps( $$$$ ) {
     
     my $tmpfile="$tmpprefix.clustal";
 
-    my $seqA_dp="$input_dir/$nameA";
-    my $seqB_dp="$input_dir/$nameB";
+    my $seqA_dp="$input_dir/".get_normalized_seqname($nameA);
+    my $seqB_dp="$input_dir/".get_normalized_seqname($nameB);
 
     my $cmd="$bindir/locarna $seqA_dp $seqB_dp $locarna_params --clustal=$tmpfile >/dev/null";
     
@@ -1950,8 +1955,8 @@ sub compute_alignment_from_dps_probs( $$$$$$ ) {
     my $tmpfile2 = "$tmpprefix.bmprobs";
     my $tmpfile3 = "$tmpprefix.amprobs";
 
-    my $seqA_dp="$input_dir/$nameA";
-    my $seqB_dp="$input_dir/$nameB";
+    my $seqA_dp="$input_dir/".get_normalized_seqname($nameA);
+    my $seqB_dp="$input_dir/".get_normalized_seqname($nameB);
 
     write_sparsematrix_2D($bmprobs_ref,$tmpfile2);
     
@@ -2049,9 +2054,9 @@ sub compute_dotplot($$) {
         
     $RNAfold_args.=" >/dev/null" unless $verbose;
     
-    my $name = $seqs->[$i]->{nname}; # the normalized name of the sequence
+    my $name = $seqs->[$i]->{name}; # the name of the sequence
     
-    if ( $skip_pp && -e "$input_dir/$name" ) {
+    if ( $skip_pp && -e ("$input_dir/".get_normalized_seqname($name)) ) {
 	# print "Skip $name\n";
         # skip
     } else {
@@ -2059,7 +2064,7 @@ sub compute_dotplot($$) {
 	# partition folding
 	#
 	
-	my $longname=$seqs->[$i]->{name}; ## use the non-normalized name here!
+	my $longname=$seqs->[$i]->{name};
 	$longname =~ s/[^a-zA-Z0-9]/_/g; # replace special characters by "_" such that this can be used as filename again
 	
 	my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
@@ -2101,9 +2106,9 @@ sub compute_dotplot($$) {
 	}
 	
 	if ( -e "$dpname\_dp2.ps" ) {
-	    convert_dp_to_pp_with_constraints("$dpname\_dp2.ps","$input_dir/$name",$name,$seq_str,$constraints,1);
+	    convert_dp_to_pp_with_constraints("$dpname\_dp2.ps","$input_dir/".get_normalized_seqname($name),$name,$seq_str,$constraints,1);
 	} else {
-	    convert_dp_to_pp_with_constraints("$dpname\_dp.ps","$input_dir/$name",$name,$seq_str,$constraints,0);
+	    convert_dp_to_pp_with_constraints("$dpname\_dp.ps","$input_dir/".get_normalized_seqname($name),$name,$seq_str,$constraints,0);
 	}
 		
 	# convert was before a simple rename:
@@ -2159,8 +2164,8 @@ sub compute_all_pairwise_alignments($$$) {
 						     $names[$a],
 						     $names[$b],
 						     $locarna_params_tree,
-						     $bmprobs{MLocarna::chp($names[$a],$names[$b])},
-						     $amprobs{MLocarna::chp($names[$a],$names[$b])}
+						     $bmprobs{nnamepair($names[$a],$names[$b])},
+						     $amprobs{nnamepair($names[$a],$names[$b])}
 		    );
 	    } else {
 		@aln = compute_alignment_from_dps($input_dir,
@@ -2200,8 +2205,8 @@ sub compute_all_pairwise_alignments_par($$$$) {
 		my @arg_list = ($num,$a,$b,
 				$names[$a],
 				$names[$b],
-				$bmprobs{MLocarna::chp($names[$a],$names[$b])},
-				$amprobs{MLocarna::chp($names[$a],$names[$b])});
+				$bmprobs{nnamepair($names[$a],$names[$b])},
+				$amprobs{nnamepair($names[$a],$names[$b])});
 		push @argument_lists, [ @arg_list ];
 	    } else {
 		my @arg_list=($num,$a,$b,
@@ -2299,7 +2304,7 @@ sub perform_progressive_steps($$$) {
 	    push @stack, "$intermediate_dir/$intermediate_name.pp";
 	    
 	} else {
-	    push @stack, "$input_dir/$item";
+	    push @stack, "$input_dir/".get_normalized_seqname($item);
 	}
     }
     
@@ -2426,7 +2431,7 @@ sub run_evaluation_mode {
  	my $alnlist = read_fasta($alnfile);
 	my %alnhash=();
 	foreach my $seq (@$alnlist) {
-	    $alnhash{$seq->{nname}} = $seq->{seq};
+	    $alnhash{$seq->{name}} = $seq->{seq};
 	}
 	$aln = \%alnhash;
     } else {
@@ -2513,9 +2518,29 @@ sub reference_alignment_option {
 ## @returns boolean whether $reference_aln contains an alignment of the sequences $seq
 ##
 sub is_aln_of_seqs {
-    my ($seqs,$reference_aln) = @_;
-  
-    print STDERR "is_aln_of_seqs: not implemented yet.\n";
+    my ($seqs,$aln) = @_;
+    
+    foreach my $seq ( @$seqs ) {
+	
+	my $found=0;
+	foreach my $alnseq ( @$aln ) {
+	    if ($seq->{name} eq $alnseq->{name}) {
+		
+		my $alnseqstr = $alnseq->{seq};
+		$alnseqstr =~ tr/~.-//d;
+		$alnseqstr = uc $alnseqstr;
+		
+		my $seqstr=$seq->{seq};
+		$seqstr = uc $seqstr;
+
+		
+		$found = ( $alnseqstr eq $seqstr );
+		last;
+	    }
+	}
+	if (!$found) { return 0; }
+    }
+    return 1;
 }
 
 ### ============================================================================

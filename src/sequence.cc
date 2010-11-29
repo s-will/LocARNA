@@ -137,7 +137,7 @@ Sequence::write(ostream &out,
     // prefix output by names
     
     for (size_type i=0; i<rows_; i++) {
-	int ow=out.width(18);
+	int ow=out.width(26);
 	out << left << names_[i]<<" ";
 	out.width(ow);
 	
