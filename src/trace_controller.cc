@@ -184,7 +184,7 @@ TraceController::merge_in_trace(const Trace &trace, size_type delta) {
 	// probably it will be necessary to replace the intersection idea
 	// by a more relaxed merging strategy
 	if ( min_col_vector[i] > max_col_vector[i] ) {
-	    std::cerr << "Inconsistent trace range due to max-diff heuristic" << i << std::endl;
+	    std::cerr << "Inconsistent trace range due to max-diff heuristic" << std::endl;
 	    exit(-1); // ATTENTION: think later what to do about that
 	}
     }

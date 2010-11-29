@@ -666,7 +666,7 @@ Aligner::align_D() {
     for (size_type al=r.get_endA()+1; al>r.get_startA(); ) { al--; 
 	
 	size_type max_bl = min(r.get_endB(),params->trace_controller.max_col(al));
-	size_type min_bl = max(r.get_startB(),params->trace_controller.max_col(al));
+	size_type min_bl = max(r.get_startB(),params->trace_controller.min_col(al));
 	
 	// for bl in max_bl .. min_bl
 	for (size_type bl=max_bl+1; bl > min_bl;) { bl--; 

@@ -35,8 +35,8 @@ bool ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
   // std::cout << "ArcMatches::is_valid_arcmatch" << " " 
   // 	    << arcA << " "
   // 	    << arcB << " : " 
-  // 	    << trace_controller.is_valid_trace(arcA.left(),arcB.left()) << " "
-  // 	    << trace_controller.is_valid_trace(arcA.right(),arcB.right()) << " "
+  // 	    << trace_controller.is_valid_match(arcA.left(),arcB.left()) << " "
+  // 	    << trace_controller.is_valid_match(arcA.right(),arcB.right()) << " "
   // 	    << valid << " "
   // 	    << std::endl;
   
