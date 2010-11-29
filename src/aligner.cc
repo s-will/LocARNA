@@ -279,14 +279,17 @@ Aligner::align_noex(int state, size_type al, size_type bl, size_type i, size_typ
 
 
 // generic initalization method.
-// Depending on the state
-// the al-th row and bl-th column are initialized
 //
 // The method takes care of anchor constraints. Positions that are constraint cannot be deleted/inserted
 //
 // The method initializes Ms and Es. ATTENTION: Fs has to be re-initialized for each row i during recursion.  
 //
-// In case of global alignment without exclusions initialization is easy: 
+// Init has to be aware of the trace controllers restriction that potentially limit the
+// computed entries in each matrix row
+// It is necessary to initialize all invalid entries that may be accessed from these valid entries with neg_infty
+//
+//
+// In case of global alignment without exclusions and without restriction due to trace controller initialization is easy: 
 //    M(al,bl)=0
 //    M(i,bl)=indel_opening+i*indel, for i>0
 //    M(al,j)=indel_opening+j*indel, for j>0
@@ -300,7 +303,7 @@ Aligner::align_noex(int state, size_type al, size_type bl, size_type i, size_typ
 
 template <class ScoringView>
 void
-Aligner::init_state(int state, int al, int ar, int bl, int br, 
+Aligner::init_state(int state, size_type al, size_type ar, size_type bl, size_type br, 
 		    bool globalA, bool exclA,
 		    bool globalB, bool exclB, 
 		    ScoringView sv) {
@@ -309,7 +312,7 @@ Aligner::init_state(int state, int al, int ar, int bl, int br,
     // end with gap in alistr of B do not exist ==> -infty 
     if (state<4) {
 	ScoreVector   &E = Es[state];
-	for (int j=bl; j<br; j++) {
+	for (size_type j=bl; j<br; j++) {
 	    E[j]=infty_score_t::neg_infty;
 	}
     }
@@ -319,9 +322,9 @@ Aligner::init_state(int state, int al, int ar, int bl, int br,
     // al,bl can only be reached in states, where this is legal with cost 0 for empty alignment
     M(al,bl) = (infty_score_t)0;
     
-    // std::cout << "ROW "<<bl<<" AL: "<<al<<" AR: "<<ar<<std::endl;
+    // std::cout << "COL "<<bl<<" AL: "<<al<<" AR: "<<ar<<std::endl;
     
-    // init first row bl
+    // init first col bl
     //
     infty_score_t indel_score=(infty_score_t)sv.scoring()->indel_opening();
     if (exclA) {
@@ -334,23 +337,29 @@ Aligner::init_state(int state, int al, int ar, int bl, int br,
     // anchored positions must not be excluded, 
     // nor deleted
     
-    for (int i=al+1; i<ar; i++) {
-      if (!indel_score.is_neg_infty()) {
-	if (params->constraints.aligned_in_a(i)) {
-	  indel_score=infty_score_t::neg_infty;
-	}
-	else if (!exclA && globalA) {
-	  indel_score += sv.scoring()->gapA(i,bl);
-	}
-      }
-      M(i,bl) = (infty_score_t)indel_score;
-      // std::cout << indel_score<<" ";
-    }
-    // std::cout << std::endl;
+    size_type i;
+    for (i=al+1; i<ar; i++) {
 
+	if (params->trace_controller.min_col(i)>bl) break; // fill only as long as column is accessible
+
+	if (!indel_score.is_neg_infty()) {
+	    if (params->constraints.aligned_in_a(i)) {
+		indel_score=infty_score_t::neg_infty;
+	    }
+	    else if (!exclA && globalA) {
+		indel_score += sv.scoring()->gapA(i,bl);
+	    }
+	}
+	M(i,bl) = (infty_score_t)indel_score;
+    }
+
+    // fill entries left of valid entries 
+    for ( ; i<ar; i++) {
+	assert(params->trace_controller.min_col(i)>bl);
+	M(i,params->trace_controller.min_col(i)-1) = infty_score_t::neg_infty; 
+    }
     
-    
-    // init first col al
+    // init first row al
     //
     indel_score=(infty_score_t)sv.scoring()->indel_opening();
     if (exclB) {
@@ -359,7 +368,8 @@ Aligner::init_state(int state, int al, int ar, int bl, int br,
       indel_score = (infty_score_t)0;
     }
     
-    for (int j=bl+1; j<br; j++) {
+    size_type j;
+    for (j=bl+1 ; j < min(br, params->trace_controller.max_col(al)+1) ; j++) {
       if (!indel_score.is_neg_infty()) {
 	if (params->constraints.aligned_in_b(j)) {
 	  indel_score=infty_score_t::neg_infty;
@@ -370,14 +380,27 @@ Aligner::init_state(int state, int al, int ar, int bl, int br,
       }
       M(al,j) = (infty_score_t)indel_score;
     }
+
+    // fill entries above valid entries 
+    // here j points to the last initialized entry in row al + 1
+    i=al+1;
+    for (; i<ar; i++) {
+	for (;
+	     j<min(br,params->trace_controller.max_col(i)+1); ++j) {
+	    M(i-1,j)=infty_score_t::neg_infty;
+	}
+    }
+
 }
 
 // ----------------------------------------
 // recomputes M matrix/matrices
 // after the call the matrix is filled in the range [al..ar-1] x [bl..br-1]
 void
-Aligner::align_in_arcmatch(int al,int ar,int bl,int br,
+Aligner::align_in_arcmatch(size_type al,size_type ar,size_type bl,size_type br,
 				bool allow_exclusion) {
+
+    assert(br>0); // if br<=0 we run into trouble below when computing br-1
 
     // cout << al << " " << ar <<" " << bl << " " << br <<endl;
 
@@ -411,12 +434,12 @@ Aligner::align_in_arcmatch(int al,int ar,int bl,int br,
     // alignment for state E_NO_NO
     //
     
-    for (size_type i=al+1; i<(size_type)ar; i++) {
+    for (size_type i=al+1; i<ar; i++) {
 	Fs[E_NO_NO]=infty_score_t::neg_infty;
 	
 	// limit entries due to trace controller
-	size_type min_col = std::max((size_type)(bl+1),params->trace_controller.min_col(i));
-	size_type max_col = std::min((size_type)(br-1),params->trace_controller.max_col(i));
+	size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
+	size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
 	
 	for (size_type j=min_col; j<=max_col; j++) {
 	    Ms[E_NO_NO](i,j)=align_noex(E_NO_NO,al,bl,i,j,def_scoring_view);
@@ -431,8 +454,13 @@ Aligner::align_in_arcmatch(int al,int ar,int bl,int br,
 	int state;
 
 	state=E_OP_NO;
-	for (int i=al+1; i<ar; i++) { 
-	    for (int j=bl+1; j<br; j++) {
+	for (size_type i=al+1; i<ar; i++) { 
+	
+	    // limit entries due to trace controller
+	    size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
+	    size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
+	    
+	    for (size_type j=min_col; j<=max_col; j++) {
 		Ms[state](i,j) = max(
 				     params->constraints.aligned_in_a(i)?infty_score_t::neg_infty:Ms[state](i-1,j),
 				     Ms[E_NO_NO](i,j)
@@ -441,8 +469,12 @@ Aligner::align_in_arcmatch(int al,int ar,int bl,int br,
 	}
 	    
 	state=E_NO_OP;
-	for (int i=al+1; i<ar; i++) {
-	    for (int j=bl+1; j<br; j++) {
+	for (size_type i=al+1; i<ar; i++) {
+	    // limit entries due to trace controller
+	    size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
+	    size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
+	    
+	    for (size_type j=min_col; j<=max_col; j++) {
 		Ms[state](i,j) = max(
 				     params->constraints.aligned_in_b(j)?infty_score_t::neg_infty:Ms[state](i,j-1),
 				     Ms[E_NO_NO](i,j)
@@ -451,17 +483,25 @@ Aligner::align_in_arcmatch(int al,int ar,int bl,int br,
 	}
 
 	state=E_NO_X;
-	for (int i=al+1; i<ar; i++) {
+	for (size_type i=al+1; i<ar; i++) {
 	    Fs[state]=infty_score_t::neg_infty;
-	    for (int j=bl+1; j<br; j++) { 
+	    // limit entries due to trace controller
+	    size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
+	    size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
+	    
+	    for (size_type j=min_col; j<=max_col; j++) {
 		Ms[state](i,j) = max(align_noex(state,al,bl,i,j,def_scoring_view),
 				     Ms[E_NO_OP](i,j)+scoring->exclusion());
 	    }
 	}
 	
 	state=E_OP_X;
-	for (int i=al+1; i<ar; i++) {
-	    for (int j=bl+1; j<br; j++) {
+	for (size_type i=al+1; i<ar; i++) {
+	    // limit entries due to trace controller
+	    size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
+	    size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
+	    
+	    for (size_type j=min_col; j<=max_col; j++) {
 		Ms[state](i,j) = max(
 				     params->constraints.aligned_in_a(i)?infty_score_t::neg_infty:Ms[state](i-1,j),
 				     Ms[E_NO_X](i,j)
@@ -470,17 +510,25 @@ Aligner::align_in_arcmatch(int al,int ar,int bl,int br,
 	}
 	
 	state=E_X_NO;
-	for (int i=al+1; i<ar; i++) {
+	for (size_type i=al+1; i<ar; i++) {
 	    Fs[state]=infty_score_t::neg_infty;
-	    for (int j=bl+1; j<br; j++) { 
+	    // limit entries due to trace controller
+	    size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
+	    size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
+	    
+	    for (size_type j=min_col; j<=max_col; j++) {
 		Ms[state](i,j) = max(align_noex(state,al,bl,i,j,def_scoring_view),
 				     Ms[E_OP_NO](i,j)+scoring->exclusion());
 	    }
 	}
 
 	state=E_X_OP;
-	for (int i=al+1; i<ar; i++) {
-	    for (int j=bl+1; j<br; j++) { 
+	for (size_type i=al+1; i<ar; i++) {
+	    // limit entries due to trace controller
+	    size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
+	    size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
+	    
+	    for (size_type j=min_col; j<=max_col; j++) {
 		Ms[state](i,j) = max(
 				     params->constraints.aligned_in_b(j)?infty_score_t::neg_infty:Ms[state](i,j-1),
 				     Ms[E_X_NO](i,j)
@@ -489,9 +537,13 @@ Aligner::align_in_arcmatch(int al,int ar,int bl,int br,
 	}
 
 	state=E_X_X;
-	for (int i=al+1; i<ar; i++) {
+	for (size_type i=al+1; i<ar; i++) {
 	    Fs[state]=infty_score_t::neg_infty;
-	    for (int j=bl+1; j<br; j++) { 
+	    // limit entries due to trace controller
+	    size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
+	    size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
+	    
+	    for (size_type j=min_col; j<=max_col; j++) {
 		Ms[state](i,j) = 
 		    max(align_noex(state,al,bl,i,j,def_scoring_view),
 			max(Ms[E_OP_X](i,j)+scoring->exclusion(),
@@ -669,7 +721,12 @@ Aligner::align_top_level_free_endgaps() {
     M_matrix_t &M=Ms[E_NO_NO];
     infty_score_t max_score;
     
-    init_state(E_NO_NO,r.get_startA()-1,r.get_endA()+1,r.get_startB()-1,r.get_endB()+1,!params->free_endgaps.allow_left_2(),false,!params->free_endgaps.allow_left_1(),false,def_scoring_view);
+    init_state(E_NO_NO,
+	       r.get_startA()-1,r.get_endA()+1,
+	       r.get_startB()-1,r.get_endB()+1,
+	       !params->free_endgaps.allow_left_2(),false,
+	       !params->free_endgaps.allow_left_1(),false,
+	       def_scoring_view);
     
     // need to handle anchor constraints:
     // search maximum to the right of (or at) rightmost anchor constraint
@@ -679,7 +736,12 @@ Aligner::align_top_level_free_endgaps() {
     
     for (size_type i=r.get_startA(); i<=r.get_endA(); i++) {
 	Fs[E_NO_NO]=infty_score_t::neg_infty;
-	for (size_type j=r.get_startB(); j<=r.get_endB(); j++) {
+	
+	// limit entries due to trace controller
+	size_type min_col = std::max(r.get_startB(),params->trace_controller.min_col(i));
+	size_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(i));
+
+	for (size_type j=min_col; j<=max_col; j++) {
 	    M(i,j) = align_noex( E_NO_NO, r.get_startA()-1, r.get_startB()-1, i, j,def_scoring_view );	      
 	}
     }
@@ -747,7 +809,12 @@ Aligner::align_top_level_locally(ScoringView sv) {
     
     for (size_type i=r.get_startA(); i<=r.get_endA(); i++) {
 	Fs[E_NO_NO]=infty_score_t::neg_infty;
-        for (size_type j=r.get_startB(); j<=r.get_endB(); j++) {
+
+	// limit entries due to trace controller
+	size_type min_col = std::max(r.get_startB(),params->trace_controller.min_col(i));
+	size_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(i));
+
+	for (size_type j=min_col; j<=max_col; j++) {
 	    
 	    M(i,j) = align_noex( E_NO_NO,r.get_startA()-1,r.get_startB()-1,i,j, sv);	      
 	    //
@@ -784,7 +851,12 @@ Aligner::align_top_level_localB() {
     init_state(E_NO_NO,r.get_startA()-1,r.get_endA()+1,r.get_startB()-1,r.get_endB()+1,true,false,false,false,def_scoring_view);
     
     for (size_type i=r.get_startA(); i<=r.get_endA(); i++) {
-	for (size_type j=r.get_startB(); j<=r.get_endB(); j++) {
+
+	// limit entries due to trace controller
+	size_type min_col = std::max(r.get_startB(),params->trace_controller.min_col(i));
+	size_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(i));
+
+	for (size_type j=min_col; j<=max_col; j++) {
 	    M(i,j) = 
 		max( (infty_score_t)0,
 		     align_noex( E_NO_NO, 

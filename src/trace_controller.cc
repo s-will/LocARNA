@@ -157,7 +157,7 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 	    // construct trace for current sequences A and B
 	    Trace trace(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB);
 	    
-	    trace.print_debug(std::cout);
+	    //trace.print_debug(std::cout);
 
 	    // combine existing trace range with new trace +/- delta
 	    merge_in_trace(trace, (size_type)delta);
@@ -165,7 +165,7 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 	}
     }
         
-    print_debug(std::cout);
+    //print_debug(std::cout);
 } 
 
 void

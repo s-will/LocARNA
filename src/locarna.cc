@@ -453,11 +453,11 @@ main(int argc, char **argv) {
 	multiple_ref_alignment = new MultipleAlignment(seqA.names()[0],seqB.names()[0],max_diff_pw_alignment);
     }
 
-    if (multiple_ref_alignment) {
-	std::cout<<"Reference aligment:"<<std::endl;
-	multiple_ref_alignment->print_debug(std::cout);
-	std::cout << std::flush;
-    }
+    // if (multiple_ref_alignment) {
+    // 	std::cout<<"Reference aligment:"<<std::endl;
+    // 	multiple_ref_alignment->print_debug(std::cout);
+    // 	std::cout << std::flush;
+    // }
     
     TraceController trace_controller(seqA,seqB,multiple_ref_alignment,max_diff);
     

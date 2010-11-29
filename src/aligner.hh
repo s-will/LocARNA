@@ -217,7 +217,8 @@ protected:
     //! @param exclB analogous for sequence B
     //! 
     template <class ScoringView>
-    void init_state(int state, int al, int ar, int bl, int br, 
+    void init_state(int state, size_type al, size_type ar, 
+		    size_type bl, size_type br, 
 		    bool globalA, bool exclA,
 		    bool globalB, bool exclB, 
 		    ScoringView sv);
@@ -250,7 +251,7 @@ protected:
     //! @param allow_exclusion whether to allow exclusions
     //! 
     //! @pre arc-match (al,ar)~(bl,br) valid due to constraints and heuristics
-    void align_in_arcmatch(int al,int ar,int bl,int br,
+    void align_in_arcmatch(size_type al,size_type ar,size_type bl,size_type br,
 			   bool allow_exclusion);
   
 
