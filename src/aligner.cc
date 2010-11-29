@@ -1,6 +1,6 @@
 #include "aligner.hh"
 #include "anchor_constraints.hh"
-#include "edge_controller.hh"
+#include "trace_controller.hh"
 // #include "d_matrix.hh"
 
 #include <math.h>
@@ -22,6 +22,14 @@ using namespace std;
   both positions occur in the local alignment)
   
   Names that occur in only one sequence, do not impose constraints
+*/
+
+
+
+/* SEMANTICS OF MAX DIFF HEURISTIC
+
+   restrict matrix cells (i,j) to valid trace cells due to trace_controller
+   
 */
 
 
@@ -145,7 +153,9 @@ infty_score_t
 Aligner::align_noex(int state, size_type al, size_type bl, size_type i, size_type j,ScoringView sv) {
     
     assert(0<=state && state<4);
-
+    
+    assert(params->trace_controller.is_valid(i,j));
+    
     M_matrix_t &M = Ms[state];
     ScoreVector &E = Es[state];
     infty_score_t &F = Fs[state];
@@ -192,7 +202,7 @@ Aligner::align_noex(int state, size_type al, size_type bl, size_type i, size_typ
     // standard case for arc match (without restriction to lonely pairs)
     //    
     
-    if (params->constraints.allowed_edge(i,j) && (params->edge_controller.is_valid_edge(i,j))) {
+    if ( params->constraints.allowed_edge(i,j) ) {
 	const BasePairs::RightAdjList &adjlA = bpsA.right_adjlist(i);
 	const BasePairs::RightAdjList &adjlB = bpsB.right_adjlist(j);
 	
@@ -330,7 +340,7 @@ Aligner::init_state(int state, int al, int ar, int bl, int br,
 	  indel_score=infty_score_t::neg_infty;
 	}
 	else if (!exclA && globalA) {
-	  indel_score += sv.scoring()->gapA(i,0);
+	  indel_score += sv.scoring()->gapA(i,bl);
 	}
       }
       M(i,bl) = (infty_score_t)indel_score;
@@ -355,7 +365,7 @@ Aligner::init_state(int state, int al, int ar, int bl, int br,
 	  indel_score=infty_score_t::neg_infty;
 	}
 	else if (!exclB && globalB && !indel_score.is_neg_infty()) {
-	  indel_score += sv.scoring()->gapB(0,j);
+	  indel_score += sv.scoring()->gapB(al,j);
 	}
       }
       M(al,j) = (infty_score_t)indel_score;
@@ -397,12 +407,25 @@ Aligner::align_in_arcmatch(int al,int ar,int bl,int br,
 	init_state(E_OP_X, al,ar,bl,br, false, false, true , true ,def_scoring_view);
     }
 
-    for (int i=al+1; i<ar; i++) {
+    // ----------------------------------------
+    // alignment for state E_NO_NO
+    //
+    
+    for (size_type i=al+1; i<(size_type)ar; i++) {
 	Fs[E_NO_NO]=infty_score_t::neg_infty;
-	for (int j=bl+1; j<br; j++) {
+	
+	// limit entries due to trace controller
+	size_type min_col = std::max((size_type)(bl+1),params->trace_controller.min_col(i));
+	size_type max_col = std::min((size_type)(br-1),params->trace_controller.max_col(i));
+	
+	for (size_type j=min_col; j<=max_col; j++) {
 	    Ms[E_NO_NO](i,j)=align_noex(E_NO_NO,al,bl,i,j,def_scoring_view);
 	}
     }
+    
+    //
+    // end state E_NO_NO
+    // ----------------------------------------
     
     if (allow_exclusion) {
 	int state;
@@ -585,12 +608,20 @@ Aligner::align_D() {
 
     // ------------------------------------------------------------
     // traverse the left ends al,bl of arcs in descending order
+    // (restrict by trace controller and r)
     //
-    for (size_type al=r.get_endA(); al+1>r.get_startA(); al--) {
+    // for al in r.get_endA() .. r.get_startA
+    for (size_type al=r.get_endA()+1; al>r.get_startA(); ) { al--; 
 	
-	for (size_type bl=r.get_endB(); bl+1>r.get_startB(); bl--) {
-
-	    if (! params->constraints.allowed_edge(al,bl)) continue;
+	size_type max_bl = min(r.get_endB(),params->trace_controller.max_col(al));
+	size_type min_bl = max(r.get_startB(),params->trace_controller.max_col(al));
+	
+	// for bl in max_bl .. min_bl
+	for (size_type bl=max_bl+1; bl > min_bl;) { bl--; 
+	    
+	    if (! ( params->constraints.allowed_edge(al,bl)
+		    && params->trace_controller.is_valid_match(al,bl) )
+		) continue;
 	    
 	    // ------------------------------------------------------------
 	    // get maximal right ends of arcs with left ends al,bl 
@@ -604,6 +635,7 @@ Aligner::align_D() {
 	    // get the maximal right ends of any arc match with left ends (al,bl)
 	    arc_matches.get_max_right_ends(al,bl,&max_ar,&max_br,params->no_lonely_pairs);
 	    
+	     // check whether there is an arc match at all
 	    if (al==max_ar || bl == max_br) continue;
 	    
 	    // ------------------------------------------------------------
@@ -772,7 +804,7 @@ Aligner::align_top_level_localB() {
 infty_score_t
 Aligner::align() {
     // ------------------------------------------------------------
-    // computes D matrix and then does the alignment on the top level
+    // computes D matrix (if not already done) and then does the alignment on the top level
     // ------------------------------------------------------------
     
     if (!D_created) align_D();

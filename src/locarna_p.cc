@@ -29,7 +29,8 @@
 
 #include "anchor_constraints.hh"
 
-#include "edge_controller.hh"
+#include "trace_controller.hh"
+#include "multiple_alignment.hh"
 
 using namespace std;
 
@@ -56,7 +57,7 @@ bool sequ_local; // maximize alignment of subsequences
 const bool DO_TRACE=true;
 
 
-int max_diff; // maximal difference for positions of alignment edges
+int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
 int max_diff_am; //maximal difference between two arc ends, -1 is off
 
@@ -67,7 +68,7 @@ double min_bm_prob; // only matched base-pair with a probability of at least min
 int match_score;
 
 // only consider arc matchs where
-//   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!!!! this changed due to EdgeController
+//   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!!!! this changed due to TraceController
 //   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
 // except when there is no additional computation of M matrices necessary,
 // this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
@@ -151,7 +152,7 @@ option_def my_options[] = {
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
-    {"max-diff-match",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment edges"},
+    {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relativ to given pairwise alignment (delim=&)."},
     
@@ -248,8 +249,13 @@ main(int argc, char **argv) {
     
     // missing: proper error handling in case that lenA, lenB, and max_diff_alignment are incompatible 
 
-    EdgeController edge_controller(lenA,lenB,max_diff_pw_alignment,max_diff);
-
+    MultipleAlignment *multipleAlignment=NULL;
+    if (max_diff_pw_alignment!="") {
+	multipleAlignment = new MultipleAlignment(seqA.names()[0],seqB.names()[0],max_diff_pw_alignment);
+    }
+    TraceController trace_controller(seqA,seqB,multipleAlignment,max_diff);
+    if (multipleAlignment) delete multipleAlignment;
+    
     // ----------------------------------------
     // construct set of relevant arc matches
     //
@@ -260,7 +266,7 @@ main(int argc, char **argv) {
 				 rnadataB,
 				 min_prob,
 				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
-				 edge_controller,
+				 trace_controller,
 				 seq_constraints
 				 );
 	
@@ -334,7 +340,7 @@ main(int argc, char **argv) {
 				 false,//struct_local,
 				 false,//sequ_local,
 				 "",
-				 edge_controller,
+				 trace_controller,
 				 max_diff_am,
 				 min_am_prob,
 				 min_bm_prob,

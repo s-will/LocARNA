@@ -101,6 +101,7 @@ public:
     //! return sequence length
     size_type length() const {return seq_.size();}
     
+    //! @returns number of rows/sequences in the alignment
     size_type get_rows() const {return rows_;}
     
     //static const Alphabet<char> &alphabet() { return alphabet_; }

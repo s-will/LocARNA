@@ -223,3 +223,10 @@ Oct, 2010
 
 Nov, 2010
 	Change Copyright to GPL v2 and update README
+
+	rename max-diff-match to max-diff heuristic.
+
+	replace EdgeController by TraceController use the max-diff delta
+	( TraceController ) to restrict alignment of paired and unpaired
+	positions (not only ends of arcs) in aligner Semantics is given by
+	restriction of traces!

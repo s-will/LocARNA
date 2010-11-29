@@ -33,7 +33,7 @@
 
 #include "anchor_constraints.hh"
 
-#include "edge_controller.hh"
+#include "trace_controller.hh"
 
 using namespace std;
 
@@ -70,15 +70,15 @@ std::string free_endgaps; //!< specification of free end gaps,
 const bool DO_TRACE=true;
 
 
-int max_diff; // maximal difference for positions of alignment edges
+int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
 int max_diff_am; //maximal difference between two arc ends, -1 is off
 
-std::string max_diff_pw_alignment; // pairwise reference alignment for max-diff-match heuristic, separator &
-std::string max_diff_alignment_file; // reference alignment for max-diff-match heuristic, name of clustalw format file
+std::string max_diff_pw_alignment; // pairwise reference alignment for max-diff heuristic, separator &
+std::string max_diff_alignment_file; // reference alignment for max-diff heuristic, name of clustalw format file
 
 // only consider arc matchs where
-//   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!! changed due to EdgeController/reference alignment
+//   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!! changed due to TraceController/reference alignment
 //   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
 // except when there is no additional computation of M matrices necessary,
 // this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
@@ -204,7 +204,7 @@ option_def my_options[] = {
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
-    {"max-diff-match",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment edges"},
+    {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))."},
     {"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)."},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
@@ -420,7 +420,7 @@ main(int argc, char **argv) {
     // --------------------
     // handle max_diff restriction
 
-    // do not relax max_diff in case of unequal lengths anymore, instead change constraint in EdgeController
+    // do not relax max_diff in case of unequal lengths anymore, instead change constraint in TraceController
     // if (max_diff!=-1) {
     // 	int len_diff = (lenA>lenB) ? (lenA-lenB) : (lenB-lenA);
     // 	max_diff = std::max(max_diff, (int)(len_diff*1.1));
@@ -437,25 +437,29 @@ main(int argc, char **argv) {
 	exit(-1);
     }
 
-    // construct EdgeController and check inconsistency for with multiplicity of sequences
+    // construct TraceController and check inconsistency for with multiplicity of sequences
     //
 
-    std::auto_ptr<EdgeController> edge_controller(NULL);
     MultipleAlignment *multiple_ref_alignment=NULL;
     
     if (max_diff_alignment_file!="") {
 	multiple_ref_alignment = new MultipleAlignment(max_diff_alignment_file);
-	
     } else if (max_diff_pw_alignment!="") {
 	if ( seqA.get_rows()!=1 || seqB.get_rows()!=1 ) {
 	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
 	    exit(-1);
 	}
 	
-	edge_controller = std::auto_ptr<EdgeController>(new EdgeController(lenA,lenB,max_diff_pw_alignment,max_diff));
+	multiple_ref_alignment = new MultipleAlignment(seqA.names()[0],seqB.names()[0],max_diff_pw_alignment);
+    }
+
+    if (multiple_ref_alignment) {
+	std::cout<<"Reference aligment:"<<std::endl;
+	multiple_ref_alignment->print_debug(std::cout);
+	std::cout << std::flush;
     }
     
-    edge_controller = std::auto_ptr<EdgeController>(new EdgeController(seqA,seqB,multiple_ref_alignment,max_diff));
+    TraceController trace_controller(seqA,seqB,multiple_ref_alignment,max_diff);
     
     if (multiple_ref_alignment) {
 	delete multiple_ref_alignment;
@@ -500,7 +504,7 @@ main(int argc, char **argv) {
 				     arcmatch_scores_file,
 				     opt_read_arcmatch_probs?((mea_beta*probability_scale)/100):-1,
 				     (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
-				     *edge_controller,
+				     trace_controller,
 				     seq_constraints
 				     );
     } else {
@@ -509,7 +513,7 @@ main(int argc, char **argv) {
 				     rnadataB,
 				     min_prob,
 				     (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
-				     *edge_controller,
+				     trace_controller,
 				     seq_constraints
 				     );
     }
@@ -620,7 +624,7 @@ main(int argc, char **argv) {
 				 struct_local,
 				 sequ_local,
 				 free_endgaps,
-				 *edge_controller,
+				 trace_controller,
 				 max_diff_am,
 				 min_am_prob,
 				 min_bm_prob,

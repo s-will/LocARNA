@@ -10,6 +10,8 @@
 #include "basepairs.hh"
 #include "anchor_constraints.hh"
 
+#include "trace_controller.hh"
+
 #include <assert.h>
 
 /*
@@ -87,7 +89,7 @@ private:
     
     size_type max_length_diff; //!< for max-diff-am heuristics
     
-    const EdgeController &edge_controller; //!< allowed alignment edges by max-diff heuristics
+    const TraceController &trace_controller; //!< allowed alignment traces by max-diff heuristics
     
     const AnchorConstraints &constraints; //!< for constraints
     
@@ -98,7 +100,7 @@ private:
     //! @param arcB arc (k.l) in second sequence
     //! @returns whether match of arcA and arcB is valid
     //! An arc match is valid, if and only if:
-    //! 1.) edges i~k and j~l are valid due to edge_controller (max-diff-match heuristic) and constraints (anchor constraints)
+    //! 1.) matches i~k and j~l are valid due to trace_controller (max-diff-match heuristic) and constraints (anchor constraints)
     //! 2.) length difference of arcs <= max_length_diff
     bool is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const;
     
@@ -166,7 +168,7 @@ public:
 	       const std::string &arcmatch_scores_file,
 	       int probability_scale,
 	       size_type max_length_diff,
-	       const EdgeController &edge_controller,
+	       const TraceController &trace_controller,
 	       const AnchorConstraints &constraints);
     
     
@@ -183,7 +185,7 @@ public:
 	       const RnaData &rnadataB,
 	       double min_prob,
 	       size_type max_length_diff, 
-	       const EdgeController &edge_controller,
+	       const TraceController &trace_controller,
 	       const AnchorConstraints &constraints);
     
     //! clean up base pair objects

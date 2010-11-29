@@ -143,7 +143,7 @@ protected:
 
 
     // ============================================================
-    // prepare a template mechanism to switch between use of the
+    // we use a template mechanism to switch between use of the
     // unmodified score and the modified score without run-time
     // penalty for the standard case
     // the mechanism is used for methods align_noex and trace_noex
@@ -206,7 +206,7 @@ protected:
     //! globalA/B and exclA/B need to be given correctly
     //! for the state!
     //!
-    //! @param state the state, selected the matrices
+    //! @param state the state, selects the matrices M,E
     //! @param al left end of arc a
     //! @param ar right end of arc a
     //! @param bl left end of arc b
@@ -225,12 +225,31 @@ protected:
     // recursion cases that handle everything but exclusions
     // (in the LSSA-paper this function was called NoEx
     
-    //! standard cases for alignment (without exlusion handling)
+    //! standard cases for alignment (without exlusion handling).
+    //!
+    //! @param state necessary for structure local, there state refers to a set of matrices M,E,F
+    //! @param al position in sequence A: left end of current arc match
+    //! @param bl position in sequence B: left end of current arc match
+    //! @param i position in sequence A, for which score is computed
+    //! @param j position in sequence B, for which score is computed
+    //! @param sv the scoring view to be used
+    //! @returns score of i,j in matrix set state that results from standard cases
+    //! 
+    //! @pre state in 0..4, in non-structure local alignment state has to be 0;
+    //! @pre i,j is allowed by edge controller
     template<class ScoringView>
     infty_score_t align_noex(int state, size_type al, size_type bl, size_type i, size_type j, ScoringView sv);
      
-    //! align, where al,ar,bl,br is an arc-match
+    //! align the loops closed by arcs (al,ar) and (bl,br).
     //! in structure local alignment, this allows to introduce exclusions
+    //!
+    //! @param al left end of arc a
+    //! @param ar right end of arc a
+    //! @param bl left end of arc b
+    //! @param br right end of arc b
+    //! @param allow_exclusion whether to allow exclusions
+    //! 
+    //! @pre arc-match (al,ar)~(bl,br) valid due to constraints and heuristics
     void align_in_arcmatch(int al,int ar,int bl,int br,
 			   bool allow_exclusion);
   
@@ -289,7 +308,7 @@ protected:
     */
     void 
     fill_D_entries_noLP(size_type al, size_type bl);
-
+    
     
     infty_score_t &D(const ArcMatch &am) {
 	return Dmat(am.arcA().idx(),am.arcB().idx());

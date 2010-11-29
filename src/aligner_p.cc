@@ -294,9 +294,9 @@ void AlignerP::align_D() {
     size_type min_bl=r.get_startB();
     size_type max_bl=r.get_endB();
 	
-    // restrict range for left ends of bl due to edge controller
-    min_bl = std::max(min_bl,params->edge_controller.min_j(al));
-    max_bl = std::min(max_bl,params->edge_controller.max_j(al));
+    // restrict range for left ends of bl due to trace controller
+    min_bl = std::max(min_bl,params->trace_controller.min_col(al));
+    max_bl = std::min(max_bl,params->trace_controller.max_col(al));
     
 	
     for (size_type bl=max_bl; bl>=min_bl; bl--) {
@@ -800,9 +800,9 @@ void AlignerP::align_Dprime() {
     size_type min_bl=r.get_startB();
     size_type max_bl=r.get_endB();
     
-    // restrict range for left ends of bl due to edge controller
-    min_bl = std::max(min_bl,params->edge_controller.min_j(al));
-    max_bl = std::min(max_bl,params->edge_controller.max_j(al));
+    // restrict range for left ends of bl due to trace controller
+    min_bl = std::max(min_bl,params->trace_controller.min_col(al));
+    max_bl = std::min(max_bl,params->trace_controller.max_col(al));
     
     for (size_type bl=min_bl; bl<=max_bl; bl++) {
 	    

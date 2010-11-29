@@ -9,6 +9,7 @@
 
 #include <iostream>
 
+#include "aux.hh"
 
 //! maintain the constraints on alignment (sequence) edges that
 //! have to be satisfied during the alignment
@@ -17,13 +18,7 @@ public:
     typedef size_t size_type;
     typedef std::pair<size_type,size_type> size_pair_t;
 
-    class failure : public std::exception {
-	std::string msg_;
-    public:
-	explicit failure (const std::string& msg): msg_(msg) {};
-	virtual ~failure() throw();
-	virtual const char* what() const throw();
-    };
+    typedef locarna::failure failure;
     
 private:
     typedef std::map<std::string,size_type> name_tab_t;

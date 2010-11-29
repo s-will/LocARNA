@@ -4,14 +4,6 @@
 
 #include <iostream>
 
-AnchorConstraints::failure::~failure() throw() {};
-
-const char *
-AnchorConstraints::failure::what() const throw() {
-    //exception::what();
-    return msg_.c_str();
-}
-
 AnchorConstraints::AnchorConstraints(size_type lenA,
 			       const std::vector<std::string> &seqVecA,
 			       size_type lenB,

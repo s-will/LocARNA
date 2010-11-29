@@ -88,6 +88,8 @@ public:
      * @param i sequence position of first sequence in 1..lenA
      * 
      * @returns minimum j such that |j - A_2(i)| <= delta,  
+     *
+     * guarantee: min_j is monotone
      */
     size_type min_j(size_type i) const;
 
@@ -95,6 +97,8 @@ public:
      * @param i sequence position of first sequence in 1..lenA
      *
      * @returns maximum j such that |j - A_2(i)| <= delta,  
+     *
+     * guarantee: max_j is monotone
      */
     size_type max_j(size_type i) const;
     

@@ -93,7 +93,7 @@ existing. Non-existing ones are still computed.
 =item B<--max-diff-aln=<file>> 
 
 Restrict maximal difference to the alignment in <file> in clustalw
-format (difference given by --max-diff-match). Use this option for
+format (difference given by --max-diff). Use this option for
 constrained re-aligning.
 
 =item B<--probabilistic> 
@@ -631,8 +631,8 @@ my @autopass_arg_options =
      "exp-prob|e=f",
 
      "max-diff-am=i",
-     "max-diff-match=i",
-           
+     "max-diff=i",
+     
      "struct-local=s",
      "sequ-local=s",
      

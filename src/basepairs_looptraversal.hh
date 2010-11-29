@@ -6,30 +6,9 @@
 
 #include "basepairs.hh"
 
-//! triple stores three values first, second, third.
-//! extension of std::pair to 3-tuple
-template<class T1,class T2,class T3>
-class triple: public std::pair<T1,T2> {
-public:
-    T3 third;
+#include "aux.hh"
 
-    triple(const T1 &x1,const T2 &x2,const T3 &x3): std::pair<T1,T2>(x1,x2),third(x3) {
-    }
-};
-
-
-//! quadruple stores four values first, second, third, fourth.
-//! extension of triple to 4-tuple
-template<class T1,class T2,class T3,class T4>
-class quadruple: public triple<T1,T2,T3> {
-public:
-    T4 fourth;
-
-    quadruple(const T1 &x1,const T2 &x2,const T3 &x3,const T4 &x4): triple<T1,T2,T3>(x1,x2,x3),fourth(x4) {
-    }
-};
-
-
+using namespace locarna;
 
 // ============================================================
 // class BasePairsLoopTraversal

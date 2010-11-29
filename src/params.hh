@@ -5,7 +5,7 @@
 */
 
 class AnchorConstraints;
-class EdgeController;
+class TraceController;
 
 
 /**
@@ -63,7 +63,7 @@ public:
     
     const bool DO_TRACE;
 
-    const EdgeController &edge_controller;
+    const TraceController &trace_controller;
 
     const int max_diff_am;
     const double min_am_prob;
@@ -78,7 +78,7 @@ public:
 		  bool _STRUCT_LOCAL, 
 		  bool _SEQU_LOCAL, 
 		  std::string _free_endgaps,
-		  const EdgeController &_edge_controller,
+		  const TraceController &_trace_controller,
 		  int _max_diff_am,
 		  const double _min_am_prob,
 		  const double _min_bm_prob,
@@ -90,7 +90,7 @@ public:
 	SEQU_LOCAL(_SEQU_LOCAL),
 	free_endgaps(_free_endgaps),
 	DO_TRACE(true),
-	edge_controller(_edge_controller),
+	trace_controller(_trace_controller),
 	max_diff_am(_max_diff_am),
 	min_am_prob(_min_am_prob), 
 	min_bm_prob(_min_bm_prob),	   

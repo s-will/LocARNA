@@ -26,7 +26,7 @@
 #include "match_probs.hh"
 
 #include "anchor_constraints.hh"
-#include "edge_controller.hh"
+#include "trace_controller.hh"
 
 #include "exact_matcher.hh"
 
@@ -45,7 +45,7 @@ double min_prob; // only pairs with a probability of at least min_prob are taken
 
 const bool DO_TRACE=true;
 
-int max_diff; // maximal difference for positions of alignment edges
+int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
 int max_diff_am; //maximal difference between two arc ends, -1 is off
 
@@ -83,7 +83,7 @@ bool opt_verbose;
 option_def my_options[] = {
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
-    {"max-diff-match",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment edges"},
+    {"max-diff-match",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
 
     {"anchorA",0,0,O_ARG_STRING,&seq_constraints_A,"","string","Anchor constraints sequence A."},
     {"anchorB",0,0,O_ARG_STRING,&seq_constraints_B,"","string","Anchor constraints sequence B."},
@@ -169,7 +169,7 @@ main(int argc, char **argv) {
     // --------------------
     // handle max_diff restriction
     
-    EdgeController edge_controller(lenA,lenB,"",max_diff);
+    TraceController trace_controller(seqA,seqB,NULL,max_diff);
     
     // ------------------------------------------------------------
     // Handle constraints (optionally)
@@ -201,7 +201,7 @@ main(int argc, char **argv) {
 				 rnadataB,
 				 min_prob,
 				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
-				 edge_controller,
+				 trace_controller,
 				 seq_constraints
 				 );
     

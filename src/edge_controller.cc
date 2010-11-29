@@ -71,11 +71,11 @@ EdgeController::EdgeController(Sequence seqA, Sequence seqB, const MultipleAlign
     // ensure constraints for all pairs of sequences in seqA and seqB,
     // therefore iterate over all name pairs
     for (std::vector<std::string>::const_iterator itA=seqA.names().begin(); seqA.names().end()!=itA; ++itA) {
-	const MultipleAlignment::NameSeqPair & nspA = ma->nameseqpair(*itA);
+	const MultipleAlignment::SeqEntry & nspA = ma->nameseqpair(*itA);
 	
 	const std::vector<std::string> & seqB_names = seqB.names();
 	for (std::vector<std::string>::size_type i = 0; i < seqB.length(); i++) {
-	    const MultipleAlignment::NameSeqPair &nspB = ma->nameseqpair(seqB_names[i]);
+	    const MultipleAlignment::SeqEntry &nspB = ma->nameseqpair(seqB_names[i]);
 	    
 	    for (size_type i=1; i<=lenA; ++i) {
 		size_type col_i = nspA.pos_to_col(i);

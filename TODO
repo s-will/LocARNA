@@ -1,4 +1,6 @@
-Usually a lot.
+Usually a lot ;)
+
+In particular:
 
 in reliability_profile eliminate use of tmp file
 
@@ -7,3 +9,8 @@ new feature: constrain match-diff relative to given alignment (for realigning)
     mlocarna: give alignment and difference to alignment
               --relative-max-diff-match=clustal-alignment-file
     locarna:  position specific intervals
+
+
+clean up chaos with types size_type, pos_type
+
+introduce proper use of namespace locarna
