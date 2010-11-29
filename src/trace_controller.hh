@@ -160,6 +160,11 @@ public:
     bool
     is_valid_match(size_type i, size_type j) const;
 
+    //! print debugging information to stream
+    //! @param out output stream
+    void
+    print_debug(std::ostream & out) const;
+
 private:
     //! constrain the min/max j without reference alignment by delta only
     //! such that
@@ -167,10 +172,6 @@ private:
     void
     constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);
 
-    //! print debugging information to stream
-    //! @param out output stream
-    void
-    print_debug(std::ostream & out) const;
 };
 
 inline

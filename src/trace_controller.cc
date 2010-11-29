@@ -65,6 +65,9 @@ TraceController::Trace::Trace(const MultipleAlignment::SeqEntry &pseqA,
 	    max_col_vector[pposA-1] = pposB.second-1;	
 	    min_col_vector[pposA] = pposB.first;
 	    
+	} else {
+	    max_col_vector[pposA-1] = min_col_vector[pposA-1];
+	    min_col_vector[pposA] = max_col_vector[pposA-1]; 
 	}
     }
     

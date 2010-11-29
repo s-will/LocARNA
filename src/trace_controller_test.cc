@@ -39,6 +39,14 @@ int main(int argc, char**argv) {
     // 3         *
     // 4         *
     // 5          *
+
+    //   0 1 2 3 4 5
+    // 0 * 
+    // 1   * * *
+    // 2         *
+    // 3         *
+    // 4         *
+    // 5          *
     
     std::istrstream example_ma_istream(example_ma.c_str());
     
@@ -51,11 +59,11 @@ int main(int argc, char**argv) {
     
     Sequence seqA;
     //seqA.append_row("fruA","CCUCGAGGGGAACCCGAAAGGGACCCGAGAGG");
-    seqA.append_row("seqA","ACTTG");
+    seqA.append_row("seqA","A-CTTG");
 
     Sequence seqB;
     //seqB.append_row("fdhA","CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG");
-    seqB.append_row("seqB","ACCTG");
+    seqB.append_row("seqB","ACCT-G");
     
     if (verbose) {
  	std::cout<<"seqA:"<<std::endl;
@@ -65,6 +73,8 @@ int main(int argc, char**argv) {
     }
     
     TraceController tc(seqA,seqB,&ma,0);
+    
+    if (verbose) tc.print_debug(std::cout);
     
     retVal=0;
 
