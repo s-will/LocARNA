@@ -16,7 +16,81 @@ class Sequence;
 
 */
 
-class Trace;
+//! class representing a range of possible traces in a dynamic
+//! programming matrix for aligning two sequences
+class TraceRange {    
+public:
+    typedef size_t pos_type;
+    typedef size_t size_type;
+
+    typedef std::pair<MultipleAlignment::SeqEntry,
+		      MultipleAlignment::SeqEntry> seqentry_pair_t;
+
+    static
+    seqentry_pair_t
+    insert_profile_gaps(const MultipleAlignment::SeqEntry & pseqA,
+			const MultipleAlignment::SeqEntry &aliA,
+			const MultipleAlignment::SeqEntry &aliB);
+    
+    static
+    seqentry_pair_t
+    remove_common_gaps(const MultipleAlignment::SeqEntry &aliA,
+		       const MultipleAlignment::SeqEntry &aliB);
+
+protected:		
+    std::vector<size_t> min_col_vector; //!< minimal column in row
+    std::vector<size_t> max_col_vector; //!< maximal column in row
+    
+public:
+    //! construct trace range of two sequences given two alignment strings
+    //! of the sequences and the allowed deviation delta
+    //! the sequences can contain gaps themselves (which happens,
+    //! when sequences orignate from a sequence profile).
+    //!
+    //! @param seqA SeqEntry of sequence A
+    //! @param seqB SeqEntry of sequence B
+    //! @param aliA alignment SeqEntry for sequence A
+    //! @param aliB alignment SeqEntry for sequence B
+    //! @param delta the allowed deviation
+    //!
+    //! side conditions:
+    //! remove_gaps(seqA) == remove_gaps(aliA)
+    //! && remove_gaps(seqB) == remove_gaps(aliB)
+    //! where remove_gaps is a function that removes all gap symbols
+    //! length(aliA)==length(aliB)
+    //!
+    TraceRange(const MultipleAlignment::SeqEntry &pseqA,
+	       const MultipleAlignment::SeqEntry &pseqB,
+	       const MultipleAlignment::SeqEntry &aliA,
+	       const MultipleAlignment::SeqEntry &aliB,
+	       size_t delta);
+    
+    //! construct empty
+    TraceRange() {
+    }
+    
+	
+    //! @returns length of seqA, i.e. the maximal row of the trace
+    size_t
+    rows() const {return min_col_vector.size()-1;}
+	
+    //! minimal column of trace in a row
+    //! @params i: row of matrix, 0<=i<=rows()
+    //! @returns minimal valid trace cell in the row i
+    size_t
+    min_col(size_t i) const {return min_col_vector[i];}
+	
+    //! maximal column of trace in a row
+    //! @params i: row of matrix, 0<=i<=rows()
+    //! @returns maximal valid trace cell in the row i
+    size_t 
+    max_col(size_t i) const {return max_col_vector[i];}
+
+    void
+    print_debug(std::ostream & out) const;
+	
+};
+
 
 /***
  * TraceController controls the matrix cells that need to be filled
@@ -28,84 +102,21 @@ class Trace;
  * a maximal difference to a given alignment (trace).
  * 
  **/
-class TraceController {
-public:
-    typedef size_t pos_type;
-    typedef size_t size_type;
-
-
-    //! class representing a trace in a dynamic programming matrix
-    //! for aligning two sequences
-    class Trace {    
-    private:
-	
-	std::vector<size_t> min_col_vector; //!< minimal column in row
-	std::vector<size_t> max_col_vector; //!< maximal column in row
-	
-    public:
-	//! construct trace of two sequences given two alignment strings of the sequences
-	//! the sequences can contain gaps themselves (which happens, when sequences
-	//! stem from a sequence profile).
-	//!
-	//! @param seqA SeqEntry of sequence A
-	//! @param seqB SeqEntry of sequence B
-	//! @param aliA alignment SeqEntry for sequence A
-	//! @param aliB alignment SeqEntry for sequence B
-	//!
-	//! side conditions:
-	//! remove_gaps(seqA) == remove_gaps(aliA)
-	//! && remove_gaps(seqB) == remove_gaps(aliB)
-	//! where remove_gaps is a function that removes all gap symbols
-	//! length(aliA)==length(aliB)
-	//!
-	Trace(const MultipleAlignment::SeqEntry &pseqA,
-	      const MultipleAlignment::SeqEntry &pseqB,
-	      const MultipleAlignment::SeqEntry &aliA,
-	      const MultipleAlignment::SeqEntry &aliB);
-	
-	//! @returns length of seqA, i.e. the maximal row of the trace
-	size_t
-	rows() const {return min_col_vector.size()-1;}
-	
-	//! minimal column of trace in a row
-	//! @params i: row of matrix, 0<=i<=rows()
-	//! @returns minimal trace cell in the row i
-	size_t
-	min_col(size_t i) const {return min_col_vector[i];}
-	
-	//! maximal column of trace in a row
-	//! @params i: row of matrix, 0<=i<=rows()
-	//! @returns maximal trace cell in the row i
-	size_t 
-	max_col(size_t i) const {return max_col_vector[i];}
-	
-	void
-	print_debug(std::ostream & out) const;
-	
-    };
-
+class TraceController : public TraceRange {
 
 private:
-    // The allowed distance in computing the min and max positions.
-    size_type delta_;
-		
-    // The gap character in an alignment
-    static const char gap = '-';
-		
     // The delimiter character separating the two sequences in the alignment string
     static const char delimiter = '&';
 	    
-    // min_col_vector[i] = the min j corresponding to position i in sequence 1
-    std::vector<size_type> min_col_vector;
+    TraceRange trace_range;
     
-    // max_col_vector[i] = the max k corresponding to position i in sequence 1
-    std::vector<size_type> max_col_vector;
-
     // merge in the given trace with delta into current trace range
     // @param trace the new trace
-    // @param delta delta tolerance value
     void
-    merge_in_trace(const Trace &trace, size_type delta);
+    merge_in_trace_range(const TraceRange &tr);
+
+    // The allowed distance in computing the min and max positions.
+    const size_type delta;
 
 public:
     
@@ -122,30 +133,7 @@ public:
      *  the delta constraint holds for all pairs of sequences in seqA and seqB.
      */
     TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta);
-    
-    /***
-     * @returns delta
-     **/
-    size_type get_delta() const {return delta_;}
-    
-    /***
-     * @param i sequence position of first sequence in 1..lenA or 0
-     * 
-     * @returns minimum j where trace through (i,j) is valid
-     *
-     * guarantee: min_col is monotone
-     */
-    size_type min_col(size_type i) const;
-
-    /***
-     * @param i sequence position of first sequence in 1..lenA or 0
-     *
-     * @returns maximum j where trace through (i,j) is valid
-     *
-     * guarantee: max_col is monotone
-     */
-    size_type max_col(size_type i) const;
-    
+        
     //! test for matrix entries on valid trace
     //! @param i position in sequence A in 1..lenA or 0
     //! @param j position in sequence B in 1..lenB or 0
@@ -160,6 +148,11 @@ public:
     bool
     is_valid_match(size_type i, size_type j) const;
 
+    /***
+     * @returns delta
+     **/
+    size_type get_delta() const {return delta;}
+
     //! print debugging information to stream
     //! @param out output stream
     void
@@ -173,20 +166,6 @@ private:
     constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);
 
 };
-
-inline
-TraceController::size_type
-TraceController::min_col(size_type i) const {
-    assert(i>=0 && i<min_col_vector.size());
-    return min_col_vector[i];
-}
-
-inline
-TraceController::size_type
-TraceController::max_col(size_type i) const {
-    assert(i>=0 && i<max_col_vector.size());
-    return max_col_vector[i];
-}
 
 inline
 bool

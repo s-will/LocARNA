@@ -94,7 +94,7 @@ public:
 	//! @param col column index in aligmnent
 	//! @returns pair of positions (pos1,pos2)
 	//!   if column col contains a non-gap, then pos1=pos2 is the position of the gap
-	//!   if column col contains a gap, then pos1 is the sequence position left of the gap and pos2 the position right of the gap
+	//!   if column col contains a gap, then pos1 is the sequence position left of the gap or 0 and pos2 the position right of the gap or sequence length+1
 	pos_pair_t
 	col_to_pos(pos_type col) const;
     };

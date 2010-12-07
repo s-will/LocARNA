@@ -148,11 +148,19 @@ MultipleAlignment::SeqEntry::pos_to_col(size_type pos) const {
 
 MultipleAlignment::SeqEntry::pos_pair_t
 MultipleAlignment::SeqEntry::col_to_pos(size_type col) const {
+    // std::cout << "col_to_pos : " << col << "/" << seq().length() << std::endl;
+    assert(col<=seq().length());
     // iterate over the positions in the sequence until you've read pos number of non-gap characters
     size_t curr_pos = 0;
-    
+ 
+    if (col==0) { // special case
+	return pos_pair_t(0,0);
+    }
+
     for (size_t i = 1 ; i <= col ; i++) {
-	    if (! is_gap_symbol( seq_[i] )) {	curr_pos++; }
+	if (! is_gap_symbol( seq_[i] )) { 
+	    curr_pos++;
+	}
     }
     
     // if column col contains a gap, then return (curr_pos, curr_pos + 1)

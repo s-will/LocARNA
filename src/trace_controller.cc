@@ -13,71 +13,159 @@
 using namespace locarna;
 
 
-TraceController::Trace::Trace(const MultipleAlignment::SeqEntry &pseqA,
-			      const MultipleAlignment::SeqEntry &pseqB,
-			      const MultipleAlignment::SeqEntry &aliA,
-			      const MultipleAlignment::SeqEntry &aliB) {
+TraceController::TraceRange::seqentry_pair_t
+TraceController::TraceRange::
+remove_common_gaps(const MultipleAlignment::SeqEntry &aliA,
+		   const MultipleAlignment::SeqEntry &aliB) {
+    size_t lenAli = aliA.seq().length();
+    
+    std::string raliA="";
+    std::string raliB="";
 
+    for (size_t i=1; i<=lenAli;i++) {
+	if (!(MultipleAlignment::SeqEntry::is_gap_symbol(aliA.seq()[i])
+	      && MultipleAlignment::SeqEntry::is_gap_symbol(aliB.seq()[i])
+	      )) {
+	    raliA+=aliA.seq()[i];
+	    raliB+=aliB.seq()[i];
+	}
+    }
+    
+    return 
+	seqentry_pair_t(
+			MultipleAlignment::SeqEntry("raliA",raliA),
+			MultipleAlignment::SeqEntry("raliB",raliB)
+			);
+}   
+
+
+TraceController::TraceRange::seqentry_pair_t
+TraceController::TraceRange::
+insert_profile_gaps(const MultipleAlignment::SeqEntry & pseqA,
+		    const MultipleAlignment::SeqEntry &aliA,
+		    const MultipleAlignment::SeqEntry &aliB) {
+    
+    std::string paliA="";
+    std::string paliB="";
+    
+    size_t pos=1;
+    
+    size_t lenAli = aliA.seq().length();
+    
+    for (size_t i=1; i<=lenAli;) {
+	if (MultipleAlignment::SeqEntry::is_gap_symbol(pseqA.seq()[pos])
+	    && MultipleAlignment::SeqEntry::is_gap_symbol(aliA.seq()[i])) {
+	    paliA+="=";
+	    paliB+=aliB.seq()[i];
+	    i++;
+	    pos++;
+	} else if (MultipleAlignment::SeqEntry::is_gap_symbol(aliA.seq()[i])) {
+	    paliA+=aliA.seq()[i];
+	    paliB+=aliB.seq()[i];
+	    i++;
+	} else if (MultipleAlignment::SeqEntry::is_gap_symbol(pseqA.seq()[pos])) {
+	    paliA+="=";
+	    paliB+="-";
+	    pos++;
+	} else {
+	    paliA+=aliA.seq()[i];
+	    paliB+=aliB.seq()[i];
+	    pos++;
+	    i++;
+	}
+    }
+    
+    size_t lenA=pseqA.seq().length();
+    for (;pos<=lenA;pos++) {
+	paliA+="=";
+	paliB+="-";
+    }
+    
+    return 
+	seqentry_pair_t(
+			MultipleAlignment::SeqEntry("paliA",paliA),
+			MultipleAlignment::SeqEntry("paliB",paliB)
+			);
+}
+
+TraceController::TraceRange
+::TraceRange(
+	     const MultipleAlignment::SeqEntry &pseqA,
+	     const MultipleAlignment::SeqEntry &pseqB,
+	     const MultipleAlignment::SeqEntry &aliA,
+	     const MultipleAlignment::SeqEntry &aliB,
+	     size_type delta) {
+
+    assert(aliA.seq().length() == aliB.seq().length());
+    
     size_t plenA = pseqA.seq().length();
     size_t plenB = pseqB.seq().length();
     
     min_col_vector.resize(plenA+1);
     max_col_vector.resize(plenA+1);
-
-    //std::cerr << "TODO: Trace::Trace( ... );"<<std::endl;
-    //exit(-1);
     
-    // pseqA and pseqB can contain gaps, therefore we call these strings profile sequences
-    // (until we find a better name :))
-    //
-    
-    // the sequences A and B are pseqA and pseqB respectively where
-    // gaps are removed
-
-    size_t posA=0;
-
-    min_col_vector[0] = 0;
-    
-    // iterate over positions pposA in profile sequence A
-    // and keep track of position posA in sequence A
-    for (size_t pposA=1; pposA <= plenA; pposA++) {
-	
-	if (!MultipleAlignment::SeqEntry::is_gap_symbol(pseqA.seq()[pposA])) {
-	    posA++;
-	    
-	    // compute column colA in aliA corresponding to i
-	    size_t colA = aliA.pos_to_col(posA);
-	    
-	    // compute positions in sequence B that correspond to col_i
-	    MultipleAlignment::SeqEntry::pos_pair_t posB = aliB.col_to_pos(colA);
-	    
-	     // std::cout << posA << " " << colA << " "
-	     // 	      << posB.first << " " << posB.second << " "
-	     // 	 ;
-		 // 	      << pposB.first << " " << pposB.second << std::endl;
-
-	    // compute positions in profile sequence B that correspond to these positions in sequence B	
-	    MultipleAlignment::SeqEntry::pos_pair_t pposB;
-	    pposB.first = pseqB.pos_to_col(posB.first);
-	    pposB.second = pseqB.pos_to_col(posB.second);
-	    
-	    
-	    max_col_vector[pposA-1] = pposB.second-1;	
-	    min_col_vector[pposA] = pposB.first;
-	    
-	} else {
-	    max_col_vector[pposA-1] = min_col_vector[pposA-1];
-	    min_col_vector[pposA] = max_col_vector[pposA-1]; 
-	}
+    for (size_t i=0; i<=plenA; i++) {
+	min_col_vector[i]=plenB;
+	max_col_vector[i]=0;
     }
     
-    max_col_vector[plenA] = plenB;
+    // pseqA and pseqB can contain gaps, therefore we call these strings profile sequences
     
-    //print_debug(std::cout);
+        
+    seqentry_pair_t pali =
+	remove_common_gaps(aliA,aliB);
+
+    pali =
+	insert_profile_gaps(pseqA,
+			    pali.first,
+			    pali.second);
+    
+    pali = 
+     	insert_profile_gaps(pseqB,
+     			    pali.second,
+     			    pali.first);
+    
+    const MultipleAlignment::SeqEntry &paliA = pali.second;
+    const MultipleAlignment::SeqEntry &paliB = pali.first;
+    
+    
+    std::cout << "TraceController::TraceRange::TraceRange()"<<std::endl
+    	      << " " << pseqA.seq().to_string() << std::endl
+    	      << " " << pseqB.seq().to_string() << std::endl
+    	      << " " << aliA.seq().to_string() << std::endl
+    	      << " " << aliB.seq().to_string() << std::endl
+    	      << " " << paliA.seq().to_string() << std::endl
+    	      << " " << paliB.seq().to_string() << std::endl
+    	      << std::endl;
+
+    size_t len_pali = paliA.seq().length();
+
+    // iterate over columns c in alignment
+    for (size_t c=0; c <= len_pali; c++) {
+	
+	// compute positions in sequence A that correspond to column c
+	// alignment split after posA.first in seqA(!)
+	MultipleAlignment::SeqEntry::pos_pair_t posA = paliA.col_to_pos(c);
+	
+	// compute positions in sequence B that correspond to columns c-delta and c+delta
+	// alignment split after a position between posBminus.first and posBplus.first 
+	MultipleAlignment::SeqEntry::pos_pair_t posBminus = paliB.col_to_pos(std::max(delta,c)-delta);
+	MultipleAlignment::SeqEntry::pos_pair_t posBplus  = paliB.col_to_pos(std::min(c+delta,len_pali));
+	
+	// std::cout << c <<": " 
+	// 	  <<posA.first << " x " 
+	// 	  << posBminus.first << " - " 
+	// 	  <<posBplus.first << std::endl;
+
+	min_col_vector[posA.first] = std::min(posBminus.first,min_col_vector[posA.first]);	
+	max_col_vector[posA.first] = std::max(posBplus.first, max_col_vector[posA.first]);
+    }
+    
+    print_debug(std::cout);
 }
 
 void
-TraceController::Trace::print_debug(std::ostream & out) const {
+TraceController::TraceRange::print_debug(std::ostream & out) const {
     out << "min_col_vector: ";
     copy (min_col_vector.begin(), min_col_vector.end(), std::ostream_iterator<size_t> (out, " "));
     out << std::endl;
@@ -99,7 +187,8 @@ TraceController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delt
 
 /* Construct from MultipleAlignment (as needed for progressive alignment) */
 
-TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta) {
+TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta_)
+  : delta(delta_) {
     
     size_type lenA = seqA.length();
     size_type lenB = seqB.length();
@@ -111,7 +200,7 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
     fill(min_col_vector.begin(), min_col_vector.end(),0);
     fill(max_col_vector.begin(), max_col_vector.end(),lenB);
     
-    if ( delta == -1 ) { // no constraints!	
+    if ( delta_ == -1 ) { // no constraints!	
 	//print_debug(std::cout);
 	return;
     }
@@ -158,12 +247,12 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 	    const MultipleAlignment::SeqEntry &ref_seqentryB = ma->seqentry(nameB);
 	    
 	    // construct trace for current sequences A and B
-	    Trace trace(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB);
+	    TraceRange tr(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB,delta);
 	    
 	    //trace.print_debug(std::cout);
 
 	    // combine existing trace range with new trace +/- delta
-	    merge_in_trace(trace, (size_type)delta);
+	    merge_in_trace_range(tr);
 	    
 	}
     }
@@ -172,12 +261,12 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 } 
 
 void
-TraceController::merge_in_trace(const Trace &trace, size_type delta) {
+TraceController::merge_in_trace_range(const TraceRange &tr) {
     // intersect trace range of *this with trace
-    for (size_type i=0; i<=trace.rows(); i++) {
+    for (size_type i=0; i<=tr.rows(); i++) {
 	
-	min_col_vector[i] = std::max( min_col_vector[i] + delta , trace.min_col(i) ) - delta; // unsigned arithmetic!
-	max_col_vector[i] = std::min( max_col_vector[i], trace.max_col(i) + delta );
+	min_col_vector[i] = std::max( min_col_vector[i], tr.min_col(i) ); // unsigned arithmetic!
+	max_col_vector[i] = std::min( max_col_vector[i], tr.max_col(i) );
 		
 	
 	// intersecting may lead to inconsistency, check this here.
@@ -191,12 +280,3 @@ TraceController::merge_in_trace(const Trace &trace, size_type delta) {
 }
 
 
-void
-TraceController::print_debug(std::ostream & out) const {
-    out << "min_col_vector: ";
-    copy (min_col_vector.begin(), min_col_vector.end(), std::ostream_iterator<size_type> (out, " "));
-    out << std::endl;
-    out << "max_col_vector: ";
-    copy (max_col_vector.begin(), max_col_vector.end(), std::ostream_iterator<size_type> (out, " "));
-    out << std::endl;
-}
