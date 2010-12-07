@@ -1,6 +1,7 @@
 syntax: glob
 *~
 *.o
+aclocal.m4
 configure
 Makefile.in
 Makefile
