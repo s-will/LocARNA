@@ -39,129 +39,59 @@ remove_common_gaps(const MultipleAlignment::SeqEntry &aliA,
 }   
 
 
-TraceController::TraceRange::seqentry_pair_t
-TraceController::TraceRange::
-insert_profile_gaps(const MultipleAlignment::SeqEntry & pseqA,
-		    const MultipleAlignment::SeqEntry &aliA,
-		    const MultipleAlignment::SeqEntry &aliB) {
-    
-    std::string paliA="";
-    std::string paliB="";
-    
-    size_t pos=1;
-    
-    size_t lenAli = aliA.seq().length();
-    
-    for (size_t i=1; i<=lenAli;) {
-	if (MultipleAlignment::SeqEntry::is_gap_symbol(pseqA.seq()[pos])
-	    && MultipleAlignment::SeqEntry::is_gap_symbol(aliA.seq()[i])) {
-	    paliA+="=";
-	    paliB+=aliB.seq()[i];
-	    i++;
-	    pos++;
-	} else if (MultipleAlignment::SeqEntry::is_gap_symbol(aliA.seq()[i])) {
-	    paliA+=aliA.seq()[i];
-	    paliB+=aliB.seq()[i];
-	    i++;
-	} else if (MultipleAlignment::SeqEntry::is_gap_symbol(pseqA.seq()[pos])) {
-	    paliA+="=";
-	    paliB+="-";
-	    pos++;
-	} else {
-	    paliA+=aliA.seq()[i];
-	    paliB+=aliB.seq()[i];
-	    pos++;
-	    i++;
-	}
-    }
-    
-    size_t lenA=pseqA.seq().length();
-    for (;pos<=lenA;pos++) {
-	paliA+="=";
-	paliB+="-";
-    }
-    
-    return 
-	seqentry_pair_t(
-			MultipleAlignment::SeqEntry("paliA",paliA),
-			MultipleAlignment::SeqEntry("paliB",paliB)
-			);
-}
-
 TraceController::TraceRange
 ::TraceRange(
 	     const MultipleAlignment::SeqEntry &pseqA,
 	     const MultipleAlignment::SeqEntry &pseqB,
-	     const MultipleAlignment::SeqEntry &aliA,
-	     const MultipleAlignment::SeqEntry &aliB,
+	     const MultipleAlignment::SeqEntry &paliA,
+	     const MultipleAlignment::SeqEntry &paliB,
 	     size_type delta) {
+    
+    // pseqA and pseqB can contain gaps, therefore we call these strings profile sequences    
 
-    assert(aliA.seq().length() == aliB.seq().length());
+    assert(paliA.seq().length() == paliB.seq().length());
     
     size_t plenA = pseqA.seq().length();
-    size_t plenB = pseqB.seq().length();
+    //size_t plenB = pseqB.seq().length();
     
     min_col_vector.resize(plenA+1);
     max_col_vector.resize(plenA+1);
     
-    for (size_t i=0; i<=plenA; i++) {
-	min_col_vector[i]=plenB;
-	max_col_vector[i]=0;
-    }
+    seqentry_pair_t ali =
+	remove_common_gaps(paliA,paliB);
     
-    // pseqA and pseqB can contain gaps, therefore we call these strings profile sequences
+    const MultipleAlignment::SeqEntry &aliA=ali.first;
+    const MultipleAlignment::SeqEntry &aliB=ali.second;
+      
+    size_t lenAli = aliA.seq().length();
     
-        
-    seqentry_pair_t pali =
-	remove_common_gaps(aliA,aliB);
-
-    pali =
-	insert_profile_gaps(pseqA,
-			    pali.first,
-			    pali.second);
-    
-    pali = 
-     	insert_profile_gaps(pseqB,
-     			    pali.second,
-     			    pali.first);
-    
-    const MultipleAlignment::SeqEntry &paliA = pali.second;
-    const MultipleAlignment::SeqEntry &paliB = pali.first;
-    
-    
-    std::cout << "TraceController::TraceRange::TraceRange()"<<std::endl
-    	      << " " << pseqA.seq().to_string() << std::endl
-    	      << " " << pseqB.seq().to_string() << std::endl
-    	      << " " << aliA.seq().to_string() << std::endl
-    	      << " " << aliB.seq().to_string() << std::endl
-    	      << " " << paliA.seq().to_string() << std::endl
-    	      << " " << paliB.seq().to_string() << std::endl
-    	      << std::endl;
-
-    size_t len_pali = paliA.seq().length();
-
     // iterate over columns c in alignment
-    for (size_t c=0; c <= len_pali; c++) {
+    for (size_t pi=0; pi <= plenA; pi++) {
 	
-	// compute positions in sequence A that correspond to column c
-	// alignment split after posA.first in seqA(!)
-	MultipleAlignment::SeqEntry::pos_pair_t posA = paliA.col_to_pos(c);
+	size_t left_i=pseqA.col_to_pos(pi).first; // left_i is the position in seqA left of the gap 
+	size_t right_i=pseqA.col_to_pos(pi+1).second; // right_i is a position in seqA right of the gap
+	// a gap starting at position pi in plenA corresponds to a gap between positions left_i, right_i in seqA
 	
-	// compute positions in sequence B that correspond to columns c-delta and c+delta
-	// alignment split after a position between posBminus.first and posBplus.first 
-	MultipleAlignment::SeqEntry::pos_pair_t posBminus = paliB.col_to_pos(std::max(delta,c)-delta);
-	MultipleAlignment::SeqEntry::pos_pair_t posBplus  = paliB.col_to_pos(std::min(c+delta,len_pali));
+	size_t left_col = aliA.pos_to_col(left_i);
+	size_t right_col = aliA.pos_to_col(right_i);
 	
-	// std::cout << c <<": " 
-	// 	  <<posA.first << " x " 
-	// 	  << posBminus.first << " - " 
-	// 	  <<posBplus.first << std::endl;
-
-	min_col_vector[posA.first] = std::min(posBminus.first,min_col_vector[posA.first]);	
-	max_col_vector[posA.first] = std::max(posBplus.first, max_col_vector[posA.first]);
+	// add delta deviation to columns
+	left_col = std::max(delta,left_col)-delta;
+	right_col = std::min(lenAli+1,right_col+delta);
+	
+	size_t left_j = aliB.col_to_pos(left_col).first;
+	size_t right_j = aliB.col_to_pos(right_col).second;
+	
+	size_t left_pj = pseqB.pos_to_col(left_j);
+	size_t right_pj = pseqB.pos_to_col(right_j);
+	
+	
+	min_col_vector[pi] = left_pj;
+	max_col_vector[pi] = right_pj-1;
+	
     }
     
-    print_debug(std::cout);
+    //print_debug(std::cout);
 }
 
 void
