@@ -1307,7 +1307,7 @@ sub perform_multiple_alignment($) {
 	#
 	
 	printmsg 3,"Compute pairwise alignments ... \n";
-
+	
 	# store all pairwise alignments in @pairwise_alignments
 	my @pairwise_alns;
 	if ($thread_number==1) {
@@ -1333,19 +1333,7 @@ sub perform_multiple_alignment($) {
     close TREE;
 
     my @tree_postorder = newick_tree_to_postorder($tree);
-    
-    ## if we read the tree from a file, then we have to shorten the names,
-    ## and substitute special characters
-    if (defined($tree_file)) {
-	for (my $i=0; $i<=$#tree_postorder; $i++) {
-	    if ( $tree_postorder[$i] ne $MLocarna::Trees::node_sym ) {
-		$tree_postorder[$i] =  substr $tree_postorder[$i],0,16;
-		$tree_postorder[$i] =~ s/[^a-zA-Z\d]/_/g;
-	    }
-	}
-    }
-
-
+        
     ## ----------------------------------------
     # progressive alignment along the guide tree
     #
