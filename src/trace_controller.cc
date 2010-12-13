@@ -104,7 +104,7 @@ TraceController::TraceRange::print_debug(std::ostream & out) const {
     out << std::endl;
 }
 
-
+TraceController::~TraceController() {}
 
 void
 TraceController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delta) {

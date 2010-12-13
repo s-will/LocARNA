@@ -89,7 +89,7 @@ private:
     
     size_type max_length_diff; //!< for max-diff-am heuristics
     
-    const TraceController &trace_controller; //!< allowed alignment traces by max-diff heuristics
+    const MatchController &match_controller; //!< allowed alignment traces by max-diff heuristics
     
     const AnchorConstraints &constraints; //!< for constraints
     
@@ -168,7 +168,7 @@ public:
 	       const std::string &arcmatch_scores_file,
 	       int probability_scale,
 	       size_type max_length_diff,
-	       const TraceController &trace_controller,
+	       const MatchController &trace_controller,
 	       const AnchorConstraints &constraints);
     
     
@@ -185,7 +185,7 @@ public:
 	       const RnaData &rnadataB,
 	       double min_prob,
 	       size_type max_length_diff, 
-	       const TraceController &trace_controller,
+	       const MatchController &trace_controller,
 	       const AnchorConstraints &constraints);
     
     //! clean up base pair objects

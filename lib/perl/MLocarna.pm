@@ -309,7 +309,7 @@ sub read_fasta {
 		chomp $line;
 		$line =~ s/\s+//g;
 		
-		if  ($line =~ /(.+)\#(.+)/) {
+		if  ($line =~ /(.+)\s*\#(.+)/) {
 		    $seq->{"ANNO\#$2"} .= $1;
 		} else {
 		    $seq->{seq} .= $line;

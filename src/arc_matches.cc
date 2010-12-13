@@ -22,9 +22,9 @@ public:
 
 bool ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
   bool valid = 
-      trace_controller.is_valid_match(arcA.left(),arcB.left())
+      match_controller.is_valid_match(arcA.left(),arcB.left())
       &&
-      trace_controller.is_valid_match(arcA.right(),arcB.right())
+      match_controller.is_valid_match(arcA.right(),arcB.right())
       &&
       ((size_type)abs((int)(arcA.right()-arcA.left()) - (int)(arcB.right()-arcB.left())) <= max_length_diff)
       &&
@@ -35,8 +35,8 @@ bool ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
   // std::cout << "ArcMatches::is_valid_arcmatch" << " " 
   // 	    << arcA << " "
   // 	    << arcB << " : " 
-  // 	    << trace_controller.is_valid_match(arcA.left(),arcB.left()) << " "
-  // 	    << trace_controller.is_valid_match(arcA.right(),arcB.right()) << " "
+  // 	    << match_controller.is_valid_match(arcA.left(),arcB.left()) << " "
+  // 	    << match_controller.is_valid_match(arcA.right(),arcB.right()) << " "
   // 	    << valid << " "
   // 	    << std::endl;
   
@@ -114,13 +114,13 @@ ArcMatches::ArcMatches(const Sequence &seqA_,
 		       const std::string &arcmatch_scores_file,
 		       int probability_scale,
 		       size_type max_length_diff_, 
-		       const TraceController &trace_controller_,
+		       const MatchController &match_controller_,
 		       const AnchorConstraints &constraints_
 		       )
   : lenA(seqA_.length()),
     lenB(seqB_.length()),
     max_length_diff(max_length_diff_),
-    trace_controller(trace_controller_),
+    match_controller(match_controller_),
     constraints(constraints_),
     maintain_explicit_scores(true)
 {
@@ -131,7 +131,7 @@ ArcMatches::ArcMatches(const RnaData &rnadataA,
 		       const RnaData &rnadataB,
 		       double min_prob,
 		       size_type max_length_diff_, 
-		       const TraceController &trace_controller_,
+		       const MatchController &match_controller_,
 		       const AnchorConstraints &constraints_
 		       )
   : lenA(rnadataA.get_sequence().length()),
@@ -139,7 +139,7 @@ ArcMatches::ArcMatches(const RnaData &rnadataA,
     bpsA(new BasePairs(&rnadataA,min_prob)),
     bpsB(new BasePairs(&rnadataB,min_prob)),
     max_length_diff(max_length_diff_),
-    trace_controller(trace_controller_),
+    match_controller(match_controller_),
     constraints(constraints_),
     maintain_explicit_scores(false)
 {

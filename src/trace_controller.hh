@@ -92,6 +92,21 @@ public:
 };
 
 
+//! abstract class that declares the method is_valid_match()
+class MatchController {
+    
+public:
+    //! test for allowed matches due to valid traces
+    //! @param i position in sequence A in 1..lenA
+    //! @param j position in sequence B in 1..lenB
+    //! @returns whether i~j is an allowed match due to valid traces
+    virtual
+    bool
+    is_valid_match(size_t i, size_t j) const=0;
+    
+};
+
+
 /***
  * TraceController controls the matrix cells that need to be filled
  * in a dynamic programming algorithm because they occur on valid
@@ -102,7 +117,7 @@ public:
  * a maximal difference to a given alignment (trace).
  * 
  **/
-class TraceController : public TraceRange {
+class TraceController : public TraceRange, public MatchController {
 
 private:
     // The delimiter character separating the two sequences in the alignment string
@@ -133,6 +148,9 @@ public:
      *  the delta constraint holds for all pairs of sequences in seqA and seqB.
      */
     TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta);
+
+    //! destructor
+    ~TraceController();
         
     //! test for matrix entries on valid trace
     //! @param i position in sequence A in 1..lenA or 0
@@ -145,6 +163,7 @@ public:
     //! @param i position in sequence A in 1..lenA
     //! @param j position in sequence B in 1..lenB
     //! @returns whether i~j is an allowed match due to valid traces
+    virtual
     bool
     is_valid_match(size_type i, size_type j) const;
 
