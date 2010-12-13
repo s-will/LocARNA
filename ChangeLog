@@ -228,5 +228,7 @@ Nov, 2010
 
 	replace EdgeController by TraceController use the max-diff delta
 	( TraceController ) to restrict alignment of paired and unpaired
-	positions (not only ends of arcs) in aligner Semantics is given by
-	restriction of traces!
+	positions (not only ends of arcs) in Aligner. Semantics is given by
+	restriction of alignment cuts/matrix cells!
+
+	

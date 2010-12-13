@@ -1005,9 +1005,13 @@ sub read_clustalw_alignment {
 	if ($line =~ /^([^\s]+)\s+(.+)/) {
 	    my $name=$1;
 	    my $seq=$2;
-	       
+	    
+	    if (!exists $aln{$name}) {
+		push @names,$name;
+	    }
+	    
 	    $aln{$name} .= $seq;
-	    push @names,$name;
+	    
 	}
     } while ($line = <$fh>);
     
