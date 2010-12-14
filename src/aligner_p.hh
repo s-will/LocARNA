@@ -149,7 +149,7 @@ protected:
 
     /**
        For the current pair of left arc ends (al,bl),
-       Mrev(i,j) is the partition function of the subsequences seqA(i..al-1) and seqB(j..bl-1)
+       Mrev(i,j) is the partition function of the subsequences seqA(i+1..al-1) and seqB(j+1..bl-1)
     */
     PFScoreMatrix Mrev;
   
@@ -166,7 +166,7 @@ protected:
 
     /**
        D'(a,b) is the partition function of the subsequences seqA(1..al-1,ar+1..lenA) and seqB(1..bl-1,br+1..lenB)
-       times the score contribution of the arc match (al,ar);(bl,br)
+       times the contribution of the arc match (al,ar);(bl,br)
     */
     PFScoreMatrix Dmatprime;
 
@@ -212,10 +212,24 @@ protected:
     //! initialize E
     void init_E(size_type al, size_type ar, size_type bl, size_type br);
     
-    //! initialize the reversed M matrix
+    //! initialize the reversed M matrix, such that
+    //! Mrev(i,j) codes for subsequences seqA(i+1..ar) and seqB(j+1..br)
+    //! and is valid for al-1<=i<=ar and bl-1<=j<=br
+    //! @param al left position delimiting range of positions in seqA 
+    //! @param ar right position delimiting range of positions in seqA 
+    //! @param bl left position delimiting range of positions in seqB 
+    //! @param br right position delimiting range of positions in seqB 
+    //! pre: matrix Mrev has size 0..lenA x 0..lenB 
     void init_Mrev(size_type al, size_type ar, size_type bl, size_type br); 
 
     //! initialize the reversed E matrix/vector
+    //! Erev[j] codes for subsequences seqA(i+1..ar) and seqB(j+1..br)
+    //! and is valid for bl-1<=j<=br
+    //! @param al left position delimiting range of positions in seqA 
+    //! @param ar right position delimiting range of positions in seqA 
+    //! @param bl left position delimiting range of positions in seqB 
+    //! @param br right position delimiting range of positions in seqB 
+    //! pre: Erev has size 0..lenB 
     void init_Erev(size_type al, size_type ar, size_type bl, size_type br); 
 
     //! initialize first column and row of M' for outside recursion
@@ -244,26 +258,60 @@ protected:
 
 
     //! compute one entry in Erev
-    pf_score_t comp_Erev_entry(size_type al, size_type bl, size_type i, size_type j);
+    pf_score_t comp_Erev_entry( size_type i, size_type j );
 
     //! compute one entry in Frev
-    pf_score_t comp_Frev_entry(size_type al, size_type bl, size_type i, size_type j);
+    pf_score_t comp_Frev_entry( size_type i, size_type j );
 
-    //! compute one entry in Mrev
-    pf_score_t comp_Mrev_entry(size_type al, size_type bl, size_type i, size_type j);
+    //! compute one entry in Mrev, where
+    //! Mrev(i,j) codes for subsequences seqA(i+1..ar) and seqB(j+1..br)
+    //! @param ar right position delimiting range of positions in seqA 
+    //! @param br right position delimiting range of positions in seqB
+    //! @param i position in seqA
+    //! @param j position in seqB    
+    //! assert i<=ar and j<=br.
+    //! pre: matrix entries Mrev(i',j') and Erev(j') computed/initialised for i<=i'<=ar, j<=j'<=br, (i,j)!=(i',j')
+    //! @returns score of entry M(i,j)
+    pf_score_t comp_Mrev_entry( size_type i, size_type j, size_type ar, size_type br);
     
-    //! align, where al,ar,bl,br is an arc-match
+    //! align subsequences enclosed by two arcs    
+    //! @param al left end of arc in seqA 
+    //! @param ar right end of arc in seqA 
+    //! @param bl left end of arc in seqB 
+    //! @param br right end of arc in seqB
+    //! Align subsequences seqA(al+1,ar-1) to seqB(bl+1,br-1).
+    //! Computes matrix entries in M, E, F.
+    //! post: entries (i,j) are valid in the range al<i<ar, bl<j<br
     void align_inside_arcmatch(size_type al,size_type ar,size_type bl,size_type br);
     
-    //! align, where al,ar,bl,br is an arc-match.
-    //! max_ar and max_br are the leftmost right ends for which the score can simply be
-    //! composed from M and Mrev.
+    //! align outside of an arc-match
+    //! @param al left end of arc in seqA 
+    //! @param ar right end of arc in seqA 
+    //! @param bl left end of arc in seqB 
+    //! @param br right end of arc in seqB
+    //! @param max_ar leftmost right end for which the score can simply be composed from M and Mrev.
+    //! @param max_br the leftmost right end for which the score can simply be composed from M and Mrev.
+    //! 
     void
     align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size_type bl,size_type br,size_type max_br);
-
-    //! align, reversed
+    
+    //! align reversed. fills matrices Mrev, Erev, Frev, such that
+    //! Mrev(i,j) codes for subsequences seqA(i+1..ar) and seqB(j+1..br)
+    //! and is valid for al-1<=i<=ar and bl-1<=j<=br
+    //!
+    //! @param al left position delimiting range of positions in seqA 
+    //! @param ar right position delimiting range of positions in seqA 
+    //! @param bl left position delimiting range of positions in seqB 
+    //! @param br right position delimiting range of positions in seqB 
+    //! pre: matrix Mrev has size 0..lenA x 0..lenB 
     //! @param copy if true, make a copy of Erev/Frev in Erev/Frev_mat
-    void align_reverse(size_type al, size_type bl,size_type i, size_type j, bool copy=false);
+    //!
+    //! Note that al, ar, bl, br denote the actual limits of the
+    //! subsequences, which differs from their use in
+    //! align_inside_arcmatch.  Otherwise the two methods correspond
+    //! to each other by respectively preforming forward and backward
+    //! computation!
+    void align_reverse(size_type al, size_type ar, size_type bl, size_type br, bool copy=false);
     
     //! create the entries in the D matrix.
     //! This function is called by align() (unless D_created)

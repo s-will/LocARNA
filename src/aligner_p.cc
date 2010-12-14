@@ -49,14 +49,14 @@ AlignerP::alloc_outside_matrices() {
     
 
 
-    Mrev.resize(seqA.length()+2, seqB.length()+2); // "+2" necessary for computing reverse of whole alig
-    Mrev.fill((pf_score_t )0);
-    Erev.resize(seqB.length()+2); // size: one row of M/Mprime matrix
+    Mrev.resize(seqA.length()+1, seqB.length()+1);
+    //Mrev.fill((pf_score_t )0); // only for debugging!
+    Erev.resize(seqB.length()+1); // size: one row of M/Mprime matrix
     
-    Erev_mat.resize(seqA.length()+2, seqB.length()+2); // size as Mrev
-    Erev_mat.fill((pf_score_t )0);
-    Frev_mat.resize(seqA.length()+2, seqB.length()+2); // size as Mrev
-    Frev_mat.fill((pf_score_t )0);
+    Erev_mat.resize(seqA.length()+1, seqB.length()+1); // size as Mrev
+    //Erev_mat.fill((pf_score_t )0);
+    Frev_mat.resize(seqA.length()+1, seqB.length()+1); // size as Mrev
+    //Frev_mat.fill((pf_score_t )0);
 }
 
 
@@ -385,38 +385,40 @@ pf_score_t AlignerP::align_inside() {
 // ================================================================================
 
 // =================================================================
-// init alignment matrix for aligning the fragments al..ar-1 and bl..br-1 
+// init alignment matrix for aligning the fragments seqA(al..ar) and seqB(bl..br) 
 void
 AlignerP::init_Mrev(size_type al, size_type ar, size_type bl, size_type br) {
-    assert(ar>0);
-    assert(br>0);
-  
-    Mrev(ar,br)=((pf_score_t)1)/pf_scale;
+    assert(al>=1);
+    assert(bl>=1);
     
-    // initialize column br
+    Mrev(ar,br)=((pf_score_t)1)/pf_scale; // empty sequences
+    
+    // initialize column br, subsequence B empty
     pf_score_t indel_score;
     indel_score = scoring->exp_indel_opening()/pf_scale;
     size_type i;
-    for (i=ar-1; i>=al; i--) {
+    for (i=ar; i>=al; ) { i--;
 	if (params->trace_controller.max_col(i)<br) break; // fill only as long as column bl is accessible
 	
 	indel_score *= scoring->exp_gapA(i,br);;
 	Mrev(i,br) = indel_score;
     }
     // fill entries right of valid entries 
-    for ( ; i>=al; i--) {
+    for ( ; i>=al; ) { i--;
 	Mrev(i,params->trace_controller.max_col(i)+1) = 0;
     }
     
-
+    // initialize row ar, subsequence A empty
     indel_score = scoring->exp_indel_opening()/pf_scale;
+    
+    size_type min_col = std::max( bl-1, params->trace_controller.min_col(ar) );
     size_type j;
-    for (j=br-1; j>=bl; j--) {
+    for (j=br; j>min_col; ) { j--;
 	indel_score *= scoring->exp_gapB(ar,j);
 	Mrev(ar,j)= indel_score;
     }
     // fill entries below valid entries 
-    for (size_type i=ar-1; i>=al; i--) {
+    for (size_type i=ar; i>=al; ) { i--;
 	for (; j>=max(bl,params->trace_controller.min_col(i)); --j) {
 	    Mrev(i+1,j)=0;
 	}
@@ -425,40 +427,40 @@ AlignerP::init_Mrev(size_type al, size_type ar, size_type bl, size_type br) {
 
 void
 AlignerP::init_Erev(size_type al, size_type ar, size_type bl, size_type br) {
-    for (size_type j=br-1; j>=bl; j--) {
+    for (size_type j=br; j>=bl; ) { --j;
 	Erev[j]= (pf_score_t)0;
     }
 }
 
 inline
 pf_score_t
-AlignerP::comp_Erev_entry(size_type i, size_type j,size_type al, size_type bl) {
+AlignerP::comp_Erev_entry(size_type i, size_type j) {
     return 
-	Erev[j] * scoring->exp_gapA(i, j-1)
+	Erev[j] * scoring->exp_gapA(i+1, j)
 	+
 	(Mrev(i+1,j)-Erev[j]) * scoring->exp_gapA(i, j-1) * scoring->exp_indel_opening();
 }
 
 inline
 pf_score_t
-AlignerP::comp_Frev_entry(size_type i, size_type j,size_type al, size_type bl) {
+AlignerP::comp_Frev_entry(size_type i, size_type j) {
     return 
-	Frev * scoring->exp_gapB(i-1, j)
+	Frev * scoring->exp_gapB(i, j+1)
 	+
 	(Mrev(i,j+1)-Frev) * scoring->exp_gapB(i-1, j) * scoring->exp_indel_opening();
 }
 
 // compute reversed M matrix entry; cases: base match, base in/del, arc match
-// compute pf of alignments i..al-1 and j..bl-1 
+// compute pf of alignments i+1..ar and j+1..br 
 inline
 pf_score_t
-AlignerP::comp_Mrev_entry(size_type i, size_type j,size_type al, size_type bl) {
+AlignerP::comp_Mrev_entry(size_type i, size_type j,size_type ar, size_type br) {
     
     pf_score_t pf;
     
-    pf = 
+    pf =
 	// base match
-	Mrev(i+1,j+1) * scoring->exp_basematch(i,j)
+	Mrev(i+1,j+1) * scoring->exp_basematch(i+1,j+1)
 	
 	// base del
 	+ Erev[j]
@@ -468,55 +470,47 @@ AlignerP::comp_Mrev_entry(size_type i, size_type j,size_type al, size_type bl) {
     
     // arc match
     // standard case for arc match (without restriction to lonely pairs)
-    const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(i);
-    const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(j);
+    const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(i+1);
+    const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(j+1);
 
-    // for all pairs of arcs in A and B that have right ends i and j, respectively
+    // for all pairs of arcs in A and B that have right ends i+1 and j+1, respectively
     //
     for (BasePairs::LeftAdjList::const_iterator arcA=adjlA.begin();
-	 arcA!=adjlA.end() && arcA->right() < al; ++arcA) {
+	 arcA!=adjlA.end() && arcA->right() <= ar; ++arcA) {
 	for (BasePairs::LeftAdjList::const_iterator arcB=adjlB.begin();
-	     arcB!=adjlB.end() && arcB->right() < bl; ++arcB) {
-
-	    // consider score for match of basepairs
-	    //assert(Mrev(arcA->right()+1,arcB->right()+1)>0);
-	    //assert(am_heuristic || D(*arcA,*arcB)>0);
-			
+	     arcB!=adjlB.end() && arcB->right() <= br; ++arcB) {
+	    
 	    pf +=
-		D(*arcA,*arcB) * Mrev(arcA->right()+1,arcB->right()+1) * pf_scale;
+		D(*arcA,*arcB) * Mrev(arcA->right(),arcB->right()) * pf_scale;
 	}
     }
     return pf;
 }
 
 
-// compute alignment matrix of suffix alignment scores 
-// for aligning the fragments al..ar-1 and bl..br-1
 void
-AlignerP::align_reverse(size_type al, size_type bl,size_type ar, size_type br, bool copy){
-    assert(al<=ar);
-    assert(bl<=br);
+AlignerP::align_reverse(size_type al, size_type ar, size_type bl, size_type br, bool copy){
     assert(al>0);
     assert(bl>0);
-  
+    
     init_Mrev(al,ar,bl,br);
     init_Erev(al,ar,bl,br);
     
-    for(size_type p=ar-1; p>=al; p--) {
+    for(size_type i=ar; i>=al; ) { --i;//i from ar-1 downto al-1!
 	Frev = (pf_score_t)0;
 	
 	// limit entries due to trace controller
-	size_type min_col = std::max(bl,params->trace_controller.min_col(p));
-	size_type max_col = std::min(br-1,params->trace_controller.max_col(p));
+	size_type min_col = std::max(bl-1,params->trace_controller.min_col(i));
+	size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
 	
-	for(size_type q=max_col; q>=min_col; q--) {
-	    Erev[q]   = comp_Erev_entry(p,q,ar,br);
-	    Frev      = comp_Frev_entry(p,q,ar,br);
+	for(size_type j=max_col+1; j>=min_col+1; ) { --j;  //j from max_col downto min_col
+	    Erev[j]   = comp_Erev_entry(i,j);
+	    Frev      = comp_Frev_entry(i,j);
 	    if (copy) { 
-		Erev_mat(p,q) = Erev[q];
-		Frev_mat(p,q) = Frev;
+		Erev_mat(i,j) = Erev[j];
+		Frev_mat(i,j) = Frev;
 	    }
-	    Mrev(p,q) = comp_Mrev_entry(p,q,ar,br);
+	    Mrev(i,j) = comp_Mrev_entry(i,j,ar,br);
 	}
     }
 }
@@ -644,7 +638,7 @@ AlignerP::comp_Fprime_entry(size_type al, size_type bl, size_type i, size_type j
 pf_score_t 
 AlignerP::virtual_Mprime(size_type al, size_type bl, size_type i, size_type j, size_type max_ar, size_type max_br) const {
     if (i>=max_ar || j>=max_br) {
-	return M(al-1,bl-1)*Mrev(i+1,j+1)*pf_scale;
+	return M(al-1,bl-1)*Mrev(i,j)*pf_scale;
     }
     return Mprime(i,j);
 }
@@ -686,11 +680,10 @@ AlignerP::comp_Mprime_entry(size_type al, size_type bl, size_type i, size_type j
 	    for (BasePairs::RightAdjList::const_reverse_iterator arcB=adjlB.rbegin();
 		 arcB!=adjlB.rend() && arcB->left() < bl; ++arcB) {
 		// consider score for match of basepair
-		//std::cout<<"Mrev(arcA->left()+1,arcB->left()+1) "<<Mrev(arcA->left()+1,arcB->left()+1)<<endl;
+		
+		// assert(Mrev(arcA->left(),arcB->left()) > 0);
 	
-		// assert(Mrev(arcA->left()+1,arcB->left()+1) > 0);
-	
-		pf += Dprime(*arcA,*arcB) * Mrev(arcA->left()+1,arcB->left()+1) * pf_scale;
+		pf += Dprime(*arcA,*arcB) * Mrev(arcA->left(),arcB->left()) * pf_scale;
 	    }
 	}
 	//std::cout<<"Max score of outside up to case 4: " << pf <<"  "<<al<<"  "<<bl<<"  "<<i<<"  "<<j<<endl;
@@ -742,7 +735,7 @@ AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size
     //
     size_pair start = leftmost_covering_arcmatch(al,bl,ar,br);
 
-    align_reverse(start.first,start.second,al,bl);
+    align_reverse(start.first+1,al-1,start.second+1,bl-1);
   
     //cout << "Outside "<<al<<".."<<ar<<" "<<bl<<".."<<br <<" " << max_ar << " " << max_br << " : "; // <<std::endl;
     //cout << Mrev<<std::endl;
@@ -754,13 +747,13 @@ AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size
     
     assert(params->trace_controller.is_valid(max_ar,max_br));
     
-    Mprime(max_ar,max_br) = M(al-1,bl-1)*Mrev(max_ar+1,max_br+1)*pf_scale;
+    Mprime(max_ar,max_br) = M(al-1,bl-1)*Mrev(max_ar,max_br)*pf_scale;
     
     // fill column max_br
     size_type i;
     for(i=max_ar; i>ar; ) {
 	i--;
-	Mprime(i,max_br) = M(al-1,bl-1)*Mrev(i+1,max_br+1)*pf_scale;
+	Mprime(i,max_br) = M(al-1,bl-1)*Mrev(i,max_br)*pf_scale;
     }
     // fill entries right of valid entries 
     for ( ; i>al; ) {
@@ -773,7 +766,7 @@ AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size
     for(j=max_br; j>br;) {
 	j--;
 	Eprime[j]        = M(al-1,bl-1)*Erev_mat(max_ar+1,j+1)*pf_scale;
-	Mprime(max_ar,j) = M(al-1,bl-1)*Mrev(max_ar+1,j+1)*pf_scale;
+	Mprime(max_ar,j) = M(al-1,bl-1)*Mrev(max_ar,j)*pf_scale;
     }
     // fill entries below valid entries 
     for (size_type i=ar; i>al; ) {
@@ -926,7 +919,7 @@ void AlignerP::align_outside() {
     
 	alloc_outside_matrices();
       
-	align_reverse(r.get_startA(),r.get_startB(),r.get_endA()+1,r.get_endB()+1,true);
+	align_reverse(r.get_startA(),r.get_endA(),r.get_startB(),r.get_endB(),true);
     
 	align_Dprime();
     }  
@@ -1030,7 +1023,8 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
 				size_type ar=arcA->right();
 				size_type br=arcB->right();
 				
-				align_reverse(al+1,bl+1,ar,br);
+				// compute the reverse matrix for all values below of the arc match (al,ar)~(bl,br)
+				align_reverse(al+1,ar-1,bl+1,br-1);
 				
 				// a part of the pf-contrib can be computed outside of the loops
 				pf_score_t arcmatch_outside_pf=
@@ -1041,9 +1035,9 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
 				    
 				    // limit entries due to trace controller
 				    size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
-				    size_type max_col = std::min(br,params->trace_controller.max_col(i));
+				    size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
 				    
-				    for(size_type j=min_col;j<max_col;j++){
+				    for(size_type j=min_col;j<=max_col;j++){
 					
 					if ( ! params->trace_controller.is_valid_match(i,j) ) continue;
 					if ( ! params->trace_controller.is_valid(i+1,j+1) ) continue;
@@ -1053,7 +1047,7 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
 					bm_prob(i,j) += 
 					    M(i-1,j-1)
 					    * scoring->exp_basematch(i,j)
-					    * Mrev(i+1,j+1)
+					    * Mrev(i,j)
 					    * pf_scale
 					    * arcmatch_outside_pf
 					    * pf_scale;
@@ -1071,11 +1065,11 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
     // extra case, where there is no enclosing arc match of alignment edge (i,j)
   
     align_inside_arcmatch(0,r.get_endA()+1,0,r.get_endB()+1);
-    align_reverse(r.get_startA(),r.get_startB(),r.get_endA()+1,r.get_endB()+1);
+    align_reverse(r.get_startA(),r.get_endA(),r.get_startB(),r.get_endB());
   
     for(size_type i=r.get_startA();i<=r.get_endA();i++){
 	for(size_type j=r.get_startB();j<=r.get_endB();j++){
-	    bm_prob(i,j) += M(i-1,j-1) * scoring->exp_basematch(i,j) * Mrev(i+1,j+1) * pf_scale;
+	    bm_prob(i,j) += M(i-1,j-1) * scoring->exp_basematch(i,j) * Mrev(i,j) * pf_scale;
 	}
     }
   
@@ -1173,7 +1167,7 @@ AlignerP::compute_fragment_match_prob(size_type i,size_type j,size_type k,size_t
     
     // ensure that pre-conditions are met for align_outside_arcmatch 
     align_inside_arcmatch(r.get_startA()-1, r.get_endA()+1, r.get_startB()-1,r.get_endB()+1);
-    align_reverse(r.get_startA(),r.get_startB(),r.get_endA()+1,r.get_endB()+1,true);
+    align_reverse(r.get_startA(),r.get_endA(),r.get_startB(),r.get_endB(),true);
     
     
     size_pair max_r = rightmost_covering_arcmatch(i,k,j,l);
