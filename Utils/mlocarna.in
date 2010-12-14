@@ -2509,8 +2509,6 @@ sub is_aln_of_seqs {
     my ($seqs,$aln) = @_;
     
     foreach my $seq ( @$seqs ) {
-	print "$seq->{name} $seq->{seq}\n";
-	
 	my $found=0;
 	foreach my $alnseq ( @$aln ) {
 	    if ($seq->{name} eq $alnseq->{name}) {

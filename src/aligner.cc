@@ -340,7 +340,7 @@ Aligner::init_state(int state, size_type al, size_type ar, size_type bl, size_ty
     size_type i;
     for (i=al+1; i<ar; i++) {
 
-	if (params->trace_controller.min_col(i)>bl) break; // fill only as long as column is accessible
+	if (params->trace_controller.min_col(i)>bl) break; // fill only as long as column bl is accessible
 
 	if (!indel_score.is_neg_infty()) {
 	    if (params->constraints.aligned_in_a(i)) {
@@ -382,9 +382,8 @@ Aligner::init_state(int state, size_type al, size_type ar, size_type bl, size_ty
     }
 
     // fill entries above valid entries 
-    // here j points to the last initialized entry in row al + 1
-    i=al+1;
-    for (; i<ar; i++) {
+    // here j points to one position right of the last initialized entry in row al
+    for (i=al+1; i<ar; i++) {
 	for (;
 	     j<min(br,params->trace_controller.max_col(i)+1); ++j) {
 	    M(i-1,j)=infty_score_t::neg_infty;
