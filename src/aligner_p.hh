@@ -361,24 +361,39 @@ protected:
     Dprime(const Arc &arcA,const Arc &arcB) {
 	return Dmatprime(arcA.idx(),arcB.idx());
     }
-
-    //! returns the leftmost end l'>=s of an arc in bps that covers (l,r)
-    //! Thereby, an arc (l',r') covers (l,r) iff l'<l and r'>r.
-    //! If there is no such arc then return l
-    size_type 
+    
+    //! determine leftmost end of an arc that covers the range l..r
+    //! @param s sequence position, limit to base pairs right of s or equal
+    //! @param bps base pairs
+    //! @param l sequence position, left end of range
+    //! @param r sequence position, right end of range
+    //! @return leftmost end l'>=s of any arc in bps that covers (l,r). Return l if there is no such arc
+    //! An arc (l',r') covers (l,r) iff l'<l and r'>r.
+    size_type
     leftmost_covering_arc(size_type s,const BasePairs &bps,size_type l,size_type r) const;
   
-    //! returns the leftmost left ends of an arc match that covers
+    //! compute the leftmost left ends of an arc match that covers
     //! (al,ar);(bl,br) (or smaller positions).
+    //! @param al left end of base pair in seqA
+    //! @param ar right end of base pair in seqA
+    //! @param bl left end of base pair in seqB
+    //! @param br right end of base pair in seqB
     std::pair<size_type,size_type>
     leftmost_covering_arcmatch(size_type al,size_type bl,size_type ar,size_type br) const;
 
-    //! returns the rightmost end r'<=s of an arc in bps that covers (l,r)
-    //! Thereby, an arc (l',r') covers (l,r) iff l'<l and r'>r.
-    //! If there is no such arc then return r
+    //! @param bps base pairs
+    //! @param l sequence position, left end of range
+    //! @param r sequence position, right end of range
+    //! @param s sequence position, limit to base pairs left of s or equal
+    //! @returns rightmost end r'<=s of an arc in bps that covers (l,r). Return r if there is no such arc
+    //! An arc (l',r') covers (l,r) iff l'<l and r'>r.
     size_type 
     rightmost_covering_arc(const BasePairs &bps,size_type l,size_type r,size_type s) const;
   
+    //! @param al left end of base pair in seqA
+    //! @param ar right end of base pair in seqA
+    //! @param bl left end of base pair in seqB
+    //! @param br right end of base pair in seqB
     //! returns the rightmost left ends of an arc match that covers
     //! (al,ar);(bl,br) (or smaller positions).
     std::pair<size_type,size_type>
