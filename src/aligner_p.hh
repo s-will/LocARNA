@@ -189,10 +189,7 @@ protected:
        M'(i,j) is the partition function of the subsequences seqA(1..al-1,i+1..lenA) and seqB(1..bl-1,j+1..lenB)
     */
     PFScoreMatrix Mprime;
-    
-    
-    
-    
+        
     //! probabilities of arc matchs, as computed by the algo
     SparseProbMatrix am_prob;
 
@@ -289,8 +286,8 @@ protected:
     //! @param ar right end of arc in seqA 
     //! @param bl left end of arc in seqB 
     //! @param br right end of arc in seqB
-    //! @param max_ar leftmost right end for which the score can simply be composed from M and Mrev.
-    //! @param max_br the leftmost right end for which the score can simply be composed from M and Mrev.
+    //! @param max_ar leftmost right end in seqA for which the score can simply be composed from M and Mrev.
+    //! @param max_br leftmost right end in seqB for which the score can simply be composed from M and Mrev.
     //! 
     void
     align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size_type bl,size_type br,size_type max_br);

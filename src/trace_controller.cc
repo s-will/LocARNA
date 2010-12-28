@@ -91,7 +91,6 @@ TraceController::TraceRange
 	
     }
     
-    //print_debug(std::cout);
 }
 
 void
@@ -131,73 +130,73 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
     fill(max_col_vector.begin(), max_col_vector.end(),lenB);
     
     if ( delta_ == -1 ) { // no constraints!	
-	//print_debug(std::cout);
-	return;
+	// do nothing
     }
-    
-    if ( ma == NULL ) { // constraints due to delta but no reference
-			// alignment
-	
+    else if ( ma == NULL ) { 
+	// constraints due to delta but no reference alignment
 	constrain_wo_ref(lenA, lenB, (size_type)delta);
+    } else {
 	
-	//print_debug(std::cout);
+	// HERE: delta >= 0 and reference alignment ma is given
 	
-	return;
-    }
-    
-    
-    // HERE: delta >= 0 and reference alignment ma is given
-
-    
-    // ----------------------------------------
-    // Compute valid trace cells from REFERENCE ALIGNMENT
-    //
-    // constrain the valid traces from the traces
-    // of all pairwise alignments between seqA and seqB
-    // as given in the reference alignment
-    // 
-
-    // construct multiple alignment objects out of sequence objects
-    // since this allows easier access and provides mappings pos_to_col,
-    // col_to_pos
-    MultipleAlignment maSeqA(seqA);
-    MultipleAlignment maSeqB(seqB);
-    
-    //  iterate over all pairs of rows in the multiple alignment of seqA and seqB
-    for (size_type i=0; i<maSeqA.size(); ++i) {
-	const MultipleAlignment::SeqEntry &seqentryA = maSeqA.seqentry(i);
-	// get alignment string in reference corresponding to seqentryA
-	const std::string &nameA = seqentryA.name();
-	const MultipleAlignment::SeqEntry &ref_seqentryA = ma->seqentry(nameA);
 	
-	for (size_type j=0; j<maSeqB.size(); ++j) {
-	    const MultipleAlignment::SeqEntry &seqentryB = maSeqB.seqentry(j);
-	    // get alignment string in reference corresponding to seqentryB
-	    const std::string &nameB = seqentryB.name();
-	    const MultipleAlignment::SeqEntry &ref_seqentryB = ma->seqentry(nameB);
-	    
-	    // construct trace for current sequences A and B
-	    TraceRange tr(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB,delta);
-	    
-	    //trace.print_debug(std::cout);
+	// ----------------------------------------
+	// Compute valid trace cells from REFERENCE ALIGNMENT
+	//
+	// constrain the valid traces from the traces
+	// of all pairwise alignments between seqA and seqB
+	// as given in the reference alignment
+	// 
 
-	    // combine existing trace range with new trace +/- delta
-	    merge_in_trace_range(tr);
+	// construct multiple alignment objects out of sequence objects
+	// since this allows easier access and provides mappings pos_to_col,
+	// col_to_pos
+	MultipleAlignment maSeqA(seqA);
+	MultipleAlignment maSeqB(seqB);
+    
+	//  iterate over all pairs of rows in the multiple alignment of seqA and seqB
+	for (size_type i=0; i<maSeqA.size(); ++i) {
+	    const MultipleAlignment::SeqEntry &seqentryA = maSeqA.seqentry(i);
+	    // get alignment string in reference corresponding to seqentryA
+	    const std::string &nameA = seqentryA.name();
+	    const MultipleAlignment::SeqEntry &ref_seqentryA = ma->seqentry(nameA);
+	
+	    for (size_type j=0; j<maSeqB.size(); ++j) {
+		const MultipleAlignment::SeqEntry &seqentryB = maSeqB.seqentry(j);
+		// get alignment string in reference corresponding to seqentryB
+		const std::string &nameB = seqentryB.name();
+		const MultipleAlignment::SeqEntry &ref_seqentryB = ma->seqentry(nameB);
 	    
+		// construct trace for current sequences A and B
+		TraceRange tr(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB,delta);
+	    
+		// combine existing trace range with new trace +/- delta
+		merge_in_trace_range(tr);
+	    
+	    }
 	}
+
+#ifndef NDEBGUG
+	for (size_type i=1; i < min_col_vector.size(); ++i) {
+	    assert(min_col_vector[i-1]<=min_col_vector[i]);
+	    assert(max_col_vector[i-1]<=max_col_vector[i]);
+	    assert(min_col_vector[i]<=max_col_vector[i]); // otherwise trace range inconsistent
+	    assert(max_col_vector[i-1]+1>=min_col_vector[i]); // ranges connected/overlap, otherwise trace is inconsistent
+	}
+#endif
     }
-        
-    //print_debug(std::cout);
-} 
+    
+    TraceRange::print_debug(std::cout);
+}
 
 void
 TraceController::merge_in_trace_range(const TraceRange &tr) {
     // intersect trace range of *this with trace
     for (size_type i=0; i<=tr.rows(); i++) {
 	
-	min_col_vector[i] = std::max( min_col_vector[i], tr.min_col(i) ); // unsigned arithmetic!
+	min_col_vector[i] = std::max( min_col_vector[i], tr.min_col(i) );
 	max_col_vector[i] = std::min( max_col_vector[i], tr.max_col(i) );
-		
+	
 	
 	// intersecting may lead to inconsistency, check this here.
 	// probably it will be necessary to replace the intersection idea
@@ -208,5 +207,3 @@ TraceController::merge_in_trace_range(const TraceRange &tr) {
 	}
     }
 }
-
-

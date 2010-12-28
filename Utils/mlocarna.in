@@ -1126,7 +1126,7 @@ sub compute_and_write_reliabilities {
 	mkdir "$tgtdir/$results_dir/$single_reliabilities_dir";
 	## compute reliability profiles for single sequences
 	for my $name (@names) {
-	    printmsg 1,"Compute structure reliability profile for $name\n";
+	    # printmsg 1,"Compute structure reliability profile for $name\n";
 	    
 	    ## compute and write reliability profiles for the single sequences
 	    my ($bmrels_seq,$bmrels_str) = 

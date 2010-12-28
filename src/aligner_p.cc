@@ -19,9 +19,8 @@ using namespace std;
 void
 AlignerP::alloc_inside_matrices() {
     Dmat.resize(bpsA.num_bps(), bpsB.num_bps());
-    Dmat.fill((pf_score_t )0);
-    
-    
+    Dmat.fill((pf_score_t )0); // this is essential, such that we can avoid to test validity of arc matches 
+        
     //std::cout << "Size of Dmat:" << sizeof(Dmat)+bpsA.num_bps()*bpsB.num_bps()*sizeof(pf_score_t) << std::endl;
   
     M.resize(seqA.length()+1, seqB.length()+1);
@@ -89,13 +88,6 @@ AlignerP::AlignerP(const Sequence &seqA_,
     Dprime_created(false)
 {
     
-    /*
-      am_prob.resize(bpsA.num_bps(), bpsB.num_bps());
-      am_prob.fill(0.0);
-      bm_prob.resize(seqA.length()+1, seqB.length()+1);
-      bm_prob.fill((pf_score_t)0);
-    */
-    
 }
 
 
@@ -110,17 +102,18 @@ AlignerP::AlignerP(const Sequence &seqA_,
 // Initialization of inside matrices  M,E,F
 //
 
-// Initialize the "0th" row and column of the M matrix,
-// i.e. actually this initializes row al and column bl of the M matrix
-// for the alignment below of the arcs starting at al and bl
+// Initialize the "0th" row and column of the M matrix, i.e. actually
+// this initializes row al and column bl of the M matrix for the
+// alignment below of the arcs starting at al and bl. Additionally,
+// initialize all (according to trace controller) invalid matrix
+// entries that can be accessed from valid ones with 0.
 //
 void AlignerP::init_M(size_type al, size_type ar, size_type bl, size_type br) {
     
     M(al, bl)=((pf_score_t)1)/pf_scale; // empty alignment
-  
-  
+
     pf_score_t indel_score;
-  
+
     // initialize column bl of M
     indel_score = scoring->exp_indel_opening()/pf_scale;
     size_type i;
@@ -700,16 +693,13 @@ AlignerP::comp_Mprime_entry(size_type al, size_type bl, size_type i, size_type j
 	const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(i+1);
 	const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(j+1);
 	
-	assert(params->trace_controller.is_valid_match(i+1,j+1));
-	
 	// for all pairs of arcs in A and B that have left ends i+1 and j+1, respectively
 	for (BasePairs::LeftAdjList::const_iterator arcA=adjlA.begin(); arcA!=adjlA.end(); ++arcA) {
 	    for (BasePairs::LeftAdjList::const_iterator arcB=adjlB.begin(); arcB!=adjlB.end(); ++arcB) {
 		// consider score for match of basepairs
-		
 		//std::cout << *arcA << "." << *arcB << std::endl;
-
-		assert(params->trace_controller.is_valid_match(arcA->right(),arcB->right()));
+		
+		//NOTE: if arcA, arcB cannot be matched due to heuristics, then D(*arcA,*arcB) is 0.
 
 		pf += virtual_Mprime(al, bl, arcA->right(),arcB->right(),max_ar,max_br) * D(*arcA,*arcB) * pf_scale;
 	    }
@@ -724,14 +714,7 @@ AlignerP::comp_Mprime_entry(size_type al, size_type bl, size_type i, size_type j
 //===========================================================================
 
 
-// fill Mprime(i,j) entries for fixed left indices al and bl
-// where i>=ar and j>=br
-// ar and br are the minimal right ends
-// max_ar, max_br: only smaller entries need to be expensively computed, since larger
-// values can be directly composed from M and Mrev.
-// pre: M and Mrev are computed properly
-//
-// There is further potential for optimization:
+// NOTE: There is further potential for optimization:
 // The latter optimization will have best effect, if we compute only
 // the necessary entries in Mprime, Eprime, Fprime.
 //
@@ -759,35 +742,40 @@ AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size
     // init Mprime (al,ar,bl,br);
     // init Eprime (al,ar,bl,br);
     
-    assert(params->trace_controller.is_valid(max_ar,max_br));
     
-    Mprime(max_ar,max_br) = M(al-1,bl-1)*Mrev(max_ar,max_br)*pf_scale;
-       
+    // initialize the valid entries in column max_br and row max_ar
+    if (params->trace_controller.is_valid(max_ar,max_br)) {
+	Mprime(max_ar,max_br) = M(al-1,bl-1)*Mrev(max_ar,max_br)*pf_scale;
+    }
+    
+    // note that max_ar,max_br is not necessarily valid!
+    
     // fill column max_br
     size_type i;
-    for(i=max_ar; i>ar; ) {
-	i--;
+    for(i=max_ar; i>ar; ) { i--;
 	if (params->trace_controller.max_col(i) < max_br) break;
-	Mprime(i,max_br) = M(al-1,bl-1)*Mrev(i,max_br)*pf_scale;
+	if (params->trace_controller.is_valid(i,max_br)) {
+	    Mprime(i,max_br) = M(al-1,bl-1)*Mrev(i,max_br)*pf_scale;
+	} 
     }
-    // fill entries right of valid entries 
+    // fill invalid entries right of valid entries 
     for ( ; i>al; ) {
 	i--;
-	if (params->trace_controller.max_col(i)+1<max_br) {
+	if (params->trace_controller.max_col(i)+1 <= max_br) {
 	    Mprime(i,params->trace_controller.max_col(i)+1) = 0;
 	}
     }
     
     // fill row max_ar ( Mprime and Eprime )
     size_type j;
-    for(j=max_br; j>br;) {
-	j--;
+    size_type min_col = std::max(br,params->trace_controller.min_col(max_ar));
+    size_type max_col = std::min(max_br-1,params->trace_controller.max_col(max_ar));
+    for(j=max_col+1; j>min_col;) { j--;
 	Eprime[j]        = M(al-1,bl-1)*Erev_mat(max_ar,j)*pf_scale;
 	Mprime(max_ar,j) = M(al-1,bl-1)*Mrev(max_ar,j)*pf_scale;
     }
-    // fill entries below valid entries 
-    for (size_type i=ar; i>al; ) {
-	i--;
+    // fill invalid entries below valid entries 
+    for (size_type i=max_ar; i>al; ) { i--;
 	for (; j>max(bl,params->trace_controller.min_col(i)); ) {
 	    --j;
 	    Mprime(i+1,j)=0;
@@ -798,9 +786,12 @@ AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size
     for(size_type i=max_ar; i>ar; ) {
 	i--;
 	
-	
-	Fprime = M(al-1,bl-1)*Frev_mat(i,max_br)*pf_scale;
-	
+	if (params->trace_controller.is_valid(i,max_br)) {
+	    Fprime = M(al-1,bl-1)*Frev_mat(i,max_br)*pf_scale;
+	} else {
+	    Fprime=0;
+	}
+
 	size_type min_col = std::max(br,params->trace_controller.min_col(i));
 	size_type max_col = std::min(max_br,params->trace_controller.max_col(i));
     	
@@ -965,14 +956,9 @@ AlignerP::compute_arcmatch_probabilities() {
 	const Arc &arcA=it->arcA();
 	const Arc &arcB=it->arcB();
 	
-	am_prob(arcA.idx(),arcB.idx())=
+	am_prob(arcA.idx(),arcB.idx()) =
 	    (D(arcA,arcB)/(long double)partFunc)
 	    *  Dprime(arcA,arcB) * pf_scale / scoring->exp_arcmatch(*it);
-    
-	//if (it->idx()==271) {
-	// std::cout << "D:"<<D(arcA,arcB)<<" D'/am:"<< Dprime(arcA,arcB)/scoring->exp_arcmatch(*it)<<std::endl;
-	//}
-
     
 	assert(am_prob(arcA.idx(),arcB.idx())<=1);
     }
@@ -1001,36 +987,54 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
     //
     
     for(size_type al=r.get_startA();al<=r.get_endA();al++){
-	for(size_type bl=r.get_startB();bl<=r.get_endB();bl++){
+
+	// limit entries due to trace controller
+	size_type min_col = std::max(r.get_startB(),params->trace_controller.min_col(al));
+	size_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(al));
+	for(size_type bl=min_col; bl<=max_col; bl++){
+	    
+	    // trace controller allows trace through (al,bl), but not
+	    // necessarily match of al and bl
+	    if (params->trace_controller.is_valid_match(al,bl)) continue;
+	    
 	    const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
 	    const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
-	    //	if(al==r.get_endA() || bl==r.get_endB())
-	    //							std::cout<<" ends encountered here"<<endl;
+
 	    if(adjlA.size() >0 && adjlB.size()>0)
 		{
-			    
-		    // get max_ar and max_br (due to am_prob)
+		    
+		    assert(D_created);assert(Dprime_created);
+		    
+		    // get max_ar and max_br, where am_prob larger than threshold
+		    // (which implies that the arc match is valid!).
+		    // This is used only for limiting the inside recomputation.
 		    
 		    size_type max_ar=al;
 		    size_type max_br=bl;
-		    		    
+		    
 		    for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
 			 arcA!=adjlA.end(); ++arcA) {
 			for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-			     arcB!=adjlB.end(); ++arcB)
-			    {
-				size_type ar = arcA->right();
-				size_type br = arcB->right();
-				
-				if ( am_prob(arcA->idx(),arcB->idx()) > am_prob_threshold ) {
-				    max_ar=max(max_ar, ar);
-				    max_br=max(max_br, br);
-				}
+			     arcB!=adjlB.end(); ++arcB) {
+			    size_type ar = arcA->right();
+			    size_type br = arcB->right();
+			    
+			    // Note that the match of arcA and arcB
+			    // may be illegal due to heuristics!
+			    // However, in this case am_prob is 0.0,
+			    // since am_prob is of type SparseMatrix
+			    // with default 0.0 and we wrote values
+			    // only for arc matches in the arc_matches
+			    // object (see compute_arcmatch_probabilities).
+			    
+			    if ( am_prob(arcA->idx(),arcB->idx()) > am_prob_threshold ) {
+				max_ar=max(max_ar, ar);
+				max_br=max(max_br, br);
 			    }
+			}
 		    }
 		    
-		    
-		    assert(D_created);assert(Dprime_created);
+		    // Align inside limited by the determined maximal ar and br
 		    align_inside_arcmatch(al,max_ar,bl,max_br);
 		    
 		    for (BasePairs::LeftAdjList::const_iterator arcA=adjlA.begin();
@@ -1039,6 +1043,8 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
 			     arcB!=adjlB.end(); ++arcB) {
 			    
 			    if (am_prob(arcA->idx(),arcB->idx()) > am_prob_threshold) {
+				// again note that the above comparison is sufficient to guarantee the validity of
+				// the arc match arcA~arcB
 				
 				size_type ar=arcA->right();
 				size_type br=arcB->right();
@@ -1060,7 +1066,6 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
 				    for(size_type j=min_col;j<=max_col;j++){
 					
 					if ( ! params->trace_controller.is_valid_match(i,j) ) continue;
-					if ( ! params->trace_controller.is_valid(i+1,j+1) ) continue;
 					
 					//	std::cout<<" calling rev outside for "<<i<<"  "<<j<<" having "<<ar<<"  "<<br<<endl;
 					
@@ -1088,7 +1093,13 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
     align_reverse(r.get_startA(),r.get_endA(),r.get_startB(),r.get_endB());
   
     for(size_type i=r.get_startA();i<=r.get_endA();i++){
-	for(size_type j=r.get_startB();j<=r.get_endB();j++){
+	// limit entries due to trace controller
+	size_type min_col = std::max(r.get_startB(),params->trace_controller.min_col(i));
+	size_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(i));
+	for(size_type j=min_col;j<=max_col;j++){
+	    
+	    if ( ! params->trace_controller.is_valid_match(i,j) ) continue;
+	    
 	    bm_prob(i,j) += M(i-1,j-1) * scoring->exp_basematch(i,j) * Mrev(i,j) * pf_scale;
 	}
     }
@@ -1097,10 +1108,21 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
     // --------------------------------------------------
     // divide the conditional partition functions by total partition function  
 	
-    for(size_type i=1;i<=r.get_endA();i++){
-	for(size_type j=1;j<=r.get_endB();j++){
+    for(size_type i=r.get_startA();i<=r.get_endA();i++){
+	// limit entries due to trace controller
+	size_type min_col = std::max(r.get_startB(),params->trace_controller.min_col(i));
+	size_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(i));
+	for(size_type j=min_col;j<=max_col;j++){
+	    
+	    if ( ! params->trace_controller.is_valid_match(i,j) ) continue;
+	    
 	    bm_prob(i,j)=bm_prob(i,j)/partFunc;
-	    assert(bm_prob(i,j)<=1);
+	    
+	    //assert(bm_prob(i,j)<=1);
+	    if (bm_prob(i,j)>1) {
+		std::cerr << "ERROR: bm prob " << i <<" " << j <<" " << bm_prob(i,j)<<std::endl;
+		exit(-1);
+	    }
 	}
     }
 
