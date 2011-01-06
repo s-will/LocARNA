@@ -230,10 +230,10 @@ protected:
     void init_Erev(size_type al, size_type ar, size_type bl, size_type br); 
 
     //! initialize first column and row of M' for outside recursion
-    void init_Mprime(size_type al, size_type ar, size_type bl, size_type br);
+    // void init_Mprime(size_type al, size_type ar, size_type bl, size_type br);
 
     //! initialize first row of E' for outside recursion
-    void init_Eprime(size_type al, size_type ar, size_type bl, size_type br);
+    // void init_Eprime(size_type al, size_type ar, size_type bl, size_type br);
 
     //! compute one entry in E (inside recursion cases)
     pf_score_t comp_E_entry(size_type al, size_type bl, size_type i, size_type j);
@@ -252,7 +252,6 @@ protected:
 
     //! compute one entry in Fprime (outside recursion cases)
     pf_score_t comp_Fprime_entry(size_type al, size_type bl, size_type i, size_type j);
-
 
     //! compute one entry in Erev
     pf_score_t comp_Erev_entry( size_type i, size_type j );
@@ -286,8 +285,8 @@ protected:
     //! @param ar right end of arc in seqA 
     //! @param bl left end of arc in seqB 
     //! @param br right end of arc in seqB
-    //! @param max_ar leftmost right end in seqA for which the score can simply be composed from M and Mrev.
-    //! @param max_br leftmost right end in seqB for which the score can simply be composed from M and Mrev.
+    //! @param max_ar leftmost right end in seqA, for which the score can simply be composed from M and Mrev.
+    //! @param max_br leftmost right end in seqB, for which the score can simply be composed from M and Mrev.
     //! 
     void
     align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size_type bl,size_type br,size_type max_br);
@@ -296,17 +295,17 @@ protected:
     //! Mrev(i,j) codes for subsequences seqA(i+1..ar) and seqB(j+1..br)
     //! and is valid for al-1<=i<=ar and bl-1<=j<=br
     //!
-    //! @param al left position delimiting range of positions in seqA 
-    //! @param ar right position delimiting range of positions in seqA 
-    //! @param bl left position delimiting range of positions in seqB 
-    //! @param br right position delimiting range of positions in seqB 
+    //! @param al left position delimiting range of positions in seqA
+    //! @param ar right position delimiting range of positions in seqA
+    //! @param bl left position delimiting range of positions in seqB
+    //! @param br right position delimiting range of positions in seqB
     //! pre: matrix Mrev has size 0..lenA x 0..lenB 
     //! @param copy if true, make a copy of Erev/Frev in Erev/Frev_mat
     //!
     //! Note that al, ar, bl, br denote the actual limits of the
     //! subsequences, which differs from their use in
     //! align_inside_arcmatch.  Otherwise the two methods correspond
-    //! to each other by respectively preforming forward and backward
+    //! to each other by respectively performing forward and backward
     //! computation!
     void align_reverse(size_type al, size_type ar, size_type bl, size_type br, bool copy=false);
     

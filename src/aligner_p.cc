@@ -5,8 +5,8 @@
 
 #include <math.h>
 #include <assert.h>
-#include<iomanip>
-#include <queue>
+#include <iomanip>
+// #include <queue>
 
 using namespace std;
 
@@ -53,12 +53,6 @@ AlignerP::alloc_outside_matrices() {
     
     Erev_mat.resize(seqA.length()+1, seqB.length()+1); // size as Mrev
     Frev_mat.resize(seqA.length()+1, seqB.length()+1); // size as Mrev
-
-#ifndef NDEBUG
-    Mrev.fill((pf_score_t )0);
-    Erev_mat.fill((pf_score_t )0);
-    Frev_mat.fill((pf_score_t )0);
-#endif
 
 }
 
@@ -381,28 +375,38 @@ pf_score_t AlignerP::align_inside() {
 // REVERSE INSIDE
 // ================================================================================
 
+//#define printMrev(x,i,j) std::cout << x << " " << "Mrev(" << i << "," << j << ") := " << Mrev(i,j) << std::endl
+
+
 // =================================================================
 // init alignment matrix for aligning the fragments seqA(al..ar) and seqB(bl..br) 
 void
 AlignerP::init_Mrev(size_type al, size_type ar, size_type bl, size_type br) {
+    // std::cout << "init_Mrev " << al << " " << ar << " " << bl << " " << br << std::endl;
+    
     assert(al>=1);
     assert(bl>=1);
     
     Mrev(ar,br)=((pf_score_t)1)/pf_scale; // empty sequences
-    
+    // printMrev(1,ar,br);
+
     // initialize column br, subsequence B empty
     pf_score_t indel_score;
     indel_score = scoring->exp_indel_opening()/pf_scale;
     size_type i;
     for (i=ar; i>=al; ) { i--;
-	if (params->trace_controller.max_col(i)<br) break; // fill only as long as column bl is accessible
-	
-	indel_score *= scoring->exp_gapA(i+1,br);;
+	if (params->trace_controller.max_col(i)<br) {
+	    ++i;
+	    break; // fill only as long as column bl is accessible
+	}
+	indel_score *= scoring->exp_gapA(i+1,br);
 	Mrev(i,br) = indel_score;
+	// printMrev(2,i,br);
     }
-    // fill entries right of valid entries 
+    // fill entries right of valid entries
     for ( ; i>=al; ) { i--;
 	Mrev(i,params->trace_controller.max_col(i)+1) = 0;
+	// printMrev(3,i,params->trace_controller.max_col(i)+1);
     }
     
     // initialize row ar, subsequence A empty
@@ -413,11 +417,13 @@ AlignerP::init_Mrev(size_type al, size_type ar, size_type bl, size_type br) {
     for (j=br; j>min_col; ) { j--;
 	indel_score *= scoring->exp_gapB(ar,j+1);
 	Mrev(ar,j)= indel_score;
+	// printMrev(4,ar,j);
     }
-    // fill entries below valid entries 
+    // fill entries below valid entries
     for (size_type i=ar; i>=al; ) { i--;
-	for (; j>=max(bl,params->trace_controller.min_col(i)); --j) {
+	for (; j>std::max(bl-1,params->trace_controller.min_col(i)); ) { --j;
 	    Mrev(i+1,j)=0;
+	    // printMrev(5,i+1,j);
 	}
     }
 }
@@ -488,7 +494,16 @@ AlignerP::comp_Mrev_entry(size_type i, size_type j,size_type ar, size_type br) {
 void
 AlignerP::align_reverse(size_type al, size_type ar, size_type bl, size_type br, bool copy){
     assert(al>0);
-    assert(bl>0); 
+    assert(bl>0);
+
+    // Mrev.fill with -1 for debugging!
+    for (size_t i=al; i<=ar; ++i) {
+	for (size_t j=bl; j<=br; ++j) {
+	    Mrev(i,j) = -1;
+	}
+    }
+
+
 
     init_Mrev(al,ar,bl,br);
     init_Erev(al,ar,bl,br);
@@ -507,9 +522,19 @@ AlignerP::align_reverse(size_type al, size_type ar, size_type bl, size_type br, 
 		Erev_mat(i,j) = Erev[j];
 		Frev_mat(i,j) = Frev;
 	    }
+
 	    Mrev(i,j) = comp_Mrev_entry(i,j,ar,br);
 	}
     }
+
+    
+    // cout << "Mrev " << al << " " << ar << " " << bl << " " << br <<std::endl;
+    // for (size_t i=al; i<=ar; ++i) {
+    // 	for (size_t j=bl; j<=br; ++j) {
+    // 	    std::cout << Mrev(i,j) << " ";
+    // 	}
+    // 	std::cout << std::endl;
+    // }
 }
 
 
@@ -575,40 +600,40 @@ AlignerP::rightmost_covering_arcmatch(size_type al,size_type bl,size_type ar,siz
 // Initialization of outside matrices Mprime, Eprime
 
 
-// Initialize the last row and column of Mprime for aligning outside of (a,b).
-// Initialize for the computation of outside alignments for all holes that start with
-// left ends al,bl and end with right ends ar<=i<=lenA and br<=j<=lenB
-// The initialization of Mprime relies on the M matrix, this matrix has to be filled
-// with prefix alignment scores of the complete sequences.
-void
-AlignerP::init_Mprime(size_type al, size_type ar, size_type bl, size_type br) {   
-    assert(al>0 && bl>0);
+// // Initialize the last row and column of Mprime for aligning outside of (a,b).
+// // Initialize for the computation of outside alignments for all holes that start with
+// // left ends al,bl and end with right ends ar<=i<=lenA and br<=j<=lenB
+// // The initialization of Mprime relies on the M matrix, this matrix has to be filled
+// // with prefix alignment scores of the complete sequences.
+// void
+// AlignerP::init_Mprime(size_type al, size_type ar, size_type bl, size_type br) {   
+//     assert(al>0 && bl>0);
     
-    Mprime(r.get_endA(),r.get_endB()) = M(al-1,bl-1);
-    //std::cout<<"in init_Mprime :  with al,ar,bl,br "<<al<<" "<<ar<< " : "<<bl<<" "<<br<<endl;
+//     Mprime(r.get_endA(),r.get_endB()) = M(al-1,bl-1);
+//     //std::cout<<"in init_Mprime :  with al,ar,bl,br "<<al<<" "<<ar<< " : "<<bl<<" "<<br<<endl;
     
-    pf_score_t pf;
+//     pf_score_t pf;
     
-    pf = M(al-1,bl-1) * scoring->exp_indel_opening();
-    for (int i=(int)r.get_endA()-1;i>=(int)ar; i--) {
-	pf *= scoring->exp_gapA(i+1,r.get_endB());
-	Mprime(i,r.get_endB()) = pf;
-    }
+//     pf = M(al-1,bl-1) * scoring->exp_indel_opening();
+//     for (int i=(int)r.get_endA()-1;i>=(int)ar; i--) {
+// 	pf *= scoring->exp_gapA(i+1,r.get_endB());
+// 	Mprime(i,r.get_endB()) = pf;
+//     }
     
-    pf = M(al-1,bl-1) * scoring->exp_indel_opening();
-    for (int j=(int)r.get_endB()-1; j>=(int)br; j--) {
-	pf *= scoring->exp_gapB(r.get_endA(),j+1);
-	Mprime(r.get_endA(),j) = pf; 
-    }
-}
+//     pf = M(al-1,bl-1) * scoring->exp_indel_opening();
+//     for (int j=(int)r.get_endB()-1; j>=(int)br; j--) {
+// 	pf *= scoring->exp_gapB(r.get_endA(),j+1);
+// 	Mprime(r.get_endA(),j) = pf; 
+//     }
+// }
 
-inline
-void
-AlignerP::init_Eprime(size_type al, size_type ar, size_type bl, size_type br) {
-    for (int j=(int)r.get_endB()-1; j>=(int)br; j--) {
-	Eprime[j] = 0;
-    }
-}
+// inline
+// void
+// AlignerP::init_Eprime(size_type al, size_type ar, size_type bl, size_type br) {
+//     for (int j=(int)r.get_endB()-1; j>=(int)br; j--) {
+// 	Eprime[j] = 0;
+//     }
+// }
 
 
 // compute a single entry of Eprime
@@ -711,9 +736,8 @@ AlignerP::comp_Mprime_entry(size_type al, size_type bl, size_type i, size_type j
 }
 
 
-//===========================================================================
-
-
+// ===========================================================================
+//
 // NOTE: There is further potential for optimization:
 // The latter optimization will have best effect, if we compute only
 // the necessary entries in Mprime, Eprime, Fprime.
@@ -722,44 +746,42 @@ void
 AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size_type bl,size_type br,size_type max_br) {
     assert(al>0);
     assert(bl>0);
-  
-    // fill the Mrev matrix 
-    //
-    size_pair start = leftmost_covering_arcmatch(al,bl,ar,br);
-
-    // cout << "Outside " 
-    // 	 <<al<<".."<<ar<<" "
-    // 	 <<bl<<".."<<br <<" " 
-    // 	 <<"Start " << start.first<<" "<<start.second <<" " 
-    // 	 << max_ar << " " << max_br << std::endl;
-
-    align_reverse(start.first+1,al-1,start.second+1,bl-1);
-  
-    // cout << Mrev<<std::endl;
     
+    // fill the Mrev matrix 
+    size_pair start = leftmost_covering_arcmatch(al,bl,ar,br);
+    
+    // cout << "Outside "
+    //  	 <<al<<".."<<ar<<" "
+    //  	 <<bl<<".."<<br <<" "
+    //  	 <<"Start " << start.first<<" "<<start.second <<" "
+    //  	 << max_ar << " " << max_br << std::endl;
+    
+    align_reverse(start.first+1,al-1,start.second+1,bl-1);
+        
     // fill the outside matrices Mprime,Eprime,Fprime
     //
     // init Mprime (al,ar,bl,br);
     // init Eprime (al,ar,bl,br);
     
+    Mprime.fill(-1); // only for debugging
     
     // initialize the valid entries in column max_br and row max_ar
+    // note that max_ar,max_br is not necessarily valid!
     if (params->trace_controller.is_valid(max_ar,max_br)) {
 	Mprime(max_ar,max_br) = M(al-1,bl-1)*Mrev(max_ar,max_br)*pf_scale;
     }
-    
-    // note that max_ar,max_br is not necessarily valid!
-    
+        
     // fill column max_br
     size_type i;
     for(i=max_ar; i>ar; ) { i--;
-	if (params->trace_controller.max_col(i) < max_br) break;
+	if (params->trace_controller.max_col(i) < max_br) { i++; break; }
 	if (params->trace_controller.is_valid(i,max_br)) {
 	    Mprime(i,max_br) = M(al-1,bl-1)*Mrev(i,max_br)*pf_scale;
-	} 
+	}
     }
+
     // fill invalid entries right of valid entries 
-    for ( ; i>al; ) {
+    for ( ; i>ar; ) {
 	i--;
 	if (params->trace_controller.max_col(i)+1 <= max_br) {
 	    Mprime(i,params->trace_controller.max_col(i)+1) = 0;
@@ -775,13 +797,12 @@ AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size
 	Mprime(max_ar,j) = M(al-1,bl-1)*Mrev(max_ar,j)*pf_scale;
     }
     // fill invalid entries below valid entries 
-    for (size_type i=max_ar; i>al; ) { i--;
+    for (size_type i=max_ar; i>ar; ) { i--;
 	for (; j>max(bl,params->trace_controller.min_col(i)); ) {
 	    --j;
 	    Mprime(i+1,j)=0;
 	}
     }
-    
     
     for(size_type i=max_ar; i>ar; ) {
 	i--;
@@ -793,9 +814,9 @@ AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size
 	}
 
 	size_type min_col = std::max(br,params->trace_controller.min_col(i));
-	size_type max_col = std::min(max_br,params->trace_controller.max_col(i));
+	size_type max_col = std::min(max_br-1,params->trace_controller.max_col(i));
     	
-	for(size_type j=max_col; j>min_col;) {
+	for(size_type j=max_col+1; j>min_col;) {
 	    j--;
 	    
 	    Fprime      = comp_Fprime_entry(al,bl,i,j);
@@ -804,8 +825,8 @@ AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size
 	}
     }
   
-    //cout << "Mprime "<<al<<".."<<ar<<" "<<bl<<".."<<br <<std::endl;
-    //cout << Mprime<<std::endl;
+    // cout << "Mprime "<<al<<".."<<ar<<" "<<bl<<".."<<br <<std::endl;
+    // cout << Mprime<<std::endl;
 }
 
 //===========================================================================
@@ -868,12 +889,9 @@ void AlignerP::align_Dprime() {
     //
     for (size_type al=r.get_startA(); al<=r.get_endA(); al++) {
 	
-	size_type min_bl=r.get_startB();
-	size_type max_bl=r.get_endB();
-    
 	// restrict range for left ends of bl due to trace controller
-	min_bl = std::max(min_bl,params->trace_controller.min_col(al));
-	max_bl = std::min(max_bl,params->trace_controller.max_col(al));
+	size_type min_bl = std::max(r.get_startB(), params->trace_controller.min_col(al));
+	size_type max_bl = std::min(r.get_endB(),   params->trace_controller.max_col(al));
     
 	for (size_type bl=min_bl; bl<=max_bl; bl++) {
 	    
@@ -884,11 +902,11 @@ void AlignerP::align_Dprime() {
 	    size_type min_br=r.get_endB()+1;
 	    
 	    arc_matches.get_min_right_ends(al,bl,&min_ar,&min_br); 
-      
+	    
 	    // continue, when there is no arc match with left ends al,bl
 	    // this is only a small optimization and not needed for correctness
 	    if (min_ar > r.get_endA() || min_br > r.get_endB()) continue;
-      
+	    
 	    // ------------------------------------------------------------
 	    // get rightmost end of covering arc match.
 	    // idea: for positions right of right_end, there is no dependency
@@ -927,13 +945,13 @@ void AlignerP::align_outside() {
 	// argument: al,bl are visited in ascending order, for the
 	// smaller Mrev one overwrites only values that are smaller or equal al,bl
 	// for the optimization we need only entries that are larger al,bl
-    
+
 	alloc_outside_matrices();
-      
+
 	align_reverse(r.get_startA(),r.get_endA(),r.get_startB(),r.get_endB(),true);
-    
+
 	align_Dprime();
-    }  
+    }
 }
 
 
@@ -950,7 +968,14 @@ void AlignerP::align_outside() {
 
 void 
 AlignerP::compute_arcmatch_probabilities() {
-	
+
+
+    cout << "D" << std::endl
+	 << Dmat << std::endl;
+
+    cout << "Dprime" << std::endl
+	 << Dmatprime << std::endl;
+    
     // iterate over all arc matches
     for(ArcMatches::const_iterator it=arc_matches.begin(); arc_matches.end()!=it; ++it) {
 	const Arc &arcA=it->arcA();
@@ -959,10 +984,14 @@ AlignerP::compute_arcmatch_probabilities() {
 	am_prob(arcA.idx(),arcB.idx()) =
 	    (D(arcA,arcB)/(long double)partFunc)
 	    *  Dprime(arcA,arcB) * pf_scale / scoring->exp_arcmatch(*it);
-    
-	assert(am_prob(arcA.idx(),arcB.idx())<=1);
+	
+	//std::cout << arcA << " " << arcB << ": " << D(arcA,arcB) << " " << Dprime(arcA,arcB) << " " <<  am_prob(arcA.idx(),arcB.idx()) <<  std::endl;  
+	
+	if (! (am_prob(arcA.idx(),arcB.idx())<=1) ) {
+	    std::cerr << "ERROR: am prob " << arcA <<" " << arcB <<" " << am_prob(arcA.idx(),arcB.idx())<<std::endl;
+	    exit(-1);
+	}
     }
-    
     //std::cout<<"Arc match probs calculated"<<endl;
     //std::cout<<am_prob<<std::endl;
 }
@@ -995,7 +1024,7 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
 	    
 	    // trace controller allows trace through (al,bl), but not
 	    // necessarily match of al and bl
-	    if (params->trace_controller.is_valid_match(al,bl)) continue;
+	    if (! params->trace_controller.is_valid_match(al,bl)) continue;
 	    
 	    const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
 	    const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
@@ -1066,9 +1095,7 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
 				    for(size_type j=min_col;j<=max_col;j++){
 					
 					if ( ! params->trace_controller.is_valid_match(i,j) ) continue;
-					
-					//	std::cout<<" calling rev outside for "<<i<<"  "<<j<<" having "<<ar<<"  "<<br<<endl;
-					
+										
 					bm_prob(i,j) += 
 					    M(i-1,j-1)
 					    * scoring->exp_basematch(i,j)
