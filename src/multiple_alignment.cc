@@ -130,6 +130,18 @@ MultipleAlignment::SeqEntry::is_gap_symbol(char c) {
 }
 
 MultipleAlignment::size_type
+MultipleAlignment::SeqEntry::length_wogaps() const {
+    size_type len = 0;
+    for ( size_type col = 1 ; col <= seq_.length() ; col++) {
+	if ( ! is_gap_symbol( seq_[col] ) ) { 
+	    len++;
+	}
+    }
+    return len;
+}
+
+
+MultipleAlignment::size_type
 MultipleAlignment::SeqEntry::pos_to_col(size_type pos) const {
 
     if (pos==0) return 0; // special case: position 0 maps to column 0

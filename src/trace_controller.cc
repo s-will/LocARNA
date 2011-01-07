@@ -49,10 +49,15 @@ TraceController::TraceRange
     
     // pseqA and pseqB can contain gaps, therefore we call these strings profile sequences    
 
+    // std::cout << pseqA.seq().to_string() << std::endl
+    // 	      << paliA.seq().to_string() << std::endl
+    // 	      << paliB.seq().to_string() << std::endl
+    // 	      << pseqB.seq().to_string() << std::endl; 
+	
     assert(paliA.seq().length() == paliB.seq().length());
     
     size_t plenA = pseqA.seq().length();
-    //size_t plenB = pseqB.seq().length();
+    size_t plenB = pseqB.seq().length();
     
     min_col_vector.resize(plenA+1);
     max_col_vector.resize(plenA+1);
@@ -64,8 +69,21 @@ TraceController::TraceRange
     const MultipleAlignment::SeqEntry &aliB=ali.second;
       
     size_t lenAli = aliA.seq().length();
+    size_t lenA = pseqA.length_wogaps();
+    size_t lenB = pseqB.length_wogaps();
+        
+    // std::cout << plenA << " "
+    // 	      << plenB << " "
+    // 	      << lenA << " "
+    // 	      << lenB << " "
+    // 	      << lenAli << " "
+    // 	      << std::endl;
     
-    // iterate over columns c in alignment
+#ifdef COLUMN_CUT_DISTANCE
+    // this code will compute the permissible cuts according to a definition
+    // of the alignment deviation that limits the column cut distance to Delta
+    
+    // iterate over positions in sequence A
     for (size_t pi=0; pi <= plenA; pi++) {
 	
 	size_t left_i=pseqA.col_to_pos(pi).first; // left_i is the position in seqA left of the gap 
@@ -88,10 +106,91 @@ TraceController::TraceRange
 	
 	min_col_vector[pi] = left_pj;
 	max_col_vector[pi] = right_pj-1;
-	
+
+    }
+#else // POSITION_CUT_DISTANCE
+    // this code computes the permissible cuts according to a definition
+    // of the alignment deviation that limits the position cut distance to Delta
+    
+    // initialize col vectors
+    for (size_t pi=0; pi <= plenA; pi++) {
+	min_col_vector[pi] = plenB;
+	max_col_vector[pi] = 0;
     }
     
-    //print_debug(std::cout);
+    // iterate over columns of the alignment paliA/paliB
+    for (size_t c=0; c <= lenAli; c++) {
+	
+	// determine cut ^t(pi,pj) of the alignment ^t(paliA,paliB) at column c
+	size_t i = aliA.col_to_pos(c).first; // position in sequence A that corresponds to column c
+	size_t j = aliB.col_to_pos(c).first; // position in sequence B that corresponds to column c
+	
+	// std::cout << c << " "
+	// 	  << i << " "
+	// 	  << j << " "
+	// 	  << std::endl; 
+	
+	// this cut corresponds to a set of cuts C in alignments of pseqA and pseqB,
+	// we describe this set by two ranges pi_min..pi_max and pj_min..pj_max
+	size_t pi_min=pseqA.pos_to_col(i);
+	size_t pi_max=pseqA.pos_to_col(i+1)-1;
+	size_t pj_min=pseqB.pos_to_col(j);
+	size_t pj_max=pseqB.pos_to_col(j+1)-1;
+
+	// std::cout <<"  "
+	// 	  << pi_min << " "
+	// 	  << pi_max << " "
+	// 	  << pj_min << " "
+	// 	  << pj_max << " "
+	// 	  << std::endl; 
+	
+	// determine the positions in delta distance 
+	size_t i_minus = std::max(delta,i)-delta;
+	size_t i_plus  = std::min(lenA,i+delta);
+	size_t j_minus = std::max(delta,j)-delta;
+	size_t j_plus  = std::min(lenB,j+delta);
+
+	// std::cout <<"  "
+	// 	  << i_minus << " "
+	// 	  << i_plus << " "
+	// 	  << j_minus << " "
+	// 	  << j_plus << " "
+	// 	  << std::endl; 
+
+	
+	// project to positions in pseqA and pseqB respectively
+	size_t pi_minus = pseqA.pos_to_col(i_minus);
+	size_t pi_plus  = pseqA.pos_to_col(i_plus);
+	size_t pj_minus = pseqB.pos_to_col(j_minus);
+	size_t pj_plus  = pseqB.pos_to_col(j_plus);
+	
+	// std::cout <<"  "
+	// 	  << pi_minus << " "
+	// 	  << pi_plus << " "
+	// 	  << pj_minus << " "
+	// 	  << pj_plus << " "
+	// 	  << std::endl;
+
+
+	// for all cuts in C, potentially update min_col_vector and max_col_vector
+	for (size_t pi=pi_min; pi<=pi_max; pi++) {
+	    min_col_vector[pi] = std::min(min_col_vector[pi],pj_minus);
+	    max_col_vector[pi] = std::max(max_col_vector[pi],pj_plus);
+	}
+	
+	for (size_t pi=pi_minus; pi<pi_min; pi++) {
+	    max_col_vector[pi] = std::max(max_col_vector[pi],pj_max);
+	}
+	
+	for (size_t pi=pi_max+1; pi<=pi_plus; pi++) {
+	    min_col_vector[pi] = std::min(min_col_vector[pi],pj_min);
+	}
+	    
+    }
+    
+#endif
+    
+    // print_debug(std::cout);
 }
 
 void

@@ -77,6 +77,9 @@ public:
 	//! (read-only) access to seq
 	const locarna::string1 &
 	seq() const {return seq_;}
+
+	//! length without gaps
+	size_type length_wogaps() const;
 	
 	//****************************************
 	// projections
