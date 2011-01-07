@@ -80,9 +80,6 @@ std::string max_diff_alignment_file; // reference alignment for max-diff heurist
 // only consider arc matchs where
 //   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!! changed due to TraceController/reference alignment
 //   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
-// except when there is no additional computation of M matrices necessary,
-// this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
-
 
 int exclusion_score; // Score contribution per exclusion
 // set to zero for unrestricted structure locality
@@ -205,8 +202,8 @@ option_def my_options[] = {
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
-    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))."},
-    {"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)."},
+    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
+    {"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
     
@@ -418,17 +415,9 @@ main(int argc, char **argv) {
     size_type lenB=seqB.length();
 
     // --------------------
-    // handle max_diff restriction
-
-    // do not relax max_diff in case of unequal lengths anymore, instead change constraint in TraceController
-    // if (max_diff!=-1) {
-    // 	int len_diff = (lenA>lenB) ? (lenA-lenB) : (lenB-lenA);
-    // 	max_diff = std::max(max_diff, (int)(len_diff*1.1));
-    // }
-    
+    // handle max_diff restriction  
     
     // missing: proper error handling in case that lenA, lenB, and max_diff_pw_alignment/max_diff_alignment_file are incompatible 
-    
     
     // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
     //

@@ -61,7 +61,8 @@ int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
 int max_diff_am; //maximal difference between two arc ends, -1 is off
 
-std::string max_diff_pw_alignment; // reference alignment for max-diff-match heuristic
+std::string max_diff_pw_alignment; // pairwise reference alignment for max-diff heuristic, separator &
+std::string max_diff_alignment_file; // reference alignment for max-diff heuristic, name of clustalw format file
 
 double min_am_prob; // only matched arc-pair with a probability of at least min_am_prob are taken into account
 double min_bm_prob; // only matched base-pair with a probability of at least min_bm_prob are taken into account
@@ -70,8 +71,7 @@ int match_score;
 // only consider arc matchs where
 //   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!!!! this changed due to TraceController
 //   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
-// except when there is no additional computation of M matrices necessary,
-// this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
+
 int exclusion_score; // Score contribution per exclusion
 // set to zero for unrestricted structure locality
 
@@ -154,7 +154,8 @@ option_def my_options[] = {
 
     {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
-    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relativ to given pairwise alignment (delim=&)."},
+    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
+    {"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Computed probabilities"},
     {"fragment-match-probs",0,0,O_ARG_STRING,&fragment_match_probs,"","\"i j k l\"",
@@ -242,19 +243,42 @@ main(int argc, char **argv) {
     // --------------------
     // handle max_diff restriction
     
-    // if (max_diff!=-1) {
-    // 	int len_diff = (lenA>lenB) ? (lenA-lenB) : (lenB-lenA);
-    // 	max_diff = std::max(max_diff, len_diff);
-    // }
-    
     // missing: proper error handling in case that lenA, lenB, and max_diff_alignment are incompatible 
 
-    MultipleAlignment *multipleAlignment=NULL;
-    if (max_diff_pw_alignment!="") {
-	multipleAlignment = new MultipleAlignment(seqA.names()[0],seqB.names()[0],max_diff_pw_alignment);
+    // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
+    //
+    if (max_diff_pw_alignment!="" && max_diff_alignment_file!="") {
+	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
+	exit(-1);
     }
-    TraceController trace_controller(seqA,seqB,multipleAlignment,max_diff);
-    if (multipleAlignment) delete multipleAlignment;
+
+    // construct TraceController and check inconsistency for with multiplicity of sequences
+    //
+
+    MultipleAlignment *multiple_ref_alignment=NULL;
+    
+    if (max_diff_alignment_file!="") {
+	multiple_ref_alignment = new MultipleAlignment(max_diff_alignment_file);
+    } else if (max_diff_pw_alignment!="") {
+	if ( seqA.get_rows()!=1 || seqB.get_rows()!=1 ) {
+	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
+	    exit(-1);
+	}
+	
+	multiple_ref_alignment = new MultipleAlignment(seqA.names()[0],seqB.names()[0],max_diff_pw_alignment);
+    }
+
+    // if (multiple_ref_alignment) {
+    // 	std::cout<<"Reference aligment:"<<std::endl;
+    // 	multiple_ref_alignment->print_debug(std::cout);
+    // 	std::cout << std::flush;
+    // }
+    
+    TraceController trace_controller(seqA,seqB,multiple_ref_alignment,max_diff);
+    
+    if (multiple_ref_alignment) {
+	delete multiple_ref_alignment;
+    }
     
     // ----------------------------------------
     // construct set of relevant arc matches

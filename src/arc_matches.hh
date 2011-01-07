@@ -14,11 +14,6 @@
 
 #include <assert.h>
 
-/*
-  wie funktioniert Pruning mit der neuen Struktur?  
-*/
-
-
 
 /** a match of two base pairs. Maintains pointers to the single arcs
     (in the base pairs strucures) and an arc match index.
@@ -68,11 +63,11 @@ typedef std::vector<ArcMatch::idx_type> ArcMatchIdxVec;
    The index is used to access the arc match score, the single arcs of the match,
    the matrix D, ...
    
-   The object offers iteration over 1.) all arc matches 2.) all arch
+   The object offers iteration over 1.) all arc matches 2.) all arc
    matches that share left ends/right ends (i,j) During iteration the
    index of the current arc match is known, thus one never needs to
    infer the arc match index from the arc ends or arc indices!
-   (This could be done in constant time using an O(n^2) lookup table.)      
+   (This could be done in constant time using an O(n^2) lookup table.)
 */
 class ArcMatches {
 public:
@@ -123,11 +118,6 @@ private:
     Matrix<ArcMatchIdxVec> common_left_end_lists;
     
     
-//     //! for each (i,j) maintain indices of the arc matchs that share the common right end (i,j)
-//     //! in a way optimized for traversal in the inner loop of Aligner
-//     Matrix<std::vector<ArcMatchVec> > sorted_common_right_end_lists;
-    
-    
     //! vector of indices of inner arc matches 
     ArcMatchIdxVec inner_arcmatch_idxs;
     
@@ -135,7 +125,7 @@ private:
     void
     init_inner_arc_matchs();
     
-    // compare two arc match indices by lexicographically comparing their left ends
+    //! compare two arc match indices by lexicographically comparing their left ends
     class lex_greater_left_ends {
 	const ArcMatches &arc_matches;
     public:
@@ -266,11 +256,6 @@ public:
 	return common_left_end_lists(i,j);
     }
     
-//     //! list of all arc matches that share the common right end (i,j)
-//     const std::vector<ArcMatchVec> &
-//     sorted_common_right_end_list(size_type i, size_type j) const {
-// 	return sorted_common_right_end_lists(i,j);
-//     }
     
     // ============================================================
     
