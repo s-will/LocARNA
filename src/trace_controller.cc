@@ -160,9 +160,9 @@ TraceController::TraceRange
 	
 	// project to positions in pseqA and pseqB respectively
 	size_t pi_minus = pseqA.pos_to_col(i_minus);
-	size_t pi_plus  = pseqA.pos_to_col(i_plus);
+	size_t pi_plus  = pseqA.pos_to_col(i_plus+1)-1;
 	size_t pj_minus = pseqB.pos_to_col(j_minus);
-	size_t pj_plus  = pseqB.pos_to_col(j_plus);
+	size_t pj_plus  = pseqB.pos_to_col(j_plus+1)-1;
 	
 	// std::cout <<"  "
 	// 	  << pi_minus << " "
@@ -190,6 +190,16 @@ TraceController::TraceRange
     
 #endif
     
+    //assert monotony, consistency and connectivity
+#ifndef NDEBGUG
+    for (size_type i=1; i < min_col_vector.size(); ++i) {
+	assert(min_col_vector[i-1]<=min_col_vector[i]); // monotony
+	assert(max_col_vector[i-1]<=max_col_vector[i]); // monotony
+	assert(min_col_vector[i]<=max_col_vector[i]); // otherwise trace range inconsistent
+	assert(max_col_vector[i-1]+1>=min_col_vector[i]); // ranges connected/overlap, otherwise trace is inconsistent
+    }
+#endif
+
     // print_debug(std::cout);
 }
 
@@ -290,8 +300,8 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 	//TraceRange::print_debug(std::cout);
 	
 	for (size_type i=1; i < min_col_vector.size(); ++i) {
-	    assert(min_col_vector[i-1]<=min_col_vector[i]);
-	    assert(max_col_vector[i-1]<=max_col_vector[i]);
+	    assert(min_col_vector[i-1]<=min_col_vector[i]); // monotony
+	    assert(max_col_vector[i-1]<=max_col_vector[i]); // monotony
 	    assert(min_col_vector[i]<=max_col_vector[i]); // otherwise trace range inconsistent
 	    assert(max_col_vector[i-1]+1>=min_col_vector[i]); // ranges connected/overlap, otherwise trace is inconsistent
 	}
