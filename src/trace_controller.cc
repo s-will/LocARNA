@@ -291,7 +291,7 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 	
 		// combine existing trace range with new trace +/- delta
 		merge_in_trace_range(tr);
-	    
+		
 	    }
 	}
 

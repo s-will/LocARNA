@@ -1,4 +1,4 @@
-bin_PROGRAMS = locarna ribosum2cc locarna_p fit locarna_X
+bin_PROGRAMS = locarna ribosum2cc locarna_p fit locarna_X deviation
 
 BUILT_SOURCES=ribosum85_60.icc
 
@@ -37,6 +37,8 @@ nodist_locarna_SOURCES = ribosum85_60.icc
 ribosum2cc_SOURCES = ribosum2cc.cc ribosum.cc ribosum.hh matrices.hh alphabet.icc alphabet.hh
 
 fit_SOURCES = fit.cc fitonoff.cc fitonoff.hh options.hh options.cc
+
+deviation_SOURCES = deviation.cc multiple_alignment.hh multiple_alignment.cc aux.hh aux.cc
 
 ribosum85_60.icc: ribosum2cc
 	./ribosum2cc Ribosum85_60 $(top_srcdir)/Matrices/RIBOSUM85_60 >$@

@@ -4,6 +4,13 @@
 
 #include "multiple_alignment.hh"
 
+#include "sequence.hh"
+#include "alignment.hh"
+
+#include <limits>
+
+#include <stdlib.h>
+
 using namespace std;
 
 
@@ -76,6 +83,51 @@ MultipleAlignment::MultipleAlignment(const std::string &nameA, const std::string
 
     create_name2idx_map();
 }
+
+MultipleAlignment::MultipleAlignment(const Alignment &alignment) {
+    const std::vector<int> &a=alignment.get_a();
+    const std::vector<int> &b=alignment.get_b();
+
+    const Sequence &seqA=alignment.get_seqA();
+    const Sequence &seqB=alignment.get_seqB();
+    
+    std::vector<std::string> aliA(seqA.get_rows(),"");
+    std::vector<std::string> aliB(seqB.get_rows(),"");
+    
+    std::vector<int>::size_type alisize = a.size();
+    
+    for (size_type i=0; i<alisize; i++) {
+	if ( a[i]==-1 ) {
+	    for (size_type k=0; k<seqA.get_rows(); k++) {
+		aliA[k] += '-';
+	    }
+	} else {
+	    for (size_type k=0; k<seqA.get_rows(); k++) {
+		aliA[k] += seqA[a[i]][k];
+	    }
+	}
+	if ( b[i]==-1 ) {
+	    for (size_type k=0; k<seqB.get_rows(); k++) {
+		aliB[k] += '-';
+	    }
+	} else {
+	    for (size_type k=0; k<seqB.get_rows(); k++) {
+		aliB[k] += seqB[b[i]][k];
+	    }
+	}
+    }
+    
+    const std::vector<std::string> namesA = seqA.names();
+    const std::vector<std::string> namesB = seqB.names();
+    
+    for (size_type k=0; k<seqA.get_rows();k++) {
+	alig.push_back(SeqEntry(namesA[k],aliA[k]));
+    }
+    for (size_type k=0; k<seqB.get_rows();k++) {
+	alig.push_back(SeqEntry(namesB[k],aliB[k]));
+    }
+}
+
 
 void
 MultipleAlignment::create_name2idx_map() {
@@ -214,7 +266,68 @@ MultipleAlignment::contains(string name) const {
     }
     return false;
 }
+
 		   
+MultipleAlignment::size_type
+MultipleAlignment::deviation2(const locarna::string1 &a1,
+			      const locarna::string1 &a2,
+			      const locarna::string1 &b1,
+			      const locarna::string1 &b2
+			      ) {
+    
+    //determine the cut deviation between to pariwise alignments
+    // compute the maximum over the minimum distance of cut c1 in a to a cut c2 in b 
+    
+    size_type d=0;
+    
+    size_type i1=0;
+    size_type j1=0;
+    for (size_type c1=0; c1<=a1.length(); c1++) {
+	
+	size_type dprime=numeric_limits<size_type>::max();
+	
+	if (c1>0) {
+	    if (!SeqEntry::is_gap_symbol(a1[c1])) i1++;
+	    if (!SeqEntry::is_gap_symbol(a2[c1])) j1++;
+	}
+
+	size_type i2=0;
+	size_type j2=0;
+	for (size_type c2=0; c2<=b1.length(); c2++) {
+	    
+	    if (c2>0) {
+		if (!SeqEntry::is_gap_symbol(b1[c2])) i2++;
+		if (!SeqEntry::is_gap_symbol(b2[c2])) j2++;
+	    }
+
+	    dprime = std::min(dprime,(size_type)(abs((long int)i1-(long int)i2)+abs((long int)j1-(long int)j2)));
+	}
+	d=std::max(d,dprime);
+    }
+    return d;
+}
+
+
+MultipleAlignment::size_type
+MultipleAlignment::deviation(const MultipleAlignment &ma) const {
+    
+    //determine maximal deviation2 of pairwise subalignments
+
+    size_type d=0;
+    
+    //traverse all pairs of sequences in *this and ma
+    for (size_type x=0; x<ma.alig.size(); x++) {
+	const std::string &namex = ma.seqentry(x).name();
+	for (size_type y=0; y<ma.alig.size(); y++) {
+	    const std::string &namey = ma.seqentry(y).name();
+	    
+	    d = std::max(d, deviation2(seqentry(namex).seq(),seqentry(namey).seq(),
+				       ma.seqentry(x).seq(),ma.seqentry(y).seq()));
+	}
+    }
+    return d;
+}
+
 		   
 void
 MultipleAlignment::print_debug(ostream &out) const {
@@ -224,3 +337,5 @@ MultipleAlignment::print_debug(ostream &out) const {
     } 
     
 }
+
+

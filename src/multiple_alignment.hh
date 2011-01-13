@@ -7,7 +7,6 @@
 #include <map>
 
 #include "aux.hh"
-#include "sequence.hh"
 
 #include <assert.h>
 
@@ -15,13 +14,17 @@
 
 #include <iostream>
 
+class Alignment;
+class Sequence;
+
 /** Represents a multiple alignment as vector of name/sequence pairs.
     
-    Supports traversal of name/sequence pairs.
+    Supports traversal of name/sequence pairs. Sequence entries
+    support mapping from columns to positions and back.
 
-    Names are unique in a multiple alignment object
+    Names are unique in a multiple alignment object.
 
-    Sequences positions and column indices are 1..len
+    Sequences positions and column indices are 1..len.
     
 */
 class MultipleAlignment {
@@ -146,6 +149,11 @@ public:
     //! @param alistrings alignment strings of sequence A and B concatenated by '&'
     //! recognized gap symbols in the alignment string locarna::gap_symbols
     MultipleAlignment(const std::string &nameA, const std::string &nameB, const std::string &alistrings);
+
+
+    //! construct from Alignment object
+    //! @param alignment object of type Alignment
+    MultipleAlignment(const Alignment &alignment);
     
     //! size of multiple aligment
     //! @returns number of name/sequence pairs in alignment
@@ -216,9 +224,35 @@ public:
     }
     
 
+    //! compute the deviation between two multiple alignments.
+    //! @param ma multiple alignment
+    //! @returns deviation between *this and ma
+    //! deviation is defined for realignment in limited deviation to a
+    //! reference alignment as done when --max-diff-aln is given with
+    //! --max-diff to locarna.
+    //! @pre the sequences of ma have to occur in the alignment *this 
+    size_type
+    deviation(const MultipleAlignment &ma) const; 
+
+private:
+    //! deviation between two pairwise alignments
+    //! @param a1 first alignment string of first alignment
+    //! @param a2 second alignment string of first alignment
+    //! @param b1 first alignment string of second alignment
+    //! @param b2 second alignment string of second alignment
+    //! @returns deviation between first and second alignment
+    static
+    size_type
+    deviation2(const locarna::string1 &a1,
+				  const locarna::string1 &a2,
+				  const locarna::string1 &b1,
+				  const locarna::string1 &b2
+				  );
+public:
+
     //! print contents of object to stream
     //! @param out output stream
-    void print_debug(std::ostream &out) const;
+    void print_debug(std::ostream &out=std::cout) const;
 };
 
 

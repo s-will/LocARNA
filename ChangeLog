@@ -231,4 +231,6 @@ Nov, 2010
 	positions (not only ends of arcs) in Aligner. Semantics is given by
 	restriction of alignment cuts/matrix cells!
 
-	
+Jan, 2010
+	Alignment in limited deviation to a reference alignment
+	program deviation computes deviation of alignment to reference

@@ -450,9 +450,6 @@ main(int argc, char **argv) {
     
     TraceController trace_controller(seqA,seqB,multiple_ref_alignment,max_diff);
     
-    if (multiple_ref_alignment) {
-	delete multiple_ref_alignment;
-    }
     
     // ------------------------------------------------------------
     // Handle constraints (optionally)
@@ -702,7 +699,17 @@ main(int argc, char **argv) {
 				      opt_write_structure
 				      );
 	std::cout<<endl;
-
+	
+	// test MultipleAlignment
+	if (opt_verbose) {
+	    MultipleAlignment resultMA(aligner.get_alignment());
+	    //std::cout << "MultipleAlignment"<<std::endl; 
+	    //resultMA.print_debug(cout);
+	    if (multiple_ref_alignment) {
+		std::cout << "Deviation to reference: "<< multiple_ref_alignment->deviation(resultMA)<<std::endl;
+	    }
+	}
+	
 	// ----------------------------------------
 	// optionally write output formats
 	//

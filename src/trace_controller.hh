@@ -18,7 +18,7 @@ class Sequence;
 
 //! class representing a range of possible traces in a dynamic
 //! programming matrix for aligning two sequences
-class TraceRange {    
+class TraceRange {
 public:
     typedef size_t pos_type;
     typedef size_t size_type;
