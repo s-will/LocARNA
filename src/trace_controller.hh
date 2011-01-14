@@ -64,11 +64,28 @@ public:
 	       const MultipleAlignment::SeqEntry &aliA,
 	       const MultipleAlignment::SeqEntry &aliB,
 	       size_t delta);
-    
+
+    //! compute consensus trace range from a set of traces
+    //! @params trs set of traces
+    //! constructs object as consensus trace ranges of the traces trs.
+    //! The construction follows an idea of relaxing the deviation constraints
+    //! by computing a trace with minimal accumulated distance to all traces
+    //! and then determining its delta environment.
+    TraceRange(size_type lenA, size_type lenB, const std::vector<TraceRange> &trs, size_type delta);
+
     //! construct empty
     TraceRange() {
     }
     
+    //! compute cost of a cut in the consensus trace of a trace range set
+    //! @param i cut.first  
+    //! @param j cut.second
+    //! @param trs set of trace ranges
+    //! @returns cost of cut (i,j) in consensus of trs
+    size_type
+    consensus_cost(size_type i,
+		   size_type j,
+		   const std::vector<TraceRange> &trs) const;
 	
     //! @returns length of seqA, i.e. the maximal row of the trace
     size_t
@@ -125,14 +142,18 @@ private:
 	    
     TraceRange trace_range;
     
-    // merge in the given trace with delta into current trace range
-    // @param trace the new trace
+    //! merge in the given trace with delta into current trace range
+    //! @param trace the new trace
     void
     merge_in_trace_range(const TraceRange &tr);
 
-    // The allowed distance in computing the min and max positions.
+    //! The allowed distance in computing the min and max positions.
     const size_type delta;
 
+    //! switch between strict and relaxed merging of pairwise trace
+    //! ranges
+    const bool relaxed_merging; 
+    
 public:
     
     /** construct for the general case of alignment of alignments
@@ -140,14 +161,14 @@ public:
      * @param seqB sequence B
      * @param align multiple reference alignment
      * @param delta the allowed difference
-     *  
+     * @param relaxed_merging whether to use relaxed merging of trace ranges 
      *  If delta == -1 then min_col is 1 and max_col is lenB
      *  If delta != -1 and ma==NULL, then define min j, max j by deviation |i-(lenA/lenB)*j|<=delta
      *
      *  These values are chosen such that for all j between min and max,
      *  the delta constraint holds for all pairs of sequences in seqA and seqB.
      */
-    TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta);
+    TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta,bool relaxed_merging=false);
 
     //! destructor
     ~TraceController();

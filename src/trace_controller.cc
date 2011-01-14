@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <limits>
 #include "trace_controller.hh"
 #include "multiple_alignment.hh"
 #include "sequence.hh"
@@ -203,6 +204,103 @@ TraceController::TraceRange
     // print_debug(std::cout);
 }
 
+TraceController::size_type 
+TraceController::TraceRange::consensus_cost(size_type i, size_type j, const std::vector<TraceRange> &trs) const {
+    size_type d=0;
+    for (std::vector<TraceRange>::const_iterator it=trs.begin(); it!=trs.end(); ++it) {
+	size_type dprime=std::numeric_limits<size_type>::max();
+	
+	for (size_type i2=0; i2<=it->rows(); i2++) {
+	    size_type dprime2;
+	    if (j < it->min_col(i2)) {
+		dprime2 = (size_type)(abs((long int)i-(long int)i2)+(it->min_col(i2)-j));
+	    } else if (j > it->max_col(i2)) {
+		dprime2 = std::min(dprime,(size_type)(abs((long int)i-(long int)i2)+(j-it->max_col(i2))));
+	    } else {
+		dprime2 = abs((long int)i-(long int)i2);
+	    }
+	    
+	    dprime = std::min(dprime,dprime2);
+	}
+	d += dprime;
+    }
+        
+    return d;
+}
+
+TraceController::TraceRange::TraceRange(size_type lenA,
+					size_type lenB, 
+					const std::vector<TraceRange> &trs,
+					size_type delta) {
+
+    Matrix<size_type> C(lenA+1,lenB+1);
+    Matrix<size_type> T(lenA+1,lenB+1);
+
+    T(0,0)=3; // stop
+    C(0,0)=consensus_cost(0,0,trs);
+    for (size_type i=1; i<=lenA; i++) {
+	T(i,0) = 1;
+	C(i,0) = consensus_cost(i,0,trs) + C(i-1,0);
+    }
+    for (size_type j=1; j<=lenB; j++) {
+	T(0,j) = 2;
+	C(0,j) = consensus_cost(0,j,trs) + C(0,j-1);
+    }
+    
+    for (size_type i=1; i<=lenA; i++) {
+	for (size_type j=1; j<=lenB; j++) {
+	    C(i,j) = consensus_cost(i,j,trs);
+	    
+	    if ( C(i-1,j-1) < C(i-1,j) && C(i-1,j-1) < C(i,j-1) ) {
+		T(i,j) = 0;
+		C(i,j) += C(i-1,j-1);
+	    } else {
+		if ( C(i-1,j) < C(i,j-1) ) { 
+		    T(i,j)=1;
+		    C(i,j) += C(i-1,j);
+		} else {
+		    T(i,j)=2;
+		    C(i,j) += C(i,j-1);
+		}
+	    }
+	}
+    }
+    
+    
+    min_col_vector.resize(lenA+1);
+    max_col_vector.resize(lenA+1);
+    for (size_type i=0; i<=lenA; i++) {
+	min_col_vector[i]=lenB;
+	max_col_vector[i]=0;
+    }
+    
+    size_type i=lenA;
+    size_type j=lenB;
+    
+    while(1) {
+	// define trace range
+	min_col_vector[i] = std::min(min_col_vector[i],j);
+	max_col_vector[i] = std::max(max_col_vector[i],j);
+	
+	if (T(i,j)==3) break;
+	
+	switch ( T(i,j) ) {
+	case 0:
+	    i-=1;
+	    j-=1;
+	break;
+	case 1:
+	    i-=1;
+	break;
+	case 2:
+	    j-=1;
+	break;
+	}
+    }
+    
+}
+
+
 void
 TraceController::TraceRange::print_debug(std::ostream & out) const {
     out << "min_col_vector: ";
@@ -230,10 +328,14 @@ TraceController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delt
     }
 }
 
+
+
 /* Construct from MultipleAlignment (as needed for progressive alignment) */
 
-TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta_)
-  : delta(delta_) {
+TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta_,bool relaxed_merging_)
+    : delta(delta_),
+      relaxed_merging(relaxed_merging_)
+{
     
     size_type lenA = seqA.length();
     size_type lenB = seqB.length();
@@ -270,6 +372,8 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 	MultipleAlignment maSeqA(seqA);
 	MultipleAlignment maSeqB(seqB);
     
+	std::vector<TraceRange> trs;
+
 	//  iterate over all pairs of rows in the multiple alignment of seqA and seqB
 	for (size_type i=0; i<maSeqA.size(); ++i) {
 	    const MultipleAlignment::SeqEntry &seqentryA = maSeqA.seqentry(i);
@@ -282,17 +386,51 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 		// get alignment string in reference corresponding to seqentryB
 		const std::string &nameB = seqentryB.name();
 		const MultipleAlignment::SeqEntry &ref_seqentryB = ma->seqentry(nameB);
-	    
-		// construct trace for current sequences A and B
-		TraceRange tr(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB,delta);
 		
-		//std::cout << nameA << " " << nameB << std::endl;
-		//tr.print_debug(std::cout);
-	
-		// combine existing trace range with new trace +/- delta
-		merge_in_trace_range(tr);
-		
+		if (relaxed_merging) {
+		    
+		    // construct trace for current sequences A and B
+		    TraceRange tr(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB,0);
+		    //tr.print_debug(std::cout);
+		    trs.push_back(tr);
+		    
+		} else {
+		    // strict merging
+		    
+		    // construct trace for current sequences A and B with delta deviation
+		    TraceRange tr(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB,delta);
+		    
+		    //std::cout << nameA << " " << nameB << std::endl;
+		    //tr.print_debug(std::cout);
+		    
+		    // combine existing trace range with new trace +/- delta
+		    merge_in_trace_range(tr);
+		}
 	    }
+	}
+
+	
+	if (relaxed_merging) {
+	    TraceRange tr(lenA, lenB, trs, delta);
+	    
+	    //tr.print_debug(std::cout);
+	    
+	    // initialize vectors most constrained
+	    fill(min_col_vector.begin(), min_col_vector.end(),lenB);
+	    fill(max_col_vector.begin(), max_col_vector.end(),0);
+
+	    // blow up by delta
+	    for (size_type i=0; i<=lenA; i++) {
+		min_col_vector[i] = std::min(std::max(tr.min_col(i),delta)-delta,min_col_vector[i]);
+		max_col_vector[i] = std::max(std::min(tr.max_col(i)+delta,lenB), max_col_vector[i]);
+		
+		size_type i_minus = std::max(delta,i)-delta;
+		size_type i_plus  = std::min(i+delta,lenA);
+		
+		min_col_vector[i] = std::min(tr.min_col(i_minus),min_col_vector[i]);
+		max_col_vector[i] = std::max(tr.max_col(i_plus), max_col_vector[i]);
+	    }
+	    
 	}
 
 #ifndef NDEBGUG
@@ -307,9 +445,19 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 	}
 #endif
     }
-    
+
+    // size_type micv[]={0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28};
+    // size_type macv[]={10,10,10,10,10,10,10,10,11,12,13,14,15,16,17,18,19,20,21,21,21,22,23,24,25,26,27,35,37,48,48,48,48,48,48,48,48,48,48,48};
+    // size_type micv[]={0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27};
+    // size_type macv[]={10,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,28,29,30,31,32,33,34,35,37,48,48,48,48,48,48,48,48,48,48,48};
+    // for (size_type i=0; i<=lenA; i++) {
+    // 	min_col_vector[i] = micv[i];
+    // 	max_col_vector[i] = macv[i];
+    // };
+
     //TraceRange::print_debug(std::cout);
 }
+
 
 void
 TraceController::merge_in_trace_range(const TraceRange &tr) {

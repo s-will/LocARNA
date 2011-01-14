@@ -77,6 +77,8 @@ int max_diff_am; //maximal difference between two arc ends, -1 is off
 std::string max_diff_pw_alignment; // pairwise reference alignment for max-diff heuristic, separator &
 std::string max_diff_alignment_file; // reference alignment for max-diff heuristic, name of clustalw format file
 
+bool opt_max_diff_relax=false;
+
 // only consider arc matchs where
 //   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!! changed due to TraceController/reference alignment
 //   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
@@ -204,6 +206,7 @@ option_def my_options[] = {
     {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
     {"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
+    {"max-diff-relax",0,&opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
     
@@ -448,7 +451,7 @@ main(int argc, char **argv) {
     // 	std::cout << std::flush;
     // }
     
-    TraceController trace_controller(seqA,seqB,multiple_ref_alignment,max_diff);
+    TraceController trace_controller(seqA,seqB,multiple_ref_alignment,max_diff,opt_max_diff_relax);
     
     
     // ------------------------------------------------------------
