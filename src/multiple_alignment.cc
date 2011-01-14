@@ -271,8 +271,8 @@ MultipleAlignment::contains(string name) const {
 MultipleAlignment::size_type
 MultipleAlignment::deviation2(const locarna::string1 &a1,
 			      const locarna::string1 &a2,
-			      const locarna::string1 &b1,
-			      const locarna::string1 &b2
+			      const locarna::string1 &ref1,
+			      const locarna::string1 &ref2
 			      ) {
     
     //determine the cut deviation between to pariwise alignments
@@ -293,15 +293,20 @@ MultipleAlignment::deviation2(const locarna::string1 &a1,
 
 	size_type i2=0;
 	size_type j2=0;
-	for (size_type c2=0; c2<=b1.length(); c2++) {
+	for (size_type c2=0; c2<=ref1.length(); c2++) {
 	    
 	    if (c2>0) {
-		if (!SeqEntry::is_gap_symbol(b1[c2])) i2++;
-		if (!SeqEntry::is_gap_symbol(b2[c2])) j2++;
+		if (!SeqEntry::is_gap_symbol(ref1[c2])) i2++;
+		if (!SeqEntry::is_gap_symbol(ref2[c2])) j2++;
 	    }
 
-	    dprime = std::min(dprime,(size_type)(abs((long int)i1-(long int)i2)+abs((long int)j1-(long int)j2)));
+	    size_type dc =
+		abs((long int)i1-(long int)i2)
+		+abs((long int)j1-(long int)j2);
+
+	    dprime = std::min(dprime,dc);
 	}
+
 	d=std::max(d,dprime);
     }
     return d;
@@ -318,11 +323,15 @@ MultipleAlignment::deviation(const MultipleAlignment &ma) const {
     //traverse all pairs of sequences in *this and ma
     for (size_type x=0; x<ma.alig.size(); x++) {
 	const std::string &namex = ma.seqentry(x).name();
-	for (size_type y=0; y<ma.alig.size(); y++) {
+	for (size_type y=x+1; y<ma.alig.size(); y++) {
 	    const std::string &namey = ma.seqentry(y).name();
 	    
-	    d = std::max(d, deviation2(seqentry(namex).seq(),seqentry(namey).seq(),
-				       ma.seqentry(x).seq(),ma.seqentry(y).seq()));
+	    size_type d2 =
+		deviation2(ma.seqentry(x).seq(),ma.seqentry(y).seq(),
+			   seqentry(namex).seq(),seqentry(namey).seq()
+			   );
+
+	    d = std::max(d, d2);
 	}
     }
     return d;

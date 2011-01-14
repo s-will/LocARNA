@@ -50,11 +50,6 @@ TraceController::TraceRange
     
     // pseqA and pseqB can contain gaps, therefore we call these strings profile sequences    
 
-    // std::cout << pseqA.seq().to_string() << std::endl
-    // 	      << paliA.seq().to_string() << std::endl
-    // 	      << paliB.seq().to_string() << std::endl
-    // 	      << pseqB.seq().to_string() << std::endl; 
-	
     assert(paliA.seq().length() == paliB.seq().length());
     
     size_t plenA = pseqA.seq().length();
@@ -68,7 +63,12 @@ TraceController::TraceRange
     
     const MultipleAlignment::SeqEntry &aliA=ali.first;
     const MultipleAlignment::SeqEntry &aliB=ali.second;
-      
+
+    std::cout << pseqA.seq().to_string() << std::endl
+     	      << aliA.seq().to_string() << std::endl
+     	      << aliB.seq().to_string() << std::endl
+     	      << pseqB.seq().to_string() << std::endl;
+
     size_t lenAli = aliA.seq().length();
     size_t lenA = pseqA.length_wogaps();
     size_t lenB = pseqB.length_wogaps();
@@ -119,17 +119,17 @@ TraceController::TraceRange
 	max_col_vector[pi] = 0;
     }
     
-    // iterate over columns of the alignment paliA/paliB
+    // iterate over columns of the alignment aliA/aliB
     for (size_t c=0; c <= lenAli; c++) {
 	
-	// determine cut ^t(pi,pj) of the alignment ^t(paliA,paliB) at column c
+	// determine cut ^t(pi,pj) of the alignment ^t(aliA,aliB) at column c
 	size_t i = aliA.col_to_pos(c).first; // position in sequence A that corresponds to column c
 	size_t j = aliB.col_to_pos(c).first; // position in sequence B that corresponds to column c
 	
 	// std::cout << c << " "
-	// 	  << i << " "
-	// 	  << j << " "
-	// 	  << std::endl; 
+	//  	  << i << " "
+	//  	  << j << " "
+	//  	  << std::endl;
 	
 	// this cut corresponds to a set of cuts C in alignments of pseqA and pseqB,
 	// we describe this set by two ranges pi_min..pi_max and pj_min..pj_max

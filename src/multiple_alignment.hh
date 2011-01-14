@@ -224,29 +224,29 @@ public:
     }
     
 
-    //! compute the deviation between two multiple alignments.
+    //! compute the deviation of a multiple alignment from a reference alignment
     //! @param ma multiple alignment
-    //! @returns deviation between *this and ma
-    //! deviation is defined for realignment in limited deviation to a
-    //! reference alignment as done when --max-diff-aln is given with
+    //! @returns deviation of ma from reference alignment *this
+    //! deviation is defined for realignment in limited deviation from a
+    //! reference alignment as preformed when --max-diff-aln is given with
     //! --max-diff to locarna.
     //! @pre the sequences of ma have to occur in the alignment *this 
     size_type
     deviation(const MultipleAlignment &ma) const; 
 
 private:
-    //! deviation between two pairwise alignments
-    //! @param a1 first alignment string of first alignment
-    //! @param a2 second alignment string of first alignment
-    //! @param b1 first alignment string of second alignment
-    //! @param b2 second alignment string of second alignment
-    //! @returns deviation between first and second alignment
+    //! deviation of a pairwise alignment from a pairwise reference alignment
+    //! @param a1 first alignment string of alignment a
+    //! @param a2 second alignment string of alignment a
+    //! @param ref1 first alignment string of reference alignment ref
+    //! @param ref2 second alignment string of reference alignment ref
+    //! @returns deviation of alignment a from reference alignment ref
     static
     size_type
     deviation2(const locarna::string1 &a1,
 				  const locarna::string1 &a2,
-				  const locarna::string1 &b1,
-				  const locarna::string1 &b2
+				  const locarna::string1 &ref1,
+				  const locarna::string1 &ref2
 				  );
 public:
 
