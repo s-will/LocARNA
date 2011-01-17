@@ -970,11 +970,11 @@ void
 AlignerP::compute_arcmatch_probabilities() {
 
 
-    cout << "D" << std::endl
-	 << Dmat << std::endl;
+    // cout << "D" << std::endl
+    // 	 << Dmat << std::endl;
 
-    cout << "Dprime" << std::endl
-	 << Dmatprime << std::endl;
+    // cout << "Dprime" << std::endl
+    // 	 << Dmatprime << std::endl;
     
     // iterate over all arc matches
     for(ArcMatches::const_iterator it=arc_matches.begin(); arc_matches.end()!=it; ++it) {

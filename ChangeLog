@@ -234,3 +234,5 @@ Nov, 2010
 Jan, 2010
 	Alignment in limited deviation to a reference alignment
 	program deviation computes deviation of alignment to reference
+	Deactivate max-diff-aln for --probabilistic/locarna_p
+	(Version 1.6)

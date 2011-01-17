@@ -154,8 +154,9 @@ option_def my_options[] = {
 
     {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
-    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
-    {"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
+    
+    //{"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
+    //{"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Computed probabilities"},
     {"fragment-match-probs",0,0,O_ARG_STRING,&fragment_match_probs,"","\"i j k l\"",
