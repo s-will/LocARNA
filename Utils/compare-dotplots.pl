@@ -20,11 +20,13 @@ Options:
 
 =item  B<-q, --quiet>                   Quiet
 
+=item  B<--compare-by>                  Measure for comparing column distributions (default=cor)
+
 =back
 
 =head1 DESCRIPTION
 
-Compare two dot plots by columnwise correlations and their mean.
+Compare two dot plots by average divergence/similarity of column probability distributions.
 
 =cut
 
@@ -41,15 +43,17 @@ my $man;
 my $quiet;
 my $verbose;
 
+my $compare_by = "cor";
 
 ## Getopt::Long::Configure("no_ignore_case");
 
 GetOptions(	   
-	   "verbose" => \$verbose,
-	   "quiet" => \$quiet,   
-	   "help"=> \$help,
-	   "man" => \$man
-	   ) || pod2usage(2);
+    "verbose" => \$verbose,
+    "quiet" => \$quiet,   
+    "help"=> \$help,
+    "man" => \$man,
+    "compare-by=s" => \$compare_by
+    ) || pod2usage(2);
 
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
@@ -138,18 +142,18 @@ my $rscript="gargs <- commandArgs()
 t1<-read.table(gargs[5])
 t2<-read.table(gargs[6])
 
-correlations=numeric(length(t1))
+measures=numeric(length(t1))
 
 for (i in 1:length(t1)) { 
    x1 <- t1[[i]];
    x2 <- t2[[i]];
    x1[i] <- 1-sum(x1);
    x2[i] <- 1-sum(x2);
-   correlations[i]<-abs(cor(x1,x2));
+   measures[i]<-$compare_by(x1,x2);
 }
 
-#print(correlations)
-print(mean(correlations))
+#print(measures)
+print(mean(measures))
 ";
 
 system("printf '$rscript' | R -q --slave --args $tmp1 $tmp2|cut -f2 -d' '");

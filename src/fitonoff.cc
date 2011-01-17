@@ -58,7 +58,9 @@ double FitOnOff::best_once_on(double c0, double c1) {
     
     for (size_type i=1; i<=x.size(); ++i) {
 	for (size_type j=i+min_size-1; j<=x.size(); ++j) {
-	    // compute distance for signal that is on in interval [i..j] and off otherwise
+	    // compute distance for signal that is on in interval [i..j] and off otherwise.
+	    // This distance is \sum_{k=1..i-1} sqdiff(x[k],c0) + \sum_{k=i..j} sqdiff(x[k],c1) + \sum_{k=i+1..x.size()} sqdiff(x[k],c0)
+	    // and computed from sum_dist_off and sum_dist_on in constant time.
 	    double dist = sum_dist_off[i-1] + ( sum_dist_on[j]-sum_dist_on[i-1] )  + sum_dist_off[x.size()]-sum_dist_off[j+1];
 	    
 	    if (dist < best_dist) {
