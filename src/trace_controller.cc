@@ -435,17 +435,6 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
 	    
 	}
 
-#ifndef NDEBGUG
-	//std::cout << "Merged:" << std::endl;
-	//TraceRange::print_debug(std::cout);
-	
-	for (size_type i=1; i < min_col_vector.size(); ++i) {
-	    assert(min_col_vector[i-1]<=min_col_vector[i]); // monotony
-	    assert(max_col_vector[i-1]<=max_col_vector[i]); // monotony
-	    assert(min_col_vector[i]<=max_col_vector[i]); // otherwise trace range inconsistent
-	    assert(max_col_vector[i-1]+1>=min_col_vector[i]); // ranges connected/overlap, otherwise trace is inconsistent
-	}
-#endif
     }
 
     // size_type micv[]={0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28};
@@ -457,6 +446,16 @@ TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAli
     // 	max_col_vector[i] = macv[i];
     // };
 
+#ifndef NDEBGUG
+    //TraceRange::print_debug(std::cout);
+    
+    for (size_type i=1; i < min_col_vector.size(); ++i) {
+	assert(min_col_vector[i-1]<=min_col_vector[i]); // monotony
+	assert(max_col_vector[i-1]<=max_col_vector[i]); // monotony
+	assert(min_col_vector[i]<=max_col_vector[i]); // otherwise trace range inconsistent
+	assert(max_col_vector[i-1]+1>=min_col_vector[i]); // ranges connected/overlap, otherwise trace is inconsistent
+    }
+#endif
     //TraceRange::print_debug(std::cout);
 }
 
