@@ -6,6 +6,7 @@ configure
 Makefile.in
 Makefile
 .deps/
+src/.deps/
 doc/
 CVS/
 Releases/
