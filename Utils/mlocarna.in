@@ -883,12 +883,6 @@ $locarna_params_tree .= " --stacking" if ($stacking);
 #
 #
 
-if ($probabilistic && defined($max_diff_aln)) {
-    printerr "Option --max-diff-aln is not working in probabilistic mode. Exit.\n";
-    exit -1;
-}
-
-
 if ($consistency_transformation && !$probabilistic) {
     printerr "Consistency transformation is supported only in probabilistic mode. Exit.\n";
     exit -1;

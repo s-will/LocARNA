@@ -113,7 +113,7 @@ void AlignerP::init_M(size_type al, size_type ar, size_type bl, size_type br) {
     size_type i;
     for (i=al+1; i<ar; i++) {
 	if (params->trace_controller.min_col(i)>bl) break; // fill only as long as column bl is accessible
-      
+
 	indel_score *= scoring->exp_gapA(i, bl);
 	M(i, bl) = indel_score;
     }
@@ -640,6 +640,7 @@ AlignerP::rightmost_covering_arcmatch(size_type al,size_type bl,size_type ar,siz
 inline 
 pf_score_t 
 AlignerP::comp_Eprime_entry(size_type al, size_type bl, size_type i, size_type j) {
+    
     return 
 	Eprime[j] * scoring->exp_gapA(i+1, j)
 	+
@@ -675,9 +676,16 @@ AlignerP::virtual_Mprime(size_type al, size_type bl, size_type i, size_type j, s
 inline
 pf_score_t 
 AlignerP::comp_Mprime_entry(size_type al, size_type bl, size_type i, size_type j, size_type max_ar, size_type max_br) {
-
+    
+    //assert(params->trace_controller.is_valid(i,j));
+    
     pf_score_t pf;
-
+    
+    // check proper intialization
+    //assert(params->trace_controller.is_valid(i+1,j+1) || Mprime(i+1,j+1)==0 );
+    //assert(params->trace_controller.is_valid(i+1,j  ) || Eprime[j]==0 );
+    //assert(params->trace_controller.is_valid(i  ,j+1) || Fprime==0 );
+    
     pf =
 	// base match
 	Mprime(i+1, j+1) * scoring->exp_basematch(i+1, j+1)
@@ -801,6 +809,7 @@ AlignerP::align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size
 	for (; j>max(bl,params->trace_controller.min_col(i)); ) {
 	    --j;
 	    Mprime(i+1,j)=0;
+	    Eprime[j]=0;
 	}
     }
     
@@ -969,17 +978,24 @@ void AlignerP::align_outside() {
 void 
 AlignerP::compute_arcmatch_probabilities() {
 
-
-    // cout << "D" << std::endl
-    // 	 << Dmat << std::endl;
-
-    // cout << "Dprime" << std::endl
-    // 	 << Dmatprime << std::endl;
+    //cout.precision(2);
+    
+    /*
+    cout << "D" << std::endl
+     	 << Dmat << std::endl;
+    
+    cout << "Dprime" << std::endl
+     	 << Dmatprime << std::endl;
+    */
     
     // iterate over all arc matches
     for(ArcMatches::const_iterator it=arc_matches.begin(); arc_matches.end()!=it; ++it) {
 	const Arc &arcA=it->arcA();
 	const Arc &arcB=it->arcB();
+	
+	// trace_controller validity due to ArcMatches class
+	assert(params->trace_controller.is_valid_match(arcA.left(),arcB.left()));
+	assert(params->trace_controller.is_valid_match(arcA.right(),arcB.right()));
 	
 	am_prob(arcA.idx(),arcB.idx()) =
 	    (D(arcA,arcB)/(long double)partFunc)

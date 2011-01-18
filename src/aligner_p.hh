@@ -418,6 +418,7 @@ public:
     
     //! compute the partition function by the inside algorithm
     //! and fill the D matrix
+    //! @returns partition function 
     pf_score_t
     align_inside();
        
