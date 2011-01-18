@@ -905,6 +905,11 @@ Aligner::align() {
 // Aligner: traceback
 
 void Aligner::trace_arcmatch(const ArcMatch &am) {
+
+    // std::cout << "trace_arcmatch " << am.arcA() << " " << am.arcB() <<std::endl;
+
+    assert(params->trace_controller.is_valid_match(am.arcA().left(),am.arcB().left()));
+    assert(params->trace_controller.is_valid_match(am.arcA().right(),am.arcB().right()));
     
     const Arc &arcA=am.arcA();
     const Arc &arcB=am.arcB();
@@ -962,6 +967,12 @@ void Aligner::trace_arcmatch(const ArcMatch &am) {
 
 void Aligner::trace_arcmatch_noLP(const ArcMatch &am) {
     
+    //std::cout << "trace_arcmatch_noLP " << am.arcA() << " " << am.arcB() <<std::endl;
+    
+    assert(params->trace_controller.is_valid_match(am.arcA().left(),am.arcB().left()));
+    assert(params->trace_controller.is_valid_match(am.arcA().right(),am.arcB().right()));
+    
+    
     assert(arc_matches.exists_inner_arc_match(am));
     
     const ArcMatch &inner_am = arc_matches.inner_arc_match(am);
@@ -1013,6 +1024,7 @@ Aligner::trace_noex(int state,size_type oal,size_type i,
     
     // match
     if ( params->constraints.allowed_edge(i,j)
+	 && params->trace_controller.is_valid(i-1,j-1)
 	 && M(i,j) ==  M(i-1,j-1)+sv.scoring()->basematch(i,j) ) {
 	trace_in_arcmatch(state,oal,i-1,obl,j-1,tl,sv);
 	alignment.append(i,j);
@@ -1022,6 +1034,7 @@ Aligner::trace_noex(int state,size_type oal,size_type i,
     if ( sv.scoring()->indel_opening() == 0 ) { // base del and ins, linear cost
 	// del
 	if ( (!params->constraints.aligned_in_a(i))
+	     && params->trace_controller.is_valid(i-1,j)
 	     && M(i,j) == M(i-1,j)+sv.scoring()->gapA(i,j)) {
 	    trace_in_arcmatch(state,oal,i-1,obl,j,tl,sv);
 	    alignment.append(i,-1);
@@ -1029,6 +1042,7 @@ Aligner::trace_noex(int state,size_type oal,size_type i,
 	}
 	// ins
 	if ( (!params->constraints.aligned_in_b(j))
+	     && params->trace_controller.is_valid(i,j-1)
 	     && M(i,j) == M(i,j-1)+sv.scoring()->gapB(i,j)) {
 	    trace_in_arcmatch(state,oal,i,obl,j-1,tl,sv);
 	    alignment.append(-1,j);
@@ -1044,6 +1058,10 @@ Aligner::trace_noex(int state,size_type oal,size_type i,
 		 && (! params->constraints.aligned_in_a(i-k+1));
 	     k++)
 	{
+	    // break if gap becomes invalid due to trace controller
+	    // (it is safe to break, because of trace controller's monotonicity)
+	    if (! params->trace_controller.is_valid(i-k,j)) break;
+
 	    gap_cost += sv.scoring()->gapA(i-k+1,j);
 	    
 	    if ( M(i,j) == M(i-k,j) + gap_cost) {
@@ -1063,6 +1081,10 @@ Aligner::trace_noex(int state,size_type oal,size_type i,
 		 && (! params->constraints.aligned_in_b(j-k+1));
 	     k++)
 	{
+	    // break if gap becomes invalid due to trace controller
+	    // (it is safe to break, because of trace controller's monotonicity)
+	    if (! params->trace_controller.is_valid(i,j-k)) break;
+
 	    gap_cost += sv.scoring()->gapB(i,j-k+1);
 	    if (M(i,j) == M(i,j-k) + gap_cost) {
 		// gap in B of length k
@@ -1076,10 +1098,13 @@ Aligner::trace_noex(int state,size_type oal,size_type i,
 	}
     }
 
-    // only consider arc match cases if edge (i,j) is allowed!
-    if ( ! params->constraints.allowed_edge(i,j) ) return;
+    // only consider arc match cases if edge (i,j) is allowed and valid!
+    if ( ! (params->constraints.allowed_edge(i,j) 
+	    && params->trace_controller.is_valid(i-1,j-1))
+	 ) return;
     
-    // here (i,j) is allowed
+    
+    // here (i,j) is allowed and valid
     
     //  arc match
     const size_type &ar=i;
@@ -1139,10 +1164,13 @@ Aligner::trace_in_arcmatch(int state,int al,int i,int bl,int j,bool tl,ScoringVi
 
     /*
     string state_text[]={"E_NO_NO", "E_X_NO", "E_NO_X", "E_X_X",
-      "E_OP_NO", "E_NO_OP", "E_OP_X", "E_X_OP"};
-      cout << "trace_in_arcmatch "<<state_text[state]<<" al:"<<al<<" i:"<<i
-      <<" bl:"<<bl<<" j:"<<j<<" :: "<< M(i,j) <<endl;
+			 "E_OP_NO", "E_NO_OP", "E_OP_X", "E_X_OP"};
+    cout << "trace_in_arcmatch "<<state_text[state]<<" al:"<<al<<" i:"<<i
+	 <<" bl:"<<bl<<" j:"<<j<<" :: "<< M(i,j) <<endl;
     */
+    
+    assert(params->trace_controller.is_valid(i,j));
+    
     
     // terminate traceback if
     // * trace on toplevel
