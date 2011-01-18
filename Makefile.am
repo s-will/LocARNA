@@ -75,7 +75,7 @@ man/locarnate.1: Utils/locarnate man-subdir
 	-$(HELP2MAN) --no-discard-stderr --output=$@ Utils/locarnate
 
 man-subdir:
-	if [ ! -d $(builddir)/man ] ; then mkdir $(builddir)/man ; fi
+	if [ ! -d $(top_builddir)/man ] ; then mkdir $(top_builddir)/man ; fi
 
 
 

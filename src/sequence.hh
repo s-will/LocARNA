@@ -101,6 +101,7 @@ public:
     //! return sequence length
     size_type length() const {return seq_.size();}
     
+    //! @returns number of rows/sequences in the alignment
     size_type get_rows() const {return rows_;}
 
     //! read access to name by index
@@ -114,6 +115,13 @@ public:
     AliColumn &operator [](size_type i) {return seq_[i-1];}
     const AliColumn &operator [](size_type i) const {return seq_[i-1];}
 
+    // ------------------------------------------------------------
+    //! read-only access to names vector
+    const std::vector<std::string> &
+    names() const {
+	return names_;
+    }
+    
     // ----------------------------------------
     // get profile information
 

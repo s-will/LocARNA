@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.5.4], [will@informatik.uni-freiburg.de])
+AC_INIT([LocARNA], [1.6], [will@informatik.uni-freiburg.de])
 
 AM_INIT_AUTOMAKE
 

@@ -5,19 +5,19 @@ LocARNA is a collection of alignment tools for the structural analysis
 of RNA. Given a set of RNA sequences, LocARNA simultaneously aligns
 and predicts common structures for your RNAs. In this way, LocARNA
 performs Sankoff-like alignment and is in particular suited for
-analysing sets of related RNAs without known common structure.
+analyzing sets of related RNAs without known common structure.
 
 LocARNA distinguishes itself from many other Sankoff-style multiple
 alignment programs by its performance and low memory complexity, high
 accuracy, and richness of features. As unique features, it offers
-structure-local alignment, flexibel structure and anchor constraints,
+structure-local alignment, flexible structure and anchor constraints,
 and provides efficient computation of reliabilities in
 sequence-structure alignment. The package offers a robust core of
 features and is used as experimental platform for the incorporation of
 new features in RNA sequence-structure alignment.
 
 
-At its core, the package offers global and local multiple aligmnent of
+At its core, the package offers global and local multiple alignment of
 RNAs.
 
 Multiple alignment can be performed in one of several different ways:
@@ -38,14 +38,14 @@ identifies and aligns the best matching subsequences. This form of
 locality is called sequence local to distinguish it from structural
 locality. When performing structure local alignment, LocARNA
 identifies and aligns the best matching substructures in the RNAs. The
-sequences of those substructures can be discontinous on the sequence
+sequences of those substructures can be discontinuous on the sequence
 level, but remain connected via structural bonds.
 
 Alignment Reliabilities (LocARNA-P). In this special, probabilistic
 mode of operation LocARNA supports the efficient computation of match
 probabilities, probabilistic consistency transformation for more
 accurate multiple alignment, and generates reliability profiles of
-multiple alignemnts.
+multiple alignments.
 
 
 
@@ -66,7 +66,7 @@ the tools
 * locarnate --- for multiple alignment of RNAs via T-Coffee. This script offers
                 multiple alignment of RNAs that is performed by sequence-structurally
                 aligning all pairs of RNAs and then using T-Coffee to construct
-                a common mulitple alignment out of all pairwise ones. 
+                a common multiple alignment out of all pairwise ones. 
 
 and the low level tools for pairwise comparison of RNAs
 

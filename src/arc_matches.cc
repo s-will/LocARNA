@@ -1,5 +1,5 @@
 #include "arc_matches.hh"
-#include "edge_controller.hh"
+#include "trace_controller.hh"
 
 #include <fstream>
 #include <sstream>
@@ -21,16 +21,26 @@ public:
 
 
 bool ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
-  return
-      edge_controller.is_valid_edge(arcA.left(),arcB.left())
+  bool valid = 
+      match_controller.is_valid_match(arcA.left(),arcB.left())
       &&
-      edge_controller.is_valid_edge(arcA.right(),arcB.right())
+      match_controller.is_valid_match(arcA.right(),arcB.right())
       &&
-      (size_type)abs((int)(arcA.right()-arcA.left()) - (int)(arcB.right()-arcB.left())) <= max_length_diff	
+      ((size_type)abs((int)(arcA.right()-arcA.left()) - (int)(arcB.right()-arcB.left())) <= max_length_diff)
       &&
       constraints.allowed_edge(arcA.left(),arcB.left())
       &&
       constraints.allowed_edge(arcA.right(),arcB.right());	
+  
+  // std::cout << "ArcMatches::is_valid_arcmatch" << " " 
+  // 	    << arcA << " "
+  // 	    << arcB << " : " 
+  // 	    << match_controller.is_valid_match(arcA.left(),arcB.left()) << " "
+  // 	    << match_controller.is_valid_match(arcA.right(),arcB.right()) << " "
+  // 	    << valid << " "
+  // 	    << std::endl;
+  
+  return valid;
 }
 
 
@@ -104,13 +114,13 @@ ArcMatches::ArcMatches(const Sequence &seqA_,
 		       const std::string &arcmatch_scores_file,
 		       int probability_scale,
 		       size_type max_length_diff_, 
-		       const EdgeController &edge_controller_,
+		       const MatchController &match_controller_,
 		       const AnchorConstraints &constraints_
 		       )
   : lenA(seqA_.length()),
     lenB(seqB_.length()),
     max_length_diff(max_length_diff_),
-    edge_controller(edge_controller_),
+    match_controller(match_controller_),
     constraints(constraints_),
     maintain_explicit_scores(true)
 {
@@ -121,7 +131,7 @@ ArcMatches::ArcMatches(const RnaData &rnadataA,
 		       const RnaData &rnadataB,
 		       double min_prob,
 		       size_type max_length_diff_, 
-		       const EdgeController &edge_controller_,
+		       const MatchController &match_controller_,
 		       const AnchorConstraints &constraints_
 		       )
   : lenA(rnadataA.get_sequence().length()),
@@ -129,7 +139,7 @@ ArcMatches::ArcMatches(const RnaData &rnadataA,
     bpsA(new BasePairs(&rnadataA,min_prob)),
     bpsB(new BasePairs(&rnadataB,min_prob)),
     max_length_diff(max_length_diff_),
-    edge_controller(edge_controller_),
+    match_controller(match_controller_),
     constraints(constraints_),
     maintain_explicit_scores(false)
 {

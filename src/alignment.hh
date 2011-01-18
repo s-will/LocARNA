@@ -140,6 +140,29 @@ public:
     //! get last position of B that is locally aligned to something
     size_type get_local_endB() const {return b_[b_.size()-1];}
 
+    
+    /* access */
+    
+    //! read access seqA
+    //! @returns sequence A
+    const Sequence &get_seqA() const {return seqA_;} 
+
+    //! read access seqB
+    //! @returns sequence B
+    const Sequence &get_seqB() const {return seqB_;} 
+
+    //! read access a
+    //! @returns vector a
+    //! vector a is the vector of first components of the aligment
+    //! edges. Entries are positions of sequence A or -1 for gap
+    const std::vector<int> &get_a() const {return a_;} 
+
+    //! read access b
+    //! @returns vector b
+    //! vector b is the vector of second components of the aligment
+    //! edges. Entries are positions of sequence B or -1 for gap
+    const std::vector<int> &get_b() const {return b_;} 
+
 };
 
 #endif

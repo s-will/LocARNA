@@ -1,6 +1,8 @@
 syntax: glob
 *~
 *.o
+aclocal.m4
+configure
 Makefile.in
 Makefile
 .deps/
@@ -18,11 +20,17 @@ man/locarna_p.1
 man/locarnate.1
 man/mlocarna.1
 src/fit
+src/deviation
 src/locarna
 src/locarna_X
 src/locarna_p
 src/ribosum2cc
 src/ribosum85_60.icc
+
+src/edge_controller_test
+src/trace_controller_test
+
+Data/*.out
 
 syntax: regexp
 (.*/)?\#[^/]*\#$

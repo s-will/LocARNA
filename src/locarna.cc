@@ -12,6 +12,8 @@
 #include <fstream>
 #include <vector>
 
+#include <memory> // for auto_ptr
+
 //#include <math.h>
 
 #include "sequence.hh"
@@ -31,7 +33,7 @@
 
 #include "anchor_constraints.hh"
 
-#include "edge_controller.hh"
+#include "trace_controller.hh"
 
 using namespace std;
 
@@ -68,18 +70,18 @@ std::string free_endgaps; //!< specification of free end gaps,
 const bool DO_TRACE=true;
 
 
-int max_diff; // maximal difference for positions of alignment edges
+int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
 int max_diff_am; //maximal difference between two arc ends, -1 is off
 
-std::string max_diff_alignment; // reference alignment for max-diff-match heuristic
+std::string max_diff_pw_alignment; // pairwise reference alignment for max-diff heuristic, separator &
+std::string max_diff_alignment_file; // reference alignment for max-diff heuristic, name of clustalw format file
+
+bool opt_max_diff_relax=false;
 
 // only consider arc matchs where
-//   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!! changed due to EdgeController/reference alignment
+//   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!! changed due to TraceController/reference alignment
 //   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
-// except when there is no additional computation of M matrices necessary,
-// this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
-
 
 int exclusion_score; // Score contribution per exclusion
 // set to zero for unrestricted structure locality
@@ -201,8 +203,10 @@ option_def my_options[] = {
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
-    {"max-diff-match",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment edges"},
-    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment,"","alignment","Maximal difference relativ to given alignment (delim=&)."},
+    {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
+    {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
+    {"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
+    {"max-diff-relax",0,&opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
     
@@ -335,16 +339,16 @@ main(int argc, char **argv) {
     // ----------------------------------------  
     // Ribosum matrix
     //
-    RibosumFreq *ribosum=NULL;
+    std::auto_ptr<RibosumFreq> ribosum(NULL);
 	
     if (use_ribosum) {
 	if (ribosum_file == "RIBOSUM85_60") {
 	    if (opt_verbose) {
 		std::cout <<"Use built-in ribosum."<<std::endl;
 	    }
-	    ribosum = new Ribosum85_60();
+	    ribosum = auto_ptr<RibosumFreq>(new Ribosum85_60);
 	} else {
-	    ribosum = new RibosumFreq(ribosum_file);
+	    ribosum = auto_ptr<RibosumFreq>(new RibosumFreq(ribosum_file));
 	}	
 	/*
 	std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
@@ -368,7 +372,7 @@ main(int argc, char **argv) {
 				 // for the case of mea alignment!
 				 (opt_mea_alignment && !opt_mea_gapcost)?0:indel_score * (opt_mea_gapcost?probability_scale/100:1),
 				 (opt_mea_alignment && !opt_mea_gapcost)?0:indel_opening_score * (opt_mea_gapcost?probability_scale/100:1),
-				 ribosum,
+				 ribosum.get(),
 				 struct_weight,
 				 tau_factor,
 				 exclusion_score,
@@ -414,18 +418,41 @@ main(int argc, char **argv) {
     size_type lenB=seqB.length();
 
     // --------------------
-    // handle max_diff restriction
+    // handle max_diff restriction  
+    
+    // missing: proper error handling in case that lenA, lenB, and max_diff_pw_alignment/max_diff_alignment_file are incompatible 
+    
+    // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
+    //
+    if (max_diff_pw_alignment!="" && max_diff_alignment_file!="") {
+	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
+	exit(-1);
+    }
 
-    // do not relax max_diff in case of unequal lengths anymore, instead change constraint in EdgeController
-    // if (max_diff!=-1) {
-    // 	int len_diff = (lenA>lenB) ? (lenA-lenB) : (lenB-lenA);
-    // 	max_diff = std::max(max_diff, (int)(len_diff*1.1));
+    // construct TraceController and check inconsistency for with multiplicity of sequences
+    //
+
+    MultipleAlignment *multiple_ref_alignment=NULL;
+    
+    if (max_diff_alignment_file!="") {
+	multiple_ref_alignment = new MultipleAlignment(max_diff_alignment_file);
+    } else if (max_diff_pw_alignment!="") {
+	if ( seqA.get_rows()!=1 || seqB.get_rows()!=1 ) {
+	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
+	    exit(-1);
+	}
+	
+	multiple_ref_alignment = new MultipleAlignment(seqA.names()[0],seqB.names()[0],max_diff_pw_alignment);
+    }
+
+    // if (multiple_ref_alignment) {
+    // 	std::cout<<"Reference aligment:"<<std::endl;
+    // 	multiple_ref_alignment->print_debug(std::cout);
+    // 	std::cout << std::flush;
     // }
     
+    TraceController trace_controller(seqA,seqB,multiple_ref_alignment,max_diff,opt_max_diff_relax);
     
-    // missing: proper error handling in case that lenA, lenB, and max_diff_alignment are incompatible 
-
-    EdgeController edge_controller(lenA,lenB,max_diff_alignment,max_diff);
     
     // ------------------------------------------------------------
     // Handle constraints (optionally)
@@ -466,7 +493,7 @@ main(int argc, char **argv) {
 				     arcmatch_scores_file,
 				     opt_read_arcmatch_probs?((mea_beta*probability_scale)/100):-1,
 				     (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
-				     edge_controller,
+				     trace_controller,
 				     seq_constraints
 				     );
     } else {
@@ -475,7 +502,7 @@ main(int argc, char **argv) {
 				     rnadataB,
 				     min_prob,
 				     (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
-				     edge_controller,
+				     trace_controller,
 				     seq_constraints
 				     );
     }
@@ -586,7 +613,7 @@ main(int argc, char **argv) {
 				 struct_local,
 				 sequ_local,
 				 free_endgaps,
-				 edge_controller,
+				 trace_controller,
 				 max_diff_am,
 				 min_am_prob,
 				 min_bm_prob,
@@ -675,7 +702,17 @@ main(int argc, char **argv) {
 				      opt_write_structure
 				      );
 	std::cout<<endl;
-
+	
+	// test MultipleAlignment
+	if (opt_verbose) {
+	    MultipleAlignment resultMA(aligner.get_alignment());
+	    //std::cout << "MultipleAlignment"<<std::endl; 
+	    //resultMA.print_debug(cout);
+	    if (multiple_ref_alignment) {
+		std::cout << "Deviation to reference: "<< multiple_ref_alignment->deviation(resultMA)<<std::endl;
+	    }
+	}
+	
 	// ----------------------------------------
 	// optionally write output formats
 	//

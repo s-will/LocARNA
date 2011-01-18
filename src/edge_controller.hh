@@ -4,6 +4,10 @@
 #include <vector>
 #include <assert.h>
 
+class Sequence;
+
+class MultipleAlignment;
+
 /***
  * For pairwise alignment between two sequences, EdgeController 
  * computes the range of positions in the first sequence which are within 
@@ -25,7 +29,7 @@ public:
 
 private:
     // The allowed distance in computing the min and max positions.
-    size_type delta;
+    size_type delta_;
 		
     // The gap character in an alignment
     static const char gap = '-';
@@ -39,11 +43,15 @@ private:
     // max_j_vector[i] = the max k corresponding to position i in sequence 1
     std::vector<size_type> max_j_vector;
 public:
-    /*** Inputs
+    
+    
+    /** construct from pairwise alignment for alignment of single sequences.
+     * @param lenA length of sequence A
+     * @param lenB length of sequence B
      * @param align A string "<S_1>&<S_2>" where 
      *             S_1 is sequence 1, S_2 is sequence 2, and & is the 
      *             delimiter character
-     * @param d the allowed difference
+     * @param delta the allowed difference
      * @param print_maps prints out the mappings between sequence positions
      * 		      		and alignment columns, for debugging purposes.
      *  
@@ -51,19 +59,37 @@ public:
      *  If delta != -1 and align == "", then define min j, max j by deviation |i-(lenA/lenB)*j|<=delta
      *
      *  Constructs an EdgeController object which can then be queried 
-     *  for the min j and max j.
+     *  for the minimal j and maximal j for each i.
      */
-    EdgeController(size_type lenA, size_type lenB, const std::string &align, int d, bool print_maps=false);
+    EdgeController(size_type lenA, size_type lenB, const std::string & align, int delta);
+    
+    /** construct for the general case of alignment of alignments
+     * @param seqA sequence A
+     * @param seqB sequence B
+     * @param align multiple reference alignment
+     * @param delta the allowed difference
+     *  
+     *  If delta == -1 then min_j is 1 and max_j is lenB
+     *  If delta != -1 and ma==NULL, then define min j, max j by deviation |i-(lenA/lenB)*j|<=delta
+     *
+     *  Constructs an EdgeController object which can then be queried 
+     *  for the minimal j and maximal j for each i.
+     *  These values are chosen such that for all j between min and max,
+     *  the delta constraint holds for all pairs of sequences in seqA and seqB.
+     */
+    EdgeController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta);
 
     /***
-     * Returns delta
+     * @returns delta
      **/
-    size_type get_delta() const;	
+    size_type get_delta() const {return delta_;}
     
     /***
      * @param i sequence position of first sequence in 1..lenA
      * 
      * @returns minimum j such that |j - A_2(i)| <= delta,  
+     *
+     * guarantee: min_j is monotone
      */
     size_type min_j(size_type i) const;
 
@@ -71,6 +97,8 @@ public:
      * @param i sequence position of first sequence in 1..lenA
      *
      * @returns maximum j such that |j - A_2(i)| <= delta,  
+     *
+     * guarantee: max_j is monotone
      */
     size_type max_j(size_type i) const;
     
@@ -79,21 +107,32 @@ public:
     //! @param j position in sequence B in 1..lenB
     bool
     is_valid_edge(size_type i, size_type j) const;
-	
+
+private:
+    //! constrain the min/max j without reference alignment by delta only
+    //! such that
+    //! match i~j is allowed iff | i*lenB/lenA - j | <= delta
+    void
+    constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);
+
+    //! print debugging information to stream
+    //! @param out output stream
+    void
+    print_debug(std::ostream & out) const;
 };
 
 
 inline
 EdgeController::size_type
 EdgeController::min_j(size_type i) const {
-    assert(i>0);
+    assert(i>0 && i<min_j_vector.size());
     return min_j_vector[i];
 }
 
 inline
 EdgeController::size_type
 EdgeController::max_j(size_type i) const {
-    assert(i>0);
+    assert(i>0 && i<max_j_vector.size());
     return max_j_vector[i];
 }
 
@@ -105,4 +144,3 @@ EdgeController::is_valid_edge(size_type i, size_type j) const {
 
 
 #endif /* EDGE_CONTROLLER_HH */
-

@@ -335,7 +335,9 @@ private:
     void
     subtract(Matrix<score_t> &m,score_t x) const;
 
-
+    //! score arc match, does *NOT* support explicit arc match scores
+    score_t arcmatch(const Arc &arcA, const Arc &arcB, bool stacked=false) const;
+    
 public:
     // ------------------------------------------------------------
     // SCORE CONTRIBUTIONS
@@ -348,10 +350,7 @@ public:
     pf_score_t exp_basematch(size_type i, size_type j) const {
 	return exp_sigma_tab(i,j);
     }
-    
-    //! score arc match, does *NOT* support explicit arc match scores
-    score_t arcmatch(const Arc &arcA, const Arc &arcB, bool stacked=false) const;
-
+        
     //! score arc match, support explicit arc match scores
     score_t arcmatch(const ArcMatch &am, bool stacked=false) const;
 
