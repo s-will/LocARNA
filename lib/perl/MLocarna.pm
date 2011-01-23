@@ -58,6 +58,7 @@ write_clustalw_alnloh
 loh_names 
 loh_sort
 
+sprint_fasta_alnloh
 
 write_pp
 
@@ -228,7 +229,6 @@ sub forget_normalized_names {
 ########################################
 ## get_normalized_seqname( $name )
 ## returns normalized name for the given name
-## if the name does not exist already, it will be registered
 ##
 ## @returns normalized name for $name
 ##
@@ -1060,7 +1060,7 @@ sub read_clustalw_alnloh {
 ##
 ## the result hash associates names to alignment strings
 ##
-## returns ref of alignment list of hash
+## returns ref of alignment hash
 ##
 ########################################
 sub read_clustalw_aln {
@@ -1087,6 +1087,7 @@ sub read_clustalw_aln {
 ## Writes alignment $aln to filehandle $fh, where
 ## the alignment is given in list of hash format.
 ## Breaks lines to restrict maximal line width
+## Write in CLUSTALW format!
 ##
 ## $fh filehandle open for writing
 ## $seqs loh representation of alignment
@@ -1098,7 +1099,7 @@ sub write_clustalw_alnloh {
     my $aln   = shift;
     my $width = shift;
 
-    print $fh "CLUSTAL W --- $PACKAGE_STRING - Local Alignment of RNA\n\n\n";
+    print $fh "CLUSTAL W --- $PACKAGE_STRING\n\n\n"; #  - Local Alignment of RNA
     
     my $maxlen=0;
     ## determine longest name
@@ -1131,6 +1132,52 @@ sub write_clustalw_alnloh {
 	$offset+=$width;
     }
 }
+
+########################################
+## sprint_fasta_alnloh($fh, $seqs, $width)
+## 
+## Writes alignment $aln to string, where
+## the alignment is given in list of hash format.
+## Breaks lines to restrict maximal line width.
+## Write in FASTA format!
+##
+## $seqs loh representation of alignment
+## $width line width
+##
+########################################
+sub sprint_fasta_alnloh {
+    my $aln   = shift;
+    my $width = shift;
+    
+    my $res="";
+    
+    foreach my $seq (@$aln) {
+	
+	$res .= ">".$seq->{name};
+	if (exists $seq->{desc}) {
+	    $res.=" ".$seq->{desc};
+	}
+	$res.="\n";
+	
+	my $offset=0;
+	while(1) {	
+	    my $more=0;
+	    
+	    my $s=$seq->{seq};
+	    if (defined($width)) {
+		$s = substr $s,$offset,$width;
+		$more |= length($seq->{seq})>$offset+$width;
+	    }
+	    $res .= "$s\n";
+	    
+	    last unless $more;
+	    
+	    $offset+=$width;
+	}
+    }
+    return $res;
+}
+
 
 
 ############################################################
@@ -1233,9 +1280,10 @@ sub write_aln($) {
     my %aln=%{ $aln_ref };
     
     foreach my $name (sort(keys %aln)) {
-	printf "%-26s %s\n",$name,$aln{$name};
+	printf "%-18s %s\n",$name,$aln{$name};
     }
 }
+
 
 ########################################
 ## read_aln($filename)
@@ -1431,7 +1479,7 @@ sub write_pp($$$$) {
     print OUT "SCORE: 0\n\n";
     
     foreach my $name (keys %aln) {
-	printf OUT "%-26s %s\n", $name, $aln{$name};
+	printf OUT "%-18s %s\n", $name, $aln{$name};
     }
     
     

@@ -137,7 +137,7 @@ AC_CONFIG_FILES([Makefile])
 # AC_FUNC_MALLOC
 
 
-AC_OUTPUT([src/Makefile Utils/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/mlocarna Utils/locarnate])
+AC_OUTPUT([src/Makefile Utils/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/mlocarna Utils/locarnate Utils/aln2fa.pl])
 
 
 if test "$VRNA_OK" = "false" ; then

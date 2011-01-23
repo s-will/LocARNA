@@ -1147,7 +1147,7 @@ sub compute_and_write_reliabilities {
 	    my @empty=();
 	    my ($score,$rel_str)=max_weight_structure(length($aln{$name}),\@empty,$amrels_ref,1,0.125);
 	    
-	    printmsg 3,sprintf("%-26s ",$name).$rel_str."\n";
+	    printmsg 3,sprintf("%-18s ",$name).$rel_str."\n";
 	    
 	    $rel_str = project_str_to_aln_seq($rel_str,$aln{$name});
 	    
@@ -2413,6 +2413,8 @@ sub perform_iterative_refinement_one_round($$$$$) {
 sub run_evaluation_mode {
     my ($alnfile,$probsdir)=@_;
     
+    ## TODO: this should be changed for use of alnloh representation
+    ## such that sequence name order is preserved
     my $aln;
     
     if ( $opt_eval_fasta ) {
@@ -2426,6 +2428,11 @@ sub run_evaluation_mode {
 	$aln = read_aln($alnfile);
     }
     
+     ## register normalized names that can be used as filenames
+    for my $name (keys %$aln) {
+	register_normalized_seqname($name);
+    }
+    
     my $bmprobs = read_bm_probs("$probsdir/bmprobs");
     my $amprobs = read_am_probs("$probsdir/amprobs");
     
@@ -2435,10 +2442,9 @@ sub run_evaluation_mode {
     
     my $cheap_score = aln_reliability($aln,$bmprobs,$amprobs);
     
-    printmsg 3, "RELIABILITY 1/COL   ".sprintf("%5.2f",$cheap_score)."\%\n";
-    
     my ($score,$rel_str) = evaluate_alignment($aln,$bmprobs,$amprobs,1);
     
+    printmsg 3, "RELIABILITY 1/COL   ".sprintf("%5.2f",$cheap_score)."\%\n";
     printmsg 3, "RELIABILITY 2/COL  ".sprintf("%5.2f",$score)."\%\n";
     printmsg 3, "MAX REL. STRUCT.   $rel_str\n";
     

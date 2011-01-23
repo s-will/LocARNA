@@ -100,7 +100,7 @@ void Alignment::write_clustal(std::ostream &out,
     }
 
     if (clustal_format) {
-	out << "CLUSTAL W --- "<<PACKAGE_STRING<<" - Local Alignment of RNA";
+	out << "CLUSTAL W --- "<<PACKAGE_STRING; // <<" - Local Alignment of RNA"
 	if (seqA_.get_rows()==1 && seqB_.get_rows()==1)
 	    out  <<" --- Score: " <<score;
 	out  <<std::endl<<std::endl;
