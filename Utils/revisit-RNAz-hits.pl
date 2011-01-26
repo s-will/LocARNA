@@ -29,6 +29,10 @@ overlap with Flybase ncRNA annotation).
 
 Special mode: draw n random instances
 
+=item B<--context <c>>
+
+Extract with maximal context of c columns upstream and downstream.
+
 =back
 
 =head1 DESCRIPTION
@@ -38,7 +42,7 @@ the RNAz hits with dmel flybase annotation. In random mode, draw n
 random hits. With flag --all select all hits.  For the selected hits
 get the annotation and the position in the pecan alignment. Determine
 the sequences that are well-aligned to the dmel sequence, obtain these
-sequences with genomic context (as specified in script).
+sequences with genomic context (option --context, default=100).
 
 Goal: use these sequence for realining by locarna. From the
 locarna reliability profile, determine boundaries of the
@@ -123,7 +127,8 @@ GetOptions(
     "help"=> \$help,
     "man" => \$man,
     "random=i" => \$random_n,
-    "all" => \$all
+    "all" => \$all,
+    "context=i" => \$context_size
     ) || pod2usage(2);
 
 pod2usage(1) if $help;
@@ -509,7 +514,7 @@ foreach my $chromosome (@chromosomes) {
 	my $seqdesc=$annseqobj->description();
 	#print "$ann_id $seqdesc\n";
 
-	my %d = parse_description($seqdesc);
+	my %d = parse_fasta_description($seqdesc);
 	
 	my $ann_name = $d{"Name"};
 
