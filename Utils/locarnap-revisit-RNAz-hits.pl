@@ -2,13 +2,20 @@
 
 =head1 NAME
 
-revisit-RNAz-hits
+locarnap-revisit-RNAz-hits
 
 =head1 SYNOPSIS
 
-revisit-RNAz-hits [options]
+locarnap-revisit-RNAz-hits [options]
 
-Options:
+=head1 DESCRIPTION
+
+Revisits the hits of the fly RNAz screen and prepares input data for
+realigning all loci with locarnap-realign-all.pl. The script is
+usually used as first step in a pipeline for refining RNAz hits with
+LocARNA-P.
+
+=head1 OPTIONS
 
 =over 4
 
@@ -35,14 +42,12 @@ Extract with maximal context of c columns upstream and downstream.
 
 =back
 
-=head1 DESCRIPTION
-
-Revisits the hits of the fly RNAz screen. In default mode, determine
-the RNAz hits with dmel flybase annotation. In random mode, draw n
-random hits. With flag --all select all hits.  For the selected hits
-get the annotation and the position in the pecan alignment. Determine
-the sequences that are well-aligned to the dmel sequence, obtain these
-sequences with genomic context (option --context, default=100).
+In default mode, determine the RNAz hits with dmel flybase
+annotation. In random mode, draw n random hits. With flag --all select
+all hits.  For the selected hits get the annotation and the position
+in the pecan alignment. Determine the sequences that are well-aligned
+to the dmel sequence, obtain these sequences with genomic context
+(option --context, default=100).
 
 Goal: use these sequence for realining by locarna. From the
 locarna reliability profile, determine boundaries of the
@@ -320,9 +325,9 @@ sub slice_sequences_with_context {
 # print a selected rnaz hit (+ annotation) in list and store the mfa and aln files for the hit 
 sub store_rnaz_hit {
     #parameter
-    my ($locus,$chromosome,$start,$end,$ann_id,$ann_name,$ann_start,$ann_end,$dmel_seq) = @_;
+    my ($locus,$chromosome,$start,$end,$orient,$ann_id,$ann_name,$ann_start,$ann_end,$ann_orient,$dmel_seq) = @_;
     
-    print "$locus $chromosome $start $end $ann_id $ann_name $ann_start $ann_end\n";
+    print "$locus $chromosome $start $end $orient $ann_id $ann_name $ann_start $ann_end $ann_orient\n";
     
     ## .$hit_tab[8]." ".$hit_tab[9]." ".$hit_tab[10]." ".$hit_tab[11]." ".$hit_tab[12]." ".$hit_tab[13]." ".$hit_tab[14]." ".$hit_tab[15]." ".$hit_tab[16]."\n";
     
@@ -406,7 +411,7 @@ sub draw_and_store_random_instances {
 	    my $start=$hit_tab[2];
 	    my $end=$hit_tab[3];
 	    
-	    store_rnaz_hit($locus,$chromosome,$start,$end,"???","???",0,0,$dmel_seq);
+	    store_rnaz_hit($locus,$chromosome,$start,$end,"?","???","???","?",0,0,$dmel_seq);
 	    
 	    $num_idx++;
 	}
@@ -440,7 +445,7 @@ sub extract_all_instances {
 	    my $start=$hit_tab[2];
 	    my $end=$hit_tab[3];
 	    
-	    store_rnaz_hit($locus,$chromosome,$start,$end,"???","???",0,0,$dmel_seq);
+	    store_rnaz_hit($locus,$chromosome,$start,$end,"?","???","???","?",0,0,$dmel_seq);
 	    
 	}
     }
@@ -466,10 +471,7 @@ if (! -e $aln_outdir) {
 }
 
 if (defined($random_n)) {
-    
-    $mfa_outdir.=".random";
-    $aln_outdir.=".random";
-    
+       
     # run in special mode
     draw_and_store_random_instances($datadir,$mfa_outdir,$aln_outdir,$random_n,$max_gap_content);
     exit;
@@ -513,7 +515,7 @@ foreach my $chromosome (@chromosomes) {
 	my $ann_id=$annseqobj->id();
 	my $seqdesc=$annseqobj->description();
 	#print "$ann_id $seqdesc\n";
-
+	
 	my %d = parse_fasta_description($seqdesc);
 	
 	my $ann_name = $d{"Name"};
@@ -524,9 +526,11 @@ foreach my $chromosome (@chromosomes) {
 	my $ann_end=$loc{"end"};
 	
 	my $ann_len=$d{"len"};
-
+	
+	my $ann_orient=($d{"complement"}==0)?"+":"-";
+	
 	if ($ann_len > $max_len) {next;} ## skip annotations that are too long
-
+	
 	#print "$ann_id ".$d{"Name"}." ".$loc{"chr"}." ".$loc{"start"}." ".$loc{"end"}." ".$loc{"complement"}."\n";
 	
 	foreach my $hit ( @rnazhits ) {
@@ -538,7 +542,7 @@ foreach my $chromosome (@chromosomes) {
 	    # test for overlap of annotation and RNAz hit, if yes: report
 	    if (ranges_overlap($ann_start,$ann_end,$start,$end)) {
 
-		store_rnaz_hit($locus,$chromosome,$start,$end,$ann_id,$ann_name,$ann_start,$ann_end,$dmel_seq);
+		store_rnaz_hit($locus,$chromosome,$start,$end,"?",$ann_id,$ann_name,$ann_start,$ann_end,$ann_orient,$dmel_seq);
 		
 	    }
 	}

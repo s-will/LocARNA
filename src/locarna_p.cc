@@ -122,6 +122,10 @@ std::string fragment_match_probs;
 double pf_scale;
 
 option_def my_options[] = {
+    {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
+    {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
+    {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
 
     {"match",'m',0,O_ARG_INT,&match_score,"50","score","Match score"},
@@ -162,12 +166,6 @@ option_def my_options[] = {
     {"fragment-match-probs",0,0,O_ARG_STRING,&fragment_match_probs,"","\"i j k l\"",
      "Requests probabilities for the match of fragments [i..j] and [k..l]. Accepts a ';' separated list of ranges."},
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Standard options"},
-
-    {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","This help"},
-    {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
-    {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
-
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
     {"",0,0,O_ARG_STRING,&bpsfile1,O_NODEFAULT,"bps-file 1","Basepairs input file 1"},
@@ -196,12 +194,12 @@ main(int argc, char **argv) {
     bool process_success=process_options(argc,argv,my_options);
     
     if (opt_help) {
+	cout << "locarna_p - a tool for pairwise partition function alignment of RNA."<<endl;
+	cout << "Computes the partitition function and sequence and structure "
+	     << "match probabilities."<<endl<<endl;
+	
 	cout << VERSION_STRING<<endl;
 
-	cout << "Copyright Sebastian Will, 2004-2009"<<endl<<endl;
-
-	cout << "A tool for pairwise Local (and global) Alignment of RNA."<<endl<<endl;
-	cout << "LocARNA-P: computes partitition function and edge probabilities of alignment."<<endl<<endl;
 		
 	print_help(argv[0],my_options);
 
@@ -210,7 +208,7 @@ main(int argc, char **argv) {
     }
 
     if (opt_version || opt_verbose) {
-	cout << VERSION_STRING<<endl;
+	cout << "locarna_p ("<< VERSION_STRING<<")"<<endl;
 	if (opt_version) exit(0); else cout <<endl;
     }
 

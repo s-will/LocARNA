@@ -169,6 +169,10 @@ bool opt_normalized;
 int normalized_L;
 
 option_def my_options[] = {
+    {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
+    {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
+    {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
 
     {"match",'m',0,O_ARG_INT,&match_score,"50","score","Match score"},
@@ -246,12 +250,6 @@ option_def my_options[] = {
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Mode of operation"},
     {"eval",0,&opt_eval,O_NO_ARG,0,O_NODEFAULT,"","Turn on evaluation mode"},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Standard options"},
-
-    {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","This help"},
-    {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
-    {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
-
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
     {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
@@ -278,11 +276,9 @@ main(int argc, char **argv) {
     bool process_success=process_options(argc,argv,my_options);
 
     if (opt_help) {
-	cout << VERSION_STRING<<endl;
-
-	cout << "Copyright Sebastian Will, 2005-2009"<<endl<<endl;
-
-	cout << "A tool for pairwise Local (and global) Alignment of RNA."<<endl<<endl;
+	cout << "locarna - a tool for pairwise (global and local) alignment of RNA."<<endl<<endl;
+	
+	cout << VERSION_STRING<<endl<<endl;
 
 	print_help(argv[0],my_options);
 
@@ -291,7 +287,7 @@ main(int argc, char **argv) {
     }
 
     if (opt_version || opt_verbose) {
-	cout << VERSION_STRING<<endl;
+	cout << "locarna ("<< VERSION_STRING<<")"<<endl;
 	if (opt_version) exit(0); else cout <<endl;
     }
 

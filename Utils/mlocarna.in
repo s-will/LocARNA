@@ -7,15 +7,20 @@
 
 =head1 NAME
 
-MLocarna - local multiple alignment of RNA
+MLocarna - multiple alignment of RNA (@PACKAGE_STRING@)
 
 =head1 SYNOPSIS
 
 mlocarna [options] <fasta file>
 
-=head2 Options:
+=head1 DESCRIPTION
 
-=head3 Controlling Output
+B<MLocarna> computes a multiple sequence-structure alignment of RNA
+sequences.  
+
+=head1 OPTIONS
+
+=head2 Controlling Output
 
 =over 4
 
@@ -44,7 +49,7 @@ output to stdout and results/result.aln.
 
 =back 
 
-=head3 Controlling pairwise alignments
+=head2 Controlling pairwise alignments
 
 =over 4
 
@@ -64,7 +69,7 @@ B<Please see> C<locarna -h> or the manpage of locarna.
 
 =back
 
-=head3 Controlling guide tree construction 
+=head2 Controlling guide tree construction 
 
 =over 4
 
@@ -86,7 +91,7 @@ existing. Non-existing ones are still computed.
 =back
 
 
-=head3 Controlling multiple alignment
+=head2 Controlling multiple alignment
 
 =over 4
 
@@ -132,7 +137,7 @@ in probabilistic mode, when reliabilities can be computed.
 
 =back
 
-=head3 Options for probabilistic mode
+=head2 Options for probabilistic mode
 
 =over 4
 
@@ -179,7 +184,7 @@ Don't write arc match probabilities to files in target dir.
 
 =back
 
-=head3 Special modes of operation
+=head2 Special modes of operation
 
 =over 4
 
@@ -201,7 +206,7 @@ Assume that alignment for evaluation is in fasta format
 
 =back
 
-=head3 Constraints
+=head2 Constraints
 
 =over 4
 
@@ -211,7 +216,7 @@ Ignore constraints even if given.
 
 =back
 
-=head3 Rna folding (RNAfold/RNAplfold)
+=head2 Rna folding (RNAfold/RNAplfold)
 
 =over 4
 
@@ -229,7 +234,7 @@ Parameter file for RNAfold (RNAfold's -P option)
 
 =back
 
-=head3 Multithreading
+=head2 Multithreading
 
 =over 4
 
@@ -239,7 +244,7 @@ Use <num> threads in parallel (support multicore/processor).
 
 =back
 
-=head3 Getting Help
+=head2 Getting Help
 
 =over 4
 
@@ -252,19 +257,17 @@ Brief help message
 Full documentation
 
 =back
-    
-=head1 DESCRIPTION
 
-B<MLocarna> computes a multiple global or local sequence-structure
-alignment of the RNA molecules that are given in input file <file> in
-mfasta format.  Results are written to directory <dir>. If the file
-tree is given, contained tree (in NEWICK-tree format) is used as guide
-tree for the progressive alignment. The final results are collected in
-<tgtdir>/results. The final multiple alignment is
+The sequences are given in input file <file> in mfasta
+format.  All results are written to a target directory <dir>. If the
+file tree is given, contained tree (in NEWICK-tree format) is used as
+guide tree for the progressive alignment. The final results are
+collected in <tgtdir>/results. The final multiple alignment is
 <tgtdir>/results/result.aln.
 
 Whenever parameters are not specified explicitly, we use the locarna defaults 
 (please see C<locarna -h> or the manpage of locarna).
+
 
 =head1 AUTHOR
 

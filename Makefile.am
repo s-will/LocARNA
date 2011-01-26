@@ -1,7 +1,14 @@
 SUBDIRS = src Utils lib
 
+HELP2MANOPTS=-N
 
-man_MANS=man/locarna.1 man/locarna_p.1 man/mlocarna.1 man/locarnate.1
+man_MANS=man/locarna.1 man/locarna_p.1 man/mlocarna.1 man/locarnate.1	\
+         man/reliability-profile.pl.1					\
+         man/locarnap-predict-and-plot.pl.1				\
+         man/locarnap-realign-all.pl.1					\
+         man/locarnap-revisit-RNAz-hits.pl.1				\
+         man/locarnap-revcomp.pl.1 man/locarnap_fit.1		\
+         man/locarna_deviation.1
 
 matrices_DATA=\
 Matrices/RIBOSUM85_60
@@ -62,17 +69,39 @@ EXTRA_DIST=Examples/archaea.fa Examples/ferritin.fa Examples/haca.snoRNA.fa Exam
 
 
 man/locarna.1: src/locarna man-subdir
-	-$(HELP2MAN) --output=$@ src/locarna
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ src/locarna
 
 man/locarna_p.1: src/locarna_p man-subdir
-	-$(HELP2MAN) --output=$@ src/locarna_p
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ src/locarna_p
 
 man/mlocarna.1: Utils/mlocarna man-subdir
 	-$(POD2MAN)  Utils/mlocarna >$@
 
+man/reliability-profile.pl.1: Utils/reliability-profile.pl man-subdir
+	-$(POD2MAN) $< >$@
+
+man/locarnap-revisit-RNAz-hits.pl.1: Utils/locarnap-revisit-RNAz-hits.pl man-subdir
+	-$(POD2MAN) $< >$@
+
+man/locarnap-realign-all.pl.1: Utils/locarnap-realign-all.pl man-subdir
+	-$(POD2MAN) $< >$@
+
+man/locarnap-predict-and-plot.pl.1: Utils/locarnap-predict-and-plot.pl man-subdir
+	-$(POD2MAN) $< >$@
+
+man/locarnap-revcomp.pl.1: Utils/locarnap-revcomp.pl man-subdir
+	-$(POD2MAN) $< >$@
+
 man/locarnate.1: Utils/locarnate man-subdir
 	chmod +x Utils/locarnate
-	-$(HELP2MAN) --no-discard-stderr --output=$@ Utils/locarnate
+	-$(HELP2MAN) $(HELP2MANOPTS) --no-discard-stderr --output=$@ Utils/locarnate
+
+man/locarna_deviation.1: src/locarna_deviation man-subdir
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ src/locarna_deviation
+
+man/locarnap_fit.1: src/locarnap_fit man-subdir
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ src/locarnap_fit
+
 
 man-subdir:
 	if [ ! -d $(top_builddir)/man ] ; then mkdir $(top_builddir)/man ; fi

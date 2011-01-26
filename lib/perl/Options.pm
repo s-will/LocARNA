@@ -289,7 +289,7 @@ my $_create_help_meassage = sub {
   $message .= "\n\n";
 
   # header
-  $message .= 'OPTIONS:'."\n";
+  $message .= 'Options:'."\n";
 
   # named options
   for (my $index = 0; $index < @{$definition}; ++$index) {

@@ -2,50 +2,66 @@
 
 =head1 NAME
 
-predict-and-plot.pl
-
+locarnap-predict-and-plot.pl
 
 =head1 SYNOPSIS
 
-predict-and-plot.pl [options]
-
-Options:
-
-=over 1
-
-=item  B<--help>                        Brief help message
-
-=item  B<--man>                         Full documentation
-
-=item  B<--verbose>                 Verbose
-
-=item  B<--quiet>                   Quiet
-
-=item  B<--test>                    Test
-
-=item  B<--output-dir>=d            Output directory (def=Relplots)
-
-=item  B<--dont-plot>                   Skip plotting, only output
-
-=item  B<--show-sw>                     Show the structure weight in the plot
-
-=item  B<--revcompl>                    Draw for reverse complement (3'-5')
-
-=item  B<--write-subseq>                Write the subsequence of fit
-
-=item  B<--output-format>=f          Output format (f = pdf or png, def=pdf)
-
-=back
+locarnap-predict-and-plot.pl [options]
 
 =head1 DESCRIPTION
 
 Performs boundary and reliability prediction and draws all reliability
-plots according to annotation file. By default plots are written to
-directory Relplots. The predictions are written to standard out as a
-table. A line of the table contains of the locus name, start,end, and
-orientation of the RNAz prediction, the LocARNA prediction and the
-first annotation, the on and off value of the fit, and the background
-and hit reliability.
+plots according to annotation file. The script is usually used after
+generating alignments with locarnap-realign-all.pl as third step in a
+pipeline for refining RNAz hits with LocARNA-P.
+
+=head1 OPTIONS
+
+=over 4
+
+=item  B<--help>
+
+Brief help message
+
+=item  B<--man>
+
+Full documentation
+
+=item  B<--test>
+
+Test
+
+=item  B<--output-dir>=d
+
+Output directory (def=Relplots)
+
+=item  B<--dont-plot>
+
+Skip plotting, only output
+
+=item  B<--show-sw>
+
+Show the structure weight in the plot
+
+=item  B<--revcompl>
+
+Draw for reverse complement (3'-5')
+
+=item  B<--write-subseq>
+
+Write the subsequence of fit
+
+=item  B<--output-format>=f
+
+Output format (f = pdf or png, def=pdf)
+
+=back
+
+By default plots are written to directory Relplots. The predictions
+are written to standard out as a table. A line of the table contains
+of the locus name, start,end, and orientation of the RNAz prediction,
+the LocARNA prediction and the first annotation, the on and off value
+of the fit, and the background and hit reliability.
 
 =cut
 

@@ -20,11 +20,11 @@
 \newcommand{\LocARNAP}{\textsc{LocARNA-P}}
 \newenvironment{ttbox}{%
   \begin{framed}\begin{minipage}{1.0\textwidth}\tt}%
-{\end{minipage}\end{framed}}
+{\end{minipage}\end{framed}\noindent}
 
 
 \title{\LocARNAP{} Manual:\\ Computing Match Probabilities and
-  Reliabilities in \LocARNA{}'s Probabistic Mode} 
+  Reliabilities in \LocARNA{}'s Probabilistic Mode} 
 
 \author{Sebastian Will\\[6pt]
 \normalsize
@@ -105,7 +105,6 @@ from
   make\\
   make install\\
 \end{ttbox}
-\noindent
 These commands will compile the package and install it under directory
 \texttt{/usr/local}. 
 
@@ -126,7 +125,6 @@ The \texttt{configure} option
 \begin{ttbox}
   --with-vrna=VRNAPREFIX
 \end{ttbox}
-\noindent
 selects the installation directory of the Vienna RNA library to
 \texttt{VRNAPREFIX}.
 %
@@ -150,7 +148,6 @@ For aligning large sequences it is advised to use the option
 \begin{ttbox}
   --enable-large-pf
 \end{ttbox}
-\noindent
 when calling \texttt{configure}. This option avoids under- and
 overflows when computing the partition function by activating high
 precision floating point arithmetic.
@@ -474,10 +471,10 @@ over all consensus structures $P$ of the alignment and the maximal
 structure respectively.
 
 \paragraph{Use for de-novo prediction of non-coding RNA}
-A reliability score that discriminates discriminates true and false
-non-coding RNA alignments particularly well, when obtained from the
-\LocARNAP{} alignment is computed by the script
-\text{reliability-profile.pl}.  The call
+A reliability score that discriminates true and false non-coding RNA
+alignments particularly well, when obtained from the \LocARNAP{}
+alignment is computed by the script \text{reliability-profile.pl}.
+The call
 \begin{ttbox}
   reliability-profile.pl example.out --dont-plot --fit-once-on
 \end{ttbox}
@@ -513,7 +510,6 @@ base pair probabilities) as
 \begin{ttbox}
   locarna\_p in1 in2
 \end{ttbox}
-\noindent
 The input files \texttt{in1} and \texttt{in2} are either dot plot
 postscript files as produced by \texttt{RNAfold -p} or files in the
 \LocARNA{}'s proprietary pp format. Files in the latter format are
@@ -535,7 +531,6 @@ Match probabilities can be written to files specified by the options
 --write-basematch-probs=<file>\\
 --write-arcmatch-probs=<file>
 \end{ttbox}
-\noindent
 for writing sequence (base) match probabilities and structure (arc) match probabilities respectively.
 
 A complete list of the options of \texttt{locarna\_p} is obtained by calling
@@ -547,11 +542,11 @@ A complete list of the options of \texttt{locarna\_p} is obtained by calling
 
 In this section, we describe how to refine predictions from a
 genome-wide screen for non-coding RNAs. We provide scripts that call
-the previously described commands for performing the reliability
-computation and prediction. Specifically we describe the refinement of
-an
+the previous commands for performing the reliability computation and
+prediction. Specifically we outline and provdie scripts for the
+refinement of an
 \texttt{RNAz}~\cite{Washietl:Hofacker:Stadler:Fast_and_relia:PNAS2005,Washietl:Hofacker:Lukasser:Mappi_conse_RNA:2005}
-screen, although the method can be applied to screens by other
+screen. Nevertheless, the method can be applied to screens by other
 programs, e.g. by
 \texttt{EvoFold}~\cite{Pedersen:Bejerano:Siepel:Ident_and_Class:2006},
 as well.
@@ -568,8 +563,7 @@ screens are available online and can be downloaded from
 The candidate annotation table from this screen contains positions in
 the \emph{D. melanogaster} genome for each putative non-coding RNA
 locus. Furthermore, the table contains the RNAz max P score for each
-locus, which is used to discriminate high and low confidence
-predictions.
+locus, which is used to identify high and low confidence predictions.
 
 The goal of our refinement is to predict precise boundaries for the
 putative non-coding RNAs in each locus and to assign reliability
@@ -579,64 +573,79 @@ predictions over the RNAz max P score.
 We provide three scripts that in combination perform the refinement of
 the Fly RNAz screen in the hope that they are useful for other de-novo
 non-coding RNA screens too. The first script
-\texttt{revisit-RNAz-hits.pl} reads the annotation from the RNAz
+\texttt{locarnap-revisit-RNAz-hits.pl} reads the annotation from the RNAz
 screen, extracts the relevant locus annotation, and, for each locus,
 writes the corresponding slice of the PECAN whole genome alignment to
 disk.
 
 \paragraph{Extracting locus alignment slices}
-The first script is called as 
+In this first step, we prepare the input for \LocARNAP{} by extracting
+alignments of the RNAz loci with genomic context from the whole genome
+aligmnent and writing the alignments and their sequences to files. We
+will also produce a table of meta information on the loci. The script
+is called as
 \begin{ttbox}
-  bin/revisit-RNAz-hits.pl --all 2>/dev/null >annotation
+  locarnap-revisit-RNAz-hits.pl --all 2>/dev/null >annotation
 \end{ttbox}
-\noindent
 to write the annotation to file \texttt{annotation}, the alignment
 slices to directory \texttt{Alignment-Slices}, and the sequences of
 the alignments to \texttt{Realign-Sequences}. The script expects to
-find the input data in subdirectory \texttt{Data}.
+find all input data in subdirectory \texttt{Data}.
 
-Directory \texttt{Data} itself contains the directories
+The directory \texttt{Data} contains the directories
 \begin{itemize}
+\item \texttt{Annotation} containing annotation files from the Fly RNAz screen, 
 \item \texttt{Alignments} containing the PECAN whole genome
   alignment. The alignment is organized in chromosomes, such that
   there is one directory \emph{CHR}\texttt{-pecan-CAF1} for each
-  Drosophila chromosome \emph{CHR} in 2L, 2R, 3L, 3R, 4, and X.
-\item \texttt{Annotation} containing annotation files from the Fly RNAz screen, and
+  Drosophila chromosome \emph{CHR} in 2L, 2R, 3L, 3R, 4, and X, and
 \item \texttt{Dmel-r4.3} containing the sequences of the
   \emph{D. melanogaster} chromosomes in fasta format, organized in
   files
   \texttt{dmel-}\emph{CHR}\texttt{-chromosome-r4.3.fasta.gz}. The
   assembly of this data and the alignment match (here release 4.3).
 \end{itemize}
-
-See \texttt{revisit-RNAz-hits.pl --man} for full documentation of the
+%
+See \texttt{locarnap-revisit-RNAz-hits.pl --man} for full documentation of the
 script.
 
-\paragraph{Realigning the loci} The script \texttt{realign-all.pl}
-realigns all loci that were extracted in the previous step. The script
-submits the jobs to a sun grid engine (SGE) queue and expects to be
-started on a head node. The script expects the directories from step
-one in the current directory. The results are written to directory
-\texttt{Alignment-Results}, which has to exist already. An option
-\texttt{--test} allows to control the SGE script and submission
-command before submission to the grid engine. By default, the script
-realigns in the forward direction only. If also realignment of the
-reverse complements is wanted, the script has to be called a second
-time with option \texttt{--revcompl}.
-%See \texttt{realign-all.pl --man} for full documentation of the
-%script.
+\paragraph{Realigning the loci} 
+In the second step, we use \texttt{mlocarna} to realign all loci
+sequences that were extracted in the step one. The script
+\texttt{locarnap-realign-all.pl} realigns all loci by calling
+\begin{ttbox}
+  mlocarna --probabilistic --consistency-transformation --max-diff=100 --struct-weight=200 --mea-beta 400 locusXY.mfa
+\end{ttbox}
+for each file of locus sequences \texttt{locusXY.mfa}. By default, the
+script submits the jobs to a sun grid engine (SGE) queue and expects
+to be started on a head node. Alternatively, the script can be run
+locally (option \texttt{--run-locally}) and provides support for
+multicore machines (option \texttt{--threads}. The script expects the
+directories from step one in the current directory. The results are
+written to directory \texttt{Alignment-Results}, which has to exist
+already. Several constants controlling the behavior of the script can
+be adapted in the code. An option \texttt{--test} allows to control
+the SGE script and submission command before submission to the grid
+engine. By default, the script realigns in the forward direction
+only. If also realignment of the reverse complements is wanted, the
+script has to be called a second time with option \texttt{--revcompl}.
+See \texttt{locarnap-realign-all.pl --man} for full documentation of
+the script.
 
 \paragraph{Predicting boundaries and locus reliability}
-The script \texttt{predict-and-plot.pl} is provided to perform the
+The script \texttt{locarnap-predict-and-plot.pl} is provided to perform the
 actual prediction of boundaries and reliability of each putative
 non-coding RNA locus. Furthermore, the script generates reliability
 profile plots with optional annotation (in directory
 \texttt{Relplots}). The script is called as
 \begin{ttbox}
-  predict-and-plot.pl annotation
+  locarnap-predict-and-plot.pl annotation
 \end{ttbox}
 and expects the results from the previous script in directory
-\texttt{Alignment-Results}.  See \texttt{predict-and-plot.pl --man}
+\texttt{Alignment-Results}.  See 
+\begin{ttbox}
+  locarnap-predict-and-plot.pl --man
+\end{ttbox}
 for full documentation of the script.
 
 \section{Reporting bugs.}

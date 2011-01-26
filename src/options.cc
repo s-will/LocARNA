@@ -288,7 +288,7 @@ print_options(option_def options[]) {
 	} else { //NEW SECTION
 	    hide_options = (options[i].arg_type == O_SECTION_HIDE);
 	    if (!hide_options) {
-		printf("=== %s ===\n",options[i].description.c_str());
+		printf("%s:\n",options[i].description.c_str());
 	    }
 	}
     }
@@ -332,7 +332,8 @@ print_help(char *progname, option_def options[]) {
     int i;
     int num_opts = count_opts(options);
 
-    printf("USAGE: "); print_usage(progname, options); 
+    printf("Usage: "); 
+    print_usage(progname, options); 
     puts("\n");
 
     puts("Options:");
@@ -352,7 +353,7 @@ print_help(char *progname, option_def options[]) {
 	  	  
 	    if (!hide_options) {
 		puts("");
-		printf(" === %s ===\n",options[i].description.c_str());
+		printf("%s:\n",options[i].description.c_str());
 	    }
 	}
     }
