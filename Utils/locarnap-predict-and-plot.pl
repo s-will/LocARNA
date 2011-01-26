@@ -6,14 +6,15 @@ locarnap-predict-and-plot.pl
 
 =head1 SYNOPSIS
 
-locarnap-predict-and-plot.pl [options]
+locarnap-predict-and-plot.pl [options] [<annotation-file>]
 
 =head1 DESCRIPTION
 
 Performs boundary and reliability prediction and draws all reliability
-plots according to annotation file. The script is usually used after
-generating alignments with locarnap-realign-all.pl as third step in a
-pipeline for refining RNAz hits with LocARNA-P.
+plots according to annotation (given as file or read from standard
+input). The script is usually used after generating alignments with
+locarnap-realign-all.pl as third step in a pipeline for refining RNAz
+hits with LocARNA-P.
 
 =head1 OPTIONS
 

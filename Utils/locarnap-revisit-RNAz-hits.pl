@@ -325,22 +325,24 @@ sub slice_sequences_with_context {
 # print a selected rnaz hit (+ annotation) in list and store the mfa and aln files for the hit 
 sub store_rnaz_hit {
     #parameter
-    my ($locus,$chromosome,$start,$end,$orient,$ann_id,$ann_name,$ann_start,$ann_end,$ann_orient,$dmel_seq) = @_;
+    my ($locus,$chromosome,$dmel_seq,$start,$end,$orient,$ann_id,$ann_name,$ann_start,$ann_end,$ann_orient) = @_;
     
-    print "$locus $chromosome $start $end $orient $ann_id $ann_name $ann_start $ann_end $ann_orient\n";
-    
+    print "$locus $chromosome $start $end $orient";
+    if (defined($ann_id)) {
+	print " $ann_id $ann_name $ann_start $ann_end $ann_orient";
+    }
+    print "\n";
+
     ## .$hit_tab[8]." ".$hit_tab[9]." ".$hit_tab[10]." ".$hit_tab[11]." ".$hit_tab[12]." ".$hit_tab[13]." ".$hit_tab[14]." ".$hit_tab[15]." ".$hit_tab[16]."\n";
-    
-    ## get drosophila sequence of the RNAz prediction
-    my $RNAz_hit_sequence =  $dmel_seq->trunc($start,$end);
-    
-    # print $RNAz_hit_sequence->seq."\n";
     
     ## ------------------------------
     ## look for the RNAz hit in the pecan alignment, get alignment slice,
     ## determine well-aligned sequences and sequences with context
     ## in the alignment
     
+    ## get drosophila sequence of the RNAz prediction
+    my $RNAz_hit_sequence =  $dmel_seq->trunc($start,$end);
+
     #print "NOW FIND\n";
     
     my ($alnfile,$start_col,$end_col)
@@ -411,7 +413,7 @@ sub draw_and_store_random_instances {
 	    my $start=$hit_tab[2];
 	    my $end=$hit_tab[3];
 	    
-	    store_rnaz_hit($locus,$chromosome,$start,$end,"?","???","???","?",0,0,$dmel_seq);
+	    store_rnaz_hit($locus,$chromosome,$dmel_seq,$start,$end,"?");
 	    
 	    $num_idx++;
 	}
@@ -445,7 +447,7 @@ sub extract_all_instances {
 	    my $start=$hit_tab[2];
 	    my $end=$hit_tab[3];
 	    
-	    store_rnaz_hit($locus,$chromosome,$start,$end,"?","???","???","?",0,0,$dmel_seq);
+	    store_rnaz_hit($locus,$chromosome,$dmel_seq,$start,$end,"?");
 	    
 	}
     }
@@ -542,7 +544,7 @@ foreach my $chromosome (@chromosomes) {
 	    # test for overlap of annotation and RNAz hit, if yes: report
 	    if (ranges_overlap($ann_start,$ann_end,$start,$end)) {
 
-		store_rnaz_hit($locus,$chromosome,$start,$end,"?",$ann_id,$ann_name,$ann_start,$ann_end,$ann_orient,$dmel_seq);
+		store_rnaz_hit($locus,$chromosome,$dmel_seq,$start,$end,"?",$ann_id,$ann_name,$ann_start,$ann_end,$ann_orient);
 		
 	    }
 	}

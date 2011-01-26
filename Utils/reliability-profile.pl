@@ -347,7 +347,7 @@ while(<IN>) {
 close TMP;
 
 ### do fit
-my $fit_cmd="cat $tmpfile | fit - --delta $fitpenalty".($fit_once_on?" --once-on":"").(defined($beta)?" --beta $beta":"");
+my $fit_cmd="cat $tmpfile | locarnap_fit - --delta $fitpenalty".($fit_once_on?" --once-on":"").(defined($beta)?" --beta $beta":"");
 my @fit_answer = readpipe($fit_cmd);
 
 #print STDOUT "fit call: $fit_cmd\n";
