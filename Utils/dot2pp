@@ -8,7 +8,13 @@ dot2pp
 
 dot2pp <infile.dp_ps >outfile.pp
 
-Options:
+=head1 DESCRIPTION
+
+Convert a dot plot file (like produced by RNAfold -p) to a pp file,
+which is an locarna proprietary format for representing dot plots.
+Reads dotplot from stdin and write pp file to stdout.
+
+=head1 OPTIONS
 
 =over 1
 
@@ -16,17 +22,10 @@ Options:
 
 =item  B<--man>                         Full documentation
 
-=item  B<-v, --verbose>                 Verbose
-
-=item  B<-q, --quiet>                   Quiet
+=item  B<--name=s>                      Sequence name
 
 =back
 
-=head1 DESCRIPTION
-
-Convert a dot plot file (like produced by RNAfold -p) to a pp file,
-which is an locarna proprietary format for representing dot plots.
-Reads dotplot from stdin and write pp file to stdout.
 
 =cut
 
@@ -40,18 +39,16 @@ use Pod::Usage;
 
 my $help;
 my $man;
-my $quiet;
-my $verbose;
 
+my $name="seq";
 
 ## Getopt::Long::Configure("no_ignore_case");
 
 GetOptions(	   
-	   "verbose" => \$verbose,
-	   "quiet" => \$quiet,   
-	   "help"=> \$help,
-	   "man" => \$man
-	   ) || pod2usage(2);
+    "help"=> \$help,
+    "man" => \$man,
+    "name=s" => \$name
+    ) || pod2usage(2);
 
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
@@ -69,7 +66,7 @@ while (my $line=<STDIN>) {
 	    $line =~ s/[^UACTG]//g;
 	    $sequence.=$line;
 	}
-	print "SCORE: 0\n\nseq $sequence\n\n#\n";
+	print "SCORE: 0\n\n$name $sequence\n\n#\n";
     } elsif( $line =~ /(\d+)\s+(\d+)\s+([\d.]+)\s+ubox/ ) {
 	my $i=$1;
 	my $j=$2;

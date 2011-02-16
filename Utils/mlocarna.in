@@ -61,6 +61,14 @@ Disallow/Allow lonely pairs (default: Disallow).
 
 Allow free endgaps. (Corresponds to pairwise locarna option --free-endgaps "++++".)
 
+=item  B<--free-endgaps-3>
+
+Allow free endgaps 3'.
+
+=item  B<--free-endgaps-5>
+
+Allow free endgaps 5'.
+
 =item B<other locarna options>
 
 Many of the options of locarna, the program for pairwise alignment, will work as well.
@@ -353,6 +361,8 @@ my $no_lonely_pair;
 my $lonely_pair;
 
 my $free_endgaps;
+my $free_endgaps_3;
+my $free_endgaps_5;
 
 my $tree_file;
 my $tgtdir;
@@ -432,6 +442,8 @@ my %options_hash=
      "LP" => \$lonely_pair,
      
      "free-endgaps" => \$free_endgaps,
+     "free-endgaps-3" => \$free_endgaps_3,
+     "free-endgaps-5" => \$free_endgaps_5,
 
      "min-prob" => \$min_prob,
      "tree-min-prob" => \$tree_min_prob,
@@ -542,6 +554,8 @@ my @options = #options that are not or not automatically passed to locarna
      "LP",
      
      "free-endgaps",
+     "free-endgaps-3",
+     "free-endgaps-5",
 
      "min-prob|p=f",
      "tree-min-prob|P=f",
@@ -760,16 +774,22 @@ my $locarna_p_params="";
 ## first set parameters that are equal for tree construction and other locarna runs
 ## (we copy locarna_params to locarna_params_tree later)
 
-
+my $endgaps_string="++++";
+if (defined($free_endgaps_3)) {
+    $free_endgaps=1;
+    $endgaps_string="-+-+" unless defined($free_endgaps_5);
+} elsif (defined($free_endgaps_5)) {  
+    $free_endgaps=1;
+    $endgaps_string="+-+-";
+}
 if (defined($free_endgaps)) {
-    if ($probabilistic) {
+    if($probabilistic) {
 	printerr "ERROR: no free-end gaps in probabilistic mode.\n";
 	exit(-1);
     } else {
-	$locarna_params.=" --free-endgaps \"++++\"";
+	$locarna_params .= "--free-endgaps=\"$endgaps_string\"";
     }
 }
-
 
 if (defined($only_basematch_probs)) { $locarna_p_params.=" --include-am-in-bm"; }
 
