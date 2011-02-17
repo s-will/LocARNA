@@ -1,8 +1,13 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+AC_INIT([LocARNA], [1.6.1], [will@informatik.uni-freiburg.de])
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.6], [will@informatik.uni-freiburg.de])
+
+AC_CONFIG_MACRO_DIR([m4])
+
+
+LT_INIT
 
 AM_INIT_AUTOMAKE
 
@@ -132,7 +137,7 @@ AC_HEADER_STDBOOL
 AC_C_CONST
 AC_TYPE_SIZE_T
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile LocARNA.pc])
 
 # AC_FUNC_MALLOC
 

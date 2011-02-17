@@ -5,9 +5,11 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
-#include "multiple_alignment.hh"
+#include <LocARNA/multiple_alignment.hh>
 
-const std::string 
+using namespace LocARNA;
+
+const std::string
 VERSION_STRING = (std::string)PACKAGE_STRING; 
 
 

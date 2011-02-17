@@ -40,7 +40,9 @@ read_number_sequence(istream &in,numseq_t &numseq) {
 //
 // Options
 //
-#include "options.hh"
+#include <LocARNA/options.hh>
+
+using namespace LocARNA;
 
 const std::string
 VERSION_STRING = (std::string)PACKAGE_STRING;

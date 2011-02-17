@@ -11,7 +11,7 @@ all:	locarnap-doc.pdf
 	mlocarna --probabilistic --consistency-transformation $< >$@
 
 example.evaluation: example.output
-	mlocarna --evaluate example.out/results/result.aln example.fa  >$@
+	mlocarna --evaluate example.output/results/result.aln example.fa  >$@
 
 example.fa:
 	cp ../Examples/archaea.fa example.fa
@@ -27,7 +27,7 @@ locarnap-doc.pdf: locarnap-doc.tex $(FIGS) example.fa example.output manpagepdfs
 	mv $@-joined $@
 
 Figs/relprof.pdf: example.output
-	reliability-profile.pl example.out --out=Figs/relprof.pdf
+	reliability-profile.pl example.output --out=Figs/relprof.pdf
 
 
 manpagepdfs: $(DOCPDFS)
@@ -35,3 +35,7 @@ manpagepdfs: $(DOCPDFS)
 
 man/%.pdf: ../man/%.1
 	man -t $< | ps2pdf - > $@
+
+
+clean:
+	$(RM) locarnap-doc.aux locarnap-doc.log locarnap-doc.out locarnap-doc.pdf

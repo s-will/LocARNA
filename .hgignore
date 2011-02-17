@@ -1,6 +1,7 @@
 syntax: glob
 *~
 *.o
+*.lo
 aclocal.m4
 configure
 Makefile.in
@@ -12,14 +13,30 @@ CVS/
 Releases/
 Utils/locarnate
 Utils/mlocarna
+Utils/aln2fa.pl
 configure
 config.log
 config.status
+config.sub
+config.guess
+libtool
+ltmain.sh
 autom4te.cache/
+
+LocARNA.pc
+
 man/locarna.1
 man/locarna_p.1
 man/locarnate.1
 man/mlocarna.1
+man/locarna_deviation.1
+man/locarnap-predict-and-plot.pl.1
+man/locarnap-realign-all.pl.1
+man/locarnap-revcomp.pl.1
+man/locarnap-revisit-RNAz-hits.pl.1
+man/locarnap_fit.1
+man/reliability-profile.pl.1
+
 src/fit
 src/deviation
 src/locarna
@@ -30,8 +47,35 @@ src/ribosum85_60.icc
 
 src/edge_controller_test
 src/trace_controller_test
+src/.libs
+
+src/libLocARNA.la
+src/locarna_deviation
+src/locarnap_fit
 
 Data/*.out
+
+Doc/man/*.pdf
+Doc/locarnap-doc.aux
+Doc/locarnap-doc.bbl
+Doc/locarnap-doc.blg
+Doc/locarnap-doc.log
+Doc/locarnap-doc.pdf
+Doc/example.fa
+Doc/example.evaluation
+Doc/example.output
+Doc/example2.fa
+Doc/example2.output
+Doc/Figs/relprof.pdf
+Doc/texput.log
+Doc/auto
+
+m4
+Examples/*.out
+Doc/*.out
+
+tmp/*
+
 
 syntax: regexp
 (.*/)?\#[^/]*\#$

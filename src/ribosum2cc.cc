@@ -1,11 +1,12 @@
 #include <cstdlib>
 #include <iostream>
-#include "ribosum.hh"
 #include <string>
 
-#include "matrices.hh"
+#include <LocARNA/ribosum.hh>
+#include <LocARNA/matrices.hh>
 
 using namespace std;
+using namespace LocARNA;
 
 int main(int argc, char **argv) {
     if (argc!=3) {

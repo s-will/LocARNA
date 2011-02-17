@@ -16,19 +16,19 @@
 
 //#include <math.h>
 
-#include "sequence.hh"
-#include "basepairs.hh"
+#include <LocARNA/sequence.hh>
+#include <LocARNA/basepairs.hh>
 
-//#include "exact_matcher.hh"
+//#include <LocARNA/exact_matcher.hh>
 
-#include "rna_data.hh"
-#include "arc_matches.hh"
-#include "match_probs.hh"
+#include <LocARNA/rna_data.hh>
+#include <LocARNA/arc_matches.hh>
+#include <LocARNA/match_probs.hh>
 
-#include "anchor_constraints.hh"
-#include "trace_controller.hh"
+#include <LocARNA/anchor_constraints.hh>
+#include <LocARNA/trace_controller.hh>
 
-#include "exact_matcher.hh"
+#include <LocARNA/exact_matcher.hh>
 
 using namespace std;
 
@@ -72,8 +72,9 @@ std::string file2;
 //
 // Options
 //
-#include "options.hh"
+#include <LocARNA/options.hh>
 
+using namespace LocARNA;
 
 bool opt_help;
 bool opt_version;
