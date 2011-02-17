@@ -8,4 +8,4 @@ Description: LocARNA C++ library.
 Version: @PACKAGE_VERSION@
 URL: @PACKAGE_URL@
 Libs: -L${libdir} -lLocARNA-@API_VERSION@
-Cflags: -I${includedir}/LocARNA-@API_VERSION@ -I${libdir}/LocARNA-@API_VERSION@/include
+Cflags: -I${includedir}/LocARNA-@API_VERSION@

@@ -29,18 +29,17 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ../LocARNA-$(API_VERSION).pc
 
 library_includedir=$(includedir)/LocARNA-$(API_VERSION)
-library_include_HEADERS = LocARNA/aux.hh LocARNA/options.hh		\
-	LocARNA/matrices.hh LocARNA/sparse_matrix.hh			\
-	LocARNA/sequence.hh LocARNA/basepairs.hh LocARNA/alignment.hh	\
-	LocARNA/rna_data.hh LocARNA/params.hh LocARNA/scoring.hh	\
+nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
+	LocARNA/options.hh LocARNA/matrices.hh				\
+	LocARNA/sparse_matrix.hh LocARNA/sequence.hh			\
+	LocARNA/basepairs.hh LocARNA/alignment.hh LocARNA/rna_data.hh	\
+	LocARNA/params.hh LocARNA/scoring.hh				\
 	LocARNA/infty_arith_int.hh LocARNA/match_probs.hh		\
 	LocARNA/alphabet.hh LocARNA/alphabet.icc LocARNA/ribosum.hh	\
 	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
-	LocARNA/aligner.hh LocARNA/stral_score.hh			\
+	LocARNA/aligner.hh LocARNA/aligner_p.hh LocARNA/stral_score.hh	\
 	LocARNA/trace_controller.hh LocARNA/evaluator.hh		\
-	LocARNA/multiple_alignment.hh
-
-
+	LocARNA/multiple_alignment.hh LocARNA/ribosum85_60.icc
 
 
 ## binary programs
@@ -50,7 +49,7 @@ bin_PROGRAMS = locarna ribosum2cc locarna_p locarnap_fit locarna_deviation
 # all binaries should be linked to libLocARNA
 LDADD=libLocARNA-$(API_VERSION).la
 
-BUILT_SOURCES=ribosum85_60.icc
+BUILT_SOURCES=LocARNA/ribosum85_60.icc
 
 check_PROGRAMS = trace_controller_test
 trace_controller_test_SOURCES = trace_controller_test.cc
@@ -64,7 +63,7 @@ locarna_p_SOURCES = locarna_p.cc
 #	exact_matcher.hh exact_matcher.cc \
 #	basepairs_looptraversal.hh basepairs_looptraversal.cc
 
-nodist_locarna_SOURCES = ribosum85_60.icc
+nodist_locarna_SOURCES = LocARNA/ribosum85_60.icc
 
 ribosum2cc_SOURCES = ribosum2cc.cc
 
@@ -72,11 +71,7 @@ locarnap_fit_SOURCES = fit.cc fitonoff.cc LocARNA/options.hh fitonoff.hh
 
 locarna_deviation_SOURCES = deviation.cc
 
-ribosum85_60.icc: ribosum2cc
+LocARNA/ribosum85_60.icc: ribosum2cc
 	./ribosum2cc Ribosum85_60 $(top_srcdir)/Matrices/RIBOSUM85_60 >$@
 
-CLEANFILES=ribosum85_60.icc
-
-
-show-version:
-	echo "API: $(API_VERSION)"
+CLEANFILES=LocARNA/ribosum85_60.icc

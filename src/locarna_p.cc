@@ -18,19 +18,15 @@
 #include <LocARNA/sequence.hh>
 #include <LocARNA/basepairs.hh>
 #include <LocARNA/aligner_p.hh>
-
 #include <LocARNA/rna_data.hh>
 #include <LocARNA/arc_matches.hh>
-
 #include <LocARNA/match_probs.hh>
 #include <LocARNA/ribosum.hh>
-
-#include "ribosum85_60.icc"
-
 #include <LocARNA/anchor_constraints.hh>
-
 #include <LocARNA/trace_controller.hh>
 #include <LocARNA/multiple_alignment.hh>
+
+#include <LocARNA/ribosum85_60.icc>
 
 using namespace std;
 

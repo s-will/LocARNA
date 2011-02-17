@@ -21,19 +21,14 @@
 #include <LocARNA/alignment.hh>
 #include <LocARNA/aligner.hh>
 #include <LocARNA/evaluator.hh>
-
 #include <LocARNA/rna_data.hh>
-
 #include <LocARNA/arc_matches.hh>
-
 #include <LocARNA/match_probs.hh>
 #include <LocARNA/ribosum.hh>
-
-#include "ribosum85_60.icc"
-
 #include <LocARNA/anchor_constraints.hh>
-
 #include <LocARNA/trace_controller.hh>
+#include <LocARNA/ribosum85_60.icc>
+
 
 using namespace std;
 using namespace LocARNA;
