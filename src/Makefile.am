@@ -1,9 +1,19 @@
+## Place generated object files (.o) into the same directory as their source
+## files, in order to avoid collisions when non-recursive make is used.
 AUTOMAKE_OPTIONS = subdir-objects
 
+## Additional flags to pass to aclocal when it is invoked automatically at
+## make time. The ${ACLOCAL_FLAGS} variable is picked up from the environment
+## to provide a way for the user to supply additional arguments.
+ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
+
+
+########################################
 ### Rules for LocARNA library libLocARNA
 
-lib_LTLIBRARIES=libLocARNA.la
-libLocARNA_la_SOURCES=LocARNA/aux.cc LocARNA/options.cc			\
+lib_LTLIBRARIES=libLocARNA-@API_VERSION@.la
+
+libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc LocARNA/options.cc	\
 	LocARNA/sequence.cc LocARNA/basepairs.cc LocARNA/alignment.cc	\
 	LocARNA/rna_data.cc LocARNA/scoring.cc				\
 	LocARNA/infty_arith_int.cc LocARNA/match_probs.cc		\
@@ -13,24 +23,32 @@ libLocARNA_la_SOURCES=LocARNA/aux.cc LocARNA/options.cc			\
 	LocARNA/aligner_p.hh LocARNA/trace_controller.cc		\
 	LocARNA/evaluator.cc LocARNA/multiple_alignment.cc
 
+libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
-library_includedir=$(includedir)/LocARNA
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = ../LocARNA-$(API_VERSION).pc
+
+library_includedir=$(includedir)/LocARNA-$(API_VERSION)
 library_include_HEADERS = LocARNA/aux.hh LocARNA/options.hh		\
 	LocARNA/matrices.hh LocARNA/sparse_matrix.hh			\
 	LocARNA/sequence.hh LocARNA/basepairs.hh LocARNA/alignment.hh	\
 	LocARNA/rna_data.hh LocARNA/params.hh LocARNA/scoring.hh	\
 	LocARNA/infty_arith_int.hh LocARNA/match_probs.hh		\
 	LocARNA/alphabet.hh LocARNA/alphabet.icc LocARNA/ribosum.hh	\
-	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh
-	LocARNA/aligner.hh LocARNA/stral_score.hh LocARNA/trace_controller.hh
-	LocARNA/evaluator.hh LocARNA/multiple_alignment.hh
+	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
+	LocARNA/aligner.hh LocARNA/stral_score.hh			\
+	LocARNA/trace_controller.hh LocARNA/evaluator.hh		\
+	LocARNA/multiple_alignment.hh
+
+
+
 
 ## binary programs
 bin_PROGRAMS = locarna ribosum2cc locarna_p locarnap_fit locarna_deviation
 # locarna_X 
 
 # all binaries should be linked to libLocARNA
-LDADD=libLocARNA.la
+LDADD=libLocARNA-$(API_VERSION).la
 
 BUILT_SOURCES=ribosum85_60.icc
 
@@ -58,3 +76,7 @@ ribosum85_60.icc: ribosum2cc
 	./ribosum2cc Ribosum85_60 $(top_srcdir)/Matrices/RIBOSUM85_60 >$@
 
 CLEANFILES=ribosum85_60.icc
+
+
+show-version:
+	echo "API: $(API_VERSION)"
