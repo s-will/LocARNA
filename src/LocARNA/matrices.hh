@@ -207,6 +207,17 @@ public:
 	return this->mat_[addr(i,j)];
     }
 
+    //! read only access to (i,j)
+    const elem_t get(size_type i,size_type j) const {
+	return this->mat_[addr(i,j)];
+    }
+
+    //! write access to (i,j)
+    void
+    set(size_type i,size_type j, const elem_t &x) {
+	this->mat_[addr(i,j)]=x;
+    }
+
     //! fill the restricted area of the matrix with the given value
     void 
     fill(const elem_t &val) {
@@ -253,6 +264,18 @@ public:
     elem_t & operator() (size_t i,size_t j) {
 	return this->mat_[addr(i,j)];
     }
+
+    //! read only access to (i,j)
+    const elem_t get(size_t i,size_t j) const {
+	return this->mat_[addr(i,j)];
+    }
+
+    //! write access to (i,j)
+    void
+    set(size_t i,size_t j, const elem_t &x) {
+	this->mat_[addr(i,j)]=x;
+    }
+
 };
 
 
@@ -301,7 +324,22 @@ public:
     elem_t & operator() (size_t i,size_t j) {
 	return this->mat_[addr(i,j)];
     }
+
+    //! read only access to (i,j)
+    const elem_t get(size_t i,size_t j) const {
+	return this->mat_[addr(i,j)];
+    }
+
+    //! write access to (i,j)
+    void
+    set(size_t i,size_t j, const elem_t &x) {
+	this->mat_[addr(i,j)]=x;
+    }
 };
+
+
+
+
 
 } // end namespace LocARNA
 

@@ -43,8 +43,8 @@ private:
     //! sequence of ranges for a, allows fast constraint checking.
     //! a position i can only be matched to any position in ar[i].first..ar[i].second
     //! without violating an anchor constraint (holds for arbitrary i: 1<=i<=lenA)
-    range_seq_t ar; 
-  
+    range_seq_t ar;
+
     //! map from position to names in a
     name_seq_t names_a;
     //! map from position to names in b
@@ -113,6 +113,8 @@ public:
     }
 
     //! matching position in b for position <i> in a
+    //! @param i position in sequence A 
+    //! @returns j, 1<=j<=lenB, if there is an anchor from A_i to B_j, 0 if there is no name for position i in A, and -1 if there is a name for A_i, but no match to B 
     int
     match_to_a(size_type i) const {
 	return a[i];
@@ -167,17 +169,6 @@ public:
 	if (a[i]>0) return size_pair_t(i,a[i]);
       }
       return size_pair_t(a.size()+1,b.size()+1);
-    }
-
-    //! give acces to the array of ranges for sequence A. This method
-    //! is added for convenience in Carna, which can use this directly
-    //! for constraining its model variables.
-    //! The range sequence ar of sequence A is defined by:
-    //! a position i can be matched only to a position in ar[i].first..ar[i].second
-    //! without violating an anchor constraint (holds for arbitrary i: 1<=i<=lenA)
-    //! @returns range sequence ar
-    const range_seq_t &get_range_seqA() const {
-	return ar;
     }
 
 private:
