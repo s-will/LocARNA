@@ -179,7 +179,7 @@ sub newick_tree_to_postorder {
 
     my @list;
     
-    $tree =~ s/:[\d.e-]+//g;
+    #$tree =~ s/:[\d.e-]+//g;
     
     $tree =~ s/;$//; # allow that the tree string is terminated by ';'
 

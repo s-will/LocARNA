@@ -1320,6 +1320,11 @@ sub perform_multiple_alignment($) {
 	open(TREE,"$tree_file") || die "Cannot read $tree_file for reading tree\n";
 	$tree=<TREE>;
 	chomp($tree);
+
+	## don't allow names that end in :<float>, but accept input tree with distances (and ignore them)
+	$tree =~ s/:[\d.e-]+\s*[,)]//g;
+	$tree =~ s/:[\d.e-]+\s*$//g;
+	
 	close TREE;
     } elsif ($#names == 1) { # for only two sequences, tree is unique
 	$tree="($names[0],$names[1])";

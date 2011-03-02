@@ -15,6 +15,7 @@ use 5.008003;
 use strict;
 use warnings;
 
+use MLocarna;
 use MLocarna::Aux;
 use MLocarna::SparseMatrix;
 
@@ -312,7 +313,6 @@ sub consistency_transform_single_bm($$) {
 sub consistency_transform_bm {
     my ( $h, $names ) = @_;
     
-
     my $num_seqs=@$names;
 
     my $sum_paired_prob;
@@ -337,16 +337,19 @@ sub consistency_transform_bm {
 	    
 	    foreach my $nameC (@$names) {
 		
+		# careful, names in the hash are normalized!
+		my $nnameC=MLocarna::get_normalized_seqname($nameC);
+		
 		# transform via $nameC and add to matrix AB
 		
 		my $matrixAB_add;
 		
-		if ($nameC eq $nameA || $nameC eq $nameB) {
+		if ($nnameC eq $nameA || $nnameC eq $nameB) {
 		    $matrixAB_add = $h->{$name_pair}
 		} else {
 		    $matrixAB_add = 
-			consistency_transform_single_bm( $h->{chp($nameC,$nameA)},
-							 $h->{chp($nameC,$nameB)} );
+			consistency_transform_single_bm( $h->{chp($nnameC,$nameA)},
+							 $h->{chp($nnameC,$nameB)} );
 		}
 		
 		add_sparsematrix_2D_inplace ( \%matrixAB, $matrixAB_add );
@@ -1228,15 +1231,18 @@ sub consistency_transform_am {
 		my %matrixAB;
 		
 		foreach my $nameC (@$names) {
+
+		    # careful, names in the hash are normalized!
+		    my $nnameC=MLocarna::get_normalized_seqname($nameC);
 		    
 		    # transform via $nameC and add to matrix AB
 		    
 		    my $matrixAB_add;
 		    
-		    if ($nameC eq $nameA || $nameC eq $nameB) {
+		    if ($nnameC eq $nameA || $nnameC eq $nameB) {
 			$matrixAB_add = $h->{$name_pair};
 		    } else {
-			$matrixAB_add = consistency_transform_single_am( $h->{chp($nameC,$nameA)} , $h->{chp($nameC,$nameB)} );
+			$matrixAB_add = consistency_transform_single_am( $h->{chp($nnameC,$nameA)} , $h->{chp($nnameC,$nameB)} );
 		    }
 		    
 		    %matrixAB = add_sparsematrix_4D ( \%matrixAB, $matrixAB_add );
