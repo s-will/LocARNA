@@ -240,5 +240,6 @@ Jan, 2011
 Feb, 2011
 	Restructure code
 	library libLocARNA is generated and is used as library by executables
+
+	Fix name normalization bug in mlocarna.in
 	(Version 1.6.1)
-	
