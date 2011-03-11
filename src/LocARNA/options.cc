@@ -49,7 +49,7 @@ int count_opts(option_def *options);
 char *sprint_option_name(char *buf,option_def *options,int i);
 char *sprint_option_name_opt(char *buf,option_def *options,int i);
 
-char buf[512]; /* buffer used for constructing strings */
+char buf[MYBUFSIZ]; /* buffer used for constructing small strings */
 
 /************************************************************
  *
@@ -103,7 +103,7 @@ process_options(int argc, char *argv[], option_def *options) {
 	}
 	/* long options */
 	if (options[i].longname!="") {
-	  long_opts[k].name = options[i].longname.c_str();
+	    long_opts[k].name = const_cast<char *>(options[i].longname.c_str());
 	    if (options[i].argument==0) 
 		long_opts[k].has_arg = no_argument;
 	    else {
