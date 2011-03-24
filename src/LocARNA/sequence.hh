@@ -169,7 +169,7 @@ namespace LocARNA {
 
 	//! output subsequence
 	void write(std::ostream &out, size_type start, size_type end) const;
-    
+  
 	// ------------------------------------------------------------
 	// DEBUGGING
     

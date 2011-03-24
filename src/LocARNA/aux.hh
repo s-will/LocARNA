@@ -167,6 +167,10 @@ namespace LocARNA {
 	}
     };
 
+
+    // ------------------------------------------------------------
+    // transformation of strings
+
     /**
      * \brief Implements a vector with += operator
      *
@@ -194,8 +198,24 @@ namespace LocARNA {
     };
 
     
+    /** 
+     * Convert string to all upper case
+     * 
+     * @param[in,out] s string
+     * @post string is all upper case
+     */
     void transform_toupper(std::string &s);
+
     
+    //! \brief Transform an RNA sequence string
+    //! 
+    //! Transform, such that 
+    //! all characters are upper case
+    //! and Ts are translated to Us
+    //!
+    //! @param seq sequence string
+    void 
+    normalize_rna_sequence(std::string &seq);
 }
 
 

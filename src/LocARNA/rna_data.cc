@@ -2,6 +2,7 @@
 #include <sstream>
 #include <map>
 
+#include "aux.hh"
 #include "rna_data.hh"
 
 #include "alphabet.hh"
@@ -77,7 +78,7 @@ void RnaData::readPS(const std::string &filename) {
     
     //! sequence characters should be upper case, and 
     //! Ts translated to Us
-    transform_sequence(seqstr);
+    normalize_rna_sequence(seqstr);
         
     sequence.append_row(seqname,seqstr);
             
@@ -135,7 +136,7 @@ void RnaData::readPP(const std::string &filename) {
 	    std::istringstream in(line);
 	    in >> name >> seqstr;
 	    
-	    transform_sequence(seqstr);
+	    normalize_rna_sequence(seqstr);
 	    
 	    if (name != "SCORE:") { // ignore the (usually first) line that begins with SCORE:
 		if (name == "#C") {

@@ -53,19 +53,21 @@ public:
     /** 
      * Construct from sequence, predicting the basepairs
      * 
-     * @param sequence_ 
+     * @param sequence_ the RNA sequence as Sequence object 
+     * @param keepQ     if TRUE, keep the McCaskill matrices for use in prob_unpaired_in_loop()
      * @todo Implement
-     * @note will require linking to librna
+     * @note requires linking to librna
+     * @see prob_unpaired_in_loop()
      */
-    RnaData(const Sequence &sequence_)
+    RnaData(const Sequence &sequence_, bool keepQ)
 	: sequence(sequence_),
 	  arc_probs_(0),
 	  arc_2_probs_(0)
-	{
-	    std::cerr << "construct RnaData from sequence, currently not implemented."
-		      << std::endl;
-	    exit(-1);
-	}
+    {
+	std::cerr << "construct RnaData from sequence, currently not implemented."
+		  << std::endl;
+	exit(-1);
+    }
     
     //! get the sequence
     //! @return sequence of RNA
@@ -82,20 +84,6 @@ public:
     
 private:
     
-    //! \brief Transform an input sequence string
-    //! 
-    //! Transform, such that 
-    //! all characters are upper case
-    //! and Ts are translated to Us
-    //!
-    //! @param seq sequence string
-    void 
-    transform_sequence(std::string &seq) {
-	transform_toupper(seq);
-	for (size_type i=0; i<=seq.length(); i++) {
-	    if (seq[i]=='T') seq[i]='U';
-	}
-    }
     
     // ------------------------------------------------------------
     // reading methods
@@ -271,6 +259,45 @@ public:
 	    - prob_paired_upstream(i)
 	    - prob_paired_downstream(i);
     }
+
+    /** 
+     * \brief Unpaired probabilty of base in a specified loop 
+     * 
+     * @param k unpaired sequence position
+     * @param i left end of loop enclosing base pair
+     * @param j right end of loop enclosing base pair
+     * 
+     * @return probability that k is unpaired in the loop closed by i and j
+     *
+     * @note This method is designed for use in ExpaRNA-P
+     *
+     * @note For computing these unpaired probabilities we need access to the
+     * dynamic programming matrices of the McCaskill algorithm
+     *
+     * @pre McCaskill matrices are computed and generated.
+     * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepQ)
+     *
+     * @todo Implement
+     */
+    double
+    prob_unpaired_in_loop(size_type k,
+			  size_type i,
+			  size_type j);
+    
+    /** 
+     * \brief Computes the McCaskill matrices and keeps them accessible
+     * 
+     * @note Access to these matrices is required by
+     * prob_unpaired_in_loop(). The McCaskill algorithm is also
+     * performed when the RnaData object is constructed from a sequence.
+     *
+     * @note requires linking to librna
+     * @see prob_unpaired_in_loop(), RnaData(const Sequence &sequence_, bool keepQ)
+     *
+     * @todo Implement
+     */
+    void
+    compute_McCaskill_matrices();
     
     // ------------------------------------------------------------
     // misc

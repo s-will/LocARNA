@@ -21,15 +21,17 @@ namespace LocARNA {
 	char operator() (char c) const  { return std::toupper(c); }
     };
 	
-    /** 
-     * Convert string to all upper case
-     * 
-     * @param[in,out] s string
-     * @post string is all upper case
-     */
     void transform_toupper(std::string &s) {
 
 	std::transform(s.begin(),s.end(),s.begin(),ToUpper());
+    }
+
+    void 
+    normalize_rna_sequence(std::string &seq) {
+	transform_toupper(seq);
+	for (size_type i=0; i<=seq.length(); i++) {
+	    if (seq[i]=='T') seq[i]='U';
+	}
     }
 
 }
