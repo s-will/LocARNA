@@ -35,9 +35,9 @@ public:
 
     //! construct with parameters
     //! @param x_ number sequence that we want to fit
-    //! @param delta_01 penalty for change from a to b
-    //! @param delta_10 penalty for change from b to a
-    //! @param beta is the inverse temperature
+    //! @param delta_01_ penalty for change from a to b
+    //! @param delta_10_ penalty for change from b to a
+    //! @param beta_ is the inverse temperature
     FitOnOff(numseq_t &x_, double delta_01_, double delta_10_, double beta_)
 	: delta_01(delta_01_),
 	  delta_10(delta_10_),
@@ -60,16 +60,16 @@ public:
     
     //! compute the viterbi score (and optionally path)
     //! fills tables v, optionally compute t and trace
-    //! @params c0 off-value
-    //! @params c1 on-value
-    //! @params traceback whether to perform traceback
+    //! @param c0 off-value
+    //! @param c1 on-value
+    //! @param traceback whether to perform traceback
     double
     viterbi(double c0, double c1, bool traceback);
 
     //! best path that is "on" (=c1) exactly once
-    //! @params c0 off-value
-    //! @params c1 on-value
-    //! @returns score of best path
+    //! @param c0 off-value
+    //! @param c1 on-value
+    //! @return score of best path
     //! post: best path is in trace
     double
     best_once_on(double c0, double c1);
@@ -82,7 +82,7 @@ public:
     
     
     //! optimize c0 and c1 by gradient optimization
-    //! @returns optimal c0 and c1 
+    //! @return optimal c0 and c1 
     std::pair<double,double>
     optimize(double c0, double c1);
     
@@ -95,12 +95,29 @@ public:
     write_viterbi_path(std::ostream &out,double c0, double c1) const;
     
     // DEBUGGING
+    
+    /** 
+     * Print boolean vector to cout
+     * 
+     * @param name Identifier name to be printed
+     * @param v    Vector
+     */
     void
     print_table(const std::string &name, const std::vector<bool> &v) const;
 
+    /** 
+     * Print vector of partition functions (pf_t) to cout
+     * 
+     * @param name Identifier name to be printed
+     * @param v    Vector
+     */
     void
     print_table(const std::string &name, const std::vector<pf_t> &v) const;
 
+    /** 
+     * Print DP-tables for debugging to cout
+     * @see print_table()
+     */
     void
     print_tables() const;
 

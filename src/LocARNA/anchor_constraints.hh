@@ -17,11 +17,11 @@ namespace LocARNA {
 //! have to be satisfied during the alignment
 class AnchorConstraints {
 public:
-    typedef size_t size_type;
-    typedef std::pair<size_type,size_type> size_pair_t;
+    typedef size_t size_type; //!< size type
+    typedef std::pair<size_type,size_type> size_pair_t;  //!< size pair
 
-    typedef size_pair_t range_t;
-    typedef std::vector<range_t> range_seq_t;
+    typedef size_pair_t range_t; //!< type of range
+    typedef std::vector<range_t> range_seq_t; //!< type for sequence of ranges
     
 private:
     typedef std::map<std::string,size_type> name_tab_t;
@@ -112,15 +112,22 @@ public:
 	  && j <= ar[i].second;
     }
 
-    //! matching position in b for position <i> in a
+    //! matching position in b for position i in a
     //! @param i position in sequence A 
-    //! @returns j, 1<=j<=lenB, if there is an anchor from A_i to B_j, 0 if there is no name for position i in A, and -1 if there is a name for A_i, but no match to B 
+    //!
+    //! @return j, 1<=j<=lenB, if there is an anchor from A_i to B_j,
+    //! 0 if there is no name for position i in A, and -1 if there is
+    //! a name for A_i, but no match to B
     int
     match_to_a(size_type i) const {
 	return a[i];
     }
     
-    //! matching position in b for position <i> in a
+    //! matching position in b for position i in a
+    //! @param i position in sequence B
+    //!
+    //! @return j
+    //! @see match_to_a
     int
     match_to_b(size_type i) const {
 	return b[i];

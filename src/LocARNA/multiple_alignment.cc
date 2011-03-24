@@ -195,7 +195,7 @@ MultipleAlignment::SeqEntry::length_wogaps() const {
 
 
 MultipleAlignment::size_type
-MultipleAlignment::SeqEntry::pos_to_col(size_type pos) const {
+MultipleAlignment::SeqEntry::pos_to_col(pos_type pos) const {
 
     if (pos==0) return 0; // special case: position 0 maps to column 0
 
@@ -212,7 +212,7 @@ MultipleAlignment::SeqEntry::pos_to_col(size_type pos) const {
 }
 
 MultipleAlignment::SeqEntry::pos_pair_t
-MultipleAlignment::SeqEntry::col_to_pos(size_type col) const {
+MultipleAlignment::SeqEntry::col_to_pos(pos_type col) const {
     // std::cout << "col_to_pos : " << col << "/" << seq().length() << std::endl;
     assert(col<=seq().length()+1);
     // iterate over the positions in the sequence until you've read pos number of non-gap characters

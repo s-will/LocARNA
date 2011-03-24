@@ -32,15 +32,15 @@ class Sequence;
 class MultipleAlignment {
         
 public:
-    typedef size_t size_type;
+    typedef size_t size_type; //!< size type
     
     //! pair of a name string and a sequence string
     //! support projections
     class SeqEntry {
     public:
-	typedef MultipleAlignment::size_type size_type;
+	typedef MultipleAlignment::size_type size_type; //!< size type
 	
-	typedef std::pair<pos_type,pos_type> pos_pair_t;
+	typedef std::pair<pos_type,pos_type> pos_pair_t; //!< pair of positions
 	
     private:	
 	std::string name_; //!< name of the sequence
@@ -60,7 +60,12 @@ public:
 	//! construct from string name and 1-based string seq
 	SeqEntry(const std::string &name, const string1 &seq): name_(name), seq_(seq) {}
 	
-	SeqEntry(const SeqEntry &nsp): name_(nsp.name_),seq_(nsp.seq_) {}
+	/** 
+	 * Copy Constructor
+	 * 
+	 * @param se sequence entry
+	 */
+	SeqEntry(const SeqEntry &se): name_(se.name_),seq_(se.seq_) {}
 	
 	/*
 	  const SeqEntry &operator=(const SeqEntry &nsp) {
@@ -86,7 +91,7 @@ public:
 	// projections
 	
 	//! map sequence position -> alignment column.
-	//! @time O(len)
+	//! @note time O(len)
 	//! @param pos position in sequence (without gaps)
 	//! as marginal cases: pos 0 maps to 0 and
 	//! a too large position maps to length+1
@@ -94,7 +99,7 @@ public:
 	pos_to_col(pos_type pos) const;
 	
 	//! map alignment column -> sequence positions
-	//! @time O(len)
+	//! @note time O(len)
 	//! @param col column index in aligmnent
 	//! @returns pair of positions (pos1,pos2)
 	//!   if column col contains a non-gap, then pos1=pos2 is the position of the gap
@@ -186,7 +191,7 @@ public:
     
     //! test whether name exists
     //! @param name name of a sequence
-    //! @returns whether sequence with given name exists in multiple alignment
+    //! @return whether sequence with given name exists in multiple alignment
     bool
     contains(std::string name) const;
       
@@ -195,7 +200,7 @@ public:
     //! access index by name
     //! @pre name exists
     //! @param name name of a sequence
-    //! @returns index of name/sequence pair with given name
+    //! @return index of name/sequence pair with given name
     size_type
     index(const std::string &name) const {
 	str2idx_map_t::const_iterator it = name2idx.find(name);
@@ -203,19 +208,20 @@ public:
 	return it->second;
     }
     
-    //! access name/sequence pair by index
+    //! Access name/sequence pair by index
+    //!
     //! @pre index in range 0..size()-1
     //! @param index index of name/sequence pair (0-based)
-    //! @returns sequence (including gaps) with given index
+    //! @return sequence (including gaps) with given index
     const SeqEntry &
     seqentry(size_type index) const {
 	return alig[index];
     }
     
-    //! access name/sequence pair by name
-    //! @pre index in range 0..size()-1
-    //! @param index index of name/sequence pair (0-based)
-    //! @returns sequence (including gaps) with given index
+    //! \brief Access name/sequence pair by name
+    //!
+    //! @param name name of name/sequence pair (0-based)
+    //! @return sequence (including gaps) with given index
     const SeqEntry &
     seqentry(const std::string &name) const {
 	return alig[index(name)];

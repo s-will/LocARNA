@@ -108,7 +108,7 @@ Ribosum::read_matrix(std::istream &in, Matrix<double> &mat, const Alphabet<std::
     }
     
     mat.resize(siz,siz);
-    for(size_type i=0; i<siz; i++) {
+    for(size_t i=0; i<siz; i++) {
 	std::getline(in,line);
 	std::istringstream linestream(line);
 	std::string base;
@@ -116,7 +116,7 @@ Ribosum::read_matrix(std::istream &in, Matrix<double> &mat, const Alphabet<std::
 	if (base != alph.elem(i))
 	    throw(std::ifstream::failure("Expecting base name "+ alph.elem(i) +" as row header"));
 	
-	for (size_type j=0; j<=i; j++) {
+	for (size_t j=0; j<=i; j++) {
 	    double number;
 	    linestream >> number;
 	    mat(i,j) = mat(j,i) = number;
@@ -132,7 +132,14 @@ Ribosum::write_matrix(std::ostream &out, const Matrix<double> &mat, const Alphab
     return out;
 }
 
-
+    /** 
+     * Output operator
+     * 
+     * @param out output stream
+     * @param ribosum Ribosum to be written to stream
+     * 
+     * @return output stream after writing
+     */
 std::ostream & operator << (std::ostream &out, const Ribosum &ribosum) {
     out << ribosum.name << std::endl << std::endl;
     
@@ -146,6 +153,13 @@ std::ostream & operator << (std::ostream &out, const Ribosum &ribosum) {
 // ================================================================================
 // class RibosumFreq
 
+/** 
+ * Test for only blank characters
+ * 
+ * @param s string to be tested
+ * 
+ * @return whether s consists of only blank characters
+ */
 bool is_blank(std::string &s) {
     for (size_t i=0; i<s.length(); i++)
 	if (s[i]!=' ') return false;
@@ -164,7 +178,7 @@ RibosumFreq::read_frequencies(std::istream &in)  {
 void
 RibosumFreq::read_matrix(std::istream &in, 
 			 const std::string &header,
-			 Matrix<double> &mat, 
+			 matrix_t &mat, 
 			 size_t xdim, 
 			 size_t ydim) {
     try {
@@ -198,6 +212,14 @@ RibosumFreq::write_matrix(std::ostream &out, const std::string &name, const Matr
 }
 
 
+    /** 
+     * Output operator
+     * 
+     * @param out output stream
+     * @param ribosum Ribosum to be written to stream
+     * 
+     * @return output stream after writing
+     */
 std::ostream & operator << (std::ostream &out, const RibosumFreq &ribosum) {
     out << (Ribosum)(ribosum);
     out << std::endl;

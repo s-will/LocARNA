@@ -13,7 +13,10 @@ namespace LocARNA {
 class Sequence;
 class ArcMatches;
 
-
+    /**
+     * \brief First try to implement exact matching 'Exparna-P' 
+     * 
+     */
 class ExactMatcher {
     typedef size_t size_type;
 

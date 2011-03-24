@@ -32,13 +32,14 @@ class Evaluator {
     const ScoringParams *scoring_params;
     
 public:
-    //! construct from file
+    //! \brief construct from file
     //! @param alignment_file The name of the alignment file
-    //! @param dir            Directory with dot plot information
+    //! @param dp_dir            Directory with dot plot information
+    //! @param scoring_params The parameters for scoring
     Evaluator(const std::string alignment_file, const std::string dp_dir, const ScoringParams *scoring_params);
     
     //! compute the score of the alignment
-    //! @returns alignment score
+    //! @return alignment score
     score_t eval();
 };
 

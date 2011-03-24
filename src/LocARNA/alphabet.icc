@@ -1,5 +1,5 @@
 template<class T>
-void Alphabet<T>::init(Alphabet<T>::vec_t a) {
+void Alphabet<T>::init(const vec_t &a) {
     alph_vec=a;
     
     for(typename Alphabet<T>::vec_t::size_type i=0; i < a.size() ; ++i) {

@@ -27,11 +27,12 @@ namespace LocARNA {
 //!
 class RnaData {
 public:
-    typedef Sequence::size_type size_type;
+    //! type for matrix of arc probabilities
+    //! @note we use a sparse matrix
     typedef SparseMatrix<double> arc_prob_matrix_t;
 private:
-    Sequence sequence;
-    bool stacking;
+    Sequence sequence; //!< the sequence
+    bool stacking; //! whether to support stacking
 
     arc_prob_matrix_t arc_probs_; //!< array for all arc probabilities
     //!< the array is used
@@ -45,10 +46,9 @@ private:
     
     //std::vector<arc_prob_matrix_t> arc_probs_single_;
     //std::vector<arc_prob_matrix_t> arc_2_probs_single_;
-
-    std::string seq_constraints_;
-
-
+    
+    std::string seq_constraints_; //!< string description of sequence constraints
+    
     class ToUpper { 
     public:
 	char operator() (char c) const  { return std::toupper(c); }
@@ -63,7 +63,13 @@ public:
     //! construct by reading basepairs from file (pp or dp_ps)
     RnaData(const std::string &file, bool stacking=false);
     
-    // construct from sequence, predicting the basepairs
+    /** 
+     * Construct from sequence, predicting the basepairs
+     * 
+     * @param sequence_ 
+     * @todo Implement
+     * @note will require linking to librna
+     */
     RnaData(const Sequence &sequence_)
 	: sequence(sequence_),
 	  arc_probs_(0),
@@ -75,11 +81,13 @@ public:
 	}
     
     //! get the sequence
+    //! @return sequence of RNA
     const Sequence &get_sequence() const {
 	return sequence;
     }
     
     //! get the sequence constraints
+    //! @return string description of sequence constraints of RNA
     const std::string &get_seq_constraints() const {
 	return seq_constraints_;
     }
@@ -87,9 +95,13 @@ public:
     
 private:
     
-    //! transform an input sequence string, such that 
+    //! \brief Transform an input sequence string
+    //! 
+    //! Transform, such that 
     //! all characters are upper case
     //! and Ts are translated to Us
+    //!
+    //! @param seq sequence string
     void 
     transform_sequence(std::string &seq) {
 	transform_toupper(seq);
@@ -97,26 +109,32 @@ private:
 	    if (seq[i]=='T') seq[i]='U';
 	}
     }
-
+    
     // ------------------------------------------------------------
     // reading methods
     
-    //! read basepairs and sequence from a pp-format file
-    //! pp is a proprietary format of LocARNA
+    //! \brief read basepairs and sequence from a pp-format file
+    //! 
+    //! @note pp is a proprietary format of LocARNA
     //! which starts with the sequence/alignment and then simply
     //! lists the arcs (i,j) with their probabilities p.
     //!
-    //! SEMANTIC for stacking
+    //! @note SEMANTIC for stacking:
     //! pp-files contain entries i j p [p2] for listing the probality for base pair (i,j).
     //! In case of stacking alignment, p2 is the probability to see the base pairs
     //! (i,j) and (i+1,j+1) simultaneously. If p2 is not given set probability to 0.
-    
-    void readPP(const std::string &filename);
-
-    //! read basepairs and sequence from a ppml-format file.
-    //! ppml is a currently NOT IMPLEMENTED, only envisioned xml-like file format.
     //!
-    //! ppml is a proprietary format of LocARNA,
+    //! @param filename name of input file
+    //!
+    //! @post object is initialized with information from file
+    void readPP(const std::string &filename);
+    
+    //! @brief read basepairs and sequence from a ppml-format file.
+    //! 
+    //! @note ppml is a currently NOT IMPLEMENTED, only envisioned xml-like file format.
+    //! @todo Implement (or decide to drop)
+    //!
+    //! @note ppml is a proprietary format of LocARNA,
     //! which represents a single RNA sequence or a multiple alignment
     //! together with the base pair probabilities of the RNAs
     //! it contains 
@@ -136,30 +154,51 @@ private:
     //!
     //! expect "brackets" <ppml> ... </ppml>
     //!
+    //! @param filename name of input file
+    //!
+    //! @post object is initialized with information from file
+    //!
     void readPPML(const std::string &filename);
     
     //! read basepairs and sequence from a dp-format ps file
     //! dp is written by RNAfold -p
     void readPS(const std::string &filename);
     
-    //! read baepairs and sequence from a file
-    //! (try to autodetect file format)
-    //!@param filename the input file
-    //!@param seq output parameter for the sequence
-    //!@param stacking reads also stacking probabilities
+    //! \brief read baepairs and sequence from a file
+    //! (autodetect file format)
+    //! @param filename the input file
+    //! @post object is initialized from file
+    //!
     void read(const std::string &filename);
-    
     
     // ------------------------------------------------------------
     // set methods
     
-    //! sets probability of basepair (i,j)
+    
+    /** 
+     * Set probability of basepair
+     * 
+     * @param i left sequence position  
+     * @param j right sequence position
+     * @param p probability
+     * 
+     * @post probability of base pair (i,j) set to p 
+     */
     void set_arc_prob(int i, int j, double p) {
 	assert(i<j); 
 	arc_probs_.set(i,j,p);
     }
 
-    //! sets stacking probability of basepairs (i,j) and (i+1,j-1)
+    /** 
+     * Set joint probability of stacked arcs
+     * 
+     * @param i left sequence position
+     * @param j right sequence position
+     * @param p probability
+     * 
+     * @post the probability that basepairs (i,j) and (i+1,j-1) occur
+     * simultaneously is set to p
+     */
     void set_arc_2_prob(int i, int j, double p) {
 	assert(i<j);
 	arc_2_probs_.set(i,j,p);
@@ -169,20 +208,29 @@ public:
     // ------------------------------------------------------------
     // get methods
     
-    //! \returns probability of basepair (i,j)
+    //! \brief Get arc probability
+    //! @param i left sequence position  
+    //! @param j right sequence position
+    //! \return probability of basepair (i,j)
     double get_arc_prob(size_type i, size_type j) const {
 	assert(i<j);
 	return arc_probs_(i,j);
     }
 
-    //! \returns probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
+    //! \brief Get joint probability of stacked arcs
+    //! @param i left sequence position  
+    //! @param j right sequence position
+    //! \return probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
     double get_arc_2_prob(size_type i, size_type j) const {
 	assert(i<j); 
 	return arc_2_probs_(i,j);
     }
 
-    //! \returns probability of basepairs (i,j) stacked, i.e. the
-    //! conditional probability Pr[(i,j)|(i+1,j-1)].  
+    //! \brief Get conditional propability that a base pair is stacked
+    //! @param i left sequence position  
+    //! @param j right sequence position
+    //! \return probability of basepairs (i,j) stacked, i.e. the
+    //! conditional probability Pr[(i,j)|(i+1,j-1)].
     //! \pre base pair (i+1,j-1) has probability > 0
     double get_arc_stack_prob(size_type i, size_type j) const {
 	assert(i<j);
@@ -194,8 +242,12 @@ public:
     // ------------------------------------------------------------
     // compute probabilities paired upstream, downstream, and unpaired
     
-    //! returns probability that a position i is paired with a position j>i (upstream)
-    //! O(sequence.length()) implementation
+    //! \brief Probability that a position is paired upstream
+    //! 
+    //! \param i sequence position
+    //! \return probability that a position i is paired with a position j>i (upstream)
+    //! @note O(sequence.length()) implementation
+    //! @see prob_paired_downstream
     double prob_paired_upstream(size_type i) const {
 	double prob_paired=0.0;
 	
@@ -206,8 +258,12 @@ public:
 	return prob_paired;
     }
         
-    //! \returns probability that a position i is paired with a position j<i (downstream)
-    //! O(sequence.length()) implementation
+    //! \brief Probability that a position is paired upstream
+    //! 
+    //! \param i sequence position
+    //! \return probability that a position i is paired with a position j<i (downstream)
+    //! @note O(sequence.length()) implementation
+    //! @see prob_paired_upstream
     double prob_paired_downstream(size_type i) const {
 	double prob_paired=0.0;
 	
@@ -216,10 +272,12 @@ public:
 	}
 	
 	return prob_paired;
-    }    
-        
-    //! \returns probability that a position i is unpaired
-    //! O(sequence.length()) implementation
+    }
+    
+    //! \brief Unpaired probability 
+    //! \param i sequence position
+    //! \return probability that a position i is unpaired
+    //! @note O(sequence.length()) implementation
     double prob_unpaired(size_type i) const {
 	return 
 	    1.0
@@ -230,6 +288,19 @@ public:
     // ------------------------------------------------------------
     // misc
     
+    /** 
+     * Generate sequence name from filename 
+     * 
+     * @param s file name
+     * 
+     * @return sequence name derived from file name by reducing
+     * filename to base name, stripping the path and all suffixes as
+     * well as a final "_dp" suffix.
+     *
+     * @note This method is used when input files do not explicitely
+     * provide a sequence name. In particular this is the case for
+     * postscript dotplot files.
+     */
     std::string seqname_from_filename(const std::string &s) const;
 };
 
