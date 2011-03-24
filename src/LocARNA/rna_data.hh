@@ -1,63 +1,50 @@
 #ifndef LOCARNA_RNA_DATA_HH
 #define LOCARNA_RNA_DATA_HH
 
-#include <algorithm>
 #include <string>
 #include <iostream>
 
+#include "aux.hh"
 #include "sequence.hh"
 
 #include "sparse_matrix.hh"
 
 namespace LocARNA {
 
-//! Represents the input data per RNA,
-//! i.e. the set of base pairs and the RNA sequence
+//! @brief Represents the raw input data for an RNA
 //!
-//! Reads, maintains and provides access to
-//! the set of basepairs of one RNA
-//! together with their pair probabilities
-//! Features: read from pp or dp_ps
-//! also maintains stacking probabilities
-//! 
-//! possible extensions: 
-//! offer predicition using Vienna RNA lib
+//! Stores the set of base pairs and the RNA sequence
 //!
-//! supports the definition of sequence constraints in pp files
+//! Reads, maintains and provides access to the set of basepairs of
+//! one RNA together with their pair probabilities 
+//!
+//! Input formats: pp or dp_ps (including stacking probabilities).
+//!
+//! Supports the definition of sequence constraints in pp files.
+//!
+//! @todo predicition of bp probabilities via Vienna RNA lib
+//! @todo special conditional unpaired probabilities for ExpaRNA-P
 //!
 class RnaData {
 public:
     //! type for matrix of arc probabilities
-    //! @note we use a sparse matrix
+    //! @note we use a sparse matrix for arc probabilities
     typedef SparseMatrix<double> arc_prob_matrix_t;
 private:
     Sequence sequence; //!< the sequence
     bool stacking; //! whether to support stacking
 
-    arc_prob_matrix_t arc_probs_; //!< array for all arc probabilities
-    //!< the array is used
-    //!< when reading in the probabilities
-    //!< and for merging probs during pp-output
-   
-    arc_prob_matrix_t arc_2_probs_; //!< array for all probabilities
-                                    //!< that a pair (i,j) and its immediately inner pair (i+1,j-1) 
-                                    //!< are formed simultaneously;
-                                    //!< analogous to arc_probs_
-    
-    //std::vector<arc_prob_matrix_t> arc_probs_single_;
-    //std::vector<arc_prob_matrix_t> arc_2_probs_single_;
-    
-    std::string seq_constraints_; //!< string description of sequence constraints
-    
-    class ToUpper { 
-    public:
-	char operator() (char c) const  { return std::toupper(c); }
-    };
+    //! array for all arc probabilities the array is used when reading
+    //! in the probabilities and for merging probs during pp-output
+    arc_prob_matrix_t arc_probs_; 
 
-    static void transform_toupper(std::string &s) {
-	std::transform(s.begin(),s.end(),s.begin(),ToUpper());
-    }
-
+    //! array for all probabilities that a pair (i,j) and its
+    //! immediately inner pair (i+1,j-1) are formed simultaneously;
+    //! analogous to arc_probs_
+    arc_prob_matrix_t arc_2_probs_; 
+    
+    //! string description of sequence constraints
+    std::string seq_constraints_; 
 
 public:
     //! construct by reading basepairs from file (pp or dp_ps)

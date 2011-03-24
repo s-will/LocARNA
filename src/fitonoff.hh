@@ -11,8 +11,7 @@ typedef std::vector<double>::size_type size_type;
 
 typedef long double pf_t;
 
-//!
-//! class for fitting a two-step function to a number sequence 
+//! \brief Implements fitting of a two-step function to a number sequence 
 //!
 class FitOnOff {
     double delta_01;

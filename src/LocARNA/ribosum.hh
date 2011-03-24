@@ -11,7 +11,9 @@
 
 namespace LocARNA {
 
-//! read and provide access to ribosum data
+//! @brief Represents ribosum similarity matrices
+//!
+//! Reads ribosum data from file and provides access.
 //! 
 class Ribosum {
 public:
@@ -150,9 +152,13 @@ public:
 
 };
 
-//! extension of the ribosum class that 
-//! maintains additional "raw" information
-//! in particular frequencies of bases, basematches, basepairs, and arcmatches 
+
+//! @brief Represents ribosum similarity matrices including raw frequencies
+//!
+//! Extension of the ribosum class that maintains additional "raw"
+//! information in particular frequencies of bases, basematches,
+//! basepairs, and arcmatches
+//!
 class RibosumFreq : public Ribosum {
 public:
 

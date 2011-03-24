@@ -9,21 +9,22 @@
 namespace LocARNA {
 
 /**
-   Evaluate a multiple alignment, given a scoring scheme
-   
-   
+   \brief Evaluate a multiple alignment, given a scoring scheme
+      
    Evaluator needs the following  information:
-   * scoring parameter
-   * pair probabilities or arc match probs/scores
-   * whether and how to get base match probs 
-   * noLP option
-   * whether to evaluate for a fixed structure or optimize
+   - scoring parameter
+   - pair probabilities or arc match probs/scores
+   - whether and how to get base match probs 
+   - noLP option
+   - whether to evaluate for a fixed structure or optimize
    
    
    It computes the alignment score
    for the given structure or for the best
    consensus structure.
-   
+
+   @todo Implement
+
 */
 
 class Evaluator {

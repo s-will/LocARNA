@@ -86,8 +86,8 @@ namespace LocARNA {
 	 * alignment rows in the RNA sequence, which are alignments in
 	 * general.
 	 *
-	 * @todo The treatment of gaps and unknown nucleotide symbols
-	 * in the aligned alignments is still quite ad hoc.
+	 * @note The treatment of gaps and unknown nucleotide symbols
+	 * in the aligned alignments is quite ad hoc.
 	 * 
 	 * @return similarity of residues i in A and j in B. 
 	 */

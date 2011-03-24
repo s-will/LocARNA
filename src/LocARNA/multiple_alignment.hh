@@ -19,23 +19,37 @@ namespace LocARNA {
 class Alignment;
 class Sequence;
 
-/** Represents a multiple alignment as vector of name/sequence pairs.
-    
-    Supports traversal of name/sequence pairs. Sequence entries
-    support mapping from columns to positions and back.
-
-    Names are unique in a multiple alignment object.
-
-    Sequences positions and column indices are 1..len.
-    
-*/
+/**
+ * @brief Represents a multiple alignment
+ *
+ * The multiple alignment is implemented as vector of name/sequence
+ * pairs.
+ *
+ * Supports traversal of name/sequence pairs. Sequence entries support
+ * mapping from columns to positions and back.
+ *
+ * Names are unique in a multiple alignment object.
+ *
+ * Sequences positions and column indices are 1..len.
+ *
+ * @note The class Sequence also represents a multiple alignment, but
+ * does so in a different way. The major difference is that Sequence
+ * structures the matrix column-wise, which is well suited for use in
+ * an alignment algorithm. This class features the more traditional
+ * row-wise view.
+ *
+ * @see Sequence
+ */
 class MultipleAlignment {
         
 public:
     typedef size_t size_type; //!< size type
     
+    //! @brief A row in a multiple alignment
+    //! 
     //! pair of a name string and a sequence string
     //! support projections
+    //! @see MultipleAlignment
     class SeqEntry {
     public:
 	typedef MultipleAlignment::size_type size_type; //!< size type

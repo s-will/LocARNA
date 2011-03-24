@@ -51,7 +51,7 @@ namespace LocARNA {
 #define O_NODEFAULT std::string("__")
 
     /**
-       Definition structure of an option
+       @brief Definition structure of an option
     */
     typedef
     struct {

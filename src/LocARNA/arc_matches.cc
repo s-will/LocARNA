@@ -7,34 +7,6 @@
 
 namespace LocARNA {
 
-    /**
-     * A simple 5-tuple of 4 positions and a score
-     * 
-     */
-    class tuple5 {
-    public:
-	typedef std::vector<int>::size_type size_type; //!< size type
-
-	size_type i; //!< position i
-	size_type j; //!< position j
-	size_type k; //!< position k
-	size_type l; //!< position l
-	score_t score; //!< the score (as used below: score of arc match (i,j)~(k,l))
-	
-	/** 
-	 * Construct with member values
-	 * 
-	 * @param i_ position i
-	 * @param j_ position j
-	 * @param k_ position k
-	 * @param l_ position l
-	 * @param score_ the score
-	 */
-	tuple5(size_type i_,size_type j_,size_type k_,size_type l_,score_t score_)
-	    :i(i_), j(j_), k(k_), l(l_), score(score_)
-	{}
-    };
-
 
     bool ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
 	bool valid = 

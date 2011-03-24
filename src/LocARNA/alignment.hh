@@ -13,7 +13,8 @@ namespace LocARNA {
 
     class BasePairs;
     
-    /** Store a structure-annotated sequence alignment
+    /** 
+     * \brief Represents a structure-annotated sequence alignment
      *
      *	Supports construction of the alignment during traceback.
      */

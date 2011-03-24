@@ -3,6 +3,8 @@
 
 #include <exception>
 #include <string>
+#include <vector>
+#include <algorithm>
 
 //!
 //! auxilliary types and global constants for use in locarna
@@ -40,16 +42,14 @@ namespace LocARNA {
     };
 
  
-    /** simple 1-based string
+    /** 
+     * @brief A simple 1-based string
 	
-	features:
-	based on  c++ string class, but offers very limited interface
-	
-	conversion from and to string
-	
-	access via operator []
-	
-	length method
+     * Features:
+     * - based on  c++ std::string class, but offers very limited interface
+     * - conversion from and to std::string
+     * - access via operator []
+     * - length method
     */
     class string1 {
 	std::string s_;
@@ -124,6 +124,8 @@ namespace LocARNA {
     };
 
 
+    //! @brief Represents a 3-tuple
+    //!
     //! triple stores three values first, second, third.
     //! extension of std::pair to 3-tuple
     template<class T1,class T2,class T3>
@@ -142,7 +144,9 @@ namespace LocARNA {
 	triple(const T1 &x1,const T2 &x2,const T3 &x3): std::pair<T1,T2>(x1,x2),third(x3) {
 	}
     };
-
+    
+    //! @brief Represents a 4-tuple
+    //!
     //! quadruple stores four values first, second, third, fourth.
     //! extension of triple to 4-tuple
     template<class T1,class T2,class T3,class T4>
@@ -162,7 +166,36 @@ namespace LocARNA {
 	quadruple(const T1 &x1,const T2 &x2,const T3 &x3,const T4 &x4): triple<T1,T2,T3>(x1,x2,x3),fourth(x4) {
 	}
     };
-   
+
+    /**
+     * \brief Implements a vector with += operator
+     *
+     * The class provides an alternate syntax for push_back.
+     * 
+     * @see Alignment::write_pp() for usage example
+     */
+    template<class T>
+    class plusvector: public std::vector<T> {
+
+    public:
+	
+	/** 
+	 * @brief Add an element to end of vector
+	 * 
+	 * @param x vector element
+	 * 
+	 * @return *this
+	 * @post x is added at end of *this (like push_back)
+	 */
+	plusvector& operator += (const T &x) {
+	    push_back(x);
+	    return *this;
+	}
+    };
+
+    
+    void transform_toupper(std::string &s);
+    
 }
 
 

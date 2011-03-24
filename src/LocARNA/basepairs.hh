@@ -73,7 +73,7 @@ namespace LocARNA {
     typedef std::vector<Arc> arc_vec_t;
     
     /**
-     * Entry in a left adjacency list
+     * @brief Entry in a left adjacency list
      *
      * @see RightAdjEntry
      *
@@ -94,7 +94,7 @@ namespace LocARNA {
     };
 
     /**
-     * Entry in a right adjacency list
+     * @brief Entry in a right adjacency list
      * @see LeftAdjEntry
      */
     class RightAdjEntry : public Arc {
@@ -110,10 +110,18 @@ namespace LocARNA {
 
 
     // ============================================================
-    // class BasePairs
-    /** 
-     * Stores and maintains the list of base pairs together with their score
-     * contributions in arc matches.
+    /**
+     * @brief Describes sequence and structure ensemble of an RNA
+     *
+     * Stores and maintains the list of potential base pairs together
+     * with their score contributions in arc matches.
+     *
+     * In contrast to RnaData, which stores the raw data for an RNA,
+     * a BasePairs object knows about sparsification of base pairs by
+     * a probability threshold and provides traversal of base pairs
+     * suited for alignment algorithms.
+     *
+     * @see RnaData, Aligner, AlignerP
     */
     class BasePairs
     {

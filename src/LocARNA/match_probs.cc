@@ -34,104 +34,70 @@
 #include "stral_score.hh"
 
 namespace  LocARNA {
-
-    /**
-     * Maintains parameter for computing match probabilities in
-     * sequence alignment a la Probcons, supports reading parameter
-     * from file
-     * 
-     */
-    class ProbConsParameter {
-    public:
-	// ------------------------------------------------------------
-	// transition probabilities
-	// there are three states M, X, Y (plus implicitely start and end state)
-	double initM; //!< transition probability initM
-	double initX; //!< transition probability initX 
-	double initY; //!< transition probability initY 
-	double startX; //!< transition probability startX
-	double startY; //!< transition probability startY
-	double extendM; //!< transition probability extendM
-	double extendX; //!< transition probability extendX
-	double extendY; //!< transition probability extendY
-	double startMFromX; //!< transition probability startMFromX
-	double startMFromY; //!< transition probability startMFromY
-
-	std::string basenames; //!< base names
     
-	Matrix<double> emmission; //!< matrix of emmission probabilities
-	std::vector<double> background; //!< vector of background probabilities
-    
-	/** 
-	 * Construct from file
-	 * 
-	 * @param filename 
-	 */
-	ProbConsParameter(const std::string &filename) {
-	    std::ifstream in(filename.c_str());
-	    if (!in.good()) {
-		std::cerr << "Cannot open file "<<filename<<" for reading."<<std::endl;
-		exit(-1);
-	    }
-	
-	    try {
-		in >> initM >> initX >> initY;
-	    
-		in >> startX >> startY;
-	    
-		extendM = 1-startX-startY;
-	    
-		in >> extendX >> extendY;
-		startMFromX = 1 - extendX;
-		startMFromY = 1 - extendY;   
-	    
-		getline(in,basenames); // eat line before base names
-		getline(in,basenames); // read base names
-	    
-		if (basenames!="ACGUTN") {
-		    throw(std::ifstream::failure("Expected base names ACGUTN. Found line: "+basenames));
-		}
-	    
-		// read emmission probs
-		emmission.resize(6,6);
-	    
-		std::string line;
-		int i=0;
-		while (i<6 && getline(in,line)) {
-		    std::istringstream sline(line);
-		    for (int j=0; j<=i; j++) {
-			double p;
-			sline >> p;
-			emmission(i,j)=p;
-			emmission(j,i)=p;
-		    }
-		    i++;
-		}
-		if (i!=6) {
-		    throw(std::ifstream::failure("Cannot read enough emmission probabilities."));
-		}
-
-		// read background probabilities
-
-		background.resize(6);
-		if (getline(in,line)) {
-		    std::istringstream sline(line);
-		    for (int j=0; j<6; j++) {
-			double p;
-			sline >> p;
-			background[j]=p;
-		    }
-		} else {
-		    throw(std::ifstream::failure("Cannot read background probabilities."));
-		}
-	    } catch (std::ifstream::failure e) {
-		std::cerr << "Cannot parse "<<filename<<". " <<e.what()<< std::endl
-			  << "File not in probcons parameter format. Now exiting." << std::endl;
-		exit(-1);
-	    }
+    MatchProbs::ProbConsParameter::ProbConsParameter(const std::string &filename) {
+	std::ifstream in(filename.c_str());
+	if (!in.good()) {
+	    std::cerr << "Cannot open file "<<filename<<" for reading."<<std::endl;
+	    exit(-1);
 	}
-    };
+	
+	try {
+	    in >> initM >> initX >> initY;
+	    
+	    in >> startX >> startY;
+	    
+	    extendM = 1-startX-startY;
+	    
+	    in >> extendX >> extendY;
+	    startMFromX = 1 - extendX;
+	    startMFromY = 1 - extendY;   
+	    
+	    getline(in,basenames); // eat line before base names
+	    getline(in,basenames); // read base names
+	    
+	    if (basenames!="ACGUTN") {
+		throw(std::ifstream::failure("Expected base names ACGUTN. Found line: "+basenames));
+	    }
+	    
+	    // read emmission probs
+	    emmission.resize(6,6);
+	    
+	    std::string line;
+	    int i=0;
+	    while (i<6 && getline(in,line)) {
+		std::istringstream sline(line);
+		for (int j=0; j<=i; j++) {
+		    double p;
+		    sline >> p;
+		    emmission(i,j)=p;
+		    emmission(j,i)=p;
+		}
+		i++;
+	    }
+	    if (i!=6) {
+		throw(std::ifstream::failure("Cannot read enough emmission probabilities."));
+	    }
 
+	    // read background probabilities
+
+	    background.resize(6);
+	    if (getline(in,line)) {
+		std::istringstream sline(line);
+		for (int j=0; j<6; j++) {
+		    double p;
+		    sline >> p;
+		    background[j]=p;
+		}
+	    } else {
+		throw(std::ifstream::failure("Cannot read background probabilities."));
+	    }
+	} catch (std::ifstream::failure e) {
+	    std::cerr << "Cannot parse "<<filename<<". " <<e.what()<< std::endl
+		      << "File not in probcons parameter format. Now exiting." << std::endl;
+	    exit(-1);
+	}
+    }
 
     MatchProbs::MatchProbs()
 	: probs() {

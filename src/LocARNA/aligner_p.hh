@@ -29,23 +29,20 @@ namespace LocARNA {
     //! restriction of AlignerP ( same as for Aligner )
     typedef AlignerRestriction AlignerPRestriction;
     
-    /* ============================================================ 
-       class AlignerP
-
-       Compute partition function of alignment, arc match and base match probabilities
-   
-       initialize with two sequences and their basepairs (including scores)
-       ============================================================ 
+    /**
+       \brief Computes partition function of alignment, arc match and base match probabilities
+       
+       Performs partition function computation over alignment
+       consensus structure pairs of two sequences and their associated
+       sets of weighted basepairs
+       
+       Implements indise and outside algorithm.
+       
+       Implements calculation of match probabilities.
+       
+       The class knows about the two sequences and the two weighted
+       base pair sets.
     */
-
-
-    //! class for doing the alignment of two sequences and their
-    //! associated sets of weighted basepairs
-    //!
-    //! an object always knows about the two sequences and
-    //! the two weighted base pair sets
-    //!
-    //! common usage: construct, align, trace, get_alignment
     class AlignerP {
     public:
 	typedef size_t size_type; //!< size type

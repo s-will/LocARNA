@@ -6,7 +6,8 @@
 
 namespace LocARNA {
 
-
+    //! \brief Specifies an alphabet 
+    //!
     //! maintain an (ordered) alphabet and offer transformation
     //! between elements of alphabet and their indices
     //!

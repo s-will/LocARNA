@@ -16,9 +16,14 @@
 
 namespace LocARNA {
 
-    /** a match of two base pairs. Maintains pointers to the single arcs
-	(in the base pairs strucures) and an arc match index.
-    */
+    /**
+     * @brief Represents a match of two base pairs (arc match) 
+     *
+     * Maintains pointers to the single arcs (in the base pairs
+     * strucures) and an arc match index.
+     *
+     * @see ArcMatches
+     */
     class ArcMatch {
     public:
 	typedef std::vector<int>::size_type size_type; //!< size type
@@ -27,7 +32,7 @@ namespace LocARNA {
 	const Arc *arcA_; //!< the arc in A
 	const Arc *arcB_; //!< the arc in B
 	idx_type idx_;    //!< (unique) index of arc match
-	
+
     public:
 	
 	/** 
@@ -75,7 +80,7 @@ namespace LocARNA {
     typedef std::vector<ArcMatch::idx_type> ArcMatchIdxVec;
 
     /**
-       The class ArcMatches maintains the relevant arc matches and their scores
+       @brief Maintains the relevant arc matches and their scores
    
        It works as an interface between the source of arc match scoring
        information, i.e.  dot plots of the single sequences or explicit
@@ -168,7 +173,35 @@ namespace LocARNA {
 		return (ali>alj) || (ali==alj && bli>blj);
 	    }
 	};
-    
+
+	/**
+	 * A simple 5-tuple of 4 positions and a score
+	 * 
+	 */
+	class tuple5 {
+	public:
+	    typedef std::vector<int>::size_type size_type; //!< size type
+
+	    size_type i; //!< position i
+	    size_type j; //!< position j
+	    size_type k; //!< position k
+	    size_type l; //!< position l
+	    score_t score; //!< the score (as used below: score of arc match (i,j)~(k,l))
+	
+	    /** 
+	     * Construct with member values
+	     * 
+	     * @param i_ position i
+	     * @param j_ position j
+	     * @param k_ position k
+	     * @param l_ position l
+	     * @param score_ the score
+	     */
+	    tuple5(size_type i_,size_type j_,size_type k_,size_type l_,score_t score_)
+		:i(i_), j(j_), k(k_), l(l_), score(score_)
+	    {}
+	};
+	    
     
     public:
 

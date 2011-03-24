@@ -160,31 +160,6 @@ namespace LocARNA {
     }
 
 
-    /**
-     * Implements a vector with += operator
-     * that provides an alternate syntax for push_back
-     * 
-     * @note This is used in Alignment::write_pp() to compose output
-     */
-    class plusvector: public std::vector<int> {
-
-    public:
-	
-	/** 
-	 * @brief Add an element to end of vector
-	 * 
-	 * @param x vector element
-	 * 
-	 * @return *this
-	 * @post x is added at end of *this (like push_back)
-	 */
-	plusvector& operator += (int x) {
-	    push_back(x);
-	    return *this;
-	}
-    };
-
-
     /*
       write pp output, which can be reread for progressive alignment!
     */
@@ -197,8 +172,8 @@ namespace LocARNA {
 	int lastA=1; // bases consumed in sequence A
 	int lastB=1; // ---------- "" ------------ B
 
-	plusvector aliA;
-	plusvector aliB;
+	plusvector<int> aliA;
+	plusvector<int> aliB;
 
 	for (size_type i=0; i<alisize; i++) {
 	    // out << "("<<a_[i]<<","<<b_[i]<<") "; out.flush();

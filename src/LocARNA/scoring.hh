@@ -52,13 +52,14 @@ namespace LocARNA {
     class ArcMatch;
 
 
-
-    //! Contains all parameters
-    //! for doing the scoring of alignments
-    //! in class Scoring.
-    //! The class encapsulates the configuration
-    //! of the score.
+    
+    //! \brief Parameters for scoring 
+    //!    
+    //! Contains all parameters for doing the scoring of alignments in
+    //! class Scoring.  The class encapsulates the configuration of
+    //! the score.
     //!
+    //! @see Scoring
     class ScoringParams {
 	friend class Scoring;
 
@@ -194,6 +195,8 @@ namespace LocARNA {
 	}
     };
 
+    //! \brief Provides methods for the scoring of alignments
+    //!
     //! Maintains and provides the scores for the alignment of two specific
     //! Rnas.
     //! Configurable via class ScoringParams, supports

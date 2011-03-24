@@ -4,13 +4,18 @@
 namespace LocARNA {
 
     /**
-       Contains data for restricting Aligner to sub-sequences startA..endA amd startB..endB.
+       @brief Restricts range of an alignment in Aligner
+       
+       Contains information for restricting Aligner to sub-sequences
+       startA..endA amd startB..endB.
 
        Take care when using aligner restrictions for multiple
        Alignments with the same aligner object.
        The D-matrix is only computed once, so this works
        as long as the first Aligner::align() is called with
        the most general restriction (e.g. no restriction at all)!
+       
+       @see Aligner
     */
     class AlignerRestriction {
     private:

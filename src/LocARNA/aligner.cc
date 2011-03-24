@@ -1294,23 +1294,6 @@ Aligner::trace() {trace(def_scoring_view);}
    Compute k-best alignments by intervall splitting
 */
 
-/**
- * Templated function class implementing a comparison operator for
- * member second of class T.
- * @note used for priority queue in Aligner::suboptimal
- */
-template <class T>
-class greater_second {
-public:
-    /** 
-     * Compare members second of class T
-     * 
-     * @return whether a.second smaller b.second
-     */
-    bool operator() (const T& a, const T&b) {
-	return a.second < b.second;
-    }
-};
 
 //! type of a task (used in computing k-best alignment)
 typedef std::pair<AlignerRestriction,infty_score_t> task_t;

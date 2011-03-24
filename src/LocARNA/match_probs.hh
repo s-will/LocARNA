@@ -13,7 +13,8 @@ namespace LocARNA {
 
     class StralScore;
 
-    //! Provides probabilities for each match.
+    //! \brief Provides probabilities for each match.
+    //!
     //! The probabilities are either computed or
     //! read in from file
     //! 
@@ -136,8 +137,47 @@ namespace LocARNA {
 		 );
     
 	Matrix<double> probs; //!< the base match probabilities
-    };
+    
+	/**
+	 * @brief Maintains parameter for computing match probabilities 
+	 *
+	 * The class is used in sequence alignment a la Probcons by MatchProbs::pairHMM_probs()
+	 *
+	 * Supports reading parameter from file
+	 *
+	 * @see MatchProbs 
+	 */
+	class ProbConsParameter {
+	public:
+	    // ------------------------------------------------------------
+	    // transition probabilities
+	    // there are three states M, X, Y (plus implicitely start and end state)
+	    double initM; //!< transition probability initM
+	    double initX; //!< transition probability initX 
+	    double initY; //!< transition probability initY 
+	    double startX; //!< transition probability startX
+	    double startY; //!< transition probability startY
+	    double extendM; //!< transition probability extendM
+	    double extendX; //!< transition probability extendX
+	    double extendY; //!< transition probability extendY
+	    double startMFromX; //!< transition probability startMFromX
+	    double startMFromY; //!< transition probability startMFromY
 
+	    std::string basenames; //!< base names
+    
+	    Matrix<double> emmission; //!< matrix of emmission probabilities
+	    std::vector<double> background; //!< vector of background probabilities
+    
+	    /** 
+	     * Construct from file
+	     * 
+	     * @param filename 
+	     */
+	    ProbConsParameter(const std::string &filename);
+	};
+
+    };
+    
 }
 
 #endif // LOCARNA_MATCH_PROBS

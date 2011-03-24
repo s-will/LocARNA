@@ -390,7 +390,7 @@ namespace LocARNA {
 
 
     // ----------------------------------------
-    //! simple matrix class with offset
+    //! @brief Simple matrix class with offset
     template <class elem_t>
     class OMatrix : public Matrix<elem_t> {
     protected:
@@ -501,7 +501,8 @@ namespace LocARNA {
 
 
     // ----------------------------------------
-    //! matrix class with rotation
+    //! @brief A matrix class with rotation
+    //! 
     template <class elem_t>
     class RotMatrix: public Matrix<elem_t> {
 

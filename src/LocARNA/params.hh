@@ -11,7 +11,8 @@ namespace LocARNA {
 
 
     /**
-       Description of free end gaps.
+       \brief Description of free end gaps.
+       
        Decodes the description given by a string of 4 characters '+'/'-'
        and provides methods with reasonable names.
     */
@@ -74,10 +75,15 @@ namespace LocARNA {
 
 
     /**
+       \brief Parameter for alignment by Aligner
+             
        Collects the parameters for the aligner object.  These parameters
        controll the kind of alignment (local/global),
        restrictions/constraints on the alignment and certain heuristics.
        Parameters for the score are collected in a different class.
+       
+       @see Aligner
+       @see ScoringParams
     */
     class AlignerParams {  
     public:
