@@ -1,12 +1,9 @@
 HELP2MANOPTS=-N
 
-man_MANS=locarna.1 locarna_p.1 mlocarna.1 locarnate.1	\
-         reliability-profile.pl.1					\
-         locarnap-predict-and-plot.pl.1				\
-         locarnap-realign-all.pl.1					\
-         locarnap-revisit-RNAz-hits.pl.1				\
-         locarnap-revcomp.pl.1 locarnap_fit.1		\
-         locarna_deviation.1
+man_MANS=locarna.1 locarna_p.1 mlocarna.1 locarnate.1			\
+         reliability-profile.pl.1 locarnap-predict-and-plot.pl.1	\
+         locarnap-realign-all.pl.1 locarnap-revisit-RNAz-hits.pl.1	\
+         locarnap-revcomp.pl.1 locarnap_fit.1 locarna_deviation.1
 
 EXTRA_DIST=$(man_MANS)
 

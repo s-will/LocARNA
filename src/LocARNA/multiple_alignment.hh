@@ -25,7 +25,7 @@ class Sequence;
  * The multiple alignment is implemented as vector of name/sequence
  * pairs.
  *
- * Supports traversal of name/sequence pairs. Sequence entries support
+ * Supports traversal of name/sequence pairs. The sequence entries support
  * mapping from columns to positions and back.
  *
  * Names are unique in a multiple alignment object.
@@ -146,13 +146,18 @@ private:
     read_aln_clustalw(std::istream &in);
     
 public:
+    
+    //! \brief const iterator of sequence entries
+    typedef std::vector<SeqEntry>::const_iterator const_iterator;
 
     //! read multiple alignment from file (clustalW-like format)
     //! @param file file with alignment in clustalW-like format
+    //! @see MultipleAlignment(std::istream &in)
     MultipleAlignment(const std::string &file);
 
     //! read multiple alignment from stream (clustalW-like format)
     //! @param in input stream with alignment in clustalW-like format
+    //! @todo accept mfasta input
     MultipleAlignment(std::istream &in);
 
     //! construct multiple alignment from sequence object
@@ -191,14 +196,14 @@ public:
     
     //! allow read-only traversal of name/sequence pairs
     //! @returns begin iterator
-    const std::vector<SeqEntry>::const_iterator 
+    const_iterator
     begin() const {
 	return alig.begin();
     }
     
     //! allow read-only traversal of name/sequence pairs
     //! @returns end iterator
-    const std::vector<SeqEntry>::const_iterator
+    const_iterator
     end() const {
 	return alig.end();
     }
@@ -234,8 +239,8 @@ public:
     
     //! \brief Access name/sequence pair by name
     //!
-    //! @param name name of name/sequence pair (0-based)
-    //! @return sequence (including gaps) with given index
+    //! @param name name of name/sequence pair
+    //! @return sequence (including gaps) with given name
     const SeqEntry &
     seqentry(const std::string &name) const {
 	return alig[index(name)];

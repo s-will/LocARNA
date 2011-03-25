@@ -102,12 +102,12 @@ namespace LocARNA {
 
 	if (clustal_format) {
 	    out << "CLUSTAL W --- "<<PACKAGE_STRING; // <<" - Local Alignment of RNA"
-	    if (seqA_.get_rows()==1 && seqB_.get_rows()==1)
+	    if (seqA_.row_number()==1 && seqB_.row_number()==1)
 		out  <<" --- Score: " <<score;
 	    out  <<std::endl<<std::endl;
 	}
 	//else if (!pos_out)
-	//	if (seqA_.get_rows()==1 && seqB_.get_rows()==1)
+	//	if (seqA_.row_number()==1 && seqB_.row_number()==1)
 	//	    out << "SCORE: "<<score<<std::endl;
     
 	size_type local_start_A=a_[0]; //!< pos where local alignment starts for A
@@ -262,9 +262,9 @@ namespace LocARNA {
     
 	double p_minMean =
 	    exp(
-		(log(p_minA)*seqA_.get_rows()
-		 + log(p_minB)*seqB_.get_rows())
-		/ (seqA_.get_rows() + seqB_.get_rows())
+		(log(p_minA)*seqA_.row_number()
+		 + log(p_minB)*seqB_.row_number())
+		/ (seqA_.row_number() + seqB_.row_number())
 		);
     
 	//std::cout << "avg p_min: " << p_minMean << std::endl;
@@ -335,13 +335,13 @@ namespace LocARNA {
     
 	// weighted geometric mean
 	double p = exp(
-		       (log(pA)*seqA_.get_rows() + log(pB)*seqB_.get_rows()) / 
+		       (log(pA)*seqA_.row_number() + log(pB)*seqB_.row_number()) / 
 		       //--------------------------------------------------- 
-		       (seqA_.get_rows() + seqB_.get_rows())
+		       (seqA_.row_number() + seqB_.row_number())
 		       );
     
 	// weighted arithmetic mean
-	// p = (seqA_.get_rows()*pA + seqB_.get_rows()*pB)/(seqA_.get_rows()+seqB_.get_rows());
+	// p = (seqA_.row_number()*pA + seqB_.row_number()*pB)/(seqA_.row_number()+seqB_.row_number());
 	return p;
     }
 

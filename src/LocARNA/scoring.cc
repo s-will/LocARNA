@@ -368,8 +368,8 @@ namespace LocARNA {
 	RibosumFreq *ribosum = static_cast<RibosumFreq *>(params->ribosum);
     
 	
-	const size_type rowsA = seqA.get_rows();
-	const size_type rowsB = seqB.get_rows();
+	const size_type rowsA = seqA.row_number();
+	const size_type rowsB = seqB.row_number();
     
 	double score=0;
 	int gapless_combinations=0;
@@ -422,8 +422,8 @@ namespace LocARNA {
     
 	RibosumFreq *ribosum = static_cast<RibosumFreq *>(params->ribosum);
     
-	const size_type rowsA = seqA.get_rows();
-	const size_type rowsB = seqB.get_rows();
+	const size_type rowsA = seqA.row_number();
+	const size_type rowsB = seqB.row_number();
 	
 	double score=0;
 	int gapless_combinations=0;

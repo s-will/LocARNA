@@ -6,6 +6,7 @@
 
 #include "alphabet.hh"
 #include "sequence.hh"
+#include "multiple_alignment.hh"
 
 
 namespace LocARNA {
@@ -13,14 +14,15 @@ namespace LocARNA {
     //const Sequence::alphabet_type
     //Sequence::alphabet_=Sequence::alphabet_type((char *)"ACGU-",5);
 
-    /** 
-     * Initializes the buffer for one row with a name
-     * 
-     * @param name Name of buffer
-     *
-     * @post The buffer is initialized with one row with speficied
-     * name and of length 0
-     */
+    Sequence::Sequence(const MultipleAlignment &ma):
+	 seq_(),
+	 rows_(0)
+    {
+	for(MultipleAlignment::const_iterator it=ma.begin(); ma.end()!=it; ++it) {
+	    append_row(it->name(),it->seq().to_string());
+	}
+    }
+
     void Sequence::init_buffer(const std::string &name) {
 	rows_=1;
 	seq_.resize(0);
@@ -28,11 +30,7 @@ namespace LocARNA {
 	names_.push_back(name);
     }
 
-    /** 
-     * Initializes the buffer for the rows in seq with the names and alphabet from seq
-     * 
-     * @param seq sequence
-     */
+
     void Sequence::init_buffer(const Sequence &seq) {
 	names_ = seq.names_;
 	rows_ = seq.rows_;
@@ -40,23 +38,15 @@ namespace LocARNA {
 	//profile_.resize(0);
     }
   
-    /** 
-     * Append row
-     * 
-     * @param name name of new row
-     * @param seqstr sequence string of new row
-     *
-     * @pre *this is empty or seqstr must have same length as *this
-     */
     void Sequence::append_row(const std::string &name, const std::string &seqstr) {
 	names_.push_back(name);
-    
+	
 	if (rows_==0) {
-	    int len=seqstr.length();
+	    size_t len=seqstr.length();
 	    seq_.resize(len);
 	}
 	
-	assert(seq_.size()==seqstr.size());
+	assert(seq_.size()==seqstr.length());
 	
 	for (size_type i=1; i<=seq_.size(); i++) {
 	    (*this)[i].push_back(seqstr[i-1]);

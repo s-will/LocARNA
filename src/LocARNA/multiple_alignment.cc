@@ -47,7 +47,7 @@ MultipleAlignment::MultipleAlignment(const std::string &filename) {
 
 
 MultipleAlignment::MultipleAlignment(const Sequence &sequence) {
-    size_type rows = sequence.get_rows();
+    size_type rows = sequence.row_number();
     
     for (size_type i=0; i<rows; i++) {
 	std::string name = sequence.names()[i];
@@ -92,27 +92,27 @@ MultipleAlignment::MultipleAlignment(const Alignment &alignment) {
     const Sequence &seqA=alignment.get_seqA();
     const Sequence &seqB=alignment.get_seqB();
     
-    std::vector<std::string> aliA(seqA.get_rows(),"");
-    std::vector<std::string> aliB(seqB.get_rows(),"");
+    std::vector<std::string> aliA(seqA.row_number(),"");
+    std::vector<std::string> aliB(seqB.row_number(),"");
     
     std::vector<int>::size_type alisize = a.size();
     
     for (size_type i=0; i<alisize; i++) {
 	if ( a[i]==-1 ) {
-	    for (size_type k=0; k<seqA.get_rows(); k++) {
+	    for (size_type k=0; k<seqA.row_number(); k++) {
 		aliA[k] += '-';
 	    }
 	} else {
-	    for (size_type k=0; k<seqA.get_rows(); k++) {
+	    for (size_type k=0; k<seqA.row_number(); k++) {
 		aliA[k] += seqA[a[i]][k];
 	    }
 	}
 	if ( b[i]==-1 ) {
-	    for (size_type k=0; k<seqB.get_rows(); k++) {
+	    for (size_type k=0; k<seqB.row_number(); k++) {
 		aliB[k] += '-';
 	    }
 	} else {
-	    for (size_type k=0; k<seqB.get_rows(); k++) {
+	    for (size_type k=0; k<seqB.row_number(); k++) {
 		aliB[k] += seqB[b[i]][k];
 	    }
 	}
@@ -121,10 +121,10 @@ MultipleAlignment::MultipleAlignment(const Alignment &alignment) {
     const std::vector<std::string> namesA = seqA.names();
     const std::vector<std::string> namesB = seqB.names();
     
-    for (size_type k=0; k<seqA.get_rows();k++) {
+    for (size_type k=0; k<seqA.row_number();k++) {
 	alig.push_back(SeqEntry(namesA[k],aliA[k]));
     }
-    for (size_type k=0; k<seqB.get_rows();k++) {
+    for (size_type k=0; k<seqB.row_number();k++) {
 	alig.push_back(SeqEntry(namesB[k],aliB[k]));
     }
 }

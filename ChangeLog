@@ -243,3 +243,14 @@ Feb, 2011
 
 	Fix name normalization bug in mlocarna.in
 	(Version 1.6.1)
+Mar, 2011
+	Doxygen compiles without warning and produces useful documentation
+	of the library
+
+	Vienna RNA library is now required for compilation and will be linked
+
+	Locarna accepts clustal files as input and then computes base pair
+	probabilities via pf_fold of the Vienna RNA lib. Currently this is
+	limited to single sequence clustal files. This functionality
+	should be extended to mfasta input files.
+	

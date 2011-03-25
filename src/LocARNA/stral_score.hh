@@ -96,8 +96,8 @@ namespace LocARNA {
 	    //
 	    int pairs=0;
 	    double seq_score=0;
-	    for (size_type k=0; k<seqA.get_rows(); k++) {
-		for (size_type l=0; l<seqB.get_rows(); l++) {
+	    for (size_type k=0; k<seqA.row_number(); k++) {
+		for (size_type l=0; l<seqB.row_number(); l++) {
 		    if (alphabet.in(seqA[i][k]) && alphabet.in(seqB[j][l])) {
 			seq_score += sim_mat(alphabet.idx(seqA[i][k]),alphabet.idx(seqB[j][l]));
 			pairs++;

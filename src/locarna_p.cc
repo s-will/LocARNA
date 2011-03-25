@@ -1,11 +1,17 @@
-/**********************************************************************
+/**
+ * \file locarna_p.cc
  *
- * LocARNA-P: LOCal Alignment of RNA - Partitition Function Variant
+ * \brief Defines main function of locarna_p
  *
- * Copyright (C) Sebastian Will <will(@@)informatik.uni-freiburg.de> 
- *               2005-2010
+ * LocARNA-P: global and LOCal Alignment of RNA - Partitition function variant
  *
- **********************************************************************/
+ * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
+ *               2005-2011
+ *
+ *  
+ * @todo wrap command line parameter in a structure (like in locarna.cc)
+ * 
+ */
 
 
 #include <iostream>
@@ -30,68 +36,66 @@
 
 using namespace std;
 
+//! Version string (from configure.ac via autoconf system)
 const std::string 
 VERSION_STRING = (std::string)PACKAGE_STRING; 
 
 // ------------------------------------------------------------
 // Parameter
 
-double min_prob; // only pairs with a probability of at least min_prob are taken into account
+double min_prob; //!< only pairs with a probability of at least min_prob are taken into account
 
-int mismatch_score;
-int indel_score;
-int indel_opening_score=0;
-int temperature;
-int struct_weight;
+int mismatch_score; //!< mismatch_score
+int indel_score; //!< indel_score
+int indel_opening_score=0; //!< indel_opening_score=0
+int l_temperature; //!< rename from temperature to avoid clash with rnalib 
+int struct_weight; //!< struct_weight
 
-int tau_factor; // contribution of sequence similarity in an arc match (in percent)
-
-
-bool struct_local; // allow exclusions for maximizing alignment of connected substructures 
-bool sequ_local; // maximize alignment of subsequences
-
-const bool DO_TRACE=true;
+int tau_factor; //!< contribution of sequence similarity in an arc match (in percent)
 
 
-int max_diff; // maximal difference for positions of alignment traces
-// (only used for ends of arcs)
-int max_diff_am; //maximal difference between two arc ends, -1 is off
+bool struct_local; //!< allow exclusions for maximizing alignment of connected substructures 
+bool sequ_local; //!< maximize alignment of subsequences
 
-std::string max_diff_pw_alignment; // pairwise reference alignment for max-diff heuristic, separator &
-std::string max_diff_alignment_file; // reference alignment for max-diff heuristic, name of clustalw format file
+const bool DO_TRACE=true; //!< DO_TRACE=true
 
-double min_am_prob; // only matched arc-pair with a probability of at least min_am_prob are taken into account
-double min_bm_prob; // only matched base-pair with a probability of at least min_bm_prob are taken into account
-int match_score;
 
-// only consider arc matchs where
-//   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0) !!!!! this changed due to TraceController
-//   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
+int max_diff; //!< maximal difference for positions of alignment traces (only used for ends of arcs)
+int max_diff_am; //!<maximal difference between two arc ends, -1 is off
 
-int exclusion_score; // Score contribution per exclusion
-// set to zero for unrestricted structure locality
+std::string max_diff_pw_alignment; //!< pairwise reference alignment for max-diff heuristic, separator &
+std::string max_diff_alignment_file; //!< reference alignment for max-diff heuristic, name of clustalw format file
 
-//double prob_exp_f(int seqlen) {return 1.0/(2*seqlen);} // expected probability of a base pair (null-model)
+double min_am_prob; //!< only matched arc-pair with a probability of at least min_am_prob are taken into account
+double min_bm_prob; //!< only matched base-pair with a probability of at least min_bm_prob are taken into account
+int match_score; //!< match_score
 
+//! Score contribution per exclusion set to zero for unrestricted structure locality
+int exclusion_score; 
+
+//double prob_exp_f(int seqlen) {return 1.0/(2*seqlen);} 
+
+//! expected probability of a base pair (null-model)
 double exp_prob;
-bool opt_exp_prob;
-int output_width=70;
-bool opt_write_arcmatch_probs;
-bool opt_write_basematch_probs;
+
+bool opt_exp_prob; //!< opt_exp_prob
+int output_width=70; //!< output_width=70
+bool opt_write_arcmatch_probs; //!< opt_write_arcmatch_probs
+bool opt_write_basematch_probs; //!< opt_write_basematch_probs
 // ------------------------------------------------------------
 // File arguments
 
-std::string arcmatch_probs_file;
-std::string basematch_probs_file;
+std::string arcmatch_probs_file; //!< arcmatch_probs_file
+std::string basematch_probs_file; //!< basematch_probs_file
 
-std::string bpsfile1;
-std::string bpsfile2;
+std::string bpsfile1; //!< bpsfile1
+std::string bpsfile2; //!< bpsfile2
 
-std::string clustal_out;
-bool opt_clustal_out;
+std::string clustal_out; //!< clustal_out
+bool opt_clustal_out; //!< opt_clustal_out
 
-std::string pp_out;
-bool opt_pp_out;
+std::string pp_out; //!< pp_out
+bool opt_pp_out; //!< opt_pp_out
 
 // ------------------------------------------------------------
 //
@@ -101,23 +105,32 @@ bool opt_pp_out;
 
 using namespace LocARNA;
 
-bool opt_help;
-bool opt_version;
-bool opt_verbose;
-bool opt_local_output;
-bool opt_pos_output;
+bool opt_help; //!< opt_help
+bool opt_version; //!< opt_version
+bool opt_verbose; //!< opt_verbose
+bool opt_local_output; //!< opt_local_output
+bool opt_pos_output; //!< opt_pos_output
 
-std::string ribosum_file;
-bool use_ribosum;
+std::string ribosum_file; //!< ribosum_file
+bool use_ribosum; //!< use_ribosum
 
-bool basematch_probs_include_arcmatch;
+bool basematch_probs_include_arcmatch; //!< basematch_probs_include_arcmatch
 
-std::string fragment_match_probs;
+std::string fragment_match_probs; //!< fragment_match_probs
 
-// IMPORTANT: here use double (not pf_score_t), since option parser cannot interpret pf_score_t, when using long double
-// later this will be converted to pf_score_t
-double pf_scale;
+//! Scale for partition function
+//!
+//! All partition functions are multiplied by this factor.
+//! Note that this is much less flexible compared to the use of pf_scale in RNAfold, which adapts the scale to the
+//! sequence length. 
+//!
+//! @note IMPORTANT: here use double (not pf_score_t), since option
+//! parser cannot interpret pf_score_t, when using long double later
+//! this will be converted to pf_score_t
+//! @note renamed to avoid conflict with vrna
+double l_pf_scale; 
 
+//! defines command line parameters
 option_def my_options[] = {
     {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
     {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
@@ -134,9 +147,9 @@ option_def my_options[] = {
     {"struct-weight",'s',0,O_ARG_INT,&struct_weight,"180","score","Maximal weight of 1/2 arc match"},
     {"exp-prob",'e',&opt_exp_prob,O_ARG_DOUBLE,&exp_prob,O_NODEFAULT,"prob","Expected probability"},
     {"tau",'t',0,O_ARG_INT,&tau_factor,"0","factor","Tau factor in percent"},
-    {"temperature",0,0,O_ARG_INT,&temperature,"150","int","Temperature for PF-computation"},
+    {"temperature",0,0,O_ARG_INT,&l_temperature,"150","int","Temperature for PF-computation"},
     
-    {"pf-scale",0,0,O_ARG_DOUBLE,&pf_scale,"1.0","scale","Scaling of the partition function. Use in order to avoid overflow."},
+    {"pf-scale",0,0,O_ARG_DOUBLE,&l_pf_scale,"1.0","scale","Scaling of the partition function. Use in order to avoid overflow."},
     
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
@@ -180,6 +193,14 @@ option_def my_options[] = {
 // ------------------------------------------------------------
 // MAIN
 
+/** 
+ * \brief Main method of executable locarna_p
+ * 
+ * @param argc argument counter
+ * @param argv argument vector
+ * 
+ * @return success
+ */
 int
 main(int argc, char **argv) {
 
@@ -256,7 +277,7 @@ main(int argc, char **argv) {
     if (max_diff_alignment_file!="") {
 	multiple_ref_alignment = new MultipleAlignment(max_diff_alignment_file);
     } else if (max_diff_pw_alignment!="") {
-	if ( seqA.get_rows()!=1 || seqB.get_rows()!=1 ) {
+	if ( seqA.row_number()!=1 || seqB.row_number()!=1 ) {
 	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
 	    exit(-1);
 	}
@@ -341,7 +362,7 @@ main(int argc, char **argv) {
 				 tau_factor,
 				 0, // exclusion score
 				 opt_exp_prob?exp_prob:-1,
-				 temperature,//temperature,
+				 l_temperature,
 				 false,//opt_stacking,
 				 false,//opt_mea_alignment,
 				 0,//mea_alpha,
@@ -370,7 +391,7 @@ main(int argc, char **argv) {
     
     
     // initialize aligner object, which does the alignment computation
-    AlignerP aligner(seqA,seqB,*arc_matches,&aligner_params,&scoring,pf_scale);
+    AlignerP aligner(seqA,seqB,*arc_matches,&aligner_params,&scoring,l_pf_scale);
 
     if (opt_verbose) {
 	std::cout << "Run inside algorithm."<<std::endl;

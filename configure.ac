@@ -28,20 +28,22 @@ AC_PATH_PROG([POD2MAN],[pod2man],false)
 
 
 
-
 # Vienna RNA package library path support, if not installed in standard directory/path
+VRNA_OK=true;
+
 AC_ARG_WITH([vrna],
     AC_HELP_STRING(
         [--with-vrna=PREFIX],
         [Installation directory of the Vienna RNA library]
       )
-) 
+)
 
+# register Vienna programs as configuration variables
 AC_ARG_VAR([RNAfold],[RNAfold name (def=RNAfold)])
 AC_ARG_VAR([RNAplfold],[RNAplfold name (def=RNAplfold)])
 AC_ARG_VAR([RNAalifold],[RNAalifold name (def=RNAalifold)])
 
-
+# check for required Vienna programs
 if test "$with_vrna" = "" ; then
    AC_PATH_PROG([RNAfold],[RNAfold],[false])
    AC_PATH_PROG([RNAplfold],[RNAplfold],[false])
@@ -52,16 +54,35 @@ else
    AC_PATH_PROG([RNAalifold],[RNAalifold],[false],[$with_vrna/bin])  
 fi
 
-
-# error output if ViennaRNA not found
-VRNA_OK=true;
+# trigger error if ViennaRNA programs not found
 if test "$RNAfold" = "false" -o "$RNAplfold" = "false" -o "$RNAalifold" = "false" ; then
     VRNA_OK=false
 fi
 
+# if --with-vrna given, add to flags for CPP and LD
+if test "$with_vrna" != "" ; then
+   LDFLAGS="-L$with_vrna/lib $LDFLAGS"
+   CPPFLAGS="-I$with_vrna/include $CPPFLAGS"
+fi
+
+# Check for Vienna librna
+AC_CHECK_HEADER("ViennaRNA/fold.h",
+		[],
+		[VRNA_OK=false])
+
+## link the Vienna library
+LIBS="-lg2 -lRNA $LIBS"
 
 
-# Checks for libraries.
+# ------------------------------
+# handle open mp support
+#  this is necessary for linking against the vienna lib 2.0
+AC_OPENMP
+AC_SUBST(OPENMP_CXXFLAGS)
+
+CPPFLAGS="$OPENMP_CXXFLAGS $CPPFLAGS"
+LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
+
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -144,22 +165,30 @@ AC_TYPE_SIZE_T
 AC_CONFIG_FILES([Makefile LocARNA-${API_VERSION}.pc:LocARNA.pc.in])
 
 
-# AC_FUNC_MALLOC
+### ----------------------------------------
+### Test if Vienna lib available and ok
+## don't allow compiling otherwise 
+#
+if test "$VRNA_OK" = "false" ; then
+   AC_MSG_NOTICE([=================================================================])
+   AC_MSG_NOTICE([ERROR:])
+   AC_MSG_NOTICE()
+   
+   if test "$with_vrna" != "" ; then
+      AC_MSG_NOTICE([Cannot find Vienna RNA package in given path '$with_vrna'.])
+   else
+      AC_MSG_NOTICE([Cannot find Vienna RNA package in standard path. For using a])
+      AC_MSG_NOTICE([non-standard path, please specify with --with-vrna=PREFIX.])
+   fi
+   
+   AC_MSG_NOTICE()
+   AC_MSG_NOTICE([The Vienna RNA package (version >= 1.8) is required for compiling.])
+   AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/~ivo/RNA/.])
+   AC_MSG_NOTICE()
+    
+   exit -1;
+fi
 
 
 AC_OUTPUT([src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/mlocarna Utils/locarnate Utils/aln2fa.pl])
 
-
-if test "$VRNA_OK" = "false" ; then
-   AC_MSG_NOTICE([============================================================])
-   AC_MSG_NOTICE()
-     if test "$with_vrna" != "" ; then
-        AC_MSG_NOTICE(Cannot find Vienna RNA package in given path '$with_vrna'.)
-     else
-        AC_MSG_NOTICE(Cannot find Vienna RNA package in standard path, for non-standard path use --with-vrna=PREFIX.)
-     fi
-    AC_MSG_NOTICE()
-    AC_MSG_NOTICE(The Vienna RNA package is required for full functionality (use version >= 1.8.*).)
-    AC_MSG_NOTICE(It can be obtained from http://www.tbi.univie.ac.at/~ivo/RNA/.)
-    AC_MSG_NOTICE()
-fi
