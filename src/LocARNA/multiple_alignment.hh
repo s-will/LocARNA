@@ -58,42 +58,82 @@ public:
 	
     private:	
 	std::string name_; //!< name of the sequence
+	std::string description_; //!< optional sequence description
 	string1 seq_; //<! alignment string of the sequence 
 	
     public:
 
-
-	//! definition of gap for this class
+	//! @brief Defines gap symbol for this class
 	//! @param c character to be tested
 	//! @returns whether c codes for a gap
 	static bool is_gap_symbol(char c);
 	
-	//! construct from strings name and seq
-	SeqEntry(const std::string &name, const std::string &seq): name_(name), seq_((string1)seq) {}
+	/** 
+	 * @brief Construct from strings name and seq
+	 * 
+	 * @param name Sequence name
+	 * @param seq  Sequence string
+	 * @note empty description
+	 */
+	SeqEntry(const std::string &name,
+		 const std::string &seq)
+	    : name_(name), description_(""), seq_((string1)seq)
+	{}
 	
-	//! construct from string name and 1-based string seq
-	SeqEntry(const std::string &name, const string1 &seq): name_(name), seq_(seq) {}
+	/** 
+	 * @brief Construct from strings name and 1-based string seq
+	 * 
+	 * @param name Sequence name
+	 * @param seq  Sequence string
+	 * @note empty description
+	 */
+	SeqEntry(const std::string &name, const string1 &seq)
+	    : name_(name), description_(""), seq_(seq)
+	{}
+	
+	/** 
+	 * @brief Construct from strings name, description and seq
+	 * 
+	 * @param name Sequence name
+	 * @param description Sequence description
+	 * @param seq  Sequence string
+	 */
+	SeqEntry(const std::string &name, 
+		 const std::string &description,
+		 const std::string &seq)
+	    : name_(name), description_(description), seq_((string1)seq)
+	{}
+	
+	/** 
+	 * @brief Construct from strings name, description and 1-based string seq
+	 * 
+	 * @param name Sequence name
+	 * @param description Sequence description
+	 * @param seq  Sequence string
+	 */
+	SeqEntry(const std::string &name,
+		 const std::string &description,
+		 const string1 &seq)
+	    : name_(name), description_(description), seq_(seq)
+	{}
 	
 	/** 
 	 * Copy Constructor
 	 * 
 	 * @param se sequence entry
 	 */
-	SeqEntry(const SeqEntry &se): name_(se.name_),seq_(se.seq_) {}
+	SeqEntry(const SeqEntry &se): name_(se.name_),description_(se.description_),seq_(se.seq_) {}
 	
-	/*
-	  const SeqEntry &operator=(const SeqEntry &nsp) {
-	    name_ = nsp.name_;
-	    seq_ = nsp.seq_;
-	    return *this;
-	}
-	*/
+	// access
 	
-	//access
 	//! (read-only) access to name
 	const std::string &
 	name() const {return name_;}
 	
+	//! (read-only) access to description
+	const std::string &
+	description() const {return description_;}
+
 	//! (read-only) access to seq
 	const string1 &
 	seq() const {return seq_;}
@@ -135,37 +175,63 @@ private:
     void
     create_name2idx_map();
 
-    //! read alignment from input stream, expect clustalw-like format.
-    //! A header starting with CLUSTAL is ignored, but not required.
-    //! Lines can be empty or of the form <name> <seq>.
-    //! Names may occur multiple times. in this case seq strings <seq> are appended.
-    //! The order of first occurrences of names in the stream is preserved.
+    //! \brief Read alignment from input stream, expect clustalw-like format.
     //!
     //! @param in input stream
+    //! @note
+    //! - A header starting with CLUSTAL is ignored, but not required.
+    //! - Lines can be empty or of the form <name> <seq>.
+    //! - Names may occur multiple times. in this case seq strings <seq> are appended.
+    //! - The order of first occurrences of names in the stream is preserved.
     void
     read_aln_clustalw(std::istream &in);
+
+
+    //! \brief Read alignment from input stream, expect fasta format.
+    //! 
+    //! @param in input stream
+    //!
+    //! @note Sequence descriptors have the form '>descriptor'. Any
+    //! white space between '>' and the name is ignored.  The sequence
+    //! name is the descriptor until the first blank. The rest of the
+    //! line is understood as sequence description.
+    //!
+    //! @note Sequences can be multiline, white space in sequences is ignored.
+    //! @note The order of sequences in the stream is preserved.
+    //! @todo Introduce class abstraction for reading/writing of fasta files
+    void
+    read_aln_fasta(std::istream &in);
     
 public:
     
     //! \brief const iterator of sequence entries
     typedef std::vector<SeqEntry>::const_iterator const_iterator;
 
-    //! read multiple alignment from file (clustalW-like format)
-    //! @param file file with alignment in clustalW-like format
+    //! file format type for multiple alignments
+    //! @todo Use in output, introduce AUTO for automatic detection of input format
+    enum format_t {CLUSTAL,FASTA};
+
+    //! @brief Construct from file
+    //!
+    //! @param file name of input file
+    //! @param format file format (CLUSTAL or FASTA) 
+    //! @throw failure on read problems
     //! @see MultipleAlignment(std::istream &in)
-    MultipleAlignment(const std::string &file);
+    MultipleAlignment(const std::string &file, format_t format=CLUSTAL);
 
-    //! read multiple alignment from stream (clustalW-like format)
+    //! @brief Construct from stream
+    //!
     //! @param in input stream with alignment in clustalW-like format
-    //! @todo accept mfasta input
-    MultipleAlignment(std::istream &in);
+    //! @param format file format (CLUSTAL or FASTA) 
+    //! @throw failure on read problems
+    MultipleAlignment(std::istream &in, format_t format=CLUSTAL);
 
-    //! construct multiple alignment from sequence object
+    //! @brief Construct from sequence object
     //! @param sequence the sequence 
     MultipleAlignment(const Sequence &sequence);
     
     
-    //! construct multiple alignment as pairwise alignment from names and strings
+    //! \brief Construct as pairwise alignment from names and strings
     //! @param nameA name of sequence A
     //! @param nameB name of sequence B
     //! @param alistrings alignment strings of sequence A and B concatenated by '&'
@@ -173,42 +239,43 @@ public:
     MultipleAlignment(const std::string &nameA, const std::string &nameB, const std::string &alistrings);
 
 
-    //! construct from Alignment object
+    //! \brief Construct from Alignment object
     //! @param alignment object of type Alignment
     MultipleAlignment(const Alignment &alignment);
     
-    //! size of multiple aligment
-    //! @returns number of name/sequence pairs in alignment
+    //! \brief Size of multiple aligment
+    //! @return number of name/sequence pairs in alignment
     size_type
     size() const { return alig.size(); }
     
-    //! test whether alignment is proper
-    //! @returns whether all sequences have the same length
+    //! @brief Test whether alignment is proper
+    //! @return whether all sequences have the same length
     bool
     is_proper() const;
     
-    //! length of multiple aligment.
-    //! assumes proper alignment, method does not
-    //! check, whether all sequences have the same length!  
-    //! @returns length of first sequence in alignment
+    //! @brief Length of multiple aligment
+    //!
+    //! @note Assumes proper alignment. Does not check, whether all
+    //! sequences have the same length!
+    //! @return length of first sequence in alignment
     pos_type 
     length() const { return alig[0].seq().length(); }
     
-    //! allow read-only traversal of name/sequence pairs
-    //! @returns begin iterator
+    //! @brief Begin for read-only traversal of name/sequence pairs
+    //! @return begin iterator
     const_iterator
     begin() const {
 	return alig.begin();
     }
     
-    //! allow read-only traversal of name/sequence pairs
-    //! @returns end iterator
+    //! @brief End for read-only traversal of name/sequence pairs
+    //! @return end iterator
     const_iterator
     end() const {
 	return alig.end();
     }
     
-    //! test whether name exists
+    //! @brief Test whether name exists
     //! @param name name of a sequence
     //! @return whether sequence with given name exists in multiple alignment
     bool
@@ -216,7 +283,7 @@ public:
       
     /* index access saves time over access by sequence name */
     
-    //! access index by name
+    //! @brief Access index by name
     //! @pre name exists
     //! @param name name of a sequence
     //! @return index of name/sequence pair with given name
@@ -227,7 +294,7 @@ public:
 	return it->second;
     }
     
-    //! Access name/sequence pair by index
+    //! @brief Access name/sequence pair by index
     //!
     //! @pre index in range 0..size()-1
     //! @param index index of name/sequence pair (0-based)
@@ -247,9 +314,9 @@ public:
     }
     
 
-    //! compute the deviation of a multiple alignment from a reference alignment
+    //! @brief Deviation of a multiple alignment from a reference alignment
     //! @param ma multiple alignment
-    //! @returns deviation of ma from reference alignment *this
+    //! @return deviation of ma from reference alignment *this
     //! deviation is defined for realignment in limited deviation from a
     //! reference alignment as preformed when --max-diff-aln is given with
     //! --max-diff to locarna.
@@ -258,12 +325,12 @@ public:
     deviation(const MultipleAlignment &ma) const; 
 
 private:
-    //! deviation of a pairwise alignment from a pairwise reference alignment
+    //! @brief Deviation of a pairwise alignment from a pairwise reference alignment
     //! @param a1 first alignment string of alignment a
     //! @param a2 second alignment string of alignment a
     //! @param ref1 first alignment string of reference alignment ref
     //! @param ref2 second alignment string of reference alignment ref
-    //! @returns deviation of alignment a from reference alignment ref
+    //! @return deviation of alignment a from reference alignment ref
     static
     size_type
     deviation2(const string1 &a1,
@@ -273,7 +340,7 @@ private:
 	       );
 public:
 
-    //! print contents of object to stream
+    //! @brief Print contents of object to stream
     //! @param out output stream
     void print_debug(std::ostream &out=std::cout) const;
 };

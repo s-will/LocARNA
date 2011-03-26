@@ -232,7 +232,8 @@ namespace LocARNA {
     void RnaData::readMultipleAlignment(const std::string &filename, bool keepMcM) {
 	
 	//read to multiple alignment object
-	MultipleAlignment ma(filename);
+	MultipleAlignment ma(filename,MultipleAlignment::CLUSTAL); // accept clustal input
+	// MultipleAlignment ma(filename,MultipleAlignment::FASTA); // accept fasta input
 	
 	// convert to sequence
 	sequence = Sequence(ma);

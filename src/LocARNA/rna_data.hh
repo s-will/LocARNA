@@ -26,9 +26,6 @@ namespace LocARNA {
     //!
     //! Supports the definition of sequence constraints in pp files.
     //!
-    //! @todo predicition of bp probabilities via Vienna RNA lib
-    //! @todo special conditional unpaired probabilities for ExpaRNA-P
-    //!
     class RnaData {
     public:
 	//! type for matrix of arc probabilities
@@ -103,8 +100,11 @@ namespace LocARNA {
 	 * @note requires linking to librna
 	 * @see prob_unpaired_in_loop()
 	 * @pre sequence_ has exactly one row
-	 * @todo Support construction from general Sequence objects (i.e. multiple rows). 
-	 * This could be done by calling alipf_fold() (in place of pf_fold()) in general.
+	 * @todo Support construction from general Sequence objects
+	 * (i.e. multiple rows). 
+	 * This could be done by calling alipf_fold() (in place of
+	 * pf_fold()) in general. See also pre-condition
+	 * compute_McCaskill_matrices()
 	 */
 	RnaData(const Sequence &sequence_, bool keepMcM);
 	
@@ -363,7 +363,7 @@ namespace LocARNA {
 	 * @pre McCaskill matrices are computed and generated.
 	 * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepMcC)
 	 *
-	 * @todo Implement
+	 * @todo Implement: required by ExpaRNA-P
 	 */
 	double
 	prob_unpaired_in_loop(size_type k,
@@ -384,8 +384,6 @@ namespace LocARNA {
 	 *
 	 * @note requires linking to librna
 	 * @see prob_unpaired_in_loop(), RnaData(const Sequence &sequence_, bool keepMcM), free_McCaskill_matrices()
-	 *
-	 * @todo get rid of pre-condition "exactly one row"
 	 */
 	void
 	compute_McCaskill_matrices();

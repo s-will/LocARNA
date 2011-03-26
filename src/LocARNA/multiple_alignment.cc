@@ -15,19 +15,23 @@ using namespace std;
 
 namespace LocARNA {
 
-MultipleAlignment::MultipleAlignment(std::istream &in) {
+    MultipleAlignment::MultipleAlignment(std::istream &in, format_t format) {
     if (!in.good()) {
-	throw(std::ifstream::failure("Cannot read input stream."));
+	throw(failure("Cannot read input stream."));
     }
 
-    read_aln_clustalw(in);
+    if (format==FASTA) {
+	read_aln_fasta(in);
+    } else {
+	read_aln_clustalw(in);
+    }	
 
     create_name2idx_map();
 }
 
 
 
-MultipleAlignment::MultipleAlignment(const std::string &filename) {
+MultipleAlignment::MultipleAlignment(const std::string &filename, format_t format) {
     try {
 	ifstream in(filename.c_str());
     
@@ -35,7 +39,12 @@ MultipleAlignment::MultipleAlignment(const std::string &filename) {
 	    throw(std::ifstream::failure("Cannot read file"+filename+"."));
 	}
 	
-	read_aln_clustalw(in);
+	if (format==FASTA) {
+	    read_aln_fasta(in);
+	} else {
+	    read_aln_clustalw(in);
+	}
+	
 	in.close();
     } catch (std::ifstream::failure e) {
 	throw failure("Cannot construct multiple alignment: "+(std::string)e.what());
@@ -176,6 +185,49 @@ MultipleAlignment::read_aln_clustalw(std::istream &in) {
 	alig.push_back( SeqEntry(*it,seq_map[*it]) );
     }
 }
+
+
+void
+MultipleAlignment::read_aln_fasta(std::istream &in) {
+        
+    std::string name;
+    std::string description;
+    std::string seqstr;
+    
+    std::string line;
+    
+    getline(in,line);
+    
+    while(in.good()) {
+	
+	if (line.length()>0) {
+	    
+	    if (line[0]=='>') {
+		std::istringstream sin(line);
+		sin.get(); // this eats '>'
+		sin >> name; // gets the first non-whitespace substring after '>' of the line
+		std::stringbuf sb;
+		sin.get(sb);
+		description=sb.str();
+	    }
+	    
+	    getline(in,line);
+	    while(in.good() && (line.size()==0 || line[0]!='>')) {
+		// remove whitespace and add to seqstr
+		std::istringstream sin(line);
+		seqstr="";
+		std::string seqstr1;
+		while(sin >> seqstr1) {
+		    seqstr += seqstr1;
+		}
+		getline(in,line);
+	    }
+	    
+	    alig.push_back( SeqEntry(name,description,seqstr) );
+	}
+    }
+}
+    
 
 bool
 MultipleAlignment::SeqEntry::is_gap_symbol(char c) {

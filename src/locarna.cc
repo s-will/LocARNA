@@ -7,8 +7,6 @@
  *
  * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
  *               2005-2011
- *  
- * @todo wrap command line parameter in a structure (like in locarna.cc)
  * 
  */
 
