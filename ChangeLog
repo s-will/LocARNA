@@ -251,6 +251,6 @@ Mar, 2011
 
 	Locarna accepts clustal files as input and then computes base pair
 	probabilities via pf_fold of the Vienna RNA lib. Currently this is
-	limited to single sequence clustal files. This functionality
-	should be extended to mfasta input files.
-	
+	limited to single sequence clustal files.
+	Implement reading of mfasta files (still switched off).
+
