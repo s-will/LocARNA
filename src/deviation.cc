@@ -15,14 +15,16 @@ VERSION_STRING = (std::string)PACKAGE_STRING;
 
 void usage() {
     std::cout 
-	<< "locarna_deviation - compute the deviation of an alignment to a reference alignemnt"<<std::endl<<std::endl
+	<< "locarna_deviation - compare an alignment to a reference alignment"<<std::endl<<std::endl
 	<< "Usage: deviation <aln-file> <ref-aln-file>"<<std::endl<<std::endl
 	<< "Options:"<<std::endl<<std::endl
 	<< " <aln-file>        alignment file in clustalw format" << std::endl<< std::endl
 	<< " <aln-ref-file>    reference alignment file in clustalw format" << std::endl<< std::endl
 	<< std::endl
 	<< "The sequences of <aln-file> have to be contained"<<std::endl
-	<< "in the alignment of <aln-ref-file>." << std::endl;
+	<< "in the alignment of <aln-ref-file>." << std::endl
+	<< std::endl
+	<< "In addition to the deviation, print match sps and shift score" << std::endl;
     
 }
 
@@ -47,7 +49,15 @@ main(int argc, char **argv) {
     MultipleAlignment ma((std::string)argv[1]);
     MultipleAlignment refma((std::string)argv[2]);
     
-    std::cout << refma.deviation(ma) << std::endl;
+    std::cout << "Deviation:     " << refma.deviation(ma) << std::endl;
     
+    std::cout << "Realig. score: " << refma.cmfinder_realignment_score(ma) << std::endl;
+    
+    std::cout << "Match SPS:     " << refma.sps(ma,false) << std::endl;
+
+    std::cout << "Compalign SPS: " << refma.sps(ma,true) << std::endl;
+
+    std::cout << "Deviation SPS: " << refma.avg_deviation_score(ma) << std::endl;
+
     exit(0);
 }

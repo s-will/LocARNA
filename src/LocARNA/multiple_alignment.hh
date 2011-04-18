@@ -323,7 +323,50 @@ public:
     //! @pre the sequences of ma have to occur in the alignment *this 
     size_type
     deviation(const MultipleAlignment &ma) const; 
+    
+    //! @brief Sum-of-pairs score between a multiple alignment and a reference alignment
+    //!
+    //! @param ma multiple alignment
+    //! @param compalign whether to compute score like compalign
+    //!
+    //! @return sum-of-pairs score of ma from reference alignment *this
+    //!
+    //! @note Whereas the sps score for compalign==FALSE
+    //! counts common matches only, the compalign score additionally
+    //! counts common indels.
+    //!
+    //! @pre the sequences of ma have to occur in the alignment *this 
+    double
+    sps(const MultipleAlignment &ma, bool compalign=true) const; 
+    
+    //! @brief Cmfinder realignment score of a multiple alignment to a reference alignment
+    //!
+    //! @param ma multiple alignment
+    //!
+    //! @return cmfinder realignment score of ma to reference alignment *this
+    //!
+    //! @note this score was defined in Elfar Torarinsson, Zizhen Yao,
+    //! Eric D. Wiklund, et al. Comparative genomics beyond
+    //! sequence-based alignments: RNA structures in the ENCODE
+    //! regions. Genome Res. 2008 (Section Realignment calculation)
+    //!
+    //! @pre the sequences of ma have to occur in the alignment *this 
+    double
+    cmfinder_realignment_score(const MultipleAlignment &ma) const; 
 
+    /** 
+     * Average deviation score
+     * 
+     * @param ma multiple alignment
+     * 
+     * @return average deviation fo alignment ma to reference alignment *this
+     *
+     * @pre the sequences of ma have to occur in the alignment *this 
+     */
+    double
+    avg_deviation_score(const MultipleAlignment &ma) const;
+
+    
 private:
     //! @brief Deviation of a pairwise alignment from a pairwise reference alignment
     //! @param a1 first alignment string of alignment a
@@ -338,6 +381,110 @@ private:
 	       const string1 &ref1,
 	       const string1 &ref2
 	       );
+
+    
+    /** 
+    * @brief Pairwise match score for calculation of match_sps
+    * 
+    * @param a1 row 1 of test alignment
+    * @param a2 row 2 of test alignment
+    * @param ref1 row 1 of reference alignment
+    * @param ref2 row 2 of reference alignment
+    * @param score_common_gaps whehter to score common gaps
+    * 
+    * @return alignment comparison match score for pairwise alignments (a1,a2) and (ref1,ref2)
+    *
+    * @see sps()
+    */
+    static
+    double
+    pairwise_match_score(const SeqEntry &a1,
+			 const SeqEntry &a2,
+			 const SeqEntry &ref1,
+			 const SeqEntry &ref2,
+			 bool score_common_gaps
+			 );
+
+    /** 
+     * @brief Determine matching positions for each string position
+     * 
+     * @param s string 1
+     * @param t string 2
+     * 
+     * @return vector v of length length(s+1), such that for each position i in s (1<=i<=|s|),
+     * v[i] is the matching position in t or -1 if there is no match.
+     */
+    static
+    std::vector<int>
+    match_vector(const string1 &s,
+		 const string1 &t);
+    
+    /** 
+     * @brief Determine matching positions for each string position
+     * 
+     * @param s string 1
+     * @param t string 2
+     * 
+     * @return vector v of length length(s+1), such that for each position i in s (1<=i<=|s|),
+     * v[i] is the matching position in t or the position after that i is deleted.
+     */
+    static
+    std::vector<int>
+    match_vector2(const string1 &s,
+		  const string1 &t);
+    
+
+
+
+    /** 
+     * Count matches in pairwise alignment
+     * 
+     * @param a1 alignment string 1
+     * @param a2 alignment string 2
+     * 
+     * @return number of matches
+     */
+    static
+    size_t
+    count_matches(const SeqEntry &a1,
+		  const SeqEntry &a2);
+    
+    /** 
+     * Count matches in pairwise alignment that do not occur in a second alignment
+     * 
+     * @param a1 alignment string 1
+     * @param a2 alignment string1 
+     * @param ref1 reference alignment string 1
+     * @param ref2 reference alignment string 1
+     * 
+     * @return number of matches exclusively in alignment a (and not in reference)
+     */
+    static
+    size_t
+    count_exclusive_matches(const SeqEntry &a1,
+			    const SeqEntry &a2,
+			    const SeqEntry &ref1,
+			    const SeqEntry &ref2
+			    );
+
+    /** 
+     * Average deviation score for pairwise alignment
+     * 
+     * @param a1 alignment string 1
+     * @param a2 alignment string1 
+     * @param ref1 reference alignment string 1
+     * @param ref2 reference alignment string 1
+     * 
+     * @return avg deviation score for alignment (a1,a2) from reference alignment (ref1,ref2)
+     */
+    static
+    double
+    pairwise_deviation_score(const SeqEntry &a1,
+			     const SeqEntry &a2,
+			     const SeqEntry &ref1,
+			     const SeqEntry &ref2
+			     );
+
 public:
 
     //! @brief Print contents of object to stream
