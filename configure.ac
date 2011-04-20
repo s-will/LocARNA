@@ -38,6 +38,20 @@ AC_ARG_WITH([vrna],
       )
 )
 
+####################
+## whether to link to RNAlib and offer corresponding features
+AC_MSG_CHECKING([whether to link Vienna RNA library])
+ENABLE_LIBRNA=no
+AC_ARG_ENABLE([librna],
+    AC_HELP_STRING(
+        [--enable-librna],
+        [enable linking to librna and corresponding features (def=disabled)]
+    ),
+    ENABLE_LIBRNA="$enableval"
+)
+AC_MSG_RESULT([$ENABLE_LIBRNA])
+
+
 # register Vienna programs as configuration variables
 AC_ARG_VAR([RNAfold],[RNAfold name (def=RNAfold)])
 AC_ARG_VAR([RNAplfold],[RNAplfold name (def=RNAplfold)])
@@ -59,19 +73,24 @@ if test "$RNAfold" = "false" -o "$RNAplfold" = "false" -o "$RNAalifold" = "false
     VRNA_OK=false
 fi
 
-# if --with-vrna given, add to flags for CPP and LD
-if test "$with_vrna" != "" ; then
-   LDFLAGS="-L$with_vrna/lib $LDFLAGS"
-   CPPFLAGS="-I$with_vrna/include $CPPFLAGS"
+# if we want linking to librna
+if test "$ENABLE_LIBRNA" = "yes" ; then
+   # if --with-vrna given, add to flags for CPP and LD
+   if test "$with_vrna" != "" ; then
+      LDFLAGS="-L$with_vrna/lib $LDFLAGS"
+      CPPFLAGS="-I$with_vrna/include $CPPFLAGS"
+   fi
+   
+   # Check for Vienna RNA library (primitive check for one header) 
+   AC_CHECK_HEADER("ViennaRNA/fold.h",
+		   [],
+ 		   [VRNA_OK=false])
+
+   ## link the Vienna library
+   LIBS="-lg2 -lRNA $LIBS"
+   
+   AC_DEFINE([HAVE_LIBRNA],[],[Whether librna is linked and available.])
 fi
-
-# Check for Vienna librna
-AC_CHECK_HEADER("ViennaRNA/fold.h",
-		[],
-		[VRNA_OK=false])
-
-## link the Vienna library
-LIBS="-lg2 -lRNA $LIBS"
 
 
 # ------------------------------
@@ -120,6 +139,7 @@ else
 fi
 
 CPPFLAGS="$CPPFLAGS -Wno-deprecated"
+
 
 
 ####################
@@ -191,4 +211,3 @@ fi
 
 
 AC_OUTPUT([src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/mlocarna Utils/locarnate Utils/aln2fa.pl])
-

@@ -9,11 +9,14 @@
 
 #include "multiple_alignment.hh"
 
+#ifdef HAVE_LIBRNA
 extern "C" {
+#include <ViennaRNA/fold_vars.h>
 #include <ViennaRNA/part_func.h>
 #include <ViennaRNA/fold.h>
 #include <ViennaRNA/utils.h>
 }
+#endif // HAVE_LIBRNA
 
 #include <math.h>
 #include <string.h>
@@ -31,6 +34,8 @@ namespace LocARNA {
 	read(file);
     }
     
+#ifdef HAVE_LIBRNA
+
     RnaData::RnaData(const Sequence &sequence_, bool keepMcM)
 	: sequence(sequence_),
 	  stacking(false),
@@ -56,10 +61,6 @@ namespace LocARNA {
 	if (!keepMcM) {
 	    free_McCaskill_matrices();
 	}
-    }
-
-    RnaData::~RnaData() {
-	free_McCaskill_matrices();
     }
     
     void
@@ -126,6 +127,14 @@ namespace LocARNA {
 	}
     }
     
+#endif // HAVE_LIBRNA
+
+    RnaData::~RnaData() {
+#     ifdef HAVE_LIBRNA	
+	free_McCaskill_matrices();
+#     endif
+    }
+
     
     // decide on file format and call either readPS or readPP
     void RnaData::read(const std::string &filename) {
@@ -147,9 +156,12 @@ namespace LocARNA {
 	    //} else if (s == "<ppml>") {
 	    // proprietary PPML file format
 	    //readPPML(filename);
+
+#ifdef HAVE_LIBRNA
 	} else if (s.substr(0,7) == "CLUSTAL" || s[0]=='>') {
 	    // assume multiple alignment format: read and compute base pair probabilities
 	    readMultipleAlignment(filename, false);
+#endif
 	} else {
 	    // try reading as PP-file (proprietary format, which is easy to read and contains pair probs)
 	    readPP(filename);
@@ -229,6 +241,8 @@ namespace LocARNA {
 	}
     }
 
+#ifdef HAVE_LIBRNA
+
     void RnaData::readMultipleAlignment(const std::string &filename, bool keepMcM) {
 	
 	//read to multiple alignment object
@@ -258,6 +272,23 @@ namespace LocARNA {
 	}
 	
     }
+
+    void
+    RnaData::init_from_McCaskill_bppm(double threshold) {
+	for( size_t i=1; i <= sequence.length(); i++ ) {
+	    for( size_t j=i+1; j <= sequence.length(); j++ ) {
+		
+		double p=McC_matrices->get_bppm(i,j);
+		
+		if (p >= threshold) { // apply very relaxed filter 
+		    set_arc_prob(i,j,p);
+		}
+	    }
+	}
+    }
+
+
+#endif // HAVE_LIBRNA
 
     void RnaData::readPP(const std::string &filename) {
 	std::ifstream in(filename.c_str());
@@ -327,19 +358,6 @@ namespace LocARNA {
 	}
     }
 
-    void
-    RnaData::init_from_McCaskill_bppm(double threshold) {
-	for( size_t i=1; i <= sequence.length(); i++ ) {
-	    for( size_t j=i+1; j <= sequence.length(); j++ ) {
-		
-		double p=McC_matrices->get_bppm(i,j);
-		
-		if (p >= threshold) { // apply very relaxed filter 
-		    set_arc_prob(i,j,p);
-		}
-	    }
-	}
-    }
 	
 
     /*

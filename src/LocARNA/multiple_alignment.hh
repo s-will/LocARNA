@@ -362,6 +362,9 @@ public:
      * @return average deviation fo alignment ma to reference alignment *this
      *
      * @pre the sequences of ma have to occur in the alignment *this 
+
+     * @note this is not the same as deviation (and may be even
+     * not very similar)!
      */
     double
     avg_deviation_score(const MultipleAlignment &ma) const;
@@ -476,6 +479,10 @@ private:
      * @param ref2 reference alignment string 1
      * 
      * @return avg deviation score for alignment (a1,a2) from reference alignment (ref1,ref2)
+     *
+     * @note This score averages over the differences of positions j_a and j_ref for all positions i
+     * and computes a sum-of-pairs score. In case i is matched to a gap between j^left and j^right,
+     * we define j as the average value (for j in {j_a, j_ref}).
      */
     static
     double

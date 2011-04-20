@@ -4,9 +4,21 @@
 #include <string>
 #include <iostream>
 
-extern "C" {
-#include <ViennaRNA/fold_vars.h>
-}
+/**
+ * @brief select FLT_OR_DBL
+ *
+ * @note By defining as double, we rely on Vienna package compiled
+ * with LARGE_PF (defined in fold_vars.h)
+ *
+ * @note By defining this here, we get rid of dependency of header
+ * file ViennaRNA/fold_vars.h
+ */
+#define FLT_OR_DBL double
+
+// extern "C" {
+// #include <ViennaRNA/fold_vars.h>
+// }
+
 
 #include "aux.hh"
 #include "sequence.hh"
@@ -48,7 +60,8 @@ namespace LocARNA {
 	std::string seq_constraints_; 
 
     protected:
-	
+
+#   ifdef HAVE_LIBRNA	
 	//! @brief  structure for McCaskill matrices pointers
 	//!
 	//! Contains pointers to matrices made accessible through
@@ -78,7 +91,11 @@ namespace LocARNA {
 	//! \brief Pointer to McCaskill matrices
 	//! @see compute_McCaskill_matrices()
 	McC_matrices_t *McC_matrices;
-	
+#   else
+	//! @note define even for !HAVE_LIBRNA to make code less cluttered
+	void *McC_matrices;
+#   endif // HAVE_LIBRNA
+
     public:
 	/** 
 	 * @brief Construct from file (either pp or dp_ps)
@@ -346,6 +363,11 @@ namespace LocARNA {
 		- prob_paired_downstream(i);
 	}
 
+	
+#   ifdef HAVE_LIBRNA
+	// the following methods need linking to librna
+
+
 	/** 
 	 * \brief Unpaired probabilty of base in a specified loop 
 	 * 
@@ -396,6 +418,8 @@ namespace LocARNA {
 	 */
 	void
 	free_McCaskill_matrices();
+
+#   endif // HAVE_LIBRNA
 
     
 	// ------------------------------------------------------------

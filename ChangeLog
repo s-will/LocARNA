@@ -254,3 +254,9 @@ Mar, 2011
 	limited to single sequence clustal files.
 	Implement reading of mfasta files (still switched off).
 
+Apr, 2011
+	Implement several alignment comparison measures (and use in locarna_deviation) (EXPERIMENTAL)
+
+	Make linking to Vienna librna configurable, default=off! Activate
+	by calling ./configure with --enable-librna.
+
