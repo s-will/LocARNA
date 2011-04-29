@@ -267,3 +267,6 @@ Apr, 2011
 	pp to Vienna-like dot plot postscript files) and should help to
 	improve the default strategy (otherwise we are going to replace
 	it!)
+
+	mlocarna accepts via --tree-file a super-tree as guide tree and
+	automatically projects to the taxa in the input.

@@ -1343,6 +1343,7 @@ sub perform_multiple_alignment($) {
 	$tree =~ s/:[\d.e-]+\s*$//g;
 	
 	close TREE;
+	
     } elsif ($#names == 1) { # for only two sequences, tree is unique
 	$tree="($names[0],$names[1])";
     } else {
@@ -1373,19 +1374,35 @@ sub perform_multiple_alignment($) {
 	
     } # end generation of tree
 
+    
     open(TREE,">$results_dir/result.tree")|| die "Cannot write to $tgtdir/result.tree";
     print TREE "$tree\n";
     close TREE;
 
-    my @tree_postorder = newick_tree_to_postorder($tree);
-        
+    my $tree_postorder = newick_tree_to_postorder($tree);
+
+    if (defined($tree_file)) {
+	## check whether tree contains all names in the input file and project tree to these names
+	
+	if (! check_tree_labels($tree_postorder,\@names) ) {
+	    print STDERR "ERROR: given guide tree (--treefile) does not contain all names in the input.\n";
+	    exit(-1);
+	}
+	print "Tree: @$tree_postorder\n";
+
+	$tree_postorder = project_tree($tree_postorder,\@names);
+	
+	print "Projected tree: @$tree_postorder\n";
+	exit 0;
+    }
+    
     ## ----------------------------------------
     # progressive alignment along the guide tree
     #
     printmsg 3, "Perform progressive alignment ...\n";
 
     my $current_alignment_name =
-	perform_progressive_steps(\@tree_postorder,\%bmprobs,\%amprobs);
+	perform_progressive_steps($tree_postorder,\%bmprobs,\%amprobs);
 
     ## ----------------------------------------
     ## copy results to files result_prog.aln and result_prog.pp
@@ -1433,7 +1450,7 @@ sub perform_multiple_alignment($) {
     if (defined($iterations) && ($iterations>0)) {
  	printmsg 3, "Perform iterative refinement ...\n";
 
-	$current_alignment_name = perform_iterative_refinement($current_alignment_name,\@tree_postorder,\@names,\%bmprobs,\%amprobs);
+	$current_alignment_name = perform_iterative_refinement($current_alignment_name,$tree_postorder,\@names,\%bmprobs,\%amprobs);
     }
     
     ### DONE iterative refinement
@@ -2346,12 +2363,11 @@ sub compute_all_pairwise_alignments_par($$$$) {
 ## needs bmprobs, amprobs in probabilistic mode
 ##
 sub perform_progressive_steps($$$) {
-    my ($tree_postorder_ref,$bmprobs_ref,$amprobs_ref)=@_;    
-    my @tree_postorder = @{ $tree_postorder_ref };
+    my ($tree_postorder,$bmprobs_ref,$amprobs_ref)=@_;    
     
     my @stack=();
         
-    for my $item (@tree_postorder) {
+    for my $item (@$tree_postorder) {
 	if ($item eq $MLocarna::Trees::node_sym) {
 	    # align two topmost stack entrys and push result
 	    my $op1 = $stack[$#stack-1];
@@ -2426,15 +2442,14 @@ sub perform_iterative_refinement {
 ## @returns file name of result and alignment quality
 ##
 sub perform_iterative_refinement_one_round($$$$$) {
-    my ($current_alignment_name,$current_aliquality,$tree_postorder_ref,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+    my ($current_alignment_name,$current_aliquality,$tree_postorder,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
     
     my $round_aliquality = $current_aliquality;
     
     my @names = @{ $names_ref };
 
-    my @tree_postorder = @{ $tree_postorder_ref };
 
-    my $partitions = tree_partitions(\@tree_postorder);
+    my $partitions = tree_partitions($tree_postorder);
     
     foreach my $namesA_ref (@$partitions) {
 	my @namesA = @{ $namesA_ref };

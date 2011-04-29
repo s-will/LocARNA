@@ -22,6 +22,8 @@ our @EXPORT      = qw(
 upgma_tree
 newick_tree_to_postorder
 tree_partitions
+check_tree_labels
+project_tree
 );
 
 our %EXPORT_TAGS = ();
@@ -169,7 +171,7 @@ sub tree_partitions($) {
 ##
 ## $tree string in newick tree format 
 ##
-## returns list of nodes/leaves in postorder, use $node_sym for inner nodes
+## returns ref to list of nodes/leaves in postorder, use $node_sym for inner nodes
 ##
 ## dies if tree is not parsable
 ##
@@ -207,5 +209,72 @@ sub newick_tree_to_postorder {
 	}
     }
 
-    return @list;
+    return \@list;
+}
+
+
+########################################
+## check whether a tree contains a set of labels
+##
+## @param $tree ref to tree in postorder 
+## @param labels ref to list of labels
+sub check_tree_labels {
+    my ($tree,$labels) = @_;
+    
+    my %existing_labels;
+    
+    foreach my $i (@$tree) {
+	$existing_labels{$i}=1;
+    }
+    
+    foreach my $i (@$labels) {
+	if (!exists $existing_labels{$i}) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+########################################
+## project a tree to a set of labels
+##
+## @param $tree ref to tree in postorder 
+## @param labels ref to list of labels
+## 
+## @returns tree in postorder that is a sub-tree of @$tree
+## and contains exactly the labels @$labels
+
+sub project_tree {
+    my ($tree,$labels) = @_;
+    
+    my @stack;
+
+    foreach my $item (@$tree) {
+	my @list=();
+	
+	if ($item eq $node_sym) {
+	    my @x = @{ $stack[-2] };
+	    my @y = @{ $stack[-1] };
+	    $#stack-=2;
+	    
+	    if (@x==0 && @y==0) {
+		@list = ();
+	    } elsif (@x==0) {
+		@list = @y;
+	    } elsif (@y==0) {
+		@list = @x;
+	    } else {
+		@list=(@x,@y,$node_sym);
+	    }
+	} else {
+	    @list=();
+	    if (grep (/^$item$/, @$labels)!=0) {
+		@list=($item);
+	    }
+	}
+	push @stack, [ @list ];
+    }
+    
+    return $stack[0];
 }
