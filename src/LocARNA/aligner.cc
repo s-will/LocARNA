@@ -1163,12 +1163,12 @@ Aligner::trace_in_arcmatch(int state,int al,int i,int bl,int j,bool tl,ScoringVi
     //pre: M matrices for arc computed
     M_matrix_t &M=Ms[state];
 
-    /*
-    string state_text[]={"E_NO_NO", "E_X_NO", "E_NO_X", "E_X_X",
-			 "E_OP_NO", "E_NO_OP", "E_OP_X", "E_X_OP"};
-    cout << "trace_in_arcmatch "<<state_text[state]<<" al:"<<al<<" i:"<<i
-	 <<" bl:"<<bl<<" j:"<<j<<" :: "<< M(i,j) <<endl;
-    */
+    
+    // string state_text[]={"E_NO_NO", "E_X_NO", "E_NO_X", "E_X_X",
+    // 			 "E_OP_NO", "E_NO_OP", "E_OP_X", "E_X_OP"};
+    // cout << "trace_in_arcmatch "<<state_text[state]<<" al:"<<al<<" i:"<<i
+    // 	 <<" bl:"<<bl<<" j:"<<j<<" :: "<< M(i,j) <<endl;
+    
     
     assert(params->trace_controller.is_valid(i,j));
     

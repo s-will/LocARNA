@@ -31,6 +31,7 @@ read_dp_ps
 read_pp_file_aln
 read_pp_file_pairprobs
 convert_dp_to_pp_with_constraints
+convert_alifold_dp_to_pp
 compute_alifold_structure
 constrain_sequences
 
@@ -607,6 +608,44 @@ sub convert_dp_to_pp_with_constraints($$$$$$) {
     close PP_OUT;
 }
 
+########################################
+## convert alifold dot plot to pp file
+##
+## @param dot plot file
+## @param clustalw alignment file
+## @param pp output file
+##
+sub convert_alifold_dp_to_pp( $$$ ) {
+    my ($dpfile,$alnfile,$ppfile) = @_;
+    
+    my $aln = read_clustalw_alnloh($alnfile);
+    
+    my $PP_OUT;
+    my $DP_IN;
+
+    open($PP_OUT,">$ppfile") || die "Cannot open $ppfile for writing."; 
+    open($DP_IN,"$dpfile") || die "Cannot open $dpfile for reading."; 
+    
+    print $PP_OUT "SCORE: 0\n\n";
+    
+    ## copy alignment from alnfile
+    write_clustalw_alnloh($PP_OUT, $aln, 75, 0);
+
+    print $PP_OUT "\n\#\n";
+    
+    while (my $line=<$DP_IN>) {
+	if ($line =~ /(\d+) (\d+) ([\d\.]+) ubox/) {
+	    my $i=$1;
+	    my $j=$2;
+	    my $p=$3*$3; 
+
+	    print $PP_OUT "$i $j $p\n";
+	}
+    }
+    close $DP_IN;    
+    close $PP_OUT;
+}
+
 
 ## compute pairwise alignment for given sequences using RNAfold -p for generating dps
 sub compute_alignment($$$$$) {
@@ -1098,9 +1137,12 @@ sub write_clustalw_alnloh {
     my $fh    = shift;
     my $aln   = shift;
     my $width = shift;
-
-    print $fh "CLUSTAL W --- $PACKAGE_STRING\n\n\n"; #  - Local Alignment of RNA
+    my $write_header = shift;
     
+    if (!defined($write_header) || $write_header==1 ) { 
+	print $fh "CLUSTAL W --- $PACKAGE_STRING\n\n\n"; #  - Local Alignment of RNA
+    }
+
     my $maxlen=0;
     ## determine longest name
     foreach my $seq (@$aln) {

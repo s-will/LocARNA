@@ -1,0 +1,91 @@
+#!@PERL@ -I@prefix@/lib/perl
+# -*- perl -*-
+
+=head1 NAME
+
+pp2dot
+
+=head1 SYNOPSIS
+
+pp2dot infile.pp outfile_dp.ps
+
+=head1 DESCRIPTION
+
+Convert a pp file to a dot plot file (like produced by RNAfold -p).
+pp is a locarna proprietary format for representing dot plots.  Reads
+pp file from infile.pp and write dotplot file to outputfile_dp.ps
+
+=head1 OPTIONS
+
+=over 1
+
+=item  B<--help>                        Brief help message
+
+=item  B<--man>                         Full documentation
+
+=back
+
+
+=cut
+
+
+use MLocarna;
+use MLocarna::Aux;
+use MLocarna::MatchProbs;
+
+use strict;
+use warnings;
+
+use Cwd 'abs_path';
+
+## ------------------------------------------------------------
+## global constants
+
+
+$MLocarna::PACKAGE_STRING="@PACKAGE_STRING@";
+
+my $prefix = "@prefix@";
+my $exec_prefix = "@exec_prefix@";
+my $bindir = "@bindir@";
+
+
+##------------------------------------------------------------
+## options
+use Getopt::Long;
+use Pod::Usage;
+
+my $help;
+my $man;
+
+my $name="seq";
+
+## Getopt::Long::Configure("no_ignore_case");
+
+GetOptions(	   
+    "help"=> \$help,
+    "man" => \$man,
+    "name=s" => \$name
+    ) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+my $inputfile = $ARGV[0];
+if (!defined($inputfile)) {
+    print STDERR "Please specify input file.\n";
+    pod2usage(-exitstatus => -1, -verbose => 1);
+}
+
+my $outputfile = $ARGV[1];
+if (!defined($outputfile)) {
+    print STDERR "Please specify output file.\n";
+    pod2usage(-exitstatus => -1, -verbose => 1);
+}
+
+## ------------------------------------------------------------
+## main part
+
+my %pairprobs = read_pp_file_pairprobs("$inputfile");
+my %aln = read_pp_file_aln("$inputfile");
+
+write_dotplot("$outputfile",consensus_sequence(\%aln),\%pairprobs);

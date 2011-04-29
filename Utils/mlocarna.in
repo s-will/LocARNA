@@ -103,6 +103,16 @@ existing. Non-existing ones are still computed.
 
 =over 4
 
+=item B<--alifold-consensus-dp>
+
+Employs B<RNAalifold -p> for generating consensus dotplot after each
+progressive alignment step. This replaces the default consensus
+dotplot computation, which averages over the input dot plots.  This
+method should be used with care in combination with structural
+constraints, since it ignores them for all but the pairwise alignments
+of single sequences. Furthermore, note that it does not support
+B<--stacking>.
+
 =item B<--max-diff-aln=<file>> 
 
 Restrict maximal difference to the alignment in <file> in clustalw
@@ -433,6 +443,8 @@ my $width;
 
 my $max_diff_aln;
 
+my $alifold_consensus_dp;
+
 Getopt::Long::Configure("no_ignore_case");
 
 my %options_hash=
@@ -454,6 +466,9 @@ my %options_hash=
      
      "skip-pp" => \$skip_pp,
 
+     ## consensus dot plot computation
+     "alifold-consensus-dp" => \$alifold_consensus_dp,
+     
      ## realigning
      
      "max-diff-aln" => \$max_diff_aln,
@@ -565,6 +580,8 @@ my @options = #options that are not or not automatically passed to locarna
      "extlib",
      
      "skip-pp",
+
+     "alifold-consensus-dp",
      
      "max-diff-aln=s",
 
@@ -1124,7 +1141,7 @@ sub compute_and_write_reliabilities {
     write_am_reliabilities("$tgtdir/$results_dir/result.amreliability",$amrels_ref);
 
     write_dotplot("$tgtdir/$results_dir/reldot.ps",consensus_sequence(\%aln),$amrels_ref);
-	
+    
     if ($consistency_transformation) {
 	
 	my ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref) 
@@ -1652,7 +1669,7 @@ sub call_locarna( $$$ ) {
     printmsg 2, "Align $inA + $inB --> $tgt\n";
     
     my $cmd="$bindir/locarna $inA $inB $locarna_params --pp=$tgt.pp --clustal=$tgt.aln";
-     
+    
     $cmd.=" ".reference_alignment_option($refaln_filename);
    
     if (! $moreverbose) { $cmd.=">/dev/null"; }
@@ -1663,6 +1680,39 @@ sub call_locarna( $$$ ) {
 	|| die "Cannot execute locarna\n";
     
     system "cat $tgt.aln | grep -v '^CLUSTAL --- LocARNA'" if $verbose;
+
+    
+    ## optionally, recompute the consensus dot plot using alifold
+    if ($alifold_consensus_dp) {
+
+	## determine version of alifold
+	my $alifold_version=readpipe("$MLocarna::RNAalifold --version");
+	
+	if (grep /RNAalifold 2/, $alifold_version) {
+	    $alifold_version=2;
+	} else {
+	    $alifold_version=1;
+	}
+	
+	$cmd="$MLocarna::RNAalifold -r -p";
+	if ($noLP) {
+	    if ($alifold_version==2) {
+		$cmd .=" --noLP";
+	    } else {
+		$cmd .=" -noLP";
+	    }
+	}
+	$cmd .= " $tgt.aln";
+	
+	if (! $moreverbose) { $cmd.=" >/dev/null 2>&1"; }
+	
+	printmsg 1, "CALL: $cmd\n";
+	printmsg 1, "\n";
+	system($cmd)==0
+	    || die "Cannot execute RNAalifold\n";
+	
+	convert_alifold_dp_to_pp("alidot.ps","$tgt.aln","$tgt.pp");
+    }
 }
 
 
@@ -2551,11 +2601,20 @@ sub is_aln_of_seqs {
 		my $alnseqstr = $alnseq->{seq};
 		$alnseqstr =~ tr/~.-//d;
 		$alnseqstr = uc $alnseqstr;
-		
+		$alnseqstr =~ s/T/U/g;
+
 		my $seqstr=$seq->{seq};
 		$seqstr = uc $seqstr;
-		
+		$seqstr =~ s/T/U/g;
+
 		$found = ( $alnseqstr eq $seqstr );
+		
+		if ($verbose && !$found) {
+		    print STDERR "Warning: name match ($seq->{name}) but sequence clash between input and reference alignment!";
+		    print STDERR "  Reference: $alnseqstr\n";
+		    print STDERR "  Input    : $alnseqstr\n";
+		}
+
 		last;
 	    }
 	}

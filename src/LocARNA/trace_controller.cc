@@ -65,11 +65,12 @@ namespace LocARNA {
 	const SeqEntry &aliA=ali.first;
 	const SeqEntry &aliB=ali.second;
 
-	std::cout << pseqA.seq().to_string() << std::endl
-		  << aliA.seq().to_string() << std::endl
-		  << aliB.seq().to_string() << std::endl
-		  << pseqB.seq().to_string() << std::endl;
-
+	
+	// std::cout << pseqA.seq().to_string() << std::endl
+	// 	  << aliA.seq().to_string() << std::endl
+	// 	  << aliB.seq().to_string() << std::endl
+	// 	  << pseqB.seq().to_string() << std::endl;
+	
 	size_t lenAli = aliA.seq().length();
 	size_t lenA = pseqA.length_wogaps();
 	size_t lenB = pseqB.length_wogaps();

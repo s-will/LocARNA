@@ -260,3 +260,10 @@ Apr, 2011
 	Make linking to Vienna librna configurable, default=off! Activate
 	by calling ./configure with --enable-librna.
 
+	New strategy for consensus dot plot generation: employ RNAalifold
+	-p.  Enable via mlocarna's option --alifold-consensus-dp Note: the
+	default consensus dot plot computation seems to be flawed! The new
+	tool pp2dot allows to visualize consensus dot plots (by converting
+	pp to Vienna-like dot plot postscript files) and should help to
+	improve the default strategy (otherwise we are going to replace
+	it!)
