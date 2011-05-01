@@ -1388,12 +1388,11 @@ sub perform_multiple_alignment($) {
 	    print STDERR "ERROR: given guide tree (--treefile) does not contain all names in the input.\n";
 	    exit(-1);
 	}
-	print "Tree: @$tree_postorder\n";
+	#print "Tree: @$tree_postorder\n";
 
 	$tree_postorder = project_tree($tree_postorder,\@names);
 	
-	print "Projected tree: @$tree_postorder\n";
-	exit 0;
+	#print "Projected tree: @$tree_postorder\n";
     }
     
     ## ----------------------------------------
