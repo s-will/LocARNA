@@ -230,7 +230,6 @@ public:
     //! @param sequence the sequence 
     MultipleAlignment(const Sequence &sequence);
     
-    
     //! \brief Construct as pairwise alignment from names and strings
     //! @param nameA name of sequence A
     //! @param nameB name of sequence B

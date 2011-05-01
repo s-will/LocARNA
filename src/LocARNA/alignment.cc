@@ -1,10 +1,20 @@
 #include <math.h>
+#include <string.h>
 
 #include "alignment.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
 #include "scoring.hh"
 #include "anchor_constraints.hh"
+#include "multiple_alignment.hh"
+
+#ifdef HAVE_LIBRNA
+extern "C" {
+#  include "ViennaRNA/data_structures.h"
+#  include "ViennaRNA/fold_vars.h"
+#  include "ViennaRNA/alifold.h"
+}
+#endif
 
 namespace LocARNA {
 
@@ -164,9 +174,15 @@ namespace LocARNA {
       write pp output, which can be reread for progressive alignment!
     */
 
-    void Alignment::write_pp(std::ostream &out, const BasePairs &bpsA, const BasePairs &bpsB, const Scoring &scoring, const AnchorConstraints &seqConstraints, int width) const { 
-	// wir wollen für A und B jeweils eine Abbildung von Alignmentspalte auf Sequenzposition,
-  
+    void Alignment::write_pp(std::ostream &out,
+			     const BasePairs &bpsA,
+			     const BasePairs &bpsB,
+			     const Scoring &scoring, 
+			     const AnchorConstraints &seqConstraints, 
+			     int width,
+			     bool use_alifold) const { 
+
+
 	size_type alisize = a_.size();
 
 	int lastA=1; // bases consumed in sequence A
@@ -252,6 +268,97 @@ namespace LocARNA {
     
 	out <<"#"<<std::endl;
 
+#    ifdef HAVE_LIBRNA
+	if (use_alifold) {
+	    double p_minA = bpsA.prob_min();
+	    double p_minB = bpsB.prob_min();    
+	    double p_minMean =
+		exp(
+		    (log(p_minA)*seqA_.row_number()
+		     + log(p_minB)*seqB_.row_number())
+		    / (seqA_.row_number() + seqB_.row_number())
+		    );
+	    
+	    write_alifold_consensus_dot_plot(out,p_minMean);
+	    return;
+	}
+#    endif
+
+	assert(use_alifold==false /*HAVE_LIBRNA undefined*/);
+	write_consensus_dot_plot(out,aliA,aliB,bpsA,bpsB,scoring);
+
+    }
+
+#ifdef HAVE_LIBRNA
+    void
+    Alignment::write_alifold_consensus_dot_plot(std::ostream &out, double cutoff) const {
+	char **sequences;
+	
+	plist *pl;
+	
+	// set some global variables that control alifold behavior
+	RibosumFile = NULL;
+	ribo = 1; //activate ribosum scoring
+	cv_fact=0.6; // best values for ribosum scoring according to RNAalifold man page
+	nc_fact=0.5;
+	dangles=2;
+	oldAliEn = 0;
+
+	// construct sequences array from sequences in alignment
+	MultipleAlignment ma(*this); // generate multiple alignment from alignment object
+	sequences = new char *[ma.size()+1];
+	for (size_t i=0; i<ma.size(); i++) {
+	    sequences[i] = new char[ma.length()+1];
+	    // copy ma row to sequences[i]
+	    strcpy(sequences[i],ma.seqentry(i).seq().to_string().c_str());
+	}
+	sequences[ma.size()]=NULL;
+	
+	int length = strlen(sequences[0]);
+	char *structure = new char[length+1];
+	
+	// estimate nice scaling factor
+	double min_en = alifold((const char **)sequences, structure);
+		
+	double sfact         = 1.07; // from RNAalifold.c code
+	
+	double kT = (temperature+273.15)*1.98717/1000.; /* in Kcal */
+	pf_scale = exp(-(sfact*min_en)/kT/length); // set global variable
+	
+	// call ali pf fold
+	double energy = alipf_fold((const char **)sequences,structure,&pl);
+	
+	// read the pair_info structures from array pl
+	// and write the base pair probabilities to out
+	//
+	for(plist *pair=pl; pair->i!=0 && pair->j!=0; pair++) {
+	    if ( pair->p  >  cutoff ) {
+		out << pair->i << " " 
+		    << pair->j << " "
+		    << pair->p << std::endl;
+	    }
+	}
+
+	// free heap space
+	delete structure;
+	for (size_t i=0; i<ma.size(); i++) {
+	    delete sequences[i];
+	}
+	delete sequences;
+	
+	free(pl);
+	free_alifold_arrays();
+    }
+#endif
+    
+    void
+    Alignment::write_consensus_dot_plot(std::ostream &out,
+					const plusvector<int> &aliA,
+					const plusvector<int> &aliB,
+					const BasePairs &bpsA,
+					const BasePairs &bpsB,
+					const Scoring &scoring 
+					) const {
 	int lenA=seqA_.length();
 	int lenB=seqB_.length();
     
@@ -293,14 +400,14 @@ namespace LocARNA {
 			(aliA[i]<0 || aliA[j]<0)
 			? 0
 			: bpsA.get_arc_2_prob(aliA[i], aliA[j]);
-		
+		    
 		    double st_pB = 
 			(aliB[i]<0 || aliB[j]<0)
 			? 0
 			: bpsB.get_arc_2_prob(aliB[i], aliB[j]);
-		
+		    
 		    double st_p = average_probs(st_pA,st_pB,p_minMean,p_expA,p_expB);
-		
+		    
 		    if (p > p_minMean || st_p > p_minMean) {
 			out << i+1 << " " << j+1 << " " << p << " " << st_p <<std::endl;
 			// std::cerr << p <<" <- "<<pA<<","<<pB<<" : "<<p_minA<<","<<p_minB<<";"<<p_minMean<<std::endl;

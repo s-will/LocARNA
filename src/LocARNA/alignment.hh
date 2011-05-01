@@ -115,15 +115,29 @@ namespace LocARNA {
 	average_probs(double pA, double pB, double p_min,
 		      double p_expA, double p_expB) const;
 	
-	/**
-	   Write in pp format
-	*/
+	/** 
+	 * @brief Write pp format to stream
+	 *
+	 * In addition to writing the alignment, this method computes
+	 * consensus anchor constraints and the consensus dot plot and
+	 * writes them to the output
+	 * 
+	 * @param out output stream
+	 * @param bpsA base pairs for sequence A
+	 * @param bpsB base pairs for sequence B
+	 * @param scoring scoring object
+	 * @param seq_constraints sequence constraints
+	 * @param width output width
+	 * @param use_alifold whether to use alifold for consensus dot plot computation
+	 */
 	void write_pp(std::ostream &out,
 		      const BasePairs &bpsA,
 		      const BasePairs &bpsB,
 		      const Scoring &scoring, 
 		      const AnchorConstraints &seq_constraints, 
-		      int width) const;
+		      int width,
+		      bool use_alifold=false
+		      ) const;
 
 	//! get first position of A that is locally aligned to something
 	size_type get_local_startA() const {return a_[0];}
@@ -158,7 +172,23 @@ namespace LocARNA {
 	//! vector b is the vector of second components of the aligment
 	//! edges. Entries are positions of sequence B or -1 for gap
 	const std::vector<int> &get_b() const {return b_;} 
-
+	
+    private:
+	void
+	write_consensus_dot_plot(std::ostream &out,
+				 const plusvector<int> &aliA,
+				 const plusvector<int> &aliB,
+				 const BasePairs &bpsA,
+				 const BasePairs &bpsB,
+				 const Scoring &scoring
+				 ) const;
+	
+#ifdef HAVE_LIBRNA
+	void
+	write_alifold_consensus_dot_plot(std::ostream &out,
+					 double cutoff) const;
+#endif
+	
     };
 
 }

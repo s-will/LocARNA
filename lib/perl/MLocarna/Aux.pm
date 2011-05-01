@@ -206,7 +206,7 @@ sub consensus_sequence {
 	my $best=-1;
 	my $best_sym="_";
 	foreach my $sym (keys %counts) {
-	    if ($counts{$sym} > $best) {
+	    if (($counts{$sym} > $best) || (($counts{$sym} == $best) && $sym eq "-")) {
 		$best = $counts{$sym};
 		$best_sym=$sym;
 	    }

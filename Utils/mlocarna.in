@@ -467,7 +467,7 @@ my %options_hash=
      "skip-pp" => \$skip_pp,
 
      ## consensus dot plot computation
-     "alifold-consensus-dp" => \$alifold_consensus_dp,
+     # "alifold-consensus-dp" => \$alifold_consensus_dp,
      
      ## realigning
      
@@ -581,7 +581,7 @@ my @options = #options that are not or not automatically passed to locarna
      
      "skip-pp",
 
-     "alifold-consensus-dp",
+#     "alifold-consensus-dp",
      
      "max-diff-aln=s",
 
@@ -677,7 +677,7 @@ my @autopass_arg_options =
      "pf-struct-weight=i"
     );
 
-my @autopass_noarg_options = ( "max-diff-relax" );
+my @autopass_noarg_options = ( "max-diff-relax", "alifold-consensus-dp" );
 
 # -----------------------------------
 # some default values
@@ -1686,9 +1686,9 @@ sub call_locarna( $$$ ) {
     
     my $cmd="$bindir/locarna $inA $inB $locarna_params --clustal=$tgt.aln";
     
-    $cmd .= " --pp=$tgt.pp" unless $alifold_consensus_dp;
+    $cmd .= " --pp=$tgt.pp";# unless $alifold_consensus_dp;
     
-    $cmd.=" ".reference_alignment_option($refaln_filename);
+    $cmd .= " ".reference_alignment_option($refaln_filename);
    
     if (! $moreverbose) { $cmd.=">/dev/null"; }
     
@@ -1700,37 +1700,37 @@ sub call_locarna( $$$ ) {
     system "cat $tgt.aln | grep -v '^CLUSTAL --- LocARNA'" if $verbose;
 
     
-    ## optionally, recompute the consensus dot plot using alifold
-    if ($alifold_consensus_dp) {
+    # ## optionally, recompute the consensus dot plot using alifold
+    # if ($alifold_consensus_dp) {
 
-	## determine version of alifold
-	my $alifold_version=readpipe("$MLocarna::RNAalifold --version");
+    # 	## determine version of alifold
+    # 	my $alifold_version=readpipe("$MLocarna::RNAalifold --version");
 	
-	if (grep /RNAalifold 2/, $alifold_version) {
-	    $alifold_version=2;
-	} else {
-	    $alifold_version=1;
-	}
+    # 	if (grep /RNAalifold 2/, $alifold_version) {
+    # 	    $alifold_version=2;
+    # 	} else {
+    # 	    $alifold_version=1;
+    # 	}
 	
-	$cmd="$MLocarna::RNAalifold -r -p";
-	if ($noLP) {
-	    if ($alifold_version==2) {
-		$cmd .=" --noLP";
-	    } else {
-		$cmd .=" -noLP";
-	    }
-	}
-	$cmd .= " $tgt.aln";
+    # 	$cmd="$MLocarna::RNAalifold -r -p";
+    # 	if ($noLP) {
+    # 	    if ($alifold_version==2) {
+    # 		$cmd .=" --noLP";
+    # 	    } else {
+    # 		$cmd .=" -noLP";
+    # 	    }
+    # 	}
+    # 	$cmd .= " $tgt.aln";
 	
-	if (! $moreverbose) { $cmd.=" >/dev/null 2>&1"; }
+    # 	if (! $moreverbose) { $cmd.=" >/dev/null 2>&1"; }
 	
-	printmsg 1, "CALL: $cmd\n";
-	printmsg 1, "\n";
-	system($cmd)==0
-	    || die "Cannot execute RNAalifold\n";
+    # 	printmsg 1, "CALL: $cmd\n";
+    # 	printmsg 1, "\n";
+    # 	system($cmd)==0
+    # 	    || die "Cannot execute RNAalifold\n";
 	
-	convert_alifold_dp_to_pp("alidot.ps","$tgt.aln","$tgt.pp");
-    }
+    # 	convert_alifold_dp_to_pp("alidot.ps","$tgt.aln","$tgt.pp");
+    # }
 }
 
 
