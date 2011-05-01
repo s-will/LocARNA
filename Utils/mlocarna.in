@@ -1684,7 +1684,9 @@ sub call_locarna( $$$ ) {
     
     printmsg 2, "Align $inA + $inB --> $tgt\n";
     
-    my $cmd="$bindir/locarna $inA $inB $locarna_params --pp=$tgt.pp --clustal=$tgt.aln";
+    my $cmd="$bindir/locarna $inA $inB $locarna_params --clustal=$tgt.aln";
+    
+    $cmd .= " --pp=$tgt.pp" unless $alifold_consensus_dp;
     
     $cmd.=" ".reference_alignment_option($refaln_filename);
    
