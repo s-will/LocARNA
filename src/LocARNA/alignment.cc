@@ -317,13 +317,18 @@ namespace LocARNA {
 	int length = strlen(sequences[0]);
 	char *structure = new char[length+1];
 	
-	// estimate nice scaling factor
-	double min_en = alifold((const char **)sequences, structure);
+	// estimate specific scaling factor only for large instances
+	if (length > 1000) {
+	    // estimate nice scaling factor
+	    double min_en = alifold((const char **)sequences, structure);
 		
-	double sfact         = 1.07; // from RNAalifold.c code
-	
-	double kT = (temperature+273.15)*1.98717/1000.; /* in Kcal */
-	pf_scale = exp(-(sfact*min_en)/kT/length); // set global variable
+	    double sfact         = 1.07; // from RNAalifold.c code
+	    
+	    double kT = (temperature+273.15)*1.98717/1000.; /* in Kcal */
+	    pf_scale = exp(-(sfact*min_en)/kT/length); // set global variable
+	} else {
+	    pf_scale = 1.0;
+	}
 	
 	// call ali pf fold
 	double energy = alipf_fold((const char **)sequences,structure,&pl);
