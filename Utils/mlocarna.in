@@ -334,6 +334,8 @@ my $RNAfold = "@RNAfold@";
 my $RNAplfold = "@RNAplfold@";
 $MLocarna::RNAalifold = "@RNAalifold@";
 
+## test whether rnafold_pp is working
+my $HAVE_RNAFOLD_PP = readpipe("$bindir/locarna_rnafold_pp --TEST");
 
 my $input_dir="input";
 my $probs_dir="probs";
@@ -2135,12 +2137,42 @@ sub compute_dotplot($$) {
     }
 
     my $tmpname = threadsafe_name("$global_tmpname");
-        
-    $RNAfold_args.=" >/dev/null" unless $verbose;
+
+    my $constraints;
+    if (! $ignore_constraints) {
+	$constraints = sequence_constraint_string($seqs->[$i]);
+    }
     
     my $name = $seqs->[$i]->{name}; # the name of the sequence
     
-    if ( $skip_pp && -e ("$input_dir/".get_normalized_seqname($name)) ) {
+    my $ppname="$input_dir/".get_normalized_seqname($name);
+    
+    
+    ## decide whether we can use locarna_rnafold_pp as a short cut for
+    ## generating pp files by setting these variables:
+    my $RNAfoldp;
+    my $RNAfoldp_redirect="";
+    my $convert_to_pp=1;
+    my $seqname;
+    ##
+    if ($HAVE_RNAFOLD_PP && ($RNAfold_args eq "") && (!defined($plfold_span)) 
+	&& (!$stacking) && ((! defined($constraints)) || ($constraints eq ""))) {
+	$RNAfoldp = "$bindir/locarna_rnafold_pp -p $min_prob ";
+	$convert_to_pp=0;
+	$RNAfoldp_redirect=" > $ppname";
+	$seqname=$name;
+    } else {
+	$RNAfold_args.=" >/dev/null" unless $verbose;
+	$seqname=$tmpname;
+	if (! defined($plfold_span)) {
+	    $RNAfoldp = "$RNAfold -p2 $RNAfold_args";
+	} else {
+	    $RNAfoldp = "$RNAplfold -L $plfold_span -W $plfold_winsize $RNAfold_args";
+	}
+    }
+    
+    
+    if ( $skip_pp && -e ($ppname) ) {
 	# print "Skip $name\n";
         # skip
     } else {
@@ -2163,15 +2195,9 @@ sub compute_dotplot($$) {
 	    if ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#S"}) {
 		# if a structure constraint is defined do constraint folding
 		my $constraint_string = $seqs->[$i]->{"ANNO\#S"};
-		systemverb "printf '>$tmpname\n$seq_str\n$constraint_string' | $RNAfold -p2 $RNAfold_args -C";
+		systemverb "printf '>$seqname\n$seq_str\n$constraint_string' | $RNAfoldp -C $RNAfoldp_redirect";
 	    } else {
-		# else do normal pf
-		if (! defined($plfold_span)) {
-		    systemverb "printf '>$tmpname\n$seq_str' | $RNAfold -p2 $RNAfold_args";
-		} else {
-		    ## use plfold
-		    systemverb "printf '>$tmpname\n$seq_str' | $RNAplfold -L $plfold_span -W $plfold_winsize $RNAfold_args";
-		}
+		systemverb "printf '>$seqname\n$seq_str' | $RNAfoldp $RNAfoldp_redirect";
 	    }
 	    
 	    if (defined($dp_cache)) {
@@ -2183,26 +2209,19 @@ sub compute_dotplot($$) {
 	} else {
 	    $dpname="$dp_cache/$longname";
 	}
-	
-	my $constraints;
-	if (! $ignore_constraints) {
-	    $constraints = sequence_constraint_string($seqs->[$i]);
-	}
-	
-	if ( -e "$dpname\_dp2.ps" ) {
-	    convert_dp_to_pp_with_constraints("$dpname\_dp2.ps","$input_dir/".get_normalized_seqname($name),$name,$seq_str,$constraints,1);
-	} else {
-	    convert_dp_to_pp_with_constraints("$dpname\_dp.ps","$input_dir/".get_normalized_seqname($name),$name,$seq_str,$constraints,0);
-	}
-		
-	# convert was before a simple rename:
-	#rename "$shortname\_dp.ps", "$name"
-	#    || die "Cannot rename $shortname\_dp.ps to $name\n";
-	
-	if ($new_dp_computed) {
-	    unlink "$dpname\_ss.ps" || printerr "Cannot delete $tmpname\_ss.ps\n";
-	    unlink "$dpname\_dp.ps" || printerr "Cannot delete $tmpname\_dp.ps\n";
-	    if ( -e "$tmpname\_dp2.ps" )  { unlink "$dpname\_dp2.ps" || printerr "Cannot delete $tmpname\_dp2.ps\n"; }
+
+	if ($convert_to_pp) {
+	    if ( -e "$dpname\_dp2.ps" ) {
+		convert_dp_to_pp_with_constraints("$dpname\_dp2.ps",$ppname,$name,$seq_str,$constraints,1);
+	    } else {
+		convert_dp_to_pp_with_constraints("$dpname\_dp.ps",$ppname,$name,$seq_str,$constraints,0);
+	    }
+	    
+	    if ($new_dp_computed) {
+		unlink "$dpname\_ss.ps" || printerr "Cannot delete $tmpname\_ss.ps\n";
+		unlink "$dpname\_dp.ps" || printerr "Cannot delete $tmpname\_dp.ps\n";
+		if ( -e "$tmpname\_dp2.ps" )  { unlink "$dpname\_dp2.ps" || printerr "Cannot delete $tmpname\_dp2.ps\n"; }
+	    }
 	}
     }
 }

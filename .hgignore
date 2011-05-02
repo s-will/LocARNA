@@ -2,6 +2,7 @@ syntax: glob
 *~
 *.o
 *.lo
+TAGS
 aclocal.m4
 configure
 Makefile.in
@@ -14,6 +15,7 @@ Releases/
 Utils/locarnate
 Utils/mlocarna
 Utils/aln2fa.pl
+Utils/pp2dot
 configure
 config.log
 config.status
@@ -43,11 +45,12 @@ src/locarna
 src/locarna_X
 src/locarna_p
 src/ribosum2cc
-src/ribosum85_60.icc
-
+src/locarna_rnafold_pp
+src/LocARNA/ribosum85_60.icc
 src/edge_controller_test
 src/trace_controller_test
 src/.libs
+
 
 src/libLocARNA.la
 src/locarna_deviation

@@ -44,7 +44,8 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 
 
 ## binary programs
-bin_PROGRAMS = locarna ribosum2cc locarna_p locarnap_fit locarna_deviation
+bin_PROGRAMS = locarna ribosum2cc locarna_p locarnap_fit	\
+               locarna_deviation locarna_rnafold_pp
 # locarna_X 
 
 # all binaries should be linked to libLocARNA
@@ -71,6 +72,9 @@ ribosum2cc_SOURCES = ribosum2cc.cc
 locarnap_fit_SOURCES = fit.cc fitonoff.cc LocARNA/options.hh fitonoff.hh
 
 locarna_deviation_SOURCES = deviation.cc
+
+locarna_rnafold_pp_SOURCES = locarna_rnafold_pp.cc
+
 
 LocARNA/ribosum85_60.icc: ribosum2cc
 	./ribosum2cc Ribosum85_60 $(top_srcdir)/Matrices/RIBOSUM85_60 >$@
