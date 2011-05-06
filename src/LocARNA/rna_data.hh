@@ -418,6 +418,14 @@ namespace LocARNA {
 	 */
 	void
 	free_McCaskill_matrices();
+	/** 
+	 * \brief Computes the Qm2 matrix
+	 *
+	 * The method creates and fills the Qm2 matrix needed for
+	 * prob_unpaired_in_loop().
+	 */
+	void
+	compute_Qm2();
 
 #   endif // HAVE_LIBRNA
 

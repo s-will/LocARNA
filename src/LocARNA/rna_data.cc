@@ -36,6 +36,11 @@ namespace LocARNA {
     
 #ifdef HAVE_LIBRNA
 
+    FLT_OR_DBL *qm1;
+    FLT_OR_DBL *qm2;
+    FLT_OR_DBL *scale_p;
+    pf_paramT *pf_params_p;
+    FLT_OR_DBL *expMLbase_p;
     RnaData::RnaData(const Sequence &sequence_, bool keepMcM)
 	: sequence(sequence_),
 	  stacking(false),
@@ -65,7 +70,6 @@ namespace LocARNA {
     
     void
     RnaData::compute_McCaskill_matrices() {	
-	
 	if (sequence.row_number()!=1) {
 	    std::cerr << "McCaskill computation with multi-row Sequence object is not implemented." << std::endl;
 	    exit(-1);
@@ -286,7 +290,34 @@ namespace LocARNA {
 	    }
 	}
     }
-
+    void
+    RnaData::compute_Qm2(){
+      
+      int len= sequence.length();
+      qm1= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(len+2));
+      qm2= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL) * ((len+1)*(len+2)/2));
+      FLT_OR_DBL *qqm1= (FLT_OR_DBL*) space(sizeof(FLT_OR_DBL)*(len+2));
+      pf_params_p= get_pf_params();
+      expMLbase_p= get_expMLbase();
+      int index_i,index_j,index_k;
+      for (index_i=1; index_i<=len; index_i++)
+	qm1[index_i]=qqm1[index_i]=0;
+      for(index_j= TURN+2; index_j<=len; index_j++){
+	for(index_i= index_j-TURN-1; index_i>=1; index_i--){
+	 qm1[index_i]= qqm1[index_i]*expMLbase_p[1];
+	 qm1[index_i]+= (McC_matrices->qb_p[iindx[index_i]-index_j])* multiple(McC_matrices->ptype_p[iindx[index_i]-index_j],
+									    (index_i>1) ? McC_matrices->S1_p[index_i-1] : -1, (index_j<len) ? McC_matrices->S1_p[index_j+1] : -1,  pf_params_p);
+	  qm2[iindx[index_i]-index_j]= 0;
+	  for(index_k= index_i+1; index_k< index_j-1; index_k++){
+	    qm2[iindx[index_i]-index_j]+= McC_matrices->qm_p[iindx[index_i]-index_k]*qm1[index_k+1];
+	  }
+	  qqm1=qm1;
+	}
+      }
+     
+      
+      
+    }
 
 #endif // HAVE_LIBRNA
 
