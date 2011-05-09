@@ -121,6 +121,7 @@ namespace LocARNA {
 	McC_matrices->bppm = export_bppm();
 	
 	McC_matrices->iindx = get_iindx(sequence.length());
+	compute_Qm2();
     
     }
 
@@ -271,7 +272,6 @@ namespace LocARNA {
 	// initialize the object from base pair probabilities
 	// Use the same proability threshold as in RNAfold -p !
 	init_from_McCaskill_bppm();
-	std::cout << "Probability = " << prob_unpaired_in_loop(2,1,sequence.length()-1) << std::endl;
 	// optionally deallocate McCaskill matrices
 	if (!keepMcM) {
 	    free_McCaskill_matrices();
@@ -321,21 +321,21 @@ namespace LocARNA {
       
     }
     double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j){
-	compute_Qm2();
+	
 	scale_p= get_scale();
 	double H,I,M;
 	H= hairpin((j-i-1),McC_matrices->ptype_p[iindx[i]-j], McC_matrices->S1_p[i+1], McC_matrices->S1_p[j-1],(p_sequence)+i-1 , pf_params_p)*scale_p[(j-i-1)+2];
-	std::cout << "hairpin energy " << H << std::endl;
-	std::cout << "-----------------"<< std::endl;
+	//std::cout << "hairpin energy " << H << std::endl;
+	//std::cout << "-----------------"<< std::endl;
 	I= 0.0;
 	int i_p,j_p,u1,u2;
 	for(j_p= j-1; j_p> k+TURN+1; j_p--){
 	  u2= j-j_p-1;
 	  for(i_p= k+1; i_p<j_p-TURN; i_p++){
 	    u1= i_p-i-1;
-	    std::cout << "interior loop in " << i_p << ", " << j_p << " = " << (scale_p[u1+u2+2]* interior(u1,u2,McC_matrices->ptype_p[iindx[i]-j]
-						 ,McC_matrices->ptype_p[iindx[i_p]-j_p],McC_matrices->S1_p[i+1],
-						 McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p)) << std::endl;
+	//    std::cout << "interior loop in " << i_p << ", " << j_p << " = " << (scale_p[u1+u2+2]* interior(u1,u2,McC_matrices->ptype_p[iindx[i]-j]
+	//					 ,McC_matrices->ptype_p[iindx[i_p]-j_p],McC_matrices->S1_p[i+1],
+	//					 McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p)) << std::endl;
 	    I+= (scale_p[u1+u2+2]* interior(u1,u2,McC_matrices->ptype_p[iindx[i]-j],McC_matrices->ptype_p[iindx[i_p]-j_p],McC_matrices->S1_p[i+1],
 						 McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p));
 	  }
@@ -344,25 +344,25 @@ namespace LocARNA {
 	  u2= j-j_p-1;
 	  for(i_p= i+1; i_p<j_p-TURN; i_p++){
 	    u1= i_p-i-1;
-	    std::cout << "interior loop in " << i_p << ", " << j_p << " = " << (scale_p[u1+u2+2]* interior(u1,u2,McC_matrices->ptype_p[iindx[i]-j]
-						 ,McC_matrices->ptype_p[iindx[i_p]-j_p],McC_matrices->S1_p[i+1],
-						 McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p)) << std::endl;
+	 //  std::cout << "interior loop in " << i_p << ", " << j_p << " = " << (scale_p[u1+u2+2]* interior(u1,u2,McC_matrices->ptype_p[iindx[i]-j]
+	//					 ,McC_matrices->ptype_p[iindx[i_p]-j_p],McC_matrices->S1_p[i+1],
+	//					 McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p)) << std::endl;
 	    I+= (scale_p[u1+u2+2]* interior(u1,u2,McC_matrices->ptype_p[iindx[i]-j],McC_matrices->ptype_p[iindx[i_p]-j_p],McC_matrices->S1_p[i+1],
 						 McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p));
 	  }
 	}
-	std::cout << "interior loop energy " << I << std::endl;
-	std::cout << "-----------------"<< std::endl;
-	std::cout << "Qm2 " << k+1 << ", " << j-1 << " = " << (qm2[iindx[k+1]-(j-1)]*pf_params_p->expMLclosing*expMLbase_p[k-i]) << std::endl;
-	std::cout << "Qm2 " << i+1 << ", " << k-1 << " = " << (qm2[iindx[i+1]-(k-1)]*pf_params_p->expMLclosing*expMLbase_p[j-k]) << std::endl;
-	std::cout << "Qm " << i+1 << ", " << k-1 << " = " << McC_matrices->qm_p[iindx[i+1]-(k-1)] << std::endl;
-	std::cout << "Qm " << k+1 << ", " << j << " = " << McC_matrices->qm_p[iindx[k+1]-j] * pf_params_p->expMLclosing*expMLbase_p[1] << std::endl;
+	//std::cout << "interior loop energy " << I << std::endl;
+	//std::cout << "-----------------"<< std::endl;
+	//std::cout << "Qm2 " << k+1 << ", " << j-1 << " = " << (qm2[iindx[k+1]-(j-1)]*pf_params_p->expMLclosing*expMLbase_p[k-i]) << std::endl;
+	//std::cout << "Qm2 " << i+1 << ", " << k-1 << " = " << (qm2[iindx[i+1]-(k-1)]*pf_params_p->expMLclosing*expMLbase_p[j-k]) << std::endl;
+	//std::cout << "Qm " << i+1 << ", " << k-1 << " = " << McC_matrices->qm_p[iindx[i+1]-(k-1)] << std::endl;
+	//std::cout << "Qm " << k+1 << ", " << j << " = " << McC_matrices->qm_p[iindx[k+1]-j] * pf_params_p->expMLclosing*expMLbase_p[1] << std::endl;
 	M= (qm2[iindx[k+1]-(j-1)]*pf_params_p->expMLclosing*expMLbase_p[k-i]) + (qm2[iindx[i+1]-(k-1)]*pf_params_p->expMLclosing*expMLbase_p[j-k]) +
 	   (McC_matrices->qm_p[iindx[i+1]-(k-1)] * McC_matrices->qm_p[iindx[k+1]-j] * pf_params_p->expMLclosing*expMLbase_p[1]);
-	std::cout << "mulitple loop energy " << M << std::endl;
-	std::cout << "-----------------"<< std::endl;
-	std::cout << " Qb "<< McC_matrices->qb_p[iindx[i]-j] << std::endl;
-	std::cout << "-----------------"<< std::endl;
+	//std::cout << "mulitple loop energy " << M << std::endl;
+	//std::cout << "-----------------"<< std::endl;
+	//std::cout << " Qb "<< McC_matrices->qb_p[iindx[i]-j] << std::endl;
+	//std::cout << "-----------------"<< std::endl;
 	return ((H+I+M)/(McC_matrices->qb_p[iindx[i]-j]));
     }
 
