@@ -345,11 +345,11 @@ namespace LocARNA {
 	}
 
 	// free heap space
-	delete structure;
+	delete [] structure;
 	for (size_t i=0; i<ma.size(); i++) {
 	    delete sequences[i];
 	}
-	delete sequences;
+	delete [] sequences;
 	
 	free(pl);
 	free_alifold_arrays();
