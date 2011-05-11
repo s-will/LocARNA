@@ -16,6 +16,9 @@ extern "C" {
 #include <ViennaRNA/fold.h>
 #include <ViennaRNA/utils.h>
 #include <ViennaRNA/energy_const.h>
+#include <ViennaRNA/loop_energies.h>
+#include <ViennaRNA/params.h>
+#include <ViennaRNA/pair_mat.h>
 }
 #endif // HAVE_LIBRNA
 
@@ -123,10 +126,27 @@ namespace LocARNA {
 	McC_matrices->bppm = export_bppm();
 	
 	McC_matrices->iindx = get_iindx(sequence.length());
-	scale_p= get_scale();
-	pf_params_p= get_pf_params();
-	expMLbase_p= get_expMLbase();
+	pf_params_p= get_scaled_pf_parameters();
 	rtype_p= get_rtype();
+	expMLbase_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
+	scale_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
+	
+	kT = pf_params_p->kT;   /* kT in cal/mol  */
+
+	/* scaling factors (to avoid overflows) */
+	if (pf_scale == -1) { /* mean energy for random sequences: 184.3*length cal */
+	  pf_scale = exp(-(-185+(pf_params_p->temperature-37.)*7.27)/kT);
+	  if (pf_scale<1) pf_scale=1;
+	}
+	scale_p[0] = 1.;
+	scale_p[1] = 1./pf_scale;
+	expMLbase_p[0] = 1;
+	expMLbase_p[1] = pf_params_p->expMLbase/pf_scale;
+	for (int i=2; i<=sequence.length(); i++) {
+	  scale_p[i] = scale_p[i/2]*scale_p[i-(i/2)];
+	  expMLbase_p[i] = pow(pf_params_p->expMLbase, (double)i) * scale_p[i];
+	}
+	
 	compute_Qm2();
     
     }
@@ -278,8 +298,16 @@ namespace LocARNA {
 	// initialize the object from base pair probabilities
 	// Use the same proability threshold as in RNAfold -p !
 	init_from_McCaskill_bppm();
-//	std::cout<< prob_unpaired_in_loop(2,1,sequence.length()) << std::endl; 
-//	std::cout << "-----------------"<< std::endl;
+	double prob= 0;
+	int k=2;
+	for (int j=TURN+2;j<=sequence.length(); j++) {
+	  for (int i=j-TURN-1; i>=1; i--) {
+	    prob+= prob_unpaired_in_loop(k,i,j);
+	  }
+	}
+	std::cout << "the sum is " << prob << std::endl;
+	std::cout << "------------------------" << std::endl;
+	
 	// optionally deallocate McCaskill matrices
 	if (!keepMcM) {
 	    free_McCaskill_matrices();
@@ -314,7 +342,7 @@ namespace LocARNA {
       for(index_j= TURN+2; index_j<=len; index_j++){
 	for(index_i= index_j-TURN-1; index_i>=1; index_i--){
 	 qm1[index_i]= qqm1[index_i]*expMLbase_p[1];
-	 qm1[index_i]+= (McC_matrices->qb_p[iindx[index_i]-index_j])* multiple(McC_matrices->ptype_p[iindx[index_i]-index_j],
+	 qm1[index_i]+= (McC_matrices->qb_p[iindx[index_i]-index_j])* exp_E_MLstem(McC_matrices->ptype_p[iindx[index_i]-index_j],
 									    (index_i>1) ? McC_matrices->S1_p[index_i-1] : -1, (index_j<len) ? McC_matrices->S1_p[index_j+1] : -1,  pf_params_p);
 	  qm2[iindx[index_i]-index_j]= 0;
 	  for(index_k= index_i+1; index_k< index_j-1; index_k++){
@@ -332,7 +360,7 @@ namespace LocARNA {
 	
 	double H,I,M;
 	int type2;
-	H= McC_matrices->qb_p[iindx[i]-j]* hairpin((j-i-1),McC_matrices->ptype_p[iindx[i]-j], McC_matrices->S1_p[i+1], McC_matrices->S1_p[j-1],(p_sequence)+i-1 , pf_params_p)*scale_p[(j-i-1)+2];
+	H= McC_matrices->qb_p[iindx[i]-j]* exp_E_Hairpin((j-i-1),McC_matrices->ptype_p[iindx[i]-j], McC_matrices->S1_p[i+1], McC_matrices->S1_p[j-1],(p_sequence)+i-1 , pf_params_p)*scale_p[(j-i-1)+2];
 //	std::cout << "hairpin energy " << H << std::endl;
 //	std::cout << "-----------------"<< std::endl;
 	I= 0.0;
@@ -343,7 +371,7 @@ namespace LocARNA {
 	    u2= j-j_p-1;
 	    type2= McC_matrices->ptype_p[iindx[i_p]-j_p];
 	    if(type2){
-		I+= (McC_matrices->qb_p[iindx[i]-j]* McC_matrices->qb_p[iindx[i_p]-j_p]* interior(u1,u2,McC_matrices->ptype_p[iindx[i]-j],rtype_p[type2],McC_matrices->S1_p[i+1],
+		I+= (McC_matrices->qb_p[iindx[i]-j]* McC_matrices->qb_p[iindx[i_p]-j_p]* exp_E_IntLoop(u1,u2,McC_matrices->ptype_p[iindx[i]-j],rtype[type2],McC_matrices->S1_p[i+1],
 						  McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p)* scale_p[u1+u2+2]);
 	    }
 	  }
@@ -355,7 +383,7 @@ namespace LocARNA {
 	    u2= j-j_p-1;
 	    type2= McC_matrices->ptype_p[iindx[i_p]-j_p];
 	     if(type2){
-		I+= (McC_matrices->qb_p[iindx[i]-j]* McC_matrices->qb_p[iindx[i_p]-j_p]* interior(u1,u2,McC_matrices->ptype_p[iindx[i]-j],rtype_p[type2],McC_matrices->S1_p[i+1],
+		I+= (McC_matrices->qb_p[iindx[i]-j]* McC_matrices->qb_p[iindx[i_p]-j_p]* exp_E_IntLoop(u1,u2,McC_matrices->ptype_p[iindx[i]-j],rtype[type2],McC_matrices->S1_p[i+1],
 						  McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p)* scale_p[u1+u2+2]);
 	     }
 	  }
@@ -370,7 +398,7 @@ namespace LocARNA {
 //	std::cout << "-----------------"<< std::endl;
 //	std::cout << "sum " << H+I+M << std::endl;
 //	std::cout << "-----------------"<< std::endl;
-	return ((H+I+M)/(McC_matrices->qb_p[iindx[i]-j]));
+	return (McC_matrices->qb_p[iindx[i]-j]==0)? 0: ((H+I+M)/(McC_matrices->qb_p[iindx[i]-j]));
     }
 
 #endif // HAVE_LIBRNA
