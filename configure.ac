@@ -17,7 +17,9 @@ AM_INIT_AUTOMAKE
 
 # Checks for programs.
 AC_PROG_CXX
+AC_PROG_CXXCPP
 AC_PROG_CC
+AC_PROG_CPP
 
 AC_LANG_CPLUSPLUS
 
@@ -87,7 +89,7 @@ if test "$ENABLE_LIBRNA" = "yes" ; then
  		   [VRNA_OK=false])
 
    ## link the Vienna library
-   LIBS="-lg2 -lRNA $LIBS"
+   LIBS="-lRNA $LIBS"
    
    AC_DEFINE([HAVE_LIBRNA],[],[Whether librna is linked and available.])
 fi
@@ -181,6 +183,7 @@ fi
 AC_HEADER_STDBOOL
 AC_C_CONST
 AC_TYPE_SIZE_T
+
 
 AC_CONFIG_FILES([Makefile LocARNA-${API_VERSION}.pc:LocARNA.pc.in])
 
