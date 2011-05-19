@@ -76,6 +76,7 @@ register_normalized_seqname
 register_normalized_seqnames
 get_normalized_seqname
 forget_normalized_seqnames
+print_normalized_sequence_names_hash
 
 nnamepair
 
@@ -184,6 +185,16 @@ sub normalize_seqname {
 
 ## global hash for storing the association of names to normalized names
 my %normalized_sequence_names_hash;
+
+########################################
+## print normalized sequence names hash to stdout for debugging
+## 
+sub print_normalized_sequence_names_hash {
+    print "Normalized sequence names hash:\n";
+    foreach my $k (sort keys %normalized_sequence_names_hash) { 
+	print "  $k => $normalized_sequence_names_hash{$k}\n";
+    }
+}
 
 ########################################
 ## register_normalized_seqname( $name )

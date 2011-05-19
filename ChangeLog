@@ -270,3 +270,6 @@ Apr, 2011
 
 	mlocarna accepts via --tree-file a super-tree as guide tree and
 	automatically projects to the taxa in the input.
+
+	Allow quotation in newick trees (using Text::ParseWords)
+	and use quotations when generating newick trees

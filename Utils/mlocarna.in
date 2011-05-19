@@ -1046,7 +1046,9 @@ sub main {
     my $seqs = read_fasta($seqs_file); ## input sequences
     
     register_normalized_seqnames($seqs); ## register normalized names for them that can be used as filenames
-    
+
+    ## print_normalized_sequence_names_hash();
+
     ## check input: we need at least two input sequences
     if (@$seqs == 0) {
 	printerr("No input sequences found in $seqs_file.\n");
@@ -1347,7 +1349,7 @@ sub perform_multiple_alignment($) {
 	close TREE;
 	
     } elsif ($#names == 1) { # for only two sequences, tree is unique
-	$tree="($names[0],$names[1])";
+	$tree="(".quotemeta($names[0]).",".quotemeta($names[1]).")";
     } else {
 	# --------------------------------------------------
 	# compute score matrix for guide tree

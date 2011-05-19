@@ -12,6 +12,8 @@ use 5.008003;
 use strict;
 use warnings;
 
+use Text::ParseWords; ## for tokenizing
+
 require Exporter;
     
 # set the version for version checking
@@ -65,11 +67,10 @@ sub upgma_tree ($$) {
     
     for (my $i=0; $i<@$names; $i++) {
 	$clusters[$i]=$i;
-	$trees[$i]=$names->[$i];
+	$trees[$i]=quotemeta($names->[$i]);
 	$cluster_sizes[$i]=1;
     }
-    
-    
+        
     my $NEG_INFINITY=-1e10;
     
     while ($#clusters>0) {
@@ -164,6 +165,19 @@ sub tree_partitions($) {
     return \@result;
 }
 
+########################################
+##
+## unquote a string using Text::ParseWords
+##
+## param string
+## return unquoted string
+##
+sub unquote {
+    my ($s)=@_;
+    my @strings=parse_line(" ", 0, $s);
+    return join " ",@strings;
+}
+
 ########################################ä
 ## newick_tree_to_postorder($tree string)
 ##
@@ -173,10 +187,50 @@ sub tree_partitions($) {
 ##
 ## returns ref to list of nodes/leaves in postorder, use $node_sym for inner nodes
 ##
+## supports quotation via module Text::ParseWords
+##
 ## dies if tree is not parsable
 ##
 ########################################
 sub newick_tree_to_postorder {
+    my ($tree) = @_;
+
+    $tree =~ s/;$//; # allow that the tree string is terminated by ';'
+    
+    my @tokens = parse_line('[,()\s]', "delimiters", $tree);
+    
+    my @list=();
+    
+    my $brcount=0;
+    for (my $i=0; $i<@tokens; $i++) {
+	my $tok=$tokens[$i];
+	
+	next if !defined($tok);
+	
+	if ($tok eq "(") {
+	    $brcount++;
+	} elsif ($tok eq ")") {
+	    $brcount--;
+	    if ($brcount<0) {
+		die "Parse error in tree.";
+	    }
+	    
+	    push @list, $node_sym;
+	} elsif ($tok eq ",") {
+	    ## ignore, although we could do syntax checking
+	} elsif ($tok =~ /^\s*$/)  {
+	    ## ignore whitespace
+	} else {
+	    push @list, unquote($tok);
+	}
+    }
+
+    return \@list;
+}
+
+########################################
+## old version of newick tree parsing without quoting support
+sub newick_tree_to_postorder_old {
     my ($tree) = @_;
 
     my @list;
