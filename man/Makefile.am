@@ -9,7 +9,7 @@ EXTRA_DIST=$(man_MANS)
 
 
 locarna.1: ../src/locarna.cc
-	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ ../src/locarna
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ ../src/locarna.bin
 
 locarna_p.1: ../src/locarna_p.cc
 	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ ../src/locarna_p

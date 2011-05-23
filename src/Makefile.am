@@ -43,10 +43,17 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/multiple_alignment.hh LocARNA/ribosum85_60.icc
 
 
+
 ## binary programs
-bin_PROGRAMS = locarna ribosum2cc locarna_p locarnap_fit	\
+##
+##   use extension .bin for binary locarna to avoid name collission in src dir
+##
+bin_PROGRAMS = locarna.bin ribosum2cc locarna_p locarnap_fit	\
                locarna_deviation locarna_rnafold_pp
 # locarna_X 
+
+#remove the extension .bin for installation
+transform = s/\.bin$$//
 
 # all binaries should be linked to libLocARNA
 LDADD=libLocARNA-$(API_VERSION).la
@@ -57,7 +64,7 @@ check_PROGRAMS = trace_controller_test
 trace_controller_test_SOURCES = trace_controller_test.cc
 TESTS = $(check_PROGRAMS)
 
-dist_locarna_SOURCES = locarna.cc
+dist_locarna_bin_SOURCES = locarna.cc
 
 locarna_p_SOURCES = locarna_p.cc
 
@@ -65,7 +72,7 @@ locarna_p_SOURCES = locarna_p.cc
 #	exact_matcher.hh exact_matcher.cc \
 #	basepairs_looptraversal.hh basepairs_looptraversal.cc
 
-nodist_locarna_SOURCES = LocARNA/ribosum85_60.icc
+nodist_locarna_bin_SOURCES = LocARNA/ribosum85_60.icc
 
 ribosum2cc_SOURCES = ribosum2cc.cc
 

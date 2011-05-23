@@ -273,3 +273,7 @@ Apr, 2011
 
 	Allow quotation in newick trees (using Text::ParseWords)
 	and use quotations when generating newick trees
+
+May, 2011
+	Fix a problem with compiling on case-insensitive file systems (generate 	locarna.bin instead of locarna executable in src, rename at install)
+	
