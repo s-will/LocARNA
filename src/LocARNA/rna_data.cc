@@ -9,6 +9,8 @@
 
 #include "multiple_alignment.hh"
 
+#include "basepairs.hh"
+
 #ifdef HAVE_LIBRNA
 extern "C" {
 #include <ViennaRNA/fold_vars.h>
@@ -45,8 +47,6 @@ namespace LocARNA {
     FLT_OR_DBL *scale_p;
     pf_paramT *pf_params_p;
     FLT_OR_DBL *expMLbase_p;
-    char *p_sequence;
-   // int *rtype_p;
     RnaData::RnaData(const Sequence &sequence_, bool keepMcM)
 	: sequence(sequence_),
 	  stacking(false),
@@ -93,7 +93,7 @@ namespace LocARNA {
 	strcpy(c_sequence,seqstring.c_str());
 	
 	char c_structure[length+1];
-	p_sequence= c_sequence;
+	
 	
 	// std::cout <<"Call fold(" << c_sequence << "," << "c_structure" << ")"<< std::endl;
 	
@@ -127,7 +127,6 @@ namespace LocARNA {
 	
 	McC_matrices->iindx = get_iindx(sequence.length());
 	pf_params_p= get_scaled_pf_parameters();
-	//rtype_p= get_rtype();
 	expMLbase_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
 	scale_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
 	
@@ -275,7 +274,7 @@ namespace LocARNA {
     }
 
 #ifdef HAVE_LIBRNA
-
+    //bool flag;
     void RnaData::readMultipleAlignment(const std::string &filename, bool keepMcM) {
 	
 	//read to multiple alignment object
@@ -298,20 +297,7 @@ namespace LocARNA {
 	// initialize the object from base pair probabilities
 	// Use the same proability threshold as in RNAfold -p !
 	init_from_McCaskill_bppm();
-/*	double prob= 0;
-	size_t k=4;
-	for (size_t j=TURN+2;j<=sequence.length(); j++) {
-	  for (size_t i=j-TURN-1; i>=1; i--) {
-	    if(i<k && j>k)
-	      prob+= prob_unpaired_in_loop(k,i,j);
-	  }
-	}
-	std::cout << "the sum is " << prob << std::endl;
-	std::cout << "prob unpaired is " << prob_unpaired(4) << std::endl;
-	std::cout << "------------------------" << std::endl;
-	*/
-//	std::cout << prob_unpaired_in_loop(67,1,73) << std::endl;
-	// optionally deallocate McCaskill matrices
+	
 	if (!keepMcM) {
 	    free_McCaskill_matrices();
 	}
@@ -334,75 +320,96 @@ namespace LocARNA {
     void
     RnaData::compute_Qm2(){
       
-      size_t len= sequence.length();
+      int len= sequence.length();
       qm1= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(len+2));
       qm2= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL) * ((len+1)*(len+2)/2));
       FLT_OR_DBL *qqm1= (FLT_OR_DBL*) space(sizeof(FLT_OR_DBL)*(len+2));
       
-      size_t index_i,index_j,index_k;
+      int index_i,index_j,index_k,type;
       for (index_i=1; index_i<=len; index_i++)
 	qm1[index_i]=qqm1[index_i]=0;
+     
       for(index_j= TURN+2; index_j<=len; index_j++){
 	for(index_i= index_j-TURN-1; index_i>=1; index_i--){
+	 type= McC_matrices->ptype_p[iindx[index_i]-index_j];
 	 qm1[index_i]= qqm1[index_i]*expMLbase_p[1];
-	 qm1[index_i]+= (McC_matrices->qb_p[iindx[index_i]-index_j])* exp_E_MLstem(McC_matrices->ptype_p[iindx[index_i]-index_j],
-									    (index_i>1) ? McC_matrices->S1_p[index_i-1] : -1, (index_j<len) ? McC_matrices->S1_p[index_j+1] : -1,  pf_params_p);
-	  qm2[iindx[index_i]-index_j]= 0;
-	  for(index_k= index_i+1; index_k< index_j-1; index_k++){
-	    qm2[iindx[index_i]-index_j]+= McC_matrices->qm_p[iindx[index_i]-index_k]*qm1[index_k+1];
+	 if(type){
+	  qm1[index_i]+= (McC_matrices->qb_p[iindx[index_i]-index_j])* exp_E_MLstem(type, (index_i>1) ? 
+									McC_matrices->S1_p[index_i-1] : -1, (index_j<len) ? McC_matrices->S1_p[index_j+1] : -1,  pf_params_p);
+
 	  }
-	  qqm1=qm1;
 	}
-      }
-     
-      
+	if(index_j >= (2*(TURN+2))){
+	  for(index_i= index_j-2*TURN-3; index_i>=1; index_i--){
+	    qm2[iindx[index_i]-index_j]= 0;
+	      for(index_k= index_i+2; index_k< index_j-2; index_k++){
+		qm2[iindx[index_i+1]-(index_j-1)]+= McC_matrices->qm_p[iindx[index_i+1]-(index_k)]*qqm1[index_k+1];
+	      
+	      }
+	  }
+	}
+	  for(index_i= index_j-TURN-1; index_i>=1; index_i--){
+	    qqm1[index_i]=qm1[index_i];
+	  }
+	}
+
       
     }
     double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j){
 	
+	int length = sequence.length();
 	
-	double H,I,M;
-	int type2;
-	H=  exp_E_Hairpin((j-i-1),McC_matrices->ptype_p[iindx[i]-j], McC_matrices->S1_p[i+1], McC_matrices->S1_p[j-1],(p_sequence)+i-1 , pf_params_p)*scale_p[(j-i-1)+2];
-//	std::cout << "hairpin energy " << H << std::endl;
-//	std::cout << "-----------------"<< std::endl;
+	char c_sequence[length+1];
+	std::string seqstring = MultipleAlignment(sequence).seqentry(0).seq().to_string();
+	strcpy(c_sequence,seqstring.c_str());
+	
+	FLT_OR_DBL H,I,M;
+	int type,type_2;
+	type= McC_matrices->ptype_p[iindx[i]-j];
+	if (type!=0) {
+	  if (((type==3)||(type==4))&&no_closingGU) H = 0;
+	  else
+	  H = exp_E_Hairpin(j-i-1, type, McC_matrices->S1_p[i+1], McC_matrices->S1_p[j-1], c_sequence+i-1, pf_params_p) * scale_p[j-i+1];
+	}
+	else H= 0;
 	I= 0.0;
-	int u1,u2;
-	size_t i_p,j_p;
-	for (i_p=k+1; i_p<=MIN2(i+MAXLOOP+1,j-TURN-2); i_p++) {
-          u1 = i_p-i-1;
-          for (j_p=MAX2(i_p+TURN+1,j-1-MAXLOOP+u1); j_p<j; j_p++) {
-	    u2= j-j_p-1;
-	    type2= McC_matrices->ptype_p[iindx[i_p]-j_p];
-	    if(type2){
-		I+= ( McC_matrices->qb_p[iindx[i_p]-j_p]* exp_E_IntLoop(u1,u2,McC_matrices->ptype_p[iindx[i]-j],rtype[type2],McC_matrices->S1_p[i+1],
-						  McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p)* scale_p[u1+u2+2]);
+	if(type!=0){
+	  int u1;
+	  for (int i_p=k+1; i_p<=MIN2(i+MAXLOOP+1,j-TURN-2); i_p++) {
+	    u1 = i_p-i-1;
+	    for (int j_p=MAX2(i_p+TURN+1,j-1-MAXLOOP+u1); j_p<(int)j; j_p++) {
+	      type_2 =McC_matrices-> ptype_p[iindx[i_p]-j_p];
+	      if (type_2) {
+		type_2 = rtype[type_2];
+		I +=McC_matrices-> qb_p[iindx[i_p]-j_p] * (scale_p[u1+j-j_p+1] *
+                                        exp_E_IntLoop(u1, j-j_p-1, type, type_2,
+                                       McC_matrices-> S1_p[i+1],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i_p-1],McC_matrices-> S1_p[j_p+1], pf_params_p));
+	      }
 	    }
 	  }
+	  
+	  for (int i_p=i+1; i_p<=MIN2(i+MAXLOOP+1,k-TURN-2); i_p++) {
+	    u1 = i_p-i-1;
+	    for (int j_p=MAX2(i_p+TURN+1,j-1-MAXLOOP+u1); j_p<(int)k; j_p++) {
+	      type_2 =McC_matrices-> ptype_p[iindx[i_p]-j_p];
+	      if (type_2) {
+		type_2 = rtype[type_2];
+		I +=McC_matrices-> qb_p[iindx[i_p]-j_p] * (scale_p[u1+j-j_p+1] *
+                                        exp_E_IntLoop(u1, j-j_p-1, type, type_2,
+                                       McC_matrices-> S1_p[i+1],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i_p-1],McC_matrices-> S1_p[j_p+1], pf_params_p));
+	      }
+	    }
+	  }
+	  
 	}
 	
-	for (i_p=i+1; i_p<=MIN2(i+MAXLOOP+1,k-TURN-2); i_p++) {
-          u1 = i_p-i-1;
-          for (j_p=MAX2(i_p+TURN+1,j-1-MAXLOOP+u1); j_p<k; j_p++) {
-	    u2= j-j_p-1;
-	    type2= McC_matrices->ptype_p[iindx[i_p]-j_p];
-	     if(type2){
-		I+= ( McC_matrices->qb_p[iindx[i_p]-j_p]* exp_E_IntLoop(u1,u2,McC_matrices->ptype_p[iindx[i]-j],rtype[type2],McC_matrices->S1_p[i+1],
-						  McC_matrices->S1_p[j-1], McC_matrices->S1_p[i_p-1],McC_matrices->S1_p[j_p+1],pf_params_p)* scale_p[u1+u2+2]);
-	     }
+	M= 0.0;
+	if(type!=0){
+		M+= qm2[iindx[k+1]-(j-1)]*pf_params_p->expMLclosing*expMLbase_p[k-i]*exp_E_MLstem(rtype[type],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i+1], pf_params_p)* scale_p[2];
+		M+= qm2[iindx[i+1]-(k-1)]*pf_params_p->expMLclosing*expMLbase_p[j-k]*exp_E_MLstem(rtype[type],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i+1], pf_params_p) * scale_p[2];
+		M+= McC_matrices->qm_p[iindx[i+1]-(k-1)] * McC_matrices->qm_p[iindx[k+1]-(j-1)]* pf_params_p->expMLclosing*expMLbase_p[1] *exp_E_MLstem(rtype[type],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i+1], pf_params_p)* scale_p[2];
 	  }
-	}
-//	std::cout << "interior loop energy " << I << std::endl;
-//	std::cout << "-----------------"<< std::endl;
-	M=  ((qm2[iindx[k+1]-(j-1)]*pf_params_p->expMLclosing*expMLbase_p[k-i]) + (qm2[iindx[i+1]-(k-1)]*pf_params_p->expMLclosing*expMLbase_p[j-k]) +
-	   (McC_matrices->qm_p[iindx[i+1]-(k-1)] * McC_matrices->qm_p[iindx[k+1]-j] * pf_params_p->expMLclosing*expMLbase_p[1]));
-//	std::cout << "mulitple loop energy " << M << std::endl;
-//	std::cout << "-----------------"<< std::endl;
-//	std::cout << " Qb "<< McC_matrices->qb_p[iindx[i]-j] << std::endl;
-//	std::cout << "-----------------"<< std::endl;
-//	std::cout << "sum " << H+I+M << std::endl;
-//	std::cout << "-----------------"<< std::endl;
-	return (McC_matrices->qb_p[iindx[i]-j]==0)? 0: ((H+I+M)/(McC_matrices->qb_p[iindx[i]-j]));
+	return (McC_matrices->qb_p[iindx[i]-j]==0)? 0: ((H+I+M)/(McC_matrices->qb_p[iindx[i]-j]))*get_arc_prob(i,j);
     }
 
 #endif // HAVE_LIBRNA
