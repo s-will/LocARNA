@@ -345,16 +345,31 @@ namespace LocARNA {
     
 	// ============================================================
     
-	//! get the maximal right ends of any arc match with left ends (al,bl).
-	//! pre: max_ar, max_br are initialized with smallest possible values
-	//! returns result in out parameters max_ar, max_br
-	//! Optionally, account for no-lonely-pairs.
+
+	/** 
+	 * @brief get the maximal right ends of any arc match with left ends (al,bl).
+	 *
+	 * @pre max_ar, max_br are initialized with smallest possible values
+	 *
+	 * @param al left and in sequence A
+	 * @param bl left and in sequence B
+	 * @param[in,out] max_ar maximal right end in sequence A
+	 * @param[in,out] max_br maximal right end in sequence B
+	 * @param no_lonely_pairs whether in lonely pair mode 
+	 *
+	 * @return out parameters max_ar, max_br are set to the maximal right ends
+	 *
+	 * Determine minimal max_ar and max_br such that there is no arc match with left ends
+	 * al, bl and larger right ends ar>max_ar or al>max_br.
+	 * In lonely pair mode, consider only arc matchs that have an immediately enclosing arc match.
+	 */
 	void get_max_right_ends(size_type al,size_type bl,size_type *max_ar,size_type *max_br, bool no_lonely_pairs) const; 
 
+	
 	//! get the minimal right ends of any arc match with left ends (al,bl).
 	//! pre: min_ar, min_br are initialized with largest possible values
 	//! returns result in out parameters min_ar, min_br
-	//! Optionally, account for no-lonely-pairs.
+	//! @note Does not support noLP like get_max_right_ends() yet 
 	void get_min_right_ends(size_type al,size_type bl,size_type *min_ar,size_type *min_br) const; 
     
 	// ------------------------------------------------------------

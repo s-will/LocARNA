@@ -685,6 +685,7 @@ Aligner::align_D() {
 	    pos_type max_br=bl;
 	    
 	    // get the maximal right ends of any arc match with left ends (al,bl)
+	    // in noLP mode, we don't consider cases without immediately enclosing arc match
 	    arc_matches.get_max_right_ends(al,bl,&max_ar,&max_br,params->no_lonely_pairs);
 	    
 	     // check whether there is an arc match at all

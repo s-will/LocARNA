@@ -26,7 +26,8 @@ ltmain.sh
 autom4te.cache/
 
 LocARNA.pc
-
+LocARNA-1.0.pc
+src/libLocARNA-1.0.la
 man/locarna.1
 man/locarna_p.1
 man/locarnate.1
@@ -41,7 +42,7 @@ man/reliability-profile.pl.1
 
 src/fit
 src/deviation
-src/locarna
+src/locarna.bin
 src/locarna_X
 src/locarna_p
 src/ribosum2cc
@@ -50,7 +51,7 @@ src/LocARNA/ribosum85_60.icc
 src/edge_controller_test
 src/trace_controller_test
 src/.libs
-
+src/LocARNA/.dirstamp
 
 src/libLocARNA.la
 src/locarna_deviation

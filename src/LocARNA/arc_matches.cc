@@ -283,6 +283,10 @@ namespace LocARNA {
 
 
     void ArcMatches::get_max_right_ends(size_type al,size_type bl,size_type *max_ar,size_type *max_br, bool no_lonely_pairs) const {     
+
+	assert(*max_ar>=al);
+	assert(*max_br>=bl);
+	
   
 	// for no lonely pairs, al,bl is the beginning of the inner base pair match
 	// we need to find the largest base pair match with beginning al-1,bl-1
@@ -290,6 +294,8 @@ namespace LocARNA {
 	if (no_lonely_pairs) {
 	    al--;
 	    bl--;
+	    (*max_ar)++;
+	    (*max_br)++;
 	}
 
 	for(ArcMatchIdxVec::const_iterator it=common_left_end_list(al,bl).begin();
@@ -305,9 +311,13 @@ namespace LocARNA {
 	    *max_br=std::max(*max_br,am.arcB().right());
 	}
 
+	// If lonely base pairs are forbidden, we have computed the
+	// maximum ar, br for the enclosing base pairs (or left end
+	// al-1,bl-1). Therefore, infer maximum ar, br for requested
+	// al,bl.
 	if (no_lonely_pairs) {
-	    *max_ar--;
-	    *max_br--;
+	    (*max_ar)--;
+	    (*max_br)--;
 	}
     }
 
