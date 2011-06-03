@@ -98,16 +98,20 @@ namespace LocARNA {
 
     public:
 	/** 
-	 * @brief Construct from file (either pp or dp_ps)
+	 * @brief Construct from file (either pp or dp_ps or clustalw)
 	 *
 	 * Reads the sequence/alignment, the base pairs and their
 	 * probabilities from the input file. Tries to guess whether
-	 * the input is in pp or dp_ps format.
+	 * the input is in pp, dp_ps, or clustalw format. In the
+	 * latter case, which works only when linking to librna, the
+	 * pair probabilities are predicted and it is possible to
+	 * keep the DP-matrices for later use.
 	 *
 	 * @param file input file name
 	 * @param stacking whether to use stacking
+	 * @param keepMcM if TRUE, keep the McCaskill matrices for use in prob_unpaired_in_loop(). This works only if file is in clustalw format!
 	 */
-	RnaData(const std::string &file, bool stacking=false);
+	RnaData(const std::string &file, bool stacking=false, bool keepMcM=false);
 	
 	/** 
 	 * Construct from sequence, predicting the basepairs
@@ -226,9 +230,10 @@ namespace LocARNA {
 	//! (autodetect file format)
 	//!
 	//! @param filename the input file
+	//! @param keepMcM if TRUE, keep the McCaskill matrices for use in prob_unpaired_in_loop(). This works only if file is in clustalw format!
 	//! @post object is initialized from file
 	//!
-	void read(const std::string &filename);
+	void read(const std::string &filename, bool keepMcM=false);
 
 	// ------------------------------------------------------------
 	// init from bppm

@@ -91,7 +91,7 @@ if test "$ENABLE_LIBRNA" = "yes" ; then
    ## link the Vienna library
    LIBS="-lRNA $LIBS"
    
-   AC_DEFINE([HAVE_LIBRNA],[],[Whether librna is linked and available.])
+   AC_DEFINE([HAVE_LIBRNA])
 fi
 
 

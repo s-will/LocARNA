@@ -27,7 +27,7 @@ extern "C" {
 
 namespace LocARNA {
 
-    RnaData::RnaData(const std::string &file, bool stacking_):
+    RnaData::RnaData(const std::string &file, bool stacking_, bool keepMcM):
 	sequence(),
 	stacking(stacking_),
 	arc_probs_(0),
@@ -35,7 +35,7 @@ namespace LocARNA {
 	seq_constraints_(""),
 	McC_matrices(NULL)
     {
-	read(file);
+	read(file, keepMcM);
     }
     
 #ifdef HAVE_LIBRNA
@@ -170,7 +170,7 @@ namespace LocARNA {
 
     
     // decide on file format and call either readPS or readPP
-    void RnaData::read(const std::string &filename) {
+    void RnaData::read(const std::string &filename, bool keepMcM) {
   
 	std::ifstream in(filename.c_str());
 	if (! in.good()) {
@@ -193,7 +193,7 @@ namespace LocARNA {
 #ifdef HAVE_LIBRNA
 	} else if (s.substr(0,7) == "CLUSTAL" || s[0]=='>') {
 	    // assume multiple alignment format: read and compute base pair probabilities
-	    readMultipleAlignment(filename, false);
+	    readMultipleAlignment(filename, keepMcM);
 #endif
 	} else {
 	    // try reading as PP-file (proprietary format, which is easy to read and contains pair probs)
@@ -287,7 +287,7 @@ namespace LocARNA {
 	
 	if (sequence.row_number()!=1) {
 	    std::cerr << "ERROR: Cannot handle input from "<<filename<<"."<<std::endl
-		      <<"        Base pair computation from multi-fasta is not implemented." << std::endl;
+		      <<"        Base pair computation from multiple sequence alignment is not implemented." << std::endl;
 	    exit(-1);
 	}
 	
