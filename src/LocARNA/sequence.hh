@@ -9,7 +9,6 @@
 #include "aux.hh"
 #include "matrices.hh"
 #include "alphabet.hh"
-
 namespace LocARNA {
 
     class Sequence;
@@ -78,6 +77,7 @@ namespace LocARNA {
 	void
 	inc_profile();
 	*/
+	
     
     public: 
     
@@ -198,7 +198,7 @@ namespace LocARNA {
 
 	//! output subsequence
 	void write(std::ostream &out, size_type start, size_type end) const;
-  
+	
 	// ------------------------------------------------------------
 	// DEBUGGING
     

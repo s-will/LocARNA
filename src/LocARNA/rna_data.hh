@@ -15,9 +15,9 @@
  */
 #define FLT_OR_DBL double
 
-// extern "C" {
-// #include <ViennaRNA/fold_vars.h>
-// }
+extern "C" {
+#include <ViennaRNA/fold_vars.h>
+}
 
 
 #include "aux.hh"
@@ -58,6 +58,39 @@ namespace LocARNA {
     
 	//! string description of sequence constraints
 	std::string seq_constraints_; 
+	
+	FILE *myfile;
+# ifdef HAVE_LIBRNA
+	
+	FLT_OR_DBL *qm1;
+	FLT_OR_DBL *qm2;
+	FLT_OR_DBL *scale_p;
+	pf_paramT *pf_params_p;
+	FLT_OR_DBL *expMLbase_p;
+	
+	short *S_p;          //!< 'S' array (integer representation of nucleotides)	
+	    short *S1_p;	 //!< 'S1' array (2nd integer representation of nucleotides)	
+	    char *ptype_p;	 //!< pair type matrix					
+	    FLT_OR_DBL *qb_p;	 //!< Q<sup>B</sup> matrix					
+	    FLT_OR_DBL *qm_p;	 //!< Q<sup>M</sup> matrix					
+	    FLT_OR_DBL *q1k_p;	 //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
+	    FLT_OR_DBL *qln_p;	 //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
+	
+	    //! @brief base pair probability matrix
+	    //! 
+	    //! Access elements with get_bppm()
+	    FLT_OR_DBL *bppm;
+	    
+	    int* iindx; //!< iindx from librna's get_iindx()
+	    
+	    //! \brief Get entry in bppm matrix 
+	    //! 
+	    //! @note Performs index computation via iindx
+	    FLT_OR_DBL get_bppm(size_t i, size_t j) { return bppm[iindx[i]-j]; }
+	    char get_ptype(size_t i, size_t j) { return ptype_p[iindx[i]-j]; }
+	    FLT_OR_DBL get_qb(size_t i, size_t j) { return qb_p[iindx[i]-j]; }
+	    FLT_OR_DBL get_qm(size_t i, size_t j) { return qm_p[iindx[i]-j]; }
+#endif
 
     protected:
 
@@ -90,7 +123,7 @@ namespace LocARNA {
 	
 	//! \brief Pointer to McCaskill matrices
 	//! @see compute_McCaskill_matrices()
-	McC_matrices_t *McC_matrices;
+	 McC_matrices_t *McC_matrices;
 #   else
 	//! @note define even for !HAVE_LIBRNA to make code less cluttered
 	void *McC_matrices;
@@ -111,7 +144,7 @@ namespace LocARNA {
 	 * @param stacking whether to use stacking
 	 * @param keepMcM if TRUE, keep the McCaskill matrices for use in prob_unpaired_in_loop(). This works only if file is in clustalw format!
 	 */
-	RnaData(const std::string &file, bool stacking=false, bool keepMcM=false);
+	RnaData(const std::string &file, bool keepMcM=false, bool stacking=false);
 	
 	/** 
 	 * Construct from sequence, predicting the basepairs
@@ -127,7 +160,7 @@ namespace LocARNA {
 	 * pf_fold()) in general. See also pre-condition
 	 * compute_McCaskill_matrices()
 	 */
-	RnaData(const Sequence &sequence_, bool keepMcM);
+	RnaData(const Sequence &sequence_, bool keepMcM=false, bool stacking=false);
 	
 
 	//! \brief Clean up.
@@ -223,7 +256,7 @@ namespace LocARNA {
 	 *
 	 */
 	void readMultipleAlignment(const std::string &filename, 
-				   bool keepMcC);
+				   bool keepMcC, bool stacking);
 	
 	
 	//! \brief read baepairs and sequence from a file
@@ -286,6 +319,18 @@ namespace LocARNA {
 	    assert(i<j);
 	    arc_2_probs_.set(i,j,p);
 	}
+	
+// 	/**
+// 	 * printing the base pair probabilities to file
+// 	 */
+// 	void print_probab(){
+// 	  myfile= fopen("basepairs.txt","a");
+// 	  fprintf(myfile, "Position 1\tPosition2\tProbability\n");
+// 	  for(size_t i=1; i<=sequence.length(); i++)
+// 	    for(size_t j= i+1; j<=sequence.length(); j++)
+// 	      fprintf(myfile, "%i\t%i\t%e\n", (int)i, (int)j, get_arc_prob(i,j));
+// 	  fclose(myfile);
+// 	}
     
     public:
 	// ------------------------------------------------------------
@@ -369,6 +414,14 @@ namespace LocARNA {
 	}
 
 	
+	Sequence get_sequence() {
+	  return sequence;
+	}
+	
+	int get_length() {
+	  return sequence.length();
+	}
+	
 #   ifdef HAVE_LIBRNA
 	// the following methods need linking to librna
 
@@ -390,7 +443,6 @@ namespace LocARNA {
 	 * @pre McCaskill matrices are computed and generated.
 	 * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepMcC)
 	 *
-	 * @todo Implement: required by ExpaRNA-P
 	 */
 	double
 	prob_unpaired_in_loop(size_type k,
@@ -428,6 +480,10 @@ namespace LocARNA {
 	 *
 	 * The method creates and fills the Qm2 matrix needed for
 	 * prob_unpaired_in_loop().
+	 * 
+	 * @pre McCaskill matrices should be computed and accessible.
+	 * 
+	 * @note compute_McCaskill_matrices() calls this method at the end 
 	 */
 	void
 	compute_Qm2();

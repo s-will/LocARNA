@@ -49,8 +49,7 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 ##   use extension .bin for binary locarna to avoid name collission in src dir
 ##
 bin_PROGRAMS = locarna.bin ribosum2cc locarna_p locarnap_fit	\
-               locarna_deviation locarna_rnafold_pp
-# locarna_X 
+               locarna_deviation locarna_rnafold_pp locarna_X 
 
 #remove the extension .bin for installation
 transform = s/\.bin$$//
@@ -68,9 +67,8 @@ dist_locarna_bin_SOURCES = locarna.cc
 
 locarna_p_SOURCES = locarna_p.cc
 
-#locarna_X_SOURCES = locarna_X.cc \
-#	exact_matcher.hh exact_matcher.cc \
-#	basepairs_looptraversal.hh basepairs_looptraversal.cc
+locarna_X_SOURCES = locarna_X.cc LocARNA/exact_matcher.hh LocARNA/exact_matcher.cc 
+
 
 nodist_locarna_bin_SOURCES = LocARNA/ribosum85_60.icc
 

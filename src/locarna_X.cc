@@ -13,7 +13,9 @@
 #include <fstream>
 #include <vector>
 #include <string>
-
+#include <sstream>
+#include<limits>
+#include <stdio.h>
 //#include <math.h>
 
 #include <LocARNA/sequence.hh>
@@ -30,8 +32,8 @@
 
 #include <LocARNA/exact_matcher.hh>
 
-using namespace std;
 
+using namespace std;
 
 const std::string
 VERSION_STRING = (std::string)PACKAGE_STRING;
@@ -55,6 +57,12 @@ int max_diff_am; //maximal difference between two arc ends, -1 is off
 // except when there is no additional computation of M matrices necessary,
 // this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
 
+int EPM_threshold; //threshold for Exact Pattern Matches
+int EPM_min_size; //minimum size for Exact Pattern Matches
+double prob_unpaired_threshold; // threshold for prob_unpaired_in_loop
+int alpha_1; //parameter for sequential score
+int alpha_2; //parameter for structural score
+int alpha_3; //parameter for stacking score
 
 
 std::string seq_constraints_A;
@@ -67,6 +75,8 @@ bool opt_ignore_constraints;
 // File arguments
 std::string file1;
 std::string file2;
+string psFile1;
+string psFile2;
 
 // ------------------------------------------------------------
 //
@@ -79,10 +89,11 @@ using namespace LocARNA;
 bool opt_help;
 bool opt_version;
 bool opt_verbose;
-
+bool opt_stacking;
+bool opt_locarna_output;
 
 option_def my_options[] = {
-    {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
+    {"min-prob",'P',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff-match",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
 
@@ -95,9 +106,19 @@ option_def my_options[] = {
     {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
+    {"stacking",'S',&opt_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","Use stacking terms (needs stack-probs by RNAfold -p2)"}, //TODO calculate stacking probabilities
+    {"EPM_threshold",'t',0,O_ARG_INT,&EPM_threshold,"5","threshold","User-defined threshold for Exact Pattern Matches"},
+    {"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"3","min_size","User-defined minimum size for Exact Pattern Matches"},
+    {"prob_unpaired_threshold",'p',0,O_ARG_DOUBLE,&prob_unpaired_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
+    {"alpha_1",0,0,O_ARG_INT,&alpha_1,"1","alpha_1","Parameter for sequential score"},
+    {"alpha_2",0,0,O_ARG_INT,&alpha_2,"1","alpha_2","Parameter for structural score"},
+    {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Parameter for stacking score"},
     
     {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
     {"",0,0,O_ARG_STRING,&file2,O_NODEFAULT,"file 2","Basepairs input file 2 (dp dir in eval mode)"},
+    {"PS_file1",'a',0,O_ARG_STRING,&psFile1,"SequenceA","psFile1","Postscript output file for sequence A"},
+    {"PS_file2",'b',0,O_ARG_STRING,&psFile2,"SequenceB","psFile2","Postscript output file for sequence B"},
+    {"output_locarna", 'i',&opt_locarna_output,O_NO_ARG,0,O_NODEFAULT,"","Output with anchor constraints for locarna"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -118,6 +139,7 @@ main(int argc, char **argv) {
     // Process options
 
     bool process_success=process_options(argc,argv,my_options);
+
 
     if (opt_help) {
 	cout << VERSION_STRING<<endl;
@@ -157,12 +179,25 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
+   
     
-    RnaData rnadataA(file1,false);
-    RnaData rnadataB(file2,false);
-
-    Sequence seqA=rnadataA.get_sequence();
-    Sequence seqB=rnadataB.get_sequence();
+    
+    MultipleAlignment maA(file1);
+    MultipleAlignment maB(file2);
+    
+    
+    
+    Sequence seqA(maA);
+    Sequence seqB(maB);
+    
+     //opt_stacking
+    //FILE *myfile= fopen("basepairs.txt", "w");
+    RnaData rnadataA(seqA,true,true);
+    RnaData rnadataB(seqB,true,true);
+    //fclose(myfile);
+   
+    //Sequence seqA=rnadataA.get_sequence();
+    //Sequence seqB=rnadataB.get_sequence();
     
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
@@ -209,6 +244,7 @@ main(int argc, char **argv) {
     BasePairs bpsA = arc_matches->get_base_pairsA();
     BasePairs bpsB = arc_matches->get_base_pairsB();
     
+    
     // ----------------------------------------
     // report on input in verbose mode
     if (opt_verbose) {
@@ -224,21 +260,41 @@ main(int argc, char **argv) {
 	     <<"Base Pair Matches: "<<arc_matches->num_arc_matches() << "." <<std::endl;
 	// cout << "Base Identity: "<<(seq_identity(seqA,seqB)*100)<<endl; 
     }
-    
-    
+
     // ------------------------------------------------------------
     // Compute Exact Matchings
     //
-
-    ExactMatcher em(seqA,seqB,*arc_matches);
     
-    // compute matrices for finding best and enumerating all matchings
-    infty_score_t score = em.compute_matchings();
+    Mapping mappingA(bpsA,rnadataA,prob_unpaired_threshold);
+    Mapping mappingB(bpsB,rnadataB,prob_unpaired_threshold);
+    
+    
+    string sequenceA= MultipleAlignment(seqA).seqentry(0).seq().to_string();
+    string sequenceB= MultipleAlignment(seqB).seqentry(0).seq().to_string();
+    ExactMatcher em(seqA,
+		    seqB,
+		    *arc_matches,
+		    mappingA,
+		    mappingB,
+		    EPM_threshold,
+		    EPM_min_size,
+		    alpha_1,
+		    alpha_2,
+		    alpha_3,
+		    sequenceA,
+		    sequenceB,
+		    psFile1,
+		    psFile2
+ 		  );
+
+    
+    //compute matrices for finding best and enumerating all matchings
+    em.compute_matchings();
     
     // ----------------------------------------
     // report score
     //
-    std::cout << "Size of best exact matching: "<<score<<std::endl;
+    //std::cout << "Size of best exact matching: "<<score<<std::endl;
     
     
     // ------------------------------------------------------------
@@ -252,8 +308,11 @@ main(int argc, char **argv) {
 	
 	em.write_matchings(cout);
     }
-    
+    if(opt_locarna_output){
+	em.output_locarna();
+    }
     // ----------------------------------------
     // DONE
-    exit(0);
+    delete arc_matches;
+    return 0;
 }
