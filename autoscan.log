@@ -1,0 +1,46 @@
+autoscan: warning: missing AC_CHECK_FUNCS([floor]) wanted by: 
+	src/LocARNA/trace_controller.cc:330
+autoscan: warning: missing AC_CHECK_FUNCS([pow]) wanted by: 
+	src/LocARNA/rna_data.cc:185
+autoscan: warning: missing AC_CHECK_FUNCS([sqrt]) wanted by: 
+	src/fitonoff.cc:188
+	src/fitonoff.cc:189
+	src/LocARNA/stral_score.hh:110
+	src/LocARNA/stral_score.hh:110
+	src/LocARNA/stral_score.hh:111
+	src/LocARNA/aligner_p.cc:1030
+autoscan: warning: missing AC_C_INLINE wanted by: 
+	src/LocARNA/sparse_matrix.hh:223
+	src/LocARNA/aligner_restriction.hh:106
+	src/LocARNA/trace_controller.hh:238
+	src/LocARNA/trace_controller.hh:244
+	src/LocARNA/aligner_p.cc:161
+	src/LocARNA/aligner_p.cc:171
+	src/LocARNA/aligner_p.cc:185
+	src/LocARNA/aligner_p.cc:440
+	src/LocARNA/aligner_p.cc:449
+	src/LocARNA/aligner_p.cc:460
+	src/LocARNA/aligner_p.cc:632
+	src/LocARNA/aligner_p.cc:642
+	src/LocARNA/aligner_p.cc:654
+	src/LocARNA/aligner_p.cc:678
+	src/LocARNA/infty_arith_int.hh:238
+	src/LocARNA/infty_arith_int.hh:248
+	src/LocARNA/infty_arith_int.hh:261
+	src/LocARNA/infty_arith_int.hh:274
+	src/LocARNA/infty_arith_int.hh:287
+	src/LocARNA/infty_arith_int.hh:300
+	src/LocARNA/infty_arith_int.hh:314
+	src/LocARNA/infty_arith_int.hh:329
+	src/LocARNA/infty_arith_int.hh:344
+	src/LocARNA/infty_arith_int.hh:359
+autoscan: warning: missing AC_C_RESTRICT wanted by: 
+	src/LocARNA/aligner_p.cc:313
+	src/LocARNA/aligner_p.cc:903
+	src/LocARNA/aligner.cc:663
+autoscan: warning: missing AC_FUNC_MALLOC wanted by: 
+	src/LocARNA/options.cc:137
+	src/LocARNA/options.cc:138
+	src/LocARNA/options.cc:139
+autoscan: warning: missing AC_PROG_RANLIB wanted by: 
+	ltmain.sh:1775

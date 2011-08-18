@@ -13,7 +13,7 @@
 
 #ifdef HAVE_LIBRNA
 extern "C" {
-#include <ViennaRNA/fold_vars.h>
+//#include <ViennaRNA/fold_vars.h>
 #include <ViennaRNA/part_func.h>
 #include <ViennaRNA/fold.h>
 #include <ViennaRNA/utils.h>
@@ -29,7 +29,7 @@ extern "C" {
 
 namespace LocARNA {
 
-    RnaData::RnaData(const std::string &file, bool stacking_):
+    RnaData::RnaData(const std::string &file, bool stacking_,bool keepMcM):
 	sequence(),
 	stacking(stacking_),
 	arc_probs_(0),
@@ -37,19 +37,15 @@ namespace LocARNA {
 	seq_constraints_(""),
 	McC_matrices(NULL)
     {
-	read(file);
+	read(file,keepMcM);
     }
     
 #ifdef HAVE_LIBRNA
 
-    FLT_OR_DBL *qm1;
-    FLT_OR_DBL *qm2;
-    FLT_OR_DBL *scale_p;
-    pf_paramT *pf_params_p;
-    FLT_OR_DBL *expMLbase_p;
-    RnaData::RnaData(const Sequence &sequence_, bool keepMcM)
+    
+    RnaData::RnaData(const Sequence &sequence_, bool keepMcM, bool stacking)
 	: sequence(sequence_),
-	  stacking(false),
+	  stacking(stacking),
 	  arc_probs_(0),
 	  arc_2_probs_(0),
 	  seq_constraints_(""),
@@ -68,6 +64,9 @@ namespace LocARNA {
 	// Use the same proability threshold as in RNAfold -p !
 	init_from_McCaskill_bppm();
 	
+	
+// 	print_probab();
+	
 	// optionally deallocate McCaskill matrices
 	if (!keepMcM) {
 	    free_McCaskill_matrices();
@@ -82,6 +81,8 @@ namespace LocARNA {
 	}
 	
 	assert(sequence.row_number()==1);
+	
+	
 	
 	// use MultipleAlignment to get pointer to c-string of the
 	// first (and only) sequence in object sequence.
@@ -113,7 +114,6 @@ namespace LocARNA {
 	pf_fold(c_sequence,c_structure);
 	
 	McC_matrices = new McC_matrices_t();
-	
 	// get pointers to McCaskill matrices
 	get_pf_arrays(&McC_matrices->S_p,
 		      &McC_matrices->S1_p,
@@ -122,10 +122,49 @@ namespace LocARNA {
 		      &McC_matrices->qm_p,
 		      &McC_matrices->q1k_p,
 		      &McC_matrices->qln_p);
+	
 	// get pointer to McCaskill base pair probabilities
 	McC_matrices->bppm = export_bppm();
 	
 	McC_matrices->iindx = get_iindx(sequence.length());
+	
+	iindx= (int *) space(sizeof(int)* (sequence.length()+1));
+	for(int i=0; i<=(int)sequence.length(); i++)
+		iindx[i]= McC_matrices->iindx[i];
+	
+	unsigned int size;
+	size  = sizeof(FLT_OR_DBL) * ((length+1)*(length+2)/2);
+	S_p   = encode_sequence(c_sequence, 0);
+	S1_p  = encode_sequence(c_sequence, 1);
+	ptype_p= (char *) space(sizeof(char)*((length+1)*(length+2)/2));
+	qb_p= (FLT_OR_DBL *) space(size);
+	qm_p= (FLT_OR_DBL *) space(size);
+	q1k_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
+	qln_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+2));
+	bppm= (FLT_OR_DBL *) space(size);
+	
+	int i,j;
+	for (j=TURN+2;j<=(int)sequence.length(); j++) {
+	  for (i=j-TURN-1; i>=1; i--) {
+	    ptype_p[iindx[i]-j]= McC_matrices->ptype_p[iindx[i]-j];
+	    qb_p[iindx[i]-j]= McC_matrices->qb_p[iindx[i]-j];
+	    qm_p[iindx[i]-j]= McC_matrices->qm_p[iindx[i]-j];   
+	    bppm[iindx[i]-j]= McC_matrices->bppm[iindx[i]-j];
+	  }
+	}
+	
+	
+	for (int k=1; k<=S_p[0]; k++) {
+	  q1k_p[k]= McC_matrices->q1k_p[k];
+	  qln_p[k]= McC_matrices->qln_p[k];
+	}
+	q1k_p[0] = 1.0;
+	qln_p[S_p[0]+1] = 1.0;
+	 
+	
+	
+	
+	
 	pf_params_p= get_scaled_pf_parameters();
 	expMLbase_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
 	scale_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
@@ -147,13 +186,17 @@ namespace LocARNA {
 	}
 	
 	compute_Qm2();
-    
+	
+	
+	
     }
 
     void
     RnaData::free_McCaskill_matrices() {
 	// call respective librna function
 	if (McC_matrices) {
+	    free(McC_matrices->iindx);
+	    McC_matrices->iindx= NULL;
 	    free_pf_arrays();
 	    delete McC_matrices;
 	}
@@ -162,14 +205,45 @@ namespace LocARNA {
 #endif // HAVE_LIBRNA
 
     RnaData::~RnaData() {
+      
 #     ifdef HAVE_LIBRNA	
+	
 	free_McCaskill_matrices();
+	if(S_p) free(S_p);          
+	if(S1_p) free(S1_p);	 	
+	if(ptype_p) free(ptype_p);	 				
+	if(qb_p) free(qb_p);					
+	if(qm_p) free(qm_p);	 				
+	if(q1k_p) free(q1k_p);	 
+	if(qln_p) free(qln_p);	  
+ 	if(bppm) free(bppm);   
+	if(iindx) free(iindx);
+  	if(qm2) free(qm2);
+	if(expMLbase_p) free(expMLbase_p); 
+        if(scale_p) free(scale_p); 
+	if(pf_params_p) free(pf_params_p);
+        
+	S_p= NULL;
+	S1_p= NULL;
+	ptype_p= NULL;
+	qb_p= NULL;
+	qm_p= NULL;
+	q1k_p= NULL;
+	qln_p= NULL;
+ 	bppm= NULL;
+	iindx= NULL;
+	qm2= NULL;
+	pf_params_p= NULL;
+	scale_p= NULL;
+	expMLbase_p= NULL;
+	
 #     endif
+	
     }
 
     
     // decide on file format and call either readPS or readPP
-    void RnaData::read(const std::string &filename) {
+    void RnaData::read(const std::string &filename, bool keepMcM) {
   
 	std::ifstream in(filename.c_str());
 	if (! in.good()) {
@@ -192,7 +266,7 @@ namespace LocARNA {
 #ifdef HAVE_LIBRNA
 	} else if (s.substr(0,7) == "CLUSTAL" || s[0]=='>') {
 	    // assume multiple alignment format: read and compute base pair probabilities
-	    readMultipleAlignment(filename, false);
+	    readMultipleAlignment(filename, keepMcM, stacking);
 #endif
 	} else {
 	    // try reading as PP-file (proprietary format, which is easy to read and contains pair probs)
@@ -275,8 +349,7 @@ namespace LocARNA {
 
 #ifdef HAVE_LIBRNA
     //bool flag;
-    void RnaData::readMultipleAlignment(const std::string &filename, bool keepMcM) {
-	
+    void RnaData::readMultipleAlignment(const std::string &filename, bool keepMcM, bool stacking) {
 	//read to multiple alignment object
 	MultipleAlignment ma(filename,MultipleAlignment::CLUSTAL); // accept clustal input
 	// MultipleAlignment ma(filename,MultipleAlignment::FASTA); // accept fasta input
@@ -290,6 +363,7 @@ namespace LocARNA {
 	    exit(-1);
 	}
 	
+	
 	// run McCaskill and get access to results
 	// in McCaskill_matrices
 	compute_McCaskill_matrices();
@@ -297,7 +371,7 @@ namespace LocARNA {
 	// initialize the object from base pair probabilities
 	// Use the same proability threshold as in RNAfold -p !
 	init_from_McCaskill_bppm();
-	
+	    
 	if (!keepMcM) {
 	    free_McCaskill_matrices();
 	}
@@ -309,17 +383,30 @@ namespace LocARNA {
 	for( size_t i=1; i <= sequence.length(); i++ ) {
 	    for( size_t j=i+1; j <= sequence.length(); j++ ) {
 		
-		double p=McC_matrices->get_bppm(i,j);
+		double p= get_bppm(i,j);
 		
 		if (p >= threshold) { // apply very relaxed filter 
 		    set_arc_prob(i,j,p);
 		}
 	    }
 	}
+	if(stacking){
+	  plist* pl= stackProb(threshold);
+	  plist* p= pl;
+	  while(pl->i!=0){
+	    set_arc_2_prob(pl->i, pl->j, pl->p);
+	    pl++;
+	  }
+	  free(p);
+// 	  pl= stackProb(threshold);
+// 	  free(pl);
+	  pl= NULL;
+	  p= NULL;
+	}
     }
     void
     RnaData::compute_Qm2(){
-      
+
       int len= sequence.length();
       qm1= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(len+2));
       qm2= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL) * ((len+1)*(len+2)/2));
@@ -329,21 +416,27 @@ namespace LocARNA {
       for (index_i=1; index_i<=len; index_i++)
 	qm1[index_i]=qqm1[index_i]=0;
      
+      
+      
       for(index_j= TURN+2; index_j<=len; index_j++){
+      /*
+       *the first inner loop calculates one row of Qm1 that will be needed in the calculation of Qm2  
+       */
 	for(index_i= index_j-TURN-1; index_i>=1; index_i--){
-	 type= McC_matrices->ptype_p[iindx[index_i]-index_j];
+	 type=get_ptype(index_i,index_j);
 	 qm1[index_i]= qqm1[index_i]*expMLbase_p[1];
 	 if(type){
-	  qm1[index_i]+= (McC_matrices->qb_p[iindx[index_i]-index_j])* exp_E_MLstem(type, (index_i>1) ? 
-									McC_matrices->S1_p[index_i-1] : -1, (index_j<len) ? McC_matrices->S1_p[index_j+1] : -1,  pf_params_p);
+ 	  qm1[index_i]+= (get_qb(index_i,index_j))* exp_E_MLstem(type, (index_i>1) ? 
+									S1_p[index_i-1] : -1, (index_j<len) ? S1_p[index_j+1] : -1,  pf_params_p);
 
 	  }
 	}
+	//this part calculates the Qm2 matrix
 	if(index_j >= (2*(TURN+2))){
 	  for(index_i= index_j-2*TURN-3; index_i>=1; index_i--){
 	    qm2[iindx[index_i]-index_j]= 0;
 	      for(index_k= index_i+2; index_k< index_j-2; index_k++){
-		qm2[iindx[index_i+1]-(index_j-1)]+= McC_matrices->qm_p[iindx[index_i+1]-(index_k)]*qqm1[index_k+1];
+		qm2[iindx[index_i+1]-(index_j-1)]+= get_qm(index_i+1,index_k)*qqm1[index_k+1];
 	      
 	      }
 	  }
@@ -352,10 +445,15 @@ namespace LocARNA {
 	    qqm1[index_i]=qm1[index_i];
 	  }
 	}
+	free(qm1);
+	free(qqm1);
+	qm1= NULL;
+	qqm1= NULL;
 
-      
+ 	
     }
     double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j){
+
 	
 	int length = sequence.length();
 	
@@ -365,51 +463,53 @@ namespace LocARNA {
 	
 	FLT_OR_DBL H,I,M;
 	int type,type_2;
-	type= McC_matrices->ptype_p[iindx[i]-j];
+	//calculating the Hairpin loop energy contribution
+	type=(int)(get_ptype(i,j));
 	if (type!=0) {
 	  if (((type==3)||(type==4))&&no_closingGU) H = 0;
 	  else
-	  H = exp_E_Hairpin(j-i-1, type, McC_matrices->S1_p[i+1], McC_matrices->S1_p[j-1], c_sequence+i-1, pf_params_p) * scale_p[j-i+1];
+	  H = exp_E_Hairpin((int)(j-i-1), type, S1_p[(int)(i+1)], S1_p[(int)(j-1)], c_sequence+i-1, pf_params_p) * scale_p[(int)(j-i+1)];
 	}
 	else H= 0;
 	I= 0.0;
+	//calculating the Interior loop energy contribution
 	if(type!=0){
 	  int u1;
-	  for (int i_p=k+1; i_p<=MIN2(i+MAXLOOP+1,j-TURN-2); i_p++) {
-	    u1 = i_p-i-1;
-	    for (int j_p=MAX2(i_p+TURN+1,j-1-MAXLOOP+u1); j_p<(int)j; j_p++) {
-	      type_2 =McC_matrices-> ptype_p[iindx[i_p]-j_p];
+	  // case 1: i<k<i´<j´<j
+	  for (int i_p=(int)(k+1); i_p<=(int)MIN2((int)(i+MAXLOOP+1),(int)(j-TURN-2)); i_p++) {
+	    u1 =(int)(i_p-i-1);
+	    for (int j_p=(int)MAX2((int)(i_p+TURN+1),(int)(j-1-MAXLOOP+u1)); j_p<(int)j; j_p++) {
+	      type_2 =(int)(get_ptype(i_p,j_p));
 	      if (type_2) {
 		type_2 = rtype[type_2];
-		I +=McC_matrices-> qb_p[iindx[i_p]-j_p] * (scale_p[u1+j-j_p+1] *
-                                        exp_E_IntLoop(u1, j-j_p-1, type, type_2,
-                                       McC_matrices-> S1_p[i+1],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i_p-1],McC_matrices-> S1_p[j_p+1], pf_params_p));
+		I +=get_qb(i_p,j_p) * (scale_p[(int)(u1+j-j_p+1)] *
+                                        exp_E_IntLoop(u1,(int)(j-j_p-1), type, type_2,
+                                       S1_p[(int)(i+1)],S1_p[(int)(j-1)],S1_p[i_p-1],S1_p[j_p+1], pf_params_p));
 	      }
 	    }
 	  }
-	  
-	  for (int i_p=i+1; i_p<=MIN2(i+MAXLOOP+1,k-TURN-2); i_p++) {
-	    u1 = i_p-i-1;
-	    for (int j_p=MAX2(i_p+TURN+1,j-1-MAXLOOP+u1); j_p<(int)k; j_p++) {
-	      type_2 =McC_matrices-> ptype_p[iindx[i_p]-j_p];
+	  //case 2: i<i´<j´<k<j
+	  for (int i_p=(int)(i+1); i_p<=(int)MIN2((int)(i+MAXLOOP+1),(int)(k-TURN-2)); i_p++) {
+	    u1 =(int)(i_p-i-1);
+	    for (int j_p=(int)MAX2((int)(i_p+TURN+1),(int)(j-1-MAXLOOP+u1)); j_p<(int)k; j_p++) {
+	      type_2 =(int)(get_ptype(i_p,j_p)) ;
 	      if (type_2) {
 		type_2 = rtype[type_2];
-		I +=McC_matrices-> qb_p[iindx[i_p]-j_p] * (scale_p[u1+j-j_p+1] *
-                                        exp_E_IntLoop(u1, j-j_p-1, type, type_2,
-                                       McC_matrices-> S1_p[i+1],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i_p-1],McC_matrices-> S1_p[j_p+1], pf_params_p));
+		I +=get_qb(i_p,j_p) * (scale_p[(int)(u1+j-j_p+1)] *
+                                        exp_E_IntLoop(u1,(int)(j-j_p-1), type, type_2,
+                                       S1_p[(int)(i+1)],S1_p[(int)(j-1)],S1_p[i_p-1],S1_p[j_p+1], pf_params_p));
 	      }
 	    }
 	  }
-	  
 	}
-	
+	//calculating Multiple loop energy contribution
 	M= 0.0;
 	if(type!=0){
-		M+= qm2[iindx[k+1]-(j-1)]*pf_params_p->expMLclosing*expMLbase_p[k-i]*exp_E_MLstem(rtype[type],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i+1], pf_params_p)* scale_p[2];
-		M+= qm2[iindx[i+1]-(k-1)]*pf_params_p->expMLclosing*expMLbase_p[j-k]*exp_E_MLstem(rtype[type],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i+1], pf_params_p) * scale_p[2];
-		M+= McC_matrices->qm_p[iindx[i+1]-(k-1)] * McC_matrices->qm_p[iindx[k+1]-(j-1)]* pf_params_p->expMLclosing*expMLbase_p[1] *exp_E_MLstem(rtype[type],McC_matrices-> S1_p[j-1],McC_matrices-> S1_p[i+1], pf_params_p)* scale_p[2];
+		M+= qm2[iindx[(int)(k+1)]-((int)(j-1))]*pf_params_p->expMLclosing*expMLbase_p[(int)(k-i)]*exp_E_MLstem(rtype[type],S1_p[(int)(j-1)],S1_p[(int)(i+1)], pf_params_p)* scale_p[2];
+		M+= qm2[iindx[(int)(i+1)]-((int)(k-1))]*pf_params_p->expMLclosing*expMLbase_p[(int)(j-k)]*exp_E_MLstem(rtype[type],S1_p[(int)(j-1)],S1_p[(int)(i+1)], pf_params_p) * scale_p[2];
+		M+= get_qm(i+1,k-1) *  get_qm(k+1,j-1) * pf_params_p->expMLclosing*expMLbase_p[1] *exp_E_MLstem(rtype[type],S1_p[(int)(j-1)],S1_p[(int)(i+1)], pf_params_p)* scale_p[2];
 	  }
-	return (McC_matrices->qb_p[iindx[i]-j]==0)? 0: ((H+I+M)/(McC_matrices->qb_p[iindx[i]-j]))*get_arc_prob(i,j);
+	return (get_qb(i,j)==0)? 0: ((H+I+M)/get_qb(i,j))*get_arc_prob(i,j);
     }
 
 #endif // HAVE_LIBRNA

@@ -114,8 +114,11 @@ AnchorConstraints::transform_input(name_tab_t &nameTab,
 	seq.end() != it;
 	++it) 
 	{
-	    if (seq_len != it->length())
+// 	    std::cout << "length of sequence " << seq_len << " length of constraint " << it->length() << std::endl;
+	    if (seq_len != it->length()){
+// 		std::cout << "length of sequence " << seq_len << " length of constraints " << it->length() << std::endl;
 		throw( failure("Error during parsing of constraints. Constraint string of wrong length.") );
+	    }
 	    
 	    for (std::string::size_type i=0; i<seq_len; i++) {
 		vec[i].push_back((*it)[i]);

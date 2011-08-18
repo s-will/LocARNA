@@ -45,8 +45,7 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 
 ## binary programs
 bin_PROGRAMS = locarna ribosum2cc locarna_p locarnap_fit	\
-               locarna_deviation locarna_rnafold_pp
-# locarna_X 
+               locarna_deviation locarna_rnafold_pp locarna_X 
 
 # all binaries should be linked to libLocARNA
 LDADD=libLocARNA-$(API_VERSION).la
@@ -61,8 +60,7 @@ dist_locarna_SOURCES = locarna.cc
 
 locarna_p_SOURCES = locarna_p.cc
 
-#locarna_X_SOURCES = locarna_X.cc \
-#	exact_matcher.hh exact_matcher.cc \
+locarna_X_SOURCES = locarna_X.cc LocARNA/exact_matcher.hh LocARNA/exact_matcher.cc 
 #	basepairs_looptraversal.hh basepairs_looptraversal.cc
 
 nodist_locarna_SOURCES = LocARNA/ribosum85_60.icc
