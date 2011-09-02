@@ -79,6 +79,23 @@ for each base pair $(i,j)$ and position $k$, the conditional
 probability that $k$ is member of the loop $(i,j)$. Then, the DP
 algorithm is limited to consider only 'probable' bases.
 
+\subsection*{Related Work}
+
+\Red{\bf Remarks about RAF:} RAF combines structural sparsity from
+single sequences dot-plots with alignment sparsity from sequence
+alignment. We should be able to implement the latter sparsification
+quite easily in LocARNA/LocARNAng.  (In the LocARNA code, there is a
+currently unused class for computing sequence alignment edge
+probabilities already.) The sequence alignment sparsity works
+orthogonal to our new structural sparsification idea.
+
+RAF furthermore composes its score from features based on these
+probabilities (i.e. base pair and alignment edge probs, unpaired and
+unaligned probabilities). In RAF, the weights of these features are
+automatically learned (max-margin model). This seems to cause the much
+improved accuracy of RAF over LocARNA. It would be interesting to use
+learning and/or the new scoring idea in LocARNA and the new LocARNA
+derivative.
 
 \section{Methods}
 
