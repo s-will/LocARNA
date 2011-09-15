@@ -143,9 +143,15 @@ The score of $(\myA,\myS)$ is given by
   + \sum_{(i,k)\in\myA_s} \sigma(A_i,B_k) 
   - N_{\textrm{gap}}\gamma,
 \end{equation}
-where $\PsiA{ij}$ and $\PsiB{kl}$ are base pair scores (see below), $\sigma:\{A,C,G,U\}^2\to\myR$ is the similarity score for
-(mis)matches, $\gamma$ is the gap score parameter and $N_{\textrm{gap}}$ is
-the number of insertions and deletions in the alignment $\myA$.
+where $\PsiA{ij}$ and $\PsiB{kl}$ are base pair scores (see below),
+$\sigma:\{A,C,G,U\}^2\to\myR$ is the similarity score for
+(mis)matches, $\gamma$ is the gap score parameter and
+$N_{\textrm{gap}}$ is the number of insertions and deletions in the
+alignment $\myA$.  \Red{MM: Why do we have no alignment score for the
+  matched edges? Maybe better $\sum_{(i,k)\in\myA} \sigma(A_i,B_k)$
+  than $\sum_{(i,k)\in\myA_s} \sigma(A_i,B_k)$? This would only require
+  to modify the last recursion case of $M_{ijkl}$ to incorporate
+  (mis)matching costs.}
 
 \subsection{Basic Algorithm}
 We define four matrices
@@ -233,7 +239,7 @@ For all matrices, we compute entries $ijkl$ if and only if there are
 base pairs $(i',j')$ and $(k',l')$ in respective $P^A$ and $P^B$ such
 that the following sparsity considitions are satisfied.
 \begin{align}
-  & i'=i-1, k'=k-1, j<j',\text{ and }l<l', and \\
+  & i'=i-1, k'=k-1, j<j',\text{ and }l<l', and \label{eq:startpoints}\\
   & P^A(i',j')\geq \thetaOne\text{ and }P^B(k',l')\geq \thetaOne  \label{eq:theta-one} \\
   & \pInLoopA{j}{(i',j')} \geq \thetaTwo\text{ and  }\pInLoopB{l}{(k',l')} \geq \thetaTwo\label{eq:theta-two}.
 \end{align}
@@ -244,7 +250,7 @@ the third one is new.
 
 Recall: As argued before, there are at most $1/\thetaOne$ base pairs
 $P^A(i,j)\geq \thetaOne$ for a fixed i. Therefore, there are only
-$O(n)$ many base pairs $(i',j')$ satisfying condition~$(\ref{theta-one})$.
+$O(n)$ many base pairs $(i',j')$ satisfying condition~$(\ref{eq:theta-one})$.
 
 \begin{proposition}
   \label{prop:sparsity}
@@ -255,15 +261,13 @@ $O(n)$ many base pairs $(i',j')$ satisfying condition~$(\ref{theta-one})$.
 \begin{proof}
   The probability $p(j,i',j'):=\Pr[\text{$j$ in loop closed by
     $(i',j')$ in structure of $A$}]$ is the joint probability
-  $\Pr[\text{$j$ in loop closed by $(i',j')$ in structure of $A$ and
-    $(i',j')$ base pair of $A$}]$. Therefore,
-  $p(j,i',j')=\pInLoopA{j}{i'}{j'} P^A(i',j') \geq
-  \thetaOne\thetaTwo$.
-  
-  For a fixed $j$, the events being in different loops are
-  disjoint. Therefore $\sum_{(i',j')} p(j,i',j') \leq 1$. Thus, there
-  are at most $\frac{1}{\thetaOne\thetaTwo} \in O(1)$ base pairs
-  $(i',j')$ such that the conditions are satisfied.
+  $\Pr[\text{$(i',j')$ base pair of $A$ and $j$ in loop closed by
+    $(i',j')$}]$. Therefore,
+  $p(j,i',j')=P^A(i',j')\pInLoopA{j}{(i',j')} \geq
+  \thetaOne\thetaTwo$.  For a fixed $j$, the events being in different
+  loops are disjoint. Therefore $\sum_{(i',j')} p(j,i',j') \leq
+  1$. Thus, there are at most $\frac{1}{\thetaOne\thetaTwo} \in O(1)$
+  base pairs $(i',j')$ such that the conditions are satisfied.
 \end{proof}
 
 \begin{theorem}
@@ -271,11 +275,13 @@ $O(n)$ many base pairs $(i',j')$ satisfying condition~$(\ref{theta-one})$.
 \end{theorem}
 
 \begin{proof}
-  Let the sparsity conditions hold for $i$,$j$,$k$,$l$,$i'$,$j'$,$k'$,
-  and $l'$.  Since $i=i'+1$, there are $O(n)$ many combinations $i,j$
-  by proposition~\ref{prop:sparsity}. Due to the same argument there
-  are $O(n)$ combinations $k,l$ and therefore $O(n^2)$ combinations
-  $i,j,k,l$ satisfying the conditions.
+  Let the sparsity conditions
+  (\ref{eq:startpoints},\ref{eq:theta-one},\ref{eq:theta-two}) hold
+  for $i$,$j$,$k$,$l$,$i'$,$j'$,$k'$, and $l'$.  Due to
+  proposition~\ref{prop:sparsity} and $i=i'+1$, there are $O(n)$ many
+  combinations $i',i,j$. Analogously there are $O(n)$ combinations
+  $k',k,l$ and therefore $O(n^2)$ combinations $i',k',i,j,k,l$ satisfying
+  the conditions.
 \end{proof}
 
 \begin{corollary}
