@@ -36,6 +36,10 @@ namespace LocARNA {
 	McC_matrices(NULL)
     {
 	read(file, keepMcM);
+
+	consensus_sequence = MultipleAlignment(sequence).consensus_sequence();
+	
+	std::cout << "CONSENSUS (from file): " << consensus_sequence <<std::endl;
     }
     
 #ifdef HAVE_LIBRNA
@@ -44,11 +48,14 @@ namespace LocARNA {
     RnaData::RnaData(const Sequence &sequence_, bool keepMcM, bool stacking_)
 	: sequence(sequence_),
 	  stacking(stacking_),
+	  consensus_sequence(MultipleAlignment(sequence).consensus_sequence()),
 	  arc_probs_(0),
 	  arc_2_probs_(0),
 	  seq_constraints_(""),
 	  McC_matrices(NULL)
     {
+	std::cout << "CONSENSUS (from sequence): " << consensus_sequence <<std::endl;
+
 	if (sequence.row_number()!=1) {
 	    std::cerr << "Construction with multi-row Sequence object is not implemented." << std::endl;
 	    exit(-1);
@@ -63,12 +70,14 @@ namespace LocARNA {
 	init_from_McCaskill_bppm();
 	
 	
-// 	print_probab();
+	// print_probab();
 	
 	// optionally deallocate McCaskill matrices
 	if (!keepMcM) {
 	    free_McCaskill_matrices();
 	}
+
+	
     }
     
     void
@@ -449,14 +458,10 @@ namespace LocARNA {
 
  	
     }
-    double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j){
 
+    double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j) const {
 	
-	int length = sequence.length();
-	
-	char c_sequence[length+1];
-	std::string seqstring = MultipleAlignment(sequence).seqentry(0).seq().to_string();
-	strcpy(c_sequence,seqstring.c_str());
+	const char *c_sequence=consensus_sequence.c_str();
 	
 	FLT_OR_DBL H,I,M;
 	int type,type_2;
@@ -508,6 +513,15 @@ namespace LocARNA {
 	  }
 	return (get_qb(i,j)==0)? 0: ((H+I+M)/get_qb(i,j))*get_arc_prob(i,j);
     }
+
+    double
+    RnaData::prob_basepair_in_loop(size_type k,
+				   size_type l,
+				   size_type i,
+				   size_type j) const {
+	return 0.0;
+    }
+
 
 #endif // HAVE_LIBRNA
 

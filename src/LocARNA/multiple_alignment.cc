@@ -685,5 +685,36 @@ namespace LocARNA {
     
     }
 
+    const std::string
+    MultipleAlignment::consensus_sequence() const {
+	const size_type max_code=128;
+	size_type tab[max_code];
+	
+	std::string cs="";
+	//iterate over columns and built up consensus sequence 
+	for (size_type i=1; i<=length(); ++i) {
+	    
+	    std::fill(tab,tab+max_code,0);
+	    
+	    // iterate over sequences and
+	    for (std::vector<SeqEntry>::const_iterator it=alig.begin(); alig.end()!=it; ++it) {
+		assert((size_type)it->seq()[i] < max_code);
+		tab[(size_type)it->seq()[i]]++;
+	    }
+	    
+	    size_type cur_max=0;
+	    char max_char='N';
+	    for(size_type x=0; x<max_code; ++x) {
+		if (tab[x]>cur_max) {
+		    cur_max=tab[x];
+		    max_char=x;
+		}
+	    }
+	    
+	    cs.push_back(max_char);
+	}
+	
+	return cs;
+    }
 
 } // end namespace 

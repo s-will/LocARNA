@@ -47,6 +47,9 @@ namespace LocARNA {
 	Sequence sequence; //!< the sequence
 	bool stacking; //! whether to support stacking
 
+	//! consensus sequence as C++ string
+	std::string consensus_sequence;
+
 	//! array for all arc probabilities the array is used when reading
 	//! in the probabilities and for merging probs during pp-output
 	arc_prob_matrix_t arc_probs_; 
@@ -86,10 +89,10 @@ namespace LocARNA {
 	    //! \brief Get entry in bppm matrix 
 	    //! 
 	    //! @note Performs index computation via iindx
-	    FLT_OR_DBL get_bppm(size_t i, size_t j) { return bppm[iindx[i]-j]; }
-	    char get_ptype(size_t i, size_t j) { return ptype_p[iindx[i]-j]; }
-	    FLT_OR_DBL get_qb(size_t i, size_t j) { return qb_p[iindx[i]-j]; }
-	    FLT_OR_DBL get_qm(size_t i, size_t j) { return qm_p[iindx[i]-j]; }
+	    FLT_OR_DBL get_bppm(size_t i, size_t j) const { return bppm[iindx[i]-j]; }
+	    char get_ptype(size_t i, size_t j) const { return ptype_p[iindx[i]-j]; }
+	    FLT_OR_DBL get_qb(size_t i, size_t j) const { return qb_p[iindx[i]-j]; }
+	    FLT_OR_DBL get_qm(size_t i, size_t j) const { return qm_p[iindx[i]-j]; }
 #endif
 
     protected:
@@ -428,12 +431,16 @@ namespace LocARNA {
 
 	/** 
 	 * \brief Unpaired probabilty of base in a specified loop 
-	 * 
+	 *
 	 * @param k unpaired sequence position
 	 * @param i left end of loop enclosing base pair
 	 * @param j right end of loop enclosing base pair
 	 * 
 	 * @return probability that k is unpaired in the loop closed by i and j
+	 *
+	 * Computes the joint probability that there is a base pair
+	 * (i,j) and a base k (i<k<j) is unpaired such that there is
+	 * no base pair i<i'<k<j'<j.
 	 *
 	 * @note This method is designed for use in ExpaRNA-P
 	 *
@@ -447,8 +454,39 @@ namespace LocARNA {
 	double
 	prob_unpaired_in_loop(size_type k,
 			      size_type i,
-			      size_type j);
+			      size_type j) const;
     
+
+	/** 
+	 * \brief Probabilty of base pair in a specified loop 
+	 * 
+	 * @param k left end of inner base pair
+	 * @param l right end of inner base pair
+	 * @param i left end of loop enclosing base pair
+	 * @param j right end of loop enclosing base pair
+	 * 
+	 * @return probability that k is unpaired in the loop closed by i and j
+	 *
+	 * Computes the joint probability that there is a base pair
+	 * (i,j) and a base pair (k,l) (i<k<l<j) that is inner base
+	 * pair of the loop closed by (i,j).
+	 *
+	 * @note This method is designed for use in ExpaRNA-P
+	 *
+	 * @note For computing these unpaired probabilities we need access to the
+	 * dynamic programming matrices of the McCaskill algorithm
+	 *
+	 * @pre McCaskill matrices are computed and generated.
+	 * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepMcC)
+	 *
+	 */
+	double
+	prob_basepair_in_loop(size_type k,
+			      size_type l,
+			      size_type i,
+			      size_type j) const;
+    
+
 	/** 
 	 * \brief Computes the McCaskill matrices and keeps them accessible
 	 * 

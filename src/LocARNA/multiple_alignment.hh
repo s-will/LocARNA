@@ -369,6 +369,15 @@ public:
     avg_deviation_score(const MultipleAlignment &ma) const;
 
     
+    /** 
+     * Consensus sequence of multiple alignment
+     * 
+     * Consensus sequence by simple majority in each column. Assume that only ascii < 127 characters occur
+     *
+     * @return consensus sequence as string
+     */
+    const std::string consensus_sequence() const;
+    
 private:
     //! @brief Deviation of a pairwise alignment from a pairwise reference alignment
     //! @param a1 first alignment string of alignment a

@@ -331,7 +331,8 @@ namespace LocARNA {
 	}
 	
 	// call ali pf fold
-	double energy = alipf_fold((const char **)sequences,structure,&pl);
+	// double energy = // we don't need the energy 
+	alipf_fold((const char **)sequences,structure,&pl);
 	
 	// read the pair_info structures from array pl
 	// and write the base pair probabilities to out
