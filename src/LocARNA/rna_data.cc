@@ -37,9 +37,7 @@ namespace LocARNA {
     {
 	read(file, keepMcM);
 
-	consensus_sequence = MultipleAlignment(sequence).consensus_sequence();
-	
-	std::cout << "CONSENSUS (from file): " << consensus_sequence <<std::endl;
+	consensus_sequence = MultipleAlignment(sequence).consensus_sequence();	
     }
     
 #ifdef HAVE_LIBRNA
@@ -54,8 +52,6 @@ namespace LocARNA {
 	  seq_constraints_(""),
 	  McC_matrices(NULL)
     {
-	std::cout << "CONSENSUS (from sequence): " << consensus_sequence <<std::endl;
-
 	if (sequence.row_number()!=1) {
 	    std::cerr << "Construction with multi-row Sequence object is not implemented." << std::endl;
 	    exit(-1);
@@ -67,8 +63,7 @@ namespace LocARNA {
 	
 	// initialize the object from base pair probabilities
 	// Use the same proability threshold as in RNAfold -p !
-	init_from_McCaskill_bppm();
-	
+	init_from_McCaskill_bppm();	
 	
 	// print_probab();
 	
@@ -76,8 +71,6 @@ namespace LocARNA {
 	if (!keepMcM) {
 	    free_McCaskill_matrices();
 	}
-
-	
     }
     
     void
@@ -467,7 +460,7 @@ namespace LocARNA {
 	int type,type2;
 	//calculating the Hairpin loop energy contribution
 	
-	type=(int)(get_ptype(i,j));
+	type = (int)(get_ptype(i,j));
 	
 	// immediately return 0.0 when i and j cannot pair
 	if ((type==0)
@@ -481,7 +474,7 @@ namespace LocARNA {
 	H = exp_E_Hairpin((int)(j-i-1), type, S1_p[(int)(i+1)], S1_p[(int)(j-1)],
 			  c_sequence+i-1, pf_params_p) * scale_p[(int)(j-i+1)];
 	
-	I= 0.0;
+	I = 0.0;
 	//calculating the Interior loop energy contribution
 
 	int u1;
@@ -489,7 +482,7 @@ namespace LocARNA {
 	for (int ip=(int)(k+1); 
 	     ip<=(int)MIN2((int)(i+MAXLOOP+1),(int)(j-TURN-2));
 	     ip++) {
-	    u1 =(int)(ip-i-1);
+	    u1 = (int)(ip-i-1);
 	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1)); 
 		 jp<(int)j;
 		 jp++) {
@@ -508,7 +501,7 @@ namespace LocARNA {
 	for (int ip=(int)(i+1);
 	     ip<=(int)MIN2((int)(i+MAXLOOP+1),(int)(k-TURN-2)); 
 	     ip++) {
-	    u1 =(int)(ip-i-1);
+	    u1 = (int)(ip-i-1);
 	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1));
 		 jp<(int)k;
 		 jp++) {
