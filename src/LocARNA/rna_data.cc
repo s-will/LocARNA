@@ -471,57 +471,72 @@ namespace LocARNA {
 	
 	// immediately return 0.0 when i and j cannot pair
 	if ((type==0)
-	    || 
-	    (((type==3)||(type==4))&&no_closingGU)
-	    ||
-	    (get_qb(i,j)==0.0)
-	    ||
-	    (get_arc_prob(i,j)))
+	    || (((type==3)||(type==4))&&no_closingGU)
+	    || (get_qb(i,j)==0.0)
+	    || (get_arc_prob(i,j)))
 	    {
 		return 0.0;
 	    }
 
-	H = exp_E_Hairpin((int)(j-i-1), type, S1_p[(int)(i+1)], S1_p[(int)(j-1)], c_sequence+i-1, pf_params_p) * scale_p[(int)(j-i+1)];
+	H = exp_E_Hairpin((int)(j-i-1), type, S1_p[(int)(i+1)], S1_p[(int)(j-1)],
+			  c_sequence+i-1, pf_params_p) * scale_p[(int)(j-i+1)];
 	
 	I= 0.0;
 	//calculating the Interior loop energy contribution
 
 	int u1;
 	// case 1: i<k<i´<j´<j
-	for (int ip=(int)(k+1); ip<=(int)MIN2((int)(i+MAXLOOP+1),(int)(j-TURN-2)); ip++) {
+	for (int ip=(int)(k+1); 
+	     ip<=(int)MIN2((int)(i+MAXLOOP+1),(int)(j-TURN-2));
+	     ip++) {
 	    u1 =(int)(ip-i-1);
-	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1)); jp<(int)j; jp++) {
+	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1)); 
+		 jp<(int)j;
+		 jp++) {
 		type2 =(int)(get_ptype(ip,jp));
 		if (type2) {
 		    type2 = rtype[type2];
-		    I +=get_qb(ip,jp) * (scale_p[(int)(u1+j-jp+1)] *
-					   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
-							 S1_p[(int)(i+1)],S1_p[(int)(j-1)],S1_p[ip-1],S1_p[jp+1], pf_params_p));
+		    I += get_qb(ip,jp) 
+			* (scale_p[(int)(u1+j-jp+1)] *
+			   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
+					 S1_p[(int)(i+1)],S1_p[(int)(j-1)],
+					 S1_p[ip-1],S1_p[jp+1], pf_params_p));
 		}
 	    }
 	}
 	//case 2: i<i´<j´<k<j
-	for (int ip=(int)(i+1); ip<=(int)MIN2((int)(i+MAXLOOP+1),(int)(k-TURN-2)); ip++) {
+	for (int ip=(int)(i+1);
+	     ip<=(int)MIN2((int)(i+MAXLOOP+1),(int)(k-TURN-2)); 
+	     ip++) {
 	    u1 =(int)(ip-i-1);
-	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1)); jp<(int)k; jp++) {
+	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1));
+		 jp<(int)k;
+		 jp++) {
 		type2 =(int)(get_ptype(ip,jp)) ;
 		if (type2) {
 		    type2 = rtype[type2];
-		    I +=get_qb(ip,jp) * (scale_p[(int)(u1+j-jp+1)] *
-					   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
-							 S1_p[(int)(i+1)],S1_p[(int)(j-1)],S1_p[ip-1],S1_p[jp+1], pf_params_p));
+		    I += get_qb(ip,jp)
+			* (scale_p[(int)(u1+j-jp+1)] *
+			   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
+					 S1_p[(int)(i+1)],S1_p[(int)(j-1)],
+					 S1_p[ip-1],S1_p[jp+1], pf_params_p));
 		}
 	    }
 	}
 	
 	//calculating Multiple loop energy contribution
-	M= 0.0;
+	M = 0.0;
 	
-	M+= qm2[iindx[(int)(k+1)]-((int)(j-1))]*pf_params_p->expMLclosing*expMLbase_p[(int)(k-i)]*exp_E_MLstem(rtype[type],S1_p[(int)(j-1)],S1_p[(int)(i+1)], pf_params_p)* scale_p[2];
-	M+= qm2[iindx[(int)(i+1)]-((int)(k-1))]*pf_params_p->expMLclosing*expMLbase_p[(int)(j-k)]*exp_E_MLstem(rtype[type],S1_p[(int)(j-1)],S1_p[(int)(i+1)], pf_params_p) * scale_p[2];
-	M+= get_qm(i+1,k-1) *  get_qm(k+1,j-1) * pf_params_p->expMLclosing*expMLbase_p[1] *exp_E_MLstem(rtype[type],S1_p[(int)(j-1)],S1_p[(int)(i+1)], pf_params_p)* scale_p[2];
+	M += qm2[iindx[(int)(k+1)]-((int)(j-1))] * expMLbase_p[(int)(k-i)];
 
-	
+	M += qm2[iindx[(int)(i+1)]-((int)(k-1))] * expMLbase_p[(int)(j-k)];
+	    
+	M += get_qm(i+1,k-1) * expMLbase_p[1] *  get_qm(k+1,j-1);
+	    
+	// multiply with contribution for closing of multiloop
+	M *= pf_params_p->expMLclosing 
+	    * exp_E_MLstem(rtype[type],S1_p[(int)(j-1)],S1_p[(int)(i+1)], pf_params_p)
+	    * scale_p[2]; 
 	
 	return ((H+I+M)/get_qb(i,j))*get_arc_prob(i,j);
     }
@@ -544,28 +559,21 @@ namespace LocARNA {
 	
 	// immediately return 0.0 when i and j cannot pair
 	if ((type==0)
-	    || 
-	    (((type==3)||(type==4))&&no_closingGU)
-	    ||
-	    (get_qb(i,j)==0.0)
-	    ||
-	    (get_arc_prob(i,j)))
+	    || (((type==3)||(type==4))&&no_closingGU)
+	    || (get_qb(i,j)==0.0)
+	    || (get_arc_prob(i,j)))
 	    {
 		return 0.0;
 	    }
 
 	// immediately return 0.0 when ip and jp cannot pair
 	if ((type2==0)
-	    || 
-	    (((type2==3)||(type2==4))&&no_closingGU)
-	    ||
-	    (get_qb(ip,jp)==0.0)
-	    ||
-	    (get_arc_prob(ip,jp)))
+	    || (((type2==3)||(type2==4))&&no_closingGU)
+	    || (get_qb(ip,jp)==0.0)
+	    || (get_arc_prob(ip,jp)))
 	    {
 		return 0.0;
 	    }
-	
 	
 	//calculating the Interior loop energy contribution
 	//
@@ -574,11 +582,10 @@ namespace LocARNA {
 	int u1 =(int)(ip-i-1);
 	int u2 =(int)(j-jp-1);
 	
-	Ipp = (scale_p[u1+u2+2] *
-	       exp_E_IntLoop(u1,u2, type, rtype[type2],
-			     S1_p[(int)(i+1)],S1_p[(int)(j-1)],
-			     S1_p[ip-1],S1_p[jp+1], pf_params_p)
-	       );
+	Ipp = exp_E_IntLoop(u1,u2, type, rtype[type2],
+			    S1_p[(int)(i+1)],S1_p[(int)(j-1)],
+			    S1_p[ip-1],S1_p[jp+1], pf_params_p)
+	    * scale_p[u1+u2+2];
 	
 	//calculating Multiple loop energy contribution
 	//
