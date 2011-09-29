@@ -499,10 +499,11 @@ namespace LocARNA {
 	 * performed when the RnaData object is constructed from a
 	 * sequence.
 	 *
-	 * @note If we don't want to keep the McCaskill matrices, the
+	 * @todo If we don't want to keep the McCaskill matrices, the
 	 * method will unnessarily produce local copies of the
-	 * McCaskill matrices. Probably, the overhead is usually
-	 * negligible. However, this could be optimized.
+	 * McCaskill matrices and compute the Qm2 matrix. Probably,
+	 * the overhead is usually negligible. However, this could be
+	 * optimized.
 	 *
 	 * @note requires linking to librna
 	 * @see prob_unpaired_in_loop(), RnaData(const Sequence &sequence_, bool keepMcM), free_McCaskill_matrices()
@@ -515,8 +516,6 @@ namespace LocARNA {
 	 *
 	 * These matrices are allocated and filled by calling
 	 * compute_McCaskill_matrices()
-	 *
-	 * @todo: implement
 	 *
 	 */
 	void

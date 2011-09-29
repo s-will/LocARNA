@@ -155,16 +155,20 @@ namespace LocARNA {
 	}
 	
 	
-	for (int k=1; k<=S_p[0]; k++) {
+	for (int k=1; k<=sequence.length(); k++) {
 	  q1k_p[k]= McCmat.q1k_p[k];
 	  qln_p[k]= McCmat.qln_p[k];
 	}
 	q1k_p[0] = 1.0;
-	qln_p[S_p[0]+1] = 1.0;
-	 
+	qln_p[sequence.length()+1] = 1.0;
+	
+	// copying of McCaskill pf matrices done
 	
 	
-	
+	// precompute tables for computations
+	// of probabilities unpaired / basepair in loop or external
+	// as they are required for Exparna P functionality
+	//
 	
 	pf_params_p= get_scaled_pf_parameters();
 
@@ -448,8 +452,6 @@ namespace LocARNA {
 	free(qqm1);
 	qm1= NULL;
 	qqm1= NULL;
-
- 	
     }
 
     double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j) const {
@@ -535,7 +537,7 @@ namespace LocARNA {
     }
 
     double RnaData::prob_unpaired_external(size_type k) const {
-	//return get_q(1,k-1) * get_q(k+1,sequence.length());
+	return (q1k_p[k-1] * scale_p[1] * qln_p[k+1]) / qln_p[1];
     }
 
     double
@@ -608,6 +610,9 @@ namespace LocARNA {
 	return (get_qb(ip,jp)*(Ipp+Mpp)/get_qb(i,j))*get_arc_prob(i,j);
     }
 
+    double RnaData::prob_basepair_external(size_type i,size_type j) const {
+	return (q1k_p[i-1] * get_qb(i,j) *  qln_p[j+1]) / qln_p[1];
+    }
 
 #endif // HAVE_LIBRNA
 
