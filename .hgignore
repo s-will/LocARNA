@@ -80,6 +80,12 @@ Doc/*.out
 
 tmp/*
 
+Ideas/locarna-ng.aux
+Ideas/locarna-ng.log
+Ideas/locarna-ng.pdf
+
+Examples/453
+Examples/500
 
 syntax: regexp
 (.*/)?\#[^/]*\#$
