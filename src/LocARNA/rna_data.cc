@@ -32,8 +32,7 @@ namespace LocARNA {
 	stacking(stacking_),
 	arc_probs_(0),
 	arc_2_probs_(0),
-	seq_constraints_(""),
-	McC_matrices(NULL)
+	seq_constraints_("")
     {
 	read(file, keepMcM);
 
@@ -49,8 +48,7 @@ namespace LocARNA {
 	  consensus_sequence(MultipleAlignment(sequence).consensus_sequence()),
 	  arc_probs_(0),
 	  arc_2_probs_(0),
-	  seq_constraints_(""),
-	  McC_matrices(NULL)
+	  seq_constraints_("")
     {
 	if (sequence.row_number()!=1) {
 	    std::cerr << "Construction with multi-row Sequence object is not implemented." << std::endl;
@@ -65,7 +63,9 @@ namespace LocARNA {
 	// Use the same proability threshold as in RNAfold -p !
 	init_from_McCaskill_bppm();	
 	
-	// print_probab();
+	// since we have local copies of all McCaskill pf arrays,
+	// we can free the ones of the Vienna lib
+	free_pf_arrays();
 	
 	// optionally deallocate McCaskill matrices
 	if (!keepMcM) {
@@ -111,25 +111,27 @@ namespace LocARNA {
 	// call pf_fold
 	pf_fold(c_sequence,c_structure);
 	
-	McC_matrices = new McC_matrices_t();
 	
+	McC_matrices_t McCmat;
+
 	// get pointers to McCaskill matrices
-	get_pf_arrays(&McC_matrices->S_p,
-		      &McC_matrices->S1_p,
-		      &McC_matrices->ptype_p,
-		      &McC_matrices->qb_p,
-		      &McC_matrices->qm_p,
-		      &McC_matrices->q1k_p,
-		      &McC_matrices->qln_p);
+	get_pf_arrays(&McCmat.S_p,
+		      &McCmat.S1_p,
+		      &McCmat.ptype_p,
+		      &McCmat.qb_p,
+		      &McCmat.qm_p,
+		      &McCmat.q1k_p,
+		      &McCmat.qln_p);
 	
 	// get pointer to McCaskill base pair probabilities
-	McC_matrices->bppm = export_bppm();
+	McCmat.bppm = export_bppm();
 	
-	McC_matrices->iindx = get_iindx(sequence.length());
+	// since the space referenced by pointers in McCmat will be
+	// overwritten by the next call to pf_fold, we have to copy
+	// the data structures if we want to keep them.
+	//
 	
-	iindx= (int *) space(sizeof(int)* (sequence.length()+1));
-	for(int i=0; i<=(int)sequence.length(); i++)
-		iindx[i]= McC_matrices->iindx[i];
+	iindx= get_iindx(sequence.length());
 	
 	unsigned int size;
 	size  = sizeof(FLT_OR_DBL) * ((length+1)*(length+2)/2);
@@ -145,17 +147,17 @@ namespace LocARNA {
 	int i,j;
 	for (j=TURN+2;j<=(int)sequence.length(); j++) {
 	  for (i=j-TURN-1; i>=1; i--) {
-	    ptype_p[iindx[i]-j]= McC_matrices->ptype_p[iindx[i]-j];
-	    qb_p[iindx[i]-j]= McC_matrices->qb_p[iindx[i]-j];
-	    qm_p[iindx[i]-j]= McC_matrices->qm_p[iindx[i]-j];   
-	    bppm[iindx[i]-j]= McC_matrices->bppm[iindx[i]-j];
+	    ptype_p[iindx[i]-j]= McCmat.ptype_p[iindx[i]-j];
+	    qb_p[iindx[i]-j]= McCmat.qb_p[iindx[i]-j];
+	    qm_p[iindx[i]-j]= McCmat.qm_p[iindx[i]-j];   
+	    bppm[iindx[i]-j]= McCmat.bppm[iindx[i]-j];
 	  }
 	}
 	
 	
 	for (int k=1; k<=S_p[0]; k++) {
-	  q1k_p[k]= McC_matrices->q1k_p[k];
-	  qln_p[k]= McC_matrices->qln_p[k];
+	  q1k_p[k]= McCmat.q1k_p[k];
+	  qln_p[k]= McCmat.qln_p[k];
 	}
 	q1k_p[0] = 1.0;
 	qln_p[S_p[0]+1] = 1.0;
@@ -186,27 +188,20 @@ namespace LocARNA {
 	}
 	
 	compute_Qm2();
-    
+	
     }
 
-    void
-    RnaData::free_McCaskill_matrices() {
-	// call respective librna function
-	if (McC_matrices) {
-	    free(McC_matrices->iindx);
-	    McC_matrices->iindx= NULL;
-	    free_pf_arrays();
-	    delete McC_matrices;
-	}
-    }
     
 #endif // HAVE_LIBRNA
 
     RnaData::~RnaData() {
-      
+	free_McCaskill_matrices();
+    }
+
+    void
+    RnaData::free_McCaskill_matrices() {
 #     ifdef HAVE_LIBRNA	
 	
-	free_McCaskill_matrices();
 	if(S_p) free(S_p);          
 	if(S1_p) free(S1_p);	 	
 	if(ptype_p) free(ptype_p);	 				
@@ -369,7 +364,11 @@ namespace LocARNA {
 	// initialize the object from base pair probabilities
 	// Use the same proability threshold as in RNAfold -p !
 	init_from_McCaskill_bppm();
-	    
+	
+	// since we have local copies of all McCaskill pf arrays,
+	// we can free the ones of the Vienna lib
+	free_pf_arrays();
+
 	if (!keepMcM) {
 	    free_McCaskill_matrices();
 	}
@@ -402,6 +401,7 @@ namespace LocARNA {
 	  p= NULL;
 	}
     }
+
     void
     RnaData::compute_Qm2(){
 
@@ -532,6 +532,10 @@ namespace LocARNA {
 	    * scale_p[2]; 
 	
 	return ((H+I+M)/get_qb(i,j))*get_arc_prob(i,j);
+    }
+
+    double RnaData::prob_unpaired_external(size_type k) const {
+	//return get_q(1,k-1) * get_q(k+1,sequence.length());
     }
 
     double

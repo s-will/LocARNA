@@ -4,23 +4,12 @@
 #include <string>
 #include <iostream>
 
-/**
- * @brief select FLT_OR_DBL
- *
- * @note By defining as double, we rely on Vienna package compiled
- * with LARGE_PF (defined in fold_vars.h)
- *
- * @note By defining this here, we get rid of dependency of header
- * file ViennaRNA/fold_vars.h
- */
-#define FLT_OR_DBL double
+#include "aux.hh"
 
 extern "C" {
 #include <ViennaRNA/fold_vars.h>
 }
 
-
-#include "aux.hh"
 #include "sequence.hh"
 
 #include "sparse_matrix.hh"
@@ -63,8 +52,13 @@ namespace LocARNA {
 	std::string seq_constraints_; 
 	
 	FILE *myfile;
+
+	////////////////////////////////////////////////////////////
+	// Attributes to store copies of the McCaskill matrices of pf_fold
+	// and corresponding access methods
+	//
+	// It would be nice to encapsulate them in a class.
 # ifdef HAVE_LIBRNA
-	
 	FLT_OR_DBL *qm1;
 	FLT_OR_DBL *qm2;
 	FLT_OR_DBL *scale_p;
@@ -72,65 +66,30 @@ namespace LocARNA {
 	FLT_OR_DBL *expMLbase_p;
 	
 	short *S_p;          //!< 'S' array (integer representation of nucleotides)	
-	    short *S1_p;	 //!< 'S1' array (2nd integer representation of nucleotides)	
-	    char *ptype_p;	 //!< pair type matrix					
-	    FLT_OR_DBL *qb_p;	 //!< Q<sup>B</sup> matrix					
-	    FLT_OR_DBL *qm_p;	 //!< Q<sup>M</sup> matrix					
-	    FLT_OR_DBL *q1k_p;	 //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
-	    FLT_OR_DBL *qln_p;	 //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
+	short *S1_p;	 //!< 'S1' array (2nd integer representation of nucleotides)	
+	char *ptype_p;	 //!< pair type matrix					
+	FLT_OR_DBL *qb_p;	 //!< Q<sup>B</sup> matrix					
+	FLT_OR_DBL *qm_p;	 //!< Q<sup>M</sup> matrix					
+	FLT_OR_DBL *q1k_p;	 //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
+	FLT_OR_DBL *qln_p;	 //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
 	
-	    //! @brief base pair probability matrix
-	    //! 
-	    //! Access elements with get_bppm()
-	    FLT_OR_DBL *bppm;
-	    
-	    int* iindx; //!< iindx from librna's get_iindx()
-	    
-	    //! \brief Get entry in bppm matrix 
-	    //! 
-	    //! @note Performs index computation via iindx
-	    FLT_OR_DBL get_bppm(size_t i, size_t j) const { return bppm[iindx[i]-j]; }
-	    char get_ptype(size_t i, size_t j) const { return ptype_p[iindx[i]-j]; }
-	    FLT_OR_DBL get_qb(size_t i, size_t j) const { return qb_p[iindx[i]-j]; }
-	    FLT_OR_DBL get_qm(size_t i, size_t j) const { return qm_p[iindx[i]-j]; }
+	//! @brief base pair probability matrix
+	//! 
+	//! Access elements with get_bppm()
+	FLT_OR_DBL *bppm;
+	
+	int* iindx; //!< iindx from librna's get_iindx()
+	
+	//! \brief Get entry in bppm matrix 
+	//! 
+	//! @note Performs index computation via iindx
+	FLT_OR_DBL get_bppm(size_t i, size_t j) const { return bppm[iindx[i]-j]; }
+	char get_ptype(size_t i, size_t j) const { return ptype_p[iindx[i]-j]; }
+	FLT_OR_DBL get_qb(size_t i, size_t j) const { return qb_p[iindx[i]-j]; }
+	FLT_OR_DBL get_qm(size_t i, size_t j) const { return qm_p[iindx[i]-j]; }
 #endif
-
-    protected:
-
-#   ifdef HAVE_LIBRNA	
-	//! @brief  structure for McCaskill matrices pointers
-	//!
-	//! Contains pointers to matrices made accessible through
-	//! get_pf_arrays() and get_bppm() of Vienna librna
-	struct McC_matrices_t {
-	    short *S_p;          //!< 'S' array (integer representation of nucleotides)	
-	    short *S1_p;	 //!< 'S1' array (2nd integer representation of nucleotides)	
-	    char *ptype_p;	 //!< pair type matrix					
-	    FLT_OR_DBL *qb_p;	 //!< Q<sup>B</sup> matrix					
-	    FLT_OR_DBL *qm_p;	 //!< Q<sup>M</sup> matrix					
-	    FLT_OR_DBL *q1k_p;	 //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
-	    FLT_OR_DBL *qln_p;	 //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
+	////////////////////////////////////////////////////////////
 	
-	    //! @brief base pair probability matrix
-	    //! 
-	    //! Access elements with get_bppm()
-	    FLT_OR_DBL *bppm;
-	    
-	    int* iindx; //!< iindx from librna's get_iindx()
-	    
-	    //! \brief Get entry in bppm matrix 
-	    //! 
-	    //! @note Performs index computation via iindx
-	    FLT_OR_DBL get_bppm(size_t i, size_t j) { return bppm[iindx[i]-j]; }
-	};
-	
-	//! \brief Pointer to McCaskill matrices
-	//! @see compute_McCaskill_matrices()
-	 McC_matrices_t *McC_matrices;
-#   else
-	//! @note define even for !HAVE_LIBRNA to make code less cluttered
-	void *McC_matrices;
-#   endif // HAVE_LIBRNA
 
     public:
 	/** 
@@ -145,7 +104,7 @@ namespace LocARNA {
 	 *
 	 * @param file input file name
 	 * @param stacking whether to use stacking
-	 * @param keepMcM if TRUE, keep the McCaskill matrices for use in prob_unpaired_in_loop(). This works only if file is in clustalw format!
+	 * @param keepMcM if TRUE, keep the McCaskill matrices for use in methods prob_unpaired/basepair_in_loop/external. This works only if file is in clustalw format!
 	 */
 	RnaData(const std::string &file, bool keepMcM=false, bool stacking=false);
 	
@@ -153,7 +112,7 @@ namespace LocARNA {
 	 * Construct from sequence, predicting the basepairs
 	 * 
 	 * @param sequence_ the RNA sequence as Sequence object 
-	 * @param keepMcM     if TRUE, keep the McCaskill matrices for use in prob_unpaired_in_loop()
+	 * @param keepMcM     if TRUE, keep the McCaskill matrices for use in methods prob_unpaired/basepair_in_loop/external
 	 * @note requires linking to librna
 	 * @see prob_unpaired_in_loop()
 	 * @pre sequence_ has exactly one row
@@ -456,16 +415,35 @@ namespace LocARNA {
 			      size_type i,
 			      size_type j) const;
     
+	/** 
+	 * \brief Unpaired probabilty of base in external 'loop'
+	 *
+	 * @param k unpaired sequence position
+	 * 
+	 * @return probability that k is unpaired and external
+	 *
+	 * @note This method is designed for use in ExpaRNA-P
+	 *
+	 * @note For computing these unpaired probabilities we need access to the
+	 * dynamic programming matrices of the McCaskill algorithm
+	 *
+	 * @pre McCaskill matrices are computed and generated.
+	 * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepMcC)
+	 *
+	 */
+	double
+	prob_unpaired_external(size_type k) const;
+	
 
 	/** 
 	 * \brief Probabilty of base pair in a specified loop 
 	 * 
-	 * @param k left end of inner base pair
-	 * @param l right end of inner base pair
+	 * @param ip left end of inner base pair
+	 * @param jp right end of inner base pair
 	 * @param i left end of loop enclosing base pair
 	 * @param j right end of loop enclosing base pair
 	 * 
-	 * @return probability that k is unpaired in the loop closed by i and j
+	 * @return probability that (ip,jp) is inner base pair in the loop closed by i and j
 	 *
 	 * Computes the joint probability that there is a base pair
 	 * (i,j) and a base pair (k,l) (i<k<l<j) that is inner base
@@ -481,23 +459,50 @@ namespace LocARNA {
 	 *
 	 */
 	double
-	prob_basepair_in_loop(size_type k,
-			      size_type l,
+	prob_basepair_in_loop(size_type ip,
+			      size_type jp,
 			      size_type i,
 			      size_type j) const;
-    
 
+	/** 
+	 * \brief Probabilty of base pair in the external 'loop'
+	 * 
+	 * @param i left end of inner base pair
+	 * @param j right end of inner base pair
+	 * 
+	 * @return probability that i and j form a basepair and the base pair is external
+	 *
+	 * @note This method is designed for use in ExpaRNA-P
+	 *
+	 * @note For computing these unpaired probabilities we need access to the
+	 * dynamic programming matrices of the McCaskill algorithm
+	 *
+	 * @pre McCaskill matrices are computed and generated.
+	 * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepMcC)
+	 *
+	 */
+	double
+	prob_basepair_external(size_type i,
+			       size_type j) const;
+	
+	
 	/** 
 	 * \brief Computes the McCaskill matrices and keeps them accessible
 	 * 
-	 * Allocates and fills the structure McC_matrices. Use free_McCaskill_matrices() for 
-	 * freeing the space again.
+	 * Allocates and fills the McCaskill matrices. Use
+	 * free_McCaskill_matrices() for freeing the space again.
 	 *
 	 * @pre sequence_ has exactly one row
 	 *
 	 * @note Access to these matrices is required by
 	 * prob_unpaired_in_loop(). The McCaskill algorithm is also
-	 * performed when the RnaData object is constructed from a sequence.
+	 * performed when the RnaData object is constructed from a
+	 * sequence.
+	 *
+	 * @note If we don't want to keep the McCaskill matrices, the
+	 * method will unnessarily produce local copies of the
+	 * McCaskill matrices. Probably, the overhead is usually
+	 * negligible. However, this could be optimized.
 	 *
 	 * @note requires linking to librna
 	 * @see prob_unpaired_in_loop(), RnaData(const Sequence &sequence_, bool keepMcM), free_McCaskill_matrices()
@@ -510,9 +515,14 @@ namespace LocARNA {
 	 *
 	 * These matrices are allocated and filled by calling
 	 * compute_McCaskill_matrices()
+	 *
+	 * @todo: implement
+	 *
 	 */
 	void
 	free_McCaskill_matrices();
+
+
 	/** 
 	 * \brief Computes the Qm2 matrix
 	 *

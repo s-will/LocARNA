@@ -216,6 +216,42 @@ namespace LocARNA {
     //! @param seq sequence string
     void 
     normalize_rna_sequence(std::string &seq);
+
+
+    /**
+     * @brief select FLT_OR_DBL
+     *
+     * @note By defining as double, we rely on Vienna package compiled
+     * with LARGE_PF (defined in fold_vars.h)
+     *
+     * @note By defining this here, we get rid of dependency of header
+     * file ViennaRNA/fold_vars.h
+     */
+     #define FLT_OR_DBL double
+
+    
+#   ifdef HAVE_LIBRNA	
+    //! @brief  structure for McCaskill matrices pointers
+    //!
+    //! Contains pointers to matrices made accessible through
+    //! get_pf_arrays() and get_bppm() of Vienna librna
+    struct McC_matrices_t {
+	short *S_p;          //!< 'S' array (integer representation of nucleotides)	
+	short *S1_p;	 //!< 'S1' array (2nd integer representation of nucleotides)	
+	char *ptype_p;	 //!< pair type matrix					
+	FLT_OR_DBL *qb_p;	 //!< Q<sup>B</sup> matrix					
+	FLT_OR_DBL *qm_p;	 //!< Q<sup>M</sup> matrix					
+	FLT_OR_DBL *q1k_p;	 //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
+	FLT_OR_DBL *qln_p;	 //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
+	
+	//! @brief base pair probability matrix
+	//! 
+	//! Access elements with get_bppm()
+	FLT_OR_DBL *bppm;
+	
+    };
+#    endif	
+
 }
 
 
