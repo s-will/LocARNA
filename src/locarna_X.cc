@@ -63,6 +63,8 @@ double prob_unpaired_threshold; // threshold for prob_unpaired_in_loop
 int alpha_1; //parameter for sequential score
 int alpha_2; //parameter for structural score
 int alpha_3; //parameter for stacking score
+int easier_scoring_par;
+int subopt_score;
 
 
 std::string seq_constraints_A;
@@ -91,6 +93,7 @@ bool opt_version;
 bool opt_verbose;
 bool opt_stacking;
 bool opt_locarna_output;
+bool opt_suboptimal;
 
 option_def my_options[] = {
     {"min-prob",'P',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
@@ -106,13 +109,16 @@ option_def my_options[] = {
     {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
-    {"stacking",'S',&opt_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","Use stacking terms (needs stack-probs by RNAfold -p2)"}, //TODO calculate stacking probabilities
+    {"stacking",'S',&opt_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","Use stacking terms (needs stack-probs by RNAfold -p2)"},
     {"EPM_threshold",'t',0,O_ARG_INT,&EPM_threshold,"5","threshold","User-defined threshold for Exact Pattern Matches"},
     {"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"3","min_size","User-defined minimum size for Exact Pattern Matches"},
     {"prob_unpaired_threshold",'p',0,O_ARG_DOUBLE,&prob_unpaired_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
     {"alpha_1",0,0,O_ARG_INT,&alpha_1,"1","alpha_1","Parameter for sequential score"},
     {"alpha_2",0,0,O_ARG_INT,&alpha_2,"1","alpha_2","Parameter for structural score"},
-    {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Parameter for stacking score"},
+    {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Parameter for stacking score, 0 means no stacking contribution"},
+    {"suboptimal",0,&opt_suboptimal,O_NO_ARG,0,O_NODEFAULT,"suboptimal_traceback","Use a suboptimal traceback for the computation of the exact pattern matchings"},
+    {"suboptimal_score",0,0,O_ARG_INT,&subopt_score,"5","alpha_1","Threshold for suboptimal traceback"},
+    {"easier_scoring_par",'e',0,O_ARG_INT,&easier_scoring_par,"0","alpha","use only sequential and a constant structural score alpha (easier_scoring_par) for each matched base of a basepair"},
     
     {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
     {"",0,0,O_ARG_STRING,&file2,O_NODEFAULT,"file 2","Basepairs input file 2 (dp dir in eval mode)"},
@@ -124,9 +130,6 @@ option_def my_options[] = {
 
 
 // ------------------------------------------------------------
-
-
-
 // ------------------------------------------------------------
 // MAIN
 
@@ -174,13 +177,17 @@ main(int argc, char **argv) {
     
     // ------------------------------------------------------------
     // parameter consistency
-
     
+    //if no stacking should be considered, set the parameter for stacking to 0
+    if(!opt_stacking){
+    	alpha_3 = 0;
+    }
+
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
    
-    
+    time_t start_preprocessing = time (NULL);
     
     MultipleAlignment maA(file1);
     MultipleAlignment maB(file2);
@@ -189,12 +196,13 @@ main(int argc, char **argv) {
     
     Sequence seqA(maA);
     Sequence seqB(maB);
-    
-     //opt_stacking
-    //FILE *myfile= fopen("basepairs.txt", "w");
-    RnaData rnadataA(seqA,true,true);
-    RnaData rnadataB(seqB,true,true);
-    //fclose(myfile);
+
+    time_t start_RNAdata = time (NULL);
+    RnaData rnadataA(seqA,true,opt_stacking);
+    RnaData rnadataB(seqB,true,opt_stacking);
+    time_t stop_RNAdata = time (NULL);
+    cout << "time for RNAdata: " << stop_RNAdata - start_RNAdata << "sec " << endl;
+
    
     //Sequence seqA=rnadataA.get_sequence();
     //Sequence seqB=rnadataB.get_sequence();
@@ -265,9 +273,11 @@ main(int argc, char **argv) {
     // Compute Exact Matchings
     //
     
+    time_t start_mapping = time (NULL);
     Mapping mappingA(bpsA,rnadataA,prob_unpaired_threshold);
     Mapping mappingB(bpsB,rnadataB,prob_unpaired_threshold);
-    
+    time_t stop_mapping = time (NULL);
+    cout << "time for mapping: " << stop_mapping - start_mapping << "sec " << endl;
     
     string sequenceA= MultipleAlignment(seqA).seqentry(0).seq().to_string();
     string sequenceB= MultipleAlignment(seqB).seqentry(0).seq().to_string();
@@ -281,35 +291,51 @@ main(int argc, char **argv) {
 		    alpha_1,
 		    alpha_2,
 		    alpha_3,
+		    subopt_score,
+		    easier_scoring_par,
 		    sequenceA,
 		    sequenceB,
 		    psFile1,
 		    psFile2
  		  );
 
-    
-    //compute matrices for finding best and enumerating all matchings
-    em.compute_matchings();
-    
-    // ----------------------------------------
-    // report score
-    //
-    //std::cout << "Size of best exact matching: "<<score<<std::endl;
+    time_t stop_preprocessing = time (NULL);
+
+    cout << "time for preprocessing: " << stop_preprocessing - start_preprocessing << "sec " << endl;
+
+    time_t start_computeMatrices = time (NULL);
+        	//compute matrices for finding best and enumerating all matchings
+        	em.compute_matrices();
+        	time_t stop_computeMatrices = time (NULL);
+        	cout << "time for computing Matrices : " << stop_computeMatrices - start_computeMatrices << "sec " << endl;
     
     
     // ------------------------------------------------------------
     // Traceback
     //
-    if (DO_TRACE) {
+   if (DO_TRACE) {
 	
 	if (opt_verbose) {
 	    std::cout << "Traceback."<<std::endl;
 	}
 	
-	em.write_matchings(cout);
+	 if(opt_suboptimal){
+		 em.compute_EPMs_suboptimal();
+
+	 }
+
+	 else{
+		 time_t start_traceback = time (NULL);
+		 em.compute_EPMs_heuristic();
+		 time_t stop_traceback = time(NULL);
+		 cout << "time for traceback : " << stop_traceback - start_traceback << "sec " << endl;
+	 }
+
+
     }
+
     if(opt_locarna_output){
-	em.output_locarna();
+    	em.output_locarna();
     }
     // ----------------------------------------
     // DONE

@@ -313,100 +313,176 @@ class EPM{
 	 const Sequence &seqA_;
 	 const Sequence &seqB_;
 
-	struct EPM_entry{
+	/*struct EPM_entry{
 		int pos1;
 		int pos2;
 		char str;
-	};
+	};*/
 
 	intVec pat1Vec;
 	intVec pat2Vec;
-	int list_it;
 	string structure;
-	
-	//! the EPM consists of the positions and the corresponding structure
-	list<EPM_entry> epm;
 
-	typedef list<EPM_entry>::iterator iter;
-	iter cur_it; //! current position
+	//! the EPM consists of the positions and the corresponding structure
+	//list<EPM_entry> epm;
+
+	//typedef list<EPM_entry>::iterator iter;
+	//iter cur_it; //! current position
 
         //!contains the indices of the arcMatches which need to be considered and a corresponding iterator which
 	//!gives the position where the traceback of the arcMatch should be inserted
-	std::vector<pair<ArcMatch::idx_type,iter> > arcmatches_to_do;
-	PatternPairMap mcsPatterns;
+	//std::vector<pair<ArcMatch::idx_type,iter> > arcmatches_to_do;
+	std::vector<ArcMatch::idx_type> arcmatches_to_do;
+
+	void swap(int i, int j){
+		swap(i,j,pat1Vec);
+		swap(i,j,pat2Vec);
+		//swap position i and j in structure
+		char tmp = structure[i];
+		structure[i]=structure[j];
+		structure[j]=tmp;
+	}
+
+	void swap(int i, int j, vector<unsigned int> &vec){
+		int tmp = vec[i];
+		vec[i]=vec[j];
+		vec[j]=tmp;
+	}
+
+	int split(int left,int right){
+		   int pivot=pat1Vec[right];
+		   int i=left;
+		   int j=right-1;
+		   while(i<j){
+		   while(pat1Vec[i]<=pivot && i<right){
+			   i++;
+		   }
+		   while(pat1Vec[j]>=pivot && j>left){
+			   j--;
+		   }
+		   if(i<j){
+			   swap(i,j);
+		   }
+		   }
+		   if(i<right){
+			   if(pat1Vec[i] > pivot){
+				   swap(i,right);
+			   }
+		   }
+		   return i;
+		}
+
+		void quicksort_EPM(int left,int right){
+		    if(left<right) {
+		    	int Pivot_idx=split(left,right);
+		    	quicksort_EPM(left,Pivot_idx-1);
+		    	quicksort_EPM(Pivot_idx+1,right);
+		    }
+		}
 
 
 public:
 	
         //!Constructor
 	EPM(const Sequence &seqA, const Sequence &seqB)
-	: seqA_(seqA),seqB_(seqB), mcsPatterns() {
+	: seqA_(seqA),seqB_(seqB){//, mcsPatterns() {
 		reset();
 	}
 
 	virtual ~EPM(){
 		pat1Vec.clear();
 		pat2Vec.clear();
-		epm.clear();
 		arcmatches_to_do.clear();
 	}
 	//!reset epm and reset current position (cur_it) to the beginning of epm
 	void reset(){
 		pat1Vec.clear();
 		pat2Vec.clear();
-		epm.clear();
+		//epm.clear();
 		structure.clear();
-		cur_it=epm.begin();
-		list_it= 0;
+		//cur_it=epm.begin();
 	}
 
 	//!reset current position to the end position of epm
-	void reset_cur_it(){
+	/*void reset_cur_it(){
 		cur_it=epm.end();
 		cur_it--;
-		list_it= pat1Vec.size();
-		list_it--;
-		if(list_it<0) list_it= 0;
-	}
+	}*/
 
-	//!appends a position and the corresponding structure to the epm and increments the iterator
-	void append(int pos1_, int pos2_, char c){
-		struct EPM_entry entry = {pos1_,pos2_,c};
-		epm.push_back(entry);
+	void add(int pos1_, int pos2_,char c){
 		pat1Vec.push_back(pos1_);
 		pat2Vec.push_back(pos2_);
-		cur_it++;
-		list_it++;
+		structure.push_back(c);
+		//cout << "add 1 " << pos1_ << endl;
+		//cout << "add 2 " << pos2_ << endl;
+		/*cout << "pat1Vec " << endl;
+		for(int i=0;i<pat1Vec.size(); i++){
+			cout << pat1Vec.at(i) << " ";
+		}
+		cout << endl;
+		cout << "pat2Vec " << endl;
+		for(int i=0;i<pat2Vec.size(); i++){
+			cout << pat2Vec.at(i) << " ";
+		}
+	    cout << endl;*/
 	}
 
 	//!appends an arcMatch to the epm
-	void append_arcmatch(const ArcMatch &am){
-		append(am.arcA().left(),am.arcB().left(),'(');
-		append(am.arcA().right(),am.arcB().right(),')');
+	void add_arcmatch(const ArcMatch &am){
+		//cout << "add_test( " << am.arcA().left() << "," << am.arcB().left() << "'('" << endl;
+		//cout << "add_test( " << am.arcA().right() << "," << am.arcB().right() << "'('" << endl;
+		//cout << "add arcmatch " << am.arcA().left() << "," << am.arcB().left()<< endl;
+		//cout << "add arcmatch " << am.arcA().right() << "," << am.arcB().right()<< endl;
+		add(am.arcA().left(),am.arcB().left(),'(');
+		add(am.arcA().right(),am.arcB().right(),')');
 	}
 
+	//!appends a position and the corresponding structure to the epm and increments the iterator
+	/*void append(int pos1_, int pos2_, char c){
+		struct EPM_entry entry = {pos1_,pos2_,c};
+		epm.push_back(entry);
+		//pat1Vec.push_back(pos1_);
+		//pat2Vec.push_back(pos2_);
+		//structure.push_back(c);
+		cur_it++;
+	}*/
+
+	//!appends an arcMatch to the epm
+	/*void append_arcmatch(const ArcMatch &am){
+		append(am.arcA().left(),am.arcB().left(),'(');
+		append(am.arcA().right(),am.arcB().right(),')');
+	}*/
+
 	//!adds a positions and the corresponding structure to the epm at cur_it and decrements the iterator
-	void add(int pos1_, int pos2_,char c){
+	/*void add(int pos1_, int pos2_,char c){
 		struct EPM_entry entry = {pos1_,pos2_,c};
 		epm.insert(cur_it,entry);
-		pat1Vec.insert(pat1Vec.begin()+ list_it,pos1_);
-		pat2Vec.insert(pat2Vec.begin()+ list_it,pos2_);
 		cur_it--;
-		list_it--;
-		if(list_it<0) list_it= 0;
-	}
+		//pat1Vec.push_back(pos1_);
+		//pat2Vec.push_back(pos2_);
+		//structure.push_back(c);
+	}*/
 
 
 	//!adds an arcmatch at the current position (cur_it) and stores the corresponding arcMatch
-	void add_arcmatch(const ArcMatch &am){
+	/*void add_arcmatch(const ArcMatch &am){
 		add(am.arcA().right(),am.arcB().right(),')');
 		store_arcmatch(am.idx());
 		add(am.arcA().left(),am.arcB().left(),'(');
-	}
+	}*/
 
 	//!stores the index of the arcMatch and the current position (cur_it) in the vector arc_matches_to_do
-	void store_arcmatch(ArcMatch::idx_type idx){
+	/*void store_arcmatch(ArcMatch::idx_type idx){
+		//list_it++;
+		//cout << "store archmatch " << endl;
+		//cout << "pos for arcmatch " << list_it << endl;
 		arcmatches_to_do.push_back(pair<ArcMatch::idx_type,iter>(idx,cur_it));
+		//arcmatches_to_do_test.push_back(pair<ArcMatch::idx_type,int>(idx,list_it));
+		//list_it--;
+	}*/
+
+	void store_arcmatch(ArcMatch::idx_type idx){
+		arcmatches_to_do.push_back(idx);
 	}
 
 	//!checks if there are arcMatches left which need to be processed
@@ -416,27 +492,139 @@ public:
 
 	//!returns the index of the last arcMatch in the vector arcmatches_to_do
 	ArcMatch::idx_type next_arcmatch(){
-		pair<ArcMatch::idx_type,iter> lastEl = arcmatches_to_do.back();
-		cur_it = lastEl.second;
-		ArcMatch::idx_type result=lastEl.first;
+
+		//pair<ArcMatch::idx_type,iter> lastEl = arcmatches_to_do.back();
+
+		//cur_it = lastEl.second;
+
+		//ArcMatch::idx_type result=lastEl.first;
+		//arcmatches_to_do.pop_back();
+		ArcMatch::idx_type arc_idx = arcmatches_to_do.back();
 		arcmatches_to_do.pop_back();
-		return result;
+		//arcmatches_to_do_test.pop_back();
+		return arc_idx;
 	}
 
+	void validate_epm(){
+		//EPMs have the same size
+		if(pat1Vec.size()!=pat2Vec.size()){
+			cerr << "wrong pattern " << endl;
+			return;
+		}
+
+		//two matched positions in the EPMs have the same nucleotide
+		for(int i=0;i<pat1Vec.size();i++){
+			if(seqA_[pat1Vec.at(i)]!=seqB_[pat2Vec.at(i)]){
+				cerr << "no EPM " << endl;
+			}
+	    }
+
+		vector<pair<int,int> > arcmatches_to_validate;
+		int balance=0;
+
+		for(int i=0;i<pat1Vec.size()-1;i++){
+			if(pat1Vec[i]>=pat1Vec[i+1] || pat2Vec[i]>=pat2Vec[i+1]){
+				cerr << "ERROR" << endl;
+				cout << "hier " << endl;
+				print_epm(cout,0);
+			}
+		}
+		bool gap = false;
+		arcmatches_to_validate.push_back(pair<int,int>(0,pat1Vec.size()-1));
+		//for(int i=0;i<pat1Vec.size()-1;i++){
+		while(arcmatches_to_validate.size()!=0){
+			pair<int,int> cur_arcmatch = arcmatches_to_validate.back();
+			arcmatches_to_validate.pop_back();
+			gap=false;
+			//cout << "validate cur arcmatch " << cur_arcmatch.first << "," << cur_arcmatch.second << endl;
+			for(int i=cur_arcmatch.first+1;i<=cur_arcmatch.second;i++){
+			//cout << "i " << i << endl;
+			if(structure.at(i)=='.'){
+				//cout << "validated " << i-1 << "," << i << endl;
+				if(i!=0 && !(pat1Vec.at(i-1)+1==pat1Vec.at(i))){
+					//cout << "gap " << endl;
+					if(gap) cerr << "ERROR";//cout << "from position " << i-1 << " to " << i << endl; //cerr << "ERROR";
+					else gap=true;
+				}
+			}
+			else if(structure.at(i)=='('){
+				int start = i;
+				//cout << "validated " << i-1 << "," << i << endl;
+				if(!(pat1Vec.at(i-1)+1==pat1Vec.at(i))){
+					//cout << "gap " << endl;
+					if(gap) cerr << "ERROR " << endl;
+					gap=true;
+				}
+				//gap=false;
+				//i++;
+				//cout << "i " << i << endl;
+				//cout << "pat vec " << structure.at(i) << endl;
+				int balance = 1; //count first open bracket at position i
+				//i--;
+				while(balance!=0){
+					i++;
+				//	cout << "i " << i << endl;
+					//cout << "structure " << structure.at(i) << endl;
+					if(structure.at(i)=='(') balance++;
+					if(structure.at(i)==')') balance--;
+				//	cout << "balance " << balance << endl;
+				//	cout << "i " << i << endl;
+				}
+				//cout << "arcmatches_to_validate " << start <<","<< i << endl;
+				arcmatches_to_validate.push_back(pair<int,int>(start,i));
+
+			}
+			else if(structure.at(i)==')'){
+				//cout << "validated " << i-1 << "," << i << endl;
+				if(!(pat1Vec.at(i-1)+1==pat1Vec.at(i))){
+					//cout << "gap " << endl;
+					if(gap) cerr << "ERROR " << endl;
+					gap=true;
+				}
+			}
+			}
+		}
+	}
 
 	void print_epm(ostream &out, int score){
-		string 	seq="";
-		if(epm.begin()==epm.end()) return;
+		string 	seqA="";
+		string seqB="";
+		/*if(epm.begin()==epm.end()) return;
 		for(iter it=epm.begin();it!=epm.end();it++){
-			if(seqA_[it->pos1]!=seqB_[it->pos2]){cerr << "ERROR " << endl;}
-			seq+= seqA_[it->pos1][0];
-			cout << seqA_[it->pos1][0];
+			//cout << "posA " << it->pos1 << endl;
+			//cout << "posB " << it->pos2 << endl;
+			if(seqA_[it->pos1]!=seqB_[it->pos2]){
+			//cerr << "ERROR " << endl;cout << seqA_[it->pos1][0] << " ";
+			//cout << seqB_[it->pos2][0] << endl;
+			}
+			seqA+= seqA_[it->pos1][0];
+			seqB+= seqB_[it->pos2][0];
+			//cout << seqA_[it->pos1][0];
 		}
-		out << " ";
-		for(iter it=epm.begin();it!=epm.end();it++){
+		//out << " ";
+		if(seqA!=seqB){
+			cout << "seqA: " << seqA << endl;
+			cout << "seqB: " << seqB << endl;
+			cout << structure << endl;
+			for(iter it=epm.begin();it!=epm.end();it++){
+				cout << it->pos1 << " ";
+				if(seqA_[it->pos1]!=seqB_[it->pos2]){
+					cout << seqA_[it->pos1+1][0] << " ";
+					cout << seqB_[it->pos2+1][0] << " ";
+
+				}
+			}
+			cout << endl;
+			for(iter it=epm.begin();it!=epm.end();it++){
+							cout << it->pos2 << " ";
+			}
+			cout << endl;
+			cout << endl;
+		}*/
+		/*for(iter it=epm.begin();it!=epm.end();it++){
 			out << it->str;
-		}
-		out << endl;
+		}*/
+		/*out << endl;
 		stringstream pat1;
 		pat1 << "";
 		for(iter it=epm.begin();it!=epm.end();it++){
@@ -461,20 +649,57 @@ public:
 			}	
 		}
 		out << endl;
-		cout << "epm size " << pat1Vec.size() << " and score " << score << endl;
-	}
+		cout << "epm size " << pat1Vec.size() << " and score " << score << endl;*/
+		intVec::iterator it2=pat2Vec.begin();
+		for(intVec::iterator it=pat1Vec.begin();it!=pat1Vec.end();it++,it2++){
+			out << *it;
+			//intVec::iterator tmp = pat1Vec.end(); tmp--;
+			//if(it!=tmp){
+			  out << ":";
+			//}
+			out << *it2 << " " ;
+		}
+		/*out << " ";
+		for(intVec::iterator it=pat2Vec.begin();it!=pat2Vec.end();it++){
+					out << *it;
+					intVec::iterator tmp = pat2Vec.end(); tmp--;
+					if(it!=tmp){
+					  out << ":";
+			}
+		}*/
+		out << endl;
+		//out << " ";
+		for(string::iterator it=structure.begin();it!=structure.end();it++){
+					out << *it;
+				}
+		cout << endl;
+
+	  }
+
+	/*void compare_epms(){
+		//cout << "compare structures " << endl;
+		iter iterator=epm.begin();
+		int pos=0;
+		for(string::iterator it=structure.begin();it!=structure.end();it++){
+				if(*it!=iterator->str || pat1Vec.at(pos) != iterator->pos1 || pat2Vec.at(pos)!= iterator->pos2){print_epm(cout,0);}
+				iterator++;
+				pos++;
+		}
+	}*/
+
 
 	//for debugging
-	void print_arcmatches_to_do(ostream &out){
+	/*void print_arcmatches_to_do(ostream &out){
 		out << "to do vector " << endl;
 		for(std::vector<pair<ArcMatch::idx_type,iter> >::iterator it=arcmatches_to_do.begin();it!=arcmatches_to_do.end();it++){
 			out << it->first << endl;
 		}
 		out << endl;
-	}
+	}*/
 	void sort_patVec(){
-		sort(pat1Vec.begin(), pat1Vec.end());
-		sort(pat2Vec.begin(), pat2Vec.end());
+		//sort(pat1Vec.begin(), pat1Vec.end());
+		quicksort_EPM(0,pat1Vec.size()-1);
+		//sort(pat2Vec.begin(), pat2Vec.end());
 	}
 	intVec getPat1Vec() const{
 		return pat1Vec;
@@ -483,23 +708,30 @@ public:
 		return pat2Vec;
 	}
 	
-	void add_pattern(string patId ,SinglePattern pattern1 ,SinglePattern pattern2, int score){
-	  set_struct();
+	string getStructure() const{
+		return structure;
+	}
+
+	/*void add_pattern(string patId ,SinglePattern pattern1 ,SinglePattern pattern2, int score){
+	  //set_struct();
 	  mcsPatterns.add(patId, pat1Vec.size(), pattern1, pattern2, structure, score);
-	}
+	}*/
 	
-	PatternPairMap& get_patternPairMap() {
+	/*PatternPairMap& get_patternPairMap() {
 	  return mcsPatterns;
-	}
+	}*/
+
 	bool isEmpty(){
-	  return epm.empty();
+	  //return epm.empty();
+		return pat1Vec.empty();
 	}
-	void set_struct(){
+
+	/*void set_struct(){
 	  structure= "";
 	  for(iter it=epm.begin();it!=epm.end();it++){
 			structure+= it->str;
 		}
-	}
+	}*/
 };
 
 class ExactMatcher {
@@ -537,10 +769,12 @@ private:
 
     int EPM_threshold;
     int EPM_min_size;
-    double test;
+    //double test;
     int alpha_1;
     int alpha_2;
     int alpha_3;
+    int easier_scoring_par;
+    int subopt_score;
     const string& sequenceA;
     const string& sequenceB;
     enum{in_B,in_G,in_A};
@@ -548,13 +782,14 @@ private:
     const string& file2;
     
     PatternPairMap myLCSEPM; //!PatternPairMap result of chaining algorithm
+    PatternPairMap mcsPatterns;
     
     // ----------------------------------------
     // evaluate the recursions / fill matrices
     
     
     //!computes matrices A,G and B
-    void compute_matrices(const ArcMatch &arc_match);
+    void compute_AGBmatrices(const ArcMatch &arc_match);
 
     //! computes matrix F
     void compute_F();
@@ -572,7 +807,7 @@ private:
     void trace_F();
     
     //!traverses matrix F
-    void trace_in_F(std::ostream &out);
+    void trace_in_F();
     
     //!adds the structure and the position corresponding to the position pos_ in the matrix if
     //!the position isn't contained in another epm (score==pos_infty)
@@ -582,7 +817,7 @@ private:
     bool add_arcmatch(const ArcMatch &am, bool undo);
     
     //!outputs the exact matching starting at position $(i,j)$ while setting the processed elements Trace(i,j) to -inf
-    void get_matching(size_type i, size_type j, std::ostream &out);
+    void get_matching(size_type i, size_type j);
     
     //!recomputes matrices A,G and B for arcMatch recursively and stores the traceback
     bool trace_AGB(const ArcMatch &am, bool undo);
@@ -592,6 +827,9 @@ private:
     bool str_traceAGB(const ScoreMatrix &mat, const ArcMatch &am, size_type posA, size_type posB,pair<int,int> &curPos, bool undo);
     
     void reset_trace(size_type i, size_type j);
+
+    void set_el_to_inf();
+    void set_el_to_neg_inf();
     
     //!converts string to uppercase
     string upperCase(string seq){
@@ -605,25 +843,29 @@ private:
     void output_trace_matrix();
     void output_arc_match_score();
     void print_EPM_start_pos(list<pair<pair<int,int>,infty_score_t> > &EPM_start_pos);
+    void print_matrices(const ArcMatch &am, size_type offset_A, size_type offset_B);
     
 public:
 
     //! construct with sequences and possible arc matches
     ExactMatcher(const Sequence &seqA_,const Sequence &seqB_,const ArcMatches &arc_matches_,const Mapping &mappingA_, const Mapping &mappingB_,
-		 const int &threshold_,const int &min_size_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const string& sequenceA_,
+		 const int &threshold_,const int &min_size_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const int &subopt_score,
+		 const int &easier_scoring_par, const string& sequenceA_,
 		 const string& sequenceB_, const string& file1_, const string& file2_);
     ~ExactMatcher();
     
-    //! computes the score of best exact matching
-    //! side effect: fills the A,G,B and F matrices
+    //! fills the A,G,B and F matrices
     void
-    compute_matchings();
+    compute_matrices();
     
-    //! write all exact matchings to out.
-    //! pre: call to compute_matchings()
+    //! store all exact matchings in PatternPairMap and call chaining algorithm
+    //! pre: call to compute_marices()
     void
-    write_matchings(std::ostream &out);
+    compute_EPMs_heuristic();
     
+    void
+    compute_EPMs_suboptimal();
+
     //! outputs anchor constraints to be used as input for locarna
     void
     output_locarna();
