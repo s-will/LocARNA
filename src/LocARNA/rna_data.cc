@@ -155,7 +155,7 @@ namespace LocARNA {
 	}
 	
 	
-	for (int k=1; k<=sequence.length(); k++) {
+	for (size_type k=1; k<=sequence.length(); k++) {
 	  q1k_p[k]= McCmat.q1k_p[k];
 	  qln_p[k]= McCmat.qln_p[k];
 	}
@@ -454,24 +454,34 @@ namespace LocARNA {
 	qqm1= NULL;
     }
 
-    double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j) const {
-	
-	const char *c_sequence=consensus_sequence.c_str();
-	
-	FLT_OR_DBL H,I,M;
-	int type,type2;
-	//calculating the Hairpin loop energy contribution
-	
-	type = (int)(get_ptype(i,j));
+    
+    int 
+    RnaData::ptype_of_admissible_basepair(size_type i,size_type j) const {
+    	int type = (int)(get_ptype(i,j));
 	
 	// immediately return 0.0 when i and j cannot pair
 	if ((type==0)
 	    || (((type==3)||(type==4))&&no_closingGU)
 	    || (get_qb(i,j)==0.0)
-	    || (get_arc_prob(i,j)))
+	    || (get_arc_prob(i,j)==0.0))
 	    {
-		return 0.0;
+		return 0;
 	    }
+	
+	return type;
+    }
+
+    double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j) const {
+	
+	const char *c_sequence=consensus_sequence.c_str();
+	
+	FLT_OR_DBL H,I,M;
+	//calculating the Hairpin loop energy contribution
+	
+	int type = ptype_of_admissible_basepair(i,j);
+	
+	// immediately return 0.0 when i and j cannot pair
+	if (type==0) {return 0.0;}
 
 	H = exp_E_Hairpin((int)(j-i-1), type, S1_p[(int)(i+1)], S1_p[(int)(j-1)],
 			  c_sequence+i-1, pf_params_p) * scale_p[(int)(j-i+1)];
@@ -488,7 +498,7 @@ namespace LocARNA {
 	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1)); 
 		 jp<(int)j;
 		 jp++) {
-		type2 =(int)(get_ptype(ip,jp));
+		int type2 =(int)(get_ptype(ip,jp));
 		if (type2) {
 		    type2 = rtype[type2];
 		    I += get_qb(ip,jp) 
@@ -507,7 +517,7 @@ namespace LocARNA {
 	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1));
 		 jp<(int)k;
 		 jp++) {
-		type2 =(int)(get_ptype(ip,jp)) ;
+		int type2 =(int)(get_ptype(ip,jp)) ;
 		if (type2) {
 		    type2 = rtype[type2];
 		    I += get_qb(ip,jp)
@@ -551,28 +561,15 @@ namespace LocARNA {
 	// note: Ipp and Mpp are computed without factor get_qb(ip,jp),
 	// which is multiplied only in the end.
 	
-	int type,type2;
-	
-	type=(int)(get_ptype(i,j));
-	type2 =(int)(get_ptype(ip,jp));
+	int type=ptype_of_admissible_basepair(i,j);
 	
 	// immediately return 0.0 when i and j cannot pair
-	if ((type==0)
-	    || (((type==3)||(type==4))&&no_closingGU)
-	    || (get_qb(i,j)==0.0)
-	    || (get_arc_prob(i,j)))
-	    {
-		return 0.0;
-	    }
-
+	if (type==0) {return 0.0;}
+	
+	int type2=ptype_of_admissible_basepair(ip,jp);
+	
 	// immediately return 0.0 when ip and jp cannot pair
-	if ((type2==0)
-	    || (((type2==3)||(type2==4))&&no_closingGU)
-	    || (get_qb(ip,jp)==0.0)
-	    || (get_arc_prob(ip,jp)))
-	    {
-		return 0.0;
-	    }
+	if (type2==0) {return 0.0;}
 	
 	//calculating the Interior loop energy contribution
 	//
@@ -611,6 +608,9 @@ namespace LocARNA {
     }
 
     double RnaData::prob_basepair_external(size_type i,size_type j) const {
+	// immediately return 0.0 when i and j cannot pair
+	if (ptype_of_admissible_basepair(i,j)==0) {return 0.0;}
+	
 	return (q1k_p[i-1] * get_qb(i,j) *  qln_p[j+1]) / qln_p[1];
     }
 

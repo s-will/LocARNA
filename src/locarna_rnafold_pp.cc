@@ -38,6 +38,9 @@ double cutoff = 0.0005;
 
 // using namespace LocARNA;
 
+/** 
+ * \brief print usage
+ */
 void
 usage() {
     std::cout
@@ -58,6 +61,9 @@ usage() {
     exit(-1);
 }
 
+/** 
+ * \brief Main function of locarna_rnafold_pp when Vienna RNA lib is linked
+ */
 int
 main(int argc, char **argv) {
     
@@ -166,6 +172,9 @@ main(int argc, char **argv) {
 }
 
 #else
+/** 
+ * \brief Main in case the programs are not linked to the Vienna RNA
+ */
 int
 main(int argc, char **argv) {
     if ( argc==2 && std::string(argv[1]).compare("--TEST") == 0 ) {
