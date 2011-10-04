@@ -34,7 +34,7 @@ namespace LocARNA {
 	typedef SparseMatrix<double> arc_prob_matrix_t;
     private:
 	Sequence sequence; //!< the sequence
-	bool stacking; //! whether to support stacking
+	bool stacking; //!< whether to support stacking
 
 	//! consensus sequence as C++ string
 	std::string consensus_sequence;
@@ -90,7 +90,18 @@ namespace LocARNA {
 #endif
 	////////////////////////////////////////////////////////////
 	
-
+	/** 
+	 * Pair type of an admissible basepair.
+	 * 
+	 * @param i 
+	 * @param j 
+	 * 
+	 * @return pair type unless the base pair is not admissible,
+	 * i.e. it is not complementary or has probability 0.0. Then
+	 * return 0.
+	 */
+	int ptype_of_admissible_basepair(size_type i,size_type j) const;
+    
     public:
 	/** 
 	 * @brief Construct from file (either pp or dp_ps or clustalw)
@@ -103,8 +114,8 @@ namespace LocARNA {
 	 * keep the DP-matrices for later use.
 	 *
 	 * @param file input file name
-	 * @param stacking whether to use stacking
 	 * @param keepMcM if TRUE, keep the McCaskill matrices for use in methods prob_unpaired/basepair_in_loop/external. This works only if file is in clustalw format!
+	 * @param stacking whether to use stacking
 	 */
 	RnaData(const std::string &file, bool keepMcM=false, bool stacking=false);
 	
@@ -113,6 +124,8 @@ namespace LocARNA {
 	 * 
 	 * @param sequence_ the RNA sequence as Sequence object 
 	 * @param keepMcM     if TRUE, keep the McCaskill matrices for use in methods prob_unpaired/basepair_in_loop/external
+	 * @param stacking whether to use stacking
+	 *
 	 * @note requires linking to librna
 	 * @see prob_unpaired_in_loop()
 	 * @pre sequence_ has exactly one row
@@ -210,6 +223,7 @@ namespace LocARNA {
 	 *
 	 * @param filename input filename
 	 * @param keepMcM whether to keep McCaskill matrices
+	 * @param stacking whether to use stacking
 	 * 
 	 * @note Currently, the name is misleading. See todo.
 	 *
@@ -375,12 +389,10 @@ namespace LocARNA {
 		- prob_paired_downstream(i);
 	}
 
-	
-	Sequence get_sequence() {
-	  return sequence;
-	}
-	
-	int get_length() {
+		
+	//! \brief get length of sequence
+	//! \return sequence length
+	size_type get_length() const {
 	  return sequence.length();
 	}
 	
