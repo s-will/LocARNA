@@ -109,7 +109,10 @@ namespace LocARNA {
 	// std::cout <<"Call pf_fold(" << c_sequence << "," << "NULL" << ")"<< std::endl;
 	
 	// call pf_fold
+	time_t start_fold = time (NULL);
 	pf_fold(c_sequence,c_structure);
+	time_t stop_fold = time (NULL);
+    std::cout << "time for folding : " << stop_fold - start_fold << "sec " << std::endl;
 	
 	
 	McC_matrices_t McCmat;
@@ -144,6 +147,8 @@ namespace LocARNA {
 	qln_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+2));
 	bppm= (FLT_OR_DBL *) space(size);
 	
+	time_t start_copying = time (NULL);
+
 	int i,j;
 	for (j=TURN+2;j<=(int)sequence.length(); j++) {
 	  for (i=j-TURN-1; i>=1; i--) {
@@ -162,6 +167,9 @@ namespace LocARNA {
 	q1k_p[0] = 1.0;
 	qln_p[sequence.length()+1] = 1.0;
 	
+	time_t stop_copying = time (NULL);
+	std::cout << "time for copying : " << stop_copying - start_copying << "sec " << std::endl;
+
 	// copying of McCaskill pf matrices done
 	
 	
@@ -191,8 +199,10 @@ namespace LocARNA {
 	  expMLbase_p[i] = pow(pf_params_p->expMLbase, (double)i) * scale_p[i];
 	}
 	
+	time_t start_Qm2 = time (NULL);
 	compute_Qm2();
-	
+	time_t stop_Qm2 = time (NULL);
+	std::cout << "time for computing Qm2 : " << stop_Qm2 - start_Qm2 << "sec " << std::endl;
     }
 
     

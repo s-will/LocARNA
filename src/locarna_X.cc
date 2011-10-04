@@ -197,11 +197,14 @@ main(int argc, char **argv) {
     Sequence seqA(maA);
     Sequence seqB(maB);
 
-    time_t start_RNAdata = time (NULL);
+    time_t start_RNAdataA = time (NULL);
     RnaData rnadataA(seqA,true,opt_stacking);
+    time_t stop_RNAdataA = time (NULL);
+    cout << "time for RNAdataA: " << stop_RNAdataA - start_RNAdataA << "sec " << endl;
+    time_t start_RNAdataB = time (NULL);
     RnaData rnadataB(seqB,true,opt_stacking);
-    time_t stop_RNAdata = time (NULL);
-    cout << "time for RNAdata: " << stop_RNAdata - start_RNAdata << "sec " << endl;
+    time_t stop_RNAdataB = time (NULL);
+    cout << "time for RNAdataB: " << stop_RNAdataB - start_RNAdataB << "sec " << endl;
 
    
     //Sequence seqA=rnadataA.get_sequence();
@@ -304,10 +307,10 @@ main(int argc, char **argv) {
     cout << "time for preprocessing: " << stop_preprocessing - start_preprocessing << "sec " << endl;
 
     time_t start_computeMatrices = time (NULL);
-        	//compute matrices for finding best and enumerating all matchings
-        	em.compute_matrices();
-        	time_t stop_computeMatrices = time (NULL);
-        	cout << "time for computing Matrices : " << stop_computeMatrices - start_computeMatrices << "sec " << endl;
+    //compute matrices for finding best and enumerating all matchings
+    em.compute_matrices();
+    time_t stop_computeMatrices = time (NULL);
+    cout << "time for computing Matrices : " << stop_computeMatrices - start_computeMatrices << "sec " << endl;
     
     
     // ------------------------------------------------------------
