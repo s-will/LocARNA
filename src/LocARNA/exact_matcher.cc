@@ -119,12 +119,14 @@ infty_score_t ExactMatcher::seq_str_matching(ScoreMatrix &mat, const ArcMatch &a
 	if(seqA[PosSeqA]==seqB[PosSeqB]){
 		if(mappingA.seq_matching(idxA,i) && mappingB.seq_matching(idxB,j)){
 			//sequential matching
-			score_seq = (EPM_min_size==3) ? mat(i-1,j-1)+alpha_1*100 : mat(i-1,j-1)+alpha_1;
+			//score_seq = (EPM_min_size==3) ? mat(i-1,j-1)+alpha_1*100 : mat(i-1,j-1)+alpha_1;
+			score_seq = mat(i-1,j-1)+alpha_1*100;
 		}
 		//special case if the previous entry in matrix B was taken from matrix G -> no check if sequential matching
 		//is permitted
-		else if(matrixB){
-			score_seq = (EPM_min_size==3) ? G(i-1,j-1)+alpha_1*100 : G(i-1,j-1)+alpha_1;
+		if(matrixB){
+			//score_seq = (EPM_min_size==3) ? G(i-1,j-1)+alpha_1*100 : G(i-1,j-1)+alpha_1;
+			score_seq = max(G(i-1,j-1)+alpha_1*100,score_seq);
 		}
 		//structural matching
 		for(ArcMatchIdxVec::const_iterator it=arc_matches.common_right_end_list(PosSeqA-1,PosSeqB-1).begin();
@@ -134,8 +136,9 @@ infty_score_t ExactMatcher::seq_str_matching(ScoreMatrix &mat, const ArcMatch &a
 				int pos_before_arcA = mappingA.get_pos_in_new_seq(arcA,inner_am.arcA().left()-1);
 				int pos_before_arcB= mappingB.get_pos_in_new_seq(arcB,inner_am.arcB().left()-1);
 				if(pos_before_arcA == -1 || pos_before_arcB == -1) continue; //no valid position before the arc
-				infty_score_t tmp= (EPM_min_size==3) ? mat(pos_before_arcA,pos_before_arcB)+alpha_1*100+score_for_arc_match(inner_am)+score_for_stacking(arc_match,inner_am) :
-													       mat(pos_before_arcA,pos_before_arcB)+alpha_1+score_for_arc_match(inner_am);
+				//infty_score_t tmp= (EPM_min_size==3) ? mat(pos_before_arcA,pos_before_arcB)+alpha_1*100+score_for_arc_match(inner_am)+score_for_stacking(arc_match,inner_am) :
+					//								       mat(pos_before_arcA,pos_before_arcB)+alpha_1+score_for_arc_match(inner_am);
+				infty_score_t tmp = mat(pos_before_arcA,pos_before_arcB)+alpha_1*100+score_for_arc_match(inner_am)+score_for_stacking(arc_match,inner_am);
 				score_str=max(score_str,tmp);
 			}
 		}
@@ -150,7 +153,8 @@ void ExactMatcher::compute_F(){
 			score_seq=InftyArithInt(0);score_str=InftyArithInt(0);
 			//sequential matching
 			if(seqA[i]==seqB[j]){
-				score_seq= (EPM_min_size==3) ? F(i-1,j-1)+alpha_1*100 : F(i-1,j-1)+alpha_1;
+				//score_seq= (EPM_min_size==3) ? F(i-1,j-1)+alpha_1*100 : F(i-1,j-1)+alpha_1;
+				score_seq = F(i-1,j-1)+alpha_1*100;
 			}
 			//structural matching
 			for(ArcMatchIdxVec::const_iterator it=arc_matches.common_right_end_list(i,j).begin();
@@ -177,7 +181,8 @@ void ExactMatcher::compute_matrices() {
 			compute_AGBmatrices(*it);
 			size_type number_of_posA = mappingA.number_of_valid_pos(it->arcA().idx());
 			size_type number_of_posB = mappingB.number_of_valid_pos(it->arcB().idx());
-			infty_score_t temp= (EPM_min_size==3) ? B(number_of_posA-1,number_of_posB-1)-alpha_1*100 : B(number_of_posA-1,number_of_posB-1)-alpha_1;
+			//infty_score_t temp= (EPM_min_size==3) ? B(number_of_posA-1,number_of_posB-1)-alpha_1*100 : B(number_of_posA-1,number_of_posB-1)-alpha_1;
+			infty_score_t temp = B(number_of_posA-1,number_of_posB-1)-alpha_1*100;
 			arc_match_score.push_back(temp);
 		}
 	}
@@ -192,7 +197,9 @@ void ExactMatcher::compute_EPMs_suboptimal(){
 
 void ExactMatcher::compute_EPMs_heuristic() {
     trace_F();
+    cout << "trace_F " << endl;
     trace_in_F();
+
 }
 
 void
@@ -200,9 +207,11 @@ ExactMatcher::trace_F(){
 	for(int i=seqA.length();i>=1;i--){
 		for(int j=seqB.length();j>=1;j--){
 			//sequential matching
-			bool flag= (EPM_min_size==3) ? F(i,j)==F(i-1,j-1)+alpha_1*100 : F(i,j)==F(i-1,j-1)+alpha_1;
+			//bool flag= (EPM_min_size==3) ? F(i,j)==F(i-1,j-1)+alpha_1*100 : F(i,j)==F(i-1,j-1)+alpha_1;
+			bool flag = F(i,j)==F(i-1,j-1)+alpha_1*100;
 			if(flag){
-				bool flag2= (EPM_min_size==3) ? Trace(i,j).score>Trace(i+1,j+1).score+alpha_1*100 : Trace(i,j).score>Trace(i+1,j+1).score+alpha_1;
+				//bool flag2= (EPM_min_size==3) ? Trace(i,j).score>Trace(i+1,j+1).score+alpha_1*100 : Trace(i,j).score>Trace(i+1,j+1).score+alpha_1;
+				bool flag2 = Trace(i,j).score>Trace(i+1,j+1).score+alpha_1*100;
 				if(flag2){
 					//don't consider traceback from position (i+1,j+1)
 					Trace(i+1,j+1).score=infty_score_t::neg_infty;
@@ -226,7 +235,8 @@ ExactMatcher::trace_F(){
 					}
 					
 					//set score
-					Trace(i,j).score= (EPM_min_size==3) ? Trace(i+1,j+1).score+alpha_1*100 : Trace(i+1,j+1).score+alpha_1;
+					//Trace(i,j).score= (EPM_min_size==3) ? Trace(i+1,j+1).score+alpha_1*100 : Trace(i+1,j+1).score+alpha_1;
+					Trace(i,j).score= Trace(i+1,j+1).score+alpha_1*100;
 
 				}
 				
@@ -280,20 +290,20 @@ ExactMatcher::trace_in_F(){
 	list<pair<pair<int,int>,infty_score_t> > EPM_start_pos;
 	for(size_type i=0;i<seqA.length()+1;i++){
 		for(size_type j=0;j<seqB.length()+1;j++){
-			if(EPM_min_size==3){
+			//if(EPM_min_size==3){
 				if(Trace(i,j).score>(infty_score_t)EPM_threshold){
 					//consider element for EPM
 					pair<int,int> pos = pair<int,int>(i,j);
 					EPM_start_pos.push_back(pair<pair<int,int>,infty_score_t >(pos,Trace(i,j).score));
 				}
-			}
-			else{
+			//}
+			/*else{
 				if(Trace(i,j).score>(infty_score_t)(EPM_min_size*alpha_1)){
 					//consider element for EPM
 					pair<int,int> pos = pair<int,int>(i,j);
 					EPM_start_pos.push_back(pair<pair<int,int>,infty_score_t >(pos,Trace(i,j).score));
 				}
-			}
+			}*/
 		
 		}
 	}
@@ -474,8 +484,9 @@ bool ExactMatcher::str_traceAGB(const ScoreMatrix &mat, const ArcMatch &am, size
 			int pos_before_arcA = mappingA.get_pos_in_new_seq(am.arcA(),inner_am.arcA().left()-1);
 			int pos_before_arcB= mappingB.get_pos_in_new_seq(am.arcB(),inner_am.arcB().left()-1);
 			if(pos_before_arcA == -1 || pos_before_arcB == -1) continue; //no valid position before the arc
-			bool flag= (EPM_min_size==3) ? mat(i,j)==score_for_arc_match(inner_am)+score_for_stacking(am,inner_am)+alpha_1*100+mat(pos_before_arcA,pos_before_arcB) : 
-						       mat(i,j)==score_for_arc_match(inner_am)+alpha_1+mat(pos_before_arcA,pos_before_arcB);
+			//bool flag= (EPM_min_size==3) ? mat(i,j)==score_for_arc_match(inner_am)+score_for_stacking(am,inner_am)+alpha_1*100+mat(pos_before_arcA,pos_before_arcB) :
+				//	       mat(i,j)==score_for_arc_match(inner_am)+alpha_1+mat(pos_before_arcA,pos_before_arcB);
+			bool flag = mat(i,j)==score_for_arc_match(inner_am)+score_for_stacking(am,inner_am)+alpha_1*100+mat(pos_before_arcA,pos_before_arcB);
 			if(flag){
 				curPos=pair<int,int>(pos_before_arcA,pos_before_arcB);
 				if(posA!=am.arcA().right() && posB!=am.arcB().right()){
@@ -511,7 +522,8 @@ ExactMatcher::trace_AGB(const ArcMatch &am, bool undo){
 						curPos=str_pos; break;
 					}
 					//sequential matching
-					bool flag= (EPM_min_size==3) ? B(i,j)==B(i-1,j-1)+alpha_1*100 : B(i,j)==B(i-1,j-1)+alpha_1;
+					//bool flag= (EPM_min_size==3) ? B(i,j)==B(i-1,j-1)+alpha_1*100 : B(i,j)==B(i-1,j-1)+alpha_1;
+					bool flag = B(i,j)==B(i-1,j-1)+alpha_1*100;
 					if(flag && mappingA.seq_matching(am.arcA().idx(),i) && mappingB.seq_matching(am.arcB().idx(),j)){
 						curPos=pair<int,int>(i-1,j-1);
 						if(!add(am,pair<int,int>(i,j),'.')) return false;
@@ -521,7 +533,8 @@ ExactMatcher::trace_AGB(const ArcMatch &am, bool undo){
 				if(B(i,j)==G(i,j)){
 					state=in_G; break;
 				}
-				bool flag2= (EPM_min_size==3) ? B(i,j)==G(i-1,j-1)+alpha_1*100 : B(i,j)==G(i-1,j-1)+alpha_1;
+				//bool flag2= (EPM_min_size==3) ? B(i,j)==G(i-1,j-1)+alpha_1*100 : B(i,j)==G(i-1,j-1)+alpha_1;
+				bool flag2 = B(i,j)==G(i-1,j-1)+alpha_1*100;
 				//special case
 				if(flag2){
 					curPos=pair<int,int>(i-1,j-1);
@@ -555,7 +568,8 @@ ExactMatcher::trace_AGB(const ArcMatch &am, bool undo){
 						curPos=str_pos; break;
 					}
 					//sequential matching
-					bool flag3= (EPM_min_size==3) ? A(i,j)==A(i-1,j-1)+alpha_1*100 : A(i,j)==A(i-1,j-1)+alpha_1;
+					//bool flag3= (EPM_min_size==3) ? A(i,j)==A(i-1,j-1)+alpha_1*100 : A(i,j)==A(i-1,j-1)+alpha_1;
+					bool flag3 = A(i,j)==A(i-1,j-1)+alpha_1*100;
 					if(flag3 && mappingA.seq_matching(am.arcA().idx(),i) && mappingB.seq_matching(am.arcB().idx(),j)){
 						curPos=pair<int,int>(i-1,j-1);
 						if(!add(am,pair<int,int>(i,j),'.')) return false;
@@ -612,9 +626,9 @@ infty_score_t ExactMatcher::score_for_arc_match(const ArcMatch &am){
 	if(easier_scoring_par){
 		return arc_match_score.at(am.idx())+((2*alpha_1)+easier_scoring_par*2)*100;
 	}
-	if(EPM_min_size!=3){
+	/*if(EPM_min_size!=3){
 		return arc_match_score.at(am.idx())+(2*alpha_1);
-	}
+	}*/
 	double probArcA = bpsA.get_arc_prob(am.arcA().left(),am.arcA().right());
 	double probArcB = bpsB.get_arc_prob(am.arcB().left(),am.arcB().right());
 	return arc_match_score.at(am.idx())+((2*alpha_1)+(probArcA+probArcB)*alpha_2)*100;

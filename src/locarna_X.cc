@@ -323,11 +323,13 @@ main(int argc, char **argv) {
 	}
 	
 	 if(opt_suboptimal){
+		 cout << "suboptimal " << endl;
 		 em.compute_EPMs_suboptimal();
 
 	 }
 
 	 else{
+		 cout << "heuristic " << endl;
 		 time_t start_traceback = time (NULL);
 		 em.compute_EPMs_heuristic();
 		 time_t stop_traceback = time(NULL);

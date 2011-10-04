@@ -769,7 +769,6 @@ private:
 
     int EPM_threshold;
     int EPM_min_size;
-    //double test;
     int alpha_1;
     int alpha_2;
     int alpha_3;
