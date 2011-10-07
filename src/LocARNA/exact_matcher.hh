@@ -248,8 +248,13 @@ class Mapping{
 
 public:
 	  //! constructor
-	Mapping(const BasePairs &bps_,RnaData &rnadata_,const double &prob_unpaired_threshold_):
-	  prob_unpaired_threshold(prob_unpaired_threshold_),
+	Mapping(const BasePairs &bps_,const RnaData &rnadata_,
+			const double &prob_unpaired_in_loop_threshold_,
+			const double &prob_unpaired_external_threshold_,
+			const double &prob_basepair_external_threshold_):
+	  prob_unpaired_in_loop_threshold(prob_unpaired_in_loop_threshold_),
+	  prob_unpaired_external_threshold(prob_unpaired_external_threshold_),
+	  prob_basepair_external_threshold(prob_basepair_external_threshold_),
 	  bps(bps_),
 	  rnadata(rnadata_)
 	  {
@@ -259,9 +264,11 @@ public:
 
 private:
 	
-	const double &prob_unpaired_threshold;
+	const double &prob_unpaired_in_loop_threshold;
+	const double &prob_unpaired_external_threshold;
+	const double &prob_basepair_external_threshold;
 	const BasePairs &bps;
-	RnaData &rnadata;
+	const RnaData &rnadata;
 	bp_mapping pos_vecs; //! mapping from the new positions to the sequence positions (i.e. which positions relative to the beginning of the arc are valid)
 	bp_mapping new_pos_vecs; //!mapping from the sequence positions to the new positions;
 		                 //!sequence positions are relative to the beginning of the arc
@@ -278,7 +285,8 @@ public:
 	
 	//!is position k valid (i.e. does probability that the base k is unpaired under the loop exceed some threshold) for the basepair with index arcIdx? 
 	bool is_valid_pos(Arc arc,size_type k) const{
-		return rnadata.prob_unpaired_in_loop(k,arc.left(),arc.right())>=prob_unpaired_threshold;
+		return rnadata.prob_unpaired_in_loop(k,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold;
+		//return true; //TODO remove!
 	}
 
 	//!returns the sequence position corresponding to the position new_pos in the matrix
@@ -297,6 +305,18 @@ public:
 		return pos_vecs.at(arcIdx).size();
 	}
 	
+	bool unpaired_external(size_type k) const {
+		//cout << "prob unpaired external " << rnadata.prob_unpaired_external(k) << endl;
+		//cout << "prob unapired external threshold " << prob_unpaired_external_threshold;
+		return rnadata.prob_unpaired_external(k)>=prob_unpaired_external_threshold;
+	}
+
+	bool basepair_external(size_type i, size_type j) const{
+		cout << "i,j " << i << "," << j << endl;
+		cout << "prob basepair external " <<  rnadata.prob_basepair_external(i,j) << endl;
+		return rnadata.prob_basepair_external(i,j)>=prob_basepair_external_threshold;
+	}
+
 	//for debugging
 	void print_vec() const;
 	//!class distructor
@@ -310,8 +330,8 @@ public:
 
 //!a class for the representation of exact pattern matches (EPM)
 class EPM{
-	 const Sequence &seqA_;
-	 const Sequence &seqB_;
+	 //const Sequence &seqA_;
+	 //const Sequence &seqB_;
 
 	/*struct EPM_entry{
 		int pos1;
@@ -384,8 +404,9 @@ class EPM{
 public:
 	
         //!Constructor
-	EPM(const Sequence &seqA, const Sequence &seqB)
-	: seqA_(seqA),seqB_(seqB){//, mcsPatterns() {
+	//EPM(const Sequence &seqA, const Sequence &seqB)
+	//: seqA_(seqA),seqB_(seqB){//, mcsPatterns() {
+		EPM(){
 		reset();
 	}
 
@@ -513,11 +534,11 @@ public:
 		}
 
 		//two matched positions in the EPMs have the same nucleotide
-		for(int i=0;i<pat1Vec.size();i++){
+		/*for(int i=0;i<pat1Vec.size();i++){
 			if(seqA_[pat1Vec.at(i)]!=seqB_[pat2Vec.at(i)]){
 				cerr << "no EPM " << endl;
 			}
-	    }
+	    }*/
 
 		vector<pair<int,int> > arcmatches_to_validate;
 		int balance=0;
@@ -587,105 +608,20 @@ public:
 	}
 
 	void print_epm(ostream &out, int score){
-		string 	seqA="";
-		string seqB="";
-		/*if(epm.begin()==epm.end()) return;
-		for(iter it=epm.begin();it!=epm.end();it++){
-			//cout << "posA " << it->pos1 << endl;
-			//cout << "posB " << it->pos2 << endl;
-			if(seqA_[it->pos1]!=seqB_[it->pos2]){
-			//cerr << "ERROR " << endl;cout << seqA_[it->pos1][0] << " ";
-			//cout << seqB_[it->pos2][0] << endl;
-			}
-			seqA+= seqA_[it->pos1][0];
-			seqB+= seqB_[it->pos2][0];
-			//cout << seqA_[it->pos1][0];
-		}
-		//out << " ";
-		if(seqA!=seqB){
-			cout << "seqA: " << seqA << endl;
-			cout << "seqB: " << seqB << endl;
-			cout << structure << endl;
-			for(iter it=epm.begin();it!=epm.end();it++){
-				cout << it->pos1 << " ";
-				if(seqA_[it->pos1]!=seqB_[it->pos2]){
-					cout << seqA_[it->pos1+1][0] << " ";
-					cout << seqB_[it->pos2+1][0] << " ";
-
-				}
-			}
-			cout << endl;
-			for(iter it=epm.begin();it!=epm.end();it++){
-							cout << it->pos2 << " ";
-			}
-			cout << endl;
-			cout << endl;
-		}*/
-		/*for(iter it=epm.begin();it!=epm.end();it++){
-			out << it->str;
-		}*/
-		/*out << endl;
-		stringstream pat1;
-		pat1 << "";
-		for(iter it=epm.begin();it!=epm.end();it++){
-			pat1 << it->pos1;
-			out << it->pos1;
-			iter tmp = epm.end(); tmp--;
-			if(it!=tmp){
-			  out << ":";
-			  pat1 << ":";
-			}
-		}
-		out << " ";
-		stringstream pat2;
-		pat2 << "";
-		for(iter it=epm.begin();it!=epm.end();it++){
-			pat2 << it->pos2;
-			out << it->pos2;
-			iter tmp = epm.end(); tmp--;
-			if(it!=tmp){
-			  out << ":";
-			  pat2 << ":";
-			}	
-		}
-		out << endl;
-		cout << "epm size " << pat1Vec.size() << " and score " << score << endl;*/
+		cout << "epm with score " << score << endl;
 		intVec::iterator it2=pat2Vec.begin();
 		for(intVec::iterator it=pat1Vec.begin();it!=pat1Vec.end();it++,it2++){
 			out << *it;
-			//intVec::iterator tmp = pat1Vec.end(); tmp--;
-			//if(it!=tmp){
-			  out << ":";
-			//}
+			out << ":";
 			out << *it2 << " " ;
 		}
-		/*out << " ";
-		for(intVec::iterator it=pat2Vec.begin();it!=pat2Vec.end();it++){
-					out << *it;
-					intVec::iterator tmp = pat2Vec.end(); tmp--;
-					if(it!=tmp){
-					  out << ":";
-			}
-		}*/
 		out << endl;
-		//out << " ";
 		for(string::iterator it=structure.begin();it!=structure.end();it++){
 					out << *it;
 				}
 		cout << endl;
 
 	  }
-
-	/*void compare_epms(){
-		//cout << "compare structures " << endl;
-		iter iterator=epm.begin();
-		int pos=0;
-		for(string::iterator it=structure.begin();it!=structure.end();it++){
-				if(*it!=iterator->str || pat1Vec.at(pos) != iterator->pos1 || pat2Vec.at(pos)!= iterator->pos2){print_epm(cout,0);}
-				iterator++;
-				pos++;
-		}
-	}*/
 
 
 	//for debugging
@@ -810,26 +746,31 @@ private:
     
     //!adds the structure and the position corresponding to the position pos_ in the matrix if
     //!the position isn't contained in another epm (score==pos_infty)
-    bool add(const ArcMatch &am,pair<int,int> pos_, char c);
+    bool add(const ArcMatch &am,pair<int,int> pos_, char c, EPM &epm_to_store);
     
     //!adds the arcMatch to the epm if the positions aren't contained in another epm (score==pos_infty)
-    bool add_arcmatch(const ArcMatch &am, bool undo);
+    bool add_arcmatch(const ArcMatch &am, EPM &epm_to_store);
     
     //!outputs the exact matching starting at position $(i,j)$ while setting the processed elements Trace(i,j) to -inf
     void get_matching(size_type i, size_type j);
     
     //!recomputes matrices A,G and B for arcMatch recursively and stores the traceback
-    bool trace_AGB(const ArcMatch &am, bool undo);
+    bool trace_AGB(const ArcMatch &am, EPM &epm_to_store);
     
     //!checks the structural case for the traceback in the matrices A,G and B
     //!if an inner_am is encountered, it is stored for later processing and the left and right endpoint is added to the epm structure 
-    bool str_traceAGB(const ScoreMatrix &mat, const ArcMatch &am, size_type posA, size_type posB,pair<int,int> &curPos, bool undo);
+    bool str_traceAGB(const ScoreMatrix &mat, const ArcMatch &am, size_type posA, size_type posB,pair<int,int> &curPos, EPM &epm_to_store);
     
-    void reset_trace(size_type i, size_type j);
-
     void set_el_to_inf();
     void set_el_to_neg_inf();
     
+    void compute_F_with_prob_external();
+    void find_start_pos_for_traceback(vector<pair<int,int> > &EPM_start_pos);
+    void trace_in_F_suboptimal(int i, int j);
+    void print_epms_to_proc(list<pair<EPM,int> > &epms_to_proc);
+    bool valid_external_arcmatch(const ArcMatch &am);
+    bool valid_external_pos(size_type i,size_type j);
+
     //!converts string to uppercase
     string upperCase(string seq){
 	  string s= "";

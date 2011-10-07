@@ -59,7 +59,9 @@ int max_diff_am; //maximal difference between two arc ends, -1 is off
 
 int EPM_threshold; //threshold for Exact Pattern Matches
 int EPM_min_size; //minimum size for Exact Pattern Matches
-double prob_unpaired_threshold; // threshold for prob_unpaired_in_loop
+double prob_unpaired_in_loop_threshold; // threshold for prob_unpaired_in_loop
+double prob_unpaired_external_threshold;
+double prob_basepair_external_threshold;
 int alpha_1; //parameter for sequential score
 int alpha_2; //parameter for structural score
 int alpha_3; //parameter for stacking score
@@ -112,12 +114,14 @@ option_def my_options[] = {
     {"stacking",'S',&opt_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","Use stacking terms (needs stack-probs by RNAfold -p2)"},
     {"EPM_threshold",'t',0,O_ARG_INT,&EPM_threshold,"5","threshold","User-defined threshold for Exact Pattern Matches"},
     {"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"3","min_size","User-defined minimum size for Exact Pattern Matches"},
-    {"prob_unpaired_threshold",'p',0,O_ARG_DOUBLE,&prob_unpaired_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
+    {"prob_unpaired_in_loop_threshold",'p',0,O_ARG_DOUBLE,&prob_unpaired_in_loop_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
+    {"prob_unpaired_external_threshold",0,0,O_ARG_DOUBLE,&prob_unpaired_external_threshold,"0.00001","threshold","Threshold for prob_unpaired_external"},
+    {"prob_basepair_external_threshold",0,0,O_ARG_DOUBLE,&prob_basepair_external_threshold,"0.00001","threshold","Threshold for prob_basepair_external"},
     {"alpha_1",0,0,O_ARG_INT,&alpha_1,"1","alpha_1","Parameter for sequential score"},
     {"alpha_2",0,0,O_ARG_INT,&alpha_2,"1","alpha_2","Parameter for structural score"},
     {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Parameter for stacking score, 0 means no stacking contribution"},
     {"suboptimal",0,&opt_suboptimal,O_NO_ARG,0,O_NODEFAULT,"suboptimal_traceback","Use a suboptimal traceback for the computation of the exact pattern matchings"},
-    {"suboptimal_score",0,0,O_ARG_INT,&subopt_score,"5","alpha_1","Threshold for suboptimal traceback"},
+    {"suboptimal_score",0,0,O_ARG_INT,&subopt_score,"3","alpha_1","Threshold for suboptimal traceback"},
     {"easier_scoring_par",'e',0,O_ARG_INT,&easier_scoring_par,"0","alpha","use only sequential and a constant structural score alpha (easier_scoring_par) for each matched base of a basepair"},
     
     {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
@@ -135,6 +139,8 @@ option_def my_options[] = {
 
 int
 main(int argc, char **argv) {
+
+	time_t start = time (NULL);
 
     typedef std::vector<int>::size_type size_type;
 
@@ -277,8 +283,19 @@ main(int argc, char **argv) {
     //
     
     time_t start_mapping = time (NULL);
-    Mapping mappingA(bpsA,rnadataA,prob_unpaired_threshold);
-    Mapping mappingB(bpsB,rnadataB,prob_unpaired_threshold);
+    Mapping mappingA(bpsA,
+    		rnadataA,
+    		prob_unpaired_in_loop_threshold,
+    		prob_unpaired_external_threshold,
+    		prob_basepair_external_threshold
+    		);
+
+    Mapping mappingB(bpsB,
+    		rnadataB,
+    		prob_unpaired_in_loop_threshold,
+    		prob_unpaired_external_threshold,
+    		prob_basepair_external_threshold
+    		);
     time_t stop_mapping = time (NULL);
     cout << "time for mapping: " << stop_mapping - start_mapping << "sec " << endl;
     
@@ -325,7 +342,6 @@ main(int argc, char **argv) {
 	 if(opt_suboptimal){
 		 cout << "suboptimal " << endl;
 		 em.compute_EPMs_suboptimal();
-
 	 }
 
 	 else{
@@ -340,8 +356,14 @@ main(int argc, char **argv) {
     }
 
     if(opt_locarna_output){
+    	if (opt_verbose) {
+    		cout << "locarna anchor constraints " << endl;
+    	}
     	em.output_locarna();
     }
+
+    time_t stop = time (NULL);
+    cout << "time for program: " << stop - start << "sec " << endl;
     // ----------------------------------------
     // DONE
     delete arc_matches;
