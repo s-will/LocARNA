@@ -22,11 +22,12 @@ using namespace std;
 
 namespace LocARNA {
 
-typedef size_t size_type;
-typedef vector<unsigned int> intVec;
-typedef pair<unsigned int,unsigned int> intPair;
-typedef pair<intPair, intPair> intPPair;
-typedef vector<intPPair>::const_iterator IntPPairCITER;
+typedef size_t 					size_type;
+typedef vector<unsigned int> 			intVec;
+typedef pair<unsigned int,unsigned int> 	intPair;
+typedef pair<intPair, intPair> 			intPPair;
+typedef const intPPair* 			intPPairPTR;
+typedef vector<intPPair>::const_iterator	IntPPairCITER;
 
 class StringHash
 {
@@ -77,6 +78,7 @@ private:
 class PatternPair
    {
       public:
+      PatternPair(){};
       PatternPair(const string& myId,const int& mySize,const SinglePattern& myFirstPat,const SinglePattern& mySecPat, const string& structure_, int& score_)
                   : id(myId),size(mySize),first(myFirstPat),second(mySecPat), structure(structure_), EPMscore(score_)
       {  score = EPMscore;  };
@@ -165,17 +167,18 @@ class PatternPairMap
      PatternIdMapTYPE   idMap;
 };
 
+
 class LCSEPM
 {
     public:
 
-					LCSEPM(const int& size1_, const int& size2_,
-					  const 		PatternPairMap& myPatterns,
-										PatternPairMap& myLCSEPM,
-										int&		    mySize,
-										int&			myScore,
-						const int& EPM_min_size_
-					      )
+			LCSEPM(const	int& 		size1_,
+				const	int& 		size2_,
+				const 	PatternPairMap& myPatterns,
+					PatternPairMap& myLCSEPM,
+					int&		mySize,
+					int&		myScore,
+				const	int&		EPM_min_size_ )
 
     	                                   :size1(size1_),
 					    size2(size2_),
@@ -185,31 +188,44 @@ class LCSEPM
     	                                    LCSEPMscore(myScore),
     	                                    EPM_min_size(EPM_min_size_){};
 		
-					void MapToPS(const string& sequenceA, const string& sequenceB, int& mySize, PatternPairMap& myMap, const string& file1, const string& file2);
-        virtual 		~LCSEPM();
+	virtual		~LCSEPM();
 
-        		void    calculateLCSEPM();
+	void 		MapToPS(const string& sequenceA, const string& sequenceB, int& mySize, PatternPairMap& myMap, const string& file1, const string& file2);
+        void		calculateLCSEPM();
 
-	private:
+   private:
 
-		struct	HoleKeyS;
-        struct	HoleKeyS
-        {
-        	PatternPairMap::SelfValuePTR    pattern;
-            intPPair                        bounds;
+        struct HoleCompare2 {
+        	bool operator()(const intPPairPTR & h1, const intPPairPTR & h2) const {
+        		// first compare size of holes
+                        if (h1->first.second - h1->first.first-1 < h2->first.second - h2->first.first-1){
+                        	return true; }
+                        // compare if holes are identical in both structures
+                        if (h1->first.second - h1->first.first-1 == h2->first.second - h2->first.first-1){
+                        	if ((h1->first.first == h2->first.first) && (h1->first.second == h2->first.second) &&
+                        	    (h1->second.first==h2->second.first) && (h1->second.second==h2->second.second))
+                        	{ return true; }
+                        }
+
+                        return false;
+        	}
         };
 
-        typedef     HoleKeyS                            HoleKey;
-        typedef     HoleKey*                            HoleKeyPTR;
-        typedef     multimap<int,HoleKeyPTR>            HoleOrderingMapTYPE;
-        typedef     HoleOrderingMapTYPE::const_iterator HoleMapCITER;
+        typedef     multimap<intPPairPTR,PatternPairMap::SelfValuePTR,HoleCompare2>	HoleOrderingMapTYPE2;
+        typedef     HoleOrderingMapTYPE2::const_iterator HoleMapCITER2;
 
-        void    preProcessing				();
-        void    calculateHoles				();
-	    void    calculatePatternBoundaries	(PatternPair* myPair);
-        void 	calculateTraceback			(const int i,const int j,const int k,const int l,vector < vector<int> > holeVec);
-        int 	D_rec						(const int& i,const  int& j,const int& k,const int& l,vector < vector<int> >& D_h,const bool debug);
-        int 	max3						(int a, int b, int c);
+
+        void    preProcessing			();
+        void    calculateHoles3			();
+	void    calculatePatternBoundaries	(PatternPair* myPair);
+        void 	calculateTraceback2		(const int i,const int j,const int k,const int l,vector < vector<int> > holeVec);
+        int 	D_rec2				(const int& i,const  int& j,const int& k,const int& l,vector < vector<int> >& D_h,const bool debug);
+
+        int 	max3				(int a, int b, int c)
+        						{
+        							int tmp = a>b? a:b;
+        							return (tmp>c? tmp:c);
+        						};
 	
 	//!@brief returns the structure of the given sequence
 	char* getStructure(PatternPairMap& myMap, bool firstSeq, int length);
@@ -222,22 +238,23 @@ class LCSEPM
 	      if (tmpstr.length()>0) tmpstr.erase(tmpstr.end()-1);
 	      return tmpstr;
 	  }
+
 	string upperCase(string seq){
 	  string s= "";
 	  for(unsigned int i= 0; i<seq.length(); i++)
 	    s+= toupper(seq[i]);
 	  return s;
 	}
-				vector< vector<PatternPairMap::SelfValuePTR> >	EPM_Table;
-				const int& size1;
-				const int& size2;
-				PatternPairMap&									matchedEPMs;
-				HoleOrderingMapTYPE    					 		holeOrdering;
-        const 	PatternPairMap&         						patterns;
-				int& 											LCSEPMsize;
-				int& 											LCSEPMscore;
-	const int& EPM_min_size;
-				
+
+	vector< vector <vector<PatternPairMap::SelfValuePTR> > >	EPM_Table2;
+		HoleOrderingMapTYPE2    		holeOrdering2;
+	const int&					size1;
+	const int& 					size2;
+		PatternPairMap&				matchedEPMs;
+        const 	PatternPairMap&         		patterns;
+	int& 						LCSEPMsize;
+	int& 						LCSEPMscore;
+	const int& 					EPM_min_size;
 };
 
 
@@ -485,7 +502,11 @@ public:
 	
 	void add_pattern(string patId ,SinglePattern pattern1 ,SinglePattern pattern2, int score){
 	  set_struct();
+	  cout << "insert " << patId << endl;
+
 	  mcsPatterns.add(patId, pat1Vec.size(), pattern1, pattern2, structure, score);
+	  cout << "insert " << patId+"_2" << endl;
+	  mcsPatterns.add(patId + "_2", pat1Vec.size(), pattern1, pattern2, structure, score);
 	}
 	
 	PatternPairMap& get_patternPairMap() {

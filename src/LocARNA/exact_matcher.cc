@@ -581,7 +581,7 @@ void ExactMatcher::output_locarna(){
 	{
 		matchingsLCSEPM.push_back(make_pair(positionsSeq1LCSEPM[i],positionsSeq2LCSEPM[i]));
 	}
-	string outname = "/home/radwan/Exparna_P/LocARNA/src/locarna_constraints_input.txt";
+	string outname = "locarna_constraints_input.txt";
 	ofstream outLocARNAfile (outname.c_str());
 
 	int last_edge_seq1,last_edge_seq2;
@@ -966,24 +966,26 @@ int  PatternPairMap::getMapBases()
 
 LCSEPM::~LCSEPM()
 {
-	EPM_Table.clear();
-	for(HoleMapCITER it= holeOrdering.begin(); it!=holeOrdering.end(); it++)
-		delete (*it).second;
-	holeOrdering.clear();
-	
+	cout << endl << " execute destructor..." << endl;
+
+	EPM_Table2.clear();
+	holeOrdering2.clear();
 }
 
 void    LCSEPM::calculateLCSEPM()
 {
+	cout << " LCSEPM preprocessing..."  <<endl;
  	preProcessing();
-	calculateHoles();
+	cout << " LCSEPM calculate holes..."  <<endl;
+	calculateHoles3();
+	cout << " LCSEPM calculate outmost D_rec..."  <<endl;
+	int i = 1;
+	int k = 1;
 	vector < vector<int> > last_vec;
-	int i,k;
-	i = 1;
-	k = 1;
-	LCSEPMscore = D_rec(i,size1,k,size2,last_vec,false);
+	LCSEPMscore = D_rec2(i,size1,k,size2,last_vec,false);
 	cout << "    Score LCS-EPM: "<< LCSEPMscore <<endl;
-	calculateTraceback(i,size1,k,size2,last_vec);
+	cout << " LCSEPM calculate traceback..."  <<endl;
+	calculateTraceback2(i,size1,k,size2,last_vec);
 	LCSEPMsize = matchedEPMs.getMapBases();
 	cout << "    #EPMs: "<< matchedEPMs.size() << " / matched Bases: "<< LCSEPMsize <<endl;
 }
@@ -995,99 +997,238 @@ void    LCSEPM::calculatePatternBoundaries(PatternPair*   myPair)
 
    myPair->resetBounds();
 
-	   for (unsigned int k=1;k < (myPatStr1.size());++k)
-	   {
- 	   if ((myPatStr1[k]-EPM_min_size > myPatStr1[k-1])
-     		  &&(myPatStr2[k]-EPM_min_size > myPatStr2[k-1]))
- 		  {
-    	  myPair->addInsideBounds(std::make_pair(make_pair(myPatStr1[k-1],myPatStr1[k]),make_pair(myPatStr2[k-1],myPatStr2[k])));
- 		  }
+   for (unsigned int k=1;k < (myPatStr1.size());++k)
+   {
+	   if ( (myPatStr1[k]-EPM_min_size > myPatStr1[k-1])  &&
+	        (myPatStr2[k]-EPM_min_size > myPatStr2[k-1]) ) {
+		   myPair->addInsideBounds(std::make_pair(make_pair(myPatStr1[k-1],myPatStr1[k]),make_pair(myPatStr2[k-1],myPatStr2[k])));
 	   }
-	   // insert global min/max of the pattern
-	   myPair->setOutsideBounds(make_pair(make_pair(myPatStr1.front(),myPatStr1.back()),make_pair(myPatStr2.front(),myPatStr2.back())));
- 
+   }
+
+   // insert global min/max of the pattern
+   myPair->setOutsideBounds(make_pair(make_pair(myPatStr1.front(),myPatStr1.back()),make_pair(myPatStr2.front(),myPatStr2.back())));
  }
 
 void LCSEPM::preProcessing()
 {
-    EPM_Table.resize(size1+1);
-    for (unsigned int i = 0; i < EPM_Table.size();++i)
-    	EPM_Table[i].resize(size2+1);
+    // set EPM_Table size
+    EPM_Table2.resize(size1+1);
+        for (unsigned int i = 0; i < EPM_Table2.size();++i)
+        	EPM_Table2[i].resize(size2+1);
 
     for (PatternPairMap::patListCITER myPair = patterns.getList().begin(); myPair != patterns.getList().end(); ++myPair)
     {
         calculatePatternBoundaries(*myPair);
 
+        // add EPM to EPM_table
+        EPM_Table2[(*myPair)->getOutsideBounds().first.second][(*myPair)->getOutsideBounds().second.second].push_back(*myPair);
 
-        EPM_Table[(*myPair)->getOutsideBounds().first.second][(*myPair)->getOutsideBounds().second.second] = (*myPair);
-
+        // add all inside Holes from current EPM to holeOrdering multimap, sorted by holes size and exact position
         for(IntPPairCITER h = (*myPair)->getInsideBounds().begin(); h != (*myPair)->getInsideBounds().end(); ++h)
         {
-            HoleKeyPTR myHoleKey = HoleKeyPTR(new HoleKey());
-            int holeSize = (*h).first.second - (*h).first.first - 1;
-            myHoleKey->bounds = (*h);
-            myHoleKey->pattern = (*myPair);
-            holeOrdering.insert(make_pair(holeSize,myHoleKey));
+            // insert hole in multimap
+            intPPairPTR myH = &(*h);
+            holeOrdering2.insert(make_pair(myH,*myPair));
         }
     }
 }
 
 
-int LCSEPM::max3(int a, int b, int c)
-{
-	int tmp = a>b? a:b;
-	return (tmp>c? tmp:c);
-}
-
-int LCSEPM::D_rec(const int& i,const  int& j,const int& k,const int& l,vector < vector<int> >& D_h,const bool debug)
+int LCSEPM::D_rec2(const int& i,const  int& j,const int& k,const int& l,vector < vector<int> >& D_h,const bool debug)
 {
 
-	int 					score_EPM;
-	int 					pos_before_EPM_Str1;
-	int 					pos_before_EPM_Str2;
-
+	// initialize D_h matrix with 0
 	D_h.clear();
 	D_h.resize(j - i + 2);
 	for (unsigned int a = 0; a < D_h.size();++a)
 		D_h[a].resize(l - k + 2,0);
-	
+
 	for(unsigned int j_1 = 1; j_1 < (j-i+2); ++j_1)
 		for (unsigned int l_2 = 1; l_2 < (l-k+2); ++l_2)
 		{
-			if (EPM_Table[i + j_1-1][k + l_2-1] == NULL)
+			// check if EPMs ending at current position
+			if (EPM_Table2[i + j_1-1][k + l_2-1].size() == 0)
 			{
-				D_h[j_1][l_2] = (D_h[j_1-1][l_2]>D_h[j_1][l_2-1])? D_h[j_1-1][l_2]:D_h[j_1][l_2-1] ;
+				//D_h[j_1][l_2] = (D_h[j_1-1][l_2]>D_h[j_1][l_2-1])? D_h[j_1-1][l_2]:D_h[j_1][l_2-1] ;
+				// bug in old version? this is new: - No!
+				D_h[j_1][l_2] = max3(D_h[j_1-1][l_2],D_h[j_1][l_2-1],D_h[j_1-1][l_2-1]) ;
 			}
 			else
 			{
-				pos_before_EPM_Str1 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().first.first ) - i;
-				pos_before_EPM_Str2 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().second.first ) - k;
-				if ((pos_before_EPM_Str1 < 0)||(pos_before_EPM_Str2 <0))
-					score_EPM = 0;
-				else
-					score_EPM = D_h[pos_before_EPM_Str1][pos_before_EPM_Str2] + EPM_Table[i + j_1-1][k + l_2-1]->getScore();
-				D_h[j_1][l_2] = max3(score_EPM,D_h[j_1-1][l_2],D_h[j_1][l_2-1]);
-			}
+				// get list of all EPMS ending at current pos
+				vector<PatternPairMap::SelfValuePTR> EPM_list = EPM_Table2[i + j_1-1][k + l_2-1];
+				int maxScore = 0;
+
+				// iterate over all EPMS to get best score
+				for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); myIter++){
+
+					cout << j_1 << "," << l_2 << " patid: " <<  (*myIter)->getId() << endl;
+
+					int pos_before_EPM_Str1 = (*myIter)->getOutsideBounds().first.first  - i;
+					int pos_before_EPM_Str2 = (*myIter)->getOutsideBounds().second.first - k;
+
+					int	score_EPM = 0;
+
+					// check if EPM first into cuurent hole
+					if ((pos_before_EPM_Str1 >= 0) && (pos_before_EPM_Str2 >= 0))
+						score_EPM = D_h[pos_before_EPM_Str1][pos_before_EPM_Str2] + (*myIter)->getScore();
+
+					if (score_EPM > maxScore) { maxScore = score_EPM; }
+				}
+				cout << "score hole max "<< maxScore << endl;
+				D_h[j_1][l_2] = max3(maxScore,D_h[j_1-1][l_2],D_h[j_1][l_2-1]);
+				}
+
 		}
 	return (D_h[j - i + 1][l - k + 1]);
 }
 
-void LCSEPM::calculateHoles()
+
+//int LCSEPM::D_rec(const int& i,const  int& j,const int& k,const int& l,vector < vector<int> >& D_h,const bool debug)
+//{
+//
+//	int 					score_EPM;
+//	int 					pos_before_EPM_Str1;
+//	int 					pos_before_EPM_Str2;
+//
+//	D_h.clear();
+//	D_h.resize(j - i + 2);
+//	for (unsigned int a = 0; a < D_h.size();++a)
+//		D_h[a].resize(l - k + 2,0);
+//
+//	for(unsigned int j_1 = 1; j_1 < (j-i+2); ++j_1)
+//		for (unsigned int l_2 = 1; l_2 < (l-k+2); ++l_2)
+//		{
+//			if (EPM_Table[i + j_1-1][k + l_2-1] == NULL)
+//			{
+//				D_h[j_1][l_2] = (D_h[j_1-1][l_2]>D_h[j_1][l_2-1])? D_h[j_1-1][l_2]:D_h[j_1][l_2-1] ;
+//			}
+//			else
+//			{
+//				pos_before_EPM_Str1 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().first.first ) - i;
+//				pos_before_EPM_Str2 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().second.first ) - k;
+//				if ((pos_before_EPM_Str1 < 0)||(pos_before_EPM_Str2 <0))
+//					score_EPM = 0;
+//				else
+//					score_EPM = D_h[pos_before_EPM_Str1][pos_before_EPM_Str2] + EPM_Table[i + j_1-1][k + l_2-1]->getScore();
+//				D_h[j_1][l_2] = max3(score_EPM,D_h[j_1-1][l_2],D_h[j_1][l_2-1]);
+//			}
+//		}
+//	return (D_h[j - i + 1][l - k + 1]);
+//}
+
+//void LCSEPM::calculateHoles()
+//{
+//	vector < vector<int> > vec;
+//	for (HoleMapCITER t = holeOrdering.begin();t != holeOrdering.end();++t)
+//    {
+//		bool deb=false;
+//		//(*t).second->pattern->setEPMScore(	(*t).second->pattern->getScore() +
+//		//									D_rec((*t).second->bounds.first.first+1,(*t).second->bounds.first.second-1,\
+//		// (*t).second->bounds.second.first+1,(*t).second->bounds.second.second-1,vec,deb));
+//
+//		// new
+//		cout << endl << (*t).second->pattern->getId() << endl <<  " current hole " << (*t).second->bounds.first.first << "," << (*t).second->bounds.first.second;
+//		cout << " - " << (*t).second->bounds.second.first << "," << (*t).second->bounds.second.second << endl;
+//
+//		(*t).second->pattern->setEPMScore(	(*t).second->pattern->getScore() +
+//			D_rec2((*t).second->bounds.first.first+1,(*t).second->bounds.first.second-1,\
+//			(*t).second->bounds.second.first+1,(*t).second->bounds.second.second-1,vec,deb));
+//    }
+//}
+
+
+//void LCSEPM::calculateHoles2()
+//{
+//	vector < vector<int> > vec;
+//	for (HoleMapCITER2 t = holeOrdering2.begin();t != holeOrdering2.end();++t)
+//    {
+//		bool deb=false;
+//
+//		cout << endl << (*t).second->getId() << endl <<  " new current hole " << (*t).first.x1 << "," << (*t).first.y1;
+//		cout << " - " << (*t).first.x2 << "," << (*t).first.y2 << endl;
+//		cout << "score old " << (*t).second->getScore() << endl;
+//		(*t).second->setEPMScore(	(*t).second->getScore() +
+//			D_rec2((*t).first.x1+1,(*t).first.y1-1,(*t).first.x2+1,(*t).first.y2-1,vec,deb));
+//		cout << "score new " << (*t).second->getScore() << endl;
+//    }
+//}
+
+
+void LCSEPM::calculateHoles3()
 {
-	vector < vector<int> > vec;
-	for (HoleMapCITER t = holeOrdering.begin();t != holeOrdering.end();++t)
-    {
-		bool deb=false;
-		(*t).second->pattern->setEPMScore(	(*t).second->pattern->getScore() +
-											D_rec((*t).second->bounds.first.first+1,(*t).second->bounds.first.second-1,\
-											(*t).second->bounds.second.first+1,(*t).second->bounds.second.second-1,vec,deb));
-    }
+	intPPairPTR lastHole 			= NULL;
+	PatternPairMap::SelfValuePTR lastEPM 	= NULL;
+	int lastHoleScore 			= 0;
+
+	for (HoleMapCITER2 t = holeOrdering2.begin();t != holeOrdering2.end();++t)
+	{
+		// check if current hole is exactly teh same as last hole
+		// then we do not need to calculate again the same hole
+		// ordering of "holeOrdering" ensures that similar holes are next to each other
+		if ((lastHole == NULL) || (lastHole->first.first   != (*t).first->first.first) ||
+				          (lastHole->first.second  != (*t).first->first.second) ||
+				          (lastHole->second.first  != (*t).first->second.first) ||
+				          (lastHole->second.second != (*t).first->second.second) ) {
+
+			cout << endl << (*t).second->getId() << endl <<  " new current hole " << (*t).first->first.first << "," << (*t).first->first.second;
+			cout << " - " << (*t).first->second.first << "," << (*t).first->second.second << endl;
+			cout << "score old " << (*t).second->getScore() << endl;
+
+			// calculate best score of hole
+			bool deb=false;
+			vector < vector<int> > vec;
+			int holeScore = D_rec2((*t).first->first.first+1,(*t).first->first.second-1,(*t).first->second.first+1,(*t).first->second.second-1,vec,deb);
+			(*t).second->setEPMScore(	(*t).second->getScore() + holeScore );
+
+			cout << "score new " << (*t).second->getScore() << endl;
+
+			lastHole = (*t).first;
+			lastEPM = (*t).second;
+			lastHoleScore = holeScore;
+		} else{
+			// add score of last hole to current EPM
+			(*t).second->setEPMScore(lastEPM->getScore() + lastHoleScore);
+			cout << "score:"<< lastHoleScore << " - current hole is same as last hole. skip!" << endl;
+		}
+	}
 }
 
-void LCSEPM::calculateTraceback(const int i,const  int j,const int k,const int l,vector < vector<int> > holeVec)
+
+//void LCSEPM::calculateTraceback(const int i,const  int j,const int k,const int l,vector < vector<int> > holeVec)
+//{
+//	int j_1 = holeVec.size()-1;
+//	int l_2 = holeVec[0].size()-1;
+//	while ((j_1 >= 1)&&(l_2 >= 1))
+//	{
+//		if (holeVec[j_1 - 1][l_2] == holeVec[j_1][l_2])
+//			--j_1;
+//		else
+//			if (holeVec[j_1][l_2 - 1] == holeVec[j_1][l_2])
+//				--l_2;
+//			else
+//			{
+//				vector < vector<int> > tmpHoleVec;
+//				matchedEPMs.add(EPM_Table[i + j_1 - 1][k + l_2 - 1]);
+//				for(IntPPairCITER h = EPM_Table[i + j_1 - 1][k + l_2 - 1]->getInsideBounds().begin(); h != EPM_Table[i + j_1-1][k + l_2-1]->getInsideBounds().end(); ++h)
+//				{
+//					int sc = D_rec((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec,false);
+//					if (sc != 0)
+//						calculateTraceback((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec);
+//				}
+//				int s1 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().first.first ) - i;
+//				int s2 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().second.first) - k;
+//				j_1 = s1;
+//				l_2 = s2;
+//			}
+//	}
+//}
+
+void LCSEPM::calculateTraceback2(const int i,const  int j,const int k,const int l,vector < vector<int> > holeVec)
 {
 	int j_1 = holeVec.size()-1;
 	int l_2 = holeVec[0].size()-1;
+
 	while ((j_1 >= 1)&&(l_2 >= 1))
 	{
 		if (holeVec[j_1 - 1][l_2] == holeVec[j_1][l_2])
@@ -1097,18 +1238,37 @@ void LCSEPM::calculateTraceback(const int i,const  int j,const int k,const int l
 				--l_2;
 			else
 			{
-				vector < vector<int> > tmpHoleVec;
-				matchedEPMs.add(EPM_Table[i + j_1 - 1][k + l_2 - 1]);
-				for(IntPPairCITER h = EPM_Table[i + j_1 - 1][k + l_2 - 1]->getInsideBounds().begin(); h != EPM_Table[i + j_1-1][k + l_2-1]->getInsideBounds().end(); ++h)
-				{
-					int sc = D_rec((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec,false);
-					if (sc != 0)
-						calculateTraceback((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec);
-				}
-				int s1 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().first.first ) - i;
-				int s2 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().second.first) - k;
-				j_1 = s1;
-				l_2 = s2;
+				// get all EPMs which end at (i + j_1-1,k + l_2-1)
+				vector<PatternPairMap::SelfValuePTR> EPM_list = EPM_Table2[i + j_1-1][k + l_2-1];
+
+				// over all EPMs which end at (i+j_1-1,k+l_2-1)
+				for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); myIter++){
+
+			         // check if current EPM fits inside current hole
+				 if  ( ( (*myIter)->getOutsideBounds().first.first - i >= 0) && ( (*myIter)->getOutsideBounds().second.first - k >= 0) ){
+				   // check score
+				   if (holeVec[j_1][l_2] == (*myIter)->getEPMScore() + holeVec[(*myIter)->getOutsideBounds().first.first-1][(*myIter)->getOutsideBounds().second.first-1]){
+
+			             // add current EPM to traceback
+			             matchedEPMs.add( *myIter );
+
+			             // recurse with traceback into all holes of best EPM
+			             for(IntPPairCITER h = (*myIter)->getInsideBounds().begin(); h != (*myIter)->getInsideBounds().end(); ++h)
+			             {
+			        	     vector < vector<int> > tmpHoleVec;
+			        	     int sc = D_rec2((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec,false);
+			        	     // call traceback only if there is an EPM within hole
+			        	     if (sc != 0) {
+			        		     calculateTraceback2((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec);
+			        	     }
+			             }
+			             // jump with traceback to position before EPM
+			             j_1 = ( (*myIter)->getOutsideBounds().first.first ) - i;
+			             l_2 = ( (*myIter)->getOutsideBounds().second.first) - k;
+			             break;
+				   }
+				 }
+			       }
 			}
 	}
 }
