@@ -81,7 +81,7 @@ std::string file1;
 std::string file2;
 string psFile1;
 string psFile2;
-
+string locarna_output;
 // ------------------------------------------------------------
 //
 // Options
@@ -95,6 +95,7 @@ bool opt_version;
 bool opt_verbose;
 bool opt_stacking;
 bool opt_locarna_output;
+bool opt_postscript_output;
 bool opt_suboptimal;
 
 option_def my_options[] = {
@@ -126,9 +127,12 @@ option_def my_options[] = {
     
     {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
     {"",0,0,O_ARG_STRING,&file2,O_NODEFAULT,"file 2","Basepairs input file 2 (dp dir in eval mode)"},
-    {"PS_file1",'a',0,O_ARG_STRING,&psFile1,"SequenceA","psFile1","Postscript output file for sequence A"},
-    {"PS_file2",'b',0,O_ARG_STRING,&psFile2,"SequenceB","psFile2","Postscript output file for sequence B"},
-    {"output_locarna", 'i',&opt_locarna_output,O_NO_ARG,0,O_NODEFAULT,"","Output with anchor constraints for locarna"},
+    {"PS_file1",'a',0,O_ARG_STRING,&psFile1,"","psFile1","Postscript output file for sequence A"},
+    {"PS_file2",'b',0,O_ARG_STRING,&psFile2,"","psFile2","Postscript output file for sequence B"},
+    {"output-ps", 0,&opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"","Output best EPM chain as colored postscript"},
+//    {"output-locarna", 'o',&opt_locarna_output,O_NO_ARG,0,O_NODEFAULT,"","Output fasta file with anchor constraints for locarna"},
+    {"output-locarna",'o',0,O_ARG_STRING,&locarna_output,"locarna_constraints_input.txt","constraintsFile","Fasta file with anchor constraints for locarna"},
+
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -197,8 +201,8 @@ main(int argc, char **argv) {
     
     MultipleAlignment maA(file1,MultipleAlignment::FASTA);
     MultipleAlignment maB(file2,MultipleAlignment::FASTA);
-    cout << "name: " << maA.seqentry(0).name() << endl;
-    
+    cout << "name1: " << maA.seqentry(0).name() << endl;
+    cout << "name2: " << maB.seqentry(0).name() << endl;
     
     Sequence seqA(maA);
     Sequence seqB(maB);
@@ -301,6 +305,9 @@ main(int argc, char **argv) {
     
     //string sequenceA= MultipleAlignment(seqA).seqentry(0).seq().to_string();
     //string sequenceB= MultipleAlignment(seqB).seqentry(0).seq().to_string();
+
+    PatternPairMap myEPMs;
+
     ExactMatcher em(seqA,
 		    seqB,
 		    *arc_matches,
@@ -313,10 +320,11 @@ main(int argc, char **argv) {
 		    alpha_3,
 		    subopt_score,
 		    easier_scoring_par,
+		    myEPMs
 		//    sequenceA,
 		//    sequenceB,
-		    psFile1,
-		    psFile2
+		//    psFile1,
+		//    psFile2
  		  );
 
     time_t stop_preprocessing = time (NULL);
@@ -352,15 +360,42 @@ main(int argc, char **argv) {
 		 cout << "time for traceback : " << stop_traceback - start_traceback << "sec " << endl;
 	 }
 
+	 // chaining
+	 const int& size1= (int)seqA.length();
+	 const int& size2= (int)seqB.length();
 
-    }
+	 cout << "#EPM: " << myEPMs.size() << endl;
 
-    if(opt_locarna_output){
-    	if (opt_verbose) {
-    		cout << "locarna anchor constraints " << endl;
-    	}
-    	em.output_locarna();
-    }
+	 time_t start_chaining = time (NULL);
+
+	 PatternPairMap myLCSEPM;
+	 LCSEPM myChaining(seqA, seqB, myEPMs, myLCSEPM, EPM_min_size);
+
+	 //begin chaining algorithm
+	 myChaining.calculateLCSEPM();
+
+	 time_t stop_chaining = time (NULL);
+
+	 cout << "time for chaining : " << stop_chaining - start_chaining << "sec " << endl;
+
+	 //output chained EPMs to PS files
+	 if(opt_postscript_output){
+		 time_t start_ps = time (NULL);
+		 if (psFile1.size()==0){psFile1 = maA.seqentry(0).name()+"_EPMs.ps";}
+		 if (psFile2.size()==0){psFile2 = maB.seqentry(0).name()+"_EPMs.ps";}
+
+		 myChaining.MapToPS(maA.consensus_sequence(), maB.consensus_sequence(), myLCSEPM, psFile1,psFile2);
+		 time_t stop_ps = time (NULL);
+		 cout << "time for map to ps : " << stop_ps - start_ps << "sec " << endl;
+	 }
+
+	 //if(opt_locarna_output){
+		 if (opt_verbose) { cout << "locarna anchor constraints " << endl;}
+		 myChaining.output_locarna(maA.consensus_sequence(), maB.consensus_sequence(), locarna_output);
+	 //}
+
+   }
+
 
     time_t stop = time (NULL);
     cout << "time for program: " << stop - start << "sec " << endl;

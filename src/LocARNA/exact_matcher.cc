@@ -240,27 +240,28 @@ void ExactMatcher::compute_EPMs_suboptimal(){
 		int j=EPM_start_pos.at(k).second;
 		trace_in_F_suboptimal(i,j);
 	}
+
 	//trace_in_F_suboptimal(14,18);
 
 	// chaining for suboptimal traceback case
-	const int& size1= (int)seqA.length();
-		const int& size2= (int)seqB.length();
-		int size= 0;
-		int score= 0;
-		cout << "#EPM: " << mcsPatterns.size() << endl;
-		time_t start_chaining = time (NULL);
-		//create LCSEPM object
-		//LCSEPM patterns(size1, size2 ,epm.get_patternPairMap(), myLCSEPM,size,score, EPM_min_size);
-		LCSEPM patterns(size1, size2 ,mcsPatterns, myLCSEPM,size,score, EPM_min_size);
-		//begin chaining algorithm
-		patterns.calculateLCSEPM();
-		time_t stop_chaining = time (NULL);
-	    cout << "time for chaining : " << stop_chaining - start_chaining << "sec " << endl;
-		//output patterns to PS files
-	    time_t start_ps = time (NULL);
-		patterns.MapToPS(sequenceA, sequenceB, size, myLCSEPM, file1, file2);
-		time_t stop_ps = time (NULL);
-		cout << "time for map to ps : " << stop_ps - start_ps << "sec " << endl;
+//	const int& size1= (int)seqA.length();
+//		const int& size2= (int)seqB.length();
+//		int size= 0;
+//		int score= 0;
+//		cout << "#EPM: " << mcsPatterns.size() << endl;
+//		time_t start_chaining = time (NULL);
+//		//create LCSEPM object
+//		//LCSEPM patterns(size1, size2 ,epm.get_patternPairMap(), myLCSEPM,size,score, EPM_min_size);
+//		LCSEPM patterns(size1, size2 ,mcsPatterns, myLCSEPM,size,score, EPM_min_size);
+//		//begin chaining algorithm
+//		patterns.calculateLCSEPM();
+//		time_t stop_chaining = time (NULL);
+//	    cout << "time for chaining : " << stop_chaining - start_chaining << "sec " << endl;
+//		//output patterns to PS files
+//	    time_t start_ps = time (NULL);
+//		patterns.MapToPS(sequenceA, sequenceB, size, myLCSEPM, file1, file2);
+//		time_t stop_ps = time (NULL);
+//		cout << "time for map to ps : " << stop_ps - start_ps << "sec " << endl;
 }
 
 void ExactMatcher::find_start_pos_for_traceback(vector<pair<int,int> > &EPM_start_pos){
@@ -313,14 +314,14 @@ void ExactMatcher::trace_in_F_suboptimal(int i,int j){
 	//cout << "trace F " << i << "," << j << endl;
 	static int count=0;
 
-	// seq ids, change to input ids from fasta!
-	const std::string &seq1_id= "sequence 1";
-	const std::string &seq2_id= "sequence 2";
+	static string seq1_id = seqA.names()[0];
+	static string seq2_id = seqB.names()[0];
 
 	list<info_for_trace_F > epms_to_proc;
 	struct info_for_trace_F tmp = {epm,0,pair<int,int>(i,j)};
 	epms_to_proc.push_back(tmp);
 	int cur_i,cur_j,cur_score;
+
 	while(epms_to_proc.begin()!=epms_to_proc.end()){
 		epm = epms_to_proc.front().cur_epm;
 		cur_i = epms_to_proc.front().curPos.first;
@@ -371,18 +372,14 @@ void ExactMatcher::trace_in_F_suboptimal(int i,int j){
 			//epm.validate_epm();
 			//epm.print_epm(cout,cur_score);
 			
-				  stringstream ss;
-				  ss << "pat_" << count;
-				  string patId= ss.str();
+			stringstream ss;
+			ss << "pat_" << count;
+			string patId= ss.str();
 
-				  SinglePattern pattern1 = SinglePattern(patId,seq1_id,epm.getPat1Vec());
-				  SinglePattern pattern2 = SinglePattern(patId,seq2_id,epm.getPat2Vec());
-				  int score= cur_score;
-				  //cout << "add EPM " << ss.str() << endl;
-				  //epm.add_pattern(patId,pattern1,pattern2, score);
-				  mcsPatterns.add(patId, epm.getPat1Vec().size(), pattern1, pattern2, epm.getStructure(), score);
+			SinglePattern pattern1 = SinglePattern(patId,seq1_id,epm.getPat1Vec());
+			SinglePattern pattern2 = SinglePattern(patId,seq2_id,epm.getPat2Vec());
 
-			
+			foundEPMs.add(patId, pattern1, pattern2, epm.getStructure(), cur_score);
 		}
 		epms_to_proc.pop_front();
 	}
@@ -599,7 +596,6 @@ void ExactMatcher::compute_EPMs_heuristic() {
     trace_F();
     cout << "trace_F " << endl;
     trace_in_F();
-
 }
 
 //TODO: modifiy trace_F with prob_external!
@@ -698,38 +694,35 @@ ExactMatcher::trace_in_F(){
 		get_matching(EPM_start_pos.front().first.first,EPM_start_pos.front().first.second);
 		EPM_start_pos.pop_front();
 	}
+
+
 	//this->output_trace_matrix();
-	const int& size1= (int)seqA.length();
-	const int& size2= (int)seqB.length();
-	int size= 0;
-	int score= 0;
-	cout << "#EPM: " << mcsPatterns.size() << endl;
-	time_t start_chaining = time (NULL);
-	//create LCSEPM object
-	//LCSEPM patterns(size1, size2 ,epm.get_patternPairMap(), myLCSEPM,size,score, EPM_min_size);
-	LCSEPM patterns(size1, size2 ,mcsPatterns, myLCSEPM,size,score, EPM_min_size);
-	//begin chaining algorithm
-	patterns.calculateLCSEPM();
-	time_t stop_chaining = time (NULL);
-    cout << "time for chaining : " << stop_chaining - start_chaining << "sec " << endl;
-	//output patterns to PS files
-    time_t start_ps = time (NULL);
-	patterns.MapToPS(sequenceA, sequenceB, size, myLCSEPM, file1, file2);
-	time_t stop_ps = time (NULL);
-	cout << "time for map to ps : " << stop_ps - start_ps << "sec " << endl;
+//	const int& size1= (int)seqA.length();
+//	const int& size2= (int)seqB.length();
+//	int size= 0;
+//	int score= 0;
+//	cout << "#EPM: " << mcsPatterns.size() << endl;
+//	time_t start_chaining = time (NULL);
+//	//create LCSEPM object
+//	//LCSEPM patterns(size1, size2 ,epm.get_patternPairMap(), myLCSEPM,size,score, EPM_min_size);
+//	LCSEPM patterns(size1, size2 ,mcsPatterns, myLCSEPM,size,score, EPM_min_size);
+//	//begin chaining algorithm
+//	patterns.calculateLCSEPM();
+//	time_t stop_chaining = time (NULL);
+//    cout << "time for chaining : " << stop_chaining - start_chaining << "sec " << endl;
+//	//output patterns to PS files
+//    time_t start_ps = time (NULL);
+//	patterns.MapToPS(sequenceA, sequenceB, size, myLCSEPM, file1, file2);
+//	time_t stop_ps = time (NULL);
+//	cout << "time for map to ps : " << stop_ps - start_ps << "sec " << endl;
 }
 
 void
 ExactMatcher::get_matching(size_type i, size_type j){
     bool valid=true;
 	static int count= 0;
-	static int count2=0;
-	static int count_matching = 0;
-	count_matching++;
-	const std::string &seq1_id= "sequence 1";
-	const std::string &seq2_id= "sequence 2";
-	SinglePattern pattern1,pattern2;
-	string patId;
+	static string seq1_id = seqA.names()[0];
+	static string seq2_id = seqB.names()[0];
 	pair<int,int> prevEl=pair<int,int>(i,j);
 	pair<int,int> *curEl=Trace(i,j).next_pos;
 	infty_score_t score1= Trace(i,j).score;
@@ -761,12 +754,12 @@ ExactMatcher::get_matching(size_type i, size_type j){
 		  count++;
 		  stringstream ss;
 		  ss << "pat_" << count;
-		  patId= ss.str();
-		  pattern1 = SinglePattern(patId,seq1_id,epm.getPat1Vec());
-		  pattern2 = SinglePattern(patId,seq2_id,epm.getPat2Vec());
+		  string patId= ss.str();
+		  SinglePattern pattern1 = SinglePattern(patId,seq1_id,epm.getPat1Vec());
+		  SinglePattern pattern2 = SinglePattern(patId,seq2_id,epm.getPat2Vec());
 		  int score= score1.finite_value();
 		  //epm.add_pattern(patId,pattern1,pattern2, score);
-		  mcsPatterns.add(patId, epm.getPat1Vec().size(), pattern1, pattern2, epm.getStructure(), score);
+		  foundEPMs.add(patId, pattern1, pattern2, epm.getStructure(), score);
 		}
 		else{set_el_to_neg_inf();}
 		epm.reset();
@@ -1094,110 +1087,6 @@ void ExactMatcher::validate_epm(){
 	}
 }
 
-void ExactMatcher::output_locarna(){
-  
-	// extract matching edges (pairs of positions) from LCS-EPM
-	vector<intPair> matchingsLCSEPM;
-	intVec positionsSeq1LCSEPM;
-	intVec positionsSeq2LCSEPM;
-
-	for (PatternPairMap::patListCITER i=myLCSEPM.getList().begin();i != myLCSEPM.getList().end();i++)
-	{
-		positionsSeq1LCSEPM.insert(positionsSeq1LCSEPM.end(),(*i)->getFirstPat().getPat().begin(),(*i)->getFirstPat().getPat().end());
-		positionsSeq2LCSEPM.insert(positionsSeq2LCSEPM.end(),(*i)->getSecPat().getPat().begin(),(*i)->getSecPat().getPat().end());
-		//SinglePattern my1 = (*i)->getFirstPat();
-		//my1.print();
-		//my1 = (*i)->getSecPat();
-		//my1.print();
-	}
-
-	sort(positionsSeq1LCSEPM.begin(),positionsSeq1LCSEPM.end());
-	sort(positionsSeq2LCSEPM.begin(),positionsSeq2LCSEPM.end());;
-
-	for (unsigned int i=0;i<positionsSeq1LCSEPM.size();++i)
-	{
-		matchingsLCSEPM.push_back(make_pair(positionsSeq1LCSEPM[i],positionsSeq2LCSEPM[i]));
-	}
-	string outname = "locarna_constraints_input.txt"; //"/home/radwan/Exparna_P/LocARNA/src/locarna_constraints_input.txt";
-	ofstream outLocARNAfile (outname.c_str());
-
-	int last_edge_seq1,last_edge_seq2;
-	last_edge_seq1=0;
-	last_edge_seq2=0;
-
-	string seq1_1,seq1_2,seq1_3,seq2_1,seq2_2,seq2_3;
-	int edge = 100;
-
-	for (vector<intPair>::iterator i_edge = matchingsLCSEPM.begin(); (i_edge != matchingsLCSEPM.end() && seq1_1.size()<sequenceA.length() && seq2_2.size()<sequenceB.length());++i_edge)
-	{
-		//cout << "first: " << (*i_edge).first << " second: " << (*i_edge).second << endl;
-
-		for (int i=last_edge_seq1+1;(i<(int)((*i_edge).first)&&seq1_1.size()<sequenceA.length());++i)
-		{
-			seq1_1.push_back('.');
-			seq1_2.push_back('.');
-			seq1_3.push_back('.');
-		}
-
-		for (int j=last_edge_seq2+1;(j<(int)((*i_edge).second)&&seq2_2.size()<sequenceB.length());++j)
-		{
-			seq2_1.push_back('.');
-			seq2_2.push_back('.');
-			seq2_3.push_back('.');
-		}
-
-		ostringstream edge_st_;
-		edge_st_ << edge;
-		string edge_st;
-		edge_st = edge_st_.str();
-		const char *c_str_edge = edge_st.c_str();
-
-		seq1_1.push_back(c_str_edge[0]);
-		seq1_2.push_back(c_str_edge[1]);
-		seq1_3.push_back(c_str_edge[2]);
-
-		seq2_1.push_back(c_str_edge[0]);
-		seq2_2.push_back(c_str_edge[1]);
-		seq2_3.push_back(c_str_edge[2]);
-
-		++edge;
-
-		last_edge_seq1= (*i_edge).first;
-		last_edge_seq2 = (*i_edge).second;
-	}
-
-	// end stuff
-	for (int i=last_edge_seq1+1;i<=(int)sequenceA.length()&&seq1_1.size()<sequenceA.length();++i)
-	{
-		seq1_1.push_back('.');
-		seq1_2.push_back('.');
-		seq1_3.push_back('.');
-	}
-
-	for (int j=last_edge_seq2+1;j<=(int)sequenceB.length()&&seq2_1.size()<sequenceB.length();++j)
-	{
-		seq2_1.push_back('.');
-		seq2_2.push_back('.');
-		seq2_3.push_back('.');
-	}
-
-	seq1_1 += "#";
-	seq1_2 += "#";
-	seq1_3 += "#";
-
-	seq2_1 += "#";
-	seq2_2 += "#";
-	seq2_3 += "#";
-
-	outLocARNAfile << "> Sequence1" << endl << upperCase(sequenceA) << endl;
-	outLocARNAfile << seq1_1 << endl << seq1_2 << endl << seq1_3 << endl;
-	outLocARNAfile << "> Sequence2" << endl << upperCase(sequenceB) << endl;
-	outLocARNAfile << seq2_1 << endl << seq2_2 << endl << seq2_3 << endl << endl;
-
-	outLocARNAfile.close();
-	
-	
-}
 
 //for debugging
 void ExactMatcher::print_EPM_start_pos(list<pair<pair<int,int>,infty_score_t> > &EPM_start_pos){
@@ -1303,60 +1192,9 @@ void Mapping::print_vec() const{
 }
 
 //--------------------------------------------------------------------------
-// a pattern consist of elements
-//--------------------------------------------------------------------------
-
-
-SinglePattern::SinglePattern(const string& myId_,const string& seqId_,const intVec& mySinglePattern_)
-   :myId(myId_),seqId(seqId_),pattern(mySinglePattern_)
-   {
-   }
-
-SinglePattern::~SinglePattern()
-{
-	pattern.clear();
-}
-
-const string& SinglePattern::getmyId() const
-   {
-      return myId;
-   }
-
-const string& SinglePattern::getseqId() const
-   {
-      return seqId;
-   }
-
-const intVec& SinglePattern::getPat() const
-   {
-      return pattern;
-   }
-
-
-//--------------------------------------------------------------------------
 // class PatternPair
 //    is able to manage an EPM, consists of 2 singlepatterns, one in each RNA
 //--------------------------------------------------------------------------
-const string& PatternPair::getId() const
-{
-   return id;
-};
-
-const int& PatternPair::getSize() const
-{
-   return size;
-};
-
-const SinglePattern& PatternPair::getFirstPat() const
-{
-   return first;
-};
-
-const SinglePattern& PatternPair::getSecPat() const
-{
-   return second;
-};
-
 void PatternPair::resetBounds()
 {
 	  insideBounds.clear();
@@ -1367,19 +1205,9 @@ void PatternPair::setOutsideBounds(intPPair myPPair)
 	  outsideBounds = myPPair;
 };
 
-intPPair PatternPair::getOutsideBounds()
-{
-	  return outsideBounds;
-};
-
 void PatternPair::addInsideBounds(intPPair myPPair)
 {
 	  insideBounds.push_back(myPPair);
-};
-
-const vector<intPPair>& PatternPair::getInsideBounds()
-{
-	  return insideBounds;
 };
 
 void PatternPair::setEPMScore(int myScore)
@@ -1392,16 +1220,6 @@ string& PatternPair::get_struct()
   return structure;
 };
 
-int PatternPair::getScore()
-      {
-    	  return score;
-      };
-
-int PatternPair::getEPMScore()
-      {
-    	  return EPMscore;
-      };
-      
 //--------------------------------------------------------------------------
 // class PatternPairMap
 //    is able to manage a set of PatternPairs(EPMs), each with 2 SinglePatterns
@@ -1426,17 +1244,17 @@ PatternPairMap::~PatternPairMap()
 }
 
 void PatternPairMap::add(const string& id,
-                         const int& mysize,
                          const SinglePattern& first,
                          const SinglePattern& second,
 			 const string& structure,
 			 int score
 			)
 {
-   PatternPair* p= new PatternPair(id,mysize,first,second,structure,score);
+   PatternPair* p= new PatternPair(id,first,second,structure,score);
    SelfValuePTR myP = SelfValuePTR(p);
    patternList.push_back(myP);
    idMap.insert(make_pair(id,myP));
+   if (p->getSize() < minPatternSize)  { minPatternSize = p->getSize(); }
 }
 
 void PatternPairMap::add(const SelfValuePTR value)
@@ -1444,6 +1262,7 @@ void PatternPairMap::add(const SelfValuePTR value)
    SelfValuePTR myP = SelfValuePTR(new PatternPair(*value));
    patternList.push_back(myP);
    idMap.insert(make_pair(value->getId(),myP));
+   if (myP->getSize() < minPatternSize)  { minPatternSize = myP->getSize(); }
 }
 
 void  PatternPairMap::makeOrderedMap()
@@ -1519,18 +1338,20 @@ LCSEPM::~LCSEPM()
 void    LCSEPM::calculateLCSEPM()
 {
 	cout << " LCSEPM preprocessing..."  <<endl;
+	cout << "    min EPM size = "<< patterns.getMinPatternSize()<< endl;
  	preProcessing();
 	cout << " LCSEPM calculate holes..."  <<endl;
+	cout << "   holes to calculate = " << holeOrdering2.size() << endl;
 	calculateHoles3();
 	cout << " LCSEPM calculate outmost D_rec..."  <<endl;
 	int i = 1;
 	int k = 1;
 	vector < vector<int> > last_vec;
-	LCSEPMscore = D_rec2(i,size1,k,size2,last_vec,false);
+	int LCSEPMscore = D_rec2(i,seqA.length(),k,seqB.length(),last_vec,false);
 	cout << "    Score LCS-EPM: "<< LCSEPMscore <<endl;
 	cout << " LCSEPM calculate traceback..."  <<endl;
-	calculateTraceback2(i,size1,k,size2,last_vec);
-	LCSEPMsize = matchedEPMs.getMapBases();
+	calculateTraceback2(i,seqA.length(),k,seqB.length(),last_vec);
+	int LCSEPMsize = matchedEPMs.getMapBases();
 	cout << "    #EPMs: "<< matchedEPMs.size() << " / matched Bases: "<< LCSEPMsize <<endl;
 }
 
@@ -1543,8 +1364,8 @@ void    LCSEPM::calculatePatternBoundaries(PatternPair*   myPair)
 
    for (unsigned int k=1;k < (myPatStr1.size());++k)
    {
-	   if ( (myPatStr1[k]-EPM_min_size > myPatStr1[k-1])  &&
-	        (myPatStr2[k]-EPM_min_size > myPatStr2[k-1]) ) {
+	   if ( (myPatStr1[k]-patterns.getMinPatternSize() > myPatStr1[k-1])  &&
+	        (myPatStr2[k]-patterns.getMinPatternSize() > myPatStr2[k-1]) ) {
 		   myPair->addInsideBounds(std::make_pair(make_pair(myPatStr1[k-1],myPatStr1[k]),make_pair(myPatStr2[k-1],myPatStr2[k])));
 	   }
    }
@@ -1556,9 +1377,9 @@ void    LCSEPM::calculatePatternBoundaries(PatternPair*   myPair)
 void LCSEPM::preProcessing()
 {
     // set EPM_Table size
-    EPM_Table2.resize(size1+1);
+    EPM_Table2.resize(seqA.length()+1);
         for (unsigned int i = 0; i < EPM_Table2.size();++i)
-        	EPM_Table2[i].resize(size2+1);
+        	EPM_Table2[i].resize(seqB.length()+1);
 
     for (PatternPairMap::patListCITER myPair = patterns.getList().begin(); myPair != patterns.getList().end(); ++myPair)
     {
@@ -1635,83 +1456,12 @@ int LCSEPM::D_rec2(const int& i,const  int& j,const int& k,const int& l,vector <
 }
 
 
-//int LCSEPM::D_rec(const int& i,const  int& j,const int& k,const int& l,vector < vector<int> >& D_h,const bool debug)
-//{
-//
-//	int 					score_EPM;
-//	int 					pos_before_EPM_Str1;
-//	int 					pos_before_EPM_Str2;
-//
-//	D_h.clear();
-//	D_h.resize(j - i + 2);
-//	for (unsigned int a = 0; a < D_h.size();++a)
-//		D_h[a].resize(l - k + 2,0);
-//
-//	for(unsigned int j_1 = 1; j_1 < (j-i+2); ++j_1)
-//		for (unsigned int l_2 = 1; l_2 < (l-k+2); ++l_2)
-//		{
-//			if (EPM_Table[i + j_1-1][k + l_2-1] == NULL)
-//			{
-//				D_h[j_1][l_2] = (D_h[j_1-1][l_2]>D_h[j_1][l_2-1])? D_h[j_1-1][l_2]:D_h[j_1][l_2-1] ;
-//			}
-//			else
-//			{
-//				pos_before_EPM_Str1 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().first.first ) - i;
-//				pos_before_EPM_Str2 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().second.first ) - k;
-//				if ((pos_before_EPM_Str1 < 0)||(pos_before_EPM_Str2 <0))
-//					score_EPM = 0;
-//				else
-//					score_EPM = D_h[pos_before_EPM_Str1][pos_before_EPM_Str2] + EPM_Table[i + j_1-1][k + l_2-1]->getScore();
-//				D_h[j_1][l_2] = max3(score_EPM,D_h[j_1-1][l_2],D_h[j_1][l_2-1]);
-//			}
-//		}
-//	return (D_h[j - i + 1][l - k + 1]);
-//}
-
-//void LCSEPM::calculateHoles()
-//{
-//	vector < vector<int> > vec;
-//	for (HoleMapCITER t = holeOrdering.begin();t != holeOrdering.end();++t)
-//    {
-//		bool deb=false;
-//		//(*t).second->pattern->setEPMScore(	(*t).second->pattern->getScore() +
-//		//									D_rec((*t).second->bounds.first.first+1,(*t).second->bounds.first.second-1,\
-//		// (*t).second->bounds.second.first+1,(*t).second->bounds.second.second-1,vec,deb));
-//
-//		// new
-//		cout << endl << (*t).second->pattern->getId() << endl <<  " current hole " << (*t).second->bounds.first.first << "," << (*t).second->bounds.first.second;
-//		cout << " - " << (*t).second->bounds.second.first << "," << (*t).second->bounds.second.second << endl;
-//
-//		(*t).second->pattern->setEPMScore(	(*t).second->pattern->getScore() +
-//			D_rec2((*t).second->bounds.first.first+1,(*t).second->bounds.first.second-1,\
-//			(*t).second->bounds.second.first+1,(*t).second->bounds.second.second-1,vec,deb));
-//    }
-//}
-
-
-//void LCSEPM::calculateHoles2()
-//{
-//	vector < vector<int> > vec;
-//	for (HoleMapCITER2 t = holeOrdering2.begin();t != holeOrdering2.end();++t)
-//    {
-//		bool deb=false;
-//
-//		cout << endl << (*t).second->getId() << endl <<  " new current hole " << (*t).first.x1 << "," << (*t).first.y1;
-//		cout << " - " << (*t).first.x2 << "," << (*t).first.y2 << endl;
-//		cout << "score old " << (*t).second->getScore() << endl;
-//		(*t).second->setEPMScore(	(*t).second->getScore() +
-//			D_rec2((*t).first.x1+1,(*t).first.y1-1,(*t).first.x2+1,(*t).first.y2-1,vec,deb));
-//		cout << "score new " << (*t).second->getScore() << endl;
-//    }
-//}
-
-
 void LCSEPM::calculateHoles3()
 {
 	intPPairPTR lastHole 			= NULL;
 	PatternPairMap::SelfValuePTR lastEPM 	= NULL;
 	int lastHoleScore 			= 0;
-
+	int skippedHoles			= 0;
 	for (HoleMapCITER2 t = holeOrdering2.begin();t != holeOrdering2.end();++t)
 	{
 		// check if current hole is exactly teh same as last hole
@@ -1724,7 +1474,7 @@ void LCSEPM::calculateHoles3()
 
 			//cout << endl << (*t).second->getId() << endl <<  " new current hole " << (*t).first->first.first << "," << (*t).first->first.second;
 			//cout << " - " << (*t).first->second.first << "," << (*t).first->second.second << endl;
-			//cout << "score old " << (*t).second->getScore() << endl;
+			//cout << "score old " << (*t).second->getScore() << " " << (*t).second->get_struct() << endl;
 
 			// calculate best score of hole
 			bool deb=false;
@@ -1740,42 +1490,15 @@ void LCSEPM::calculateHoles3()
 		} else{
 			// add score of last hole to current EPM
 			(*t).second->setEPMScore((*t).second->getScore() + lastHoleScore);
+			skippedHoles++;
 			//cout << endl << (*t).second->getId() << endl <<  " new current hole " << (*t).first->first.first << "," << (*t).first->first.second;
-			//cout << " - " << (*t).first->second.first << "," << (*t).first->second.second << endl;
+			//cout << " - " << (*t).first->second.first << "," << (*t).first->second.second <<  " " << (*t).second->get_struct() << endl;
 			//cout << "score:"<< lastHoleScore << "-"<< (*t).second->getEPMScore() << "-" << (*t).second->getScore() << " - current hole is same as last hole. skip!" << endl;
 		}
 	}
+	cout << "   skipped holes = " << skippedHoles << endl;
 }
 
-
-//void LCSEPM::calculateTraceback(const int i,const  int j,const int k,const int l,vector < vector<int> > holeVec)
-//{
-//	int j_1 = holeVec.size()-1;
-//	int l_2 = holeVec[0].size()-1;
-//	while ((j_1 >= 1)&&(l_2 >= 1))
-//	{
-//		if (holeVec[j_1 - 1][l_2] == holeVec[j_1][l_2])
-//			--j_1;
-//		else
-//			if (holeVec[j_1][l_2 - 1] == holeVec[j_1][l_2])
-//				--l_2;
-//			else
-//			{
-//				vector < vector<int> > tmpHoleVec;
-//				matchedEPMs.add(EPM_Table[i + j_1 - 1][k + l_2 - 1]);
-//				for(IntPPairCITER h = EPM_Table[i + j_1 - 1][k + l_2 - 1]->getInsideBounds().begin(); h != EPM_Table[i + j_1-1][k + l_2-1]->getInsideBounds().end(); ++h)
-//				{
-//					int sc = D_rec((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec,false);
-//					if (sc != 0)
-//						calculateTraceback((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec);
-//				}
-//				int s1 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().first.first ) - i;
-//				int s2 = (EPM_Table[i + j_1-1][k + l_2-1]->getOutsideBounds().second.first) - k;
-//				j_1 = s1;
-//				l_2 = s2;
-//			}
-//	}
-//}
 
 void LCSEPM::calculateTraceback2(const int i,const  int j,const int k,const int l,vector < vector<int> > holeVec)
 {
@@ -1813,7 +1536,7 @@ void LCSEPM::calculateTraceback2(const int i,const  int j,const int k,const int 
 				   if (holeVec[j_1][l_2] == check){
 
 			             // add current EPM to traceback
-			             cout << "added traceback EPM "<< (*myIter)->getId() << endl;
+			             //cout << "added traceback EPM "<< (*myIter)->getId() << endl;
 					   matchedEPMs.add( *myIter );
 
 			             // recurse with traceback into all holes of best EPM
@@ -1821,10 +1544,10 @@ void LCSEPM::calculateTraceback2(const int i,const  int j,const int k,const int 
 			             {
 			        	     vector < vector<int> > tmpHoleVec;
 			        	     tmpHoleVec.clear();
-		        	     	     cout << (*myIter)->getId() << " D_rec2 hole " << (*h).first.first+1 << "," << (*h).first.second-1 << "-" << (*h).second.first+1 << "," << (*h).second.second-1 << endl;
+		        	     	     //cout << (*myIter)->getId() << " D_rec2 hole " << (*h).first.first+1 << "," << (*h).first.second-1 << "-" << (*h).second.first+1 << "," << (*h).second.second-1 << endl;
 			        	     int sc = D_rec2((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec,true);
 			        	     // call traceback only if there is an EPM within hole
-			        	     cout << (*myIter)->getId() << "score "<< sc << " " << (*h).first.first+1 << "," << (*h).first.second-1 << "-" << (*h).second.first+1 << "," << (*h).second.second-1 << " hole traceback..." << endl;
+			        	     //cout << (*myIter)->getId() << "score "<< sc << " " << (*h).first.first+1 << "," << (*h).first.second-1 << "-" << (*h).second.first+1 << "," << (*h).second.second-1 << " hole traceback..." << endl;
 			        	     if (sc > 0) {
 			        		     calculateTraceback2((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec);
 			        	     }
@@ -1869,7 +1592,7 @@ char* LCSEPM::getStructure(PatternPairMap& myMap, bool firstSeq, int length)
   }
   return s;
 }
-void LCSEPM::MapToPS(const string& sequenceA, const string& sequenceB, int& mySize, PatternPairMap& myMap, const string& file1, const string& file2)
+void LCSEPM::MapToPS(const string& sequenceA, const string& sequenceB, PatternPairMap& myMap, const string& file1, const string& file2)
 {
    string func_str="\
    /drawpattern {\n\
@@ -1921,7 +1644,7 @@ void LCSEPM::MapToPS(const string& sequenceA, const string& sequenceB, int& mySi
    clus2_str=func_str+clus2_str;
 
    
-   string psfilename = file1+".ps";
+   string psfilename = file1;
    string pos1= "drawpattern\ndrawbases\n";
    pos1+=label1Str.str();
    
@@ -1938,11 +1661,11 @@ void LCSEPM::MapToPS(const string& sequenceA, const string& sequenceB, int& mySi
    pos1= "drawpattern\ndrawbases\n";
    pos1+= label2Str.str();
    
-   psfilename = file2+".ps";
-   free(structure);
-   structure= NULL;
-   if(base_pair){ free(base_pair); base_pair= NULL;}
-   free_arrays();
+   psfilename = file2;
+   //free(structure);
+   //structure= NULL;
+   //if(base_pair){ free(base_pair); base_pair= NULL;}
+   //free_arrays();
    structure= getStructure(myMap,false,sequenceB.length());
    fold(upperCase(sequenceB).c_str(), structure);
    
@@ -1951,10 +1674,116 @@ void LCSEPM::MapToPS(const string& sequenceA, const string& sequenceB, int& mySi
                  const_cast<char*>(psfilename.c_str()),
                  const_cast<char*>(clus2_str.c_str()),
                  const_cast<char*>(pos1.c_str()));
-    free(structure);
-    structure= NULL;
-    if(base_pair){ free(base_pair); base_pair= NULL;}
-    free_arrays();
+    //free(structure);
+    //structure= NULL;
+    //if(base_pair){ free(base_pair); base_pair= NULL;}
+    //free_arrays();
 }
+
+void LCSEPM::output_locarna(const string& sequenceA, const string& sequenceB, const string& outfile){
+
+	// extract matching edges (pairs of positions) from LCS-EPM
+	vector<intPair> matchingsLCSEPM;
+	intVec positionsSeq1LCSEPM;
+	intVec positionsSeq2LCSEPM;
+
+	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();i++)
+	{
+		positionsSeq1LCSEPM.insert(positionsSeq1LCSEPM.end(),(*i)->getFirstPat().getPat().begin(),(*i)->getFirstPat().getPat().end());
+		positionsSeq2LCSEPM.insert(positionsSeq2LCSEPM.end(),(*i)->getSecPat().getPat().begin(),(*i)->getSecPat().getPat().end());
+		//SinglePattern my1 = (*i)->getFirstPat();
+		//my1.print();
+		//my1 = (*i)->getSecPat();
+		//my1.print();
+	}
+
+	sort(positionsSeq1LCSEPM.begin(),positionsSeq1LCSEPM.end());
+	sort(positionsSeq2LCSEPM.begin(),positionsSeq2LCSEPM.end());;
+
+	for (unsigned int i=0;i<positionsSeq1LCSEPM.size();++i)
+	{
+		matchingsLCSEPM.push_back(make_pair(positionsSeq1LCSEPM[i],positionsSeq2LCSEPM[i]));
+	}
+	//string outname = "locarna_constraints_input.txt"; //"/home/radwan/Exparna_P/LocARNA/src/locarna_constraints_input.txt";
+	ofstream outLocARNAfile (outfile.c_str());
+
+	int last_edge_seq1,last_edge_seq2;
+	last_edge_seq1=0;
+	last_edge_seq2=0;
+
+	string seq1_1,seq1_2,seq1_3,seq2_1,seq2_2,seq2_3;
+	int edge = 100;
+
+	for (vector<intPair>::iterator i_edge = matchingsLCSEPM.begin(); (i_edge != matchingsLCSEPM.end() && seq1_1.size()<seqA.length() && seq2_2.size()<seqB.length());++i_edge)
+	{
+		//cout << "first: " << (*i_edge).first << " second: " << (*i_edge).second << endl;
+
+		for (int i=last_edge_seq1+1;(i<(int)((*i_edge).first)&&seq1_1.size()<seqA.length());++i)
+		{
+			seq1_1.push_back('.');
+			seq1_2.push_back('.');
+			seq1_3.push_back('.');
+		}
+
+		for (int j=last_edge_seq2+1;(j<(int)((*i_edge).second)&&seq2_2.size()<seqB.length());++j)
+		{
+			seq2_1.push_back('.');
+			seq2_2.push_back('.');
+			seq2_3.push_back('.');
+		}
+
+		ostringstream edge_st_;
+		edge_st_ << edge;
+		string edge_st;
+		edge_st = edge_st_.str();
+		const char *c_str_edge = edge_st.c_str();
+
+		seq1_1.push_back(c_str_edge[0]);
+		seq1_2.push_back(c_str_edge[1]);
+		seq1_3.push_back(c_str_edge[2]);
+
+		seq2_1.push_back(c_str_edge[0]);
+		seq2_2.push_back(c_str_edge[1]);
+		seq2_3.push_back(c_str_edge[2]);
+
+		++edge;
+
+		last_edge_seq1= (*i_edge).first;
+		last_edge_seq2 = (*i_edge).second;
+	}
+
+	// end stuff
+	for (int i=last_edge_seq1+1;i<=seqA.length() && seq1_1.size()<seqA.length();++i)
+	{
+		seq1_1.push_back('.');
+		seq1_2.push_back('.');
+		seq1_3.push_back('.');
+	}
+
+	for (int j=last_edge_seq2+1;j<=seqB.length() && seq2_1.size()<seqB.length();++j)
+	{
+		seq2_1.push_back('.');
+		seq2_2.push_back('.');
+		seq2_3.push_back('.');
+	}
+
+	seq1_1 += "#";
+	seq1_2 += "#";
+	seq1_3 += "#";
+
+	seq2_1 += "#";
+	seq2_2 += "#";
+	seq2_3 += "#";
+
+	outLocARNAfile << ">"<< seqA.names()[0] << endl << upperCase(sequenceA) << endl;
+	outLocARNAfile << seq1_1 << endl << seq1_2 << endl << seq1_3 << endl;
+	outLocARNAfile << ">"<<seqB.names()[0] << endl << upperCase(sequenceB) << endl;
+	outLocARNAfile << seq2_1 << endl << seq2_2 << endl << seq2_3 << endl << endl;
+
+	outLocARNAfile.close();
+
+
+}
+
 
 } //end namespace
