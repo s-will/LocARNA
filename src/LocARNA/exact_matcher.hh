@@ -56,13 +56,15 @@ class SinglePattern
 {
 public:
       SinglePattern(){};
-      SinglePattern(const string& myId,const string& seqId,const intVec& mySinglePattern);
+      SinglePattern(const string& myId_,const string& seqId_,const intVec& mySinglePattern_)
+      	      	      	      :myId(myId_),seqId(seqId_),pattern(mySinglePattern_)
+      	      	      	      {};
 
-	virtual ~SinglePattern();
+	virtual ~SinglePattern() { pattern.clear(); };
 
-   const string&        getmyId()  const;
-   const string&	getseqId() const;
-   const intVec&        getPat() const;
+   const string&        getmyId()  const { return myId; };
+   const string&	getseqId() const {return seqId; };
+   const intVec&        getPat() const { return pattern; };
 
 private:
 
@@ -79,27 +81,34 @@ class PatternPair
    {
       public:
       PatternPair(){};
-      PatternPair(const string& myId,const int& mySize,const SinglePattern& myFirstPat,const SinglePattern& mySecPat, const string& structure_, int& score_)
-                  : id(myId),size(mySize),first(myFirstPat),second(mySecPat), structure(structure_), EPMscore(score_)
-      {  score = EPMscore;  };
+      PatternPair(const string& myId,const SinglePattern& myFirstPat,const SinglePattern& mySecPat, const string& structure_, int& score_)
+                  : id(myId),first(myFirstPat),second(mySecPat), structure(structure_), EPMscore(score_)
+      {
+	      if (first.getPat().size() != second.getPat().size()){
+		      cerr << "Error! PatternPair cannot be constructed due to different sizes of SinglePatterns!" << endl;
+      	      }
+	      score = EPMscore;
+	      size = first.getPat().size();
+      };
 
       virtual ~PatternPair()
       {
     	insideBounds.clear();
       };
 
-      const string& 		getId() const;
-      const int& 			getSize() const;
-      const SinglePattern& 	getFirstPat() const;
-      const	SinglePattern& 	getSecPat() const;
-			void			resetBounds();
-			void			setOutsideBounds(intPPair myPPair);
-			intPPair 		getOutsideBounds();
-			void			addInsideBounds(intPPair myPPair);
-      const vector<intPPair>& getInsideBounds();
+      const string& 		getId() const { return id; };
+      const int& 		getSize() const { return size; };
+      const SinglePattern& 	getFirstPat() const { return first; };
+      const SinglePattern& 	getSecPat() const { return second;};
+      	      void		resetBounds();
+      	      void		setOutsideBounds(intPPair myPPair);
+      const   intPPair 		getOutsideBounds() const { return outsideBounds; };
+      	      void		addInsideBounds(intPPair myPPair);
+      const   vector<intPPair>& getInsideBounds() const { return insideBounds; };
+
 			void			setEPMScore(int myScore);
-			int 			getScore();
-			int 			getEPMScore();
+	const		int 			getScore() const { return score;  };
+	const		int 			getEPMScore() const { return EPMscore; };
       string& get_struct();
 
       private:
@@ -138,12 +147,11 @@ class PatternPairMap
          PatternPairMap(const PatternPairMap& myPairMap)
                            :patternList(myPairMap.patternList),
                             patternOrderedMap(myPairMap.patternOrderedMap),
-                            idMap(myPairMap.idMap)  {};
+                            idMap(myPairMap.idMap)  { minPatternSize = 100000;};
 
       virtual ~PatternPairMap();
 
                void              add( const string& id,
-                                      const int& mysize,
                                       const SinglePattern& first,
                                       const SinglePattern& second,
 				      const string& structure,
@@ -158,13 +166,15 @@ class PatternPairMap
       const    orderedMapTYPE&   getOrderedMap() const;
                orderedMapTYPE&   getOrderedMap2();
       const    int               size()   const;
-			   int  			 getMapBases();
+      	       int		 getMapBases();
+      const    int		 getMinPatternSize() const { return minPatternSize; };
 
    private:
 
      patListTYPE        patternList;
      orderedMapTYPE     patternOrderedMap;
      PatternIdMapTYPE   idMap;
+     int minPatternSize;
 };
 
 
@@ -172,26 +182,26 @@ class LCSEPM
 {
     public:
 
-			LCSEPM(const	int& 		size1_,
-				const	int& 		size2_,
+			LCSEPM(const	Sequence& 		seqA_,
+				const	Sequence& 		seqB_,
 				const 	PatternPairMap& myPatterns,
 					PatternPairMap& myLCSEPM,
-					int&		mySize,
-					int&		myScore,
 				const	int&		EPM_min_size_ )
 
-    	                                   :size1(size1_),
-					    size2(size2_),
+    	                                   :seqA(seqA_),
+					    seqB(seqB_),
 					    matchedEPMs(myLCSEPM),
     	                                    patterns(myPatterns),
-    	                                    LCSEPMsize(mySize),
-    	                                    LCSEPMscore(myScore),
     	                                    EPM_min_size(EPM_min_size_){};
 		
 	virtual		~LCSEPM();
 
-	void 		MapToPS(const string& sequenceA, const string& sequenceB, int& mySize, PatternPairMap& myMap, const string& file1, const string& file2);
+	void 		MapToPS(const string& sequenceA, const string& sequenceB, PatternPairMap& myMap, const string& file1, const string& file2);
         void		calculateLCSEPM();
+
+        //! outputs anchor constraints to be used as input for locarna
+        void		output_locarna(const string& sequenceA, const string& sequenceB, const string& outfile);
+
 
    private:
 
@@ -248,12 +258,10 @@ class LCSEPM
 
 	vector< vector <vector<PatternPairMap::SelfValuePTR> > >	EPM_Table2;
 		HoleOrderingMapTYPE2    		holeOrdering2;
-	const int&					size1;
-	const int& 					size2;
+	const 	Sequence&				seqA;
+	const 	Sequence& 				seqB;
 		PatternPairMap&				matchedEPMs;
         const 	PatternPairMap&         		patterns;
-	int& 						LCSEPMsize;
-	int& 						LCSEPMscore;
 	const int& 					EPM_min_size;
 };
 
@@ -496,7 +504,6 @@ private:
     const BasePairs &bpsB;
     const Mapping &mappingA;
     const Mapping &mappingB;
-    
 
     EPM epm;
 
@@ -531,8 +538,7 @@ private:
     
     //PatternPairMap myLCSEPM; //!PatternPairMap result of chaining algorithm
     //PatternPairMap mcsPatterns;
-    PatternPairMap foundEPMs;
-    
+    PatternPairMap& foundEPMs;
     // ----------------------------------------
     // evaluate the recursions / fill matrices
     
@@ -625,9 +631,12 @@ public:
     ExactMatcher(const Sequence &seqA_,const Sequence &seqB_,const ArcMatches &arc_matches_,const Mapping &mappingA_, const Mapping &mappingB_,
 		 const int &threshold_,const int &min_size_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const int &subopt_score,
 		 const int &easier_scoring_par,
+		 PatternPairMap &foundEPMs_
 		 //const string& sequenceA_,
 		 //const string& sequenceB_,
-		 const string& file1_, const string& file2_);
+		 //const string& file1_,
+		 //const string& file2_
+		 );
     ~ExactMatcher();
     
     //! fills the A,G,B and F matrices
@@ -643,10 +652,9 @@ public:
     compute_EPMs_suboptimal();
 
     //! outputs anchor constraints to be used as input for locarna
-    void
-    output_locarna();
+    //void
+    //output_locarna();
 };
-
 
 
 
