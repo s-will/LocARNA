@@ -1329,7 +1329,7 @@ int  PatternPairMap::getMapBases()
 
 LCSEPM::~LCSEPM()
 {
-	cout << endl << " execute destructor..." << endl;
+	//cout << endl << " execute destructor..." << endl;
 
 	EPM_Table2.clear();
 	holeOrdering2.clear();

@@ -17,6 +17,13 @@
 #include<limits>
 #include <stdio.h>
 //#include <math.h>
+// for getrusage()
+#include <sys/resource.h>
+#include <sys/types.h>
+// for gettimeofday()
+#include <sys/time.h>
+// for setprecision
+#include <iomanip>
 
 #include <LocARNA/sequence.hh>
 #include <LocARNA/basepairs.hh>
@@ -144,7 +151,15 @@ option_def my_options[] = {
 int
 main(int argc, char **argv) {
 
-	time_t start = time (NULL);
+	//time_t start = time (NULL);
+	struct timeval tp;
+	struct rusage ruse;
+
+	gettimeofday( &tp, NULL );
+	double start = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+
+	getrusage( RUSAGE_SELF, &ruse );
+	double startR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
     typedef std::vector<int>::size_type size_type;
 
@@ -208,15 +223,31 @@ main(int argc, char **argv) {
     Sequence seqB(maB);
 
     time_t start_RNAdataA = time (NULL);
-    RnaData rnadataA(seqA,true,opt_stacking);
-    time_t stop_RNAdataA = time (NULL);
-    cout << "time for RNAdataA: " << stop_RNAdataA - start_RNAdataA << "sec " << endl;
-    time_t start_RNAdataB = time (NULL);
-    RnaData rnadataB(seqB,true,opt_stacking);
-    time_t stop_RNAdataB = time (NULL);
-    cout << "time for RNAdataB: " << stop_RNAdataB - start_RNAdataB << "sec " << endl;
 
-   
+    gettimeofday( &tp, NULL );
+    double start_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+
+    getrusage( RUSAGE_SELF, &ruse );
+    double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+
+
+    RnaData rnadataA(seqA,true,opt_stacking);
+    //time_t stop_RNAdataA = time (NULL);
+    //cout << "time for RNAdataA: " << stop_RNAdataA - start_RNAdataA << "sec " << endl;
+    //time_t start_RNAdataB = time (NULL);
+    RnaData rnadataB(seqB,true,opt_stacking);
+    //time_t stop_RNAdataB = time (NULL);
+    //cout << "time for RNAdataB: " << stop_RNAdataB - start_RNAdataB << "sec " << endl;
+
+    gettimeofday( &tp, NULL );
+    double end_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+
+    getrusage( RUSAGE_SELF, &ruse );
+    double end_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+
+    cout << "time_wall McCaskill_all = " << setprecision(3) << end_fold - start_fold << " sec" << endl;
+    cout << "time_cpu McCaskill_all = " << setprecision(3) << end_foldR - start_foldR << " sec" << endl;
+
     //Sequence seqA=rnadataA.get_sequence();
     //Sequence seqB=rnadataB.get_sequence();
     
@@ -366,7 +397,13 @@ main(int argc, char **argv) {
 
 	 cout << "#EPM: " << myEPMs.size() << endl;
 
-	 time_t start_chaining = time (NULL);
+	 //time_t start_chaining = time (NULL);
+
+	 gettimeofday( &tp, NULL );
+	 double start_chain = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+
+	 getrusage( RUSAGE_SELF, &ruse );
+	 double startR_chain = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
 	 PatternPairMap myLCSEPM;
 	 LCSEPM myChaining(seqA, seqB, myEPMs, myLCSEPM, EPM_min_size);
@@ -374,31 +411,48 @@ main(int argc, char **argv) {
 	 //begin chaining algorithm
 	 myChaining.calculateLCSEPM();
 
-	 time_t stop_chaining = time (NULL);
+	 //time_t stop_chaining = time (NULL);
 
-	 cout << "time for chaining : " << stop_chaining - start_chaining << "sec " << endl;
+	 gettimeofday( &tp, NULL );
+	 double end_chain = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+
+	 getrusage( RUSAGE_SELF, &ruse );
+	 double endR_chain = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+	 cout << endl<< "time_wall chaining = " << end_chain - start_chain << " sec" << endl;
+	 cout << "time_cpu chaining = "  << endR_chain - startR_chain << " sec" << endl << endl;
+
+	 //
+//	 cout << "time for chaining : " << stop_chaining - start_chaining << "sec " << endl;
 
 	 //output chained EPMs to PS files
 	 if(opt_postscript_output){
-		 time_t start_ps = time (NULL);
+	//	 time_t start_ps = time (NULL);
+		 if (opt_verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
 		 if (psFile1.size()==0){psFile1 = maA.seqentry(0).name()+"_EPMs.ps";}
 		 if (psFile2.size()==0){psFile2 = maB.seqentry(0).name()+"_EPMs.ps";}
 
 		 myChaining.MapToPS(maA.consensus_sequence(), maB.consensus_sequence(), myLCSEPM, psFile1,psFile2);
-		 time_t stop_ps = time (NULL);
-		 cout << "time for map to ps : " << stop_ps - start_ps << "sec " << endl;
+//		 time_t stop_ps = time (NULL);
+		// cout << "time for map to ps : " << stop_ps - start_ps << "sec " << endl;
 	 }
 
 	 //if(opt_locarna_output){
-		 if (opt_verbose) { cout << "locarna anchor constraints " << endl;}
+		 if (opt_verbose) { cout << "write locarna anchor constraints..." << endl;}
 		 myChaining.output_locarna(maA.consensus_sequence(), maB.consensus_sequence(), locarna_output);
 	 //}
 
    }
 
+    gettimeofday( &tp, NULL );
+    double end = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
 
-    time_t stop = time (NULL);
-    cout << "time for program: " << stop - start << "sec " << endl;
+    getrusage( RUSAGE_SELF, &ruse );
+    double endR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+    cout << "time_wall main = " << setprecision(3) << end - start << " sec" << endl;
+    cout << "time_cpu main = " << setprecision(3) << endR - startR << " sec" << endl;
+
+//     time_t stop = time (NULL);
+//    cout << "time for program: " << stop - start << "sec " << endl;
     // ----------------------------------------
     // DONE
     delete arc_matches;
