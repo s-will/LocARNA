@@ -52,8 +52,6 @@ double min_prob; // only pairs with a probability of at least min_prob are taken
 
 // bool no_lonely_pairs; // no lonely pairs option
 
-const bool DO_TRACE=true;
-
 int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
 int max_diff_am; //maximal difference between two arc ends, -1 is off
@@ -372,28 +370,29 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Traceback
     //
-   if (DO_TRACE) {
+    const bool DO_TRACE=true;
+    if (DO_TRACE) {
 	
-	if (opt_verbose) {
-	    std::cout << "Traceback."<<std::endl;
-	}
+//	if (opt_verbose) {
+//	    std::cout << "Traceback."<<std::endl;
+//	}
 	
 	 if(opt_suboptimal){
-		 cout << "suboptimal " << endl;
+		 cout << "suboptimal traceback..." << endl;
 		 em.compute_EPMs_suboptimal();
 	 }
 
 	 else{
-		 cout << "heuristic " << endl;
+		 cout << "heuristic traceback..." << endl;
 		 time_t start_traceback = time (NULL);
 		 em.compute_EPMs_heuristic();
 		 time_t stop_traceback = time(NULL);
 		 cout << "time for traceback : " << stop_traceback - start_traceback << "sec " << endl;
 	 }
-
+   }
 	 // chaining
-	 const int& size1= (int)seqA.length();
-	 const int& size2= (int)seqB.length();
+	 //const int& size1= (int)seqA.length();
+	 //const int& size2= (int)seqB.length();
 
 	 cout << "#EPM: " << myEPMs.size() << endl;
 
@@ -440,8 +439,6 @@ main(int argc, char **argv) {
 		 if (opt_verbose) { cout << "write locarna anchor constraints..." << endl;}
 		 myChaining.output_locarna(maA.consensus_sequence(), maB.consensus_sequence(), locarna_output);
 	 //}
-
-   }
 
     gettimeofday( &tp, NULL );
     double end = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
