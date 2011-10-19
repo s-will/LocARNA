@@ -98,3 +98,7 @@ syntax: regexp
 ^depcomp$
 syntax: regexp
 ^src/libLocARNA-1\.0\.la$
+syntax: regexp
+^\.project$
+syntax: regexp
+^\.hgignore$
