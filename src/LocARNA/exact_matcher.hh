@@ -330,6 +330,10 @@ class EPM{
 	intVec pat1Vec;
 	intVec pat2Vec;
 	string structure;
+	int score; //needed for suboptimal trace
+	int state; //needed for suboptimal trace in AGB
+	pair<int,int> curPos; //needed for suboptimal trace
+	int score_to_substract_in_F;
 
     //!contains the indices of the arcMatches which need to be considered
 	std::vector<ArcMatch::idx_type> arcmatches_to_do;
@@ -380,7 +384,43 @@ public:
 		reset();
 	}
 
-	virtual ~EPM(){
+		void set_arcmatches_to_do(std::vector<ArcMatch::idx_type> arcmatches_to_do_){
+			arcmatches_to_do = arcmatches_to_do_;
+		}
+
+		void set_score(int score_){
+			score=score_;
+		}
+
+		void set_state(int state_){
+			state=state_;
+		}
+
+		void set_curPos(pair<int,int> curPos_){
+		    curPos = curPos_;
+		}
+
+		void set_score_to_substract_in_F(int score){
+			score_to_substract_in_F=score;
+		}
+
+		int get_score(){
+			return score;
+		}
+
+		int get_state(){
+			return state;
+		}
+
+		pair<int,int> get_curPos(){
+			return curPos;
+		}
+
+		int get_score_to_substract_in_F(){
+			return score_to_substract_in_F;
+		}
+
+		virtual ~EPM(){
 		pat1Vec.clear();
 		pat2Vec.clear();
 		arcmatches_to_do.clear();
@@ -390,6 +430,7 @@ public:
 		pat1Vec.clear();
 		pat2Vec.clear();
 		structure.clear();
+		arcmatches_to_do.clear();
 	}
 	void add(int pos1_, int pos2_,char c){
 		pat1Vec.push_back(pos1_);
@@ -404,6 +445,7 @@ public:
 	}
 
 	void store_arcmatch(ArcMatch::idx_type idx){
+		//cout << "store arcmatch " << endl;
 		arcmatches_to_do.push_back(idx);
 	}
 
@@ -423,15 +465,27 @@ public:
 		return arcmatches_to_do;
 	}
 
+	/*void print_arcmatches_to_do(){
+		if(arcmatches_to_do.size()!=0){
+			cout << "arcmatches to do " << endl;
+			for(int i=0;i<arcmatches_to_do.size();i++){
+				cout << arcmatches_to_do.at(i) << " ";
+			}
+			cout << endl;
+		}
+	}*/
+
 	void print_epm(ostream &out, int score){
 		cout << "epm with score " << score << endl;
 		intVec::iterator it2=pat2Vec.begin();
+		out << " ";
 		for(intVec::iterator it=pat1Vec.begin();it!=pat1Vec.end();it++,it2++){
 			out << *it;
 			out << ":";
 			out << *it2 << " " ;
 		}
 		out << endl;
+		out << " ";
 		for(string::iterator it=structure.begin();it!=structure.end();it++){
 					out << *it;
 				}
@@ -560,31 +614,34 @@ private:
     void set_el_to_inf();
     void set_el_to_neg_inf();
     
-    struct info_for_trace_AGB {
+    /*struct info_for_trace_AGB {
     	EPM cur_epm;
     	int score;
     	int state;
     	pair<int,int> curPos;
-    	vector<ArcMatch::idx_type> arcmatches_to_do_for_cur_epm;
+    	//vector<ArcMatch::idx_type> arcmatches_to_do_for_cur_epm;
     };
 
     struct info_for_trace_F{
     	EPM cur_epm;
     	int score;
     	pair<int,int> curPos;
-    };
+    };*/
 
     void compute_F_with_prob_external();
     void find_start_pos_for_traceback(vector<pair<int,int> > &EPM_start_pos);
     void trace_in_F_suboptimal(int i, int j);
-    bool trace_AGB_suboptimal(const ArcMatch &am, EPM &epm_to_store, list<info_for_trace_AGB> &epms_to_proc_AGB,list<info_for_trace_F > &epms_to_proc);
-    void trace_AGB_suboptimal_main(const ArcMatch &am, EPM &epm_to_store,list<info_for_trace_AGB> &epms_to_proc_AGB,list<info_for_trace_F > &epms_to_proc);
-    bool str_traceAGB_suboptimal(const ScoreMatrix &mat, const ArcMatch &am, size_type i, size_type j,pair<int,int> &curPos,EPM &epm_to_store);
-    void print_epms_to_proc(list<info_for_trace_F > &epms_to_proc);
+   // void trace_AGB_suboptimal_main(const ArcMatch &am, EPM &epm_to_store,list<EPM> &epms_to_proc_AGB,list<EPM > &epms_to_proc);
+   // bool str_traceAGB_suboptimal(const ScoreMatrix &mat, const ArcMatch &am, size_type i, size_type j,pair<int,int> &curPos,EPM &epm_to_store);
+    void print_epms_to_proc(list<EPM> &epms_to_proc);
     bool valid_external_arcmatch(const ArcMatch &am);
     bool valid_external_pos(size_type i,size_type j);
-    void print_epms_to_proc_AGB(list<info_for_trace_AGB> &epms_to_proc_AGB);
+    void print_epms_to_proc_AGB(list<EPM> &epms_to_proc_AGB);
     void print_arcmatches_to_do(std::vector<ArcMatch::idx_type> arcmatches_to_do);
+    //void swap(list<EPM> &epms_to_proc_AM,list<EPM>::iterator &next_el);
+    void str_trace_AGB_suboptimal(ScoreMatrix &mat, int posA, int posB,const ArcMatch &am,int cur_score,int state, pair<int,int> curPos,list<EPM> &epms_to_proc_AM,EPM cur_epm_AM);
+    void trace_AGB_suboptimal(const ArcMatch &am, EPM &epm_to_store,EPM cur_epm_AM, list<EPM> &epms_to_proc_AM);
+    void copy_epm_trace(list<EPM> &epms_to_proc_AM,EPM &trace_F, list<EPM> &epms_to_proc);
 
     //!converts string to uppercase
     string upperCase(string seq){
@@ -595,7 +652,7 @@ private:
 	}
     
     //Debugging
-    void validate_epm();
+    bool validate_epm();
     void output_trace_matrix();
     void output_arc_match_score();
     void print_EPM_start_pos(list<pair<pair<int,int>,infty_score_t> > &EPM_start_pos);
