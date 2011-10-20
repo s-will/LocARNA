@@ -17,7 +17,6 @@ ExactMatcher::ExactMatcher(const Sequence &seqA_,
 			   const Mapping &mappingA_,
 			   const Mapping &mappingB_,
 			   const int &EPM_threshold_,
-			   const int &EPM_min_size_,
 			   const int &alpha_1_,
 			   const int &alpha_2_,
 			   const int &alpha_3_,
@@ -41,17 +40,12 @@ ExactMatcher::ExactMatcher(const Sequence &seqA_,
       //epm(seqA_,seqB_),
       epm(),
       EPM_threshold(EPM_threshold_*100),
-      EPM_min_size(EPM_min_size_),
       alpha_1(alpha_1_),
       alpha_2(alpha_2_),
       alpha_3(alpha_3_),
       subopt_score(subopt_score_*100),
       easier_scoring_par(easier_scoring_par_),
       foundEPMs(foundEPMs_)
-     // sequenceA(sequenceA_),
-     // sequenceB(sequenceB_),
-      //file1(file1_),
-      //file2(file2_)
 
 {
     // set size of matrices
@@ -68,7 +62,6 @@ ExactMatcher::ExactMatcher(const Sequence &seqA_,
 	Trace.resize(seqA.length()+2,seqB.length()+2);
 	struct Trace_entry el = {InftyArithInt(0),0,0};
 	Trace.fill(el);
-	//myLCSEPM= PatternPairMap();
 }
 
 ExactMatcher::~ExactMatcher(){
@@ -1338,6 +1331,7 @@ LCSEPM::~LCSEPM()
 void    LCSEPM::calculateLCSEPM()
 {
 	cout << " LCSEPM preprocessing..."  <<endl;
+	cout << "     found #EPMs = " << patterns.size() << endl;
 	cout << "    min EPM size = "<< patterns.getMinPatternSize()<< endl;
  	preProcessing();
 	cout << " LCSEPM calculate holes..."  <<endl;

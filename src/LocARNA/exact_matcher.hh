@@ -524,7 +524,6 @@ private:
     Matrix<Trace_entry> Trace; //!for traceback
 
     int EPM_threshold;
-    int EPM_min_size;
     int alpha_1;
     int alpha_2;
     int alpha_3;
@@ -629,13 +628,9 @@ public:
 
     //! construct with sequences and possible arc matches
     ExactMatcher(const Sequence &seqA_,const Sequence &seqB_,const ArcMatches &arc_matches_,const Mapping &mappingA_, const Mapping &mappingB_,
-		 const int &threshold_,const int &min_size_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const int &subopt_score,
+		 const int &threshold_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const int &subopt_score,
 		 const int &easier_scoring_par,
 		 PatternPairMap &foundEPMs_
-		 //const string& sequenceA_,
-		 //const string& sequenceB_,
-		 //const string& file1_,
-		 //const string& file2_
 		 );
     ~ExactMatcher();
     

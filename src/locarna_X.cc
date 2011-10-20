@@ -119,10 +119,10 @@ option_def my_options[] = {
 
     {"stacking",'S',&opt_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","Use stacking terms (needs stack-probs by RNAfold -p2)"},
     {"EPM_threshold",'t',0,O_ARG_INT,&EPM_threshold,"5","threshold","User-defined threshold for Exact Pattern Matches"},
-    {"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"3","min_size","User-defined minimum size for Exact Pattern Matches"},
+    {"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"3","min_size","User-defined minimum size for Exact Pattern Matches (chaining only)"},
     {"prob_unpaired_in_loop_threshold",'p',0,O_ARG_DOUBLE,&prob_unpaired_in_loop_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
-    {"prob_unpaired_external_threshold",0,0,O_ARG_DOUBLE,&prob_unpaired_external_threshold,"0.00001","threshold","Threshold for prob_unpaired_external"},
-    {"prob_basepair_external_threshold",0,0,O_ARG_DOUBLE,&prob_basepair_external_threshold,"0.00001","threshold","Threshold for prob_basepair_external"},
+    {"prob_unpaired_external_threshold",0,0,O_ARG_DOUBLE,&prob_unpaired_external_threshold,"0.0","threshold","Threshold for prob_unpaired_external"},
+    {"prob_basepair_external_threshold",0,0,O_ARG_DOUBLE,&prob_basepair_external_threshold,"0.0","threshold","Threshold for prob_basepair_external"},
     {"alpha_1",0,0,O_ARG_INT,&alpha_1,"1","alpha_1","Parameter for sequential score"},
     {"alpha_2",0,0,O_ARG_INT,&alpha_2,"1","alpha_2","Parameter for structural score"},
     {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Parameter for stacking score, 0 means no stacking contribution"},
@@ -149,7 +149,6 @@ option_def my_options[] = {
 int
 main(int argc, char **argv) {
 
-	//time_t start = time (NULL);
 	struct timeval tp;
 	struct rusage ruse;
 
@@ -209,48 +208,35 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
-   
-    time_t start_preprocessing = time (NULL);
+
+    gettimeofday( &tp, NULL );
+    double start_preproc = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+    getrusage( RUSAGE_SELF, &ruse );
+    double startR_preproc = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
     
     MultipleAlignment maA(file1,MultipleAlignment::FASTA);
     MultipleAlignment maB(file2,MultipleAlignment::FASTA);
-    cout << "name1: " << maA.seqentry(0).name() << endl;
-    cout << "name2: " << maB.seqentry(0).name() << endl;
+//    cout << "name1: " << maA.seqentry(0).name() << endl;
+//    cout << "name2: " << maB.seqentry(0).name() << endl;
     
     Sequence seqA(maA);
     Sequence seqB(maB);
 
-    time_t start_RNAdataA = time (NULL);
-
     gettimeofday( &tp, NULL );
     double start_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
-
     getrusage( RUSAGE_SELF, &ruse );
     double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
-
     RnaData rnadataA(seqA,true,opt_stacking);
-    //time_t stop_RNAdataA = time (NULL);
-    //cout << "time for RNAdataA: " << stop_RNAdataA - start_RNAdataA << "sec " << endl;
-    //time_t start_RNAdataB = time (NULL);
     RnaData rnadataB(seqB,true,opt_stacking);
-    //time_t stop_RNAdataB = time (NULL);
-    //cout << "time for RNAdataB: " << stop_RNAdataB - start_RNAdataB << "sec " << endl;
 
     gettimeofday( &tp, NULL );
     double end_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
-
     getrusage( RUSAGE_SELF, &ruse );
     double end_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
     cout << "time_wall McCaskill_all = " << setprecision(3) << end_fold - start_fold << " sec" << endl;
     cout << "time_cpu McCaskill_all = " << setprecision(3) << end_foldR - start_foldR << " sec" << endl;
-
-    //Sequence seqA=rnadataA.get_sequence();
-    //Sequence seqB=rnadataB.get_sequence();
-    
-    size_type lenA=seqA.length();
-    size_type lenB=seqB.length();
 
     // --------------------
     // handle max_diff restriction
@@ -286,7 +272,7 @@ main(int argc, char **argv) {
     arc_matches = new ArcMatches(rnadataA,
 				 rnadataB,
 				 min_prob,
-				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
+				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(seqA.length(),seqB.length()),
 				 trace_controller,
 				 seq_constraints
 				 );
@@ -315,7 +301,7 @@ main(int argc, char **argv) {
     // Compute Exact Matchings
     //
     
-    time_t start_mapping = time (NULL);
+    //time_t start_mapping = time (NULL);
     Mapping mappingA(bpsA,
     		rnadataA,
     		prob_unpaired_in_loop_threshold,
@@ -329,8 +315,8 @@ main(int argc, char **argv) {
     		prob_unpaired_external_threshold,
     		prob_basepair_external_threshold
     		);
-    time_t stop_mapping = time (NULL);
-    cout << "time for mapping: " << stop_mapping - start_mapping << "sec " << endl;
+    //time_t stop_mapping = time (NULL);
+    //cout << "time for mapping: " << stop_mapping - start_mapping << "sec " << endl;
     
     //string sequenceA= MultipleAlignment(seqA).seqentry(0).seq().to_string();
     //string sequenceB= MultipleAlignment(seqB).seqentry(0).seq().to_string();
@@ -343,22 +329,22 @@ main(int argc, char **argv) {
 		    mappingA,
 		    mappingB,
 		    EPM_threshold,
-		    EPM_min_size,
 		    alpha_1,
 		    alpha_2,
 		    alpha_3,
 		    subopt_score,
 		    easier_scoring_par,
 		    myEPMs
-		//    sequenceA,
-		//    sequenceB,
-		//    psFile1,
-		//    psFile2
- 		  );
+		    );
 
-    time_t stop_preprocessing = time (NULL);
 
-    cout << "time for preprocessing: " << stop_preprocessing - start_preprocessing << "sec " << endl;
+    gettimeofday( &tp, NULL );
+    double end_preproc = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+    getrusage( RUSAGE_SELF, &ruse );
+    double endR_preproc = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+
+    cout << "time_wall preprocessing = " << setprecision(3) << end_preproc - start_preproc << " sec" << endl;
+    cout << "time_cpu preprocessing = " << setprecision(3) << endR_preproc - startR_preproc << " sec" << endl;
 
     time_t start_computeMatrices = time (NULL);
     //compute matrices for finding best and enumerating all matchings
@@ -391,11 +377,6 @@ main(int argc, char **argv) {
 	 }
    }
 	 // chaining
-	 //const int& size1= (int)seqA.length();
-	 //const int& size2= (int)seqB.length();
-
-	 cout << "#EPM: " << myEPMs.size() << endl;
-
 	 //time_t start_chaining = time (NULL);
 
 	 gettimeofday( &tp, NULL );
@@ -445,13 +426,12 @@ main(int argc, char **argv) {
 
     getrusage( RUSAGE_SELF, &ruse );
     double endR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
-    cout << "time_wall main = " << setprecision(3) << end - start << " sec" << endl;
-    cout << "time_cpu main = " << setprecision(3) << endR - startR << " sec" << endl;
+    cout << endl << "time_wall main = " << setprecision(3) << end - start << " sec" << endl;
+    cout << "time_cpu main = " << setprecision(3) << endR - startR << " sec" << endl << endl;
 
-//     time_t stop = time (NULL);
-//    cout << "time for program: " << stop - start << "sec " << endl;
     // ----------------------------------------
     // DONE
     delete arc_matches;
+    cout << "... locarna_X finished!" << endl << endl;
     return 0;
 }
