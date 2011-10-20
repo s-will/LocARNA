@@ -22,7 +22,8 @@ ExactMatcher::ExactMatcher(const Sequence &seqA_,
 			   const int &alpha_3_,
 			   const int &subopt_score_,
 			   const int &easier_scoring_par_,
-			   PatternPairMap &foundEPMs_
+			   PatternPairMap &foundEPMs_,
+			   const double &subopt_range_
 			   //const string& sequenceA_,
 			   //const string& sequenceB_,
 			   //const string& file1_,
@@ -45,7 +46,8 @@ ExactMatcher::ExactMatcher(const Sequence &seqA_,
       alpha_3(alpha_3_),
       subopt_score(subopt_score_*100),
       easier_scoring_par(easier_scoring_par_),
-      foundEPMs(foundEPMs_)
+      foundEPMs(foundEPMs_),
+      subopt_range(subopt_range_)
 
 {
     // set size of matrices
@@ -220,6 +222,10 @@ void ExactMatcher::compute_EPMs_suboptimal(){
 		}
 	}
 	cout << "maximal score " << max << endl;
+	int new_score = static_cast<int>(max * (1-subopt_range));
+	//subopt_score = max * subopt_range;
+	subopt_score = std::max(new_score,EPM_threshold);
+	cout << "suboptimal cutoff " << subopt_score << endl;
 	//this->output_arc_match_score();
 	vector<pair<int,int> > EPM_start_pos;
 	find_start_pos_for_traceback(EPM_start_pos);
@@ -1761,13 +1767,13 @@ void LCSEPM::output_locarna(const string& sequenceA, const string& sequenceB, co
 		seq2_3.push_back('.');
 	}
 
-	seq1_1 += "#";
-	seq1_2 += "#";
-	seq1_3 += "#";
+	seq1_1 += "#1";
+	seq1_2 += "#2";
+	seq1_3 += "#3";
 
-	seq2_1 += "#";
-	seq2_2 += "#";
-	seq2_3 += "#";
+	seq2_1 += "#1";
+	seq2_2 += "#2";
+	seq2_3 += "#3";
 
 	outLocARNAfile << ">"<< seqA.names()[0] << endl << upperCase(sequenceA) << endl;
 	outLocARNAfile << seq1_1 << endl << seq1_2 << endl << seq1_3 << endl;

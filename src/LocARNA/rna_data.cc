@@ -104,6 +104,16 @@ namespace LocARNA {
 	
 	// call fold for setting the pf_scale
 	
+
+	struct timeval tp;
+	struct rusage ruse;
+
+	gettimeofday( &tp, NULL );
+	double start_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+
+	getrusage( RUSAGE_SELF, &ruse );
+	double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+
 	double en = fold(c_sequence,c_structure);
 	// std::cout << c_structure << std::endl;
 	free_arrays();
@@ -117,14 +127,6 @@ namespace LocARNA {
 	// call pf_fold
 	//time_t start_fold = time (NULL);
 
-	struct timeval tp;
-	struct rusage ruse;
-
-	gettimeofday( &tp, NULL );
-	double start_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
-
-	getrusage( RUSAGE_SELF, &ruse );
-	double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
 	pf_fold(c_sequence,c_structure);
 

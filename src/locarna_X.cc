@@ -72,6 +72,7 @@ int alpha_2; //parameter for structural score
 int alpha_3; //parameter for stacking score
 int easier_scoring_par;
 int subopt_score;
+double subopt_range;
 
 
 std::string seq_constraints_A;
@@ -106,7 +107,7 @@ bool opt_suboptimal;
 option_def my_options[] = {
     {"min-prob",'P',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
-    {"max-diff-match",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
+    {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
 
     {"anchorA",0,0,O_ARG_STRING,&seq_constraints_A,"","string","Anchor constraints sequence A."},
     {"anchorB",0,0,O_ARG_STRING,&seq_constraints_B,"","string","Anchor constraints sequence B."},
@@ -128,6 +129,7 @@ option_def my_options[] = {
     {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Parameter for stacking score, 0 means no stacking contribution"},
     {"suboptimal",0,&opt_suboptimal,O_NO_ARG,0,O_NODEFAULT,"suboptimal_traceback","Use a suboptimal traceback for the computation of the exact pattern matchings"},
     {"suboptimal_score",0,0,O_ARG_INT,&subopt_score,"3","alpha_1","Threshold for suboptimal traceback"},
+    {"suboptimal-range",0,0,O_ARG_DOUBLE,&subopt_range,"0.2","alpha_4","trace EPMs within that range of best EPM score"},
     {"easier_scoring_par",'e',0,O_ARG_INT,&easier_scoring_par,"0","alpha","use only sequential and a constant structural score alpha (easier_scoring_par) for each matched base of a basepair"},
     
     {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
@@ -334,7 +336,8 @@ main(int argc, char **argv) {
 		    alpha_3,
 		    subopt_score,
 		    easier_scoring_par,
-		    myEPMs
+		    myEPMs,
+		    subopt_range
 		    );
 
 
@@ -343,14 +346,14 @@ main(int argc, char **argv) {
     getrusage( RUSAGE_SELF, &ruse );
     double endR_preproc = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
-    cout << "time_wall preprocessing = " << setprecision(3) << end_preproc - start_preproc << " sec" << endl;
-    cout << "time_cpu preprocessing = " << setprecision(3) << endR_preproc - startR_preproc << " sec" << endl;
+    cout << endl << "time_wall preprocessing = " << setprecision(3) << end_preproc - start_preproc << " sec" << endl;
+    cout << "time_cpu preprocessing = " << setprecision(3) << endR_preproc - startR_preproc << " sec" << endl << endl;
 
     time_t start_computeMatrices = time (NULL);
     //compute matrices for finding best and enumerating all matchings
     em.compute_matrices();
     time_t stop_computeMatrices = time (NULL);
-    cout << "time for computing Matrices : " << stop_computeMatrices - start_computeMatrices << "sec " << endl;
+    cout << "time for computing EPM matrices : " << stop_computeMatrices - start_computeMatrices << "sec " << endl;
     
     
     // ------------------------------------------------------------
@@ -363,22 +366,34 @@ main(int argc, char **argv) {
 //	    std::cout << "Traceback."<<std::endl;
 //	}
 	
+	gettimeofday( &tp, NULL );
+	double start_trace = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+	getrusage( RUSAGE_SELF, &ruse );
+	double startR_trace = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+
+
 	 if(opt_suboptimal){
-		 cout << "suboptimal traceback..." << endl;
+		 cout << endl << "start suboptimal traceback..." << endl;
 		 em.compute_EPMs_suboptimal();
 	 }
 
 	 else{
-		 cout << "heuristic traceback..." << endl;
-		 time_t start_traceback = time (NULL);
+		 cout << endl << "start heuristic traceback..." << endl;
 		 em.compute_EPMs_heuristic();
-		 time_t stop_traceback = time(NULL);
-		 cout << "time for traceback : " << stop_traceback - start_traceback << "sec " << endl;
 	 }
+
+	 gettimeofday( &tp, NULL );
+	 double end_trace = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+	 getrusage( RUSAGE_SELF, &ruse );
+	 double endR_trace = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+	 cout << "time_wall traceback = " << setprecision(3) << end_trace - start_trace << " sec" << endl;
+	 cout << "time_cpu traceback = " << setprecision(3) << endR_trace - startR_trace << " sec" << endl << endl;
+
    }
 	 // chaining
 	 //time_t start_chaining = time (NULL);
 
+    	 cout << "Start chaining..." << endl;
 	 gettimeofday( &tp, NULL );
 	 double start_chain = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
 

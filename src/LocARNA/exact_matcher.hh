@@ -529,6 +529,7 @@ private:
     int alpha_3;
     int easier_scoring_par;
     int subopt_score;
+    double subopt_range;
    // const string& sequenceA;
    // const string& sequenceB;
     enum{in_B,in_G,in_A};
@@ -630,7 +631,8 @@ public:
     ExactMatcher(const Sequence &seqA_,const Sequence &seqB_,const ArcMatches &arc_matches_,const Mapping &mappingA_, const Mapping &mappingB_,
 		 const int &threshold_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const int &subopt_score,
 		 const int &easier_scoring_par,
-		 PatternPairMap &foundEPMs_
+		 PatternPairMap &foundEPMs_,
+		 const double &subopt_range_
 		 );
     ~ExactMatcher();
     
