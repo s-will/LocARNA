@@ -88,6 +88,7 @@ std::string file2;
 string psFile1;
 string psFile2;
 string locarna_output;
+string clustal_output;
 // ------------------------------------------------------------
 //
 // Options
@@ -100,7 +101,7 @@ bool opt_help;
 bool opt_version;
 bool opt_verbose;
 bool opt_stacking;
-bool opt_locarna_output;
+//bool opt_locarna_output;
 bool opt_postscript_output;
 bool opt_suboptimal;
 
@@ -139,7 +140,7 @@ option_def my_options[] = {
     {"output-ps", 0,&opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"","Output best EPM chain as colored postscript"},
 //    {"output-locarna", 'o',&opt_locarna_output,O_NO_ARG,0,O_NODEFAULT,"","Output fasta file with anchor constraints for locarna"},
     {"output-locarna",'o',0,O_ARG_STRING,&locarna_output,"locarna_constraints_input.txt","constraintsFile","Fasta file with anchor constraints for locarna"},
-
+    {"output-clustal",0,0,O_ARG_STRING,&clustal_output,"","filename","Write file with chain as alignment in clustalw format"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -435,6 +436,11 @@ main(int argc, char **argv) {
 		 if (opt_verbose) { cout << "write locarna anchor constraints..." << endl;}
 		 myChaining.output_locarna(maA.consensus_sequence(), maB.consensus_sequence(), locarna_output);
 	 //}
+
+	 if (clustal_output.size()>0){
+		 if (opt_verbose) { cout << "write chain as clustal alignment..." << endl;}
+		 myChaining.output_clustal(clustal_output);
+	 }
 
     gettimeofday( &tp, NULL );
     double end = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;

@@ -201,7 +201,7 @@ class LCSEPM
 
         //! outputs anchor constraints to be used as input for locarna
         void		output_locarna(const string& sequenceA, const string& sequenceB, const string& outfile);
-
+        void		output_clustal(const string& outfile_name);
 
    private:
 

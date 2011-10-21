@@ -1228,6 +1228,7 @@ PatternPairMap::PatternPairMap()
    idMap.clear();
    patternList.clear();
    patternOrderedMap.clear();
+   minPatternSize = 100000;
 }
 
 PatternPairMap::~PatternPairMap()
@@ -1785,5 +1786,95 @@ void LCSEPM::output_locarna(const string& sequenceA, const string& sequenceB, co
 
 }
 
+void	LCSEPM::output_clustal(const string& outfile_name)
+{
+	// extract matching edges (pairs of positions) from LCS-EPM
+	vector<intPair> matchingsLCSEPM;
+	intVec positionsSeq1LCSEPM;
+	intVec positionsSeq2LCSEPM;
 
+	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();i++)
+	{
+		positionsSeq1LCSEPM.insert(positionsSeq1LCSEPM.end(),(*i)->getFirstPat().getPat().begin(),(*i)->getFirstPat().getPat().end());
+		positionsSeq2LCSEPM.insert(positionsSeq2LCSEPM.end(),(*i)->getSecPat().getPat().begin(),(*i)->getSecPat().getPat().end());
+	}
+
+	sort(positionsSeq1LCSEPM.begin(),positionsSeq1LCSEPM.end());
+	sort(positionsSeq2LCSEPM.begin(),positionsSeq2LCSEPM.end());;
+
+	for (unsigned int i=0;i<positionsSeq1LCSEPM.size();++i)
+	{
+		matchingsLCSEPM.push_back(make_pair(positionsSeq1LCSEPM[i],positionsSeq2LCSEPM[i]));
+	}
+
+	//string outname = ensOptions.out_dir + "/" + ensOptions.align_file;
+	ofstream outfile (outfile_name.c_str());
+
+	string seq1_aln,seq2_aln; //,seq1_aln_str,seq2_aln_str;
+
+	int last_edge_seq1,last_edge_seq2;
+	last_edge_seq1=0;
+	last_edge_seq2=0;
+
+	for (vector<intPair>::iterator i_edge = matchingsLCSEPM.begin(); i_edge != matchingsLCSEPM.end();++i_edge)
+	{
+		for (int i=last_edge_seq1+1;i<(*i_edge).first;++i)
+		{
+			seq1_aln.push_back(seqA[i][0]);
+			seq2_aln.push_back('-');
+			//seq1_aln_str.push_back(myMol1.getStructure(i));
+			//seq2_aln_str.push_back('-');
+		}
+		for (int j=last_edge_seq2+1;j<(*i_edge).second;++j)
+		{
+			seq1_aln.push_back('-');
+			seq2_aln.push_back(seqB[j][0]);
+			//seq1_aln_str.push_back('-');
+			//seq2_aln_str.push_back(myMol2.getStructure(j));
+		}
+
+		seq1_aln.push_back(seqA[(*i_edge).first][0]);
+		seq2_aln.push_back(seqB[(*i_edge).second][0]);
+
+		//seq1_aln_str.push_back(myMol1.getStructure((*i_edge).first));
+		//seq2_aln_str.push_back(myMol2.getStructure((*i_edge).second));
+
+		last_edge_seq1= (*i_edge).first;
+		last_edge_seq2 = (*i_edge).second;
+	}
+
+	// for the part after the last edge
+	for (int i=last_edge_seq1+1;i<=seqA.length();++i)
+	{
+				seq1_aln.push_back(seqA[i][0]);
+				seq2_aln.push_back('-');
+				//seq1_aln_str.push_back(myMol1.getStructure(i));
+				//seq2_aln_str.push_back('-');
+			}
+	for (int j=last_edge_seq2+1;j<=seqB.length();++j)
+	{
+		seq1_aln.push_back('-');
+		seq2_aln.push_back(seqB[j][0]);
+		//seq1_aln_str.push_back('-');
+		//seq2_aln_str.push_back(myMol2.getStructure(j));
+	}
+
+	outfile << "CLUSTAL W (1.83) multiple sequence alignment --- expaRNA 0.7.2 - exact pattern Alignment of RNA --- Score: "<< matchingsLCSEPM.size() << endl <<endl;
+
+	string tmp1 = seqA.names()[0] +"      ";
+	string tmp2 = seqB.names()[0] +"      ";
+	if (tmp1.length() < tmp2.length())
+		tmp1.resize(tmp2.length(),' ');
+	else
+		if (tmp2.length() < tmp1.length())
+			tmp2.resize(tmp1.length(),' ');
+	string tmp3;
+	tmp3.resize(tmp1.length(),' ');
+	//outfile << tmp3 << seq1_aln_str <<endl;
+	outfile << endl;
+	outfile << tmp1 << seq1_aln << endl;
+	outfile << tmp2 << seq2_aln << endl;
+	//outfile << tmp3 << seq2_aln_str << endl << endl;
+	outfile.close();
+}
 } //end namespace
