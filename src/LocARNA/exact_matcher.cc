@@ -1183,7 +1183,16 @@ void ExactMatcher::output_trace_matrix(){
 	for(size_type i=0;i<=seqA.length()+1;i++){
 		for(size_type j=0;j<=seqB.length()+1;j++){
 			cout << Trace(i,j).score << "\t";
-
+		}
+		cout << endl;
+	}
+	cout << endl;
+	std::cout << "Trace Pointer" << std::endl;
+		for(size_type i=0;i<=seqA.length()+1;i++){
+			for(size_type j=0;j<=seqB.length()+1;j++){
+				if(Trace(i,j).next_pos!=0) cout << Trace(i,j).next_pos->first << "," << Trace(i,j).next_pos->second << "\t";
+				else cout << "-"<< "\t";
+			}
 			cout << endl;
 	}
 	cout << endl;
