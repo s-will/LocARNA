@@ -250,11 +250,9 @@ public:
 	  //! constructor
 	Mapping(const BasePairs &bps_,const RnaData &rnadata_,
 			const double &prob_unpaired_in_loop_threshold_,
-			const double &prob_unpaired_external_threshold_,
-			const double &prob_basepair_external_threshold_):
+			const double &prob_unpaired_in_F_threshold_):
 	  prob_unpaired_in_loop_threshold(prob_unpaired_in_loop_threshold_),
-	  prob_unpaired_external_threshold(prob_unpaired_external_threshold_),
-	  prob_basepair_external_threshold(prob_basepair_external_threshold_),
+	  prob_unpaired_in_F_threshold(prob_unpaired_in_F_threshold_),
 	  bps(bps_),
 	  rnadata(rnadata_)
 	  {
@@ -265,8 +263,7 @@ public:
 private:
 	
 	const double &prob_unpaired_in_loop_threshold;
-	const double &prob_unpaired_external_threshold;
-	const double &prob_basepair_external_threshold;
+	const double &prob_unpaired_in_F_threshold;
 	const BasePairs &bps;
 	const RnaData &rnadata;
 	bp_mapping pos_vecs; //! mapping from the new positions to the sequence positions (i.e. which positions relative to the beginning of the arc are valid)
@@ -285,7 +282,6 @@ public:
 	
 	//!is position k valid (i.e. does probability that the base k is unpaired under the loop exceed some threshold) for the basepair with index arcIdx? 
 	bool is_valid_pos(Arc arc,size_type k) const{
-		//return true; //TODO
 		return rnadata.prob_unpaired_in_loop(k,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold;
 	}
 
@@ -304,17 +300,14 @@ public:
 	int number_of_valid_pos(size_type arcIdx) const{
 		return pos_vecs.at(arcIdx).size();
 	}
-	
-	bool unpaired_external(size_type k) const {
-		return rnadata.prob_unpaired_external(k)>=prob_unpaired_external_threshold;
-	}
 
-	bool basepair_external(size_type i, size_type j) const{
-		return rnadata.prob_basepair_external(i,j)>=prob_basepair_external_threshold;
+	bool unpaired_in_F(size_type k) const{
+		return rnadata.prob_unpaired(k)>=prob_unpaired_in_F_threshold;
 	}
 
 	//for debugging
 	void print_vec() const;
+
 	//!class distructor
 	virtual ~Mapping(){
 		new_pos_vecs.clear();
@@ -322,7 +315,6 @@ public:
 	}
 	   
 };
-
 
 //!a class for the representation of exact pattern matches (EPM)
 class EPM{
@@ -333,7 +325,7 @@ class EPM{
 	int score; //needed for suboptimal trace
 	int state; //needed for suboptimal trace in AGB
 	pair<int,int> curPos; //needed for suboptimal trace
-	int score_to_substract_in_F;
+	int score_to_substract_in_F; //needed for suboptimal trace
 
     //!contains the indices of the arcMatches which need to be considered
 	std::vector<ArcMatch::idx_type> arcmatches_to_do;
@@ -379,59 +371,77 @@ class EPM{
 
 public:
 	
-        //!Constructor
-		EPM(){
+    //!Constructor
+	EPM(){
 		reset();
 	}
 
-		void set_arcmatches_to_do(std::vector<ArcMatch::idx_type> arcmatches_to_do_){
-			arcmatches_to_do = arcmatches_to_do_;
-		}
-
-		void set_score(int score_){
-			score=score_;
-		}
-
-		void set_state(int state_){
-			state=state_;
-		}
-
-		void set_curPos(pair<int,int> curPos_){
-		    curPos = curPos_;
-		}
-
-		void set_score_to_substract_in_F(int score){
-			score_to_substract_in_F=score;
-		}
-
-		int get_score(){
-			return score;
-		}
-
-		int get_state(){
-			return state;
-		}
-
-		pair<int,int> get_curPos(){
-			return curPos;
-		}
-
-		int get_score_to_substract_in_F(){
-			return score_to_substract_in_F;
-		}
-
-		virtual ~EPM(){
+	virtual ~EPM(){
 		pat1Vec.clear();
 		pat2Vec.clear();
 		arcmatches_to_do.clear();
 	}
-	//!reset epm and reset current position (cur_it) to the beginning of epm
+
+	void set_arcmatches_to_do(std::vector<ArcMatch::idx_type> arcmatches_to_do_){
+		arcmatches_to_do = arcmatches_to_do_;
+	}
+
+	void set_score(int score_){
+		score=score_;
+	}
+
+	void set_state(int state_){
+		state=state_;
+	}
+
+	void set_curPos(pair<int,int> curPos_){
+		curPos = curPos_;
+	}
+
+	void set_score_to_substract_in_F(int score){
+		score_to_substract_in_F=score;
+	}
+
+	int get_score(){
+		return score;
+	}
+
+	int get_state(){
+		return state;
+	}
+
+	pair<int,int> get_curPos(){
+		return curPos;
+	}
+
+	int get_score_to_substract_in_F(){
+		return score_to_substract_in_F;
+	}
+
+	std::vector<ArcMatch::idx_type> get_arcmatches_to_do(){
+		return arcmatches_to_do;
+	}
+
+	intVec getPat1Vec() const{
+		return pat1Vec;
+	}
+
+	intVec getPat2Vec() const{
+		return pat2Vec;
+	}
+
+	string getStructure() const{
+		return structure;
+	}
+
+	//!reset epm
 	void reset(){
 		pat1Vec.clear();
 		pat2Vec.clear();
 		structure.clear();
 		arcmatches_to_do.clear();
 	}
+
 	void add(int pos1_, int pos2_,char c){
 		pat1Vec.push_back(pos1_);
 		pat2Vec.push_back(pos2_);
@@ -445,7 +455,6 @@ public:
 	}
 
 	void store_arcmatch(ArcMatch::idx_type idx){
-		//cout << "store arcmatch " << endl;
 		arcmatches_to_do.push_back(idx);
 	}
 
@@ -461,22 +470,17 @@ public:
 		return arc_idx;
 	}
 
-	std::vector<ArcMatch::idx_type> get_arcmatches_to_do(){
-		return arcmatches_to_do;
+	void sort_patVec(){
+		quicksort_EPM(0,pat1Vec.size()-1);
 	}
 
-	/*void print_arcmatches_to_do(){
-		if(arcmatches_to_do.size()!=0){
-			cout << "arcmatches to do " << endl;
-			for(int i=0;i<arcmatches_to_do.size();i++){
-				cout << arcmatches_to_do.at(i) << " ";
-			}
-			cout << endl;
-		}
-	}*/
+	bool isEmpty(){
+		//return epm.empty();
+		return pat1Vec.empty();
+	}
 
 	void print_epm(ostream &out, int score){
-		cout << "epm with score " << score << endl;
+		out << "epm with score " << score << endl;
 		intVec::iterator it2=pat2Vec.begin();
 		out << " ";
 		for(intVec::iterator it=pat1Vec.begin();it!=pat1Vec.end();it++,it2++){
@@ -489,35 +493,10 @@ public:
 		for(string::iterator it=structure.begin();it!=structure.end();it++){
 					out << *it;
 				}
-		cout << endl;
-
-	  }
-
-	void sort_patVec(){
-		quicksort_EPM(0,pat1Vec.size()-1);
+		out << endl;
+		out << "pos " << this->curPos.first << "," << this->curPos.second << endl;
+		out << "state " << this->state << endl;
 	}
-	intVec getPat1Vec() const{
-		return pat1Vec;
-	}
-	intVec getPat2Vec() const{
-		return pat2Vec;
-	}
-	
-	string getStructure() const{
-		return structure;
-	}
-
-	bool isEmpty(){
-	  //return epm.empty();
-		return pat1Vec.empty();
-	}
-
-	/*void set_struct(){
-	  structure= "";
-	  for(iter it=epm.begin();it!=epm.end();it++){
-			structure+= it->str;
-		}
-	}*/
 };
 
 class ExactMatcher {
@@ -539,6 +518,7 @@ private:
 
     ScoreMatrix A;
     ScoreMatrix G;
+    ScoreMatrix G2; //for suboptimal traceback -> unambig
     ScoreMatrix B;
     ScoreMatrix F;
 
@@ -551,97 +531,117 @@ private:
     };
 
 
-    Matrix<Trace_entry> Trace; //!for traceback
+    Matrix<Trace_entry> Trace; //!for traceback for heuristic case
 
+    int am_threshold;
     int EPM_threshold;
     int EPM_min_size;
+    pair<int,int> pos_of_max;
     int alpha_1;
     int alpha_2;
     int alpha_3;
     int easier_scoring_par;
     int subopt_score;
+    int min_subopt_score;
+    int difference_to_opt_score;
     const string& sequenceA;
     const string& sequenceB;
-    enum{in_B,in_G,in_A};
+    enum{in_B,in_G,in_G2,in_A};
     const string& file1;
     const string& file2;
     
     PatternPairMap myLCSEPM; //!PatternPairMap result of chaining algorithm
     PatternPairMap mcsPatterns;
-    
+
+    struct info_for_trace_in_G_subopt{
+          	pair<int,int> curPos;
+          	int state;
+          	int score;
+       };
+
     // ----------------------------------------
     // evaluate the recursions / fill matrices
     
-    
+
     //!computes matrices A,G and B
     void compute_AGBmatrices(const ArcMatch &arc_match);
-
-    //! computes matrix F
-    void compute_F();
     
     //!helper function for compute_matrices
-    infty_score_t seq_str_matching(ScoreMatrix &mat,const ArcMatch &arc_match, size_type i, size_type j,bool matrixB);
+    infty_score_t seq_str_matching(ScoreMatrix &mat,const ArcMatch &arc_match, size_type i, size_type j,bool matrixB, bool subopt = false);
+
+    //!computes matrix F with filter criteria
+    void compute_F_with_prob_unpaired();
     
     //! computes score for arcMatch: score under the arcMatch plus the probability of the two basepairs of the arcMatch
     infty_score_t score_for_arc_match(const ArcMatch &am, bool with_part_under_am);
-    
+
     //! computes the stacking score: if stacking occurs with respect to a structure, the stacking probability is taken as a score
     infty_score_t score_for_stacking(const ArcMatch &am, const ArcMatch &inner_am);
 
+    //!computes the length of the EPM with the highest score -> calculate coverage
+    int compute_length_of_best_EPM();
+
+    //!starts suboptimal traceback from all positions where the EPM cannot be extended
+    void find_start_pos_for_traceback();
+
+    //!calculates suboptimal tracebacks
+    void trace_in_F_suboptimal(int i, int j);
+
+    //!calculates suboptimal tracebacks in A,G and B
+    void trace_AGB_suboptimal(const ArcMatch &am, EPM &epm_to_store,EPM cur_epm_AM, list<EPM> &epms_to_proc_AM);
+
+    //!calculates matrices A,G,G2 and B for nonambiguous suboptimal traceback
+    void compute_AGB_subopt(const ArcMatch &arc_match);
+
+    //!helper function for trace_AGB_suboptimal
+    bool str_trace_AGB_suboptimal(ScoreMatrix &mat, int posA, int posB,const ArcMatch &am,int cur_score,int state, pair<int,int> curPos,list<EPM> &epms_to_proc_AM,EPM cur_epm_AM);
+
+    //!calculates suboptimal traceback in G
+    void trace_suboptimal_in_G(int state,int cur_score,pair<int,int> curPos,list<ExactMatcher::info_for_trace_in_G_subopt> &result);
+
+    //!puts together the EPM from the part before the am and the part under the am
+    void copy_epm_trace(list<EPM> &epms_to_proc_AM,EPM &trace_F, list<EPM> &epms_to_proc);
+
+    //!returns if a position (i,j) is likely to be unpaired in F
+    bool valid_unpaired_pos_in_F(size_type i, size_type j);
+
+    //!helper function for trace_suboptimal_in_G
+    void store_cur_el(pair<int,int> pos, int score, int state,list<ExactMatcher::info_for_trace_in_G_subopt> &result);
+
     //!compute the backward score and the forward pointer
-    void trace_F();
-    
+    void compute_trace_matrix();
+
     //!traverses matrix F
     void trace_in_F();
     
+    //!outputs the exact matching starting at position $(i,j)$ while setting the processed elements Trace(i,j) to -inf
+    void get_matching(size_type i, size_type j);
+
+    void set_el_to_neg_inf();
+
+    //!checks the structural case for the traceback in the matrices A,G and B
+    //!if an inner_am is encountered, it is stored for later processing and the left and right endpoint is added to the epm structure
+    bool str_traceAGB(const ScoreMatrix &mat, const ArcMatch &am, size_type posA, size_type posB,pair<int,int> &curPos, EPM &epm_to_store);
+
+    //!recomputes matrices A,G and B for arcMatch recursively and stores the traceback
+    bool trace_AGB(const ArcMatch &am, EPM &epm_to_store);
+
+    //!adds the arcMatch to the epm if the positions aren't contained in another epm (score==pos_infty)
+    bool add_arcmatch(const ArcMatch &am, EPM &epm_to_store);
+
     //!adds the structure and the position corresponding to the position pos_ in the matrix if
     //!the position isn't contained in another epm (score==pos_infty)
     bool add(const ArcMatch &am,pair<int,int> pos_, char c, EPM &epm_to_store);
     
-    //!adds the arcMatch to the epm if the positions aren't contained in another epm (score==pos_infty)
-    bool add_arcmatch(const ArcMatch &am, EPM &epm_to_store);
-    
-    //!outputs the exact matching starting at position $(i,j)$ while setting the processed elements Trace(i,j) to -inf
-    void get_matching(size_type i, size_type j);
-    
-    //!recomputes matrices A,G and B for arcMatch recursively and stores the traceback
-    bool trace_AGB(const ArcMatch &am, EPM &epm_to_store);
-    
-    //!checks the structural case for the traceback in the matrices A,G and B
-    //!if an inner_am is encountered, it is stored for later processing and the left and right endpoint is added to the epm structure 
-    bool str_traceAGB(const ScoreMatrix &mat, const ArcMatch &am, size_type posA, size_type posB,pair<int,int> &curPos, EPM &epm_to_store);
-    
-    void set_el_to_inf();
-    void set_el_to_neg_inf();
-    
-    /*struct info_for_trace_AGB {
-    	EPM cur_epm;
-    	int score;
-    	int state;
-    	pair<int,int> curPos;
-    	//vector<ArcMatch::idx_type> arcmatches_to_do_for_cur_epm;
-    };
-
-    struct info_for_trace_F{
-    	EPM cur_epm;
-    	int score;
-    	pair<int,int> curPos;
-    };*/
-
-    void compute_F_with_prob_external();
-    void find_start_pos_for_traceback(vector<pair<int,int> > &EPM_start_pos);
-    void trace_in_F_suboptimal(int i, int j);
-   // void trace_AGB_suboptimal_main(const ArcMatch &am, EPM &epm_to_store,list<EPM> &epms_to_proc_AGB,list<EPM > &epms_to_proc);
-   // bool str_traceAGB_suboptimal(const ScoreMatrix &mat, const ArcMatch &am, size_type i, size_type j,pair<int,int> &curPos,EPM &epm_to_store);
-    void print_epms_to_proc(list<EPM> &epms_to_proc);
-    bool valid_external_arcmatch(const ArcMatch &am);
-    bool valid_external_pos(size_type i,size_type j);
+    //Debugging
+    void print_EPM_start_pos(list<pair<pair<int,int>,infty_score_t> > &EPM_start_pos);
+    void output_trace_matrix();
+    void output_arc_match_score();
+    void print_matrices(const ArcMatch &am, size_type offset_A, size_type offset_B);
     void print_epms_to_proc_AGB(list<EPM> &epms_to_proc_AGB);
+    void print_info_for_G_matrix(list<info_for_trace_in_G_subopt> &result);
     void print_arcmatches_to_do(std::vector<ArcMatch::idx_type> arcmatches_to_do);
-    //void swap(list<EPM> &epms_to_proc_AM,list<EPM>::iterator &next_el);
-    void str_trace_AGB_suboptimal(ScoreMatrix &mat, int posA, int posB,const ArcMatch &am,int cur_score,int state, pair<int,int> curPos,list<EPM> &epms_to_proc_AM,EPM cur_epm_AM);
-    void trace_AGB_suboptimal(const ArcMatch &am, EPM &epm_to_store,EPM cur_epm_AM, list<EPM> &epms_to_proc_AM);
-    void copy_epm_trace(list<EPM> &epms_to_proc_AM,EPM &trace_F, list<EPM> &epms_to_proc);
+    bool validate_epm();
 
     //!converts string to uppercase
     string upperCase(string seq){
@@ -651,19 +651,12 @@ private:
 	  return s;
 	}
     
-    //Debugging
-    bool validate_epm();
-    void output_trace_matrix();
-    void output_arc_match_score();
-    void print_EPM_start_pos(list<pair<pair<int,int>,infty_score_t> > &EPM_start_pos);
-    void print_matrices(const ArcMatch &am, size_type offset_A, size_type offset_B);
-    
 public:
 
     //! construct with sequences and possible arc matches
     ExactMatcher(const Sequence &seqA_,const Sequence &seqB_,const ArcMatches &arc_matches_,const Mapping &mappingA_, const Mapping &mappingB_,
-		 const int &threshold_,const int &min_size_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const int &subopt_score,
-		 const int &easier_scoring_par, const string& sequenceA_,
+		 const int &threshold_,const int &min_size_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const int &difference_to_opt_score,
+		 const int &min_subopt_score, const int &easier_scoring_par, const string& sequenceA_,
 		 const string& sequenceB_, const string& file1_, const string& file2_);
     ~ExactMatcher();
     
