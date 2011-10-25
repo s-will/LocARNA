@@ -465,6 +465,7 @@ public:
 		pat2Vec.clear();
 		structure.clear();
 		arcmatches_to_do.clear();
+		score = 0;
 	}
 
 	void add(int pos1_, int pos2_,char c){
@@ -558,8 +559,6 @@ private:
 
     Matrix<Trace_entry> Trace; //!for traceback for heuristic case
 
-    int am_threshold;
-    int EPM_threshold;
     pair<int,int> pos_of_max;
     int alpha_1;
     int alpha_2;
@@ -568,16 +567,12 @@ private:
     int subopt_score;
     int min_subopt_score;
     int difference_to_opt_score;
+    int am_threshold;
     double subopt_range;
     double cutoff_coverage;
-   // const string& sequenceA;
-   // const string& sequenceB;
+
     enum{in_B,in_G,in_G2,in_A};
-    //const string& file1;
-    //const string& file2;
-    
-    //PatternPairMap myLCSEPM; //!PatternPairMap result of chaining algorithm
-    //PatternPairMap mcsPatterns;
+
     PatternPairMap& foundEPMs;
 
     struct info_for_trace_in_G_subopt{
@@ -604,6 +599,9 @@ private:
 
     //! computes the stacking score: if stacking occurs with respect to a structure, the stacking probability is taken as a score
     infty_score_t score_for_stacking(const ArcMatch &am, const ArcMatch &inner_am);
+
+    //! add current epm to set of all EPMs (PatternPairMap)
+    void add_foundEPM();
 
     //!computes the length of the EPM with the highest score -> calculate coverage
     int compute_length_of_best_EPM();
@@ -681,12 +679,21 @@ private:
 public:
 
     //! construct with sequences and possible arc matches
-    ExactMatcher(const Sequence &seqA_,const Sequence &seqB_,const ArcMatches &arc_matches_,const Mapping &mappingA_, const Mapping &mappingB_,
-		 const int &threshold_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const int &difference_to_opt_score,
-		 const int &min_subopt_score, const int &easier_scoring_par,
+    ExactMatcher(const Sequence &seqA_,
+		 const Sequence &seqB_,
+		 const ArcMatches &arc_matches_,
+		 const Mapping &mappingA_,
+		 const Mapping &mappingB_,
 		 PatternPairMap &foundEPMs_,
+		 const int &alpha_1,
+		 const int &alpha_2,
+		 const int &alpha_3,
+		 const int &difference_to_opt_score,
+		 const int &min_subopt_score,
+		 const int &easier_scoring_par,
 		 const double &subopt_range_,
-		 const int am_threshold_
+		 const int &am_threshold_,
+		 const double &cutoff_coverage_
 		 );
     ~ExactMatcher();
     
@@ -701,10 +708,6 @@ public:
     
     void
     compute_EPMs_suboptimal();
-
-    //! outputs anchor constraints to be used as input for locarna
-    //void
-    //output_locarna();
 };
 
 

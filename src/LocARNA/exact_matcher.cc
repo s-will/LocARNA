@@ -16,21 +16,16 @@ ExactMatcher::ExactMatcher(const Sequence &seqA_,
 			   const ArcMatches &arc_matches_,
 			   const Mapping &mappingA_,
 			   const Mapping &mappingB_,
-			   const int &EPM_threshold_,
+			   PatternPairMap &foundEPMs_,
 			   const int &alpha_1_,
 			   const int &alpha_2_,
 			   const int &alpha_3_,
 			   const int &difference_to_opt_score_,
 			   const int &min_subopt_score_,
 			   const int &easier_scoring_par_,
-			   PatternPairMap &foundEPMs_,
 			   const double &subopt_range_,
-			   const int & am_threshold_,
-			   const double cutoff_coverage_
-			   //const string& sequenceA_,
-			   //const string& sequenceB_,
-			   //const string& file1_,
-			   //const string& file2_
+			   const int &am_threshold_,
+			   const double &cutoff_coverage_
 			   )
     : seqA(seqA_),
       seqB(seqB_),
@@ -40,7 +35,6 @@ ExactMatcher::ExactMatcher(const Sequence &seqA_,
       mappingA(mappingA_),
       mappingB(mappingB_),
       epm(),
-      EPM_threshold(EPM_threshold_*100),
       alpha_1(alpha_1_),
       alpha_2(alpha_2_),
       alpha_3(alpha_3_),
@@ -256,7 +250,7 @@ void ExactMatcher::compute_EPMs_suboptimal(){
 	}
 
 	if (subopt_score < min_subopt_score) {
-			subopt_score = min_subopt_score;
+		subopt_score = min_subopt_score;
 	}
 
 	cout << "subopt score " << subopt_score << endl;
@@ -269,8 +263,9 @@ void ExactMatcher::compute_EPMs_suboptimal(){
 	cout << "coverage " << max_length/min_seq_length << endl;
 	if(max_length/min_seq_length>cutoff_coverage){
 		//don't do suboptimal traceback;
-		epm.sort_patVec();
-		epm.print_epm(cout,F(pos_of_max.first,pos_of_max.second).finite_value());
+		epm.set_score(max_in_F);
+		//epm.print_epm(cout,F(pos_of_max.first,pos_of_max.second).finite_value());
+		add_foundEPM();
 		return;
 	}
 	epm.reset();
@@ -331,6 +326,7 @@ void ExactMatcher::find_start_pos_for_traceback(){
 				}*/
 				if(valid){
 					trace_in_F_suboptimal(i,j);
+
 				}
 			}
 		}
@@ -338,10 +334,7 @@ void ExactMatcher::find_start_pos_for_traceback(){
 }
 
 void ExactMatcher::trace_in_F_suboptimal(int i,int j){
-	static int count=0;
 
-	static string seq1_id = seqA.names()[0];
-	static string seq2_id = seqB.names()[0];
 
 	list<EPM> epms_to_proc_AM;
 	list<EPM> epms_to_proc;
@@ -412,19 +405,7 @@ void ExactMatcher::trace_in_F_suboptimal(int i,int j){
 			}
 		}
 		else{
-			count++;
-			epm.sort_patVec();
-			//cout << "final epm " << endl;
-			//epm.print_epm(cout,cur_score);
-			if(!validate_epm()) { cout << "wrong EPM "<< endl; return;}
-			stringstream ss;
-			ss << "pat_" << count;
-			string patId= ss.str();
-
-			SinglePattern pattern1 = SinglePattern(patId,seq1_id,epm.getPat1Vec());
-			SinglePattern pattern2 = SinglePattern(patId,seq2_id,epm.getPat2Vec());
-
-			foundEPMs.add(patId, pattern1, pattern2, epm.getStructure(), cur_score);
+			add_foundEPM();
 		}
 		epms_to_proc.pop_front();
 	}
@@ -432,8 +413,25 @@ void ExactMatcher::trace_in_F_suboptimal(int i,int j){
 }
 
 
-void ExactMatcher::add_foundEPM(const EPM& newEPM, const int& count){
+void ExactMatcher::add_foundEPM(){
 
+	static int count = 0;
+
+	static string seq1_id = seqA.names()[0];
+	static string seq2_id = seqB.names()[0];
+
+	count++;
+	epm.sort_patVec();
+	//cout << "final epm " << endl;
+	//epm.print_epm(cout,cur_score);
+	if(!validate_epm()) { cout << "wrong EPM "<< endl; return;}
+	stringstream ss;
+	ss << "pat_" << count;
+	string patId= ss.str();
+
+	SinglePattern pattern1 = SinglePattern(patId,seq1_id,epm.getPat1Vec());
+	SinglePattern pattern2 = SinglePattern(patId,seq2_id,epm.getPat2Vec());
+	foundEPMs.add(patId, pattern1, pattern2, epm.getStructure(), epm.get_score() );
 }
 
 void
@@ -918,7 +916,7 @@ ExactMatcher::trace_in_F(){
 	list<pair<pair<int,int>,infty_score_t> > EPM_start_pos;
 	for(size_type i=0;i<seqA.length()+1;i++){
 		for(size_type j=0;j<seqB.length()+1;j++){
-			if(Trace(i,j).score>(infty_score_t)EPM_threshold){
+			if(Trace(i,j).score>(infty_score_t)min_subopt_score){
 				//consider element for EPM
 				pair<int,int> pos = pair<int,int>(i,j);
 				EPM_start_pos.push_back(pair<pair<int,int>,infty_score_t >(pos,Trace(i,j).score));
@@ -955,12 +953,10 @@ ExactMatcher::trace_in_F(){
 void
 ExactMatcher::get_matching(size_type i, size_type j){
     bool valid=true;
-	static int count= 0;
-	static string seq1_id = seqA.names()[0];
-	static string seq2_id = seqB.names()[0];
+
 	pair<int,int> prevEl=pair<int,int>(i,j);
 	pair<int,int> *curEl=Trace(i,j).next_pos;
-	infty_score_t score1= Trace(i,j).score;
+	infty_score_t curr_score = Trace(i,j).score;
 	if(!(Trace(i,j).score==infty_score_t::neg_infty)){
 		while(curEl!=0){
 			//structural pointer
@@ -982,21 +978,18 @@ ExactMatcher::get_matching(size_type i, size_type j){
 				curEl = Trace(curEl->first,curEl->second).next_pos;
 			}
 		}
-		epm.sort_patVec();
+
 		if(valid){
 		  //epm.validate_epm();
 		  set_el_to_neg_inf();
-		  count++;
-		  stringstream ss;
-		  ss << "pat_" << count;
-		  string patId= ss.str();
-		  SinglePattern pattern1 = SinglePattern(patId,seq1_id,epm.getPat1Vec());
-		  SinglePattern pattern2 = SinglePattern(patId,seq2_id,epm.getPat2Vec());
-		  int score= score1.finite_value();
-		  //epm.add_pattern(patId,pattern1,pattern2, score);
-		  foundEPMs.add(patId, pattern1, pattern2, epm.getStructure(), score);
+		  epm.set_score(curr_score.finite_value());
+
+		  add_foundEPM();
 		}
-		else{set_el_to_neg_inf();}
+		else{
+			epm.sort_patVec();
+			set_el_to_neg_inf();
+		}
 		epm.reset();
 	}
 	  
@@ -1575,6 +1568,7 @@ LCSEPM::~LCSEPM()
 	//cout << endl << " execute destructor..." << endl;
 
 	EPM_Table2.clear();
+	// todo: delete pointers in EPM_table
 	holeOrdering2.clear();
 }
 
@@ -1829,7 +1823,7 @@ char* LCSEPM::getStructure(PatternPairMap& myMap, bool firstSeq, int length)
       else if(structure[j]==')')
 	x= ')';
       else 
-	x= 'X';
+	x= '.';
       s[patternVec[j]-1]= x;
     }
     

@@ -62,7 +62,6 @@ int max_diff_am; //maximal difference between two arc ends, -1 is off
 // except when there is no additional computation of M matrices necessary,
 // this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
 
-int EPM_threshold; //threshold for Exact Pattern Matches
 int EPM_min_size; //minimum size for Exact Pattern Matches
 double prob_unpaired_in_loop_threshold; // threshold for prob_unpaired_in_loop
 double prob_unpaired_in_F_threshold;
@@ -121,8 +120,7 @@ option_def my_options[] = {
     {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
     {"stacking",'S',&opt_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","Use stacking terms (needs stack-probs by RNAfold -p2)"},
-    {"EPM_threshold",'t',0,O_ARG_INT,&EPM_threshold,"5","threshold","User-defined threshold for Exact Pattern Matches"},
-    {"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"3","min_size","User-defined minimum size for Exact Pattern Matches (chaining only)"},
+    {"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"2","min_size","User-defined minimum size for Exact Pattern Matches (chaining only)"},
     {"prob_unpaired_in_loop_threshold",'p',0,O_ARG_DOUBLE,&prob_unpaired_in_loop_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
     {"prob_unpaired_in_F_threshold",0,0,O_ARG_DOUBLE,&prob_unpaired_in_F_threshold,"0.1","threshold","Threshold for prob_unpaired_in_F"},
     //{"prob_basepair_external_threshold",0,0,O_ARG_DOUBLE,&prob_basepair_external_threshold,"0.00001","threshold","Threshold for prob_basepair_external"},
@@ -133,8 +131,8 @@ option_def my_options[] = {
     {"difference_to_optimal_score",0,0,O_ARG_INT,&difference_to_opt_score,"10","threshold","Threshold for suboptimal traceback"},
     {"min_subopt_score",0,0,O_ARG_INT,&min_subopt_score,"3","min","Minimal suboptimal score"},
     {"am-threshold",0,0,O_ARG_INT,&am_threshold,"3","am","Minimal arcmatch score in F matrix"},
-    {"suboptimal-range",0,0,O_ARG_DOUBLE,&subopt_range,"0.2","alpha_4","trace EPMs within that range of best EPM score"},
-    {"coverage-cutoff",0,0,O_ARG_DOUBLE,&coverage_cutoff,"0.5","cov","Skip chaining if best EPM has larger coverage on shortes seq"},
+    {"suboptimal-range",0,0,O_ARG_DOUBLE,&subopt_range,"0.0","range","trace EPMs within that range of best EPM score"},
+    {"coverage-cutoff",0,0,O_ARG_DOUBLE,&coverage_cutoff,"0.5","cov","Skip chaining if best EPM has larger coverage on shortest seq"},
     {"easier_scoring_par",'e',0,O_ARG_INT,&easier_scoring_par,"0","alpha","use only sequential and a constant structural score alpha (easier_scoring_par) for each matched base of a basepair"},
     
     {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
@@ -337,14 +335,13 @@ main(int argc, char **argv) {
 		    *arc_matches,
 		    mappingA,
 		    mappingB,
-		    EPM_threshold,
+		    myEPMs,
 		    alpha_1,
 		    alpha_2,
 		    alpha_3,
 		    difference_to_opt_score,
 		    min_subopt_score,
 		    easier_scoring_par,
-		    myEPMs,
 		    subopt_range,
 		    am_threshold,
 		    coverage_cutoff
@@ -401,7 +398,7 @@ main(int argc, char **argv) {
 
    }
 	 // chaining
-	 //time_t start_chaining = time (NULL);
+	 //time_t start_chaining = time (	epm.sort_patVec();NULL);
 
     	 cout << "Start chaining..." << endl;
 	 gettimeofday( &tp, NULL );
