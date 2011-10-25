@@ -569,6 +569,7 @@ private:
     int min_subopt_score;
     int difference_to_opt_score;
     double subopt_range;
+    double cutoff_coverage;
    // const string& sequenceA;
    // const string& sequenceB;
     enum{in_B,in_G,in_G2,in_A};
@@ -684,7 +685,8 @@ public:
 		 const int &threshold_,const int &alpha_1,const int &alpha_2, const int &alpha_3, const int &difference_to_opt_score,
 		 const int &min_subopt_score, const int &easier_scoring_par,
 		 PatternPairMap &foundEPMs_,
-		 const double &subopt_range_
+		 const double &subopt_range_,
+		 const int am_threshold_
 		 );
     ~ExactMatcher();
     

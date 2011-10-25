@@ -24,7 +24,9 @@ ExactMatcher::ExactMatcher(const Sequence &seqA_,
 			   const int &min_subopt_score_,
 			   const int &easier_scoring_par_,
 			   PatternPairMap &foundEPMs_,
-			   const double &subopt_range_
+			   const double &subopt_range_,
+			   const int & am_threshold_,
+			   const double cutoff_coverage_
 			   //const string& sequenceA_,
 			   //const string& sequenceB_,
 			   //const string& file1_,
@@ -47,7 +49,8 @@ ExactMatcher::ExactMatcher(const Sequence &seqA_,
       easier_scoring_par(easier_scoring_par_),
       foundEPMs(foundEPMs_),
       subopt_range(subopt_range_),
-      am_threshold(300)
+      am_threshold(am_threshold_*100),
+      cutoff_coverage(cutoff_coverage_)
 {
     // set size of matrices
 	A.resize(seqA.length()+1,seqB.length()+1);
@@ -240,22 +243,31 @@ void ExactMatcher::compute_EPMs_suboptimal(){
 	//initialize G2 matrix for suboptimal traceback
 	G2.resize(seqA.length()+1,seqB.length()+1);
 	G2.fill(infty_score_t(0));
+
 	cout << "maximal score " << F(pos_of_max.first,pos_of_max.second) << endl;
 	int max_in_F = F(pos_of_max.first,pos_of_max.second).finite_value();
-	if(max_in_F-difference_to_opt_score<min_subopt_score){
-		subopt_score = min_subopt_score;
-	}
-	else{
+
+	subopt_score = max_in_F;
+	if (difference_to_opt_score > 0){
 		subopt_score = max_in_F-difference_to_opt_score;
+		cout << " Set suboptimal score to allowed difference" << endl;
+	} else if ( (subopt_range > 0.0) && (subopt_range < 1.0 ) ){
+		subopt_score = subopt_range * max_in_F;
 	}
+
+	if (subopt_score < min_subopt_score) {
+			subopt_score = min_subopt_score;
+	}
+
 	cout << "subopt score " << subopt_score << endl;
+
 	//compute length of best EPM
 	int max_length = compute_length_of_best_EPM();
-	cout << "max length " << max_length << endl;
-	double avg_seq_length = (seqA.length()+seqB.length())/2;
-	double cutoff_coverage = 0.5;
-	cout << "coverage " << max_length/avg_seq_length << endl;
-	if(max_length/avg_seq_length>cutoff_coverage){
+	cout << "max EPM length " << max_length << endl;
+
+	double min_seq_length = static_cast<double>(std::min(seqA.length(),seqB.length()));
+	cout << "coverage " << max_length/min_seq_length << endl;
+	if(max_length/min_seq_length>cutoff_coverage){
 		//don't do suboptimal traceback;
 		epm.sort_patVec();
 		epm.print_epm(cout,F(pos_of_max.first,pos_of_max.second).finite_value());
@@ -419,6 +431,10 @@ void ExactMatcher::trace_in_F_suboptimal(int i,int j){
 	epm.reset();
 }
 
+
+void ExactMatcher::add_foundEPM(const EPM& newEPM, const int& count){
+
+}
 
 void
 ExactMatcher::trace_AGB_suboptimal(const ArcMatch &am, EPM &epm_to_store,EPM cur_epm_AM, list<EPM> &epms_to_proc_AM){

@@ -74,8 +74,8 @@ int easier_scoring_par;
 int difference_to_opt_score;
 int min_subopt_score;
 double subopt_range;
-
-
+int am_threshold;
+double coverage_cutoff;
 std::string seq_constraints_A;
 std::string seq_constraints_B;
 
@@ -132,7 +132,9 @@ option_def my_options[] = {
     {"suboptimal",0,&opt_suboptimal,O_NO_ARG,0,O_NODEFAULT,"suboptimal_traceback","Use a suboptimal traceback for the computation of the exact pattern matchings"},
     {"difference_to_optimal_score",0,0,O_ARG_INT,&difference_to_opt_score,"10","threshold","Threshold for suboptimal traceback"},
     {"min_subopt_score",0,0,O_ARG_INT,&min_subopt_score,"3","min","Minimal suboptimal score"},
+    {"am-threshold",0,0,O_ARG_INT,&am_threshold,"3","am","Minimal arcmatch score in F matrix"},
     {"suboptimal-range",0,0,O_ARG_DOUBLE,&subopt_range,"0.2","alpha_4","trace EPMs within that range of best EPM score"},
+    {"coverage-cutoff",0,0,O_ARG_DOUBLE,&coverage_cutoff,"0.5","cov","Skip chaining if best EPM has larger coverage on shortes seq"},
     {"easier_scoring_par",'e',0,O_ARG_INT,&easier_scoring_par,"0","alpha","use only sequential and a constant structural score alpha (easier_scoring_par) for each matched base of a basepair"},
     
     {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
@@ -343,7 +345,9 @@ main(int argc, char **argv) {
 		    min_subopt_score,
 		    easier_scoring_par,
 		    myEPMs,
-		    subopt_range
+		    subopt_range,
+		    am_threshold,
+		    coverage_cutoff
 		    );
 
 
