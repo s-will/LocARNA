@@ -276,4 +276,11 @@ Apr, 2011
 
 May, 2011
 	Fix a problem with compiling on case-insensitive file systems (generate 	locarna.bin instead of locarna executable in src, rename at install)
-	
+
+	add alifold-consensus-dp option for mlocarna
+
+Aug, 2011: Add code for 'locarna_X'
+
+Sep, 2011: Adding Exparna-P code for "in loop" probabilities
+
+Oct, 2011: release 1.6.2
