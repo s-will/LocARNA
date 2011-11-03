@@ -114,7 +114,7 @@ namespace LocARNA {
 	 * keep the DP-matrices for later use.
 	 *
 	 * @param file input file name
-	 * @param keepMcM if TRUE, keep the McCaskill matrices for use in methods prob_unpaired/basepair_in_loop/external. This works only if file is in clustalw format!
+	 * @param keepMcM if TRUE, keep the McCaskill matrices for use in methods prob_unpaired/basepair_in_loop/external
 	 * @param stacking whether to use stacking
 	 */
 	RnaData(const std::string &file, bool keepMcM=false, bool stacking=false);
@@ -498,6 +498,14 @@ namespace LocARNA {
 			       size_type j) const;
 	
 	
+	/** 
+	 * \brief Initialize pointers to McCaskill matrices with 0.
+	 *
+	 * Used to avoid freeing unallocated space in free_McCaskill_matrices().
+	 */
+	void
+	init_McCaskill_pointers();
+
 	/** 
 	 * \brief Computes the McCaskill matrices and keeps them accessible
 	 * 

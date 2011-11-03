@@ -34,6 +34,8 @@ namespace LocARNA {
 	arc_2_probs_(0),
 	seq_constraints_("")
     {
+	init_McCaskill_pointers();
+	
 	read(file, keepMcM);
 
 	consensus_sequence = MultipleAlignment(sequence).consensus_sequence();	
@@ -54,6 +56,8 @@ namespace LocARNA {
 	    std::cerr << "Construction with multi-row Sequence object is not implemented." << std::endl;
 	    exit(-1);
 	}
+	
+	init_McCaskill_pointers();
 	
 	// run McCaskill and get access to results
 	// in McCaskill_matrices
@@ -198,28 +202,9 @@ namespace LocARNA {
     
 #endif // HAVE_LIBRNA
 
-    RnaData::~RnaData() {
-	free_McCaskill_matrices();
-    }
-
     void
-    RnaData::free_McCaskill_matrices() {
+    RnaData::init_McCaskill_pointers() {
 #     ifdef HAVE_LIBRNA	
-	
-	if(S_p) free(S_p);          
-	if(S1_p) free(S1_p);	 	
-	if(ptype_p) free(ptype_p);	 				
-	if(qb_p) free(qb_p);					
-	if(qm_p) free(qm_p);	 				
-	if(q1k_p) free(q1k_p);	 
-	if(qln_p) free(qln_p);	  
- 	if(bppm) free(bppm);   
-	if(iindx) free(iindx);
-  	if(qm2) free(qm2);
-	if(expMLbase_p) free(expMLbase_p); 
-        if(scale_p) free(scale_p); 
-	if(pf_params_p) free(pf_params_p);
-        
 	S_p= NULL;
 	S1_p= NULL;
 	ptype_p= NULL;
@@ -233,6 +218,32 @@ namespace LocARNA {
 	pf_params_p= NULL;
 	scale_p= NULL;
 	expMLbase_p= NULL;
+#     endif
+    }
+
+    RnaData::~RnaData() {
+	free_McCaskill_matrices();
+    }
+
+    void
+    RnaData::free_McCaskill_matrices() {
+#     ifdef HAVE_LIBRNA	
+	
+	if(S_p) free(S_p);
+	if(S1_p) free(S1_p);	 	
+	if(ptype_p) free(ptype_p);	 				
+	if(qb_p) free(qb_p);					
+	if(qm_p) free(qm_p);	 				
+	if(q1k_p) free(q1k_p);	 
+	if(qln_p) free(qln_p);	  
+ 	if(bppm) free(bppm);   
+	if(iindx) free(iindx);
+  	if(qm2) free(qm2);
+	if(expMLbase_p) free(expMLbase_p); 
+        if(scale_p) free(scale_p); 
+	if(pf_params_p) free(pf_params_p);
+        
+	init_McCaskill_pointers();
 	
 #     endif
 	
