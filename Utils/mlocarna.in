@@ -1718,7 +1718,7 @@ sub call_locarna( $$$ ) {
     printmsg 1, "$cmd\n";
     printmsg 1, "\n";
     system($cmd)==0
-	|| die "Cannot execute locarna\n";
+	|| die "Cannot execute $pw_aligner\n";
     
     system "cat $tgt.aln | grep -v '^CLUSTAL --- LocARNA'" if $verbose;
 
@@ -1796,7 +1796,7 @@ sub call_locarna_prob( $$$$$ ) {
     printmsg 1, "$cmd\n\n";
     
     system($cmd)==0
-	|| die "Cannot execute locarna\n";
+	|| die "Cannot execute $pw_aligner\n";
     
     system "cat $tgt.aln" if ($verbose);
     
