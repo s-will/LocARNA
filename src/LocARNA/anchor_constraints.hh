@@ -175,7 +175,7 @@ namespace LocARNA {
 
 	//! return the positions (i,j) of the leftmost anchor constraint 
 	size_pair_t leftmost_anchor() const {
-	    for (size_type i=0; i<=a.size(); i++) {
+	    for (size_type i=0; i<a.size(); i++) {
 		if (a[i]>0) return size_pair_t(i,a[i]);
 	    }
 	    return size_pair_t(a.size()+1,b.size()+1);

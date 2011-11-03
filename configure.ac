@@ -78,6 +78,7 @@ fi
 AC_SUBST(LDFLAGS,[""])
 AC_SUBST(CPPFLAGS,[""])
 AC_SUBST(LIBS,[""])
+AC_SUBST(LIBDEFS,[""]) # defines that have to be set when using the LocARNA library
 
 # if we want linking to librna
 if test "$ENABLE_LIBRNA" = "yes" ; then
@@ -99,6 +100,7 @@ if test "$ENABLE_LIBRNA" = "yes" ; then
    ## link the Vienna library
    LIBS="-lRNA $LIBS"
    
+   LIBDEFS="$LIBDEFS -DHAVE_LIBRNA"
    AC_DEFINE([HAVE_LIBRNA])
 fi
 
@@ -182,7 +184,8 @@ AC_ARG_ENABLE([large-pf],
 )
 AC_MSG_RESULT($use_large_pf)
 if test x"$use_large_pf" = x"yes"; then
-   AC_DEFINE([LARGE_PF])
+    LIBDEFS="$LIBDEFS -DLARGE_PF"
+    AC_DEFINE([LARGE_PF])
 fi
 
 
