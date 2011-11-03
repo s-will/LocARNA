@@ -284,3 +284,9 @@ Aug, 2011: Add code for 'locarna_X'
 Sep, 2011: Adding Exparna-P code for "in loop" probabilities
 
 Oct, 2011: release 1.6.2
+
+Nov, 2011:
+	Add mlocarna option to run specified binaries in place of locarna
+	and locarna_p. This can be used to plug in compatible programs
+	like carna
+

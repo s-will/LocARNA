@@ -75,12 +75,20 @@ if test "$RNAfold" = "false" -o "$RNAplfold" = "false" -o "$RNAalifold" = "false
     VRNA_OK=false
 fi
 
+AC_SUBST(LDFLAGS,[""])
+AC_SUBST(CPPFLAGS,[""])
+AC_SUBST(LIBS,[""])
+
 # if we want linking to librna
 if test "$ENABLE_LIBRNA" = "yes" ; then
    # if --with-vrna given, add to flags for CPP and LD
    if test "$with_vrna" != "" ; then
-      LDFLAGS="-L$with_vrna/lib $LDFLAGS"
-      CPPFLAGS="-I$with_vrna/include $CPPFLAGS"
+      VRNA_LDFLAGS="-L$with_vrna/lib"
+      VRNA_CPPFLAGS="-I$with_vrna/include"
+
+     # add vienna rna ld and cpp flags
+     LDFLAGS="$VRNA_LDFLAGS $LDFLAGS"
+     CPPFLAGS="$VRNA_CPPFLAGS $CPPFLAGS"
    fi
    
    # Check for Vienna RNA library (primitive check for one header) 
@@ -104,7 +112,6 @@ AC_SUBST(OPENMP_CXXFLAGS)
 CPPFLAGS="$OPENMP_CXXFLAGS $CPPFLAGS"
 LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
 
-
 # Checks for header files.
 AC_HEADER_STDC
 
@@ -124,16 +131,16 @@ AC_PATH_PROG([TCOFFEE],[$TCOFFEE],false)
 # Debug option
 #
 AC_MSG_CHECKING([whether to build with debug information])
-debuger=no
+debug_it=no
 AC_ARG_ENABLE([debug],
     AC_HELP_STRING(
         [--enable-debug],
         [enable debug data generation (def=no)]
     ),
-    debuger="$enableval"
+    debug_it="$enableval"
 )
-AC_MSG_RESULT($debuger)
-if test x"$debuger" = x"yes"; then
+AC_MSG_RESULT($debug_it)
+if test x"$debug_it" = x"yes"; then
     AC_DEFINE([DEBUG])
     CPPFLAGS="$CPPFLAGS -g -Wall"
 else
@@ -148,16 +155,17 @@ CPPFLAGS="$CPPFLAGS -Wno-deprecated"
 # Static linking
 #
 AC_MSG_CHECKING([whether to link statically])
-static_linkage=no
-AC_ARG_ENABLE([static],
+link_statically=no
+AC_ARG_ENABLE([link-static],
     AC_HELP_STRING(
-        [--enable-static],
+        [--enable-link-static],
         [link statically (def=no)]
     ),
-    static_linkage="$enableval"
+    link_statically="$enableval"
 )
-AC_MSG_RESULT($static_linkage)
-if test x"$static_linkage" = x"yes"; then
+
+AC_MSG_RESULT($link_statically)
+if test x"$link_statically" = x"yes"; then
    LDFLAGS="$LDFLAGS -static"
 fi
 

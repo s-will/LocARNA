@@ -7,5 +7,5 @@ Name: @PACKAGE_NAME@
 Description: LocARNA C++ library.
 Version: @PACKAGE_VERSION@
 URL: @PACKAGE_URL@
-Libs: -L${libdir} -lLocARNA-@API_VERSION@
-Cflags: -I${includedir}/LocARNA-@API_VERSION@
+Libs: -L${libdir} -lLocARNA-@API_VERSION@ @LIBS@  @LDFLAGS@
+Cflags: -I${includedir}/LocARNA-@API_VERSION@ @CPPFLAGS@

@@ -75,6 +75,15 @@ Many of the options of locarna, the program for pairwise alignment, will work as
 This allows controlling scoring, locality, and speed/acccuracy trade off (heuristics).
 B<Please see> C<locarna -h> or the manpage of locarna.
 
+=item B<pw-aligner>
+
+Utilize given binary for the pairwise alignment (overrides def=locarna).
+
+=item B<pw-aligner-p>
+
+Utilize given binary for the probabilistic pairwise alignment
+(overrides def=locarna_p).
+
 =back
 
 =head2 Controlling guide tree construction 
@@ -376,6 +385,9 @@ my $free_endgaps;
 my $free_endgaps_3;
 my $free_endgaps_5;
 
+my $pw_aligner="$bindir/locarna";
+my $pw_aligner_p="$bindir/locarna_p";
+
 my $tree_file;
 my $tgtdir;
 
@@ -458,6 +470,9 @@ my %options_hash=
      "free-endgaps" => \$free_endgaps,
      "free-endgaps-3" => \$free_endgaps_3,
      "free-endgaps-5" => \$free_endgaps_5,
+
+     "pw-aligner" => \$pw_aligner,
+     "pw-aligner-p" => \$pw_aligner_p,
 
      "min-prob" => \$min_prob,
      "tree-min-prob" => \$tree_min_prob,
@@ -574,6 +589,9 @@ my @options = #options that are not or not automatically passed to locarna
      "free-endgaps-3",
      "free-endgaps-5",
 
+     "pw-aligner=s",
+     "pw-aligner-p=s",
+     
      "min-prob|p=f",
      "tree-min-prob|P=f",
      
@@ -708,6 +726,7 @@ sub help_msg {
     print STDERR 
 "Usage:
     mlocarna [options] <fasta file>
+    Multiply aligns the RNA sequences in the fasta file based on sequence-structure similarity.
     For details on options call mlocarna --man.
 ";
 exit 0;
@@ -1622,9 +1641,9 @@ sub compute_match_probs($$$$$$$) {
 
 	my $cmd;
 	if ($fast_mea) {
-	    $cmd = "$bindir/locarna $input_dir/$nnameA $input_dir/$nnameB $locarna_params --write-match-probs $tmpfile_bm";
+	    $cmd = "$pw_aligner $input_dir/$nnameA $input_dir/$nnameB $locarna_params --write-match-probs $tmpfile_bm";
 	} else {
-	    $cmd = "$bindir/locarna_p $input_dir/$nnameA $input_dir/$nnameB $locarna_p_params --write-basematch-probs $tmpfile_bm";
+	    $cmd = "$pw_aligner_p $input_dir/$nnameA $input_dir/$nnameB $locarna_p_params --write-basematch-probs $tmpfile_bm";
 	    
 	    if ( ! $only_basematch_probs ) {
 		$cmd .= " --write-arcmatch-probs $tmpfile_am";
@@ -1688,7 +1707,7 @@ sub call_locarna( $$$ ) {
     
     printmsg 2, "Align $inA + $inB --> $tgt\n";
     
-    my $cmd="$bindir/locarna $inA $inB $locarna_params --clustal=$tgt.aln";
+    my $cmd="$pw_aligner $inA $inB $locarna_params --clustal=$tgt.aln";
     
     $cmd .= " --pp=$tgt.pp";# unless $alifold_consensus_dp;
     
@@ -1768,7 +1787,7 @@ sub call_locarna_prob( $$$$$ ) {
     }
     
     printmsg 2, "Align $inA + $inB --> $tgt\n";
-    my $cmd="$bindir/locarna $inA $inB $locarna_params --pp=$tgt.pp --clustal=$tgt.aln $readprob_args";
+    my $cmd="$pw_aligner $inA $inB $locarna_params --pp=$tgt.pp --clustal=$tgt.aln $readprob_args";
 
     $cmd.=" ".reference_alignment_option($refaln_filename);
 
@@ -2012,7 +2031,7 @@ sub compute_alignment_from_dps( $$$$ ) {
     my $seqA_dp="$input_dir/".get_normalized_seqname($nameA);
     my $seqB_dp="$input_dir/".get_normalized_seqname($nameB);
 
-    my $cmd="$bindir/locarna $seqA_dp $seqB_dp $locarna_params --clustal=$tmpfile >/dev/null";
+    my $cmd="$pw_aligner $seqA_dp $seqB_dp $locarna_params --clustal=$tmpfile >/dev/null";
     
     $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
         
@@ -2056,7 +2075,7 @@ sub compute_alignment_from_dps_probs( $$$$$$ ) {
 	$locarna_params .= " --read-arcmatch-probs=$tmpfile3";
     }
     
-    my $cmd="$bindir/locarna $seqA_dp $seqB_dp $locarna_params >/dev/null";
+    my $cmd="$pw_aligner $seqA_dp $seqB_dp $locarna_params >/dev/null";
     
     $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
     
