@@ -34,8 +34,10 @@ namespace LocARNA {
 	arc_2_probs_(0),
 	seq_constraints_("")
     {
+#ifdef HAVE_LIBRNA
 	init_McCaskill_pointers();
-	
+#endif
+
 	read(file, keepMcM);
 
 	consensus_sequence = MultipleAlignment(sequence).consensus_sequence();	
@@ -57,8 +59,10 @@ namespace LocARNA {
 	    exit(-1);
 	}
 	
+#ifdef HAVE_LIBRNA
 	init_McCaskill_pointers();
-	
+#endif
+
 	// run McCaskill and get access to results
 	// in McCaskill_matrices
 	compute_McCaskill_matrices();
@@ -199,12 +203,8 @@ namespace LocARNA {
 	
     }
 
-    
-#endif // HAVE_LIBRNA
-
     void
     RnaData::init_McCaskill_pointers() {
-#     ifdef HAVE_LIBRNA	
 	S_p= NULL;
 	S1_p= NULL;
 	ptype_p= NULL;
@@ -218,16 +218,20 @@ namespace LocARNA {
 	pf_params_p= NULL;
 	scale_p= NULL;
 	expMLbase_p= NULL;
-#     endif
     }
+    
+#endif // HAVE_LIBRNA
+
 
     RnaData::~RnaData() {
+#ifdef HAVE_LIBRNA
 	free_McCaskill_matrices();
+#endif
     }
 
+#ifdef HAVE_LIBRNA	
     void
     RnaData::free_McCaskill_matrices() {
-#     ifdef HAVE_LIBRNA	
 	
 	if(S_p) free(S_p);
 	if(S1_p) free(S1_p);	 	
@@ -243,12 +247,11 @@ namespace LocARNA {
         if(scale_p) free(scale_p); 
 	if(pf_params_p) free(pf_params_p);
         
-	init_McCaskill_pointers();
-	
-#     endif
-	
+	init_McCaskill_pointers();	
     }
 
+#endif
+	
     
     // decide on file format and call either readPS or readPP
     void RnaData::read(const std::string &filename, bool keepMcM) {

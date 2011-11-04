@@ -6,9 +6,11 @@
 
 #include "aux.hh"
 
+# ifdef HAVE_LIBRNA
 extern "C" {
 #include <ViennaRNA/fold_vars.h>
 }
+#endif
 
 #include "sequence.hh"
 
@@ -499,14 +501,6 @@ namespace LocARNA {
 	
 	
 	/** 
-	 * \brief Initialize pointers to McCaskill matrices with 0.
-	 *
-	 * Used to avoid freeing unallocated space in free_McCaskill_matrices().
-	 */
-	void
-	init_McCaskill_pointers();
-
-	/** 
 	 * \brief Computes the McCaskill matrices and keeps them accessible
 	 * 
 	 * Allocates and fills the McCaskill matrices. Use
@@ -555,7 +549,16 @@ namespace LocARNA {
 	void
 	compute_Qm2();
 
+	/** 
+	 * \brief Initialize pointers to McCaskill matrices with 0.
+	 *
+	 * Used to avoid freeing unallocated space in free_McCaskill_matrices().
+	 */
+	void
+	init_McCaskill_pointers();
+
 #   endif // HAVE_LIBRNA
+
 
     
 	// ------------------------------------------------------------

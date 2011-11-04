@@ -1,3 +1,6 @@
+// compile only when libRNA is available for linking
+#ifdef HAVE_LIBRNA
+
 #include "sequence.hh"
 #include "arc_matches.hh"
 
@@ -1230,3 +1233,6 @@ void LCSEPM::MapToPS(const string& sequenceA, const string& sequenceB, int& mySi
 }
 
 } //end namespace
+
+
+#endif // HAVE_LIBRNA

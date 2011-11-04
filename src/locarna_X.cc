@@ -8,6 +8,9 @@
  *
  **********************************************************************/
 
+// compile only when libRNA is available for linking
+#ifdef HAVE_LIBRNA
+
 
 #include <iostream>
 #include <fstream>
@@ -316,3 +319,16 @@ main(int argc, char **argv) {
     delete arc_matches;
     return 0;
 }
+
+#else // HAVE_LIBRNA
+#include "iostream"
+int
+main() {
+    std::cerr
+	<< "Functionality of locarna_X is not available,"
+	<< "since LocARNA was compiled without libRNA support." << std::endl
+	<< "Requires recompilation with configure option --enable-librna." <<std::endl; 
+    return -1;
+}
+
+#endif // HAVE_LIBRNA
