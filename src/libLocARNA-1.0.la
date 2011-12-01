@@ -17,7 +17,7 @@ old_library='libLocARNA-1.0.a'
 inherited_linker_flags=''
 
 # Libraries that this one depends upon.
-dependency_libs=' -L/home/will/Soft/ViennaRNA-2.0.0-RC4/lib -lRNA'
+dependency_libs=' -L/home/will/Soft/ViennaRNA-2.0.0/lib -lRNA'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''

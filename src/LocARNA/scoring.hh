@@ -27,7 +27,7 @@ namespace LocARNA {
     typedef std::vector<infty_score_t> ScoreVector;
 
     //! type of partition functions
-#ifdef LARGE_PF
+#ifdef VERY_LARGE_PF
     typedef long double pf_score_t;
 #else
     typedef double pf_score_t;

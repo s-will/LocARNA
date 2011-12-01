@@ -292,3 +292,7 @@ Nov, 2011:
 
 	Bug fix; compilation without linking libRNA was broken.
 	release (1.6.2)
+
+Dec, 2011
+	Bug-fixes: treefile regexp, LARGE_PF name clash mit Vienna package
+	

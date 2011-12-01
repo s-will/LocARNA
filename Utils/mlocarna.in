@@ -508,7 +508,7 @@ my %options_hash=
      "pf-scale" => \$pf_scale,
      
      "only-basematch-probs" => \$only_basematch_probs, ## pf only for basematch
-     "fast_mea" => \$fast_mea,                         ## use heuristics for base match probabilities
+     "fast-mea" => \$fast_mea,                         ## use heuristics for base match probabilities
      
      "min-bm-prob" => \$MLocarna::MatchProbs::min_bm_prob, ## locarna_p option
      "min-am-prob" => \$MLocarna::MatchProbs::min_am_prob, ## locarna_p option
@@ -633,7 +633,7 @@ my @options = #options that are not or not automatically passed to locarna
      "probabilistic",
      "pf-scale=f",
      "only-basematch-probs",
-     "fast_mea",
+     "fast-mea",
      
      "dp-cache=s",
      "only-dps",
@@ -1362,7 +1362,7 @@ sub perform_multiple_alignment($) {
 	chomp($tree);
 
 	## don't allow names that end in :<float>, but accept input tree with distances (and ignore them)
-	$tree =~ s/:[\d.e-]+\s*[,)]//g;
+	$tree =~ s/:[\d.e-]+\s*([,)])/\1/g;
 	$tree =~ s/:[\d.e-]+\s*$//g;
 	
 	close TREE;

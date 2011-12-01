@@ -173,6 +173,7 @@ fi
 
 
 ## flag for use of long double partition function type
+## attention: name clash with Vienna package macro LARGE_PF ==> define VERY_LARGE_PF
 AC_MSG_CHECKING([whether to support large partition function])
 use_large_pf=no
 AC_ARG_ENABLE([large-pf],
@@ -184,8 +185,8 @@ AC_ARG_ENABLE([large-pf],
 )
 AC_MSG_RESULT($use_large_pf)
 if test x"$use_large_pf" = x"yes"; then
-    LIBDEFS="$LIBDEFS -DLARGE_PF"
-    AC_DEFINE([LARGE_PF])
+    LIBDEFS="$LIBDEFS -DVERY_LARGE_PF"
+    AC_DEFINE([VERY_LARGE_PF])
 fi
 
 

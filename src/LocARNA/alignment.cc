@@ -1,5 +1,4 @@
 #include <math.h>
-#include <string.h>
 
 #include "alignment.hh"
 #include "basepairs.hh"
@@ -10,6 +9,7 @@
 
 #ifdef HAVE_LIBRNA
 extern "C" {
+#  include <string.h>
 #  include "ViennaRNA/data_structures.h"
 #  include "ViennaRNA/fold_vars.h"
 #  include "ViennaRNA/alifold.h"

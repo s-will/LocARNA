@@ -395,7 +395,7 @@ main(int argc, char **argv) {
 
     if (opt_verbose) {
 	std::cout << "Run inside algorithm."<<std::endl;
-#       ifdef LARGE_PF
+#       ifdef VERY_LARGE_PF
 	std::cout << "Use large partition function type."<<std::endl;
 #       endif
     }

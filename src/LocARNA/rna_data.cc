@@ -22,8 +22,6 @@ extern "C" {
 }
 #endif // HAVE_LIBRNA
 
-#include <math.h>
-#include <string.h>
 
 namespace LocARNA {
 
