@@ -1,0 +1,81 @@
+#!@PERL@ -I@prefix@/lib/perl
+# -*- perl -*-
+
+=head1 normalize_names
+
+normalize_names
+
+=head1 SYNOPSIS
+
+normalize_names <fasta-file>
+
+=head1 DESCRIPTION
+
+Normalize the names in the fasta file in the way of mlocarna. mlocarna uses the normalized names in file names of sequence specific files, e.g. in sub-direcory input of its result directory.
+
+=head1 OPTIONS
+
+=over 8
+
+=item  B<--help>
+
+Brief help message
+
+=item  B<--man>                         
+
+Full documentation
+
+=back
+
+=cut
+
+use MLocarna;
+use MLocarna::SparseMatrix;
+use MLocarna::Trees;
+use MLocarna::MatchProbs;
+use MLocarna::Aux;
+
+
+use strict;
+use FindBin;
+use lib $FindBin::Bin;
+
+##------------------------------------------------------------
+## options
+
+use Getopt::Long;
+use Pod::Usage;
+
+my $help;
+my $man;
+my $quiet;
+my $verbose;
+
+
+GetOptions(	   
+    "verbose" => \$verbose,
+    "quiet" => \$quiet,   
+    "help"=> \$help,
+    "man" => \$man
+    ) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+my $seqs_file = $ARGV[0];
+if (!defined($seqs_file)) {
+    print STDERR "Please specify an input file.\n";
+    pod2usage(-exitstatus => -1, -verbose => 1);
+}
+
+
+## ------------------------------------------------------------
+## main part
+
+my $seqs = read_fasta($seqs_file); ## input sequences
+register_normalized_seqnames($seqs); ## register normalized names for them that can be used as filenames
+print_normalized_sequence_names_hash();
+
+## ------------------------------------------------------------
+
+

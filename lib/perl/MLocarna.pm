@@ -190,9 +190,9 @@ my %normalized_sequence_names_hash;
 ## print normalized sequence names hash to stdout for debugging
 ## 
 sub print_normalized_sequence_names_hash {
-    print "Normalized sequence names hash:\n";
+    #print "Normalized sequence names hash:\n";
     foreach my $k (sort keys %normalized_sequence_names_hash) { 
-	print "  $k => $normalized_sequence_names_hash{$k}\n";
+	print "$k => $normalized_sequence_names_hash{$k}\n";
     }
 }
 
