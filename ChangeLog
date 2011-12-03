@@ -306,3 +306,4 @@ Dec, 2011
 	skipping dot plot computation with --skip-pp (keep name for
 	legacy).  This allows the combine user-defined dotplots with
 	anchor constraints from the mfasta input file.
+	(1.6.2.2)
