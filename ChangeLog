@@ -306,4 +306,8 @@ Dec, 2011
 	skipping dot plot computation with --skip-pp (keep name for
 	legacy).  This allows the combine user-defined dotplots with
 	anchor constraints from the mfasta input file.
+
+	Support fixed structures (with pseudoknots) in the fasta input
+	of mlocarna as structure constraint string with tag #FS
+	All base pairs in the fix structure receive a probability of 1.
 	(1.6.2.2)

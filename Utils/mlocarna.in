@@ -1148,6 +1148,95 @@ sub main {
 } ## end main
 
 
+### ------------------------------------------------------------
+### ------------------------------------------------------------
+### parse pseudoknotted dot-bracket structures
+### and generate pp file for fixed structure
+###
+
+sub parse_bracket_structure_single {
+    my ($str,$open,$close,$str_array_ref)=@_;
+    
+    my @str_array = @{ $str_array_ref };
+    
+    my @stack;
+    
+    for (my $i=0; $i<length($str); $i++) {
+	my $c=substr $str,$i,1;
+	
+	if ($c eq $open) {
+	    push @stack,$i;
+	} elsif ($c eq $close) {
+	    my $j=pop @stack;
+	    $str_array[$i]=$j;
+	    $str_array[$j]=$i;
+	}
+    }
+
+    return @str_array;
+}
+
+
+## @returns array for structure
+## entry per sequence position: gives paired position or -1
+sub parse_bracket_structure {
+    my ($str)=@_;
+    my @str_array;
+
+    for (my $i=0; $i<length($str); $i++) {
+	$str_array[$i]=-1;
+    }
+
+    @str_array=parse_bracket_structure_single $str,"(",")",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"{","}",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"[","]",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"<",">",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"A","a",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"B","b",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"C","c",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"D","d",\@str_array;
+    
+    return @str_array;
+}
+
+
+## convert_fix_structure_to_pp($ppfilename,$name,$seq,$str,$constraints)
+##
+## @param $ppfilename output file name
+## @param $name sequence name
+## @param $seq sequence string
+## @param $str structure string
+## @param $constraints anchor constraint string
+##
+##
+sub convert_fix_structure_to_pp($$$$$) {
+    my ($ppfilename,$name,$seq,$str,$constraints) = @_;
+    
+    my @str=parse_bracket_structure($str);
+    
+    local *OUT;
+
+    open(OUT,">$ppfilename") || die "Cannot write $!";
+
+    print OUT "\n";
+    print OUT "$name\t$seq\n";
+    if (defined $constraints && $constraints ne "") {
+	print PP_OUT "#C $constraints\n";
+    }
+    print OUT "\n";
+    print OUT "\n";
+    print OUT "#\n";
+    
+    for (my $i=0; $i<=$#str; $i++) {
+	if ($str[$i]>$i) {
+	    print OUT ($i+1)." ".($str[$i]+1)." 1.0\n";
+	}
+    }
+}
+### ------------------------------------------------------------
+### ------------------------------------------------------------
+
+
 ## compute and print reliabilities
 ##
 ## @param %aln the multiple alignment
@@ -2236,6 +2325,8 @@ sub compute_dotplot($$) {
 	# partition folding
 	#
 	
+	my $convert_to_pp_this=$convert_to_pp;
+	
 	my $longname=$seqs->[$i]->{name};
 	$longname =~ s/[^a-zA-Z0-9]/_/g; # replace special characters by "_" such that this can be used as filename again
 	
@@ -2246,7 +2337,15 @@ sub compute_dotplot($$) {
 	if ( !( (defined($dp_cache)) && ( -e "$dp_cache/$longname\_dp2.ps" ) ) ) {
 	    $new_dp_computed=1;
 	    
-	    if ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#S"}) {
+	    ## handle cases where structure constraints are specified
+	    ## fixed structure #FS overrides structure #S
+	    ##
+	    if ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#FS"}) {
+		my $structure = $seqs->[$i]->{"ANNO\#FS"};
+		convert_fix_structure_to_pp($ppname,$name,$seq_str,$structure,$constraints);
+		$convert_to_pp_this=0;
+	    }
+	    elsif ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#S"}) {
 		# if a structure constraint is defined do constraint folding
 		my $constraint_string = $seqs->[$i]->{"ANNO\#S"};
 		systemverb "printf '>$seqname\n$seq_str\n$constraint_string' | $RNAfoldp -C $RNAfoldp_redirect";
@@ -2264,7 +2363,7 @@ sub compute_dotplot($$) {
 	    $dpname="$dp_cache/$longname";
 	}
 
-	if ($convert_to_pp) {
+	if ($convert_to_pp_this) {
 	    if ( -e "$dpname\_dp2.ps" ) {
 		convert_dp_to_pp_with_constraints("$dpname\_dp2.ps",$ppname,$name,$seq_str,$constraints,1);
 	    } else {
