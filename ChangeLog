@@ -301,4 +301,8 @@ Dec, 2011
 	Add options pw-aligner-options and pw-aligner-p-options, to mlocarna to pass option strings to the pairwise
 	aligner.  This is useful in combination with specifying
 	non-standard pairwise alignment programs.
-	
+
+	Support generation of pp files from dp2.ps and dp.ps files when
+	skipping dot plot computation with --skip-pp (keep name for
+	legacy).  This allows the combine user-defined dotplots with
+	anchor constraints from the mfasta input file.

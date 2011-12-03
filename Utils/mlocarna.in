@@ -2208,10 +2208,29 @@ sub compute_dotplot($$) {
 	}
     }
     
+    my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
     
-    if ( $skip_pp && -e ($ppname) ) {
-	# print "Skip $name\n";
+    ##
+    ## implement optional skipping of input dot plot files:
+    ## if skip_pp is given and one of the files $ppname, $ppname\_dp2.ps, or $ppname\_dp.ps
+    ## is available, no new dot plot is computed.
+    ## Test in the above order, so $ppname overrides $ppname\_dp2.ps overrides or $ppname\_dp.ps
+    ##
+    ## The latter two cases allow using anchor constraints given in the input mfasta file
+    ##
+    ##
+    if ( $skip_pp && (-e "$ppname") ) {
+	# assume that the pp file is in pp format
+	print "Skip $name\n" if $moreverbose;
         # skip
+    } elsif ( $skip_pp && (-e "$ppname\_dp2.ps") ) {
+	# assume that the file is in dp2 format. Therefore, convert to pp.
+	print "Skip $name, convert from $ppname\_dp2.ps\n"  if $moreverbose;
+        convert_dp_to_pp_with_constraints("$ppname\_dp2.ps",$ppname,$name,$seq_str,$constraints,1);
+    } elsif ( $skip_pp && (-e "$ppname\_dp2.ps") ) {
+        # assume that the file is in dp format. Therefore, convert to pp.
+	print "Skip $name, convert from $ppname\_dp.ps\n"  if $moreverbose;
+	convert_dp_to_pp_with_constraints("$ppname\_dp.ps",$ppname,$name,$seq_str,$constraints,0);
     } else {
 	## ----------------------------------------
 	# partition folding
@@ -2220,8 +2239,6 @@ sub compute_dotplot($$) {
 	my $longname=$seqs->[$i]->{name};
 	$longname =~ s/[^a-zA-Z0-9]/_/g; # replace special characters by "_" such that this can be used as filename again
 	
-	my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
-
 	my $dpname;
 	
 	my $new_dp_computed=0; # whether a new dot plot was computed for $name
