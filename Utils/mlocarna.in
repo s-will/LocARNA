@@ -84,6 +84,14 @@ Utilize given binary for the pairwise alignment (overrides def=locarna).
 Utilize given binary for the probabilistic pairwise alignment
 (overrides def=locarna_p).
 
+=item B<pw-aligner-options>
+
+Additional option string for the pairwise alignment (def="").
+
+=item B<pw-aligner-p-options>
+
+Additional option string for the probabilistic pairwise alignment (def="").
+
 =back
 
 =head2 Controlling guide tree construction 
@@ -388,6 +396,9 @@ my $free_endgaps_5;
 my $pw_aligner="$bindir/locarna";
 my $pw_aligner_p="$bindir/locarna_p";
 
+my $pw_aligner_options="";
+my $pw_aligner_p_options="";
+
 my $tree_file;
 my $tgtdir;
 
@@ -473,7 +484,10 @@ my %options_hash=
 
      "pw-aligner" => \$pw_aligner,
      "pw-aligner-p" => \$pw_aligner_p,
-
+     
+     "pw-aligner-options" => \$pw_aligner_options,
+     "pw-aligner-p-options" => \$pw_aligner_options,
+     
      "min-prob" => \$min_prob,
      "tree-min-prob" => \$tree_min_prob,
 
@@ -591,6 +605,9 @@ my @options = #options that are not or not automatically passed to locarna
 
      "pw-aligner=s",
      "pw-aligner-p=s",
+
+     "pw-aligner-options=s",
+     "pw-aligner-p-options=s",
      
      "min-prob|p=f",
      "tree-min-prob|P=f",
@@ -695,6 +712,7 @@ my @autopass_arg_options =
     
      "temperature=i",
      "pf-struct-weight=i"
+     
     );
 
 my @autopass_noarg_options = ( "max-diff-relax", "alifold-consensus-dp" );
@@ -713,14 +731,13 @@ help_msg() if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 
-## ----------------------------------------
-# mfasta file
-
+# parameter mfasta file
 if ($#ARGV == 0) {
     $seqs_file = $ARGV[0];
 }else {
     help_msg();
 }
+
 
 sub help_msg {
     print STDERR 
@@ -731,7 +748,6 @@ sub help_msg {
 ";
 exit 0;
 }
-
 
 
 ## ----------------------------------------
@@ -804,10 +820,10 @@ if (exists $options_hash{"exp-prob"}) {
 
 ## construct parameter string for locarna
 
-my $locarna_params="";
-my $locarna_params_tree="";
+my $locarna_params="$pw_aligner_options";
+my $locarna_params_tree="$pw_aligner_options";
 
-my $locarna_p_params="";
+my $locarna_p_params="$pw_aligner_p_options";
 
 ## first set parameters that are equal for tree construction and other locarna runs
 ## (we copy locarna_params to locarna_params_tree later)

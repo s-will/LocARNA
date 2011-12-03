@@ -286,9 +286,9 @@ Sep, 2011: Adding Exparna-P code for "in loop" probabilities
 Oct, 2011: pre-release 1.6.2
 
 Nov, 2011:
-	Add mlocarna option to run specified binaries in place of locarna
-	and locarna_p. This can be used to plug in compatible programs
-	like carna
+	Add mlocarna options (pw-aligner and pw-aligner-p) to run
+	specified binaries in place of locarna and locarna_p. This can be
+	used to plug in compatible programs like carna
 
 	Bug fix; compilation without linking libRNA was broken.
 	release (1.6.2)
@@ -297,4 +297,8 @@ Dec, 2011
 	Bug-fixes: treefile regexp, LARGE_PF name clash mit Vienna package
 	(1.6.2.1)
 	add script to translate to normalized names for mlocarna
+
+	Add options pw-aligner-options and pw-aligner-p-options, to mlocarna to pass option strings to the pairwise
+	aligner.  This is useful in combination with specifying
+	non-standard pairwise alignment programs.
 	
