@@ -1221,7 +1221,7 @@ sub convert_fix_structure_to_pp($$$$$) {
     print OUT "\n";
     print OUT "$name\t$seq\n";
     if (defined $constraints && $constraints ne "") {
-	print PP_OUT "#C $constraints\n";
+	print OUT "#C $constraints\n";
     }
     print OUT "\n";
     print OUT "\n";
