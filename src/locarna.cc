@@ -385,16 +385,16 @@ main(int argc, char **argv) {
     // ----------------------------------------  
     // Ribosum matrix
     //
-    std::auto_ptr<RibosumFreq> ribosum(NULL);
+    RibosumFreq *ribosum=NULL;
 	
     if (clp.use_ribosum) {
 	if (clp.ribosum_file == "RIBOSUM85_60") {
 	    if (clp.opt_verbose) {
 		std::cout <<"Use built-in ribosum."<<std::endl;
 	    }
-	    ribosum = auto_ptr<RibosumFreq>(new Ribosum85_60);
+	    ribosum = new Ribosum85_60;
 	} else {
-	    ribosum = auto_ptr<RibosumFreq>(new RibosumFreq(clp.ribosum_file));
+	    ribosum = new RibosumFreq(clp.ribosum_file);
 	}	
 	/*
 	  std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
@@ -422,7 +422,7 @@ main(int argc, char **argv) {
 				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
 				 ?0
 				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 ribosum.get(),
+				 ribosum,
 				 clp.struct_weight,
 				 clp.tau_factor,
 				 clp.exclusion_score,
@@ -766,6 +766,14 @@ main(int argc, char **argv) {
 		std::cout << "Deviation to reference: "<< multiple_ref_alignment->deviation(resultMA)<<std::endl;
 	    }
 	}
+	
+	// ----------------------------------------
+	// already clean up
+	//
+	if (match_probs) delete match_probs;
+	if(arc_matches) delete arc_matches;
+	if (multiple_ref_alignment) delete multiple_ref_alignment;
+	if (ribosum) delete ribosum;
 	
 	// ----------------------------------------
 	// optionally write output formats

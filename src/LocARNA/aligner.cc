@@ -1424,7 +1424,8 @@ Aligner::normalized_align(score_t L, bool opt_verbose) {
     // global, their scores can be optimized in the same way as for
     // non-normalized alignments.
     if (!D_created) align_D();
-    
+
+    if (mod_scoring) delete mod_scoring;
     mod_scoring=new Scoring(*scoring); // make mod_scoring point to a copy of scoring
     
     // Apply Dinkelbach's algorithm

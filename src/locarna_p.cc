@@ -506,6 +506,9 @@ main(int argc, char **argv) {
     // std::cout << it->arcA() <<" " << it->arcB() <<" " << it->idx() << " " << scoring.exp_arcmatch(*it)<< std::endl;
     //}
 
+    // clean up
+    if(arc_matches) delete arc_matches;
+    if (ribosum) delete ribosum;
     
     // DONE
     exit(0);
