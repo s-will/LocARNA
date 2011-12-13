@@ -1,13 +1,13 @@
 #!@PERL@ -I@prefix@/lib/perl
 # -*- perl -*-
 
-=head1 normalize_names
+=head1 mlocarna_nnames
 
-normalize_names
+mlocarna_nnames
 
 =head1 SYNOPSIS
 
-normalize_names <fasta-file>
+mlocarna_nnames <fasta-file>
 
 =head1 DESCRIPTION
 

@@ -165,13 +165,21 @@ sub normalize_seqname {
     my $maxlen=16;
 
     chomp $name;
+
+    # replace all non-alpha-numeric symbols by '_' 
     $name =~ s/[^a-zA-Z\d]/_/g;
+    # take first 16 characters
     $name = substr $name,0,$maxlen;
     
+    # make $name unique if it already occurs in @names
+    # by appending '_' and a number $i to the truncated name
+    # ($name is truncated such that maxlen is not exceeded)
+    #
+    # iterate over numbers $i from 1 until a unique name is generated
     my $i=1;
     while (grep /^$name$/, @names) {
 	my $arity = int(log($i)/log(10))+1;
-	if ($arity >= 4) { # arbitrary limit
+	if ($arity > 10) { # this will never happen ;)
 	    die "Could not generate unique name";
 	}
 	
