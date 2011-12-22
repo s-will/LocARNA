@@ -69,26 +69,26 @@ Allow free endgaps 3'.
 
 Allow free endgaps 5'.
 
-=item B<other locarna options>
+=item B<Other locarna options>
 
 Many of the options of locarna, the program for pairwise alignment, will work as well.
 This allows controlling scoring, locality, and speed/acccuracy trade off (heuristics).
 B<Please see> C<locarna -h> or the manpage of locarna.
 
-=item B<pw-aligner>
+=item B<--pw-aligner>
 
 Utilize given binary for the pairwise alignment (overrides def=locarna).
 
-=item B<pw-aligner-p>
+=item B<--pw-aligner-p>
 
 Utilize given binary for the probabilistic pairwise alignment
 (overrides def=locarna_p).
 
-=item B<pw-aligner-options>
+=item B<--pw-aligner-options>
 
 Additional option string for the pairwise alignment (def="").
 
-=item B<pw-aligner-p-options>
+=item B<--pw-aligner-p-options>
 
 Additional option string for the probabilistic pairwise alignment (def="").
 
