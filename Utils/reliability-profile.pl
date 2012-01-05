@@ -386,7 +386,13 @@ if ($fit_once_on) {
     
     ## compute averages
     $hit_score /= $fitlist[1]-$fitlist[0]+1;
-    $outside_score /= $len - ($fitlist[1]-$fitlist[0]+1);
+    
+    my $outside_len = $len - ($fitlist[1]-$fitlist[0]+1);
+    if ($outside_len > 0) {
+	$outside_score /= $outside_len;
+    } 
+    # otherwise $outside_score equals 0 already
+    
     $total_score /= $len;
     
     print "SCORE $hit_score $outside_score\n";
@@ -447,7 +453,7 @@ my @on_list=();
 my @off_list=();
 
 for(my $i=0; $i<$#fitlist; $i+=2) {
-    push @on_list,$fitlist[$i];
+    push @on_list,$fitlist[$i]-1;
     push @off_list,$fitlist[$i+1];
 }
 

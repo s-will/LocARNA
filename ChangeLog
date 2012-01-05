@@ -311,3 +311,7 @@ Dec, 2011
 	of mlocarna as structure constraint string with tag #FS
 	All base pairs in the fix structure receive a probability of 1.
 	(1.6.2.2)
+
+Jan, 2012
+	fix bugs in reliability plotting and "fitting"
+	(1.6.2.3)

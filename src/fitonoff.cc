@@ -218,21 +218,30 @@ FitOnOff::write_viterbi_path(std::ostream &out,double c0, double c1) const {
 
 void
 FitOnOff::write_viterbi_path_compact(std::ostream &out,double c0, double c1) {
-//     for (size_type i=0;i<=x.size(); ++i) {
-// 	out << i<<":"<<trace[i] << " ";
-//     }
-//     out <<std::endl;
+    
+    const int on=(c0<c1)?1:0;
+    const int off=1-on;
 
-    trace[0]=!(c0<c1);
+    trace[0]=off;
 
+    // for (size_type i=0;i<=x.size(); ++i) {
+    // 	out << i<<":"<<trace[i] << " ";
+    // }
+    // out <<std::endl;
+    
+    
     for (size_type i=1;i<=x.size(); ++i) {
 	if (trace[i-1]!=trace[i]) {
-	    if (trace[i]==(c0<c1)) {
+	    if (trace[i]==on) {
 		out << i << " ";
 	    } else {
 		out << (i-1) << " ";
 	    }
 	}
+    }
+    
+    if (trace[x.size()]!=trace[0]) {
+	out << x.size();
     }
     
     out<<std::endl;
