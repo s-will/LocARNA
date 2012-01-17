@@ -498,6 +498,8 @@ my %options_hash=
      "skip-pp" => \$skip_pp,
 
      ## consensus dot plot computation
+     ## This functionality is moved to locarna binary.
+     ## (see autopass options)
      # "alifold-consensus-dp" => \$alifold_consensus_dp,
      
      ## realigning
@@ -1115,8 +1117,7 @@ sub main {
     mkdir "$tgtdir/$intermediate_dir";
     mkdir "$tgtdir/$results_dir";
 
-    system "cp", $seqs_file, "$tgtdir/$input_dir/input.fa";
-    
+    system "/bin/cp", "-f", $seqs_file, "$tgtdir/$input_dir/input.fa";
     perform_multiple_alignment($seqs);
 
     ## ----------------------------------------
@@ -1828,6 +1829,7 @@ sub call_locarna( $$$ ) {
     system "cat $tgt.aln | grep -v '^CLUSTAL --- LocARNA'" if $verbose;
 
     
+    ## alifold consensus dp is now handled by locarna binary!!!
     # ## optionally, recompute the consensus dot plot using alifold
     # if ($alifold_consensus_dp) {
 
