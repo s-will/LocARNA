@@ -315,3 +315,6 @@ Dec, 2011
 Jan, 2012
 	fix bugs in reliability plotting and "fitting"
 	(1.6.2.3)
+	New tool locarna-mea for computing the max. expected accuracy structure
+	from a dot plot
+	(1.6.2.4)
