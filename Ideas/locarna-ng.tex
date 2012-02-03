@@ -1,17 +1,32 @@
 \documentclass{article}
 
+\usepackage{algorithmic}
 \usepackage{basiccolors}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{graphicx}
 \usepackage{theorem}
 
 \newcommand{\myA}{{\cal A}}
 \newcommand{\myS}{{\cal S}}
 \newcommand{\myR}{{\mathbf R}}
-\newcommand{\Gmat}[4]{D_{#1 #2 #3 #4}}
+\newcommand{\Dmat}[4]{D_{#1 #2 #3 #4}}
 \newcommand{\Mmat}[4]{M_{#1 #2 #3 #4}}
 \newcommand{\IAmat}[4]{I^\textrm{A}_{#1 #2 #3 #4}}
 \newcommand{\IBmat}[4]{I^\textrm{B}_{#1 #2 #3 #4}}
+
+%% matrices for the formulation with quadratic instead on n^4-tables
+%% use as follows:
+%% \DTmat{a}{b}
+%% \MTmat{a}{b}{i}{k}
+%% \IATmat{a}{b}{i}
+%% \IBTmat{a}{b}{k}
+
+\newcommand{\DTmat}[2]{D(#1,#2)}  
+\newcommand{\MTmat}[4]{M^{{#1}^l {#2}^l}(#3,#4)}
+\newcommand{\IATmat}[3]{I^{{#1}^l {#2}}_\textrm{A}(#3)}
+\newcommand{\IBTmat}[3]{I^{{#1} {#2}^l}_\textrm{B}(#3)}
+
 
 \newcommand{\pInLoop}[3]{p_{#1}^\textrm{loop}(#2|#3)}
 \newcommand{\pInLoopA}[2]{\pInLoop{A}{#1}{#2}}
@@ -156,14 +171,15 @@ alignment $\myA$.  \Red{MM: Why do we have no alignment score for the
 \subsection{Basic Algorithm}
 We define four matrices
 \begin{itemize}
-\item $\Gmat{i}{j}{k}{l}$ := best score of an subalignment/ecss pairs of $A$ and $B$
+\item $\Dmat{i}{j}{k}{l}$ := best score of an subalignment/ecss pairs of $A$ and $B$
   in ranges ${i..j}$ and ${k..l}$
 \item $\Mmat{i}{j}{k}{l}$ := best score of an subalignment/ecss pairs
   of $A$ and $B$ in ranges ${i..j}$ and ${k..l}$, where all outermost
   base pairs in the ecss are matched
 \item $\IAmat{i}{j}{k}{l}$ := best score of an subalignment/ecss pairs
   of $A$ and $B$ in ranges ${i..j}$ and ${k..l}$, where the ecss
-  contains (i'j';-) as outermost xxx. (\Red{we need to define
+  contains (i'j';-) as outermost xxx and every position in $A$ within
+  $i+1..i'$ and $j'..j-1$ is aligned to a gap. (\Red{we need to define
     outermost for ecss such that (i'j') is outermost in implied
     structure of A and there is no (k'l') that 'encloses' (i'j') via
     the alignment. For such purpose, define the eccs forrest. Then,
@@ -175,7 +191,7 @@ We define four matrices
 \end{itemize}
 
 \begin{align}
-  \Gmat{i}{j}{k}{l} &= \max
+  \Dmat{i}{j}{k}{l} &= \max
   \begin{cases}
     \Mmat{i}{j}{k}{l}\\
     \IAmat{i}{j}{k}{l}\\
@@ -187,19 +203,19 @@ We define four matrices
     \Mmat{i}{j-1}{k}{l-1} + \sigma(j,l)\\
     \Mmat{i}{j-1}{k}{l} + \gamma\\
     \Mmat{i}{j}{k}{l-1} + \gamma\\
-    \max_{pq} \Mmat{i}{p-1}{k}{q-1} + \Gmat{p+1}{j-1}{q+1}{l-1} + \PsiA{pj} + \PsiB{ql}
+    \max_{pq} \Mmat{i}{p-1}{k}{q-1} + \Dmat{p+1}{j-1}{q+1}{l-1} + \PsiA{pj} + \PsiB{ql}
   \end{cases}\\
   %
   \IAmat{i}{j}{k}{l} &= \max
   \begin{cases}
     \IAmat{i}{j-1}{k}{l} + \gamma\\
-    \max_p (p-i+2)\gamma + \Gmat{p+1}{j-1}{k}{l} +  \PsiA{pj}
+    \max_p (p-i+2)\gamma + \Dmat{p+1}{j-1}{k}{l} +  \PsiA{pj}
   \end{cases}\\
   %
   \IBmat{i}{j}{k}{l} &= \max
   \begin{cases}
     \IBmat{i}{j}{k}{l-1} + \gamma\\
-    \max_q (q-k+2)\gamma + \Gmat{i}{j}{q+1}{l-1} +  \PsiB{ql}   
+    \max_q (q-k+2)\gamma + \Dmat{i}{j}{q+1}{l-1} +  \PsiB{ql}   
   \end{cases}
 \end{align}
 
@@ -213,7 +229,7 @@ Remarks:
   Once can use structural sparsity as in LocARNA by considering only ``significant'' base pairs,
   which reduces time complexity from $O(n^6)$ to $O(n^4)$.
 \item Note that all recursion cases recure to entries with the same
-  left ends $i,k$ or entries $\Gmat{i}{j}{k}{l}$ that are enclosed by
+  left ends $i,k$ or entries $\Dmat{i}{j}{k}{l}$ that are enclosed by
   ``significant'' base pairs $(i+1,j-1)$ and $(k+1,l-1)$ respectively.
   Therefore, one can furthermore limit space requirements to $O(n^2)$
   as in LocARNA.
@@ -224,6 +240,103 @@ Remarks:
 \item Affine gap cost and strucural locality should be possible (TODO!).
 \end{itemize}
 }
+\subsection{Basic Algorithm 2D detailed}
+This is a formulation of the algorithm in terms of 2D matrices which
+is equivalent to the previous one but much closer to the actual
+implementation. It is also more detailed, giving the base cases, the
+domains of the matrices, as well as visualizations of the recursion.
+
+We define the following matrices:
+\begin{itemize}
+\item $\DTmat{a}{b}$ := best score of an subalignment/ecss pairs of $A$ and $B$
+  in ranges ${i..j}$ and ${k..l}$
+\item $\MTmat{a}{b}{i}{k}$ := best score of an subalignment/ecss pairs
+  of $A$ and $B$ in ranges ${a^l+1..i}$ and ${b^l+1..k}$, where all outermost
+  base pairs in the ecss are matched
+\item $\IATmat{a}{b}{i}$ := best score of an subalignment/ecss pairs
+  of $A$ and $B$ in ranges ${a^l+1..i}$ and ${b^l+1..b^r-1}$, where
+  the ecss of this part contains some (i'j';-) with $a^l<i'<j'<a^r$ as
+  outermost xxx and every position in $A$ within $a^l+1..i'$ and $j'..i-1$ is
+  aligned to a gap. (\Red{we need to define outermost for ecss such
+    that (i'j') is outermost in implied structure of A and there is no
+    (k'l') that 'encloses' (i'j') via the alignment. For such purpose,
+    define the eccs forrest. Then, (i'j',-) has to be the single root
+    of the ecss forrest. Note that due to definition of alignment/ecss
+    compatibility (i'j',-) in ecss implies that all bases of the
+    corresponding loop (where $(i',j')$ is interior base pair) are
+    deleted.}
+\item $\IBTmat{a}{b}{k}$ := \Red{``symmetric''}.
+\end{itemize}
+\paragraph{base cases}
+\begin{align}
+  &\MTmat{a}{b}{a^l}{b^l}=0\\
+  &\MTmat{a}{b}{i}{b^l}=(i-a^l)\gamma \text{ for all }i\in \{a^l+1,\dots,a^r-1\}\\
+  &\MTmat{a}{b}{a^l}{k}=(k-b^l)\gamma \text{ for all }k\in \{b^l+1,\dots,b^r-1\}\\
+  &\IATmat{a}{b}{a^l}=\IBTmat{a}{b}{b^l}=-\infty
+\end{align}
+\paragraph{recursion}
+we compute values for all $a\in P^A$, $b\in P^B$, $i$, $k$
+with $a^l<i<a^r$, $b^l<j<b^r$ as follows
+\begin{align}
+  \DTmat{a}{b} &= \max
+  \begin{cases}
+    \MTmat{a}{b}{a^r-1}{b^r-1}\\
+    \IATmat{a}{b}{a^r-1}\\
+    \IBTmat{a}{b}{b^r-1}
+  \end{cases}\label{recursionD}\\
+  %
+  \MTmat{a}{b}{i}{k} &= \max
+  \begin{cases}
+    \MTmat{a}{b}{i-1}{k-1} + \sigma(i,k)\\
+    \MTmat{a}{b}{i}{k-1} + \gamma\\
+    \MTmat{a}{b}{i-1}{k} + \gamma\\
+    \max_{\substack{a'\in P^A,b'\in P^B\\\text{s.t. } a'^r=i, b'^r=k}}\limits \MTmat{a}{b}{a'^l-1}{b'^l-1} + \DTmat{a'}{b'} + \tau(a',b')
+  \end{cases}\label{recursionM}\\
+  %
+  \IATmat{a}{b}{i} &= \max
+  \begin{cases}
+    \IATmat{a}{b}{i-1} + \gamma\\
+    \max_{a'\in P^A\text{ s.t.} a'^r=i}\limits (a'^l-a^l+1)\gamma + \DTmat{a'}{b} +  \PsiA{a'}
+  \end{cases}\label{recursionIA}\\
+  %
+  \IBTmat{a}{b}{k} &= \max
+  \begin{cases}
+    \IBTmat{a}{b}{k-1} + \gamma\\
+    \max_{b'\in P^B\text{ s.t.} b'^r=k}\limits (b'^l-b^l+1)\gamma +
+    \DTmat{a}{b'} + \PsiA{b'}
+  \end{cases}\label{recursionIB}
+\end{align}
+The recursions are visualized in Fig~\ref{}.
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{Figs/recursion}
+  \caption{Visualization of the recursions
+    \ref{recursionD}, \ref{recursionM},
+    \ref{recursionIA}, and \ref{recursionIB}.}
+  \label{fig:maximally_extended}
+\end{figure}
+
+\paragraph{evaluation order}
+The following pseudocode shows in what order the tables can be
+computed such that at any point in time only $O(n^2)$ space is
+required.
+\begin{algorithmic}
+\FORALL {$x$ from $|A|$ to $1$ s.t. $\exists a\in P^A $ with $ a^l=x$}
+  \FORALL {$y$ from $|B|$ to $1$ s.t. $\exists b\in P^B $ with $ b^l=y$}
+    \STATE compute entire matrix $M^{xy}$
+    \FORALL {$a\in P^A$ with $a^l=x$}
+      \STATE compute entire matrix $I_A^{xb}$
+    \ENDFOR
+    \FORALL {$b\in P^B$ with $b^l=y$}
+      \STATE compute entire matrix $I_B^{ay}$
+    \ENDFOR
+    \FORALL {$a\in P^A$, $b\in P^B$ with $a^l=x$,$b^l=y$ }
+      \STATE compute $\DTmat{a}{b}$
+    \ENDFOR
+    \STATE free memory of matrices $M^{xy}$ and all $I_A^{xb}$,$I_B^{ay}$
+  \ENDFOR
+\ENDFOR
+\end{algorithmic}
 
 \subsection{Novel structural sparsification}
 
