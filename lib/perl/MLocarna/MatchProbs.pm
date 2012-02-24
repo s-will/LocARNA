@@ -46,6 +46,7 @@ compute_reliability
 
 max_weight_structure
 write_dotplot
+write_dotplot_extended
 
 evaluate_alignment
 aln_reliability
@@ -901,22 +902,23 @@ sub write_reliability_bars {
     }
 }
 
-
 ########################################
-## write_dotplot($filename,$sequence,$pairprobs)
+## write_dotplot_extended($filename,$sequence,$pairprobinfo,$colors1,$colors2)
 ##
-## write a (simple) postscript dotplot of am probs/reliabilities to a file
+## write a postscript dotplot of am probs/reliabilities to a file
 ## postscript code is adapted from Vienna RNA package RNAfold -p output
 ##
 ## $filename write to this filename
 ## $sequence sequence string
-## $pairprobs ref of hash of pair probabilities
+## $pairprobinfo ref of hash of pair probability information
 ##   ! the keys of the hash are string "$i $j", the ends of the pair
 ##   ! indices in $pairprobs need to be in range 1..'sequence length'
 ##
+## $colors1 color table 1 for upper right triangle
+## $colors2 color table 2 for lower left triangle
 ########################################
-sub write_dotplot {
-    my ($filename,$sequence,$pairprobs) = @_;
+sub write_dotplot_extended {
+    my ($filename,$sequence,$pairprobs,$colors1,$colors2) = @_;
     
     my $data="";
     foreach my $k (keys %$pairprobs) {
@@ -930,8 +932,32 @@ sub write_dotplot {
 	    print STDERR "write_dotplot: Out of range j: $j\n";
 	}
 
-	my $p=sqrt($pairprobs->{$k});
-	$data .= "$i $j $p ubox\n";
+	
+	my @pairprobinfo = split /\s+/,$pairprobs->{$k};
+	
+	my $p1=$pairprobinfo[0];
+	my $p2=$pairprobinfo[1];
+	my $w1=$pairprobinfo[2];
+	my $w2=$pairprobinfo[3];
+
+	my $colnum1=@$colors1;
+	my $colnum2=@$colors2;
+	
+	if ($p1!=0) {
+	    if (!defined($w1)) { # do we have a weight for p1
+		$w1=0;
+	    }
+	    $data .= $colors1->[int($w1*($colnum1-1))]." setrgbcolor ";
+	    $data .= "$i $j ".sqrt($p1)." ubox\n";
+	}
+
+	if (defined($p2) && ($p2!=0)) { # do we have a weight for p1
+	    if (!defined($w2)) { # do we have a weight for p1
+		$w2=0;
+	    }
+	    $data .= $colors2->[int($w2*($colnum2-1))]." setrgbcolor ";
+	    $data .= "$i $j ".sqrt($p2)." lbox\n";
+	}
     }
     my $pscode="%!PS-Adobe-3.0 EPSF-3.0
 %%Title: RNA Dot Plot
@@ -1039,6 +1065,7 @@ drawseq
 0 len moveto len 0 lineto stroke 
 
 drawgrid
+
 %data starts here
 $data
 showpage
@@ -1052,6 +1079,35 @@ end
     close OUT;
 
     return;
+}
+
+
+########################################
+## write_dotplot($filename,$sequence,$pairprobs)
+##
+## write a simple postscript dotplot of am probs/reliabilities to a file
+## postscript code is adapted from Vienna RNA package RNAfold -p output
+##
+## $filename write to this filename
+## $sequence sequence string
+## $pairprobs ref of hash of pair probabilities
+##   ! the keys of the hash are string "$i $j", the ends of the pair
+##   ! indices in $pairprobs need to be in range 1..'sequence length'
+##
+########################################
+sub write_dotplot() {
+    my ($filename,$sequence,$pairprobinfo) = @_;
+    
+    my %pairprobs;
+
+    foreach my $k (keys %$pairprobinfo) {
+	$pairprobinfo->{$k} =~ /^(\S+)/;
+	$pairprobs{$k} = $1;
+    }
+    
+    my @colors=("0 0 0");
+    
+    write_dotplot_extended($filename,$sequence,\%pairprobs,\@colors,\@colors);
 }
 
 

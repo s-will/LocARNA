@@ -30,6 +30,7 @@ compute_alignment_score
 read_dp_ps
 read_pp_file_aln
 read_pp_file_pairprobs
+read_pp_file_pairprob_info
 convert_dp_to_pp_with_constraints
 convert_alifold_dp_to_pp
 compute_alifold_structure
@@ -773,7 +774,7 @@ sub read_dp_ps {
 }
 
 
-
+## read pp file and return the alignment
 sub read_pp_file_aln($) {
     my ($filename)=@_;
     local *PP_IN;
@@ -812,29 +813,52 @@ sub read_pp_file_pairprobs($) {
     open(PP_IN,$filename) || die "Can not read $filename\n";
     
     #my %aln;
-    my %pairprobs;
+    my %pairprobs = read_pp_file_pairprob_info($filename);
+    
+    foreach my $k (keys %pairprobs) {
+	$pairprobs{$k} =~ /^(\S+)/;
+	$pairprobs{$k} = $1;
+    }
+    
+    return %pairprobs;
+}
+
+## read a pp file and return a hash of pair probability information
+##
+## @param $filename name of the pp file
+## @returns hash of pair probability information reported in the file
+##          the hash has keys "$i $j" and contains the probability information
+##          for this pair;
+##          this information is the rest of the line starting with "$i $j"
+##          in the pp file
+##          positions in the hash are in [1..sequence length]
+##
+sub read_pp_file_pairprob_info($) {
+    my ($filename)=@_;
+    local *PP_IN;
+
+    open(PP_IN,$filename) || die "Can not read $filename\n";
+    
+    #my %aln;
+    my %pairprobinfo;
 
     my $line;
 
     while ($line = <PP_IN>) {
 	if ($line =~ /^\#\s*$/) { last; }
-
-	if ($line =~ /^(\S+)\s+(.+)/) {
-	    #$aln{$1}.=$2;
-	}
     }
     
     while (($line = <PP_IN>)) {
-	if ($line =~ /(\S+)\s+(\S+)\s+(\S+)/) {
+	if ($line =~ /(\S+)\s+(\S+)\s+(.+)/) {
 	    my $i=$1;
 	    my $j=$2;
-	    my $p=$3;
-	    $pairprobs{"$i $j"}=$p;
+	    my $pi=$3;
+	    $pairprobinfo{"$i $j"}=$pi;
 	}
     }
     close PP_IN;
     
-    return %pairprobs;
+    return %pairprobinfo;
 }
 
 

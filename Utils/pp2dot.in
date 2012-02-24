@@ -7,21 +7,53 @@ pp2dot
 
 =head1 SYNOPSIS
 
-pp2dot infile.pp outfile_dp.ps
+pp2dot [options] ]infile.pp outfile_dp.ps
 
 =head1 DESCRIPTION
 
-Convert a pp file to a dot plot file (like produced by RNAfold -p).
+Convert an (extended) pp file to a dot plot file (like produced by RNAfold -p).
 pp is a locarna proprietary format for representing dot plots.  Reads
 pp file from infile.pp and write dotplot file to outputfile_dp.ps
+
+A pp-file has the following structure
+
+[SCORE: X]
+
+<name1> <seq1>
+.
+.
+.
+<nameK> <seqK>
+
+#
+<i1> <j1> <p1> [<p2> [<w1> [<w2>]]]
+
+The script accepts up to four weights per base pair in the pp
+file. Missing weights are considered to be 0.  The script draws p1 as
+the size of a dot in the upper right triangle and w1 as its color. p2
+and w2 are visualized accordingly in the lower left triangle.
+
+The color palette is controlled by options.
 
 =head1 OPTIONS
 
 =over 1
 
-=item  B<--help>                        Brief help message
+=item  B<--colors P>
 
-=item  B<--man>                         Full documentation
+Color palette. Use --colors2 to define a second palette for the lower-left triangle. Default: "black","cyan","green","yellow","red"
+
+=item  B<--colors2 P>
+
+Color palette for lower left triangle.
+
+=item  B<--help>
+
+Brief help message
+
+=item  B<--man>
+
+Full documentation
 
 =back
 
@@ -59,12 +91,17 @@ my $man;
 
 my $name="seq";
 
+my $colors1="default";
+my $colors2;
+
 ## Getopt::Long::Configure("no_ignore_case");
 
 GetOptions(	   
     "help"=> \$help,
     "man" => \$man,
-    "name=s" => \$name
+    "name=s" => \$name,
+    "colors=s"=>\$colors1,
+    "colors2=s"=>\$colors2
     ) || pod2usage(2);
 
 pod2usage(1) if $help;
@@ -82,10 +119,88 @@ if (!defined($outputfile)) {
     pod2usage(-exitstatus => -1, -verbose => 1);
 }
 
+sub hex2rgb {
+    my ($h)=@_;
+    
+    return 
+	(hex(substr($h,1,2))/256.0)." ".
+	(hex(substr($h,3,2))/256.0)." ".
+	(hex(substr($h,5,2))/256.0);
+}
+
+# test whether an item occurs as member in a list
+sub member {
+    my ($x,@xs)=@_;
+    
+    return grep /^$x$/,@xs;
+}
+
+
 ## ------------------------------------------------------------
 ## main part
 
-my %pairprobs = read_pp_file_pairprobs("$inputfile");
-my %aln = read_pp_file_aln("$inputfile");
 
-write_dotplot("$outputfile",consensus_sequence(\%aln),\%pairprobs);
+
+my %aln = read_pp_file_aln("$inputfile");
+my %pairprobinfo = read_pp_file_pairprob_info("$inputfile");
+
+############################################################
+## define colortables
+my %colortabs;
+$colortabs{"default"}=[ ("0 0 0","0 1 1","0 1 0","1 1 0","1 0 0") ];
+
+#rainbow palette generated with R rainbow(32,start=0.3,end=1)
+my @rainbow32=(
+    "#00000000",
+    "#33FF00FF", "#10FF00FF", "#00FF12FF", "#00FF35FF", "#00FF57FF", "#00FF7AFF",
+    "#00FF9CFF", "#00FFBFFF", "#00FFE1FF", "#00FAFFFF", "#00D8FFFF", "#00B5FFFF",
+    "#0092FFFF", "#0070FFFF", "#004DFFFF", "#002BFFFF", "#0008FFFF", "#1A00FFFF",
+    "#3D00FFFF", "#5F00FFFF", "#8200FFFF", "#A500FFFF", "#C700FFFF", "#EA00FFFF",
+    "#FF00F2FF", "#FF00CFFF", "#FF00ADFF", "#FF008AFF", "#FF0068FF", "#FF0045FF",
+    "#FF0023FF", "#FF0000FF"
+    );
+
+foreach my $i (0..@rainbow32-1) {
+    $rainbow32[$i]=hex2rgb($rainbow32[$i]);
+}
+$colortabs{"rainbow"}=\@rainbow32;
+
+
+my @gray;
+$gray[0]="0 0 0";
+foreach my $i (1..16) {
+    my $x = ($i*12)/256.0;
+    $gray[$i]="$x $x $x";
+}
+$colortabs{"gray"}=\@gray;
+
+print "$#gray\n";
+print "@gray\n";
+
+##
+############################################################
+
+my @colortabnames=keys %colortabs;
+
+if (!member($colors1,keys %colortabs)) {
+    print STDERR "Warning: unknown color palette $colors1. Set to default. Known palette names: @colortabnames\n";
+    $colors1="default";
+}
+
+if (defined($colors2) && (!member($colors2,keys %colortabs))) {
+    print STDERR "Warning: unknown color palette $colors2. Set colors2 to default. Known palette names: @colortabnames\n";
+    $colors2="default";
+}
+
+my $colortab1=$colortabs{$colors1};
+
+my $colortab2;
+
+if (!defined($colors2)) {
+    $colortab2=$colortab1;
+} else {
+    $colortab2=$colortabs{$colors2};
+}
+
+write_dotplot_extended("$outputfile",consensus_sequence(\%aln),\%pairprobinfo,$colortab1,$colortab2);
+
