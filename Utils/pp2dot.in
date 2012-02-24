@@ -151,7 +151,7 @@ $colortabs{"default"}=[ ("0 0 0","0 1 1","0 1 0","1 1 0","1 0 0") ];
 
 #rainbow palette generated with R rainbow(32,start=0.3,end=1)
 my @rainbow32=(
-    "#00000000",
+    #"#00000000",
     "#33FF00FF", "#10FF00FF", "#00FF12FF", "#00FF35FF", "#00FF57FF", "#00FF7AFF",
     "#00FF9CFF", "#00FFBFFF", "#00FFE1FF", "#00FAFFFF", "#00D8FFFF", "#00B5FFFF",
     "#0092FFFF", "#0070FFFF", "#004DFFFF", "#002BFFFF", "#0008FFFF", "#1A00FFFF",
