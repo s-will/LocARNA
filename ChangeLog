@@ -318,3 +318,8 @@ Jan, 2012
 	New tool locarna-mea for computing the max. expected accuracy structure
 	from a dot plot
 	(1.6.2.4)
+	New features for pp2dot script
+	New script for generating average pp-files
+	In combination, generate nice colored dot plots;
+	used first for the output of the carna server
+	(1.6.3)
