@@ -922,14 +922,14 @@ sub write_dotplot_extended {
     
     my $data="";
     foreach my $k (keys %$pairprobs) {
-	$k =~ /(\d+) (\d+)/ || die "write_dotplot: wrong keys in pairprobs.";
+	$k =~ /(\d+) (\d+)/ || die "write_dotplot_extended: wrong keys in pairprobs.";
 	my $i=$1;
 	my $j=$2;
 	if ( $i < 1 ) {
-	    print STDERR "write_dotplot: Out of range i: $i\n";
+	    print STDERR "write_dotplot_extended: Out of range i: $i\n";
 	}
 	if ( $j > length($sequence) ) {
-	    print STDERR "write_dotplot: Out of range j: $j\n";
+	    print STDERR "write_dotplot_extended: Out of range j: $j\n";
 	}
 
 	
@@ -1095,19 +1095,12 @@ end
 ##   ! indices in $pairprobs need to be in range 1..'sequence length'
 ##
 ########################################
-sub write_dotplot() {
-    my ($filename,$sequence,$pairprobinfo) = @_;
-    
-    my %pairprobs;
-
-    foreach my $k (keys %$pairprobinfo) {
-	$pairprobinfo->{$k} =~ /^(\S+)/;
-	$pairprobs{$k} = $1;
-    }
+sub write_dotplot($$$) {
+    my ($filename,$sequence,$pairprobs) = @_;
     
     my @colors=("0 0 0");
     
-    write_dotplot_extended($filename,$sequence,\%pairprobs,\@colors,\@colors);
+    write_dotplot_extended($filename,$sequence,$pairprobs,\@colors,\@colors);
 }
 
 
