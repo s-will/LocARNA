@@ -50,6 +50,7 @@ averagedot_comb_20.pp  # average dot plot of the sequences where dots >=0.2 are 
 averagedot_comb_50.pp  # average dot plot of the sequences where dots >=0.5 are highlighted
 averagedot_comb_75.pp  # average dot plot of the sequences where dots >=0.75 are highlighted
 
+seq1.pp         # dot plot of sequence 1 projected to the alignment with no highlights
 seq1_comb_20.pp # dot plot of sequence 1 projected to the alignment and dots highlighted 
                 # that occur in the average with a probability >=0.2 
                 # in the lower right triangle the average with colored variance info is given
@@ -304,7 +305,16 @@ foreach my $id (keys %sumProbs){
 #################### OUTPUT
 
 
- write_pp_file("$ofile.pp",\%alignment,\%averageProbs,\%averageProbs,2,\%scaledDeviation);
+write_pp_file("$ofile.pp",\%alignment,\%averageProbs,\%averageProbs,2,\%scaledDeviation);
+foreach my $filename (@sequenceppFiles){
+    my %sequenceData = read_pp_file_aln($filename);
+    my $sequenceName = (keys %sequenceData)[0];
+    my %tempHash = ($sequenceName => $alignment{$sequenceName});
+    print "write file for: $sequenceName and threshold $threshold\n" if $verbose;
+    write_pp_file($filename.".pp",
+		  \%tempHash,
+		  $alignmentDotPlots{$sequenceName},\%averageProbs,2,\%scaledDeviation);
+}
 
 foreach $threshold (@thresholds){
     print "write average file for threshold $threshold\n" if $verbose;
