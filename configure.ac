@@ -11,7 +11,9 @@ AC_SUBST([API_VERSION], [1.0])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-LT_INIT
+LT_INIT                     # for libtool
+AC_PROG_LIBTOOL             # deprecated; left for backward compatibility
+# AC_SUBST(LIBTOOL_DEPS)
 
 AM_INIT_AUTOMAKE
 
@@ -27,7 +29,6 @@ AC_PATH_PROGS([PERL],[perl perl5.004 perl5.003 perl5.002 perl5.001 perl5])
 
 AC_PATH_PROG([HELP2MAN],[help2man],false)
 AC_PATH_PROG([POD2MAN],[pod2man],false)
-
 
 
 # Vienna RNA package library path support, if not installed in standard directory/path
@@ -93,7 +94,7 @@ if test "$ENABLE_LIBRNA" = "yes" ; then
    fi
    
    # Check for Vienna RNA library (primitive check for one header) 
-   AC_CHECK_HEADER("ViennaRNA/fold.h",
+   AC_CHECK_HEADER([ViennaRNA/fold.h],
 		   [],
  		   [VRNA_OK=false])
 
