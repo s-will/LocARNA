@@ -196,7 +196,7 @@ sub write_pp_file {
     
     foreach my $id (keys %{$probUR}){
 	my $highlight = 0;
-	if($probUR->{$id} > $threshold){ $highlight = 1;}
+	if($probLL->{$id} > $threshold){ $highlight = 1;}
 	
 	my $fileLine = "$id $probUR->{$id} $probLL->{$id} $highlight $colorLL->{$id}\n";
 	print OUT $fileLine;
