@@ -373,7 +373,7 @@ class EPM{
 	}
 
 	int split(int left,int right){
-		   int pivot=pat1Vec[right];
+		   unsigned int pivot=pat1Vec[right];
 		   int i=left;
 		   int j=right-1;
 		   while(i<j){
@@ -565,12 +565,12 @@ private:
     int alpha_1;
     int alpha_2;
     int alpha_3;
-    int easier_scoring_par;
-    int subopt_score;
-    int min_subopt_score;
     int difference_to_opt_score;
-    int am_threshold;
+    int min_subopt_score;
+    int easier_scoring_par;
     double subopt_range;
+    infty_score_t am_threshold;
+    int subopt_score;
     double cutoff_coverage;
 
     enum{in_B,in_G,in_G2,in_A};
@@ -621,7 +621,7 @@ private:
     void compute_AGB_subopt(const ArcMatch &arc_match);
 
     //!helper function for trace_AGB_suboptimal
-    bool str_trace_AGB_suboptimal(ScoreMatrix &mat, int posA, int posB,const ArcMatch &am,int cur_score,int state, pair<int,int> curPos,list<EPM> &epms_to_proc_AM,EPM cur_epm_AM);
+    bool str_trace_AGB_suboptimal(ScoreMatrix &mat, size_type posA, size_type posB,const ArcMatch &am,int cur_score,int state, pair<int,int> curPos,list<EPM> &epms_to_proc_AM,EPM cur_epm_AM);
 
     //!calculates suboptimal traceback in G
     void trace_suboptimal_in_G(int state,int cur_score,pair<int,int> curPos,list<ExactMatcher::info_for_trace_in_G_subopt> &result);

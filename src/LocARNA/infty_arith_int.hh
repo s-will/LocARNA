@@ -169,6 +169,11 @@ namespace LocARNA {
 	bool
 	operator <(const InftyArithInt x1,
 		   const InftyArithInt x2);
+	
+	friend
+	bool
+	operator <=(const InftyArithInt x1,
+		    const InftyArithInt x2);
 
 	friend
 	bool
@@ -331,6 +336,21 @@ namespace LocARNA {
     operator <(const InftyArithInt x1,
 	       const InftyArithInt x2) {
 	return x1.val < x2.val;
+    }
+
+    /** 
+     * Smaller equal operator
+     * 
+     * @param x1 first operand 
+     * @param x2 second operand
+     * 
+     * @return x1 < x2
+     */
+    inline
+    bool
+    operator <=(const InftyArithInt x1,
+		const InftyArithInt x2) {
+	return x1.val <= x2.val;
     }
 
     /** 
