@@ -23,11 +23,11 @@ extern "C" {
 #endif // HAVE_LIBRNA
 
 
-// for getrusage()
-#include <sys/resource.h>
-#include <sys/types.h>
-// for gettimeofday()
-#include <sys/time.h>
+// // for getrusage()
+// #include <sys/resource.h>
+// #include <sys/types.h>
+// // for gettimeofday()
+// #include <sys/time.h>
 
 namespace LocARNA {
 
@@ -111,14 +111,14 @@ namespace LocARNA {
 	// call fold for setting the pf_scale
 	
 
-	struct timeval tp;
-	struct rusage ruse;
+	// struct timeval tp;
+	// struct rusage ruse;
 
-	gettimeofday( &tp, NULL );
-	double start_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+	// gettimeofday( &tp, NULL );
+	// double start_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
 
-	getrusage( RUSAGE_SELF, &ruse );
-	double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+	// getrusage( RUSAGE_SELF, &ruse );
+	// double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
 	double en = fold(c_sequence,c_structure);
 	// std::cout << c_structure << std::endl;
@@ -136,17 +136,17 @@ namespace LocARNA {
 
 	pf_fold(c_sequence,c_structure);
 
-	gettimeofday( &tp, NULL );
-	double end_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+   // 	gettimeofday( &tp, NULL );
+   // 	double end_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
 
-	getrusage( RUSAGE_SELF, &ruse );
-	double end_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+   // 	getrusage( RUSAGE_SELF, &ruse );
+   // 	double end_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
-	//time_t stop_fold = time (NULL);
-   // std::cout << "time for folding : " << stop_fold - start_fold << "sec " << std::endl;
+   // 	//time_t stop_fold = time (NULL);
+   // // std::cout << "time for folding : " << stop_fold - start_fold << "sec " << std::endl;
 
-    std::cout << "time_wall McCaskill_folding = "  << end_fold - start_fold << " sec" << std::endl;
-	std::cout << " time_cpu McCaskill_folding = "  << end_foldR - start_foldR << " sec" << std::endl;
+   //  std::cout << "time_wall McCaskill_folding = "  << end_fold - start_fold << " sec" << std::endl;
+   // 	std::cout << " time_cpu McCaskill_folding = "  << end_foldR - start_foldR << " sec" << std::endl;
 	
 	
 	McC_matrices_t McCmat;
