@@ -7,7 +7,7 @@ bin_SCRIPTS = locarna.pl mlocarna locarnate locarna-motif-scan		\
               locarna-mea average-dot.pl
 
 EXTRA_DIST = locarna.pl mlocarna.in locarnate.in locarna-motif-scan	\
-              plot-bmprobs gen-reliab-dot.pl reliability-profile.pl	\
+              plot-bmprobs gen-reliab-dot.pl reliability-profile.pl.in	\
               aln2fa.pl locarnap-realign-all.pl				\
               locarnap-revisit-RNAz-hits.pl				\
               locarnap-predict-and-plot.pl locarnap-revcomp.pl RNAz.pm	\
