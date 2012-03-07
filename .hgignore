@@ -17,6 +17,7 @@ Utils/mlocarna
 Utils/mlocarna_nnames
 Utils/aln2fa.pl
 Utils/pp2dot
+Utils/reliability-profile.pl
 configure
 config.log
 config.status
@@ -87,19 +88,9 @@ Ideas/locarna-ng.pdf
 
 Examples/453
 Examples/500
+.project
+depcomp
+missing
 
 syntax: regexp
 (.*/)?\#[^/]*\#$
-
-syntax: regexp
-^depcomp$
-syntax: glob
-.hgignore
-syntax: regexp
-^depcomp$
-syntax: regexp
-^src/libLocARNA-1\.0\.la$
-syntax: regexp
-^\.project$
-syntax: regexp
-^\.hgignore$
