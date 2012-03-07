@@ -323,3 +323,6 @@ Jan, 2012
 	In combination, generate nice colored dot plots;
 	used first for the output of the carna server
 	(1.6.3)
+Mar, 2012
+	Merge with recent Exparna-P/locarna_X code
+	(1.7)
