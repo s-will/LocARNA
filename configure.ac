@@ -25,7 +25,7 @@ AC_PROG_CPP
 
 AC_LANG_CPLUSPLUS
 
-AC_PATH_PROGS([PERL],[perl perl5.004 perl5.003 perl5.002 perl5.001 perl5])
+AC_PATH_PROGS([PERL],[perl perl5])
 
 AC_PATH_PROG([HELP2MAN],[help2man],false)
 AC_PATH_PROG([POD2MAN],[pod2man],false)
