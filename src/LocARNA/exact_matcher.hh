@@ -167,6 +167,7 @@ class PatternPairMap
                orderedMapTYPE&   getOrderedMap2();
       const    int               size()   const;
       	       int		 getMapBases();
+      	       int  	         getMapEPMScore();
       const    int		 getMinPatternSize() const { return minPatternSize; };
 
    private:

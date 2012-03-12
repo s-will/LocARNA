@@ -424,7 +424,7 @@ void ExactMatcher::add_foundEPM(){
 	epm.sort_patVec();
 	//cout << "final epm " << endl;
 	//epm.print_epm(cout,cur_score);
-	if(!validate_epm()) { cout << "wrong EPM "<< endl; return;}
+	//if(!validate_epm()) { cout << "wrong EPM "<< endl; return;}
 	stringstream ss;
 	ss << "pat_" << count;
 	string patId= ss.str();
@@ -1559,6 +1559,16 @@ int  PatternPairMap::getMapBases()
       bases += (*i)->getSize();
    }
    return bases;
+}
+
+int  PatternPairMap::getMapEPMScore()
+{
+   int EPMscore = 0;
+   for(patListITER i = patternList.begin();i!=patternList.end();i++)
+   {
+      EPMscore += (*i)->getEPMScore();
+   }
+   return EPMscore;
 }
 
 
