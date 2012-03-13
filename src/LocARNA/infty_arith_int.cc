@@ -4,22 +4,16 @@
 namespace LocARNA {
 
     const InftyArithInt::basic_type 
-    InftyArithInt::neg_infty_int = std::numeric_limits<InftyArithInt::basic_type>::min()/2;
-
-    const InftyArithInt::basic_type 
-    InftyArithInt::pos_infty_int = std::numeric_limits<InftyArithInt::basic_type>::max()/2-1;
-
-    const InftyArithInt::basic_type 
     InftyArithInt::max_neg_infty = std::numeric_limits<InftyArithInt::basic_type>::min()/4;
 
     const InftyArithInt::basic_type 
     InftyArithInt::min_pos_infty = std::numeric_limits<InftyArithInt::basic_type>::max()/4-1;
-
+    
     const InftyArithInt
-    InftyArithInt::neg_infty = InftyArithInt(InftyArithInt::neg_infty_int);
-
+    InftyArithInt::neg_infty = InftyArithInt(std::numeric_limits<InftyArithInt::basic_type>::min()/2);
+    
     const InftyArithInt
-    InftyArithInt::pos_infty = InftyArithInt(InftyArithInt::pos_infty_int);
+    InftyArithInt::pos_infty = InftyArithInt(std::numeric_limits<InftyArithInt::basic_type>::max()/2-1);
 
     
     /** 

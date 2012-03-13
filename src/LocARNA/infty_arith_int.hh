@@ -45,8 +45,6 @@ namespace LocARNA {
 
 	static const basic_type max_neg_infty;
 	static const basic_type min_pos_infty;
-	static const basic_type neg_infty_int; //!< normal negative infinity (intern)
-	static const basic_type pos_infty_int; //!< normal positive infinity (intern)
   
     public:
 
