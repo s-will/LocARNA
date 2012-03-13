@@ -50,7 +50,7 @@ namespace LocARNA {
     infty_int_test() {
 	
 	InftyInt x = InftyInt::neg_infty + 1;
-	InftyInt y = 20;
+	InftyInt y = (InftyInt)20;
 	InftyInt z = InftyInt::neg_infty;
 	InftyInt w = InftyInt::neg_infty;
 	

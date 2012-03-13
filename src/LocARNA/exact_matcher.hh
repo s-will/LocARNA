@@ -570,7 +570,7 @@ private:
     int min_subopt_score;
     int easier_scoring_par;
     double subopt_range;
-    infty_score_t am_threshold;
+    score_t am_threshold;
     int subopt_score;
     double cutoff_coverage;
 

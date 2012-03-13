@@ -61,6 +61,7 @@ namespace LocARNA {
 	TaintedInftyInt(): val(0) {
 	}
 
+	explicit
 	TaintedInftyInt(const basic_type &x)
 	    : val(x) {
 	}
@@ -72,13 +73,13 @@ namespace LocARNA {
 	static
 	TaintedInftyInt
 	min_finite() {
-	    return max_neg_infty+1;
+	    return (TaintedInftyInt)(max_neg_infty+1);
 	}
 
 	static
 	TaintedInftyInt
 	max_finite() {
-	    return min_pos_infty-1;
+	    return (TaintedInftyInt)(min_pos_infty-1);
 	}
 	
 	/** 
@@ -132,7 +133,7 @@ namespace LocARNA {
 
 	friend
 	bool
-	operator ==(const TaintedInftyInt &x, const FiniteInt &y);
+	operator ==(const TaintedInftyInt &x, const TaintedInftyInt &y);
 	
 	friend
 	TaintedInftyInt
@@ -157,6 +158,67 @@ namespace LocARNA {
 	friend
 	TaintedInftyInt
 	max(const TaintedInftyInt &x, const TaintedInftyInt &y);
+
+	/** 
+	 * Greater than operator
+	 * 
+	 * @param x
+	 * @param y 
+	 * 
+	 * @return whether x is greater than y
+	 *
+	 * @note The result is undefined when comparing infinte values
+	 * of the same sign.
+	 */ 
+	friend
+	bool
+	operator > (const TaintedInftyInt &x, const TaintedInftyInt &y);
+
+	/** 
+	 * Less than operator
+	 * 
+	 * @param x
+	 * @param y 
+	 * 
+	 * @return whether x is less than y
+	 *
+	 * @note The result is undefined when comparing infinte values
+	 * of the same sign.
+	 */ 
+	friend
+	bool
+	operator < (const TaintedInftyInt &x, const TaintedInftyInt &y);
+
+	/** 
+	 * Greater or equal than operator
+	 * 
+	 * @param x
+	 * @param y 
+	 * 
+	 * @return whether x is greater or equal than y
+	 *
+	 * @note The result is undefined when comparing infinte values
+	 * of the same sign.
+	 */ 
+	friend
+	bool
+	operator >= (const TaintedInftyInt &x, const TaintedInftyInt &y);
+
+	/** 
+	 * Less or equal than operator
+	 * 
+	 * @param x
+	 * @param y 
+	 * 
+	 * @return whether x is less or equal than y
+	 *
+	 * @note The result is undefined when comparing infinte values
+	 * of the same sign.
+	 */ 
+	friend
+	bool
+	operator <= (const TaintedInftyInt &x, const TaintedInftyInt &y);
+
 
 	friend class InftyInt;
 
@@ -204,6 +266,7 @@ namespace LocARNA {
 	InftyInt(): TaintedInftyInt() {
 	}
 
+	explicit
 	InftyInt(const basic_type &x):TaintedInftyInt(x) {
 	    assert(is_normal());
 	}
@@ -222,6 +285,12 @@ namespace LocARNA {
 	InftyInt(const TaintedInftyInt &x) :TaintedInftyInt(x) {
 	    normalize();
 	}
+
+	InftyInt &
+	operator +=(const FiniteInt &x);
+
+	InftyInt &
+	operator -=(const FiniteInt &x);
 
 	friend
 	InftyInt
@@ -293,6 +362,22 @@ namespace LocARNA {
 	res.val-=y.val;
 	return res;
     }
+
+
+    inline
+    InftyInt &
+    InftyInt::operator +=(const FiniteInt &x) {
+	val += x.val;
+	return *this;
+    }
+    
+    inline
+    InftyInt &
+    InftyInt::operator -=(const FiniteInt &x) {
+	val -= x.val;
+	return *this;
+    }
+    
     
     inline
     InftyInt
@@ -325,13 +410,10 @@ namespace LocARNA {
 	res.val-=y.val;
 	return res;
     }
-        
-
-    /* inline methods */
 
     inline
     bool
-    operator ==(const TaintedInftyInt &x, const FiniteInt &y) {
+    operator ==(const TaintedInftyInt &x, const TaintedInftyInt &y) {
 	return x.val==y.val;
     }
 
@@ -354,7 +436,6 @@ namespace LocARNA {
 	return TaintedInftyInt(std::max(x.val,y.val));
     }
 
-
     inline
     InftyInt::InftyInt(const FiniteInt &x): TaintedInftyInt(x) {
     }
@@ -362,6 +443,32 @@ namespace LocARNA {
     inline
     InftyInt::InftyInt(const InftyInt &x): TaintedInftyInt(x) {
     }
+
+    inline
+    bool
+    operator > (const TaintedInftyInt &x, const TaintedInftyInt &y) {
+	return x.val > y.val;
+    }
+
+    inline
+    bool
+    operator < (const TaintedInftyInt &x, const TaintedInftyInt &y) {
+	return x.val < y.val;
+    }
+
+    inline
+    bool
+    operator >= (const TaintedInftyInt &x, const TaintedInftyInt &y) {
+	return x.val >= y.val;
+    }
+
+    inline
+    bool
+    operator <= (const TaintedInftyInt &x, const TaintedInftyInt &y) {
+	return x.val <= y.val;
+    }
+
+    
 
 
 } // end namespace LocARNA

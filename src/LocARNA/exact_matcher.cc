@@ -156,7 +156,7 @@ infty_score_t ExactMatcher::seq_str_matching(ScoreMatrix &mat, const ArcMatch &a
 			}
 		}
 	}
-	return max(score_seq,score_str).normalized_neg();
+	return max(score_seq,score_str);
 }
 
 void ExactMatcher::compute_F_with_prob_unpaired(){
@@ -180,7 +180,7 @@ void ExactMatcher::compute_F_with_prob_unpaired(){
 			    			arc_matches.common_right_end_list(i,j).end() != it; ++it ) {
 
 			    const ArcMatch &am = arc_matches.arcmatch(*it);
-			    if(score_for_arc_match(am,true)>am_threshold){
+			    if(score_for_arc_match(am,true)>FiniteInt(am_threshold)){
 			    	score_str = max(score_str,F(am.arcA().left()-1,am.arcB().left()-1)+score_for_arc_match(am,true));
 			    }
 			}
@@ -199,7 +199,7 @@ void ExactMatcher::compute_F_with_prob_unpaired(){
 infty_score_t ExactMatcher::score_for_arc_match(const ArcMatch &am, bool with_part_under_am){
 	if(easier_scoring_par){
 		if(with_part_under_am){
-			return arc_match_score.at(am.idx())+InftyArithInt::basic_type(((2*alpha_1)+easier_scoring_par*2)*100);
+			return arc_match_score.at(am.idx())+FiniteInt(((2*alpha_1)+easier_scoring_par*2)*100);
 		}
 		else{
 			return infty_score_t(((2*alpha_1)+easier_scoring_par*2)*100);
@@ -208,7 +208,7 @@ infty_score_t ExactMatcher::score_for_arc_match(const ArcMatch &am, bool with_pa
 	double probArcA = bpsA.get_arc_prob(am.arcA().left(),am.arcA().right());
 	double probArcB = bpsB.get_arc_prob(am.arcB().left(),am.arcB().right());
 	if(with_part_under_am){
-	return arc_match_score.at(am.idx())+InftyArithInt::basic_type(((2*alpha_1)+(probArcA+probArcB)*alpha_2)*100);
+	return arc_match_score.at(am.idx())+FiniteInt(((2*alpha_1)+(probArcA+probArcB)*alpha_2)*100);
 	}
 	else{
 		return infty_score_t(((2*alpha_1)+(probArcA+probArcB)*alpha_2)*100);
@@ -229,7 +229,7 @@ infty_score_t ExactMatcher::score_for_stacking(const ArcMatch &am, const ArcMatc
 	   am.arcB().right()-1==inner_am.arcB().right()){
 	     prob_stacking_arcB = bpsB.get_arc_2_prob(am.arcB().left(),am.arcB().right());
 	}
-	return infty_score_t(0)+InftyArithInt::basic_type((prob_stacking_arcA+prob_stacking_arcB)*100*alpha_3);
+	return infty_score_t(0)+FiniteInt((prob_stacking_arcA+prob_stacking_arcB)*100*alpha_3);
 }
 
 //__________________________________________________________________________________________
@@ -366,7 +366,7 @@ void ExactMatcher::trace_in_F_suboptimal(int i,int j){
 			for(ArcMatchIdxVec::const_iterator it=arc_matches.common_right_end_list(cur_i,cur_j).begin();
 							arc_matches.common_right_end_list(cur_i,cur_j).end() != it; ++it){
 				const ArcMatch &am = arc_matches.arcmatch(*it);
-				if(score_for_arc_match(am,true) <= am_threshold){
+				if(score_for_arc_match(am,true) <= FiniteInt(am_threshold)){
 					continue;
 				}
 				else if(cur_score + score_for_arc_match(am,true).finite_value() +
