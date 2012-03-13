@@ -254,7 +254,7 @@ namespace LocARNA {
 	
     private:
 	void normalize() {
-	    std::cout << "NORMALIZE" <<std::endl;
+	    //std::cout << "NORMALIZE" <<std::endl;
 	    if (is_neg_infty()) {
 		val = neg_infty.val;
 	    } else if (is_pos_infty()) {

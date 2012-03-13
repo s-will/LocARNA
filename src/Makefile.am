@@ -16,13 +16,12 @@ lib_LTLIBRARIES=libLocARNA-@API_VERSION@.la
 libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc LocARNA/options.cc	\
 	LocARNA/sequence.cc LocARNA/basepairs.cc LocARNA/alignment.cc	\
 	LocARNA/rna_data.cc LocARNA/scoring.cc				\
-	LocARNA/infty_arith_int.cc LocARNA/match_probs.cc		\
+	LocARNA/infty_int.cc LocARNA/match_probs.cc		\
 	LocARNA/ribosum.cc LocARNA/anchor_constraints.cc		\
 	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
 	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
 	LocARNA/trace_controller.cc LocARNA/evaluator.cc		\
-	LocARNA/multiple_alignment.cc \
-	LocARNA/infty_int.cc
+	LocARNA/multiple_alignment.cc
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -35,14 +34,13 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/sparse_matrix.hh LocARNA/sequence.hh			\
 	LocARNA/basepairs.hh LocARNA/alignment.hh LocARNA/rna_data.hh	\
 	LocARNA/params.hh LocARNA/scoring.hh				\
-	LocARNA/infty_arith_int.hh LocARNA/match_probs.hh		\
+	LocARNA/infty_int.hh LocARNA/match_probs.hh		\
 	LocARNA/alphabet.hh LocARNA/alphabet.icc LocARNA/ribosum.hh	\
 	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
 	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
 	LocARNA/aligner_p.hh LocARNA/stral_score.hh			\
 	LocARNA/trace_controller.hh LocARNA/evaluator.hh		\
-	LocARNA/multiple_alignment.hh LocARNA/ribosum85_60.icc		\
-	LocARNA/infty_int.hh
+	LocARNA/multiple_alignment.hh LocARNA/ribosum85_60.icc
 
 
 ## binary programs
