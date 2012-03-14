@@ -326,3 +326,8 @@ Jan, 2012
 Mar, 2012
 	Merge with recent Exparna-P/locarna_X code
 	(1.7)
+	New classes for infinite integers (this is used for scores,
+	which can be -infty, i.e. undefined). The new mechanism automatizes
+	normalization of infinity using the type system and avoids wrong
+	usage by the type system. Consequently, it is more flexible. It avoids
+	a bug in normalized alignment and helps to clean up the Exparna-P code.
