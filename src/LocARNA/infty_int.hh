@@ -25,22 +25,26 @@ namespace LocARNA {
        values. For this purpose, the range of the basic type (long
        int) is restricted. With this encoding, two normal infinite
        values (InftyInt) of the same sign can be added without
-       resulting in overflow. This yields a non-normal TaintedInftyInt, which
-       still allows to add finite integers (FiniteInt) without
-       overflow (at least as long as the added finite integers do not
-       exceed the remaining range of [-2^(s-4)..2^(s-4)-1]).
+       resulting in overflow. This yields a non-normal
+       TaintedInftyInt, which still allows to add finite integers
+       (FiniteInt) without overflow (at least as long as the added
+       finite integers do not exceed the remaining range of
+       [-m..m-1]), where m=2^(s-1) and s is the width of the basic
+       type, e.g. 64.
 
        The range of the basic type is split into subranges, where s is
        the number of bits in the basic type: 
        
-       * negative infinity        [-2^(s-1)..-2^(s-4)]
-       * normal negative infinity [-2^(s-2)..-2^(s-4)]
-       * finite range             ]-2^(s-4).. 2^(s-4)-1[
-       * normal positive infinity [ 2^(s-4)-1..-2^(s-2)-1]
-       * positive infinity        [ 2^(s-4)-1..-2^(s-1)-1]
+       * negative infinity        [ -m..-m/5 [
+       * normal negative infinity [ -3m/5..-m/5 [
+       * normalized negative infinity -2m/5
+       * finite range             [ -m/5 .. m/5 [
+       * normal positive infinity [ m/5 .. 3m/5 [
+       * normalized positive infinity 2m/5
+       * positive infinity        [ m/5 .. m [
        
-       Normalizing resets negative infinite values to -2^(s-3) and
-       positive infinite values to 2^(s-3)-1. In this way, adding two
+       Normalizing resets negative infinite values to -2m/5 and
+       positive infinite values to 2m/5. In this way, adding two
        normalized infinite values of the same sign and some finite
        value using fast standard integer addition always works without
        overflow and results in a defined value in the infinite range.
@@ -52,8 +56,8 @@ namespace LocARNA {
 
     protected:
 	basic_type val;
-	static const basic_type max_neg_infty;
-	static const basic_type min_pos_infty;
+	static const basic_type min_finity;
+	static const basic_type max_finity;
 	static const basic_type min_normal_neg_infty;
 	static const basic_type max_normal_pos_infty;
     public:
@@ -71,15 +75,15 @@ namespace LocARNA {
 	}
 
 	static
-	TaintedInftyInt
+	basic_type
 	min_finite() {
-	    return (TaintedInftyInt)(max_neg_infty+1);
+	    return min_finity;
 	}
 
 	static
-	TaintedInftyInt
+	basic_type
 	max_finite() {
-	    return (TaintedInftyInt)(min_pos_infty-1);
+	    return max_finity;
 	}
 	
 	/** 
@@ -89,7 +93,7 @@ namespace LocARNA {
 	 */
 	bool
 	is_neg_infty() const {
-	    return val <= max_neg_infty;
+	    return val < min_finity;
 	}
 
 	/** 
@@ -99,7 +103,7 @@ namespace LocARNA {
 	 */
 	bool
 	is_pos_infty() const {
-	    return val >= min_pos_infty;
+	    return val > max_finity;
 	}
 
 	/** 
@@ -109,7 +113,7 @@ namespace LocARNA {
 	 */
 	bool
 	is_finite() const {
-	    return max_neg_infty < val &&  val < min_pos_infty;
+	    return min_finity <= val &&  val <= max_finity;
 	}
 	
 	/** 
@@ -468,7 +472,7 @@ namespace LocARNA {
 	return x.val <= y.val;
     }
 
-    
+
 
 
 } // end namespace LocARNA
