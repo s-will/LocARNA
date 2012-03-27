@@ -331,3 +331,5 @@ Mar, 2012
 	normalization of infinity using the type system and avoids wrong
 	usage by the type system. Consequently, it is more flexible. It avoids
 	a bug in normalized alignment and helps to clean up the Exparna-P code.
+	(1.7.1)
+	
