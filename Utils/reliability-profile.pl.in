@@ -81,9 +81,9 @@ Inverse temperature beta
 
 Skip plotting, only output
 
-=item B<--write-R-script>
+=item B<--write-R-script>=file
 
-Write the R script
+Write the R script to file
 
 =item B<--revcompl>
 
@@ -167,6 +167,11 @@ my $output_format="pdf";
 
 my $show_fitonoff=0;
 
+my $output_width=12;
+
+my $output_height=4;
+
+
 ## Getopt::Long::Configure("no_ignore_case");
 
 GetOptions(	   
@@ -188,10 +193,12 @@ GetOptions(
     "show-sw" => \$show_sw,
     "revcompl" => \$revcompl,
     "dont-plot" => \$dont_plot,
-    "write-R-script" => \$write_R_script,
+    "write-R-script=s" => \$write_R_script,
     "show-fitonoff" => \$show_fitonoff,
     "write-subseq" => \$write_subseq,
-    "output-format=s" => \$output_format
+    "output-format=s" => \$output_format,
+    "output-width=i" => \$output_width,
+    "output-height=i" => \$output_height
     ) || pod2usage(2);
 
 pod2usage(1) if $help;
@@ -482,8 +489,6 @@ $off_list = perl2Rvector(@off_list);
 
 $signal_names = perl2Rstring_vector(split /\s+/,$signal_names);
 
-my $output_width=12;
-my $output_height=4;
 my $resolution=64;
 my $format_extra_str="";
 
@@ -646,7 +651,9 @@ if (!$dont_plot) {
 }
 
 if ($write_R_script) {
-    print $rscript;
+    open (FILE,">$write_R_script") || die "Cannot write R script to file";
+    print FILE $rscript;
+    close FILE;
 }
 
 
