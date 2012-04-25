@@ -106,7 +106,7 @@ my $sequence="";
 while (my $line = <STDIN>) {
     if ( $line =~ /^\/sequence/ ) {
         while (($line=<STDIN>) !~ /def$/ ) {
-            $line =~ s/[^UACTG]//g;
+            $line =~ s/[^A-Za-z]//g;
             $sequence.=$line;
         }
 	chomp $sequence;
