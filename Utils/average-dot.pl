@@ -9,7 +9,7 @@ use Pod::Usage;
 
 =head1 NAME
 
-combine-dot.pl
+average-dot.pl
 
 =head1 SYNOPSIS
 
@@ -93,7 +93,7 @@ sub read_pp_file_aln($) {
     my ($filename)=@_;
     local *PP_IN;
   
-    open(PP_IN,$filename) || die "MLocarna::read_pp_file_aln: Cannot read '$filename'\n";
+    open(PP_IN,$filename) || die "read_pp_file_aln: Cannot read '$filename'\n";
    
     my %aln;
     my %pairprobs;
@@ -247,8 +247,8 @@ foreach my $filename (@sequenceppFiles){
 	$k =~ /^(\d+)\s+(\d+)/ or die "invalid index in dot plot:'$k'\n";
 	my $sx = $1;
 	my $sy = $2;
-	my $ax = @seq2aln[$sx];
-	my $ay = @seq2aln[$sy];
+	my $ax = @seq2aln[$sx-1]+1;
+	my $ay = @seq2aln[$sy-1]+1;
 	#print "($sx,$sy)-->($ax,$ay)\n" if $verbose;
 	$alnDotPlot{"$ax $ay"} = $seqDotPlot{$k};
     }
@@ -256,9 +256,8 @@ foreach my $filename (@sequenceppFiles){
     $sequenceData{$sequenceName} = \%sequenceHash;
     $sequenceDotPlots{$sequenceName} = \%seqDotPlot;
     $alignmentDotPlots{$sequenceName} = \%alnDotPlot;
-	
 }
-    
+
 
 # compute for each base pair of the alignment the sum of the
 # probabilities and the sum of the squares of the probabilities (of

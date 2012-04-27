@@ -31,14 +31,14 @@ my $verbose;
 ## Getopt::Long::Configure("no_ignore_case");
 
 GetOptions(
-	   "minprob=f" => \$minprob,
-	   "probwidth=f" => \$probwidth,
-
-	   "verbose" => \$verbose,
-	   "quiet" => \$quiet,   
-	   "help"=> \$help,
-	   "man" => \$man
-	   ) || pod2usage(2);
+    "minprob=f" => \$minprob,
+    "probwidth=f" => \$probwidth,
+    
+    "verbose" => \$verbose,
+    "quiet" => \$quiet,   
+    "help"=> \$help,
+    "man" => \$man
+    ) || pod2usage(2);
 
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
@@ -106,7 +106,7 @@ my $sequence="";
 while (my $line = <STDIN>) {
     if ( $line =~ /^\/sequence/ ) {
         while (($line=<STDIN>) !~ /def$/ ) {
-            $line =~ s/[^A-Za-z]//g;
+            $line =~ s/[^A-Za-z-]//g;
             $sequence.=$line;
         }
 	chomp $sequence;
@@ -150,7 +150,8 @@ for (my $i=1; $i<=$seqlength; $i++) {
 
 
 print 
-"%%PageTrailer
+"90 rotate
+%%PageTrailer
 showpage
 %%Trailer
 end
