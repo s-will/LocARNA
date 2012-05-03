@@ -1608,6 +1608,7 @@ sub extract_score_matrix_from_alignments($$) {
     
 
     for (my $a=0; $a<@$names; $a++) {
+	$score_matrix[$a][$a] = 0; ## set diagonal to 0
 	for (my $b=0; $b<$a; $b++) {
 	    
 	    my @aln = @{ $pairwise_alns[$a][$b] };
