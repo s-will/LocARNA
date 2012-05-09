@@ -42,7 +42,7 @@ our $node_sym="\$\$nodesym";
 ########################################
 ## upgma_tree( $names ref to list, $score_matrix ref to matrix of scores)
 ##
-## compute a upgma-tree from the given mfasta data structure
+## compute a upgma-tree
 ##
 ## $names ref to a list of names
 ## $score_matrix ref to a matrix (array of arrays) of scores
@@ -55,11 +55,11 @@ our $node_sym="\$\$nodesym";
 ##
 ########################################
 sub upgma_tree ($$) {
-    # print "Compute WPGMA-Tree ...\n";
+    # print "Compute UPGMA-Tree ...\n";
     
     my ($names, $score_matrix) = @_;    
     
-    ## compute tree by wpgma applied to score matrix
+    ## compute tree by upgma applied to score matrix
     
     my @clusters; # a list of the clusters
     my @trees; # a list of sub-trees
@@ -106,7 +106,10 @@ sub upgma_tree ($$) {
 	
 	for (my $i=1; $i<$#clusters; $i++) {
 	    $score_matrix->[$clusters[0]][$clusters[$i]]
-		= ($cluster_sizes[$cluster_i] * $score_matrix->[$cluster_i][$clusters[$i]] + $cluster_sizes[$cluster_j] * $score_matrix->[$cluster_j][$clusters[$i]]) / ($cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j]);
+		= 
+		($cluster_sizes[$cluster_i] * $score_matrix->[$cluster_i][$clusters[$i]]
+		 + $cluster_sizes[$cluster_j] * $score_matrix->[$cluster_j][$clusters[$i]])
+		/ ($cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j]);
 	    $score_matrix->[$clusters[$i]][$clusters[0]] = 
 		$score_matrix->[$clusters[0]][$clusters[$i]];
 	}
