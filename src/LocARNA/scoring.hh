@@ -436,6 +436,9 @@ namespace LocARNA {
 	 */
 	score_t arcmatch(const ArcMatch &am, bool stacked=false) const;
 
+	// Very basic interface, score of aligning a basepair to gap
+	score_t  arcgap(const Arc &arcA, bool stacked=false) const;
+
 	/** 
 	 * @brief Boltzmann weight of score of arc match
 	 * 

@@ -338,7 +338,11 @@ main(int argc, char **argv) {
 	    if (opt_verbose) {
 		std::cout <<"Use built-in ribosum."<<std::endl;
 	    }
-	    ribosum = new Ribosum85_60();
+	    std::cerr
+	  	    << "ERROR: RIBOSUM85_60 temporary disable by Milad."
+	  	    <<std::endl;
+	  	    exit(-1);
+//	    ribosum = new Ribosum85_60();
 	} else {
 	    ribosum = new RibosumFreq(ribosum_file);
 	}

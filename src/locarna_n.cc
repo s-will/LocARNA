@@ -22,7 +22,7 @@
 #include <LocARNA/sequence.hh>
 #include <LocARNA/basepairs.hh>
 #include <LocARNA/alignment.hh>
-#include <LocARNA/aligner.hh>
+#include <LocARNA/aligner_n.hh>
 #include <LocARNA/evaluator.hh>
 #include <LocARNA/rna_data.hh>
 #include <LocARNA/arc_matches.hh>
@@ -392,12 +392,11 @@ main(int argc, char **argv) {
 	    if (clp.opt_verbose) {
 		std::cout <<"Use built-in ribosum."<<std::endl;
 	    }
-//	    ribosum = auto_ptr<RibosumFreq>(new Ribosum85_60b);
 	    std::cerr
-	    << "ERROR: RIBOSUM85_60 temporary disable by Milad."
-	    <<std::endl;
-	    exit(-1);
-
+	  	    << "ERROR: RIBOSUM85_60 temporary disable by Milad."
+	  	    <<std::endl;
+	  	    exit(-1);
+//	    ribosum = auto_ptr<RibosumFreq>(new Ribosum85_60);
 	} else {
 	    ribosum = auto_ptr<RibosumFreq>(new RibosumFreq(clp.ribosum_file));
 	}	
@@ -681,12 +680,18 @@ main(int argc, char **argv) {
 				 );
     
     // initialize aligner object, which does the alignment computation
-    Aligner aligner(seqA,seqB,*arc_matches,&aligner_params,&scoring);
+    AlignerN aligner(seqA,seqB,*arc_matches,&aligner_params,&scoring);
 
     
     // enumerate suboptimal alignments (using interval splitting)
     if (clp.opt_subopt) {
-	aligner.suboptimal(clp.kbest_k,
+    	//TODO: Implement suboptimal aligner
+    	std::cerr
+      			<< "ERROR: suboptimal alignment not supported."
+      			<<std::endl;
+        exit(-1);
+
+	/*aligner.suboptimal(clp.kbest_k,
 			   clp.subopt_threshold,
 			   clp.opt_normalized,
 			   clp.normalized_L,
@@ -697,13 +702,19 @@ main(int argc, char **argv) {
 			   clp.opt_write_structure
 			   );
 	exit(0);
+	*/
     }
     
     infty_score_t score;
 
     // if option --normalized <L> is given, then do normalized local alignemnt
     if (clp.opt_normalized) {
-	
+    	  std::cerr
+    			<< "ERROR: Normalized alignment not supported."
+    			<<std::endl;
+      exit(-1);
+
+
 	// do some option consistency checks and output errors
 	if (clp.struct_local) {
 	    std::cerr 
@@ -717,8 +728,8 @@ main(int argc, char **argv) {
 		<< "ERROR: Normalized alignment requires option --sequ_local."<<std::endl;
 	    exit(-1);
 	}
-	
-	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
+	//TODO: Implement normalized_align
+//	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
 	
     } else {
 	

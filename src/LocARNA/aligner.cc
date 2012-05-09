@@ -357,7 +357,7 @@ Aligner::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type b
     // fill entries left of valid entries 
     for ( ; i<ar; i++) {
 	assert(params->trace_controller.min_col(i)>bl);
-	M(i,params->trace_controller.min_col(i)-1) = infty_score_t::neg_infty; 
+	M(i,params->trace_controller.min_col(i)-1) = infty_score_t::neg_infty;  //TODO: Ask: why do we fill min possible column? use it in locarna_n?
     }
     
     // init first row al
@@ -375,7 +375,7 @@ Aligner::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type b
 	if (params->constraints.aligned_in_b(j)) {
 	  indel_score=infty_score_t::neg_infty;
 	}
-	else if (!exclB && globalB && !indel_score.is_neg_infty()) {
+	else if (!exclB && globalB && !indel_score.is_neg_infty()) { //TODO: Why rechecking neg_infinity?
 	  indel_score += sv.scoring()->gapB(al,j);
 	}
       }
@@ -387,7 +387,7 @@ Aligner::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type b
     for (i=al+1; i<ar; i++) {
 	for (;
 	     j<std::min(br,params->trace_controller.max_col(i)+1); ++j) {
-	    M(i-1,j)=infty_score_t::neg_infty;
+	    M(i-1,j)=infty_score_t::neg_infty; //TODO: Ask: Why initialize M(i-1,j)??
 	}
     }
 

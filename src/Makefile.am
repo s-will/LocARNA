@@ -21,7 +21,7 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc LocARNA/options.cc	\
 	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
 	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
 	LocARNA/trace_controller.cc LocARNA/evaluator.cc		\
-	LocARNA/multiple_alignment.cc
+	LocARNA/multiple_alignment.cc LocARNA/aligner_n.cc		
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -49,7 +49,7 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 ##   use extension .bin for binary locarna to avoid name collission in src dir
 ##
 bin_PROGRAMS = locarna.bin ribosum2cc locarna_p locarnap_fit	\
-               locarna_deviation locarna_rnafold_pp locarna_X 
+               locarna_deviation locarna_rnafold_pp locarna_X locarna_n 
 
 #remove the extension .bin for installation
 transform = s/\.bin$$//
@@ -68,6 +68,8 @@ dist_locarna_bin_SOURCES = locarna.cc
 locarna_p_SOURCES = locarna_p.cc
 
 locarna_X_SOURCES = locarna_X.cc LocARNA/exact_matcher.hh LocARNA/exact_matcher.cc 
+
+locarna_n_SOURCES = locarna_n.cc
 
 
 nodist_locarna_bin_SOURCES = LocARNA/ribosum85_60.icc

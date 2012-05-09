@@ -602,4 +602,41 @@ namespace LocARNA {
 	return score -4*lambda_; // modify for normalized alignment
     }
 
+// Very basic interface
+    score_t
+    Scoring::arcgap(const Arc &arcA, bool stacked) const { //TODO Important Scoring scheme for aligning an arc to a gap is not defined and implemented!
+
+    	if (arc_matches->explicit_scores()) { // will not take stacking into account!!!
+    		std::cerr << "ERROR locarna_n explicit scores is not supported!" << std::endl; //TODO: Supporting explicit scores for arcgap
+    		assert( ! arc_matches->explicit_scores());
+    	}
+    	score_t sequence_contribution=0;
+
+    	if (! params->mea_scoring) {
+    		return
+    		// base match contribution
+    		// (also for arc-match add terms for the base match on both ends, weighted by tau_factor)
+    		(params->tau_factor * sequence_contribution / 100)
+    		+
+    		// base pair weights
+    		(
+    				stacked
+    				?
+    						(stack_weightsA[arcA.idx()] )
+    						:
+    						(weightsA[arcA.idx()] )		//TODO: TO be completed!!
+    		);
+    	}
+    	else
+    	{
+    		std::cerr << "ERROR locarna_n mea_scoring is not supported!" << std::endl; //TODO: Supporting mea_scoring for arcgap
+    		assert( ! params->mea_scoring);
+
+    	}
+    }
+
+
+
+
+
 }

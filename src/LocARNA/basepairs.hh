@@ -18,7 +18,7 @@
 
 namespace LocARNA {
 
-
+	//todo: Ask: what does the following note about index uniqueness mean?
     //! \brief Represents a base pair
     //! 
     //! stores base pair left end, right end
@@ -221,7 +221,7 @@ namespace LocARNA {
 	    return left_[i];
 	}
 	
-	//! returns the list of arcs with left end i
+	//! returns the list of arcs with left end i //TODO: comment: right or left?
 	const RightAdjList & right_adjlist(int i) const { return right_[i];}
 
 	//! accesses basepair by (i,j)
