@@ -14,8 +14,11 @@ CVS/
 Releases/
 Utils/locarnate
 Utils/mlocarna
+Utils/mlocarna_nnames
 Utils/aln2fa.pl
 Utils/pp2dot
+Utils/locarna-mea
+Utils/reliability-profile.pl
 configure
 config.log
 config.status

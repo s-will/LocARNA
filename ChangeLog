@@ -286,9 +286,50 @@ Sep, 2011: Adding Exparna-P code for "in loop" probabilities
 Oct, 2011: pre-release 1.6.2
 
 Nov, 2011:
-	Add mlocarna option to run specified binaries in place of locarna
-	and locarna_p. This can be used to plug in compatible programs
-	like carna
+	Add mlocarna options (pw-aligner and pw-aligner-p) to run
+	specified binaries in place of locarna and locarna_p. This can be
+	used to plug in compatible programs like carna
 
 	Bug fix; compilation without linking libRNA was broken.
 	release (1.6.2)
+
+Dec, 2011
+	Bug-fixes: treefile regexp, LARGE_PF name clash mit Vienna package
+	(1.6.2.1)
+	add script to translate to normalized names for mlocarna
+
+	Add options pw-aligner-options and pw-aligner-p-options, to mlocarna to pass option strings to the pairwise
+	aligner.  This is useful in combination with specifying
+	non-standard pairwise alignment programs.
+
+	Support generation of pp files from dp2.ps and dp.ps files when
+	skipping dot plot computation with --skip-pp (keep name for
+	legacy).  This allows the combine user-defined dotplots with
+	anchor constraints from the mfasta input file.
+
+	Support fixed structures (with pseudoknots) in the fasta input
+	of mlocarna as structure constraint string with tag #FS
+	All base pairs in the fix structure receive a probability of 1.
+	(1.6.2.2)
+
+Jan, 2012
+	fix bugs in reliability plotting and "fitting"
+	(1.6.2.3)
+	New tool locarna-mea for computing the max. expected accuracy structure
+	from a dot plot
+	(1.6.2.4)
+	New features for pp2dot script
+	New script for generating average pp-files
+	In combination, generate nice colored dot plots;
+	used first for the output of the carna server
+	(1.6.3)
+Mar, 2012
+	Merge with recent Exparna-P/locarna_X code
+	(1.7)
+	New classes for infinite integers (this is used for scores,
+	which can be -infty, i.e. undefined). The new mechanism automatizes
+	normalization of infinity using the type system and avoids wrong
+	usage by the type system. Consequently, it is more flexible. It avoids
+	a bug in normalized alignment and helps to clean up the Exparna-P code.
+	(1.7.1)
+	

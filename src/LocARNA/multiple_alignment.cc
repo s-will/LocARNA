@@ -574,7 +574,7 @@ namespace LocARNA {
 					       const SeqEntry &ref1,
 					       const SeqEntry &ref2
 					       ) {
-	size_t matches=0.0;
+	size_t matches=0;
 	
 	size_t len_a=a1.seq().length();
 	size_t len_ref=ref1.seq().length();
@@ -611,7 +611,7 @@ namespace LocARNA {
 					    const SeqEntry &ref2,
 					    bool score_common_gaps
 					    ) {
-	size_t s=0.0;
+	size_t s=0;
 	
 	size_t len_a=a1.seq().length();
 	size_t len_ref=ref1.seq().length();
@@ -639,7 +639,7 @@ namespace LocARNA {
 	    }
 	}
 	
-	return s;
+	return (double)s;
     }
     
     double

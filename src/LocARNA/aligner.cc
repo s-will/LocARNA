@@ -167,7 +167,6 @@ Aligner::align_noex(int state, pos_type al, pos_type bl, pos_type i, pos_type j,
       E[j] = 
 	std::max( E[j] + sv.scoring()->gapA(i,j),
 		  M(i-1,j) + sv.scoring()->gapA(i,j) + sv.scoring()->indel_opening() );
-      E[j] = E[j].normalized_neg();
     } else {
       // due to constraints, i cannot be deleted
       E[j] = infty_score_t::neg_infty;
@@ -178,14 +177,14 @@ Aligner::align_noex(int state, pos_type al, pos_type bl, pos_type i, pos_type j,
       // due to constraints, j can be inserted
       F=std::max( F + sv.scoring()->gapB(i,j),
 		  M(i,j-1) + sv.scoring()->gapB(i,j) + sv.scoring()->indel_opening() );
-      F = F.normalized_neg();
     } else {
       // due to constraints, j cannot be inserted
       F = infty_score_t::neg_infty;
     }
     
 
-    infty_score_t max_score = infty_score_t::neg_infty;
+    // use tainted type to save operations that normalize infinity
+    tainted_infty_score_t max_score = infty_score_t::neg_infty;
     
     // base match
     if (params->constraints.allowed_edge(i,j)) {
@@ -193,10 +192,10 @@ Aligner::align_noex(int state, pos_type al, pos_type bl, pos_type i, pos_type j,
     }
     
     // base del
-    max_score=std::max(max_score, E[j]);
+    max_score=std::max(max_score, (TaintedInftyInt)E[j]);
     
     // base ins
-    max_score=std::max(max_score, F);
+    max_score=std::max(max_score, (TaintedInftyInt)F);
 
     // arc match
     
@@ -219,7 +218,7 @@ Aligner::align_noex(int state, pos_type al, pos_type bl, pos_type i, pos_type j,
 		// because for these arc matches holds that sv.D(*arcA,*arcB)==neg_infty
 		
 		
-		infty_score_t new_score =
+		tainted_infty_score_t new_score =
 		  M(arcA->left()-1,arcB->left()-1)
 		  + sv.D(*arcA,*arcB);
 		
@@ -231,7 +230,7 @@ Aligner::align_noex(int state, pos_type al, pos_type bl, pos_type i, pos_type j,
 	}
     }
     
-    return max_score.normalized_neg();
+    return max_score;
 
     
     // The following code turned out to be much slower than the above one
@@ -357,7 +356,7 @@ Aligner::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type b
     // fill entries left of valid entries 
     for ( ; i<ar; i++) {
 	assert(params->trace_controller.min_col(i)>bl);
-	M(i,params->trace_controller.min_col(i)-1) = infty_score_t::neg_infty;  //TODO: Ask: why do we fill min possible column? use it in locarna_n?
+	M(i,params->trace_controller.min_col(i)-1) = infty_score_t::neg_infty; 
     }
     
     // init first row al
@@ -375,7 +374,7 @@ Aligner::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type b
 	if (params->constraints.aligned_in_b(j)) {
 	  indel_score=infty_score_t::neg_infty;
 	}
-	else if (!exclB && globalB && !indel_score.is_neg_infty()) { //TODO: Why rechecking neg_infinity?
+	else if (!exclB && globalB && !indel_score.is_neg_infty()) {
 	  indel_score += sv.scoring()->gapB(al,j);
 	}
       }
@@ -387,7 +386,7 @@ Aligner::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type b
     for (i=al+1; i<ar; i++) {
 	for (;
 	     j<std::min(br,params->trace_controller.max_col(i)+1); ++j) {
-	    M(i-1,j)=infty_score_t::neg_infty; //TODO: Ask: Why initialize M(i-1,j)??
+	    M(i-1,j)=infty_score_t::neg_infty;
 	}
     }
 
@@ -491,7 +490,7 @@ Aligner::align_in_arcmatch(pos_type al,pos_type ar,pos_type bl,pos_type br,
 	    
 	    for (pos_type j=min_col; j<=max_col; j++) {
 		Ms[state](i,j) = std::max(align_noex(state,al,bl,i,j,def_scoring_view),
-				     Ms[E_NO_OP](i,j)+scoring->exclusion());
+					  Ms[E_NO_OP](i,j)+scoring->exclusion());
 	    }
 	}
 	
@@ -1424,7 +1423,8 @@ Aligner::normalized_align(score_t L, bool opt_verbose) {
     // global, their scores can be optimized in the same way as for
     // non-normalized alignments.
     if (!D_created) align_D();
-    
+
+    if (mod_scoring) delete mod_scoring;
     mod_scoring=new Scoring(*scoring); // make mod_scoring point to a copy of scoring
     
     // Apply Dinkelbach's algorithm

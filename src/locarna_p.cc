@@ -338,11 +338,7 @@ main(int argc, char **argv) {
 	    if (opt_verbose) {
 		std::cout <<"Use built-in ribosum."<<std::endl;
 	    }
-	    std::cerr
-	  	    << "ERROR: RIBOSUM85_60 temporary disable by Milad."
-	  	    <<std::endl;
-	  	    exit(-1);
-//	    ribosum = new Ribosum85_60();
+	    ribosum = new Ribosum85_60();
 	} else {
 	    ribosum = new RibosumFreq(ribosum_file);
 	}
@@ -399,7 +395,7 @@ main(int argc, char **argv) {
 
     if (opt_verbose) {
 	std::cout << "Run inside algorithm."<<std::endl;
-#       ifdef LARGE_PF
+#       ifdef VERY_LARGE_PF
 	std::cout << "Use large partition function type."<<std::endl;
 #       endif
     }
@@ -510,6 +506,9 @@ main(int argc, char **argv) {
     // std::cout << it->arcA() <<" " << it->arcB() <<" " << it->idx() << " " << scoring.exp_arcmatch(*it)<< std::endl;
     //}
 
+    // clean up
+    if(arc_matches) delete arc_matches;
+    if (ribosum) delete ribosum;
     
     // DONE
     exit(0);

@@ -1,4 +1,9 @@
-#!/usr/bin/perl -w
+#!@PERL@ -I@prefix@/lib/perl
+# -*- perl -*-
+
+### ============================================================================
+### MAN-PAGE
+###
 
 =head1 NAME
 
@@ -76,9 +81,9 @@ Inverse temperature beta
 
 Skip plotting, only output
 
-=item B<--write-R-script>
+=item B<--write-R-script>=file
 
-Write the R script
+Write the R script to file
 
 =item B<--revcompl>
 
@@ -107,6 +112,14 @@ projected to the sequence with given sequence name (or containing
 
 
 use strict;
+
+## ------------------------------------------------------------
+## global constants
+my $prefix = "@prefix@";
+my $exec_prefix = "@exec_prefix@";
+my $bindir = "@bindir@";
+
+my $LOCARNAP_FIT="$bindir/locarnap_fit";
 
 ##------------------------------------------------------------
 ## options
@@ -154,6 +167,11 @@ my $output_format="pdf";
 
 my $show_fitonoff=0;
 
+my $output_width=12;
+
+my $output_height=4;
+
+
 ## Getopt::Long::Configure("no_ignore_case");
 
 GetOptions(	   
@@ -175,10 +193,12 @@ GetOptions(
     "show-sw" => \$show_sw,
     "revcompl" => \$revcompl,
     "dont-plot" => \$dont_plot,
-    "write-R-script" => \$write_R_script,
+    "write-R-script=s" => \$write_R_script,
     "show-fitonoff" => \$show_fitonoff,
     "write-subseq" => \$write_subseq,
-    "output-format=s" => \$output_format
+    "output-format=s" => \$output_format,
+    "output-width=i" => \$output_width,
+    "output-height=i" => \$output_height
     ) || pod2usage(2);
 
 pod2usage(1) if $help;
@@ -347,7 +367,7 @@ while(<IN>) {
 close TMP;
 
 ### do fit
-my $fit_cmd="cat $tmpfile | locarnap_fit - --delta $fitpenalty".($fit_once_on?" --once-on":"").(defined($beta)?" --beta $beta":"");
+my $fit_cmd="cat $tmpfile | $LOCARNAP_FIT - --delta $fitpenalty".($fit_once_on?" --once-on":"").(defined($beta)?" --beta $beta":"");
 my @fit_answer = readpipe($fit_cmd);
 
 #print STDOUT "fit call: $fit_cmd\n";
@@ -386,7 +406,13 @@ if ($fit_once_on) {
     
     ## compute averages
     $hit_score /= $fitlist[1]-$fitlist[0]+1;
-    $outside_score /= $len - ($fitlist[1]-$fitlist[0]+1);
+    
+    my $outside_len = $len - ($fitlist[1]-$fitlist[0]+1);
+    if ($outside_len > 0) {
+	$outside_score /= $outside_len;
+    } 
+    # otherwise $outside_score equals 0 already
+    
     $total_score /= $len;
     
     print "SCORE $hit_score $outside_score\n";
@@ -447,7 +473,7 @@ my @on_list=();
 my @off_list=();
 
 for(my $i=0; $i<$#fitlist; $i+=2) {
-    push @on_list,$fitlist[$i];
+    push @on_list,$fitlist[$i]-1;
     push @off_list,$fitlist[$i+1];
 }
 
@@ -463,8 +489,6 @@ $off_list = perl2Rvector(@off_list);
 
 $signal_names = perl2Rstring_vector(split /\s+/,$signal_names);
 
-my $output_width=12;
-my $output_height=4;
 my $resolution=64;
 my $format_extra_str="";
 
@@ -627,7 +651,9 @@ if (!$dont_plot) {
 }
 
 if ($write_R_script) {
-    print $rscript;
+    open (FILE,">$write_R_script") || die "Cannot write R script to file";
+    print FILE $rscript;
+    close FILE;
 }
 
 

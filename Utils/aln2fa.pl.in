@@ -78,7 +78,7 @@ if ($#ARGV == 0) {
 
 use MLocarna;
 
-my $aln = read_aln_clustalw("$inputfilename");
+my $aln = read_clustalw_alnloh("$inputfilename");
 
 print sprint_fasta_alnloh($aln,75);
 

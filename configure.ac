@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.6.2], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.7.1], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
@@ -11,7 +11,9 @@ AC_SUBST([API_VERSION], [1.0])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-LT_INIT
+LT_INIT                     # for libtool
+AC_PROG_LIBTOOL             # deprecated; left for backward compatibility
+# AC_SUBST(LIBTOOL_DEPS)
 
 AM_INIT_AUTOMAKE
 
@@ -23,11 +25,10 @@ AC_PROG_CPP
 
 AC_LANG_CPLUSPLUS
 
-AC_PATH_PROGS([PERL],[perl perl5.004 perl5.003 perl5.002 perl5.001 perl5])
+AC_PATH_PROGS([PERL],[perl perl5])
 
 AC_PATH_PROG([HELP2MAN],[help2man],false)
 AC_PATH_PROG([POD2MAN],[pod2man],false)
-
 
 
 # Vienna RNA package library path support, if not installed in standard directory/path
@@ -93,7 +94,7 @@ if test "$ENABLE_LIBRNA" = "yes" ; then
    fi
    
    # Check for Vienna RNA library (primitive check for one header) 
-   AC_CHECK_HEADER("ViennaRNA/fold.h",
+   AC_CHECK_HEADER([ViennaRNA/fold.h],
 		   [],
  		   [VRNA_OK=false])
 
@@ -173,6 +174,7 @@ fi
 
 
 ## flag for use of long double partition function type
+## attention: name clash with Vienna package macro LARGE_PF ==> define VERY_LARGE_PF
 AC_MSG_CHECKING([whether to support large partition function])
 use_large_pf=no
 AC_ARG_ENABLE([large-pf],
@@ -184,8 +186,8 @@ AC_ARG_ENABLE([large-pf],
 )
 AC_MSG_RESULT($use_large_pf)
 if test x"$use_large_pf" = x"yes"; then
-    LIBDEFS="$LIBDEFS -DLARGE_PF"
-    AC_DEFINE([LARGE_PF])
+    LIBDEFS="$LIBDEFS -DVERY_LARGE_PF"
+    AC_DEFINE([VERY_LARGE_PF])
 fi
 
 
@@ -224,4 +226,4 @@ if test "$VRNA_OK" = "false" ; then
 fi
 
 
-AC_OUTPUT([src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/mlocarna Utils/locarnate Utils/aln2fa.pl Utils/pp2dot])
+AC_OUTPUT([src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/mlocarna Utils/locarnate Utils/aln2fa.pl Utils/pp2dot Utils/mlocarna_nnames Utils/locarna-mea Utils/reliability-profile.pl])

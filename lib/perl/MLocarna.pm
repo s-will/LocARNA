@@ -30,6 +30,7 @@ compute_alignment_score
 read_dp_ps
 read_pp_file_aln
 read_pp_file_pairprobs
+read_pp_file_pairprob_info
 convert_dp_to_pp_with_constraints
 convert_alifold_dp_to_pp
 compute_alifold_structure
@@ -165,13 +166,21 @@ sub normalize_seqname {
     my $maxlen=16;
 
     chomp $name;
+
+    # replace all non-alpha-numeric symbols by '_' 
     $name =~ s/[^a-zA-Z\d]/_/g;
+    # take first 16 characters
     $name = substr $name,0,$maxlen;
     
+    # make $name unique if it already occurs in @names
+    # by appending '_' and a number $i to the truncated name
+    # ($name is truncated such that maxlen is not exceeded)
+    #
+    # iterate over numbers $i from 1 until a unique name is generated
     my $i=1;
     while (grep /^$name$/, @names) {
 	my $arity = int(log($i)/log(10))+1;
-	if ($arity >= 4) { # arbitrary limit
+	if ($arity > 10) { # this will never happen ;)
 	    die "Could not generate unique name";
 	}
 	
@@ -190,9 +199,9 @@ my %normalized_sequence_names_hash;
 ## print normalized sequence names hash to stdout for debugging
 ## 
 sub print_normalized_sequence_names_hash {
-    print "Normalized sequence names hash:\n";
+    #print "Normalized sequence names hash:\n";
     foreach my $k (sort keys %normalized_sequence_names_hash) { 
-	print "  $k => $normalized_sequence_names_hash{$k}\n";
+	print "$k => $normalized_sequence_names_hash{$k}\n";
     }
 }
 
@@ -765,7 +774,7 @@ sub read_dp_ps {
 }
 
 
-
+## read pp file and return the alignment
 sub read_pp_file_aln($) {
     my ($filename)=@_;
     local *PP_IN;
@@ -804,29 +813,52 @@ sub read_pp_file_pairprobs($) {
     open(PP_IN,$filename) || die "Can not read $filename\n";
     
     #my %aln;
-    my %pairprobs;
+    my %pairprobs = read_pp_file_pairprob_info($filename);
+    
+    foreach my $k (keys %pairprobs) {
+	$pairprobs{$k} =~ /^(\S+)/;
+	$pairprobs{$k} = $1;
+    }
+    
+    return %pairprobs;
+}
+
+## read a pp file and return a hash of pair probability information
+##
+## @param $filename name of the pp file
+## @returns hash of pair probability information reported in the file
+##          the hash has keys "$i $j" and contains the probability information
+##          for this pair;
+##          this information is the rest of the line starting with "$i $j"
+##          in the pp file
+##          positions in the hash are in [1..sequence length]
+##
+sub read_pp_file_pairprob_info($) {
+    my ($filename)=@_;
+    local *PP_IN;
+
+    open(PP_IN,$filename) || die "Can not read $filename\n";
+    
+    #my %aln;
+    my %pairprobinfo;
 
     my $line;
 
     while ($line = <PP_IN>) {
 	if ($line =~ /^\#\s*$/) { last; }
-
-	if ($line =~ /^(\S+)\s+(.+)/) {
-	    #$aln{$1}.=$2;
-	}
     }
     
     while (($line = <PP_IN>)) {
-	if ($line =~ /(\S+)\s+(\S+)\s+(\S+)/) {
+	if ($line =~ /(\S+)\s+(\S+)\s+(.+)/) {
 	    my $i=$1;
 	    my $j=$2;
-	    my $p=$3;
-	    $pairprobs{"$i $j"}=$p;
+	    my $pi=$3;
+	    $pairprobinfo{"$i $j"}=$pi;
 	}
     }
     close PP_IN;
     
-    return %pairprobs;
+    return %pairprobinfo;
 }
 
 
@@ -1576,6 +1608,7 @@ sub extract_score_matrix_from_alignments($$) {
     
 
     for (my $a=0; $a<@$names; $a++) {
+	$score_matrix[$a][$a] = 0; ## set diagonal to 0
 	for (my $b=0; $b<$a; $b++) {
 	    
 	    my @aln = @{ $pairwise_alns[$a][$b] };

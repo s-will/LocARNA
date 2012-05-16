@@ -19,6 +19,21 @@
 
 //#include <math.h>
 
+// define MEASURE_TIME for measuring the run-time of locarna directly
+// (without the need for time on the command line)
+// 
+#undef MEASURE_TIME
+#ifdef MEASURE_TIME
+// time : for getrusage()
+#include <sys/resource.h>
+#include <sys/types.h>
+// for gettimeofday()
+#include <sys/time.h>
+// for setprecision
+#include <iomanip>
+#endif
+
+
 #include <LocARNA/sequence.hh>
 #include <LocARNA/basepairs.hh>
 #include <LocARNA/alignment.hh>
@@ -318,6 +333,17 @@ option_def my_options[] = {
 int
 main(int argc, char **argv) {
 
+#ifdef MEASURE_TIME
+	struct timeval tp;
+	struct rusage ruse;
+
+	gettimeofday( &tp, NULL );
+	double start = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+
+	getrusage( RUSAGE_SELF, &ruse );
+	double startR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+#endif
+
     typedef std::vector<int>::size_type size_type;
 
     // ------------------------------------------------------------
@@ -326,7 +352,7 @@ main(int argc, char **argv) {
     bool process_success=process_options(argc,argv,my_options);
 
     if (clp.opt_help) {
-	cout << "locarna - a tool for pairwise (global and local) alignment of RNA!"<<endl<<endl;
+	cout << "locarna - a tool for pairwise (global and local) alignment of RNA."<<endl<<endl;
 	
 	cout << VERSION_STRING<<endl<<endl;
 
@@ -385,21 +411,16 @@ main(int argc, char **argv) {
     // ----------------------------------------  
     // Ribosum matrix
     //
-    std::auto_ptr<RibosumFreq> ribosum(NULL);
+    RibosumFreq *ribosum=NULL;
 	
     if (clp.use_ribosum) {
 	if (clp.ribosum_file == "RIBOSUM85_60") {
 	    if (clp.opt_verbose) {
 		std::cout <<"Use built-in ribosum."<<std::endl;
 	    }
-//	    ribosum = auto_ptr<RibosumFreq>(new Ribosum85_60b);
-	    std::cerr
-	    << "ERROR: RIBOSUM85_60 temporary disable by Milad."
-	    <<std::endl;
-	    exit(-1);
-
+	    ribosum = new Ribosum85_60;
 	} else {
-	    ribosum = auto_ptr<RibosumFreq>(new RibosumFreq(clp.ribosum_file));
+	    ribosum = new RibosumFreq(clp.ribosum_file);
 	}	
 	/*
 	  std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
@@ -427,7 +448,7 @@ main(int argc, char **argv) {
 				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
 				 ?0
 				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 ribosum.get(),
+				 ribosum,
 				 clp.struct_weight,
 				 clp.tau_factor,
 				 clp.exclusion_score,
@@ -773,6 +794,14 @@ main(int argc, char **argv) {
 	}
 	
 	// ----------------------------------------
+	// already clean up
+	//
+	if (match_probs) delete match_probs;
+	if(arc_matches) delete arc_matches;
+	if (multiple_ref_alignment) delete multiple_ref_alignment;
+	if (ribosum) delete ribosum;
+	
+	// ----------------------------------------
 	// optionally write output formats
 	//
 	if (clp.opt_clustal_out) {
@@ -813,6 +842,16 @@ main(int argc, char **argv) {
 	}
     }
     
+#ifdef MEASURE_TIME
+    gettimeofday( &tp, NULL );
+    double end = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
+
+    getrusage( RUSAGE_SELF, &ruse );
+    double endR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
+    cout << endl << "time_wall main = " << setprecision(3) << end - start << " sec" << endl;
+    cout << "time_cpu main = " << setprecision(3) << endR - startR << " sec" << endl << endl;
+#endif
+
     // ----------------------------------------
     // DONE
     exit(0);

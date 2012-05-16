@@ -149,6 +149,7 @@ namespace LocARNA {
 		    ++j;
 		}
 	    }
+
 	    /* long options */
 	    if (options[i].longname!="") {
 		long_opts[k].name = const_cast<char *>(options[i].longname.c_str());
@@ -157,12 +158,18 @@ namespace LocARNA {
 		else {
 		    long_opts[k].has_arg = required_argument;
 		}
-		long_opts[k].flag = &index;
-		long_opts[k].val  = i;
+		
+		// in combination the following assignments control how
+		// the index of a long option is returned
+		long_opts[k].flag = &index; // causes getopt_long to load val into variable index
+		long_opts[k].val  = i;      // sets val to index of long option in options array
+		
 		++k;
 	    }
 	}
-  
+
+	short_opts[j]=0; // 0-terminate short options string
+		
 	/* clear option flags */
 	for (i=0; i<num_opts; ++i) {
 	    if (options[i].flag) *(options[i].flag) = FALSE;
@@ -188,6 +195,7 @@ namespace LocARNA {
 
 	/* main loop to process options */
 	while ((c=getopt_long(argc,argv,short_opts,long_opts,&long_index))!=EOF) {
+
 	    switch (c) {
 	    case '?':
 		return FALSE;
@@ -200,10 +208,13 @@ namespace LocARNA {
 			;
 		    assert(i < num_opts);
 		    index = i;
-		} /* else: long option */
+		} /* else: 'long option';
+		     the index of long option is already written to variable index by getopt_long,
+		     due to our initialization of long_opts
+		  */
 		
 		if (options[index].flag) *(options[index].flag)=TRUE;
-      
+		
 		// printf("decode %s %d\n",options[index].longname.c_str(),options[index].arg_type);
 		
 		is_set[index] = TRUE;
@@ -228,7 +239,6 @@ namespace LocARNA {
 			}
 			return FALSE;
 		    }
-
 		}
 	    }
 	}

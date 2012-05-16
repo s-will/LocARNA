@@ -250,7 +250,7 @@ namespace LocARNA {
 	     */
 	    infty_score_t D(const Arc &a,const Arc &b) const {
 		return aligner_->Dmat(a.idx(),b.idx())
-		    -lambda_*(arc_length(a)+arc_length(b));
+		    -FiniteInt(lambda_*(arc_length(a)+arc_length(b)));
 	    }
 
 	    /** 
@@ -262,7 +262,7 @@ namespace LocARNA {
 	     */
 	    infty_score_t D(const ArcMatch &am) const {
 		return aligner_->Dmat(am.arcA().idx(),am.arcB().idx())
-		    -lambda_*(arc_length(am.arcA())+arc_length(am.arcB()));
+		    -FiniteInt(lambda_*(arc_length(am.arcA())+arc_length(am.arcB())));
 	    }
 	};
     

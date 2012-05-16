@@ -9,7 +9,7 @@
 #include "ribosum.hh"
 #include "match_probs.hh"
 
-#include "infty_arith_int.hh"
+#include "infty_int.hh"
 
 namespace LocARNA {
 
@@ -18,7 +18,9 @@ namespace LocARNA {
 
     //! an extended score_t that can store and calculate with
     //! infinite values (i.p. we use -infty for invalid matrix entries)
-    typedef InftyArithInt infty_score_t;
+    typedef InftyInt infty_score_t;
+
+    typedef TaintedInftyInt tainted_infty_score_t;
 
     //! matrix of scores supporting infinity
     typedef Matrix<infty_score_t> ScoreMatrix;
@@ -27,7 +29,7 @@ namespace LocARNA {
     typedef std::vector<infty_score_t> ScoreVector;
 
     //! type of partition functions
-#ifdef LARGE_PF
+#ifdef VERY_LARGE_PF
     typedef long double pf_score_t;
 #else
     typedef double pf_score_t;
