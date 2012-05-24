@@ -66,6 +66,8 @@ write_pp
 
 write_2D_matrix
 
+read_2D_matrix
+
 new_intermediate_name
 
 extract_score_matrix_from_alignments
@@ -1473,6 +1475,45 @@ sub aln_length_atleastonematch($) {
     return $mylen;
 }
 
+
+########################################
+## read_2D_matrix($file string, $n uint, $m uint)
+##
+## read a $nx$m-matrix from file, matrix entries are
+## separated by white space, rows are separated by new line
+##
+########################################
+sub read_2D_matrix {
+    my ($file,$n,$m) = @_;
+    
+    my @matrix=();
+
+    my $MAT;
+
+    open($MAT,"$file") || die "Cannot read matrix $file\n";
+    
+    for (my $a=0; $a<$n; $a++) {
+	my $line;
+	if ($line=<$MAT>) {
+	    
+	    chomp $line;
+	    $line=~s/^\s+//;
+	    
+	    my @row=split /\s+/,$line;
+	    if (int(@row) != $m) {
+		die "Expect $m entries per row while reading matrix from $file; found ".int(@row)."\n";
+	    }
+	    
+	    push @matrix, [ @row ]; 
+	}
+	else {
+	    die "Expect $n rows while reading matrix from $file, found ".($a-1)."\n";
+	}
+    }
+    close $MAT;
+    
+    return \@matrix;
+}
 
 ########################################
 ## write_2D_matrix($file string, $matrix ref of 2D array)

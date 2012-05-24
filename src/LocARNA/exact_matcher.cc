@@ -1716,7 +1716,7 @@ namespace LocARNA {
     void LCSEPM::calculateHoles3()
     {
 	intPPairPTR lastHole 			= NULL;
-	PatternPairMap::SelfValuePTR lastEPM 	= NULL;
+	//PatternPairMap::SelfValuePTR lastEPM 	= NULL;
 	int lastHoleScore 			= 0;
 	int skippedHoles			= 0;
 	for (HoleMapCITER2 t = holeOrdering2.begin();t != holeOrdering2.end();++t)
@@ -1740,9 +1740,9 @@ namespace LocARNA {
 		    (*t).second->setEPMScore(	(*t).second->getScore() + holeScore );
 
 		    //cout << "score new " << (*t).second->getScore() << endl;
-
+		    
 		    lastHole = (*t).first;
-		    lastEPM = (*t).second;
+		    //lastEPM = (*t).second;
 		    lastHoleScore = holeScore;
 		} else{
 		    // add score of last hole to current EPM
