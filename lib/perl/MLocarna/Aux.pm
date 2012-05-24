@@ -30,6 +30,7 @@ project_seq
 is_gap
 aln_length
 aln_size
+aln_names
 consensus_sequence
 );
 
@@ -161,8 +162,48 @@ sub project_seq($) {
 
 ########################################
 ## return size of alignment, i.e. number of sequences in the alignment
+## @param $aln ref to alignment hash
+##
+## ATTENTION: aln is not allowed to contain constraint extensions!
 sub aln_size($) {
     my $aln = shift;
+    
+    my @ks = keys %$aln;
+
+    #if (grep /#[S,C,LONG]$/,@ks) {
+    #	print STDERR "WARNING: Potentially you discovered a bug in mlocarna. Please avoid sequence names that end in #S, #C or #LONG: @ks\n";
+    #}
+    
+    return $#ks+1;
+}
+
+########################################
+## return sequence names of the alignment
+## @param $aln ref to alignment hash
+##
+## ATTENTION: aln is not allowed to contain constraint extensions!
+sub aln_names($) {
+    my $aln = shift;
+    
+    my @ks = keys %$aln;
+
+    #if (grep /#[S,C,LONG]$/,@ks) {
+    #	print STDERR "WARNING: Potentially you discovered a bug in mlocarna. Please avoid sequence names that end in #S, #C or #LONG: @ks\n";
+    #}
+    
+    return @ks;
+}
+
+########################################
+## return size of alignment, i.e. number of sequences in the alignment
+## @param $aln ref to alignment hash
+##
+## ATTENTION: sequence names in aln are not allowed to contain symbols '#',
+## since this symbol is reserved for the constraint tags
+##
+sub aln_size_with_constraints($) {
+    my $aln = shift;
+    
     my @ks = keys %$aln;
     @ks = grep !/#/,@ks;
     return $#ks+1;

@@ -140,9 +140,9 @@ sub sum_paired_prob_am {
 sub average_basematch_probs($$$) {
     my ($alnA,$alnB,$bmprobs) = @_;
     
-    my @namesA = grep !/#/, keys %$alnA;
-    my @namesB = grep !/#/, keys %$alnB;
-
+    my @namesA = aln_names($alnA);
+    my @namesB = aln_names($alnB);
+    
     my %r; # result matrix
 
     for my $nameA (@namesA) {
@@ -185,8 +185,8 @@ sub average_basematch_probs($$$) {
 sub average_arcmatch_probs($$$) {
     my ($alnA,$alnB,$amprobs) = @_;
 
-    my @namesA = grep !/#/, keys %$alnA;
-    my @namesB = grep !/#/, keys %$alnB;
+    my @namesA = aln_names($alnA);
+    my @namesB = aln_names($alnB);
 
     my %r; # result matrix
 
@@ -539,7 +539,7 @@ sub write_am_probs($$) {
 sub compute_bmreliabilities_single_seq {
     my ($nameA,$aln,$bmprobs,$amprobs) = @_;
     
-    my @names = grep !/#/, keys %$aln;
+    my @names = aln_names($aln);
     
     if ($#names < 0) { die "compute bmreliability single seq: empty alignment."; }
 
@@ -648,7 +648,7 @@ sub compute_amreliabilities_single_seq($$$$) {
     
     my ($nameA,$aln,$amprobs,$pairprobs) = @_;
     
-    my @names = grep !/#/, keys %$aln;
+    my @names = aln_names($aln);
 
     my $aln_length=length($aln->{$names[0]});
 
@@ -736,7 +736,7 @@ sub compute_amreliabilities_single_seq($$$$) {
 sub compute_reliability($$$) {
     my ($aln,$bmprobs,$amprobs) = @_;
     
-    my @names = grep !/#/, keys %$aln;
+    my @names = aln_names($aln);
     
     if ($#names < 0) { die "basematch_reliability: empty alignment."; }
 
