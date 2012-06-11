@@ -58,8 +58,9 @@ LDADD=libLocARNA-$(API_VERSION).la
 
 BUILT_SOURCES=LocARNA/ribosum85_60.icc
 
-check_PROGRAMS = trace_controller_test
-trace_controller_test_SOURCES = trace_controller_test.cc
+check_PROGRAMS = test_trace_controller test_rna_data
+test_trace_controller_SOURCES = test_trace_controller.cc
+test_rna_data_SOURCES = test_rna_data.cc
 TESTS = $(check_PROGRAMS)
 
 dist_locarna_bin_SOURCES = locarna.cc

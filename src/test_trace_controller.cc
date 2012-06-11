@@ -2,11 +2,11 @@
 #include <string>
 #include <strstream>
 
-#include "sequence.hh"
-#include "multiple_alignment.hh"
-#include "trace_controller.hh"
+#include "LocARNA/sequence.hh"
+#include "LocARNA/multiple_alignment.hh"
+#include "LocARNA/trace_controller.hh"
 
-
+using namespace LocARNA;
 
 bool verbose=false;
 
@@ -74,7 +74,7 @@ int main(int argc, char**argv) {
     
     TraceController tc(seqA,seqB,&ma,0);
     
-    if (verbose) tc.print_debug(std::cout);
+    //if (verbose) tc.print_debug(std::cout);
     
     retVal=0;
 

@@ -87,6 +87,14 @@ namespace LocARNA {
 		    //profile_(),
 		    rows_() {}; 
 
+	//! \brief Construct from name and sequence string
+	//!
+	Sequence(const std::string &name, const std::string &seqstr): 
+	    seq_(),
+	    rows_() {
+	    append_row(name,seqstr);
+	}; 
+
 	//! \brief Construct from MultipleAlignment
 	//! @param ma the multiple Alignment
 	//!
@@ -117,7 +125,7 @@ namespace LocARNA {
     
 	//! @returns number of rows/sequences in the alignment
 	size_type row_number() const {return rows_;}
-
+	
 	/*
 	//! read access to name by index
 	//! @param i index in 1..number of rows

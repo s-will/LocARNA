@@ -246,8 +246,8 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    RnaData rnadataA(bpsfile1);
-    RnaData rnadataB(bpsfile2);
+    RnaData rnadataA(bpsfile1,false,false);
+    RnaData rnadataB(bpsfile2,false,false);
 
     Sequence seqA=rnadataA.get_sequence();
     Sequence seqB=rnadataB.get_sequence();

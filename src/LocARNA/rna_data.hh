@@ -118,7 +118,7 @@ namespace LocARNA {
 	 * @param keepMcM if TRUE, keep the McCaskill matrices for use in methods prob_unpaired/basepair_in_loop/external
 	 * @param stacking whether to use stacking
 	 */
-	RnaData(const std::string &file, bool keepMcM=false, bool stacking=false);
+	RnaData(const std::string &file, bool keepMcM, bool stacking);
 	
 	/** 
 	 * Construct from sequence, predicting the basepairs

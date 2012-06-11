@@ -484,8 +484,8 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
     
-    RnaData rnadataA(clp.file1,clp.opt_stacking);
-    RnaData rnadataB(clp.file2,clp.opt_stacking);
+    RnaData rnadataA(clp.file1,false,clp.opt_stacking);
+    RnaData rnadataB(clp.file2,false,clp.opt_stacking);
 
     Sequence seqA=rnadataA.get_sequence();
     Sequence seqB=rnadataB.get_sequence();
