@@ -169,7 +169,7 @@ AC_ARG_ENABLE([link-static],
 
 AC_MSG_RESULT($link_statically)
 if test x"$link_statically" = x"yes"; then
-   LDFLAGS="$LDFLAGS -static"
+   LDFLAGS="$LDFLAGS -all-static"
 fi
 
 
