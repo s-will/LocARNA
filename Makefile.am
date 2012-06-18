@@ -70,7 +70,9 @@ GLOBAL_INSTALL_DIR=/usr/local/user
 GLOBAL_VRNA=/usr/local/user/ViennaRNA-2.0.7
 GLOBAL_TCOFFEE=/usr/local/bin/t_coffee-5.03
 
-.PHONY: release update-release release-online install-release $(distdir).tar.gz
+REMOTE_HOST=isis.informatik.uni-freiburg.de
+
+.PHONY: release update-release release-online install-release install-release-local install-release-remote
 
 ## make release
 release:
@@ -88,34 +90,48 @@ update-release:
 	@echo "The new tag is committed but not pushed."
 
 ## generate $(distdir).tar.gz from tagged release
-$(distdir).tar.gz:
+$(distdir).tar.gz: .hgtags Makefile.am
 	@echo "Update to release tag $(distdir)"
 	@if hg update -c -r $(distdir) ; then \
-          echo "Generate $(distdir).tar.gz" ;\
+	  echo "Generate $(distdir).tar.gz" ;\
 	  make dist-gzip ;\
 	  echo "Update to tip" ;\
 	  hg update ;\
 	else \
-	  echo "Failed, since there are uncommitted changes. Clean up first." ;\
-	  if [ -e $(distdir).tar.gz ] ; then $(RM) $(distdir).tar.gz ; fi ;\
+	  false ;\
 	fi
 
-## install release in $GLOBAL_INSTALL_DIR
-install-release: $(distdir).tar.gz
-	@if [ ! -e $(distdir).tar.gz ]; then echo "Exit."; exit; fi 
-	@if [ ! -d tmp ] ; then mkdir tmp ; fi
-	@cd tmp; \
-	tar xzf ../$(distdir).tar.gz ;\
-	cd $(distdir); \
-	./configure --prefix=$(GLOBAL_INSTALL_DIR)/$(distdir) \
-	  --enable-static \
-	  --enable-rnalib \
-          --with-vrna=$(GLOBAL_VRNA) \
-	  TCOFFEE=$(GLOBAL_TCOFFEE) ; \
-	make; make install
+
+# ## install release in local $GLOBAL_INSTALL_DIR
+# install-release-local: $(distdir).tar.gz
+# 	@if [ ! -d tmp ] ; then mkdir tmp ; fi
+# 	@cd tmp; \
+# 	tar xzf ../$(distdir).tar.gz ;\
+# 	cd $(distdir); \
+# 	./configure --prefix=$(GLOBAL_INSTALL_DIR)/$(distdir) \
+# 	  --enable-static \
+# 	  --enable-rnalib \
+#           --with-vrna=$(GLOBAL_VRNA) \
+# 	  TCOFFEE=$(GLOBAL_TCOFFEE) ; \
+# 	make; make install
+
+## compile release on remote host and install in remote host's $GLOBAL_INSTALL_DIR
+install-release-remote: $(distdir).tar.gz
+	scp $(distdir).tar.gz $(REMOTE_HOST):$(GLOBAL_INSTALL_DIR)/src
+	ssh $(REMOTE_HOST) 'sh -c "cd $(GLOBAL_INSTALL_DIR)/src; \
+	  if test -d $(distdir) ; then rm -rf $(distdir) ; fi ;\
+	  tar xzf $(distdir).tar.gz ;\
+	  cd $(distdir); \
+	  ./configure --prefix=$(GLOBAL_INSTALL_DIR)/$(distdir) --enable-link-static --enable-large-pf --enable-librna --with-vrna=$(GLOBAL_VRNA) TCOFFEE=$(GLOBAL_TCOFFEE) ;\
+	  make -j8; make install ;\
+	  cd .. ;\
+	  cp $(distdir)/config.log $(distdir).config.log ;\
+	  rm -rf $(distdir) \
+	"'
+
+install-release: install-release-remote
 
 release-online: $(distdir).tar.gz
-	@if [ ! -e $(distdir).tar.gz ]; then echo "Exit."; exit; fi 
 	@cp $(distdir).tar.gz $(LOCAL_WEB_INSTDIR)/Releases
 	@cd $(LOCAL_WEB_INSTDIR)/Releases; \
 	if cvs add $(distdir).tar.gz ; then \
@@ -123,3 +139,7 @@ release-online: $(distdir).tar.gz
 	else \
 	  echo "Please run wwwupdate --no-elib manually."; \
 	fi
+
+
+#check whether $(distdir).tar.gz exists, now obsolete
+#@if [ ! -e $(distdir).tar.gz ]; then echo "Exit."; exit; fi
