@@ -61,48 +61,63 @@ EXTRA_DIST=Examples/archaea.fa Examples/ferritin.fa Examples/haca.snoRNA.fa Exam
 	   $(matrices_DATA) 
 
 
-## these goals are for my private use - SW
+## these goals are for my private use (release and install releases) - SW
 
 LOCAL_INSTDIR=$(HOME)/Soft
 LOCAL_WEB_INSTDIR=$(HOME)/public_html/web/Software/LocARNA
 
-.PHONY: release release-local-install web-release tag-version
+GLOBAL_INSTALL_DIR=/usr/local/users
+GLOBAL_VRNA=/usr/local/users/ViennaRNA-2.0.3
+GLOBAL_TCOFFEE=/usr/local/bin/t_coffee-5.03
 
+.PHONY: release update-release release-online install-release $(distdir).tar.gz
 
-tag-version:
-	@tag="v.$(VERSION)"; \
-	tag=$${tag//./_} ; \
-	echo "Tag $$tag" ; \
-	cvs tag -F $$tag
-
+## make release
 release:
-	@if [ ! -e Releases/$(distdir).tar.gz ]; then \
-	  make dist-gzip; \
-	  mv $(distdir).tar.gz Releases; \
-	  cvs add Releases/$(distdir).tar.gz ; \
-	  cvs commit Releases/$(distdir).tar.gz; \
-	  make tag-version ; \
+	@if grep $(distdir) .hgtags ; then \
+	   echo "ERROR: tag $(distdir) exists already; use update-release to force tag or set new version in configure.ac"; \
 	else \
-	  echo "Release already existed."; \
-	  echo "For updating it, run make update-release."; \
+	  echo "Make release $(distdir) from current revision"; \
+	  hg tag $(distdir); \
+	  echo "The new tag is committed but not pushed."; \
 	fi
 
-update-release: dist-gzip
-	@mv $(distdir).tar.gz Releases
-	@cvs commit Releases/$(distdir).tar.gz
-	@make tag-version
+update-release:
+	@echo "Make or update release $(distdir) from current revision"
+	@hg tag -f $(distdir)
+	@echo "The new tag is committed but not pushed."
 
-release-local-install: release
-	cd Releases; tar xzf $(distdir).tar.gz; \
-        cd $(distdir); \
-	./configure --prefix=$(LOCAL_INSTDIR)/$(distdir) \
-	    --enable-static TCOFFEE=/usr/local/bin/t_coffee-5.03 \
-            --with-vrna=/usr/local/vrna/1.8.4; \
+## generate $(distdir).tar.gz from tagged release
+$(distdir).tar.gz:
+	@echo "Update to release tag $(distdir)"
+	@if hg update -c -r $(distdir) ; then \
+          echo "Generate $(distdir).tar.gz" ;\
+	  make dist-gzip ;\
+	  echo "Update to tip" ;\
+	  hg update ;\
+	else \
+	  echo "Failed, since there are uncommitted changes. Clean up first." ;\
+	  if [ -e $(distdir).tar.gz ] ; then $(RM) $(distdir).tar.gz ; fi ;\
+	fi
+
+## install release in $GLOBAL_INSTALL_DIR
+install-release: $(distdir).tar.gz
+	@if [ ! -e $(distdir).tar.gz ]; then echo "Exit."; exit; fi 
+	@if [ ! -d tmp ] ; mkdir tmp ; fi
+	@cd tmp; \
+	tar xzf ../$(distdir).tar.gz ;\
+	cd $(distdir); \
+	./configure --prefix=$(GLOBAL_INSTALL_DIR)/$(distdir) \
+	  --enable-static \
+	  --enable-rnalib \
+          --with-vrna=$(GLOBAL_VRNA) \
+	  TCOFFEE=$(GLOBAL_TCOFFEE) ; \
 	make; make install
 
-web-release: release
-	cp Releases/$(distdir).tar.gz $(LOCAL_WEB_INSTDIR)/Releases; \
-	cd $(LOCAL_WEB_INSTDIR)/Releases; \
+release-online: $(distdir).tar.gz
+	@if [ ! -e $(distdir).tar.gz ]; then echo "Exit."; exit; fi 
+	@cp $(distdir).tar.gz $(LOCAL_WEB_INSTDIR)/Releases
+	@cd $(LOCAL_WEB_INSTDIR)/Releases; \
 	if cvs add $(distdir).tar.gz ; then \
 	  echo "Please change $(LOCAL_WEB_INSTDIR)/index.html for new release and commit / wwwupdate --no-elib"; \
 	else \
