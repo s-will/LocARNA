@@ -66,8 +66,8 @@ EXTRA_DIST=Examples/archaea.fa Examples/ferritin.fa Examples/haca.snoRNA.fa Exam
 LOCAL_INSTDIR=$(HOME)/Soft
 LOCAL_WEB_INSTDIR=$(HOME)/public_html/web/Software/LocARNA
 
-GLOBAL_INSTALL_DIR=/usr/local/users
-GLOBAL_VRNA=/usr/local/users/ViennaRNA-2.0.3
+GLOBAL_INSTALL_DIR=/usr/local/user
+GLOBAL_VRNA=/usr/local/user/ViennaRNA-2.0.7
 GLOBAL_TCOFFEE=/usr/local/bin/t_coffee-5.03
 
 .PHONY: release update-release release-online install-release $(distdir).tar.gz
@@ -103,7 +103,7 @@ $(distdir).tar.gz:
 ## install release in $GLOBAL_INSTALL_DIR
 install-release: $(distdir).tar.gz
 	@if [ ! -e $(distdir).tar.gz ]; then echo "Exit."; exit; fi 
-	@if [ ! -d tmp ] ; mkdir tmp ; fi
+	@if [ ! -d tmp ] ; then mkdir tmp ; fi
 	@cd tmp; \
 	tar xzf ../$(distdir).tar.gz ;\
 	cd $(distdir); \
