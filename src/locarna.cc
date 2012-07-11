@@ -412,14 +412,15 @@ main(int argc, char **argv) {
     // Ribosum matrix
     //
     RibosumFreq *ribosum=NULL;
-	
+
     if (clp.use_ribosum) {
-	if (clp.ribosum_file == "RIBOSUM85_60") {
-	    if (clp.opt_verbose) {
-		std::cout <<"Use built-in ribosum."<<std::endl;
-	    }
-	    ribosum = new Ribosum85_60;
-	} else {
+    	if (clp.ribosum_file == "RIBOSUM85_60") {
+    		if (clp.opt_verbose) {
+    			std::cout <<"Use built-in ribosum."<<std::endl;
+    		}
+    		ribosum = new Ribosum85_60();
+
+    	} else {
 	    ribosum = new RibosumFreq(clp.ribosum_file);
 	}	
 	/*

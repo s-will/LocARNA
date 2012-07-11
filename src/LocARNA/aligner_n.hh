@@ -16,7 +16,7 @@
 namespace LocARNA {
 
 /**
- * \brief Implements locarna alignment algorithm
+ * \brief Implements locarna next generation alignment algorithm
 
  * Performs the alignment of two sequences and their associated
  * sets of weighted basepairs
@@ -25,43 +25,14 @@ namespace LocARNA {
  * weighted base pair sets
 
  * usage: construct, align, trace, get_alignment
-
- * @note Idea "NICE TO HAVE": score matrices should be as small as
- * possible and have offsets.  The M-Matrix can be smaller if the
- * maximal arc len is limited. The D-matrix may be smaller if the
- * number of simultaneously needed arc-pairs is limited, due to
- * limit on the local sub-sequence lengths. A special cyclically
- * rotatable matrix would be required for alignment on the
- * top-level. Such matrices are implemented in matrix.hh but
- * currently not used.
  */
 class AlignerN {
 public:
 
 	//! type of matrix M
-	//! @note 'typedef RMtrix<infty_score_t> M_matrix_t;' didn't improve performance
 	typedef ScoreMatrix M_matrix_t;
 
 private:
-	/**
-	 * \brief Implements comparison by member second
-	 *
-	 * Templated function class implementing a comparison operator for
-	 * member second of class T.
-	 * @note used for priority queue in AlignerN::suboptimal
-	 */
-	template <class T>
-	class greater_second {
-	public:
-		/**
-		 * Compare members second of class T
-		 *
-		 * @return whether a.second smaller b.second
-		 */
-		bool operator() (const T& a, const T&b) {
-			return a.second < b.second;
-		}
-	};
 
 protected:
 	const Scoring *scoring; //!< the scores
@@ -77,31 +48,29 @@ protected:
 	const BasePairs &bpsA; //!< base pairs of A
 	const BasePairs &bpsB; //!< base pairs of B
 
-	//! restriction of AlignerN ( currently same as for AlignerN? ) //todo: implement/modify AlignerRestriction for locarna_n?
+	//! restriction of AlignerN
 	AlignerRestriction r;
 
 	//! matrix indexed by the arc indices of rnas A and B
 	ScoreMatrix Dmat;
 
-	//! next generation
-//	ScoreVector IA;
-	//! next generation
-//	ScoreVector IB;
-
+	//! matrix indexed by positions of elements of the seqA positions and the arc indices of RNA B
 	ScoreMatrix IAmat;
+	//! matrix indexed by positions of elements of the seqB positions and the arc indices of RNA A
 	ScoreMatrix IBmat;
 
 	//! M matrices
 	//! @note in the case of structure local alignment, 
-	//! the algo uses eight M matrices 
+	//! the algo uses eight M matrices
+	//! right now for the locarna_n only on M matrix is used (no exclusion)
 	std::vector<M_matrix_t> Ms;
 
 
-	int min_i; //!< subsequence of A left end, computed by trace back
-	int min_j; //!< subsequence of B left end, computed by trace back
+	int min_i; //!< subsequence of A left end, not used in locarna_n
+	int min_j; //!< subsequence of B left end, not used in locarna_n
 
-	int max_i; //!< subsequence of A right end, computed by align_top_level
-	int max_j; //!< subsequence of B right end, computed by align_top_level
+	int max_i; //!< subsequence of A right end, not used in locarna_n
+	int max_j; //!< subsequence of B right end, not used in locarna_n
 
 	bool D_created; //!< flag, is D already created?
 
@@ -111,6 +80,7 @@ protected:
 	//!
 	//! \note The idea of the names is E=exclusion, NO=no exclusion, X=one exclusion,
 	//! OP=open exclusion. In E_1_2, 1 refers to sequence A and 2 to sequence B.
+	//! currently in locarna_n only no exclusion is provided
 	enum {E_NO_NO};
 
 
@@ -124,7 +94,6 @@ protected:
 	 * penalty for the standard case the mechanism is used for methods
 	 * compute_M_entry and trace_noex
 	 */
-	//TODO: required? UnmodifiedScoringView
 	class UnmodifiedScoringViewN {
 	protected:
 		const AlignerN *alignerN_; //!< aligner object for that the view is provided
@@ -153,14 +122,23 @@ protected:
 		 * @return D matrix entry for match of a and b
 		 */
 		infty_score_t D(const Arc &a, const Arc &b) const {
-					return alignerN_->Dmat(a.idx(),b.idx());
-				}
+			return alignerN_->Dmat(a.idx(),b.idx());
+		}
+
 
 		/**
-		 * View on matrix IA
+		 * View on matrix D
+		 *
+		 * @param arcX arc in A/B determined by isA
+		 * @param arcY arc in B/A determined by isA
+		 * @param isA swap arcX/Y parameters
+		 * @return D matrix entry for match of arcX<->arcY
 		 */
-		infty_score_t IA(const pos_type i, const Arc &b) const {
-			return alignerN_->IAmat(i ,b.idx());
+		infty_score_t D(const Arc &arcX,const Arc &arcY, bool isA) {
+			if (isA)
+				return D(arcX,arcY);
+			else
+				return D(arcY,arcX);
 		}
 
 		/**
@@ -240,7 +218,7 @@ protected:
 		 */
 		infty_score_t D(const Arc &a,const Arc &b) const {
 			return alignerN_->Dmat(a.idx(),b.idx())
-		    		-lambda_*(arc_length(a)+arc_length(b));
+		    						-lambda_*(arc_length(a)+arc_length(b));
 		}
 
 
@@ -253,7 +231,7 @@ protected:
 		 */
 		infty_score_t D(const ArcMatch &am) const {
 			return alignerN_->Dmat(am.arcA().idx(),am.arcB().idx())
-		    		-lambda_*(arc_length(am.arcA())+arc_length(am.arcB()));
+		    						-lambda_*(arc_length(am.arcA())+arc_length(am.arcB()));
 		}
 	};
 
@@ -264,74 +242,62 @@ protected:
 	// ============================================================
 
 
-	//! \brief initialize matrices M and E
+	//! \brief initialize matrices M
 	//!
-	//! initialize first column and row of matrices M and E for
+	//! initialize first column and row of matrices M for
 	//! the alignment below of arc match (a,b).
-	//! The initialization depends on the state.
 	//! First row/column means the row al and column bl.
-	//! For correct initialization (in particular in local modes),
-	//! globalA/B and exclA/B need to be given correctly
-	//! for the state!
 	//!
-	//! @param state the state, selects the matrices M,E
+	//! @param state the state, selects the matrix M (currently one possible state)
 	//! @param al left end of arc a
 	//! @param ar right end of arc a
 	//! @param bl left end of arc b
 	//! @param br right end of arc b
-	//! @param globalA allow no free deletion of prefix of sequence A
-	//! @param exclA allow deletion of prefix of sequence A with cost exclusion()
-	//! @param globalB analogous for sequence B
-	//! @param exclB analogous for sequence B
 	//! @param sv Scoring view
 	//! 
 	template <class ScoringView>
-	void init_state(int state, pos_type al, pos_type ar, 
-			pos_type bl, pos_type br, 
-			bool globalA, bool exclA,
-			bool globalB, bool exclB, 
-			ScoringView sv);
+	void init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
 
 
-	//! \brief standard cases for alignment (without exlusion handling).
+	//! \brief compute IA/IB value of single element
 	//!
-	//! recursion cases that handle everything but exclusions
-	//! (in the LSSA-paper this function was called NoEx
-	//!    
-	//! @param al position in sequence A: left end of current arc match
-	//! @param bl position in sequence B: left end of current arc match
-	//! @param i position in sequence A, for which score is computed
-	//! @param j position in sequence B, for which score is computed
+	//! @param xl position in sequence A/B: left end of current arc match
+	//! @param arcY arc in sequence B/A, for which score is computed
+	//! @param i position in sequence A/B, for which score is computed
+	//! @param isA switch to determine IX is IA/IB
 	//! @param sv the scoring view to be used
-	//! @returns score of i,j in matrix set state that results from standard cases
+	//! @returns score of IX(i,arcX) for the left end arc element i
 	//! 
-	//! @pre state in 0..4, in non-structure local alignment state has to be 0;
-	//! @pre i,j is allowed by edge controller
 	template<class ScoringView>
-	infty_score_t compute_IA(pos_type al, Arc arcB, pos_type i, ScoringView sv);
+	infty_score_t compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, ScoringView sv);
 
-	template<class ScoringView>
-	infty_score_t compute_IB(Arc arcA, pos_type bl, pos_type k, ScoringView sv);
-
-	void fill_IA_entries ( pos_type al, Arc arcB, pos_type x);
-	void fill_IB_entries ( Arc arcA, pos_type bl, pos_type x);
-
-
-	//! \brief standard cases for alignment (without exlusion handling).
+	//! \brief fills all IA values using default scoring scheme
 	//!
-	//! recursion cases that handle everything but exclusions
-	//! (in the LSSA-paper this function was called NoEx
+	//! @param al position in sequence A: left end of current arc match
+	//! @param arcB arc in sequence B, for which score is computed
+	//! @param max_ar rightmost possible for an arc starting with the left end al in sequence A: maximum right end of current arc match
 	//!
-	//! @param state necessary for structure local, there state refers to a set of matrices M,E,F
+	void fill_IA_entries ( pos_type al, Arc arcB, pos_type max_ar);
+
+	//! \brief fills all IB values using default scoring scheme
+	//!
+	//! @param arcA arc in sequence A, for which score is computed
+	//! @param bl position in sequence B: left end of current arc match
+	//! @param max_br rightmost possible for an arc with the left end of bl in sequence B: maximum right end of current arc match
+	//!
+	void fill_IB_entries ( Arc arcA, pos_type bl, pos_type max_br);
+
+
+	//! \brief compute M value of single matrix element
+	//!
 	//! @param al position in sequence A: left end of current arc match
 	//! @param bl position in sequence B: left end of current arc match
 	//! @param i position in sequence A, for which score is computed
 	//! @param j position in sequence B, for which score is computed
+	//! @param state the state, selects the matrix M (currently one possible state=noEx)
 	//! @param sv the scoring view to be used
-	//! @returns score of i,j in matrix set state that results from standard cases
+	//! @returns score of M(i,j) for the arcs left ended by al, bl
 	//!
-	//! @pre state in 0..4, in non-structure local alignment state has to be 0;
-	//! @pre i,j is allowed by edge controller
 	template<class ScoringView>
 	infty_score_t compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_type j, ScoringView sv);
 
@@ -342,16 +308,16 @@ protected:
 	//! @param ar right end of arc a
 	//! @param bl left end of arc b
 	//! @param br right end of arc b
-	//! @param allow_exclusion whether to allow exclusions
+	//! @param allow_exclusion whether to allow exclusions, not supported by locarna_n
 	//! 
 	//! @pre arc-match (al,ar)~(bl,br) valid due to constraints and heuristics
-	void align_in_arcmatch(pos_type al,pos_type ar,pos_type bl,pos_type br,
+	void align_M(pos_type al,pos_type ar,pos_type bl,pos_type br,
 			bool allow_exclusion);
 
 	/** 
 	 * \brief trace back within an match of arcs
 	 * 
-	 * @param state the state selects M/E/F matrices (used in structure local alig)
+	 * @param state the state selects Mmatrices (currently one possible state=noEx)
 	 * @param al left end of arc in A
 	 * @param i  right end of subsequence in A
 	 * @param bl left end of arc in B
@@ -360,12 +326,12 @@ protected:
 	 * @param sv scoring view 
 	 */
 	template<class ScoringView>
-	void trace_in_arcmatch(int state,int al,int i,int bl,int j,bool top_level,ScoringView sv);
+	void trace_M(int state,int al,int i,int bl,int j,bool top_level,ScoringView sv);
 
 	/** 
 	 * \brief standard cases in trace back (without handling of exclusions)
 	 * 
-	 * @param state the state selects M/E/F matrices (used in structure local alig)
+	 * @param state the state selects M/ matrices (currently one possible state=noEx)
 	 * @param al left end of arc in A
 	 * @param i  right end of subsequence in A
 	 * @param bl left end of arc in B
@@ -374,27 +340,43 @@ protected:
 	 * @param sv scoring view 
 	 */
 	template <class ScoringView>
-	void trace_noex(int state,
+	void trace_M_noex(int state,
 			pos_type al, pos_type i,
 			pos_type bl,pos_type j,
 			bool top_level,
 			ScoringView sv);
 
-	//! @param am the arc match
+	//! trace D matrix
+	//! @param arcA the corresponding arc in A which defines the D element
+	//! @param arcB the corresponding arc in B which defines the D element
+	//! @param sv scoring view
 	template <class ScoringView>
-	void trace_arcmatch(const ArcMatch &am, ScoringView sv);
+	void trace_D(const Arc &arcA, const Arc &arcB, ScoringView sv);
 
+	//! trace D matrix
+	//! @param am the corresponding arcs which defines the D element
+	//! @param sv scoring view
 	template <class ScoringView>
-	void trace_IA (pos_type i, const Arc &arcB, ScoringView sv);
+	void trace_D(const ArcMatch &am, ScoringView sv);
+
+	//! trace IA/IB matrix
+	//! @param xl position in sequence A/B: left end of current arc match
+	//! @param i position in sequence A/B, for which score is computed
+	//! @param arcY arc in sequence B/A, for which score is computed
+	//! @param isA switch to determine IA/IB
+	//! @param sv the scoring view to be used
+	template <class ScoringView>
+	void trace_IX (pos_type xl, pos_type i, const Arc &arcY, bool isA, ScoringView sv);
+
 	/**
 	   create the entries in the D matrix
 	   This function is called by align() (unless D_created)
 	 */
 	void align_D();
 
-	/**
-	   fill in D the entries with left ends al,bl
-	 */
+	//! fill in D the entries with left ends al,bl
+	//! @param al position in sequence A: left end of current arc match
+	//! @param bl position in sequence A: left end of current arc match
 	void 
 	fill_D_entries(pos_type al, pos_type bl);
 
@@ -410,7 +392,23 @@ protected:
 		return Dmat(am.arcA().idx(),am.arcB().idx());
 	}
 
-	/** 
+
+	/**
+	 * Read/Write access to D matrix
+	 *
+	 * @param arcX arc in A/B determined by isA
+	 * @param arcY arc in B/A determined by isA
+	 * @param isA swap arcX/Y parameters
+	 * @return D matrix entry for match of arcX<->arcY
+	 */
+	infty_score_t &D(const Arc &arcX,const Arc &arcY, bool isA) {
+		if (isA)
+			return Dmat(arcX.idx(),arcY.idx());
+		else
+			return Dmat(arcY.idx(),arcX.idx());
+	}
+
+	/**
 	 * Read/Write access to D matrix
 	 * 
 	 * @param arcA arc in sequence A
@@ -424,19 +422,43 @@ protected:
 
 
 	/**
-		 * Read/Write access to IA matrix
-		 *
-		 */
-		infty_score_t &IA(const pos_type i, const Arc &b) {
-			return IAmat(i, b.idx());
-		}
-		/**
-			 * Read/Write access to IA matrix
-			 *
-			 */
-			infty_score_t &IB(const Arc &a, const pos_type k) {
-				return IAmat(a.idx(), k);
-			}
+	 * Read/Write access to IAorIB matrix
+	 *
+	 * @param i rightside position in seqA/B
+	 * @param arac arc in A/B
+	 * @param isA switch to determine IA/IB
+	 * @return IA/IB matrix entry for position k and arc
+	 */
+	infty_score_t &IX(const pos_type i, const Arc &arc, bool isA) {
+
+		if ( isA )
+			return IAmat(i, arc.idx());
+		else
+			return IBmat(arc.idx(), i);
+
+	}
+
+	/**
+	 * Read/Write access to IA matrix
+	 * @param i rightside position in seqA
+	 * @param b arc in B
+	 *
+	 * @return IA matrix entry for position i of a and arc b
+	 */
+	infty_score_t &IA(const pos_type i, const Arc &b) {
+		return IAmat(i, b.idx());
+	}
+
+	/**
+	 * Read/Write access to IB matrix
+	 * @param a arc in A
+	 * @param k rightside position in seqB
+	 *
+	 * @return IB matrix entry for arc a and position k in b
+	 */
+	infty_score_t &IB(const Arc &a, const pos_type k) {
+		return IBmat(a.idx(), k);
+	}
 
 	//! do the trace back through the alignment matrix
 	//! with partial recomputation
@@ -470,19 +492,6 @@ public:
 	//! offer trace as public method. Calls trace(def_scoring_view).
 	void
 	trace();
-
-	//! set the restriction on the alignment,
-	//! mainly used for the k-best algorithm
-	void 
-	set_restriction(const AlignerRestriction &r_) {r=r_;}
-
-	//! return the current restriction,
-	//! mainly used for the k-best algorithm
-	AlignerRestriction &
-	get_restriction() {return r;}
-
-
-
 
 };
 

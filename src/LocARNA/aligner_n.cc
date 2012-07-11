@@ -15,9 +15,7 @@ using namespace std;
 
 namespace LocARNA {
 
-
-
-
+bool trace_debugging_output=false;
 
 
 // ------------------------------------------------------------
@@ -37,8 +35,6 @@ AlignerN::AlignerN(const AlignerN &a)
  Dmat(a.Dmat),
  IAmat(a.IAmat),
  IBmat(a.IBmat),
-// IA(a.IA),
-// IB(a.IB),
  Ms(a.Ms),
  min_i(a.min_i),
  min_j(a.min_j),
@@ -74,8 +70,6 @@ AlignerN::AlignerN(const Sequence &seqA_,
 	Dmat.resize(bpsA.num_bps(),bpsB.num_bps());
 	Dmat.fill(infty_score_t::neg_infty);
 
-//	IA.resize(seqA.length()+1);
-//	IB.resize(seqB.length()+1);
 	IAmat.resize(seqA.length()+1, bpsB.num_bps());
 	IBmat.resize(bpsA.num_bps(), seqB.length()+1);
 
@@ -86,31 +80,42 @@ AlignerN::AlignerN(const Sequence &seqA_,
 }
 
 
-
+//destructor
 AlignerN::~AlignerN() {
 	if (mod_scoring!=0) delete mod_scoring;
 }
 
 template<class ScoringView>
 infty_score_t
-AlignerN::compute_IA(pos_type al, Arc arcB, pos_type i, ScoringView sv) {
+AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, ScoringView sv) {
 
+	bool constraints_aligned_pos;
+	const BasePairs &bpsX = isA? bpsA : bpsB;
+	const BasePairs::RightAdjList &adjlX = bpsX.right_adjlist(i);//TODO: Ask: right_adjlist(i) returns a sorted list??
+
+	if ( isA )
+	{
+		constraints_aligned_pos = params->constraints.aligned_in_a(i);
+	}
+	else
+	{
+		constraints_aligned_pos = params->constraints.aligned_in_b(i);
+	}
 	// compute IA entry
 	infty_score_t max_score = infty_score_t::neg_infty;
-	if ( (! params->constraints.aligned_in_a(i)) ) {
+	if ( !constraints_aligned_pos  ) {
 		// due to constraints, i can be deleted
 		max_score =
 				std::max(	max_score,
-						IAmat(i-1, arcB.idx()) + sv.scoring()->gapA(i, arcB.right() )); //TODO: Review: Check for matrix functionality!
+						IX(i-1, arcY, isA) + sv.scoring()->gapX(i, arcY.right(), isA )); //TODO: Be Careful: in gapX first and second variables does NOT indicate seqA or seqB
 
-		max_score = max_score.normalized_neg(); //TODO: normalization required?
 	}
 
-	const BasePairs::RightAdjList &adjlA = bpsA.right_adjlist(i); //TODO: Ask: right_adjlist(i) returns a sorted list??
 
 	//---------------------cost computation for left sided gap blocks ----------------------------
-	std::vector<infty_score_t> blockGapCostsA;
-	blockGapCostsA.resize( i - al + 1, infty_score_t::neg_infty); //one additional element for al
+	//TODO: blockGapCosts can be computed just once and reused in method calls, variable can be transformed to an upper level attribute
+	std::vector<infty_score_t> blockGapCostsX;
+	blockGapCostsX.resize( i - xl + 1, infty_score_t::neg_infty); //one additional element for al
 	//
 	infty_score_t gap_score = (infty_score_t)0;
 
@@ -119,101 +124,43 @@ AlignerN::compute_IA(pos_type al, Arc arcB, pos_type i, ScoringView sv) {
 	// nor deleted
 
 	pos_type lastPos;
-	for (lastPos = al + 1; lastPos <= i; lastPos++) { //TODO: to be optimized. can be integrated in the arc loop
+	for (lastPos = xl + 1; lastPos <= i; lastPos++) { //TODO: to be optimized. can be integrated in the arc loop
 
-		//todo: !Review: Shall we check this trace_controller for locarna_n?
-		if (params->trace_controller.min_col(lastPos) > arcB.left()) break; // fill only as long as column bl is accessible, remaining elements have been initialized with neg_infinity
+		if (isA && params->trace_controller.min_col(lastPos) > arcY.left()) break; // fill only as long as column bl is accessible, remaining elements have been initialized with neg_infinity
+		if ( !isA && params->trace_controller.max_col(arcY.left()) < lastPos ) break;
+
 
 		if (!gap_score.is_neg_infty()) {
-			if (params->constraints.aligned_in_a(lastPos)) {
+			if ( (isA && params->constraints.aligned_in_a(lastPos))
+					|| ( !isA && params->constraints.aligned_in_b(lastPos)) ) {
 				gap_score = infty_score_t::neg_infty;
 			}
 			else {
-				gap_score += sv.scoring()->gapA( lastPos, arcB.left());
+				gap_score += sv.scoring()->gapX( lastPos, arcY.left(), isA);
 			}
 		}
-		blockGapCostsA[lastPos - al ] = gap_score;
+		else
+		{
+			break; //no more block of deletion/insertion is possible;
+		}
+
+		blockGapCostsX[lastPos - xl ] = gap_score;
 	}
 	//-------------------------------------------------------------------------------------
 
-	for (BasePairs::RightAdjList::const_iterator arcA = adjlA.begin();
-			arcA != adjlA.end() && arcA->left() > al  ; ++arcA) {
-		infty_score_t new_score = blockGapCostsA[arcA->left() - al ]
-		                                         + sv.scoring()->gapA (i, arcB.right())
-		                                         + sv.D(*arcA, arcB ) //todo: ugly code!
-		                                         + sv.scoring()->arcgap (*arcA);
+	for (BasePairs::RightAdjList::const_iterator arcX = adjlX.begin();
+			arcX != adjlX.end() && arcX->left() > xl  ; ++arcX) {
+		infty_score_t new_score = blockGapCostsX[arcX->left() - xl ]
+		                                         + sv.scoring()->gapX (i, arcY.right(), isA)
+		                                         + sv.D(*arcX, arcY, isA ) //todo: ugly code!
+		                                         + sv.scoring()->arcDel (*arcX, isA);
 
 		if (new_score > max_score) {
 			max_score = new_score;
 		}
 
 	}
-	//TODO: Review: Check for matrix functionality!
-	return (max_score.normalized_neg()); //TODO: is normalized_neg? required ?
-	//TODO: IB computation, To be done similar to  IA
-
-}
-
-template<class ScoringView>
-infty_score_t
-AlignerN::compute_IB(Arc arcA, pos_type bl, pos_type k, ScoringView sv) {
-
-	// compute IA entry
-	infty_score_t max_score = infty_score_t::neg_infty;
-	if ( (! params->constraints.aligned_in_b(k)) ) {
-		// due to constraints, i can be deleted
-		max_score =
-				std::max(	max_score,
-						IBmat( arcA.idx(), k-1) + sv.scoring()->gapB(arcA.right(), k)); //TODO: Review: Check for matrix functionality!
-
-		max_score = max_score.normalized_neg(); //TODO: normalization required?
-	}
-
-	const BasePairs::RightAdjList &adjlB = bpsB.right_adjlist(k); //TODO: Ask: right_adjlist(i) returns a sorted list??
-
-	//---------------------cost computation for left sided gap blocks ----------------------------
-	std::vector<infty_score_t> blockGapCostsB;
-	blockGapCostsB.resize( k - bl + 1, infty_score_t::neg_infty); //one additional element for al
-	//
-	infty_score_t gap_score = (infty_score_t)0;
-
-	// handling of anchor constraints:
-	// anchored positions must not be excluded,
-	// nor deleted
-
-	pos_type lastPos;
-	for (lastPos = bl + 1; lastPos <= k; lastPos++) { //TODO: to be optimized. can be integrated in the arc loop
-
-		//todo: !Review: Shall we check this trace_controller for locarna_n?
-		if (params->trace_controller.min_col(lastPos) > arcA.left()) break; // fill only as long as column bl is accessible, remaining elements have been initialized with neg_infinity
-
-		if (!gap_score.is_neg_infty()) {
-			if (params->constraints.aligned_in_b(lastPos)) {
-				gap_score = infty_score_t::neg_infty;
-			}
-			else {
-				gap_score += sv.scoring()->gapB( arcA.left(), lastPos);
-			}
-		}
-		blockGapCostsB[lastPos - bl ] = gap_score;
-	}
-	//-------------------------------------------------------------------------------------
-
-	for (BasePairs::RightAdjList::const_iterator arcB = adjlB.begin();
-			arcB != adjlB.end() && arcB->left() > bl  ; ++arcB) {
-		infty_score_t new_score = blockGapCostsB[arcB->left() - bl ]
-		                                         + sv.scoring()->gapB (arcA.right(), k)
-		                                         + sv.D(arcA, *arcB ) //todo: ugly code!
-		                                         + sv.scoring()->arcgap (*arcB);
-
-		if (new_score > max_score) {
-			max_score = new_score;
-		}
-
-	}
-	//TODO: Review: Check for matrix functionality!
-	return (max_score.normalized_neg()); //TODO: is normalized_neg? required ?
-	//TODO: IB computation, To be done similar to  IA
+	return max_score;
 
 }
 
@@ -229,13 +176,13 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 	assert(0<=state && state<4);
 
 	assert(params->trace_controller.is_valid(i,j)); //todo: trace_controller for locarna_n?
-
+//	cout << "compute_M_entry al: " << al << " bl: " << bl << " i: " << i << " j: " << j << std::endl;
 	M_matrix_t &M = Ms[state];
 
 	infty_score_t max_score = infty_score_t::neg_infty;
 
 	// base match
-	if (params->constraints.allowed_edge(i,j)) { //todo: constraints for locarna_n
+	if (params->constraints.allowed_edge(i,j)) {
 		max_score = M(i-1,j-1) + sv.scoring()->basematch(i,j);
 	}
 
@@ -250,7 +197,7 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 
 	// standard case for arc match (without restriction to lonely pairs)
 	//
-	//TODO: Important: Instead of common_right_end_list, two iterative loops of right_adjlist could be used. That might be more efficient but arc match scores are not available for an arbitrary pair of arcs
+	//TODO: Instead of common_right_end_list, two iterative loops of right_adjlist could be used. That might be more efficient but arc match scores are not available for an arbitrary pair of arcs
 	for(ArcMatchIdxVec::const_iterator it=arc_matches.common_right_end_list( i, j ).begin();
 			arc_matches.common_right_end_list(i,j).end() != it; ++it ) {
 
@@ -264,43 +211,15 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 
 		if ( xl > al && yl > bl)
 		{
-			infty_score_t new_score =  M(arcX.left(),arcY.left()-1) + sv.D(arcX,arcY) + sv.scoring()->arcmatch(am);
+			infty_score_t new_score =  M(arcX.left()-1,arcY.left()-1) + sv.D(arcX,arcY) + sv.scoring()->arcmatch(am);
 			if (new_score > max_score) {
 				max_score=new_score;
+//				cout << "compute_M_entry arcs " << arcX << " , " << arcY << " new score: " << new_score << "arc match score: " << sv.scoring()->arcmatch(am) << std::endl;
 			}
 		}
 	}
 
-	/*
-	if ( params->constraints.allowed_edge(i,j) ) { //todo: constraints for locarna_n
-		const BasePairs::RightAdjList &adjlA = bpsA.right_adjlist(i);
-		const BasePairs::RightAdjList &adjlB = bpsB.right_adjlist(j);
-
-		// for all pairs of arcs in A and B that have right ends i and j, respectively
-		//
-		for (BasePairs::RightAdjList::const_iterator arcA=adjlA.begin();
-				arcA!=adjlA.end() && arcA->left() > al  ; ++arcA) {
-			for (BasePairs::RightAdjList::const_iterator arcB=adjlB.begin();
-					arcB!=adjlB.end() && arcB->left() > bl ; ++arcB) {
-
-				// no need to check (params->constraints.allowed_edge(arcA->left(),arcB->left()))
-				// or other "constraints"
-				// because for these arc matches holds that sv.D(*arcA,*arcB)==neg_infty
-				infty_score_t new_score =  M(arcA->left()-1,arcB->left()-1) + sv.D(*arcA,*arcB) + scoring->arcmatch(am);
-
-				//				infty_score_t new_score = M(arcA->left()-1,arcB->left()-1) + sv.scoring()->arcmatch(arcA) + sv.scoring()->arcmatch(arcB);
-
-				if (new_score > max_score) {
-					//std::cout << *arcA << "-"<< *arcB << ": "<<M(arcA->left()-1,arcB->left()-1)<<"+"<<D(*arcA,*arcB)<<"="<<new_score<<std::endl;
-					max_score=new_score;
-				}
-			}
-		}
-	}
-	 */
-
-
-	return max_score.normalized_neg();
+	return max_score;
 
 
 
@@ -309,25 +228,21 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 
 // generic initalization method.
 //
-
-//TODO: Implement AlignerN::init_state method!
-// Initialization in case of local alignment 
 template <class ScoringView>
 void
-AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,
-		bool globalA, bool exclA,
-		bool globalB, bool exclB,
-		ScoringView sv) {
+AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type br, ScoringView sv) {
 
     // alignments that have empty subsequence in A (i=al) and
 	// end with gap in alistr of B do not exist ==> -infty
 
+	if (trace_debugging_output)
+		cout << "init_state al: " << al << " bl: " << bl << " ar: " << ar << " br: " << br << endl;
 	M_matrix_t &M = Ms[state];
 
 	// al,bl can only be reached in states, where this is legal with cost 0 for empty alignment
 	M(al,bl) = (infty_score_t)0;
 
-	std::cout << "COL "<<bl<<" AL: "<<al<<" AR: "<<ar<<std::endl;
+//	std::cout << "COL is"<<bl<<" AL: "<<al<<" AR: "<<ar<<std::endl;
 
 	// init first col bl
 	//
@@ -360,10 +275,10 @@ AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type 
 
 	// init first row al
 	//
-	indel_score=(infty_score_t)0;  //TODO: indel_opening score for locarna_n
+	indel_score=(infty_score_t)0;
 
 	pos_type j;
-	for (j=bl+1 ; j < std::min(br, params->trace_controller.max_col(al)+1) ; j++) { //todo: trace_controller for locarna_n
+	for (j=bl+1 ; j < std::min(br, params->trace_controller.max_col(al)+1) ; j++) { // trace_controller for locarna_n
 		if (!indel_score.is_neg_infty()) {
 			if (params->constraints.aligned_in_b(j)) {
 				indel_score=infty_score_t::neg_infty;
@@ -377,36 +292,40 @@ AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type 
 
 }
 
-void AlignerN::fill_IA_entries ( pos_type al, Arc arcB, pos_type x)
+void AlignerN::fill_IA_entries ( pos_type al, Arc arcB, pos_type max_ar)
 {
 
-	IAmat(al, arcB.idx()) = (infty_score_t)0; //TODO: Ask reinitialize IA each time?
-
-	for (pos_type i = al+1; i <= x; i++) { //todo: Evaluation order of IA & IB elements? (i <= x)?
+	IAmat(al, arcB.idx()) = infty_score_t::neg_infty;
+	for (pos_type i = al+1; i < max_ar; i++) {
 
 		// limit entries due to trace controller
-		//todo: do we need to limit IA entries due to trace controller?
-		IAmat(i, arcB.idx()) = compute_IA(al, arcB, i, def_scoring_view); //TODO: Review: Check for matrix functionality!
+		//IAmat(i, arcB.idx()) = compute_IA(al, arcB, i, def_scoring_view);
+
+		IAmat(i, arcB.idx()) = compute_IX(al, arcB, i, true, def_scoring_view);
 	}
+//	cout << "fill_IA_entries al: "<< al << " arcB.idx: " << arcB.idx() << " arcB.left: " << arcB.left() << " arcB.right: " << arcB.right() << " IAmat: " << std::endl << IAmat << std::endl;
+
 
 }
 
 
-void AlignerN::fill_IB_entries ( Arc arcA, pos_type bl, pos_type x)
+
+void AlignerN::fill_IB_entries ( Arc arcA, pos_type bl, pos_type max_br)
 {
 
-	IBmat(arcA.idx(), bl) = (infty_score_t)0; //TODO: Ask reinitialize IA each time?
+	IBmat(arcA.idx(), bl) = infty_score_t::neg_infty;
 
-	for (pos_type k = bl+1; k <= x; k++) { //todo: Evaluation order of IA & IB elements? (i <= x)?
+	for (pos_type k = bl+1; k < max_br; k++) {
 
 		// limit entries due to trace controller
-		//todo: do we need to limit IA entries due to trace controller?
-		IBmat(arcA.idx(), k) = compute_IB(arcA, bl, k, def_scoring_view); //TODO: Review: Check for matrix functionality!
+//		IBmat(arcA.idx(), k) = compute_IB(arcA, bl, k, def_scoring_view);
+		IBmat(arcA.idx(), k) = compute_IX(bl, arcA, k, false, def_scoring_view);
 	}
+//	cout << "fill_IB_entries arcA: " << arcA << " bl: "<< bl <<  " IBmat: " << std::endl << IBmat << std::endl;
 
 }
 void
-AlignerN::align_in_arcmatch(pos_type al,pos_type ar,pos_type bl,pos_type br,
+AlignerN::align_M(pos_type al,pos_type ar,pos_type bl,pos_type br,
 		bool allow_exclusion) {
 
 	assert(br>0); // if br<=0 we run into trouble below when computing br-1
@@ -414,7 +333,7 @@ AlignerN::align_in_arcmatch(pos_type al,pos_type ar,pos_type bl,pos_type br,
 
 
 
-	init_state(E_NO_NO,al,ar,bl,br,true ,false,true ,false,def_scoring_view);
+	init_state(E_NO_NO, al, ar, bl, br, def_scoring_view);
 
 
 
@@ -422,12 +341,12 @@ AlignerN::align_in_arcmatch(pos_type al,pos_type ar,pos_type bl,pos_type br,
 	for (pos_type i=al+1; i<ar; i++) {
 
 		// limit entries due to trace controller
-		//todo: do we need to limit M entries due to trace controller?
+		//need to limit M entries due to trace controller?
 		pos_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
 		pos_type max_col = std::min(br-1,params->trace_controller.max_col(i));
 
 		for (pos_type j=min_col; j<=max_col; j++) {
-			Ms[E_NO_NO](i,j) = compute_M_entry(E_NO_NO,al,bl,i,j,def_scoring_view); //TODO: not using normalization has been hard coded?!
+			Ms[E_NO_NO](i,j) = compute_M_entry(E_NO_NO,al,bl,i,j,def_scoring_view);
 		}
 	}
 
@@ -436,6 +355,8 @@ AlignerN::align_in_arcmatch(pos_type al,pos_type ar,pos_type bl,pos_type br,
 		std::cerr << "ERROR Exclusions are not supported!" << std::endl;
 		assert ( ! allow_exclusion );
 	}
+
+//	cout << "align_M aligned M is :" << std::endl << Ms[E_NO_NO] << std::endl;
 }
 
 // compute the entries in the D matrix that
@@ -446,7 +367,8 @@ AlignerN::align_in_arcmatch(pos_type al,pos_type ar,pos_type bl,pos_type br,
 void 
 AlignerN::fill_D_entries(pos_type al, pos_type bl)
 {
-	for(ArcMatchIdxVec::const_iterator it=arc_matches.common_left_end_list(al,bl).begin(); //TODO: MUST be updated! which positions of matrices D,IA,IB should be computed?
+	if (trace_debugging_output) cout << "fill_D_entries al: " << al << " bl: " << bl << std::endl;
+	for(ArcMatchIdxVec::const_iterator it=arc_matches.common_left_end_list(al,bl).begin();
 			arc_matches.common_left_end_list(al,bl).end() != it; ++it ) {
 
 		const ArcMatch &am = arc_matches.arcmatch(*it);
@@ -458,9 +380,9 @@ AlignerN::fill_D_entries(pos_type al, pos_type bl)
 		pos_type ar = arcA.right();
 		pos_type br = arcB.right();
 
-		infty_score_t m= Ms[0](ar,br);
-		infty_score_t ia= IAmat(ar,br);
-		infty_score_t ib= IBmat(ar,br);
+		infty_score_t m= Ms[0](ar-1, br-1);
+		infty_score_t ia= IAmat(ar-1,arcB.idx());
+		infty_score_t ib= IBmat(arcA.idx(),br-1);
 
 		if (params->STRUCT_LOCAL) {
 			std::cerr << "ERROR Structural Locality not implemented!" << std::endl;
@@ -470,10 +392,10 @@ AlignerN::fill_D_entries(pos_type al, pos_type bl)
 		D(am) = std::max(m, ia);
 		D(am) = std::max(D(am), ib );
 
-		//std::cout <<"["<< am.arcA() << "," <<am.arcB() <<"]:" << D(am) << std::endl;
+//		std::cout <<"["<< am.arcA() << "," <<am.arcB() <<"]:" << D(am) << std::endl;
 
 		if (scoring->stacking()) {
-			std::cout << "Warning! stacking not implemented!" << std::endl;
+			std::cerr << "Warning! stacking not implemented!" << std::endl;
 		}
 	}
 }
@@ -485,40 +407,59 @@ void
 AlignerN::align_D() {
 	// for al in r.get_endA() .. r.get_startA
 	for (pos_type al=r.get_endA()+1; al>r.get_startA(); ) { al--;
-
+//	cout << "align_D al: " << al << endl;
 	const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
 	if ( adjlA.empty() )
+	{
+//		cout << "empty left_adjlist(al)" << endl;
 		continue;
-
+	}
 //	pos_type max_bl = std::min(r.get_endB(),params->trace_controller.max_col(al)); //TODO: check trace_controller or not? It seems not!
 //	pos_type min_bl = std::max(r.get_startB(),params->trace_controller.min_col(al));
 
-	pos_type max_bl = r.get_endB();
-	pos_type min_bl = r.get_startB();
+	pos_type max_bl = r.get_endB(); //tracecontroller not considered
+	pos_type min_bl = r.get_startB(); //tracecontroller not considered
 
 	// for bl in max_bl .. min_bl
 	for (pos_type bl=max_bl+1; bl > min_bl;) { bl--;
 
-//TODO: Take care of max ar, br!!
-	pos_type max_ar=r.get_endA();	//todo: any  restriction (e.g. trace_controller) required?
-	pos_type max_br=r.get_endB();
-
-	align_in_arcmatch(al,max_ar,bl,max_br,params->STRUCT_LOCAL);
-
 	const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
-	const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
+
+	if ( adjlB.empty() )
+	{
+//		cout << "empty left_adjlist(bl)" << endl;
+		continue;
+	}
+//	cout << "size of left_adjlist(bl): " << adjlB.size() << std::endl;
+	pos_type max_ar=adjlA.begin()->right();	//tracecontroller not considered
+	pos_type max_br=adjlB.begin()->right();
+
+	//find the rightmost possible basepair for left base al
+	for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
+			arcA != adjlA.end(); arcA++)
+	{
+		if (max_ar < arcA->right() )
+			max_ar = arcA->right();
+	}
+	//find the rightmost possible basepair for left base bl
+	for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
+			arcB != adjlB.end(); arcB++)
+	{
+		if (max_br < arcB->right() )
+			max_br = arcB->right();
+	}
+	align_M(al,max_ar,bl,max_br,params->STRUCT_LOCAL);
 
 	for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
 			arcB != adjlB.end(); arcB++)
 	{
-		fill_IA_entries(al, *arcB, max_ar ); //todo: max_ar?
+		fill_IA_entries(al, *arcB, max_ar );
 	}
 
-	//TODO: Fill IB
 	for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
 			arcA != adjlA.end(); arcA++)
 	{
-		fill_IB_entries(*arcA, bl, max_br ); //todo: max_ar?
+		fill_IB_entries(*arcA, bl, max_br );
 	}
 
 
@@ -532,11 +473,12 @@ AlignerN::align_D() {
 	// fill D matrix entries
 	//
 	if (params->no_lonely_pairs) {
-		std:cerr << "no_lonely_pairs not implemented!" << std::endl;
+		std:cerr << "no_lonely_pairs not implemented !" << std::endl;
 		assert(! params->no_lonely_pairs);
-	} else {
-		fill_D_entries(al,bl);
 	}
+
+		fill_D_entries(al,bl);
+
 	}
 	}
 
@@ -550,7 +492,6 @@ AlignerN::align() {
 	// ------------------------------------------------------------
 	// computes D matrix (if not already done) and then does the alignment on the top level
 	// ------------------------------------------------------------
-
 	if (!D_created) align_D();
 
 	if (params->SEQU_LOCAL) {
@@ -561,33 +502,142 @@ AlignerN::align() {
 		// align toplevel globally with potentially free endgaps (as given by description params->free_endgaps)
 		//return align_top_level_free_endgaps(); //TODO: implement align_top_level_free_endgaps()
 
-
-		//TODO: Which one to be used at outermost? align M or align D? What has been used in the Sankoff?
-		align_in_arcmatch(r.get_startA()-1, r.get_endA(), r.get_startB()-1, r.get_endB(), false);
-		return Ms[E_NO_NO]( r.get_startA()-1, r.get_startB()-1); //no free end gaps
+		align_M(r.get_startA()-1, r.get_endA()+1, r.get_startB()-1, r.get_endB()+1, false);
+		return Ms[E_NO_NO]( r.get_endA(), r.get_endB()); //no free end gaps
 	}
 }
-
-
 
 // ------------------------------------------------------------
 
 template <class ScoringView>
-	void AlignerN::trace_IA (pos_type i, const Arc &arcB, ScoringView sv)
+	void AlignerN::trace_IX (pos_type xl, pos_type i, const Arc &arcY, bool isA, ScoringView sv)
 {
+	if (trace_debugging_output) cout << "****trace_IX**** " << i << " , " << arcY << std::endl;
+
+	if ( i <= xl )
+	{
+		for (int k = arcY.left()+1; k < arcY.right(); k++) { //TODO: implement free end gaps cost
+			if (isA)
+				alignment.append(-1,k);
+			else
+				alignment.append(k,-1);
+		}
+		return;
+	}
+
+	if ( sv.scoring()->indel_opening() == 0 ) { // base del and ins, linear cost
+		if (isA)
+		{
+			if( !params->constraints.aligned_in_a(i)  //todo: is this check necessary? does scoring()->gapA take care of constraints?
+					//todo: valid trace check for IA?
+					&& IA(i, arcY) == IA(i-1, arcY) + sv.scoring()->gapA(i, arcY.right() ) )
+			{
+				alignment.append(i, -1);
+				trace_IX( xl, i-1, arcY, isA, sv);
+				return;
+			}
+		}
+		else //isB
+			if ( !params->constraints.aligned_in_b(i) && IB(arcY, i) == IB(arcY, i-1) + sv.scoring()->gapB(arcY.right(), i ) )
+			{
+				alignment.append(-1, i);
+				trace_IX( xl, i-1, arcY, isA, sv);
+				return;
+			}
+
+	}else {
+		// base del and ins, affine cost
+		std::cerr << "aligner_n: affine gap cost is not supported" << std::endl;
+		assert ( sv.scoring()->indel_opening() == 0 );
+	}
+
+
+	const BasePairs::RightAdjList &adjlX = isA? bpsA.right_adjlist(i): bpsB.right_adjlist(i); //TODO: Ask: right_adjlist(i) returns a sorted list?
+
+	//---------------------cost computation for left sided gap blocks ----------------------------
+	std::vector<infty_score_t> blockGapCostsX;
+	blockGapCostsX.resize( i - xl + 1, infty_score_t::neg_infty); //one additional element for al
+	//
+	infty_score_t gap_score = (infty_score_t)0;
+
+	// handling of anchor constraints:
+	// anchored positions must not be excluded,
+	// nor deleted
+
+	pos_type lastPos;
+	for (lastPos = xl + 1; lastPos <= i; lastPos++) { //TODO: to be optimized. can be integrated in the arc loop
+
+			//todo: !Review: Shall we check this trace_controller for locarna_n?
+			if (isA && params->trace_controller.min_col(lastPos) > arcY.left()) break; // fill only as long as column bl is accessible, remaining elements have been initialized with neg_infinity
+			if ( !isA && params->trace_controller.max_col(arcY.left()) < lastPos ) break; // todo: validate the code
+
+
+			if (!gap_score.is_neg_infty()) {
+				if ( (isA && params->constraints.aligned_in_a(lastPos))
+						|| ( !isA && params->constraints.aligned_in_b(lastPos)) ) {
+					gap_score = infty_score_t::neg_infty;
+				}
+				else {
+					gap_score += sv.scoring()->gapX( lastPos, arcY.left(), isA);
+				}
+			}
+			else
+			{
+				break; //no more block of deletion/insertion is possible;
+			}
+
+			blockGapCostsX[lastPos - xl ] = gap_score;
+	}
+	//-------------------------------------------------------------------------------------
+
+	for (BasePairs::RightAdjList::const_iterator arcX = adjlX.begin();
+			arcX != adjlX.end() && arcX->left() > xl  ; ++arcX) {
+
+		if ( IX(i, arcY, isA) == blockGapCostsX[arcX->left() - xl ]
+		                                        + sv.scoring()->gapX (i, arcY.right(), isA)
+		                                        + sv.D(*arcX, arcY, isA ) //todo: ugly code!
+		                                        + sv.scoring()->arcDel (*arcX, isA))
+		{
+			if (trace_debugging_output) cout << "Arc Deletion for X " << (isA?"A ":"B ") << std::endl;
+			if (isA)
+			{
+				alignment.add_basepairA(arcX->left(), arcX->right());
+				for (int k = xl+1; k <= arcX->left(); k++) { //TODO: end gaps cost is not free
+					alignment.append(k, -1);
+				}
+
+				trace_D(*arcX, arcY, sv);
+
+				alignment.append(arcX->right(), -1);
+			}
+			else
+			{
+				alignment.add_basepairB(arcX->left(), arcX->right());
+				for (int k = xl+1; k <= arcX->left(); k++) { //TODO: end gaps cost is not free
+					alignment.append(-1, k);
+				}
+
+				trace_D(arcY, *arcX, sv);
+
+				alignment.append(-1, arcX->right());
+
+			}
+		}
+
+	}
+
 
 }
+
+
 // AlignerN: traceback
-//TODO: Implement traceback!
 template<class ScoringView>
-void AlignerN::trace_arcmatch(const ArcMatch &am, ScoringView sv) {
+void AlignerN::trace_D(const Arc &arcA, const Arc &arcB, ScoringView sv) {
 
-	// std::cout << "trace_arcmatch " << am.arcA() << " " << am.arcB() <<std::endl;
-	assert(! params->STRUCT_LOCAL); //TODO: support structure local
+	if (trace_debugging_output) std::cout << "****trace_D****" << arcA << " " << arcB <<std::endl;
+	assert(! params->STRUCT_LOCAL);
 
 
-	const Arc &arcA=am.arcA();
-	const Arc &arcB=am.arcB();
 
 	pos_type al=arcA.left();
 	pos_type ar=arcA.right();
@@ -604,24 +654,40 @@ void AlignerN::trace_arcmatch(const ArcMatch &am, ScoringView sv) {
 	// now handle the case that arc match is not stacked
 
 	//first compute IA
-	fill_IA_entries(al, arcB, ar-1);  //todo: If a one-dimensional IAmat were used, re-fill IA_entries for traces
-	if ( IA(ar-1, arcB ) == sv.D(am) )
+	fill_IA_entries(al, arcB, ar);
+	if ( IA(ar-1, arcB ) == sv.D(arcA, arcB) )
 	{
-		trace_IA(ar-1, arcB, sv);
+//		trace_IA(al, ar-1, arcB, sv);
+		trace_IX(al, ar-1, arcB, true, sv);
 		return;
 	}
-	//TODO: trace_IB in the similar way
+
+	fill_IB_entries(arcA, bl, br);
+	if ( IB(arcA, br-1 ) == sv.D(arcA, arcB) )
+	{
+//		trace_IB(arcA, bl, br-1, sv);
+		trace_IX(bl, br-1, arcA, false, sv);
+
+		return;
+	}
 
 	// first recompute M
-	align_in_arcmatch(al,ar, bl,br,	params->STRUCT_LOCAL);
+	align_M(al,ar, bl,br,	params->STRUCT_LOCAL);
 
-	trace_in_arcmatch(0,al,ar-1,bl,br-1,false,def_scoring_view);
+	trace_M(0,al,ar-1,bl,br-1,false,def_scoring_view);
 
 	return;
 }
+
+template<class ScoringView>
+void AlignerN::trace_D(const ArcMatch &am, ScoringView sv) {
+
+	trace_D(am.arcA(), am.arcB(), sv);
+}
+
 // trace and handle all cases that do not involve exclusions
 template<class ScoringView>
-void AlignerN::trace_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_type j, bool tl, ScoringView sv) {
+void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_type j, bool tl, ScoringView sv) {
 
 	assert (state == E_NO_NO);
 	M_matrix_t &M=Ms[state];
@@ -634,7 +700,8 @@ void AlignerN::trace_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_ty
 	if ( params->constraints.allowed_edge(i,j)
 			&& params->trace_controller.is_valid(i-1,j-1) // todo: check trace_controller?
 			&& M(i,j) ==  M(i-1,j-1) + sv.scoring()->basematch(i,j) ) {
-		trace_in_arcmatch(state, oal, i-1, obl, j-1, tl, sv);
+		if (trace_debugging_output) cout << "base match " << i << " , " << j << std::endl;
+		trace_M(state, oal, i-1, obl, j-1, tl, sv);
 		alignment.append(i,j);
 		return;
 	}
@@ -644,7 +711,7 @@ void AlignerN::trace_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_ty
 		if ( (!params->constraints.aligned_in_a(i))
 				&& params->trace_controller.is_valid(i-1,j) //todo: check trace_controller?
 				&& M(i,j) == M(i-1,j) + sv.scoring()->gapA(i,j)) {
-			trace_in_arcmatch(state, oal, i-1, obl, j, tl, sv);
+			trace_M(state, oal, i-1, obl, j, tl, sv);
 			alignment.append(i,-1);
 			return;
 		}
@@ -652,20 +719,24 @@ void AlignerN::trace_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_ty
 		if ( (!params->constraints.aligned_in_b(j))
 				&& params->trace_controller.is_valid(i,j-1) //todo: check trace_controller?
 				&& M(i,j) == M(i,j-1)+sv.scoring()->gapB(i,j)) {
-			trace_in_arcmatch(state, oal, i, obl, j-1, tl, sv);
+			trace_M(state, oal, i, obl, j-1, tl, sv);
 			alignment.append(-1,j);
 			return;
 		}
 	} else {
 		// base del and ins, affine cost
-		std::cout << "aligner_n: affine gap cost is not supported" << std::endl; //TODO: Support affine gap cost
+		std::cerr << "WARNING: aligner_n: affine gap cost is not supported" << std::endl; //TODO: Support affine gap cost
 		assert ( sv.scoring()->indel_opening() == 0 );
 	}
 
 	// only consider arc match cases if edge (i,j) is allowed and valid!
 	if ( ! (params->constraints.allowed_edge(i,j)
 			&& params->trace_controller.is_valid(i-1,j-1)) //todo: check trace_controller?
-	) return;
+	)
+		{
+			std::cerr << "WARNING: unallowed edge or trace is invalid" << std::endl;
+			return;
+		}
 
 
 	// here (i,j) is allowed and valid
@@ -694,10 +765,9 @@ void AlignerN::trace_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_ty
 		if ( M(i,j) == M(al-1, bl-1) + sv.D(am) + sv.scoring()->arcmatch(am) ) {
 			//
 			// do the trace for alignment left of the arc match
-			trace_in_arcmatch(state, oal, al-1, obl, bl-1, tl, sv);
+			trace_M(state, oal, al-1, obl, bl-1, tl, sv);
 
-			//cout << "arcmatch "<<(al)<<","<<i<<";"<<(bl)<<","<<j<<" :: "
-			//      <<(arcA->w)<<" + "<<(arcB->w)<< " + " << tau(al,bl,i,j)  <<endl;
+			if (trace_debugging_output) cout << "arcmatch "<<(al)<<","<<i<<";"<<(bl)<<","<<j<<" :: "   << endl;
 
 			alignment.add_basepairA(al,ar);
 			alignment.add_basepairB(bl,br);
@@ -708,30 +778,28 @@ void AlignerN::trace_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_ty
 			if (params->no_lonely_pairs) {
 				std:cerr << "no_lonely_pairs not implemented!" << std::endl;
 				assert(! params->no_lonely_pairs);
-			} else {
-				trace_arcmatch(am, sv);
 			}
-
+			trace_D(am, sv);
 			alignment.append(ar,br);
+
+
 
 			return;
 		}
 	}
+	if (trace_debugging_output) cout << "WARNING: No trace found!" << std::endl;
 }
 
 // do the trace within one arc match.
 // the cases without exclusions are delegated to trace_noex
 template <class ScoringView>
 void
-AlignerN::trace_in_arcmatch(int state,int al,int i,int bl,int j,bool tl,ScoringView sv) {
+AlignerN::trace_M(int state,int al,int i,int bl,int j,bool tl,ScoringView sv) {
 	//pre: M matrices for arc computed
 	M_matrix_t &M=Ms[state];
 	assert (state == E_NO_NO);
 	assert(! params->SEQU_LOCAL); //Local seq alignment not implemented yet.
-	// string state_text[]={"E_NO_NO", "E_X_NO", "E_NO_X", "E_X_X",
-	// 			 "E_OP_NO", "E_NO_OP", "E_OP_X", "E_X_OP"};
-	// cout << "trace_in_arcmatch "<<state_text[state]<<" al:"<<al<<" i:"<<i
-	// 	 <<" bl:"<<bl<<" j:"<<j<<" :: "<< M(i,j) <<endl;
+	if (trace_debugging_output) cout << "******trace_M***** " << " al:" << al << " i:" << i <<" bl:"<< bl << " j:" << j << " :: " <<  M(i,j) << endl;
 
 	if (i<=al) {
 		for (int k=bl+1;k<=j;k++) { //TODO: end gaps cost is not free
@@ -744,12 +812,13 @@ AlignerN::trace_in_arcmatch(int state,int al,int i,int bl,int j,bool tl,ScoringV
 		for (int k=al+1;k<=i;k++) {
 			alignment.append(k,-1); //TODO: end gaps cost is not free
 		}
+		return;
 	}
 
 
 	switch(state) {
 	case E_NO_NO:
-		trace_noex(state, al, i, bl, j, tl, sv);
+		trace_M_noex(state, al, i, bl, j, tl, sv);
 		break;
 	}
 }
@@ -765,17 +834,13 @@ AlignerN::trace(ScoringView sv) {
 	// such that they can be written again during the trace
 	alignment.clear();
 
-	// free end gap version: trace_in_arcmatch(E_NO_NO,r.get_startA()-1,max_i,r.get_startB()-1,max_j,true,sv);
-	trace_in_arcmatch(E_NO_NO, r.get_startA()-1, r.get_endA(), r.get_startB()-1, r.get_endB(), true, sv);
+	// free end gap version: trace_M(E_NO_NO,r.get_startA()-1,max_i,r.get_startB()-1,max_j,true,sv);
+	trace_M(E_NO_NO, r.get_startA()-1, r.get_endA(), r.get_startB()-1, r.get_endB(), true, sv); //TODO: right side for trace_M differs with align_M
 
 }
 
 void
 AlignerN::trace() {trace(def_scoring_view);}
-
-/* ------------------------------------------------------------
-   Compute k-best alignments by intervall splitting
- */
 
 
 //! type of a task (used in computing k-best alignment)

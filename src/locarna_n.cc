@@ -322,7 +322,6 @@ main(int argc, char **argv) {
 
     // ------------------------------------------------------------
     // Process options
-
     bool process_success=process_options(argc,argv,my_options);
 
     if (clp.opt_help) {
@@ -392,11 +391,7 @@ main(int argc, char **argv) {
 	    if (clp.opt_verbose) {
 		std::cout <<"Use built-in ribosum."<<std::endl;
 	    }
-	    std::cerr
-	  	    << "ERROR: RIBOSUM85_60 temporary disable by Milad."
-	  	    <<std::endl;
-	  	    exit(-1);
-//	    ribosum = auto_ptr<RibosumFreq>(new Ribosum85_60);
+	  	    ribosum = auto_ptr<RibosumFreq>(new Ribosum85_60);
 	} else {
 	    ribosum = auto_ptr<RibosumFreq>(new RibosumFreq(clp.ribosum_file));
 	}	
@@ -735,7 +730,8 @@ main(int argc, char **argv) {
 	
 	// ========== STANDARD CASE ==========
 	
-	// otherwise compute the best alignment
+	cout << "aligner_n STANDARD CASE" << std::endl;
+    	// otherwise compute the best alignment
 	score = aligner.align();
     
     }
@@ -758,7 +754,7 @@ main(int argc, char **argv) {
 	aligner.trace();
 	
 	// for debugging:
-	// aligner.get_alignment().write_debug(std::cout);
+	 aligner.get_alignment().write_debug(std::cout);
     }
     
     if (clp.opt_normalized || DO_TRACE) { // if we did a trace (one way or
