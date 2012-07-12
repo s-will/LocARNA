@@ -332,4 +332,11 @@ Mar, 2012
 	usage by the type system. Consequently, it is more flexible. It avoids
 	a bug in normalized alignment and helps to clean up the Exparna-P code.
 	(1.7.1)
-	
+Apr/May, 2012
+        Add reading of score matrix in mlocarna
+	Fix bug in probabilistic mode, which did not allow '#' in sequence names
+	Fix bugs in output of score matrix
+	Fix drawdplin
+June, 2012
+	Fix bug in trace controller
+	(1.7.2)

@@ -61,50 +61,85 @@ EXTRA_DIST=Examples/archaea.fa Examples/ferritin.fa Examples/haca.snoRNA.fa Exam
 	   $(matrices_DATA) 
 
 
-## these goals are for my private use - SW
+## these goals are for my private use (release and install releases) - SW
 
 LOCAL_INSTDIR=$(HOME)/Soft
 LOCAL_WEB_INSTDIR=$(HOME)/public_html/web/Software/LocARNA
 
-.PHONY: release release-local-install web-release tag-version
+GLOBAL_INSTALL_DIR=/usr/local/user
+GLOBAL_VRNA=/usr/local/user/ViennaRNA-2.0.7
+GLOBAL_TCOFFEE=/usr/local/bin/t_coffee-5.03
 
+REMOTE_HOST=isis.informatik.uni-freiburg.de
 
-tag-version:
-	@tag="v.$(VERSION)"; \
-	tag=$${tag//./_} ; \
-	echo "Tag $$tag" ; \
-	cvs tag -F $$tag
+.PHONY: release update-release release-online install-release install-release-local install-release-remote
 
+## make release
 release:
-	@if [ ! -e Releases/$(distdir).tar.gz ]; then \
-	  make dist-gzip; \
-	  mv $(distdir).tar.gz Releases; \
-	  cvs add Releases/$(distdir).tar.gz ; \
-	  cvs commit Releases/$(distdir).tar.gz; \
-	  make tag-version ; \
+	@if grep $(distdir) .hgtags ; then \
+	   echo "ERROR: tag $(distdir) exists already; use update-release to force tag or set new version in configure.ac"; \
 	else \
-	  echo "Release already existed."; \
-	  echo "For updating it, run make update-release."; \
+	  echo "Make release $(distdir) from current revision"; \
+	  hg tag $(distdir); \
+	  echo "The new tag is committed but not pushed."; \
 	fi
 
-update-release: dist-gzip
-	@mv $(distdir).tar.gz Releases
-	@cvs commit Releases/$(distdir).tar.gz
-	@make tag-version
+update-release:
+	@echo "Make or update release $(distdir) from current revision"
+	@hg tag -f $(distdir)
+	@echo "The new tag is committed but not pushed."
 
-release-local-install: release
-	cd Releases; tar xzf $(distdir).tar.gz; \
-        cd $(distdir); \
-	./configure --prefix=$(LOCAL_INSTDIR)/$(distdir) \
-	    --enable-static TCOFFEE=/usr/local/bin/t_coffee-5.03 \
-            --with-vrna=/usr/local/vrna/1.8.4; \
-	make; make install
+## generate $(distdir).tar.gz from tagged release
+$(distdir).tar.gz: .hgtags Makefile.am
+	@echo "Update to release tag $(distdir)"
+	@if hg update -c -r $(distdir) ; then \
+	  echo "Generate $(distdir).tar.gz" ;\
+	  make dist-gzip ;\
+	  echo "Update to tip" ;\
+	  hg update ;\
+	else \
+	  false ;\
+	fi
 
-web-release: release
-	cp Releases/$(distdir).tar.gz $(LOCAL_WEB_INSTDIR)/Releases; \
-	cd $(LOCAL_WEB_INSTDIR)/Releases; \
+
+# ## install release in local $GLOBAL_INSTALL_DIR
+# install-release-local: $(distdir).tar.gz
+# 	@if [ ! -d tmp ] ; then mkdir tmp ; fi
+# 	@cd tmp; \
+# 	tar xzf ../$(distdir).tar.gz ;\
+# 	cd $(distdir); \
+# 	./configure --prefix=$(GLOBAL_INSTALL_DIR)/$(distdir) \
+# 	  --enable-static \
+# 	  --enable-rnalib \
+#           --with-vrna=$(GLOBAL_VRNA) \
+# 	  TCOFFEE=$(GLOBAL_TCOFFEE) ; \
+# 	make; make install
+
+## compile release on remote host and install in remote host's $GLOBAL_INSTALL_DIR
+install-release-remote: $(distdir).tar.gz
+	scp $(distdir).tar.gz $(REMOTE_HOST):$(GLOBAL_INSTALL_DIR)/src
+	ssh $(REMOTE_HOST) 'sh -c "cd $(GLOBAL_INSTALL_DIR)/src; \
+	  if test -d $(distdir) ; then rm -rf $(distdir) ; fi ;\
+	  tar xzf $(distdir).tar.gz ;\
+	  cd $(distdir); \
+	  ./configure --prefix=$(GLOBAL_INSTALL_DIR)/$(distdir) --enable-link-static --enable-large-pf --enable-librna --with-vrna=$(GLOBAL_VRNA) TCOFFEE=$(GLOBAL_TCOFFEE) ;\
+	  make -j8; make install ;\
+	  cd .. ;\
+	  cp $(distdir)/config.log $(distdir).config.log ;\
+	  rm -rf $(distdir) \
+	"'
+
+install-release: install-release-remote
+
+release-online: $(distdir).tar.gz
+	@cp $(distdir).tar.gz $(LOCAL_WEB_INSTDIR)/Releases
+	@cd $(LOCAL_WEB_INSTDIR)/Releases; \
 	if cvs add $(distdir).tar.gz ; then \
 	  echo "Please change $(LOCAL_WEB_INSTDIR)/index.html for new release and commit / wwwupdate --no-elib"; \
 	else \
 	  echo "Please run wwwupdate --no-elib manually."; \
 	fi
+
+
+#check whether $(distdir).tar.gz exists, now obsolete
+#@if [ ! -e $(distdir).tar.gz ]; then echo "Exit."; exit; fi

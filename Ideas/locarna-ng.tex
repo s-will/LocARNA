@@ -225,9 +225,9 @@ We define four matrices
 \Red{
 Remarks:
 \begin{itemize}
-\item
-  Once can use structural sparsity as in LocARNA by considering only ``significant'' base pairs,
-  which reduces time complexity from $O(n^6)$ to $O(n^4)$.
+\item One can use structural sparsity as in LocARNA by considering
+  only ``significant'' base pairs, which reduces time complexity from
+  $O(n^6)$ to $O(n^4)$.
 \item Note that all recursion cases recure to entries with the same
   left ends $i,k$ or entries $\Dmat{i}{j}{k}{l}$ that are enclosed by
   ``significant'' base pairs $(i+1,j-1)$ and $(k+1,l-1)$ respectively.
@@ -306,14 +306,14 @@ with $a^l<i<a^r$, $b^l<j<b^r$ as follows
     \DTmat{a}{b'} + \PsiA{b'}
   \end{cases}\label{recursionIB}
 \end{align}
-The recursions are visualized in Fig~\ref{}.
+The recursions are visualized in Figure~\ref{fig:recursion}.
 \begin{figure}
   \centering
   \includegraphics[width=\linewidth]{Figs/recursion}
   \caption{Visualization of the recursions
     \ref{recursionD}, \ref{recursionM},
     \ref{recursionIA}, and \ref{recursionIB}.}
-  \label{fig:maximally_extended}
+  \label{fig:recursion}
 \end{figure}
 
 \paragraph{evaluation order}
@@ -324,16 +324,16 @@ required.
 \FORALL {$x$ from $|A|$ to $1$ s.t. $\exists a\in P^A $ with $ a^l=x$}
   \FORALL {$y$ from $|B|$ to $1$ s.t. $\exists b\in P^B $ with $ b^l=y$}
     \STATE compute entire matrix $M^{xy}$
-    \FORALL {$a\in P^A$ with $a^l=x$}
-      \STATE compute entire matrix $I_A^{xb}$
-    \ENDFOR
     \FORALL {$b\in P^B$ with $b^l=y$}
-      \STATE compute entire matrix $I_B^{ay}$
+      \STATE compute vector $I_A^{xb}$
+    \ENDFOR
+    \FORALL {$a\in P^A$ with $a^l=x$}
+      \STATE compute vector $I_B^{ay}$
     \ENDFOR
     \FORALL {$a\in P^A$, $b\in P^B$ with $a^l=x$,$b^l=y$ }
       \STATE compute $\DTmat{a}{b}$
     \ENDFOR
-    \STATE free memory of matrices $M^{xy}$ and all $I_A^{xb}$,$I_B^{ay}$
+    %\STATE free memory of matrices $M^{xy}$ and all $I_A^{xb}$,$I_B^{ay}$
   \ENDFOR
 \ENDFOR
 \end{algorithmic}

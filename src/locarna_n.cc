@@ -457,14 +457,40 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
     
-    RnaData rnadataA(clp.file1,clp.opt_stacking);
-    RnaData rnadataB(clp.file2,clp.opt_stacking);
+    RnaData rnadataA(clp.file1,false,clp.opt_stacking);
+    RnaData rnadataB(clp.file2,false,clp.opt_stacking);
 
     Sequence seqA=rnadataA.get_sequence();
     Sequence seqB=rnadataB.get_sequence();
     
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
+
+    // --------------------
+    //Forbid unsupported option of LocARNA_N
+    if ( clp.struct_local )
+    {
+    	std::cerr << "Exclusions is not supported" << std::endl;
+    	exit (-1);
+    }
+    if ( clp.indel_opening_score != 0 )
+    {
+    	std::cerr << "Affine gap cost is not supported" << std::endl;
+    	exit (-1);
+    }
+
+
+    if( clp.no_lonely_pairs )
+    {
+    	std::cerr << "No lonely pairs option is not supported" << std::endl;
+    	exit (-1);
+    }
+    if( clp.sequ_local )
+    {
+    	std::cerr << "Local sequence alignment is not supported" << std::endl;
+    	exit (-1);
+    }
+
 
     // --------------------
     // handle max_diff restriction  
@@ -730,7 +756,6 @@ main(int argc, char **argv) {
 	
 	// ========== STANDARD CASE ==========
 	
-	cout << "aligner_n STANDARD CASE" << std::endl;
     	// otherwise compute the best alignment
 	score = aligner.align();
     
@@ -754,7 +779,8 @@ main(int argc, char **argv) {
 	aligner.trace();
 	
 	// for debugging:
-	 aligner.get_alignment().write_debug(std::cout);
+	if (clp.opt_verbose)
+		aligner.get_alignment().write_debug(std::cout);
     }
     
     if (clp.opt_normalized || DO_TRACE) { // if we did a trace (one way or

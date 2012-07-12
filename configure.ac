@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.7.1], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.7.2], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
@@ -169,7 +169,7 @@ AC_ARG_ENABLE([link-static],
 
 AC_MSG_RESULT($link_statically)
 if test x"$link_statically" = x"yes"; then
-   LDFLAGS="$LDFLAGS -static"
+   LDFLAGS="$LDFLAGS -all-static"
 fi
 
 

@@ -412,15 +412,14 @@ main(int argc, char **argv) {
     // Ribosum matrix
     //
     RibosumFreq *ribosum=NULL;
-
+	
     if (clp.use_ribosum) {
-    	if (clp.ribosum_file == "RIBOSUM85_60") {
-    		if (clp.opt_verbose) {
-    			std::cout <<"Use built-in ribosum."<<std::endl;
-    		}
-    		ribosum = new Ribosum85_60();
-
-    	} else {
+	if (clp.ribosum_file == "RIBOSUM85_60") {
+	    if (clp.opt_verbose) {
+		std::cout <<"Use built-in ribosum."<<std::endl;
+	    }
+	    ribosum = new Ribosum85_60;
+	} else {
 	    ribosum = new RibosumFreq(clp.ribosum_file);
 	}	
 	/*
@@ -485,8 +484,8 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
     
-    RnaData rnadataA(clp.file1,clp.opt_stacking);
-    RnaData rnadataB(clp.file2,clp.opt_stacking);
+    RnaData rnadataA(clp.file1,false,clp.opt_stacking);
+    RnaData rnadataB(clp.file2,false,clp.opt_stacking);
 
     Sequence seqA=rnadataA.get_sequence();
     Sequence seqB=rnadataB.get_sequence();
