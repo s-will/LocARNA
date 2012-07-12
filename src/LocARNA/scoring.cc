@@ -11,14 +11,14 @@
 namespace LocARNA {
 
     //! vector for unpaired probabilities temporarily required by
-    //! sigma_ 
+    //! sigma_
     //! @note initialized in precompute sigma, if needed
     std::vector<double> punA_tab;
-    
+
     //! vector for unpaired probabilities
     //! @see punB_tab
     std::vector<double> punB_tab;
-    
+
     Scoring::Scoring(const Sequence &seqA_,
 		     const Sequence &seqB_,
 		     const ArcMatches *arc_matches_,
@@ -43,7 +43,7 @@ namespace LocARNA {
 	    seqB.checkAlphabet(Alphabet<char>((char*)"ACGUN-",6),true);
 	}
 #endif
-    
+
 
 	precompute_sigma();
 	precompute_gapcost();
@@ -86,7 +86,7 @@ namespace LocARNA {
     */
 
 
-    void 
+    void
     Scoring::subtract(std::vector<score_t> &v,score_t x) const {
 	std::transform(v.begin(),v.end(),v.begin(),std::bind2nd(std::minus<score_t>(),x));
     }
@@ -97,26 +97,26 @@ namespace LocARNA {
 
     void
     Scoring::modify_by_parameter(score_t lambda) {
-    
+
 	score_t delta_lambda = lambda-lambda_;
-    
+
 	lambda_ = lambda;
-    
+
 	// subtract delta_lambda from precomputed tables
 	// * simga_tab
 	// * gapcost_tabA
 	// * gapcost_tabB
-    
+
 	subtract(sigma_tab,2*delta_lambda);
 	subtract(gapcost_tabA,delta_lambda);
 	subtract(gapcost_tabB,delta_lambda);
-    
+
     }
 
     void Scoring::precompute_sigma() {
 	size_type lenA = seqA.length();
 	size_type lenB = seqB.length();
-    
+
 	sigma_tab.resize(lenA+1,lenB+1);
 
 	// precompute the unpaired probabilities and store in vectors
@@ -142,7 +142,7 @@ namespace LocARNA {
     void Scoring::precompute_exp_sigma() {
 	size_type lenA = seqA.length();
 	size_type lenB = seqB.length();
-    
+
 	exp_sigma_tab.resize(lenA+1,lenB+1);
 
 	for (size_type i=1; i<=lenA; ++i) {
@@ -160,12 +160,12 @@ namespace LocARNA {
     Scoring::sigma_(int ia, int ib) const {
 
 	if (params->mea_scoring) {
-	
+
 	    // for our mea alignment, we score basematchs
 	    // by the sum of
 	    //   the edge probability
 	    //   and a term for structural accuracy
-	
+
 	    return
 		round2score
 		(
@@ -185,9 +185,9 @@ namespace LocARNA {
 
 	    const Sequence::AliColumn &colA=seqA[ia];
 	    const Sequence::AliColumn &colB=seqB[ib];
-	
+
 	    score_t score=0;
-	
+
 	    // the sum of pairs is quite ad hoc
 	    // e.g. matching - and - counts as match ...
 	    // N is a wildcard, matchs with N don't count
@@ -196,13 +196,13 @@ namespace LocARNA {
 		for (size_t j=0; j<colB.size(); j++) {
 		    // if we have a ribosum matrix, use it!
 		    // !!! if ribosum and characters are not in the ribosum matrix
-		    // we fall back to match/mismatch scoring !!! 
-				    
+		    // we fall back to match/mismatch scoring !!!
+
 		    //
-		    if (params->ribosum 
+		    if (params->ribosum
 			&& params->ribosum->alphabet().in(colA[i])
 			&& params->ribosum->alphabet().in(colB[j])) {
-		    
+
 			score +=
 			    round2score(100.0 * params->ribosum->basematch_score_corrected(colA[i],colB[j]));
 		    } else {
@@ -215,7 +215,7 @@ namespace LocARNA {
 		    }
 		}
 	    }
-	
+
 	    return  round2score(score / (int)(colA.size()*colB.size())) ;
 	}
     }
@@ -230,10 +230,10 @@ namespace LocARNA {
 	if (params->stacking) stack_weights.resize(s);
 	for (size_type i=0; i<s; i++) {
 	    const Arc &a=bps.arc(i);
-	
+
 	    double p = bps.get_arc_prob(a.left(),a.right());
 	    weights[i] = probToWeight(p,len);
-	
+
 	    if (params->stacking) {
 		if (bps.get_arc_prob(a.left()+1,a.right()-1)>0) {
 		    double stack_p = bps.get_arc_stack_prob(a.left(),a.right());
@@ -248,7 +248,7 @@ namespace LocARNA {
     Scoring::precompute_weights() {
 	//score_t weight = 
 	//score_t cond_weight = probToWeight(cond_prob);
-    
+
 	precompute_weights(*bpsA,seqA.length(),weightsA,stack_weightsA);
 	precompute_weights(*bpsB,seqB.length(),weightsB,stack_weightsB);
     }
@@ -263,7 +263,7 @@ namespace LocARNA {
 	    return round2score(params->probability_scale*p);
 	} else {
 	    double pe=prob_exp(len);
-	
+
 	    return
 		round2score(
 			    round(params->struct_weight*
@@ -271,10 +271,10 @@ namespace LocARNA {
 			    );
 	    /*
 	      Score soll 0 sein für p=pe und struct_weight für p=1
-	  
+
 	      ==> Normalisierung log(p/pe) / log(1/pe) 
 	      //                  [=1-log(p)/log(pe)]
-	  
+
 	      */
 	}
     }
@@ -294,16 +294,16 @@ namespace LocARNA {
     // This can be refined further!
     void
     Scoring::precompute_gapcost() {
-	
+
 	size_type lenA = seqA.length();
 	size_type lenB = seqB.length();
-    
+
 	// resize and create tables
 	gapcost_tabA.resize(lenA+1);
 	gapcost_tabB.resize(lenB+1);
 	std::vector<float> gapfreqA(lenA+1,0);
 	std::vector<float> gapfreqB(lenB+1,0);
-    
+
 	// determine gap frequencies for each column in A and B
 
 	for (size_type i=1; i<lenA+1; i++) {
@@ -322,34 +322,34 @@ namespace LocARNA {
 	    gapfreqB[i] /= colB.size();
 	}
 	// gap freqs determined
-    
+
 	// ----------------------------------------
 	// compute position specific gap cost
-    
+
 	for (size_type i=1; i<lenA+1; i++) {
 	    gapcost_tabA[i] = round2score((1-gapfreqA[i]) * params->indel);
 	}
-    
+
 	for (size_type i=1; i<lenB+1; i++) {
 	    gapcost_tabB[i] = round2score((1-gapfreqB[i]) * params->indel);
 	}
-    
+
     }
 
     void
     Scoring::precompute_exp_gapcost() {
-	
+
 	size_type lenA = seqA.length();
 	size_type lenB = seqB.length();
-    
+
 	// resize and create tables
 	exp_gapcost_tabA.resize(lenA+1);
 	exp_gapcost_tabB.resize(lenB+1);
-    
+
 	for (size_type i=1; i<lenA+1; i++) {
 	    exp_gapcost_tabA[i] = boltzmann_weight(gapcost_tabA[i]);
 	}
-    
+
 	for (size_type i=1; i<lenB+1; i++) {
 	    exp_gapcost_tabB[i] = boltzmann_weight(gapcost_tabB[i]);
 	}
@@ -364,37 +364,37 @@ namespace LocARNA {
     Scoring::ribosum_arcmatch_prob(const Arc &arcA, const Arc &arcB) const {
 	assert(params->ribosum != 0);
 	// compute average ribosum score
-    
+
 	RibosumFreq *ribosum = static_cast<RibosumFreq *>(params->ribosum);
-    
-	
+
+
 	const size_type rowsA = seqA.row_number();
 	const size_type rowsB = seqB.row_number();
-    
+
 	double score=0;
 	int gapless_combinations=0;
-    
+
 	const Alphabet<char> &alphabet = ribosum->alphabet();
-    
+
 	// compute geometric mean
 	for(size_type i=0; i<rowsA; i++) { // run through all combinations of rows in A and B
-	    for(size_type j=0; j<rowsB; j++) { 
+	    for(size_type j=0; j<rowsB; j++) {
 		// wie sollen gaps behandelt werden?
 		// current solution: ignore gap entries
-		
+
 		if (seqA[arcA.left()][i]!='-'
 		    && seqA[arcA.right()][i]!='-'
 		    && seqB[arcB.left()][j]!='-'
 		    && seqB[arcB.right()][j]!='-') {
-		
+
 		    gapless_combinations++;
-		
+
 		    if (alphabet.in(seqA[arcA.left()][i])
 			&& alphabet.in(seqA[arcA.right()][i])
 			&& alphabet.in(seqB[arcB.left()][j])
 			&& alphabet.in(seqB[arcB.right()][j])) {
-		    		    
-			score+= 
+
+			score+=
 			    log(
 				ribosum->arcmatch_prob( seqA[arcA.left()][i],seqA[arcA.right()][i],
 							seqB[arcB.left()][j],seqB[arcB.right()][j] )
@@ -410,44 +410,44 @@ namespace LocARNA {
 		}
 	    }
 	}
-    
+
 	return exp(score / gapless_combinations);
     }
 
     score_t
     Scoring::ribosum_arcmatch_score(const Arc &arcA, const Arc &arcB) const {
 	assert(params->ribosum != 0);
-    
+
 	// compute average ribosum score
-    
+
 	RibosumFreq *ribosum = static_cast<RibosumFreq *>(params->ribosum);
-    
+
 	const size_type rowsA = seqA.row_number();
 	const size_type rowsB = seqB.row_number();
-	
+
 	double score=0;
 	int gapless_combinations=0;
 
 	const Alphabet<char> &alphabet = ribosum->alphabet();
-    
+
 	for(size_type i=0; i<rowsA; i++) { // run through all combinations of rows in A and B
-	    for(size_type j=0; j<rowsB; j++) { 
+	    for(size_type j=0; j<rowsB; j++) {
 		// wie sollen gaps behandelt werden?
 		// current solution: ignore gap entries
-	    
+
 		if (seqA[arcA.left()][i]!='-'
 		    && seqA[arcA.right()][i]!='-'
 		    && seqB[arcB.left()][j]!='-'
 		    && seqB[arcB.right()][j]!='-') {
-		    
+
 		    gapless_combinations++;
-		
+
 		    if (alphabet.in(seqA[arcA.left()][i])
 			&& alphabet.in(seqA[arcA.right()][i])
 			&& alphabet.in(seqB[arcB.left()][j])
 			&& alphabet.in(seqB[arcB.right()][j])) {
-		    		    
-			score+= 
+
+			score+=
 			    log(
 				ribosum->arcmatch_prob( seqA[arcA.left()][i],seqA[arcA.right()][i],
 							seqB[arcB.left()][j],seqB[arcB.right()][j] )
@@ -457,27 +457,27 @@ namespace LocARNA {
 				  ribosum->basepair_prob(seqB[arcB.left()][j],seqB[arcB.right()][j]))
 				);
 		    } else {
-			// score += 0.0; // undetermined nucleotides   
+			// score += 0.0; // undetermined nucleotides
 		    }
 		}
 	    }
 	}
-	
+
 	return round2score(100.0 * score / gapless_combinations);
     }
 
 
-    score_t 
+    score_t
     Scoring::arcmatch(const Arc &arcA, const Arc &arcB, bool stacked) const {
 	// assert: if stacking score requested, inner arcs must have probability > 0,
 	// and there must be a non-zero joint probability of the arc and the inner arc in each RNA 
-    
+
 	assert(!stacked || (bpsA->get_arc_prob(arcA.left()+1,arcA.right()-1)>0 && bpsB->get_arc_prob(arcB.left()+1,arcB.right()-1)>0));
 	assert(!stacked || (bpsA->get_arc_2_prob(arcA.left(),arcA.right())>0 && bpsB->get_arc_2_prob(arcB.left(),arcB.right())>0));
-    
+
 	score_t sequence_contribution=0;
-        
-    
+
+
 	// if tau is non-zero
 	// we add a sequence contribution
 	// for mea or if we don't have a ribosum matrix, we use sigma
@@ -493,10 +493,10 @@ namespace LocARNA {
 		// lambda, we undo the change of the
 		// sequence contribution due to modified
 		// sigma tabs.
-	    
+
 	    }
 	}
-    
+
 	if (! params->mea_scoring) {
 	    return
 		// base match contribution
@@ -521,12 +521,12 @@ namespace LocARNA {
 		  params->probability_scale *
 		  (params->tau_factor/100.0) * sequence_contribution
 		  +
-			
+
 #ifdef MEA_SCORING_OLD
 		  params->probability_scale *
 		  // structure contribution, weighted by beta
-		  (params->beta_factor/100.0) 
-		  * 
+		  (params->beta_factor/100.0)
+		  *
 		  (
 		   stacked
 		   ?
@@ -550,21 +550,21 @@ namespace LocARNA {
 		   )
 		  *
 		  ribosum_arcmatch_prob(arcA,arcB)
-			
+
 #else // NEW MEA SCORING
 		  params->probability_scale *
 		  // structure and consensus contribution, weighted by beta
-		  (params->beta_factor/100.0) 
-		  * 
-		  ( 
+		  (params->beta_factor/100.0)
+		  *
+		  (
 		   stacked
 		   ?
 		   (bpsA->get_arc_stack_prob(arcA.left(),arcA.right())
-		    + bpsB->get_arc_stack_prob(arcB.left(),arcB.right()))			    
+		    + bpsB->get_arc_stack_prob(arcB.left(),arcB.right()))
 		   :
 		   (bpsA->get_arc_prob(arcA.left(),arcA.right())
 		    + bpsB->get_arc_prob(arcB.left(),arcB.right()))
-		    )
+		   )
 		  *
 		  //
 		  (
@@ -593,13 +593,50 @@ namespace LocARNA {
 	if (arc_matches->explicit_scores()) { // will not take stacking into account!!!
 	    score = arc_matches->get_score(am);
 	} else {	
-	    const  Arc &arcA = am.arcA(); 
-	    const  Arc &arcB = am.arcB(); 
-	
+	    const  Arc &arcA = am.arcA();
+	    const  Arc &arcB = am.arcB();
+
 	    score = arcmatch(arcA,arcB,stacked);
 	}
 
 	return score -4*lambda_; // modify for normalized alignment
     }
+
+    // Very basic interface
+    score_t
+    Scoring::arcDel(const Arc &arcX, bool gapAorB, bool stacked) const { //TODO Important Scoring scheme for aligning an arc to a gap is not defined and implemented!
+
+	if (arc_matches->explicit_scores()) { // will not take stacking into account!!!
+	    std::cerr << "ERROR locarna_n explicit scores is not supported!" << std::endl; //TODO: Supporting explicit scores for arcgap
+	    assert( ! arc_matches->explicit_scores());
+	}
+	score_t sequence_contribution=0;
+
+	if (! params->mea_scoring) {
+	    return
+		// base match contribution
+		// (also for arc-match add terms for the base match on both ends, weighted by tau_factor)
+		(params->tau_factor * sequence_contribution / 100)
+		+
+		// base pair weights
+		(
+		 stacked
+		 ?
+		 (gapAorB? stack_weightsA[arcX.idx()] : stack_weightsB[arcX.idx()])
+		 :
+		 (gapAorB? weightsA[arcX.idx()] : weightsB[arcX.idx()])		//TODO: TO be completed!!
+		 );
+	}
+	else
+	    {
+		std::cerr << "ERROR locarna_n mea_scoring is not supported!" << std::endl; //TODO: Supporting mea_scoring for arcgap
+		assert( ! params->mea_scoring);
+
+	    }
+    }
+
+
+
+
 
 }

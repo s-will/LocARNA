@@ -438,6 +438,9 @@ namespace LocARNA {
 	 */
 	score_t arcmatch(const ArcMatch &am, bool stacked=false) const;
 
+	// Very basic interface, score of aligning a basepair to gap
+	score_t  arcDel(const Arc &arcA, bool gapAorB, bool stacked=false) const;
+
 	/** 
 	 * @brief Boltzmann weight of score of arc match
 	 * 
@@ -461,6 +464,20 @@ namespace LocARNA {
 	}
 
 	/** 
+	 * Score of deletion
+	 *
+	 *
+	 * @return score of deletion : posA <--> posB
+	 */
+	score_t gapX(size_type alignedToGap, size_type pos, bool gapInA) const {
+
+	    if (gapInA)
+		return gapA (alignedToGap, pos);
+	    else
+		return gapB (pos, alignedToGap);
+	}
+
+	/**
 	 * Score of deletion
 	 * 
 	 * @param posA position in A
