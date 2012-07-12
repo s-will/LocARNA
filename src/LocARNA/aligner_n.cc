@@ -11,7 +11,7 @@
 #include <iostream>
 
 
-using namespace std;
+//using namespace std;
 
 namespace LocARNA {
 
@@ -176,7 +176,7 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 	assert(0<=state && state<4);
 
 	assert(params->trace_controller.is_valid(i,j)); //todo: trace_controller for locarna_n?
-//	cout << "compute_M_entry al: " << al << " bl: " << bl << " i: " << i << " j: " << j << std::endl;
+//	std::cout << "compute_M_entry al: " << al << " bl: " << bl << " i: " << i << " j: " << j << std::endl;
 	M_matrix_t &M = Ms[state];
 
 	infty_score_t max_score = infty_score_t::neg_infty;
@@ -214,7 +214,7 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 			infty_score_t new_score =  M(arcX.left()-1,arcY.left()-1) + sv.D(arcX,arcY) + sv.scoring()->arcmatch(am);
 			if (new_score > max_score) {
 				max_score=new_score;
-//				cout << "compute_M_entry arcs " << arcX << " , " << arcY << " new score: " << new_score << "arc match score: " << sv.scoring()->arcmatch(am) << std::endl;
+//				std::cout << "compute_M_entry arcs " << arcX << " , " << arcY << " new score: " << new_score << "arc match score: " << sv.scoring()->arcmatch(am) << std::endl;
 			}
 		}
 	}
@@ -236,7 +236,7 @@ AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type 
 	// end with gap in alistr of B do not exist ==> -infty
 
 	if (trace_debugging_output)
-		cout << "init_state al: " << al << " bl: " << bl << " ar: " << ar << " br: " << br << endl;
+	    std::cout << "init_state al: " << al << " bl: " << bl << " ar: " << ar << " br: " << br << std::endl;
 	M_matrix_t &M = Ms[state];
 
 	// al,bl can only be reached in states, where this is legal with cost 0 for empty alignment
@@ -356,7 +356,7 @@ AlignerN::align_M(pos_type al,pos_type ar,pos_type bl,pos_type br,
 		assert ( ! allow_exclusion );
 	}
 
-//	cout << "align_M aligned M is :" << std::endl << Ms[E_NO_NO] << std::endl;
+//	std::cout << "align_M aligned M is :" << std::endl << Ms[E_NO_NO] << std::endl;
 }
 
 // compute the entries in the D matrix that
@@ -367,7 +367,7 @@ AlignerN::align_M(pos_type al,pos_type ar,pos_type bl,pos_type br,
 void 
 AlignerN::fill_D_entries(pos_type al, pos_type bl)
 {
-	if (trace_debugging_output) cout << "fill_D_entries al: " << al << " bl: " << bl << std::endl;
+	if (trace_debugging_output) std::cout << "fill_D_entries al: " << al << " bl: " << bl << std::endl;
 	for(ArcMatchIdxVec::const_iterator it=arc_matches.common_left_end_list(al,bl).begin();
 			arc_matches.common_left_end_list(al,bl).end() != it; ++it ) {
 
@@ -407,11 +407,11 @@ void
 AlignerN::align_D() {
 	// for al in r.get_endA() .. r.get_startA
 	for (pos_type al=r.get_endA()+1; al>r.get_startA(); ) { al--;
-//	cout << "align_D al: " << al << endl;
+//	std::cout << "align_D al: " << al << std:.endl;
 	const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
 	if ( adjlA.empty() )
 	{
-//		cout << "empty left_adjlist(al)" << endl;
+//		std::cout << "empty left_adjlist(al)" << endl;
 		continue;
 	}
 //	pos_type max_bl = std::min(r.get_endB(),params->trace_controller.max_col(al)); //TODO: check trace_controller or not? It seems not!
@@ -427,10 +427,10 @@ AlignerN::align_D() {
 
 	if ( adjlB.empty() )
 	{
-//		cout << "empty left_adjlist(bl)" << endl;
+//		std::cout << "empty left_adjlist(bl)" << endl;
 		continue;
 	}
-//	cout << "size of left_adjlist(bl): " << adjlB.size() << std::endl;
+//	std::cout << "size of left_adjlist(bl): " << adjlB.size() << std::endl;
 	pos_type max_ar=adjlA.begin()->right();	//tracecontroller not considered
 	pos_type max_br=adjlB.begin()->right();
 
@@ -473,7 +473,7 @@ AlignerN::align_D() {
 	// fill D matrix entries
 	//
 	if (params->no_lonely_pairs) {
-		std:cerr << "no_lonely_pairs not implemented !" << std::endl;
+	    std::cerr << "no_lonely_pairs not implemented !" << std::endl;
 		assert(! params->no_lonely_pairs);
 	}
 
@@ -496,7 +496,7 @@ AlignerN::align() {
 
 	if (params->SEQU_LOCAL) {
 		std::cerr << "SEQU_LOCAL is not supported by locarna_n\n" << std::endl;
-		assert (! params->SEQU_LOCAL );
+		exit(-1);
 	} else { // sequence global alignment
 
 		// align toplevel globally with potentially free endgaps (as given by description params->free_endgaps)
@@ -512,11 +512,11 @@ AlignerN::align() {
 template <class ScoringView>
 	void AlignerN::trace_IX (pos_type xl, pos_type i, const Arc &arcY, bool isA, ScoringView sv)
 {
-	if (trace_debugging_output) cout << "****trace_IX**** " << i << " , " << arcY << std::endl;
+	if (trace_debugging_output) std::cout << "****trace_IX**** " << i << " , " << arcY << std::endl;
 
 	if ( i <= xl )
 	{
-		for (int k = arcY.left()+1; k < arcY.right(); k++) { //TODO: implement free end gaps cost
+		for (size_type k = arcY.left()+1; k < arcY.right(); k++) { //TODO: implement free end gaps cost
 			if (isA)
 				alignment.append(-1,k);
 			else
@@ -598,11 +598,11 @@ template <class ScoringView>
 		                                        + sv.D(*arcX, arcY, isA ) //todo: ugly code!
 		                                        + sv.scoring()->arcDel (*arcX, isA))
 		{
-			if (trace_debugging_output) cout << "Arc Deletion for X " << (isA?"A ":"B ") << std::endl;
+			if (trace_debugging_output) std::cout << "Arc Deletion for X " << (isA?"A ":"B ") << std::endl;
 			if (isA)
 			{
 				alignment.add_basepairA(arcX->left(), arcX->right());
-				for (int k = xl+1; k <= arcX->left(); k++) { //TODO: end gaps cost is not free
+				for (size_type k = xl+1; k <= arcX->left(); k++) { //TODO: end gaps cost is not free
 					alignment.append(k, -1);
 				}
 
@@ -613,7 +613,7 @@ template <class ScoringView>
 			else
 			{
 				alignment.add_basepairB(arcX->left(), arcX->right());
-				for (int k = xl+1; k <= arcX->left(); k++) { //TODO: end gaps cost is not free
+				for (size_type k = xl+1; k <= arcX->left(); k++) { //TODO: end gaps cost is not free
 					alignment.append(-1, k);
 				}
 
@@ -700,7 +700,7 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 	if ( params->constraints.allowed_edge(i,j)
 			&& params->trace_controller.is_valid(i-1,j-1) // todo: check trace_controller?
 			&& M(i,j) ==  M(i-1,j-1) + sv.scoring()->basematch(i,j) ) {
-		if (trace_debugging_output) cout << "base match " << i << " , " << j << std::endl;
+		if (trace_debugging_output) std::cout << "base match " << i << " , " << j << std::endl;
 		trace_M(state, oal, i-1, obl, j-1, tl, sv);
 		alignment.append(i,j);
 		return;
@@ -767,7 +767,7 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 			// do the trace for alignment left of the arc match
 			trace_M(state, oal, al-1, obl, bl-1, tl, sv);
 
-			if (trace_debugging_output) cout << "arcmatch "<<(al)<<","<<i<<";"<<(bl)<<","<<j<<" :: "   << endl;
+			if (trace_debugging_output) std::cout << "arcmatch "<<(al)<<","<<i<<";"<<(bl)<<","<<j<<" :: "   << std::endl;
 
 			alignment.add_basepairA(al,ar);
 			alignment.add_basepairB(bl,br);
@@ -776,7 +776,7 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 			// do the trace below the arc match
 
 			if (params->no_lonely_pairs) {
-				std:cerr << "no_lonely_pairs not implemented!" << std::endl;
+			    std::cerr << "no_lonely_pairs not implemented!" << std::endl;
 				assert(! params->no_lonely_pairs);
 			}
 			trace_D(am, sv);
@@ -787,7 +787,7 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 			return;
 		}
 	}
-	if (trace_debugging_output) cout << "WARNING: No trace found!" << std::endl;
+	if (trace_debugging_output) std::cout << "WARNING: No trace found!" << std::endl;
 }
 
 // do the trace within one arc match.
@@ -799,7 +799,7 @@ AlignerN::trace_M(int state,int al,int i,int bl,int j,bool tl,ScoringView sv) {
 	M_matrix_t &M=Ms[state];
 	assert (state == E_NO_NO);
 	assert(! params->SEQU_LOCAL); //Local seq alignment not implemented yet.
-	if (trace_debugging_output) cout << "******trace_M***** " << " al:" << al << " i:" << i <<" bl:"<< bl << " j:" << j << " :: " <<  M(i,j) << endl;
+	if (trace_debugging_output) std::cout << "******trace_M***** " << " al:" << al << " i:" << i <<" bl:"<< bl << " j:" << j << " :: " <<  M(i,j) << std::endl;
 
 	if (i<=al) {
 		for (int k=bl+1;k<=j;k++) { //TODO: end gaps cost is not free
