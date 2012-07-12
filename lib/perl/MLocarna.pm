@@ -46,6 +46,7 @@ clone_hash
 read_aln
 write_aln
 project_aln
+project_alnloh
 aln_h2loh
 write_clustalw_loh
 aln_length_atleastonematch
@@ -1451,6 +1452,41 @@ sub project_aln {
     }
     
     return %alnP;
+}
+
+########################################
+## project_alnloh($aln ref of alignment in loh represenation)
+##
+## project multiple alignment to subset of names
+## removes only-gap columns (operate in place!)
+##
+sub project_alnloh {
+    my $aln = shift;
+    
+    my $len = length($aln->[0]{seq}); ## number of alignment columns
+
+    for (my $col=0; $col<$len; ) {
+	my $allgap=1;
+	foreach my $row (0..@$aln-1) {
+	    my $rowseq = $aln->[$row]{seq};
+	    # print "$name $row $col\n";
+	    if (! is_gap(substr($rowseq,$col,1))) {
+		$allgap=0;
+		last;
+	    }
+	}
+	if ($allgap) {
+	    # remove alignment column i
+	    foreach my $row (0..@$aln-1) {
+		substr($aln->[$row]{seq},$col,1) = "";
+	    }
+	    $len--;
+	} else {
+	    $col++;
+	}
+    }
+    
+    return $aln;
 }
 
 ########################################
