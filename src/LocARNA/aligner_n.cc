@@ -512,7 +512,7 @@ AlignerN::align() {
 template <class ScoringView>
 	void AlignerN::trace_IX (pos_type xl, pos_type i, const Arc &arcY, bool isA, ScoringView sv)
 {
-	if (trace_debugging_output) std::cout << "****trace_IX**** " << i << " , " << arcY << std::endl;
+	if (trace_debugging_output) std::cout << "****trace_IX****" << (isA?"A ":"B ") << " (" << xl << ","<< i << "] , " << arcY << std::endl;
 
 	if ( i <= xl )
 	{
@@ -532,16 +532,16 @@ template <class ScoringView>
 					//todo: valid trace check for IA?
 					&& IA(i, arcY) == IA(i-1, arcY) + sv.scoring()->gapA(i, arcY.right() ) )
 			{
-				alignment.append(i, -1);
 				trace_IX( xl, i-1, arcY, isA, sv);
+				alignment.append(i, -1);
 				return;
 			}
 		}
 		else //isB
 			if ( !params->constraints.aligned_in_b(i) && IB(arcY, i) == IB(arcY, i-1) + sv.scoring()->gapB(arcY.right(), i ) )
 			{
-				alignment.append(-1, i);
 				trace_IX( xl, i-1, arcY, isA, sv);
+				alignment.append(-1, i);
 				return;
 			}
 
