@@ -464,18 +464,18 @@ namespace LocARNA {
 	}
 
 	/** 
-		 * Score of deletion
-		 *
-		 *
-		 * @return score of deletion : posA <--> posB
-		 */
-		score_t gapX(size_type alignedToGap, size_type pos, bool gapInA) const {
+	 * Score of deletion
+	 *
+	 *
+	 * @return score of deletion : posA <--> posB
+	 */
+	score_t gapX(size_type alignedToGap, size_type pos, bool gapInA) const {
 
-		    if (gapInA)
-		    	return gapA (alignedToGap, pos);
-		    else
-		    	return gapB (pos, alignedToGap);
-		}
+	    if (gapInA)
+		return gapA (alignedToGap, pos);
+	    else
+		return gapB (pos, alignedToGap);
+	}
 
 	/**
 	 * Score of deletion
