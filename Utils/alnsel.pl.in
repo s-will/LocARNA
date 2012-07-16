@@ -1,4 +1,4 @@
-#!/usr/bin/perl -I/home/will/lib/perl
+#!@PERL@ -I@prefix@/lib/perl
 
 =head1 NAME
 

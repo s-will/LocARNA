@@ -106,8 +106,8 @@ namespace LocARNA {
 	// -----------------------------------------------------------
 	// asking for constraint information
     
-	//! is the edge (i,j) allowed?
-	//! an edge is allowed, iff it is not in conflict with an anchor constraint
+	//! is the alignment edge i~j (i.e. the match of i and j) allowed?
+	//! an alignment edge is allowed, iff it is not in conflict with any anchor constraint
 	bool
 	allowed_edge(size_type i, size_type j) const {
 	    return

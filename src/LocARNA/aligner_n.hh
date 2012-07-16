@@ -62,7 +62,7 @@ protected:
 	//! M matrices
 	//! @note in the case of structure local alignment, 
 	//! the algo uses eight M matrices
-	//! right now for the locarna_n only on M matrix is used (no exclusion)
+	//! right now for the locarna_n only one M matrix is used (no exclusions)
 	std::vector<M_matrix_t> Ms;
 
 
