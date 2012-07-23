@@ -735,7 +735,7 @@ main(int argc, char **argv) {
 	}
 	if (!clp.sequ_local) { // important: in the Aligner class, we rely on this
 	    std::cerr 
-		<< "ERROR: Normalized alignment requires option --sequ_local."<<std::endl;
+		<< "ERROR: Normalized alignment requires option --sequ-local."<<std::endl;
 	    exit(-1);
 	}
 	

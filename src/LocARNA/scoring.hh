@@ -395,9 +395,6 @@ namespace LocARNA {
 	//! subtract from each element of a score_t Matrix m a value x
 	void
 	subtract(Matrix<score_t> &m,score_t x) const;
-
-	//! score arc match, does *NOT* support explicit arc match scores
-	score_t arcmatch(const Arc &arcA, const Arc &arcB, bool stacked=false) const;
     
     public:
 	// ------------------------------------------------------------
@@ -435,8 +432,36 @@ namespace LocARNA {
 	 * @param stacked is stacked? (optional parameter)
 	 * 
 	 * @return Score of arc match am (potentially stacked)
+	 *
+	 * @note This method supports explicit arc match scores. Such
+	 * scores are required for the probabilistic mode of
+	 * (m)locarna.
+	 *
+	 * @note This method should be prefered over arcmatch(const
+	 * Arc &arcA, const Arc &arcB, bool stacked=false) unless
+	 * explicit arc match scores are not needed and the use of
+	 * this method would be too inefficient.
 	 */
 	score_t arcmatch(const ArcMatch &am, bool stacked=false) const;
+
+	/** 
+	 * @brief Score of arc match, given two arcs.
+	 * 
+	 * @param am arc match
+	 * @param stacked is stacked? (optional parameter)
+	 * 
+	 * @return Score of arc match am (potentially stacked)
+	 *
+	 * @note This method does not support explicit arc match
+	 * scores, since this would require to know the arcmatch
+	 * object.
+	 *
+	 * @note Using this method is disallowed if
+	 * arc_matches->explicit_scores()==true (This results in a
+	 * run-time error if !NDEBUG).
+	 */
+	score_t arcmatch(const Arc &arcA, const Arc &arcB, bool stacked=false) const;
+
 
 	// Very basic interface, score of aligning a basepair to gap
 	score_t  arcDel(const Arc &arcA, bool gapAorB, bool stacked=false) const;

@@ -732,7 +732,7 @@ Aligner::align_top_level_free_endgaps() {
     // search maximum to the right of (or at) rightmost anchor constraint
     //
     AnchorConstraints::size_pair_t right_anchor = params->constraints.rightmost_anchor();
-    AnchorConstraints::size_pair_t left_anchor  = params->constraints.leftmost_anchor();
+    //AnchorConstraints::size_pair_t left_anchor  = params->constraints.leftmost_anchor();
     
     for (pos_type i=r.get_startA(); i<=r.get_endA(); i++) {
 	Fs[E_NO_NO]=infty_score_t::neg_infty;
