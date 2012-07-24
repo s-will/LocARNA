@@ -165,7 +165,7 @@ namespace LocARNA {
 		common_right_end_lists(arcA->right(),arcB->right()).push_back(idx);
 	    }
 	}
-    
+
 	init_inner_arc_matchs();
     
 	sort_right_adjacency_lists();
@@ -330,6 +330,34 @@ namespace LocARNA {
     
 	    *min_ar=std::min(*min_ar,am.arcA().right());
 	    *min_br=std::min(*min_br,am.arcB().right());
+	}
+    }
+
+    void
+    ArcMatches::make_scores_explicit(const Scoring &scoring) {
+	assert(!maintain_explicit_scores); // this should be called at
+					   // most once, if explicit
+					   // scores are not available
+					   // already
+	
+	maintain_explicit_scores=true;    // enable explicit scores
+	
+	scores.clear();
+
+	// iterate through all arcmatches,
+	// compute all arcmatch scores,
+	// and push to the vector scores
+	for (const_iterator it=begin(); end()!=it; ++it) {
+	    scores.push_back(scoring.arcmatch(*it));
+	}
+    }
+
+    
+    void
+    ArcMatchesIndexed::build_arcmatch_index() {
+	am_index_.clear();
+	for (const_iterator it=begin(); end()!=it; ++it) {
+	    am_index_[idx_pair_t(it->arcA().idx(),it->arcB().idx())] = it->idx();
 	}
     }
 

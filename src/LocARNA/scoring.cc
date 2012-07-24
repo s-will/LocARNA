@@ -636,7 +636,7 @@ namespace LocARNA {
 	    {
 		std::cerr << "ERROR locarna_n mea_scoring is not supported!" << std::endl; //TODO: Supporting mea_scoring for arcgap
 		assert( ! params->mea_scoring);
-
+		return 0;
 	    }
     }
 
