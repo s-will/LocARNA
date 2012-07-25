@@ -65,9 +65,9 @@ namespace LocARNA {
 	 * @param arcB arc in A
 	 * @param idx  index
 	 */
-	ArcMatch(const Arc &arcA,const Arc &arcB, idx_type idx)
-	    : arcA_(&arcA),
-	      arcB_(&arcB),
+	ArcMatch(const Arc *arcA,const Arc *arcB, idx_type idx)
+	    : arcA_(arcA),
+	      arcB_(arcB),
 	      idx_(idx)
 	{}
     
@@ -158,8 +158,12 @@ namespace LocARNA {
 	bool maintain_explicit_scores; //!< whether scores are maintained explicitely or computed from pair probabilities
     
 	//! vector of all maintained arc matches
-	ArcMatchVec arc_matches_vec;  
-    
+	ArcMatchVec arc_matches_vec;
+
+	//! the number of valid arc matches
+	//! @note this number can differ from the size of arc_matches_vec 
+	size_type number_of_arcmatches;
+
 	//! vector of scores (of arc matches with the same index)
 	std::vector<score_t> scores;
     
@@ -347,12 +351,12 @@ namespace LocARNA {
         
 	//! total number of arc matches
 	size_type num_arc_matches() const {
-	    return arc_matches_vec.size();
+	    return number_of_arcmatches;
 	}
     
 	//! get arc match by its index
 	const ArcMatch &arcmatch(size_type idx) const {
-	    assert(idx<arc_matches_vec.size());
+	    assert(idx<number_of_arcmatches);
 	    return arc_matches_vec[idx];
 	}
         
@@ -450,7 +454,7 @@ namespace LocARNA {
 	const_iterator begin() const {return arc_matches_vec.begin();}
 
 	//! end of arc matches vector
-	const_iterator end() const {return arc_matches_vec.end();}
+	const_iterator end() const {return arc_matches_vec.begin()+number_of_arcmatches;}
     
     };
 
@@ -560,7 +564,7 @@ namespace LocARNA {
 	    // an invalid arc match to the end of vector arc_matches_vec.
 	    // Thus, we return size-1!
 
-	    return arc_matches_vec.size()-1;
+	    return number_of_arcmatches;
 	}
 	
 	/** 
@@ -591,7 +595,7 @@ namespace LocARNA {
 	 */
 	const ArcMatch &
 	am_index(const Arc &arcA,const Arc &arcB) const {
-	    return arcmatch(am_index(arcA.idx(),arcB.idx()));
+	    return arc_matches_vec[am_index(arcA.idx(),arcB.idx())];
 	}
     };
 

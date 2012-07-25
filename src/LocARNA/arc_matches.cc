@@ -34,16 +34,16 @@ namespace LocARNA {
 
     void 
     ArcMatches::init_inner_arc_matchs() {
-	inner_arcmatch_idxs.resize(arc_matches_vec.size());
-    
-	for (ArcMatch::idx_type i=0; i<arc_matches_vec.size(); ++i) {
+	inner_arcmatch_idxs.resize(number_of_arcmatches);
+	
+	for (ArcMatch::idx_type i=0; i<number_of_arcmatches; ++i) {
 	
 	    const ArcMatch &am=arc_matches_vec[i];
 	    const Arc &arcA=am.arcA();
 	    const Arc &arcB=am.arcB();
 	
 	    // set invalid, in case we don't find an inner arc
-	    inner_arcmatch_idxs[i] = arc_matches_vec.size();
+	    inner_arcmatch_idxs[i] = number_of_arcmatches;
 	
 	    // find index of inner arc match
 	    const ArcMatchIdxVec &list =common_left_end_lists(arcA.left()+1,arcB.left()+1);
@@ -145,6 +145,8 @@ namespace LocARNA {
 	common_left_end_lists.resize(lenA+1,lenB+1);
 	common_right_end_lists.resize(lenA+1,lenB+1);
     
+	number_of_arcmatches=0;
+
 	for(size_type i=0; i<bpsA->num_bps(); i++) {
 	    const Arc *arcA = &bpsA->arc(i);
 		    
@@ -158,8 +160,9 @@ namespace LocARNA {
 		size_type idx = arc_matches_vec.size();
 	    
 		// make entry in arc matches
-		arc_matches_vec.push_back(ArcMatch(*arcA,*arcB,idx));
-      
+		arc_matches_vec.push_back(ArcMatch(arcA,arcB,idx));
+		number_of_arcmatches++;
+		
 		// make entries in adjacency lists
 		common_left_end_lists(arcA->left(),arcB->left()).push_back(idx);
 		common_right_end_lists(arcA->right(),arcB->right()).push_back(idx);
@@ -232,7 +235,10 @@ namespace LocARNA {
     
 	common_left_end_lists.resize(lenA+1,lenB+1);
 	common_right_end_lists.resize(lenA+1,lenB+1);
-    
+
+
+	number_of_arcmatches=0;
+	
 	for (std::vector<tuple5>::iterator it=lines.begin(); lines.end()!=it; ++it) {
 	    const Arc &arcA=bpsA->arc(it->i,it->j);
 	    const Arc &arcB=bpsB->arc(it->k,it->l);
@@ -242,7 +248,9 @@ namespace LocARNA {
 
 	    size_type idx = arc_matches_vec.size();
 
-	    arc_matches_vec.push_back(ArcMatch(arcA,arcB,idx));
+	    arc_matches_vec.push_back(ArcMatch(&arcA,&arcB,idx));
+	    number_of_arcmatches++;
+	    
 	    scores.push_back(it->score); // now the score has the same index as the corresponding arc match
 	
 	    // make entries in adjacency lists
@@ -359,7 +367,10 @@ namespace LocARNA {
 	for (const_iterator it=begin(); end()!=it; ++it) {
 	    am_index_[idx_pair_t(it->arcA().idx(),it->arcB().idx())] = it->idx();
 	}
+	
+	// add an invalid arc match entry
+	arc_matches_vec.push_back(ArcMatch(NULL,NULL,invalid_am_index()));
     }
-
+    
 
 } // end of namespace LocARNA
