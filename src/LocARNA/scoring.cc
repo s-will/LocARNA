@@ -469,9 +469,11 @@ namespace LocARNA {
 
     score_t
     Scoring::arcmatch(const Arc &arcA, const Arc &arcB, bool stacked) const {
+	// this method is disallowed with explicit arcmatch scores
+	assert(!arc_matches->explicit_scores());
+
 	// assert: if stacking score requested, inner arcs must have probability > 0,
 	// and there must be a non-zero joint probability of the arc and the inner arc in each RNA 
-
 	assert(!stacked || (bpsA->get_arc_prob(arcA.left()+1,arcA.right()-1)>0 && bpsB->get_arc_prob(arcB.left()+1,arcB.right()-1)>0));
 	assert(!stacked || (bpsA->get_arc_2_prob(arcA.left(),arcA.right())>0 && bpsB->get_arc_2_prob(arcB.left(),arcB.right())>0));
 
@@ -510,7 +512,9 @@ namespace LocARNA {
 		 (stack_weightsA[arcA.idx()] + stack_weightsB[arcB.idx()])
 		 :
 		 (weightsA[arcA.idx()] + weightsB[arcB.idx()])
-		 );
+		 )
+		 -4*lambda_
+		;
 	} else { //mea scoring
 	    return
 		static_cast<score_t>
@@ -581,7 +585,8 @@ namespace LocARNA {
 		  ribosum_arcmatch_prob(arcA,arcB)
 #endif
 		  )
-		 );
+		 )
+		 -4*lambda_;
 	}
     }
 
@@ -591,7 +596,7 @@ namespace LocARNA {
     Scoring::arcmatch(const ArcMatch &am, bool stacked) const {
 	score_t score;
 	if (arc_matches->explicit_scores()) { // will not take stacking into account!!!
-	    score = arc_matches->get_score(am);
+	    score = arc_matches->get_score(am)  - 4*lambda_;
 	} else {	
 	    const  Arc &arcA = am.arcA();
 	    const  Arc &arcB = am.arcB();
@@ -599,7 +604,7 @@ namespace LocARNA {
 	    score = arcmatch(arcA,arcB,stacked);
 	}
 
-	return score -4*lambda_; // modify for normalized alignment
+	return score; // modify for normalized alignment
     }
 
     // Very basic interface
@@ -631,7 +636,7 @@ namespace LocARNA {
 	    {
 		std::cerr << "ERROR locarna_n mea_scoring is not supported!" << std::endl; //TODO: Supporting mea_scoring for arcgap
 		assert( ! params->mea_scoring);
-
+		return 0;
 	    }
     }
 

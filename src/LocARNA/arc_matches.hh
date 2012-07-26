@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <tr1/unordered_map>
 
 #include "scoring.hh"
 #include "sequence.hh"
@@ -13,6 +14,28 @@
 #include "trace_controller.hh"
 
 #include <assert.h>
+
+
+// define a hash function for the hash map used by ArcMatchesIndexed
+//! @todo clean up use of different hash classes in LocARNA code (tr1/gnu)
+namespace std {
+    namespace tr1 {
+	//! defines a new hash function for pairs of ints
+	template<>
+	struct hash<std::pair<size_t,size_t> >
+	{
+	    /** 
+	     * Hash function
+	     * 
+	     * @return hash code for pair of size_t
+	     */
+	    size_t
+	    operator()(std::pair<size_t,size_t> p) const
+	    { return p.first<<(sizeof(size_t)/2) | p.second; }
+	};
+    }
+}
+
 
 namespace LocARNA {
 
@@ -42,9 +65,9 @@ namespace LocARNA {
 	 * @param arcB arc in A
 	 * @param idx  index
 	 */
-	ArcMatch(const Arc &arcA,const Arc &arcB, idx_type idx)
-	    : arcA_(&arcA),
-	      arcB_(&arcB),
+	ArcMatch(const Arc *arcA,const Arc *arcB, idx_type idx)
+	    : arcA_(arcA),
+	      arcB_(arcB),
 	      idx_(idx)
 	{}
     
@@ -104,7 +127,7 @@ namespace LocARNA {
     public:
 	typedef std::vector<int>::size_type size_type; //!< type of a size
     
-    private:
+    protected:
 	size_type lenA;
 	size_type lenB;
         
@@ -135,8 +158,12 @@ namespace LocARNA {
 	bool maintain_explicit_scores; //!< whether scores are maintained explicitely or computed from pair probabilities
     
 	//! vector of all maintained arc matches
-	ArcMatchVec arc_matches_vec;  
-    
+	ArcMatchVec arc_matches_vec;
+
+	//! the number of valid arc matches
+	//! @note this number can differ from the size of arc_matches_vec 
+	size_type number_of_arcmatches;
+
 	//! vector of scores (of arc matches with the same index)
 	std::vector<score_t> scores;
     
@@ -305,6 +332,13 @@ namespace LocARNA {
 	    return maintain_explicit_scores;
 	}
     
+	//! @brief Make arcmatch scores explicit
+	//! 
+	//! @param scoring An scoring object
+	void
+	make_scores_explicit(const Scoring &scoring);
+	
+	
 	//! get the score of an arc match
 	//! @param am arc match
 	//! @returns score of arc match
@@ -317,12 +351,12 @@ namespace LocARNA {
         
 	//! total number of arc matches
 	size_type num_arc_matches() const {
-	    return arc_matches_vec.size();
+	    return number_of_arcmatches;
 	}
     
 	//! get arc match by its index
 	const ArcMatch &arcmatch(size_type idx) const {
-	    assert(idx<arc_matches_vec.size());
+	    assert(idx<number_of_arcmatches);
 	    return arc_matches_vec[idx];
 	}
         
@@ -420,8 +454,149 @@ namespace LocARNA {
 	const_iterator begin() const {return arc_matches_vec.begin();}
 
 	//! end of arc matches vector
-	const_iterator end() const {return arc_matches_vec.end();}
+	const_iterator end() const {return arc_matches_vec.begin()+number_of_arcmatches;}
     
+    };
+
+    
+    /**
+     * @brief class ArcMatches with additional mapping
+     * 
+     * Like ArcMatches, maintain the relevant arc matches and their
+     * scores. Additionally, build an index to support mapping from
+     * pairs of arcs to arc matches.
+     */
+    class ArcMatchesIndexed : public ArcMatches {
+    public:
+	/**
+	 *  \brief construct with explicit arc match score list
+	 * 
+	 * construct from seqnames and explicit list of all scored arc
+	 * matches together with their score.
+	 *
+	 *
+	 * @note registers constraints and heuristics and then calls read_arcmatch_scores.
+	 * The constructed object explicitely represents/maintains the scores of arc matchs. 
+	 *
+	 * @param seqA_ sequence A
+	 * @param seqB_ sequence B
+	 * @param arcmatch_scores_file file containing arc match scores
+	 * @param probability_scale if >=0 read probabilities and multiply them by probability_scale 
+	 * @param max_length_diff accept arc matches only up to maximal length difference
+	 * @param trace_controller accept only due to trace controller
+	 * @param constraints accept only due to constraints 
+	 */
+	ArcMatchesIndexed(const Sequence &seqA_, 
+			  const Sequence &seqB_, 
+			  const std::string &arcmatch_scores_file,
+			  int probability_scale,
+			  size_type max_length_diff,
+			  const MatchController &trace_controller,
+			  const AnchorConstraints &constraints)
+	    :ArcMatches(seqA_,seqB_,arcmatch_scores_file,probability_scale,max_length_diff,trace_controller,constraints)
+	{
+	    build_arcmatch_index();
+	}
+	
+	/** 
+	 *  \brief construct from single base pair probabilities. 
+	 * 
+	 * In this case, the object filters for relevant base
+	 * pairs/arcs by min_prob.  Registers constraints and
+	 * heuristics and then calls read_arcmatch_scores.  Constructs
+	 * BasePairs objects for each single object and registers
+	 * them.  Generates adjacency lists of arc matches for
+	 * internal use and sorts them. Lists contain only valid arc
+	 * matches according to constraints and heuristics (see
+	 * is_valid_arcmatch()). The constructed object does not
+	 * explicitely represent/maintain the scores of arc matchs.
+	 
+	 * @param rnadataA data for RNA A
+	 * @param rnadataB data for RNA B
+	 * @param min_prob consider only arcs with this minimal probability
+	 * @param max_length_diff consider arc matches only up to maximal length difference
+	 * @param trace_controller arc matches only due to trace controller
+	 * @param constraints arc matches only due to constraints 
+	 */
+	ArcMatchesIndexed(const RnaData &rnadataA,
+			  const RnaData &rnadataB,
+			  double min_prob,
+			  size_type max_length_diff,
+			  const MatchController &trace_controller,
+			  const AnchorConstraints &constraints)
+	    :ArcMatches(rnadataA,rnadataB,min_prob,max_length_diff,trace_controller,constraints)
+	{
+	    build_arcmatch_index();
+	}
+	
+    private:
+	//! type of a pair of indices
+	typedef std::pair<size_type,size_type> idx_pair_t;
+	
+	//! type of index for mapping arc pairs to arc matchs
+	typedef std::tr1::unordered_map<idx_pair_t,ArcMatch::idx_type> am_index_type;
+	
+	//! index for mapping arc pairs to arc matchs
+	am_index_type am_index_;
+	
+	/** 
+	 * @brief construct index of arcmatch indices by arc pair indices
+	 * 
+	 */
+	void
+	build_arcmatch_index();
+
+	
+    public:
+	
+	/** 
+	 * @brief the invalid arc match index 
+	 * 
+	 * @return invalid arc match index 
+	 *
+	 * @note this index is returned by am_index if the queried
+	 * pair of arcs does not correspond to a valid arcmatch
+	 */
+	const ArcMatch::idx_type invalid_am_index() const {
+	    // The invalid arc match index is implemented to be the
+	    // maximum valid index + 1.
+	    // This allows an efficient implementation, where we push 
+	    // an invalid arc match to the end of vector arc_matches_vec.
+	    // Thus, we return size-1!
+
+	    return number_of_arcmatches;
+	}
+	
+	/** 
+	 * @brief Lookup arc match index by pair of arc indices
+	 * 
+	 * @param arcAIdx index of arc in A
+	 * @param arcBIdx index of arc in B
+	 * 
+	 * @return index of arcmatch of arcA and arcB or invalid_am_index()
+	 */
+	const ArcMatch::idx_type
+	am_index(const size_type &arcAIdx,const size_type &arcBIdx) const {
+	    am_index_type::const_iterator it = am_index_.find(idx_pair_t(arcAIdx,arcBIdx));
+	    if (am_index_.end() != it) {
+		return it->second;
+	    } else {
+		return invalid_am_index();
+	    }
+	}
+
+	/** 
+	 * @brief Lookup arc match by pair of arcs
+	 * 
+	 * @param arcA arc in A
+	 * @param arcB arc in B
+	 * 
+	 * @return arcmatch of arcA and arcB (or an invalid arc match with index invalid_am_index())
+	 */
+	const ArcMatch &
+	am_index(const Arc &arcA,const Arc &arcB) const {
+	    return arc_matches_vec[am_index(arcA.idx(),arcB.idx())];
+	}
     };
 
 } // end namespace LocARNA
