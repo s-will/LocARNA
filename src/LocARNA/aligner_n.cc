@@ -24,7 +24,7 @@ bool trace_debugging_output=false;
 
 AlignerN::AlignerN(const AlignerN &a)
 :scoring(a.scoring),
- mod_scoring(0),
+mod_scoring(0),
  params(a.params),
  seqA(a.seqA),
  seqB(a.seqB),
@@ -95,11 +95,11 @@ AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, Scoring
 
 	if ( isA )
 	{
-		constraints_aligned_pos = params->constraints.aligned_in_a(i);
+	    constraints_aligned_pos = params->constraints.aligned_in_a(i);
 	}
 	else
 	{
-		constraints_aligned_pos = params->constraints.aligned_in_b(i);
+	    constraints_aligned_pos = params->constraints.aligned_in_b(i);
 	}
 	// compute IA entry
 	infty_score_t max_score = infty_score_t::neg_infty;
@@ -254,7 +254,7 @@ AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type 
 	pos_type i;
 	for (i=al+1; i<ar; i++) {
 
-		if (params->trace_controller.min_col(i)>bl) break; // fill only as long as column bl is accessible //todo: trace_controller for locarna_n
+		if (params->trace_controller.min_col(i)>bl) break; // fill only as long as column bl is accessible
 
 		if (!indel_score.is_neg_infty()) {
 			if (params->constraints.aligned_in_a(i)) {
@@ -350,11 +350,7 @@ AlignerN::align_M(pos_type al,pos_type ar,pos_type bl,pos_type br,
 		}
 	}
 
-
-	if (allow_exclusion) { //TODO support exclusions
-		std::cerr << "ERROR Exclusions are not supported!" << std::endl;
-		assert ( ! allow_exclusion );
-	}
+	assert ( ! allow_exclusion );
 
 //	std::cout << "align_M aligned M is :" << std::endl << Ms[E_NO_NO] << std::endl;
 }
@@ -384,19 +380,14 @@ AlignerN::fill_D_entries(pos_type al, pos_type bl)
 		infty_score_t ia= IAmat(ar-1,arcB.idx());
 		infty_score_t ib= IBmat(arcA.idx(),br-1);
 
-		if (params->STRUCT_LOCAL) {
-			std::cerr << "ERROR Structural Locality not implemented!" << std::endl;
-			assert (! params->STRUCT_LOCAL);
-			}
+		assert (! params->STRUCT_LOCAL);
 
 		D(am) = std::max(m, ia);
 		D(am) = std::max(D(am), ib );
 
 //		std::cout <<"["<< am.arcA() << "," <<am.arcB() <<"]:" << D(am) << std::endl;
 
-		if (scoring->stacking()) {
-			std::cerr << "Warning! stacking not implemented!" << std::endl;
-		}
+		assert(! scoring->stacking());
 	}
 }
 
@@ -472,10 +463,7 @@ AlignerN::align_D() {
 	// ------------------------------------------------------------
 	// fill D matrix entries
 	//
-	if (params->no_lonely_pairs) {
-	    std::cerr << "no_lonely_pairs not implemented !" << std::endl;
 		assert(! params->no_lonely_pairs);
-	}
 
 		fill_D_entries(al,bl);
 
@@ -547,7 +535,6 @@ template <class ScoringView>
 
 	}else {
 		// base del and ins, affine cost
-		std::cerr << "aligner_n: affine gap cost is not supported" << std::endl;
 		assert ( sv.scoring()->indel_opening() == 0 );
 	}
 
@@ -567,7 +554,6 @@ template <class ScoringView>
 	pos_type lastPos;
 	for (lastPos = xl + 1; lastPos <= i; lastPos++) { //TODO: to be optimized. can be integrated in the arc loop
 
-			//todo: !Review: Shall we check this trace_controller for locarna_n?
 			if (isA && params->trace_controller.min_col(lastPos) > arcY.left()) break; // fill only as long as column bl is accessible, remaining elements have been initialized with neg_infinity
 			if ( !isA && params->trace_controller.max_col(arcY.left()) < lastPos ) break; // todo: validate the code
 
@@ -646,9 +632,7 @@ void AlignerN::trace_D(const Arc &arcA, const Arc &arcB, ScoringView sv) {
 
 	// --------------------
 	// case of stacking: not supported
-	if ( scoring->stacking() ) { //TODO: support stacking
-		std::cerr << "aligner_n: stacking is not supported!" << std::endl;
-	}
+	assert(! scoring->stacking());
 
 	// --------------------
 	// now handle the case that arc match is not stacked
@@ -657,7 +641,6 @@ void AlignerN::trace_D(const Arc &arcA, const Arc &arcB, ScoringView sv) {
 	fill_IA_entries(al, arcB, ar);
 	if ( IA(ar-1, arcB ) == sv.D(arcA, arcB) )
 	{
-//		trace_IA(al, ar-1, arcB, sv);
 		trace_IX(al, ar-1, arcB, true, sv);
 		return;
 	}
@@ -665,7 +648,6 @@ void AlignerN::trace_D(const Arc &arcA, const Arc &arcB, ScoringView sv) {
 	fill_IB_entries(arcA, bl, br);
 	if ( IB(arcA, br-1 ) == sv.D(arcA, arcB) )
 	{
-//		trace_IB(arcA, bl, br-1, sv);
 		trace_IX(bl, br-1, arcA, false, sv);
 
 		return;
@@ -725,7 +707,6 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 		}
 	} else {
 		// base del and ins, affine cost
-		std::cerr << "WARNING: aligner_n: affine gap cost is not supported" << std::endl; //TODO: Support affine gap cost
 		assert ( sv.scoring()->indel_opening() == 0 );
 	}
 
@@ -775,10 +756,7 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 
 			// do the trace below the arc match
 
-			if (params->no_lonely_pairs) {
-			    std::cerr << "no_lonely_pairs not implemented!" << std::endl;
-				assert(! params->no_lonely_pairs);
-			}
+			assert(! params->no_lonely_pairs);
 			trace_D(am, sv);
 			alignment.append(ar,br);
 

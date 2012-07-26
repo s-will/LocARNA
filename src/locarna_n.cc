@@ -706,7 +706,6 @@ main(int argc, char **argv) {
     
     // enumerate suboptimal alignments (using interval splitting)
     if (clp.opt_subopt) {
-    	//TODO: Implement suboptimal aligner
     	std::cerr
       			<< "ERROR: suboptimal alignment not supported."
       			<<std::endl;
@@ -749,7 +748,6 @@ main(int argc, char **argv) {
 		<< "ERROR: Normalized alignment requires option --sequ_local."<<std::endl;
 	    exit(-1);
 	}
-	//TODO: Implement normalized_align
 //	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
 	
     } else {

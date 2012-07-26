@@ -18,7 +18,6 @@
 
 namespace LocARNA {
 
-	//todo: Ask: what does the following note about index uniqueness mean?
     //! \brief Represents a base pair
     //! 
     //! stores base pair left end, right end
