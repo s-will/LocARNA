@@ -21,7 +21,8 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc LocARNA/options.cc	\
 	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
 	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
 	LocARNA/trace_controller.cc LocARNA/evaluator.cc		\
-	LocARNA/multiple_alignment.cc LocARNA/aligner_n.cc		
+	LocARNA/multiple_alignment.cc LocARNA/aligner_n.cc		\
+	LocARNA/sparsification_mapper.cc	
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 

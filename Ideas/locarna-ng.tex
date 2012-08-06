@@ -32,12 +32,27 @@
 \newcommand{\pInLoopA}[2]{\pInLoop{A}{#1}{#2}}
 \newcommand{\pInLoopB}[2]{\pInLoop{B}{#1}{#2}}
 
+\newcommand{\numPos}[3]{seql^\textrm{#1}(#2,#3)}
+\newcommand{\numPosA}[2]{\numPos{A}{#1}{#2}}
+\newcommand{\numPosB}[2]{\numPos{B}{#1}{#2}}
+\newcommand{\seqPos}[2]{seq\_pos^\textrm{#1}(#2)}
+\newcommand{\unpairedA}[1]{unpaired^\textrm{A}{(#1)}}
+\newcommand{\unpairedB}[1]{unpaired^\textrm{B}{(#1)}}
+\newcommand{\probVecA}[1]{PV_\textrm{A}(#1)}
+\newcommand{\probVecB}[1]{PV_\textrm{B}(#1)}
+\newcommand{\probPrimeVecA}[1]{PV'_\textrm{A}(#1)}
+\newcommand{\probPrimeVecB}[1]{PV'_\textrm{B}(#1)}
+
+% \newcommand{\tab}{\hspace*{2em}}
+
 \newcommand{\PsiA}[1]{\Psi^\textrm{A}_{#1}}
 \newcommand{\PsiB}[1]{\Psi^\textrm{B}_{#1}}
 
 
 \newcommand{\thetaOne}{\theta_1}
 \newcommand{\thetaTwo}{\theta_2}
+\newcommand{\thetaThree}{\theta_3}
+
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -276,37 +291,89 @@ We define the following matrices:
 \end{align}
 \paragraph{recursion}
 we compute values for all $a\in P^A$, $b\in P^B$, $i$, $k$
-with $a^l<i<a^r$, $b^l<j<b^r$ as follows
+with $a^l<i<a^r$, $b^l<j<b^r$ as follows;\\ 
+where:  $\seqPos{X}{i}$ is the position of the $i^{th}$ sparsed vector element, within the sequence X.\\
+and $\numPos{X}{i}{j}$ = $\seqPos{X}{j} - \seqPos{X}{i} -1$;
 \begin{align}
   \DTmat{a}{b} &= \max
   \begin{cases}
-    \MTmat{a}{b}{a^r-1}{b^r-1}\\
-    \IATmat{a}{b}{a^r-1}\\
-    \IBTmat{a}{b}{b^r-1}
+    \MTmat{a}{b}{a^r-1}{b^r-1} + (\numPosA{a^r}{a^r-1} + \numPosB{b^r}{b^r-1})\gamma\\
+    \IATmat{a}{b}{a^r-1} + \numPosA{a^r}{a^r-1}\gamma\\
+    \IBTmat{a}{b}{b^r-1} + \numPosB{b^r}{b^r-1}\gamma
   \end{cases}\label{recursionD}\\
   %
   \MTmat{a}{b}{i}{k} &= \max
   \begin{cases}
-    \MTmat{a}{b}{i-1}{k-1} + \sigma(i,k)\\
-    \MTmat{a}{b}{i}{k-1} + \gamma\\
-    \MTmat{a}{b}{i-1}{k} + \gamma\\
-    \max_{\substack{a'\in P^A,b'\in P^B\\\text{s.t. } a'^r=i, b'^r=k}}\limits \MTmat{a}{b}{a'^l-1}{b'^l-1} + \DTmat{a'}{b'} + \tau(a',b')
+    \MTmat{a}{b}{i-1}{k-1} + \sigma(i,k) + (\numPosA{i}{i-1} + \numPosB{k}{k-1})\gamma & \unpairedA{i} \unpairedB{k}\\
+    \MTmat{a}{b}{i}{k-1} + (\Red{\numPosB{k}{k-1}}+1)\gamma & \Red{\unpairedB{k}}\\
+    \MTmat{a}{b}{i-1}{k} + (\Red{\numPosA{i}{i-1}}+1)\gamma & \Red{\unpairedA{i}}\\
+    \max_{\substack{a'\in P^A,b'\in P^B\\\text{s.t. } a'^r=i, b'^r=k}}\limits \MTmat{a}{b}{a'^l-1}{b'^l-1} + \DTmat{a'}{b'} + \tau(a',b') + \\ \qquad\qquad (\numPosA{a'^l}{a'^l-1} + \numPosB{b'^l}{b'^l-1})\gamma
   \end{cases}\label{recursionM}\\
   %
   \IATmat{a}{b}{i} &= \max
   \begin{cases}
-    \IATmat{a}{b}{i-1} + \gamma\\
-    \max_{a'\in P^A\text{ s.t.} a'^r=i}\limits (a'^l-a^l+1)\gamma + \DTmat{a'}{b} +  \PsiA{a'}
+    \IATmat{a}{b}{i-1} + (\numPosA{i}{i-1} + 1)\gamma\\
+    \max_{a'\in P^A\text{ s.t.} a'^r=i}\limits (\numPosA{a'^l}{a^l}+2)\gamma + \DTmat{a'}{b} +  \PsiA{a'}
   \end{cases}\label{recursionIA}\\
   %
   \IBTmat{a}{b}{k} &= \max
   \begin{cases}
-    \IBTmat{a}{b}{k-1} + \gamma\\
-    \max_{b'\in P^B\text{ s.t.} b'^r=k}\limits (b'^l-b^l+1)\gamma +
+    \IBTmat{a}{b}{k-1} + (\numPosB{k}{k-1} + 1)\gamma\\
+    \max_{b'\in P^B\text{ s.t.} b'^r=k}\limits (\numPosB{b'^l}{b^l}+2)\gamma +
     \DTmat{a}{b'} + \PsiA{b'}
   \end{cases}\label{recursionIB}
 \end{align}
 The recursions are visualized in Figure~\ref{fig:recursion}.
+
+\newpage
+\paragraph{evaluation order}
+The following pseudocode shows in what order the tables can be
+computed such that at any point in time only $O(n^2)$ space is
+required.\\
+Where:\\
+\begin{displaymath}
+\probVecA{x} = \{ i \in x+1..a^r_{max}(x) - 1 \mid \exists (x,v) \in P^A: [ \pInLoopA{i}{(x,v)} \geq \thetaTwo \lor \exists(k,i) \in P^A: \pInLoopA{(k,i)}{(x,v)} \geq \thetaThree]\}\\
+\end{displaymath}
+$\probVecB{y} = $  ``analogously''
+\begin{displaymath}
+\probPrimeVecA{x} = \{ i \in x+1..a^r_{max}(x) - 1 \mid \exists (x,v),(k,i) \in P^A: \pInLoopA{(k,i)}{(x,v)} \geq \thetaThree\}\\
+\end{displaymath}
+$\probPrimeVecB{y} = $  ``analogously''\\
+
+
+
+\begin{algorithmic}
+\FORALL {$x$ from $|A|$ to $1$ s.t. $\exists a\in P^A $ with $ a^l=x$}
+  \FORALL {$y$ from $|B|$ to $1$ s.t. $\exists b\in P^B $ with $ b^l=y$}
+% 	\FORALL {$i$ s.t. $\exists k,v: \pInLoopA{i}{(x,v)} \geq \thetaTwo$ \OR $\pInLoopA{(k,i)}{(x,v)} \geq \thetaThree$ }
+	\FORALL {$i \in \probVecA{x}$ in increasing order}
+	\FORALL {$j \in \probVecB{y}$ in increasing order}
+		\STATE  compute $M^{xy}(i,j)$
+	\ENDFOR
+	\ENDFOR
+      
+			    
+    
+    \FORALL {$b\in P^B$ with $b^l=y$}
+      \FORALL {$i \in \probPrimeVecA{x}$}
+      \STATE compute $I_A^{xb}(i)$
+      \ENDFOR
+    \ENDFOR
+
+    \FORALL {$a\in P^A$ with $a^l=x$}
+      \FORALL {$j \in \probPrimeVecB{y}$}
+      \STATE compute $I_B^{ya}(j)$
+      \ENDFOR
+    \ENDFOR
+
+    \FORALL {$a\in P^A$, $b\in P^B$ with $a^l=x$,$b^l=y$ }
+      \STATE compute $\DTmat{a}{b}$
+    \ENDFOR
+    %\STATE free memory of matrices $M^{xy}$ and all $I_A^{xb}$,$I_B^{ay}$
+  \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\newpage
 \begin{figure}
   \centering
   \includegraphics[width=\linewidth]{Figs/recursion}
@@ -315,29 +382,6 @@ The recursions are visualized in Figure~\ref{fig:recursion}.
     \ref{recursionIA}, and \ref{recursionIB}.}
   \label{fig:recursion}
 \end{figure}
-
-\paragraph{evaluation order}
-The following pseudocode shows in what order the tables can be
-computed such that at any point in time only $O(n^2)$ space is
-required.
-\begin{algorithmic}
-\FORALL {$x$ from $|A|$ to $1$ s.t. $\exists a\in P^A $ with $ a^l=x$}
-  \FORALL {$y$ from $|B|$ to $1$ s.t. $\exists b\in P^B $ with $ b^l=y$}
-    \STATE compute entire matrix $M^{xy}$
-    \FORALL {$b\in P^B$ with $b^l=y$}
-      \STATE compute vector $I_A^{xb}$
-    \ENDFOR
-    \FORALL {$a\in P^A$ with $a^l=x$}
-      \STATE compute vector $I_B^{ay}$
-    \ENDFOR
-    \FORALL {$a\in P^A$, $b\in P^B$ with $a^l=x$,$b^l=y$ }
-      \STATE compute $\DTmat{a}{b}$
-    \ENDFOR
-    %\STATE free memory of matrices $M^{xy}$ and all $I_A^{xb}$,$I_B^{ay}$
-  \ENDFOR
-\ENDFOR
-\end{algorithmic}
-
 \subsection{Novel structural sparsification}
 
 We consider a probability $\pInLoop{X}{k}{(i,j)} := \Pr[\text{$k$ in

@@ -258,6 +258,8 @@ protected:
 	template <class ScoringView>
 	void init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
 
+	template <class ScoringView>
+	void compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std::vector<infty_score_t> &blockGapCostsX, bool isA, ScoringView sv );
 
 	//! \brief compute IA/IB value of single element
 	//!
@@ -269,7 +271,7 @@ protected:
 	//! @returns score of IX(i,arcX) for the left end arc element i
 	//! 
 	template<class ScoringView>
-	infty_score_t compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, ScoringView sv);
+	infty_score_t compute_IX(pos_type xl, const Arc& arcY, pos_type i, std::vector<infty_score_t> const& blockGapCostsX, bool isA, ScoringView sv);
 
 	//! \brief fills all IA values using default scoring scheme
 	//!

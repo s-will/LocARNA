@@ -31,7 +31,7 @@
 #include <LocARNA/anchor_constraints.hh>
 #include <LocARNA/trace_controller.hh>
 #include <LocARNA/ribosum85_60.icc>
-
+#include <LocARNA/multiple_alignment.hh>
 
 using namespace std;
 using namespace LocARNA;
@@ -456,13 +456,18 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
-    
-    RnaData rnadataA(clp.file1,false,clp.opt_stacking);
-    RnaData rnadataB(clp.file2,false,clp.opt_stacking);
 
-    Sequence seqA=rnadataA.get_sequence();
-    Sequence seqB=rnadataB.get_sequence();
-    
+
+    MultipleAlignment maA(clp.file1,MultipleAlignment::FASTA);
+    MultipleAlignment maB(clp.file2,MultipleAlignment::FASTA);
+    //    cout << "name1: " << maA.seqentry(0).name() << endl;
+    //    cout << "name2: " << maB.seqentry(0).name() << endl;
+    Sequence seqA(maA);
+    Sequence seqB(maB);
+
+    RnaData rnadataA(seqA,true,clp.opt_stacking);
+    RnaData rnadataB(seqB,true,clp.opt_stacking);
+
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 

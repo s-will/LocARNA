@@ -13,6 +13,7 @@
 
 //using namespace std;
 
+
 namespace LocARNA {
 
 bool trace_debugging_output=false;
@@ -86,8 +87,48 @@ AlignerN::~AlignerN() {
 }
 
 template<class ScoringView>
+void AlignerN::compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std::vector<infty_score_t> &blockGapCostsX, bool isA, ScoringView sv )
+{
+	//---------------------cost computation for left sided gap blocks ----------------------------
+	blockGapCostsX.resize( xr - xl , infty_score_t::neg_infty); //one additional element for al
+	//
+	infty_score_t gap_score = (infty_score_t)0;
+
+	// handling of anchor constraints:
+	// anchored positions must not be excluded,
+	// nor deleted
+
+	pos_type lastPos;
+	for (lastPos = xl + 1; lastPos < xr; lastPos++) { //TODO: to be optimized. can be integrated in the arc loop
+
+		if (isA && params->trace_controller.min_col(lastPos) > arcY.left()) break; // fill only as long as column bl is accessible, remaining elements have been initialized with neg_infinity
+		if ( !isA && params->trace_controller.max_col(arcY.left()) < lastPos ) break;
+
+
+		if (!gap_score.is_neg_infty()) {
+			if ( (isA && params->constraints.aligned_in_a(lastPos))
+					|| ( !isA && params->constraints.aligned_in_b(lastPos)) ) {
+				gap_score = infty_score_t::neg_infty;
+			}
+			else {
+				gap_score += sv.scoring()->gapX( lastPos, arcY.left(), isA);
+			}
+		}
+		else
+		{
+			break; //no more block of deletion/insertion is possible;
+		}
+
+		blockGapCostsX[lastPos - xl ] = gap_score;
+	}
+	//-------------------------------------------------------------------------------------
+
+
+}
+template<class ScoringView>
 infty_score_t
-AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, ScoringView sv) {
+AlignerN::compute_IX(pos_type xl, const Arc&
+ arcY, pos_type i, std::vector<infty_score_t> const& blockGapCostsX, bool isA, ScoringView sv) {
 
 	bool constraints_aligned_pos;
 	const BasePairs &bpsX = isA? bpsA : bpsB;
@@ -111,6 +152,7 @@ AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, Scoring
 
 	}
 
+/*
 
 	//---------------------cost computation for left sided gap blocks ----------------------------
 	//TODO: blockGapCosts can be computed just once and reused in method calls, variable can be transformed to an upper level attribute
@@ -147,7 +189,7 @@ AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, Scoring
 		blockGapCostsX[lastPos - xl ] = gap_score;
 	}
 	//-------------------------------------------------------------------------------------
-
+*/
 	for (BasePairs::RightAdjList::const_iterator arcX = adjlX.begin();
 			arcX != adjlX.end() && arcX->left() > xl  ; ++arcX) {
 		infty_score_t new_score = blockGapCostsX[arcX->left() - xl ]
@@ -292,16 +334,18 @@ AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type 
 
 }
 
+
 void AlignerN::fill_IA_entries ( pos_type al, Arc arcB, pos_type max_ar)
 {
 
 	IAmat(al, arcB.idx()) = infty_score_t::neg_infty;
+	std::vector<infty_score_t> blockGapCostsA;
+	compute_gap_costs(al, max_ar, arcB,blockGapCostsA, true, def_scoring_view );
 	for (pos_type i = al+1; i < max_ar; i++) {
 
 		// limit entries due to trace controller
-		//IAmat(i, arcB.idx()) = compute_IA(al, arcB, i, def_scoring_view);
 
-		IAmat(i, arcB.idx()) = compute_IX(al, arcB, i, true, def_scoring_view);
+		IAmat(i, arcB.idx()) = compute_IX(al, arcB, i, blockGapCostsA, true, def_scoring_view);
 	}
 //	cout << "fill_IA_entries al: "<< al << " arcB.idx: " << arcB.idx() << " arcB.left: " << arcB.left() << " arcB.right: " << arcB.right() << " IAmat: " << std::endl << IAmat << std::endl;
 
@@ -311,15 +355,17 @@ void AlignerN::fill_IA_entries ( pos_type al, Arc arcB, pos_type max_ar)
 
 
 void AlignerN::fill_IB_entries ( Arc arcA, pos_type bl, pos_type max_br)
+
 {
 
 	IBmat(arcA.idx(), bl) = infty_score_t::neg_infty;
+	std::vector<infty_score_t> blockGapCostsB;
+	compute_gap_costs(bl, max_br, arcA, blockGapCostsB, true, def_scoring_view );
 
 	for (pos_type k = bl+1; k < max_br; k++) {
 
 		// limit entries due to trace controller
-//		IBmat(arcA.idx(), k) = compute_IB(arcA, bl, k, def_scoring_view);
-		IBmat(arcA.idx(), k) = compute_IX(bl, arcA, k, false, def_scoring_view);
+		IBmat(arcA.idx(), k) = compute_IX(bl, arcA, k, blockGapCostsB, false, def_scoring_view);
 	}
 //	cout << "fill_IB_entries arcA: " << arcA << " bl: "<< bl <<  " IBmat: " << std::endl << IBmat << std::endl;
 
@@ -330,13 +376,7 @@ AlignerN::align_M(pos_type al,pos_type ar,pos_type bl,pos_type br,
 
 	assert(br>0); // if br<=0 we run into trouble below when computing br-1
 
-
-
-
 	init_state(E_NO_NO, al, ar, bl, br, def_scoring_view);
-
-
-
 
 	for (pos_type i=al+1; i<ar; i++) {
 
@@ -396,81 +436,77 @@ AlignerN::fill_D_entries(pos_type al, pos_type bl)
 // compute all entries D
 void
 AlignerN::align_D() {
-	// for al in r.get_endA() .. r.get_startA
-	for (pos_type al=r.get_endA()+1; al>r.get_startA(); ) { al--;
-//	std::cout << "align_D al: " << al << std:.endl;
-	const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
-	if ( adjlA.empty() )
-	{
-//		std::cout << "empty left_adjlist(al)" << endl;
-		continue;
-	}
-//	pos_type max_bl = std::min(r.get_endB(),params->trace_controller.max_col(al)); //TODO: check trace_controller or not? It seems not!
-//	pos_type min_bl = std::max(r.get_startB(),params->trace_controller.min_col(al));
+    // for al in r.get_endA() .. r.get_startA
+    for (pos_type al=r.get_endA()+1; al>r.get_startA(); ) { al--;
+//    	std::cout << "align_D al: " << al << std:endl;
+    const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
+    if ( adjlA.empty() )
+    {
+//	std::cout << "empty left_adjlist(al)" << endl;
+	continue;
+    }
+    //	pos_type max_bl = std::min(r.get_endB(),params->trace_controller.max_col(al)); //TODO: check trace_controller or not? It seems not!
+    //	pos_type min_bl = std::max(r.get_startB(),params->trace_controller.min_col(al));
 
-	pos_type max_bl = r.get_endB(); //tracecontroller not considered
-	pos_type min_bl = r.get_startB(); //tracecontroller not considered
+    pos_type max_bl = r.get_endB(); //tracecontroller not considered
+    pos_type min_bl = r.get_startB(); //tracecontroller not considered
 
-	// for bl in max_bl .. min_bl
-	for (pos_type bl=max_bl+1; bl > min_bl;) { bl--;
+    // for bl in max_bl .. min_bl
+    for (pos_type bl=max_bl+1; bl > min_bl;) { bl--;
 
-	const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
+    const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
 
-	if ( adjlB.empty() )
-	{
-//		std::cout << "empty left_adjlist(bl)" << endl;
-		continue;
-	}
-//	std::cout << "size of left_adjlist(bl): " << adjlB.size() << std::endl;
-	pos_type max_ar=adjlA.begin()->right();	//tracecontroller not considered
-	pos_type max_br=adjlB.begin()->right();
+    if ( adjlB.empty() )
+    {
+//	std::cout << "empty left_adjlist(bl)" << endl;
+	continue;
+    }
+    //	std::cout << "size of left_adjlist(bl): " << adjlB.size() << std::endl;
+    pos_type max_ar=adjlA.begin()->right();	//tracecontroller not considered
+    pos_type max_br=adjlB.begin()->right();
 
-	//find the rightmost possible basepair for left base al
-	for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-			arcA != adjlA.end(); arcA++)
-	{
-		if (max_ar < arcA->right() )
-			max_ar = arcA->right();
-	}
-	//find the rightmost possible basepair for left base bl
-	for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-			arcB != adjlB.end(); arcB++)
-	{
-		if (max_br < arcB->right() )
-			max_br = arcB->right();
-	}
-	align_M(al,max_ar,bl,max_br,params->STRUCT_LOCAL);
+    //find the rightmost possible basepair for left base al
+    for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
+	    arcA != adjlA.end(); arcA++)
+    {
+	if (max_ar < arcA->right() )
+	    max_ar = arcA->right();
+    }
+    //find the rightmost possible basepair for left base bl
+    for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
+	    arcB != adjlB.end(); arcB++)
+    {
+	if (max_br < arcB->right() )
+	    max_br = arcB->right();
+    }
+    align_M(al,max_ar,bl,max_br,params->STRUCT_LOCAL);
 
-	for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-			arcB != adjlB.end(); arcB++)
-	{
-		fill_IA_entries(al, *arcB, max_ar );
-	}
+    for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
+	    arcB != adjlB.end(); arcB++)
+    {
+	fill_IA_entries(al, *arcB, max_ar );
+    }
 
-	for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-			arcA != adjlA.end(); arcA++)
-	{
-		fill_IB_entries(*arcA, bl, max_br );
-	}
+    for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
+	    arcA != adjlA.end(); arcA++)
+    {
+	fill_IB_entries(*arcA, bl, max_br );
+    }
 
+    //std::cout << al << ","<<bl<<":"<<std::endl
+    //	      << Ms[E_NO_NO] << std::endl;
 
+    // ------------------------------------------------------------
+    // fill D matrix entries
+    //
+    assert(! params->no_lonely_pairs);
 
+    fill_D_entries(al,bl);
 
+    }
+    }
 
-	//std::cout << al << ","<<bl<<":"<<std::endl
-	//	      << Ms[E_NO_NO] << std::endl;
-
-	// ------------------------------------------------------------
-	// fill D matrix entries
-	//
-		assert(! params->no_lonely_pairs);
-
-		fill_D_entries(al,bl);
-
-	}
-	}
-
-	D_created=true; // now the matrix D is built up
+    D_created=true; // now the matrix D is built up
 }
 
 
