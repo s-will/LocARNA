@@ -342,4 +342,11 @@ June, 2012
 	(1.7.2)
 	Add locarna_n code, alpha status
 Aug, 2012
-	Fix a bug related to use of trace controller (max-diff) with free endgaps
+	Fix a bug related to use of trace controller (max-diff) with free
+	endgaps.
+	Fix autodetection of input multiple alignment file format,
+	i.e. FASTA vs. CLUSTAL.
+	Change interface of scoring such that gapA (gapB) depends on only
+	positions in sequence A (B), resp.
+	(1.7.2.1)
+	

@@ -116,7 +116,7 @@ void AlignerP::init_M(size_type al, size_type ar, size_type bl, size_type br) {
     for (i=al+1; i<ar; i++) {
 	if (params->trace_controller.min_col(i)>bl) break; // fill only as long as column bl is accessible
 
-	indel_score *= scoring->exp_gapA(i, bl);
+	indel_score *= scoring->exp_gapA(i);
 	M(i, bl) = indel_score;
     }
 
@@ -131,7 +131,7 @@ void AlignerP::init_M(size_type al, size_type ar, size_type bl, size_type br) {
     indel_score = scoring->exp_indel_opening()/pf_scale;
     size_type j;
     for (j=bl+1; j<=max_col; j++) {
-	indel_score *= scoring->exp_gapB(al, j);
+	indel_score *= scoring->exp_gapB(j);
 	M(al, j) = indel_score;
     }
     // fill entries above valid entries 
@@ -162,9 +162,9 @@ inline
 pf_score_t
 AlignerP::comp_E_entry(size_type al, size_type bl, size_type i, size_type j) {
     return 
-	E[j] * scoring->exp_gapA(i, j)
+	E[j] * scoring->exp_gapA(i)
 	+ 
-	(M(i-1,j)-E[j]) * scoring->exp_gapA(i, j) * scoring->exp_indel_opening();
+	(M(i-1,j)-E[j]) * scoring->exp_gapA(i) * scoring->exp_indel_opening();
 }
 
 // compute entry in F for (i,j)
@@ -172,9 +172,9 @@ inline
 pf_score_t
 AlignerP::comp_F_entry(size_type al, size_type bl, size_type i, size_type j) {
     return 
-	F * scoring->exp_gapB(i, j)
+	F * scoring->exp_gapB(j)
 	+
-	(M(i,j-1)-F) * scoring->exp_gapB(i, j) * scoring->exp_indel_opening();
+	(M(i,j-1)-F) * scoring->exp_gapB(j) * scoring->exp_indel_opening();
 }
 
 
@@ -401,7 +401,7 @@ AlignerP::init_Mrev(size_type al, size_type ar, size_type bl, size_type br) {
 	    ++i;
 	    break; // fill only as long as column bl is accessible
 	}
-	indel_score *= scoring->exp_gapA(i+1,br);
+	indel_score *= scoring->exp_gapA(i+1);
 	Mrev(i,br) = indel_score;
 	// printMrev(2,i,br);
     }
@@ -417,7 +417,7 @@ AlignerP::init_Mrev(size_type al, size_type ar, size_type bl, size_type br) {
     size_type min_col = std::max( bl-1, params->trace_controller.min_col(ar) );
     size_type j;
     for (j=br; j>min_col; ) { j--;
-	indel_score *= scoring->exp_gapB(ar,j+1);
+	indel_score *= scoring->exp_gapB(j+1);
 	Mrev(ar,j)= indel_score;
 	// printMrev(4,ar,j);
     }
@@ -441,18 +441,18 @@ inline
 pf_score_t
 AlignerP::comp_Erev_entry(size_type i, size_type j) {
     return 
-	Erev[j] * scoring->exp_gapA(i+1, j)
+	Erev[j] * scoring->exp_gapA(i+1)
 	+
-	(Mrev(i+1,j)-Erev[j]) * scoring->exp_gapA(i+1, j) * scoring->exp_indel_opening();
+	(Mrev(i+1,j)-Erev[j]) * scoring->exp_gapA(i+1) * scoring->exp_indel_opening();
 }
 
 inline
 pf_score_t
 AlignerP::comp_Frev_entry(size_type i, size_type j) {
     return 
-	Frev * scoring->exp_gapB(i, j+1)
+	Frev * scoring->exp_gapB(j+1)
 	+
-	(Mrev(i,j+1)-Frev) * scoring->exp_gapB(i, j+1) * scoring->exp_indel_opening();
+	(Mrev(i,j+1)-Frev) * scoring->exp_gapB(j+1) * scoring->exp_indel_opening();
 }
 
 // compute reversed M matrix entry; cases: base match, base in/del, arc match
@@ -618,7 +618,7 @@ AlignerP::rightmost_covering_arcmatch(size_type al,size_type bl,size_type ar,siz
     
 //     pf = M(al-1,bl-1) * scoring->exp_indel_opening();
 //     for (int i=(int)r.get_endA()-1;i>=(int)ar; i--) {
-// 	pf *= scoring->exp_gapA(i+1,r.get_endB());
+// 	pf *= scoring->exp_gapA(i+1);
 // 	Mprime(i,r.get_endB()) = pf;
 //     }
     
@@ -644,9 +644,9 @@ pf_score_t
 AlignerP::comp_Eprime_entry(size_type al, size_type bl, size_type i, size_type j) {
     
     return 
-	Eprime[j] * scoring->exp_gapA(i+1, j)
+	Eprime[j] * scoring->exp_gapA(i+1)
 	+
-	(Mprime(i+1,j)-Eprime[j]) * scoring->exp_gapA(i+1, j) * scoring->exp_indel_opening();
+	(Mprime(i+1,j)-Eprime[j]) * scoring->exp_gapA(i+1) * scoring->exp_indel_opening();
 }
 
 
@@ -655,9 +655,9 @@ inline
 pf_score_t 
 AlignerP::comp_Fprime_entry(size_type al, size_type bl, size_type i, size_type j) {
     return 
-	Fprime * scoring->exp_gapB(i, j+1)
+	Fprime * scoring->exp_gapB(j+1)
 	+
-	(Mprime(i,j+1)-Fprime) * scoring->exp_gapB(i, j+1) * scoring->exp_indel_opening();
+	(Mprime(i,j+1)-Fprime) * scoring->exp_gapB(j+1) * scoring->exp_indel_opening();
 }
 
 

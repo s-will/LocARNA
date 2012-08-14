@@ -107,8 +107,7 @@ AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, Scoring
 		// due to constraints, i can be deleted
 		max_score =
 				std::max(	max_score,
-						IX(i-1, arcY, isA) + sv.scoring()->gapX(i, arcY.right(), isA )); //TODO: Be Careful: in gapX first and second variables does NOT indicate seqA or seqB
-
+						IX(i-1, arcY, isA) + sv.scoring()->gapX(i, isA));
 	}
 
 
@@ -136,7 +135,7 @@ AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, Scoring
 				gap_score = infty_score_t::neg_infty;
 			}
 			else {
-				gap_score += sv.scoring()->gapX( lastPos, arcY.left(), isA);
+				gap_score += sv.scoring()->gapX(lastPos, isA);
 			}
 		}
 		else
@@ -151,7 +150,7 @@ AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, Scoring
 	for (BasePairs::RightAdjList::const_iterator arcX = adjlX.begin();
 			arcX != adjlX.end() && arcX->left() > xl  ; ++arcX) {
 		infty_score_t new_score = blockGapCostsX[arcX->left() - xl ]
-		                                         + sv.scoring()->gapX (i, arcY.right(), isA)
+		                                         + sv.scoring()->gapX(i, isA)
 		                                         + sv.D(*arcX, arcY, isA ) //todo: ugly code!
 		                                         + sv.scoring()->arcDel (*arcX, isA);
 
@@ -188,10 +187,10 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 
 
 	// base del
-	max_score = std::max(max_score, M(i-1,j) + sv.scoring()->gapA(i,j));
+	max_score = std::max(max_score, M(i-1,j) + sv.scoring()->gapA(i));
 
 	// base ins
-	max_score = std::max(max_score, M(i,j-1) + sv.scoring()->gapB(i,j));
+	max_score = std::max(max_score, M(i,j-1) + sv.scoring()->gapB(j));
 
 	// arc match
 
@@ -261,7 +260,7 @@ AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type 
 				indel_score=infty_score_t::neg_infty;
 			}
 			else {
-				indel_score += sv.scoring()->gapA(i,bl);
+				indel_score += sv.scoring()->gapA(i);
 			}
 		}
 		M(i,bl) = (infty_score_t)indel_score;
@@ -284,7 +283,7 @@ AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type 
 				indel_score=infty_score_t::neg_infty;
 			}
 			else {
-				indel_score += sv.scoring()->gapB(al,j);
+				indel_score += sv.scoring()->gapB(j);
 			}
 		}
 		M(al,j) = (infty_score_t)indel_score;
@@ -518,7 +517,7 @@ template <class ScoringView>
 		{
 			if( !params->constraints.aligned_in_a(i)  //todo: is this check necessary? does scoring()->gapA take care of constraints?
 					//todo: valid trace check for IA?
-					&& IA(i, arcY) == IA(i-1, arcY) + sv.scoring()->gapA(i, arcY.right() ) )
+					&& IA(i, arcY) == IA(i-1, arcY) + sv.scoring()->gapA(i) )
 			{
 				trace_IX( xl, i-1, arcY, isA, sv);
 				alignment.append(i, -1);
@@ -526,7 +525,7 @@ template <class ScoringView>
 			}
 		}
 		else //isB
-			if ( !params->constraints.aligned_in_b(i) && IB(arcY, i) == IB(arcY, i-1) + sv.scoring()->gapB(arcY.right(), i ) )
+			if ( !params->constraints.aligned_in_b(i) && IB(arcY, i) == IB(arcY, i-1) + sv.scoring()->gapB(i) )
 			{
 				trace_IX( xl, i-1, arcY, isA, sv);
 				alignment.append(-1, i);
@@ -564,7 +563,7 @@ template <class ScoringView>
 					gap_score = infty_score_t::neg_infty;
 				}
 				else {
-					gap_score += sv.scoring()->gapX( lastPos, arcY.left(), isA);
+					gap_score += sv.scoring()->gapX(lastPos, isA);
 				}
 			}
 			else
@@ -580,7 +579,7 @@ template <class ScoringView>
 			arcX != adjlX.end() && arcX->left() > xl  ; ++arcX) {
 
 		if ( IX(i, arcY, isA) == blockGapCostsX[arcX->left() - xl ]
-		                                        + sv.scoring()->gapX (i, arcY.right(), isA)
+		                                        + sv.scoring()->gapX(i, isA)
 		                                        + sv.D(*arcX, arcY, isA ) //todo: ugly code!
 		                                        + sv.scoring()->arcDel (*arcX, isA))
 		{
@@ -692,7 +691,7 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 		// del
 		if ( (!params->constraints.aligned_in_a(i))
 				&& params->trace_controller.is_valid(i-1,j) //todo: check trace_controller?
-				&& M(i,j) == M(i-1,j) + sv.scoring()->gapA(i,j)) {
+				&& M(i,j) == M(i-1,j) + sv.scoring()->gapA(i)) {
 			trace_M(state, oal, i-1, obl, j, tl, sv);
 			alignment.append(i,-1);
 			return;
@@ -700,7 +699,7 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 		// ins
 		if ( (!params->constraints.aligned_in_b(j))
 				&& params->trace_controller.is_valid(i,j-1) //todo: check trace_controller?
-				&& M(i,j) == M(i,j-1)+sv.scoring()->gapB(i,j)) {
+				&& M(i,j) == M(i,j-1)+sv.scoring()->gapB(j)) {
 			trace_M(state, oal, i, obl, j-1, tl, sv);
 			alignment.append(-1,j);
 			return;
