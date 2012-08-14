@@ -84,6 +84,6 @@ locarna_rnafold_pp_SOURCES = locarna_rnafold_pp.cc
 
 
 LocARNA/ribosum85_60.icc: ribosum2cc
-	./ribosum2cc Ribosum85_60 $(top_srcdir)/Matrices/RIBOSUM85_60 >$@
+	./ribosum2cc Ribosum85_60 "$(top_srcdir)/Matrices/RIBOSUM85_60" >$@
 
 CLEANFILES=LocARNA/ribosum85_60.icc

@@ -421,16 +421,17 @@ main(int argc, char **argv) {
 	    ribosum = new Ribosum85_60;
 	} else {
 	    ribosum = new RibosumFreq(clp.ribosum_file);
-	}	
-	/*
-	  std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
-	  <<" C: "<< ribosum->base_nonstruct_prob('C')
-	  <<" G: "<< ribosum->base_nonstruct_prob('G')
-	  <<" U: "<< ribosum->base_nonstruct_prob('U')
-	  << std::endl;
+	}
 	
-	  ribosum->print_basematch_scores_corrected();
-	*/
+	// if (clp.opt_verbose) {
+	//   std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
+	//   <<" C: "<< ribosum->base_nonstruct_prob('C')
+	//   <<" G: "<< ribosum->base_nonstruct_prob('G')
+	//   <<" U: "<< ribosum->base_nonstruct_prob('U')
+	//   << std::endl;
+	
+	//   ribosum->print_basematch_scores_corrected();
+	// }
     }
     
     // ----------------------------------------

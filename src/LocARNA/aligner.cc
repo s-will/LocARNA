@@ -755,10 +755,10 @@ Aligner::align_top_level_free_endgaps() {
     
     if (params->free_endgaps.allow_right_2()) {
 	// search maximum in the rightmost row r.get_endB()
-	// pay attention for anchor constraints
+	// pay attention for anchor constraints AND trace controller
 	
 	for (pos_type i=std::max(right_anchor.first+1,r.get_startA()); i<=r.get_endA(); i++) {
-	    if ( M(i,r.get_endB()) > max_score ) {
+	    if ( params->trace_controller.max_col(i)>=r.get_endB() && M(i,r.get_endB()) > max_score ) {
 		max_score = M(i,r.get_endB());
 		max_i=i; 
 		max_j=r.get_endB();
@@ -768,9 +768,14 @@ Aligner::align_top_level_free_endgaps() {
     
     if (params->free_endgaps.allow_right_1()) {
 	// search maximum in the last column r.get_endA()
-	// pay attention for anchor constraints
+	// pay attention for anchor constraints AND trace controller
 	
-	for (pos_type j=std::max(right_anchor.second+1,r.get_startB()); j<=r.get_endB(); j++) {
+	// limit entries due to trace controller
+	pos_type min_col = std::max(std::max(right_anchor.second+1,r.get_startB()),params->trace_controller.min_col(r.get_endA()));
+	pos_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(r.get_endA()));
+
+	
+	for (pos_type j=min_col; j<=max_col; j++) {
 	    if ( M(r.get_endA(),j) > max_score ) {
 		max_score = M(r.get_endA(),j);
 		max_i=r.get_endA();

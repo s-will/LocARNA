@@ -363,7 +363,7 @@ namespace LocARNA {
 	    return prob_paired;
 	}
         
-	//! \brief Probability that a position is paired upstream
+	//! \brief Probability that a position is paired downstream
 	//! 
 	//! \param i sequence position
 	//! \return probability that a position i is paired with a position j<i (downstream)

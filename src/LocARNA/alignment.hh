@@ -22,8 +22,10 @@ namespace LocARNA {
 	const Sequence &seqA_;
 	const Sequence &seqB_;
     
-	std::vector<int> a_;
-	std::vector<int> b_;
+	std::vector<int> a_; //!< a_[i] is the position in seq A of
+			     //!the i-th alignment edge
+	std::vector<int> b_; //!< b_[i] is the position in seq B of
+			     //!the i-th alignment edge
 
 	std::vector<char> strA_;
 	std::vector<char> strB_;
