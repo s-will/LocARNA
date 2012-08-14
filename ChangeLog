@@ -341,3 +341,5 @@ June, 2012
 	Fix bug in trace controller
 	(1.7.2)
 	Add locarna_n code, alpha status
+Aug, 2012
+	Fix a bug related to use of trace controller (max-diff) with free endgaps
