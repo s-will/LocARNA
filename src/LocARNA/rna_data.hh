@@ -15,6 +15,8 @@ extern "C" {
 
 #include "sparse_matrix.hh"
 
+#include "multiple_alignment.hh"
+
 namespace LocARNA {
 
     //! @brief Represents the raw input data for an RNA
@@ -225,7 +227,8 @@ namespace LocARNA {
 	 * @param filename input filename
 	 * @param keepMcM whether to keep McCaskill matrices
 	 * @param stacking whether to use stacking
-	 * 
+	 * @param format file format of multiple alignment file (CLUSTAL or FASTA)
+	 *
 	 * @note Currently, the name is misleading. See todo.
 	 *
 	 * @todo Support true multiple alignments, currently only
@@ -233,7 +236,9 @@ namespace LocARNA {
 	 *
 	 */
 	void readMultipleAlignment(const std::string &filename, 
-				   bool keepMcC, bool stacking);
+				   bool keepMcC, bool stacking,
+				   MultipleAlignment::format_t format
+				   );
 	
 	
 	//! \brief read baepairs and sequence from a file
@@ -363,7 +368,7 @@ namespace LocARNA {
 	    return prob_paired;
 	}
         
-	//! \brief Probability that a position is paired upstream
+	//! \brief Probability that a position is paired downstream
 	//! 
 	//! \param i sequence position
 	//! \return probability that a position i is paired with a position j<i (downstream)

@@ -133,7 +133,6 @@ void AlignerN::compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std
 
 }
 template<class ScoringView>
-infty_score_t
 AlignerN::compute_IX(pos_type xl, const Arc&
  arcY, pos_type i, std::vector<infty_score_t> const& blockGapCostsX, bool isA, ScoringView sv) {
 
@@ -155,8 +154,7 @@ AlignerN::compute_IX(pos_type xl, const Arc&
 		// due to constraints, i can be deleted
 		max_score =
 				std::max(	max_score,
-						IX(i-1, arcY, isA) + sv.scoring()->gapX(i, arcY.right(), isA )); //TODO: Be Careful: in gapX first and second variables does NOT indicate seqA or seqB
-
+						IX(i-1, arcY, isA) + sv.scoring()->gapX(i, isA));
 	}
 
 /*
@@ -185,7 +183,7 @@ AlignerN::compute_IX(pos_type xl, const Arc&
 				gap_score = infty_score_t::neg_infty;
 			}
 			else {
-				gap_score += sv.scoring()->gapX( lastPos, arcY.left(), isA);
+				gap_score += sv.scoring()->gapX(lastPos, isA);
 			}
 		}
 		else
@@ -200,7 +198,7 @@ AlignerN::compute_IX(pos_type xl, const Arc&
 	for (BasePairs::RightAdjList::const_iterator arcX = adjlX.begin();
 			arcX != adjlX.end() && arcX->left() > xl  ; ++arcX) {
 		infty_score_t new_score = blockGapCostsX[arcX->left() - xl ]
-		                                         + sv.scoring()->gapX (i, arcY.right(), isA)
+		                                         + sv.scoring()->gapX(i, isA)
 		                                         + sv.D(*arcX, arcY, isA ) //todo: ugly code!
 		                                         + sv.scoring()->arcDel (*arcX, isA);
 
@@ -237,10 +235,10 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 
 
 	// base del
-	max_score = std::max(max_score, M(i-1,j) + sv.scoring()->gapA(i,j));
+	max_score = std::max(max_score, M(i-1,j) + sv.scoring()->gapA(i));
 
 	// base ins
-	max_score = std::max(max_score, M(i,j-1) + sv.scoring()->gapB(i,j));
+	max_score = std::max(max_score, M(i,j-1) + sv.scoring()->gapB(j));
 
 	// arc match
 
@@ -310,7 +308,7 @@ AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type 
 				indel_score=infty_score_t::neg_infty;
 			}
 			else {
-				indel_score += sv.scoring()->gapA(i,bl);
+				indel_score += sv.scoring()->gapA(i);
 			}
 		}
 		M(i,bl) = (infty_score_t)indel_score;
@@ -333,7 +331,7 @@ AlignerN::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type 
 				indel_score=infty_score_t::neg_infty;
 			}
 			else {
-				indel_score += sv.scoring()->gapB(al,j);
+				indel_score += sv.scoring()->gapB(j);
 			}
 		}
 		M(al,j) = (infty_score_t)indel_score;
@@ -369,9 +367,7 @@ void AlignerN::fill_IB_entries ( Arc arcA, pos_type bl, pos_type max_br)
 	std::vector<infty_score_t> blockGapCostsB;
 	compute_gap_costs(bl, max_br, arcA, blockGapCostsB, true, def_scoring_view );
 
-	for (pos_type k = bl+1; k < max_br; k++) {
-
-		// limit entries due to trace controller
+	for (pos_type k = bl+1; k < max_br; k++) {		// limit entries due to trace controll
 		IBmat(arcA.idx(), k) = compute_IX(bl, arcA, k, blockGapCostsB, false, def_scoring_view);
 	}
 //	cout << "fill_IB_entries arcA: " << arcA << " bl: "<< bl <<  " IBmat: " << std::endl << IBmat << std::endl;
@@ -455,8 +451,8 @@ AlignerN::align_D() {
     //	pos_type max_bl = std::min(r.get_endB(),params->trace_controller.max_col(al)); //TODO: check trace_controller or not? It seems not!
     //	pos_type min_bl = std::max(r.get_startB(),params->trace_controller.min_col(al));
 
-    pos_type max_bl = r.get_endB(); //tracecontroller not considered
-    pos_type min_bl = r.get_startB(); //tracecontroller not considered
+	pos_type max_bl = r.get_endB(); //tracecontroller not considered
+	pos_type min_bl = r.get_startB(); //tracecontroller not considered
 
     // for bl in max_bl .. min_bl
     for (pos_type bl=max_bl+1; bl > min_bl;) { bl--;
@@ -561,7 +557,7 @@ template <class ScoringView>
 		{
 			if( !params->constraints.aligned_in_a(i)  //todo: is this check necessary? does scoring()->gapA take care of constraints?
 					//todo: valid trace check for IA?
-					&& IA(i, arcY) == IA(i-1, arcY) + sv.scoring()->gapA(i, arcY.right() ) )
+					&& IA(i, arcY) == IA(i-1, arcY) + sv.scoring()->gapA(i) )
 			{
 				trace_IX( xl, i-1, arcY, isA, sv);
 				alignment.append(i, -1);
@@ -569,7 +565,7 @@ template <class ScoringView>
 			}
 		}
 		else //isB
-			if ( !params->constraints.aligned_in_b(i) && IB(arcY, i) == IB(arcY, i-1) + sv.scoring()->gapB(arcY.right(), i ) )
+			if ( !params->constraints.aligned_in_b(i) && IB(arcY, i) == IB(arcY, i-1) + sv.scoring()->gapB(i) )
 			{
 				trace_IX( xl, i-1, arcY, isA, sv);
 				alignment.append(-1, i);
@@ -607,7 +603,7 @@ template <class ScoringView>
 					gap_score = infty_score_t::neg_infty;
 				}
 				else {
-					gap_score += sv.scoring()->gapX( lastPos, arcY.left(), isA);
+					gap_score += sv.scoring()->gapX(lastPos, isA);
 				}
 			}
 			else
@@ -623,7 +619,7 @@ template <class ScoringView>
 			arcX != adjlX.end() && arcX->left() > xl  ; ++arcX) {
 
 		if ( IX(i, arcY, isA) == blockGapCostsX[arcX->left() - xl ]
-		                                        + sv.scoring()->gapX (i, arcY.right(), isA)
+		                                        + sv.scoring()->gapX(i, isA)
 		                                        + sv.D(*arcX, arcY, isA ) //todo: ugly code!
 		                                        + sv.scoring()->arcDel (*arcX, isA))
 		{
@@ -735,7 +731,7 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 		// del
 		if ( (!params->constraints.aligned_in_a(i))
 				&& params->trace_controller.is_valid(i-1,j) //todo: check trace_controller?
-				&& M(i,j) == M(i-1,j) + sv.scoring()->gapA(i,j)) {
+				&& M(i,j) == M(i-1,j) + sv.scoring()->gapA(i)) {
 			trace_M(state, oal, i-1, obl, j, tl, sv);
 			alignment.append(i,-1);
 			return;
@@ -743,7 +739,7 @@ void AlignerN::trace_M_noex(int state,pos_type oal,pos_type i, pos_type obl,pos_
 		// ins
 		if ( (!params->constraints.aligned_in_b(j))
 				&& params->trace_controller.is_valid(i,j-1) //todo: check trace_controller?
-				&& M(i,j) == M(i,j-1)+sv.scoring()->gapB(i,j)) {
+				&& M(i,j) == M(i,j-1)+sv.scoring()->gapB(j)) {
 			trace_M(state, oal, i, obl, j-1, tl, sv);
 			alignment.append(-1,j);
 			return;

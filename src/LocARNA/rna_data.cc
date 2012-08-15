@@ -202,7 +202,7 @@ namespace LocARNA {
 	qln_p[sequence.length()+1] = 1.0;
 	
 	time_t stop_copying = time (NULL);
-	std::cout << "time for copying : " << stop_copying - start_copying << "sec " << std::endl;
+	//std::cout << "time for copying : " << stop_copying - start_copying << "sec " << std::endl;
 
 	// copying of McCaskill pf matrices done
 	
@@ -236,7 +236,7 @@ namespace LocARNA {
 	time_t start_Qm2 = time (NULL);
 	compute_Qm2();
 	time_t stop_Qm2 = time (NULL);
-	std::cout << "time for computing Qm2 : " << stop_Qm2 - start_Qm2 << "sec " << std::endl;
+	//std::cout << "time for computing Qm2 : " << stop_Qm2 - start_Qm2 << "sec " << std::endl;
     }
 
     void
@@ -311,10 +311,13 @@ namespace LocARNA {
 	    //readPPML(filename);
 
 #ifdef HAVE_LIBRNA
-	} else if (s.substr(0,7) == "CLUSTAL" || s[0]=='>') {
-	    // assume multiple alignment format: read and compute base pair probabilities
-	    readMultipleAlignment(filename, keepMcM, stacking);
-#endif
+	} else if (s.substr(0,7) == "CLUSTAL") {
+	    // assume multiple alignment format clustalw: read and compute base pair probabilities
+	    readMultipleAlignment(filename, keepMcM, stacking, MultipleAlignment::CLUSTAL);
+	} else if (s[0]=='>') {
+	    // assume multiple alignment format clustalw: read and compute base pair probabilities
+	    readMultipleAlignment(filename, keepMcM, stacking, MultipleAlignment::FASTA);
+#endif   
 	} else {
 	    // try reading as PP-file (proprietary format, which is easy to read and contains pair probs)
 	    readPP(filename);
@@ -396,11 +399,10 @@ namespace LocARNA {
 
 #ifdef HAVE_LIBRNA
     //bool flag;
-    void RnaData::readMultipleAlignment(const std::string &filename, bool keepMcM, bool stacking) {
+    void RnaData::readMultipleAlignment(const std::string &filename, bool keepMcM, bool stacking, MultipleAlignment::format_t format) {
 	//read to multiple alignment object
-	MultipleAlignment ma(filename,MultipleAlignment::CLUSTAL); // accept clustal input
-	// MultipleAlignment ma(filename,MultipleAlignment::FASTA); // accept fasta input
-	
+	MultipleAlignment ma(filename,format);
+
 	// convert to sequence
 	sequence = Sequence(ma);
 	

@@ -33,14 +33,28 @@ namespace LocARNA {
 				  bool pos_out,
 				  bool clustal_format,
 				  bool write_structure) const {	
-
-	if (!pos_out) std::cout<<std::endl;
+	if (!pos_out) out<<std::endl;
 	
 	const char loc_blank='~';
 	
 	size_type alisize=a_.size();
     
+	assert(b_.size()==a_.size());
+	
+	/* DEBUGGING output
+	std::cout <<"a: " << a_.size()<<std::endl;
+	for (size_type i=0; i<a_.size(); i++) {
+	    std::cout << a_[i]<< " ";
+	}
+	std::cout << std::endl;
 
+	std::cout <<"b: " << b_.size()<<std::endl;
+	for (size_type i=0; i<b_.size(); i++) {
+	    std::cout << b_[i]<< " ";
+	}
+	std::cout << std::endl;
+	*/
+	
 	std::vector<Sequence> aliString;
     
 	aliString.resize(4,Sequence());
@@ -54,7 +68,7 @@ namespace LocARNA {
 	aliSeqA.init_buffer(seqA_);
 	aliSeqB.init_buffer(seqB_);
 	aliStrB.init_buffer("");
-    
+	
     
 	int lastA=1; // bases consumed in sequence A
 	int lastB=1; // ---------- "" ------------ B
@@ -120,53 +134,55 @@ namespace LocARNA {
 	//	if (seqA_.row_number()==1 && seqB_.row_number()==1)
 	//	    out << "SCORE: "<<score<<std::endl;
     
-	size_type local_start_A=a_[0]; //!< pos where local alignment starts for A
-	size_type local_start_B=b_[0]; //!< pos where local alignment starts for B
-		
-	size_type local_end_A=a_[alisize-1]; //!< pos where local alignment ends for A
-	size_type local_end_B=b_[alisize-1]; //!< pos where local alignment ends for B
-
-	size_type length=aliSeqA.length();
-	size_type k=1;
- 
-	if (pos_out) {
-	    out << "HIT " << score
-		<< " " << local_start_A
-		<< " " << local_start_B
-		<< " " << local_end_A
-		<< " " << local_end_B
-		<<std::endl;
-	}
-
-
-	if (local_out) {
-	    out << std::endl;
-	    out << "\t+" << local_start_A << std::endl;
-	    out << "\t+" << local_start_B << std::endl;
-	}
-
-	if (!pos_out || local_out) {
-	    out<<std::endl;
-	
-	    while (k <= length) {
+	if (alisize>0) {
+	    size_type local_start_A=a_[0]; //!< pos where local alignment starts for A
+	    size_type local_start_B=b_[0]; //!< pos where local alignment starts for B
 	    
-		if (write_structure)
-		    aliString[0].write( out, k, std::min(length,k+width-1) );
-		aliString[1].write( out, k, std::min(length,k+width-1) );
-		aliString[2].write( out, k, std::min(length,k+width-1) );
-
-		if (write_structure)
-		    aliString[3].write( out, k, std::min(length,k+width-1) );
-
-		out<<std::endl;
-		k+=width;
+	    size_type local_end_A=a_[alisize-1]; //!< pos where local alignment ends for A
+	    size_type local_end_B=b_[alisize-1]; //!< pos where local alignment ends for B
+	    
+	    size_type length=aliSeqA.length();
+	    size_type k=1;
+ 
+	    if (pos_out) {
+		out << "HIT " << score
+		    << " " << local_start_A
+		    << " " << local_start_B
+		    << " " << local_end_A
+		    << " " << local_end_B
+		    <<std::endl;
 	    }
-	}
 
-	if (local_out) {
-	    out << "\t+" << local_end_A << std::endl;
-	    out << "\t+" << local_end_B << std::endl;
-	}
+
+	    if (local_out) {
+		out << std::endl;
+		out << "\t+" << local_start_A << std::endl;
+		out << "\t+" << local_start_B << std::endl;
+	    }
+	    
+	    if (!pos_out || local_out) {
+		out<<std::endl;
+		
+		while (k <= length) {
+		    
+		    if (write_structure)
+			aliString[0].write( out, k, std::min(length,k+width-1) );
+		    aliString[1].write( out, k, std::min(length,k+width-1) );
+		    aliString[2].write( out, k, std::min(length,k+width-1) );
+		    
+		    if (write_structure)
+			aliString[3].write( out, k, std::min(length,k+width-1) );
+		    
+		    out<<std::endl;
+		    k+=width;
+		}
+	    }
+	    
+	    if (local_out) {
+		out << "\t+" << local_end_A << std::endl;
+		out << "\t+" << local_end_B << std::endl;
+	    }
+	} // end if (alisize>0)
     }
 
 
