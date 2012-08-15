@@ -3,6 +3,7 @@
 
 #include "sequence.hh"
 #include "basepairs.hh"
+#include "sparsification_mapper.hh"
 #include "arc_matches.hh"
 #include "alignment.hh"
 
@@ -12,6 +13,7 @@
 #include "matrices.hh"
 
 #include "aligner_restriction.hh"
+
 
 namespace LocARNA {
 
@@ -42,6 +44,9 @@ protected:
 
 	const Sequence &seqA; //!< sequence A
 	const Sequence &seqB; //!< sequence B
+
+	const SparsificationMapper& mapperA;
+	const SparsificationMapper& mapperB;
 
 	const ArcMatches &arc_matches; //!< the potential arc matches between A and B
 
@@ -475,6 +480,8 @@ public:
 	//! construct with sequences and corresponding arc matches
 	AlignerN(const Sequence &seqA,
 			const Sequence &seqB,
+			const SparsificationMapper &mapperA,
+			const SparsificationMapper &mapperB,
 			const ArcMatches &arc_matches,
 			const AlignerParams *ap,
 			const Scoring *s

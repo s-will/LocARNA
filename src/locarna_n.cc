@@ -32,6 +32,7 @@
 #include <LocARNA/trace_controller.hh>
 #include <LocARNA/ribosum85_60.icc>
 #include <LocARNA/multiple_alignment.hh>
+#include <LocARNA/sparsification_mapper.hh>
 
 using namespace std;
 using namespace LocARNA;
@@ -89,7 +90,7 @@ struct command_line_parameters {
     //! right 1, left 2, right 2 e.g. "+---" allows free end gaps at
     //! the left end of the first alignment string ; "----" forbids
     //! free end gaps
-    std::string free_endgaps; 
+    std::string free_endgaps;
     
     //! maximal difference for positions of alignment
     //! traces (only used for ends of arcs)
@@ -177,8 +178,8 @@ struct command_line_parameters {
 
     bool opt_subopt; //!< find suboptimal solution (either k-best or all solutions better than a threshold)
 
-    int kbest_k; //!< kbest_k
-    int subopt_threshold; //!< subopt_threshold
+//    int kbest_k; //!< kbest_k
+//    int subopt_threshold; //!< subopt_threshold
 
     std::string seq_constraints_A; //!< seq_constraints_A
     std::string seq_constraints_B; //!< seq_constraints_B
@@ -197,6 +198,10 @@ struct command_line_parameters {
 
     bool opt_normalized; //!< whether to do normalized alignment
     int normalized_L; //!< normalized_L
+
+    double prob_unpaired_in_loop_threshold; // threshold for prob_unpaired_in_loop
+    double prob_basepair_in_loop_threshold; // threshold for prob_basepait_in_loop
+
 };
 
 
@@ -217,19 +222,20 @@ option_def my_options[] = {
     {"ribosum-file",0,0,O_ARG_STRING,&clp.ribosum_file,"RIBOSUM85_60","f","Ribosum file"},
     {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,"true","bool","Use ribosum scores"},
     {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
-    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-500","score","Indel opening score"},
+//    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"0","score","Indel opening score"},
     {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score","Maximal weight of 1/2 arc match"},
     {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
-    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
-    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},   
+//    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
+//    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
+/*    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
 
     {"struct-local",0,0,O_ARG_BOOL,&clp.struct_local,"false","bool","Structure local"},
     {"sequ-local",0,0,O_ARG_BOOL,&clp.sequ_local,"false","bool","Sequence local"},
     {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,"----","spec","Whether and which end gaps are free. order: L1,R1,L2,R2"},
     {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L","Normalized local alignment with parameter L"},
+*/
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling output"},
 
@@ -241,8 +247,8 @@ option_def my_options[] = {
     {"alifold-consensus-dp",0,&clp.opt_alifold_consensus_dp,O_NO_ARG,0,O_NODEFAULT,"","Compute consensus dot plot by alifold"},
 #endif
 
-    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
-    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
+//    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
+//    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
@@ -255,10 +261,12 @@ option_def my_options[] = {
     {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
+    {"prob_unpaired_in_loop_threshold",'p',0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
+    {"prob_basepair_in_loop_threshold",'p',0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
-    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
-    {"better",0,&clp.opt_subopt,O_ARG_INT,&clp.subopt_threshold,"-1000000","t","Enumerate alignments better threshold t"},
+//    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
+//    {"better",0,&clp.opt_subopt,O_ARG_INT,&clp.subopt_threshold,"-1000000","t","Enumerate alignments better threshold t"},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Options for controlling MEA score"},
 
@@ -284,14 +292,15 @@ option_def my_options[] = {
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
-    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
-    {"anchorA",0,0,O_ARG_STRING,&clp.seq_constraints_A,"","string","Anchor constraints sequence A"},
-    {"anchorB",0,0,O_ARG_STRING,&clp.seq_constraints_B,"","string","Anchor constraints sequence B"},
-    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
+//    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
+//    {"anchorA",0,0,O_ARG_STRING,&clp.seq_constraints_A,"","string","Anchor constraints sequence A"},
+//    {"anchorB",0,0,O_ARG_STRING,&clp.seq_constraints_B,"","string","Anchor constraints sequence B"},
+//    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
-    {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Mode of operation"},
-    {"eval",0,&clp.opt_eval,O_NO_ARG,0,O_NODEFAULT,"","Turn on evaluation mode"},
 
+/*    {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Mode of operation"},
+    {"eval",0,&clp.opt_eval,O_NO_ARG,0,O_NODEFAULT,"","Turn on evaluation mode"},
+*/
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
     {"",0,0,O_ARG_STRING,&clp.file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
@@ -353,6 +362,51 @@ main(int argc, char **argv) {
 	print_options(my_options);
     }
     
+
+    // --------------------
+    //Forbid unsupported option of LocARNA_N
+    if ( clp.struct_local )
+    {
+	std::cerr << "Exclusions is not supported" << std::endl;
+	exit (-1);
+    }
+    if ( clp.indel_opening_score != 0 )
+    {
+	std::cerr << "Affine gap cost is not supported" << std::endl;
+	exit (-1);
+    }
+
+
+    if( clp.no_lonely_pairs )
+    {
+	std::cerr << "No lonely pairs option is not supported" << std::endl;
+	exit (-1);
+    }
+    if( clp.sequ_local )
+    {
+	std::cerr << "Local sequence alignment is not supported" << std::endl;
+	exit (-1);
+    }
+    if( clp.opt_stacking )
+    {
+	std::cerr << "Stacking is not supported" << std::endl;
+	exit (-1);
+    }
+    if(clp.free_endgaps.compare("----") != 0 )
+    {
+	std::cerr << "Free end gaps is not supported" << std::endl;
+	exit (-1);
+    }
+    if (clp.opt_subopt) {
+    	std::cerr
+      			<< "ERROR: suboptimal alignment not supported."
+      			<<std::endl;
+        exit(-1);
+    }
+
+
+
+
     // ------------------------------------------------------------
     // parameter consistency
     if (clp.opt_read_arcmatch_scores && clp.opt_read_arcmatch_probs) {
@@ -471,33 +525,7 @@ main(int argc, char **argv) {
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
-    // --------------------
-    //Forbid unsupported option of LocARNA_N
-    if ( clp.struct_local )
-    {
-    	std::cerr << "Exclusions is not supported" << std::endl;
-    	exit (-1);
-    }
-    if ( clp.indel_opening_score != 0 )
-    {
-    	std::cerr << "Affine gap cost is not supported" << std::endl;
-    	exit (-1);
-    }
-
-
-    if( clp.no_lonely_pairs )
-    {
-    	std::cerr << "No lonely pairs option is not supported" << std::endl;
-    	exit (-1);
-    }
-    if( clp.sequ_local )
-    {
-    	std::cerr << "Local sequence alignment is not supported" << std::endl;
-    	exit (-1);
-    }
-
-
-    // --------------------
+        // --------------------
     // handle max_diff restriction  
     
     // missing: proper error handling in case that lenA, lenB, and max_diff_pw_alignment/max_diff_alignment_file are incompatible 
@@ -610,6 +638,9 @@ main(int argc, char **argv) {
 	// cout << "Base Identity: "<<(seq_identity(seqA,seqB)*100)<<endl; 
     }
 
+    // construct sparsification mapper for seqs A,B
+    SparsificationMapper mapperA(bpsA, rnadataA, clp.prob_unpaired_in_loop_threshold, clp.prob_basepair_in_loop_threshold, true);
+    SparsificationMapper mapperB(bpsB, rnadataB, clp.prob_unpaired_in_loop_threshold, clp.prob_basepair_in_loop_threshold, true);
 
     // ------------------------------------------------------------
     // Sequence match probabilities (for MEA-Alignment)
@@ -706,15 +737,12 @@ main(int argc, char **argv) {
 				 );
     
     // initialize aligner object, which does the alignment computation
-    AlignerN aligner(seqA,seqB,*arc_matches,&aligner_params,&scoring);
+    AlignerN aligner(seqA, seqB, mapperA, mapperB, *arc_matches, &aligner_params, &scoring);
 
     
     // enumerate suboptimal alignments (using interval splitting)
     if (clp.opt_subopt) {
-    	std::cerr
-      			<< "ERROR: suboptimal alignment not supported."
-      			<<std::endl;
-        exit(-1);
+    	std::cerr << "ERROR: suboptimal alignment not supported." << std::endl;
 
 	/*aligner.suboptimal(clp.kbest_k,
 			   clp.subopt_threshold,

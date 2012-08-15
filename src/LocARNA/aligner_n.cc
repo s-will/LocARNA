@@ -29,6 +29,8 @@ mod_scoring(0),
  params(a.params),
  seqA(a.seqA),
  seqB(a.seqB),
+ mapperA(a.mapperA),
+ mapperB(a.mapperB),
  arc_matches(a.arc_matches),
  bpsA(a.bpsA),
  bpsB(a.bpsB),
@@ -49,6 +51,8 @@ mod_scoring(0),
 
 AlignerN::AlignerN(const Sequence &seqA_,
 		const Sequence &seqB_,
+		const SparsificationMapper &mapperA_,
+		const SparsificationMapper &mapperB_,
 		const ArcMatches &arc_matches_,
 		const AlignerParams *ap_,
 		const Scoring *s_
@@ -57,6 +61,8 @@ AlignerN::AlignerN(const Sequence &seqA_,
   mod_scoring(0),
   params(ap_),
   seqA(seqA_), seqB(seqB_),
+  mapperA(mapperA_),
+  mapperB(mapperB_),
   arc_matches(arc_matches_),
   bpsA(arc_matches_.get_base_pairsA()),
   bpsB(arc_matches_.get_base_pairsB()),
@@ -66,16 +72,17 @@ AlignerN::AlignerN(const Sequence &seqA_,
   def_scoring_view(this),
   mod_scoring_view(this)
 {
+	assert(!params->STRUCT_LOCAL);
 	Ms.resize(params->STRUCT_LOCAL?8:1);
 
 	Dmat.resize(bpsA.num_bps(),bpsB.num_bps());
 	Dmat.fill(infty_score_t::neg_infty);
 
-	IAmat.resize(seqA.length()+1, bpsB.num_bps());
-	IBmat.resize(bpsA.num_bps(), seqB.length()+1);
+	IAmat.resize(mapperA.get_max_info_vec_size(), bpsB.num_bps());
+	IBmat.resize(bpsA.num_bps(), mapperB.get_max_info_vec_size());
 
 	for (size_t k=0; k<(params->STRUCT_LOCAL?8:1); k++) {
-		Ms[k].resize(seqA.length()+1,seqB.length()+1);
+		Ms[k].resize(mapperA.get_max_info_vec_size(),mapperB.get_max_info_vec_size());
 	}
 
 }

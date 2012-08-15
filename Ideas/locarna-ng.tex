@@ -305,8 +305,8 @@ and $\numPos{X}{i}{j}$ = $\seqPos{X}{j} - \seqPos{X}{i} -1$;
   \MTmat{a}{b}{i}{k} &= \max
   \begin{cases}
     \MTmat{a}{b}{i-1}{k-1} + \sigma(i,k) + (\numPosA{i}{i-1} + \numPosB{k}{k-1})\gamma & \unpairedA{i} \unpairedB{k}\\
-    \MTmat{a}{b}{i}{k-1} + (\Red{\numPosB{k}{k-1}}+1)\gamma & \Red{\unpairedB{k}}\\
-    \MTmat{a}{b}{i-1}{k} + (\Red{\numPosA{i}{i-1}}+1)\gamma & \Red{\unpairedA{i}}\\
+    \MTmat{a}{b}{i}{k-1} + (\Red{\numPosB{k}{k-1}}+1)\gamma \\
+    \MTmat{a}{b}{i-1}{k} + (\Red{\numPosA{i}{i-1}}+1)\gamma \\
     \max_{\substack{a'\in P^A,b'\in P^B\\\text{s.t. } a'^r=i, b'^r=k}}\limits \MTmat{a}{b}{a'^l-1}{b'^l-1} + \DTmat{a'}{b'} + \tau(a',b') + \\ \qquad\qquad (\numPosA{a'^l}{a'^l-1} + \numPosB{b'^l}{b'^l-1})\gamma
   \end{cases}\label{recursionM}\\
   %
