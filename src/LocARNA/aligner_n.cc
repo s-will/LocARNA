@@ -118,7 +118,7 @@ void AlignerN::compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std
 				gap_score = infty_score_t::neg_infty;
 			}
 			else {
-				gap_score += sv.scoring()->gapX( lastPos, arcY.left(), isA);
+				gap_score += sv.scoring()->gapX( lastPos, isA);
 			}
 		}
 		else
@@ -133,8 +133,7 @@ void AlignerN::compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std
 
 }
 template<class ScoringView>
-AlignerN::compute_IX(pos_type xl, const Arc&
- arcY, pos_type i, std::vector<infty_score_t> const& blockGapCostsX, bool isA, ScoringView sv) {
+infty_score_t AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, std::vector<infty_score_t> const& blockGapCostsX, bool isA, ScoringView sv) {
 
 	bool constraints_aligned_pos;
 	const BasePairs &bpsX = isA? bpsA : bpsB;
