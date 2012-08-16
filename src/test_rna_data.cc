@@ -14,8 +14,17 @@ main(int argc,char **argv) {
     
     Sequence seq("test",testseqstr);    
 
-    RnaData rnadata(seq,true,false);
+    RnaData rnadata(seq);
 
+    PFoldParams params(false,false);
+    if (!rnadata.pairProbsAvailable() || !rnadata.inLoopProbsAvailable()) {
+	rnadata.computeEnsembleProbs(params,true);
+    }
+    if (!rnadata.inLoopProbsAvailable()) {
+	std::cerr << "No in loop probabilities could be computed!"<<std::endl;
+	exit(-1);
+    }
+    
     BasePairs bps(&rnadata,minprob);
     
     

@@ -36,7 +36,7 @@ namespace LocARNA {
 	    ifstream in(filename.c_str());
     
 	    if (!in.good()) {
-		throw(std::ifstream::failure("Cannot read file"+filename+"."));
+		throw(std::ifstream::failure("Cannot read file "+filename+"."));
 	    }
 	
 	    if (format==FASTA) {
@@ -685,29 +685,27 @@ namespace LocARNA {
     
     }
 
-    const std::string
+    std::string
     MultipleAlignment::consensus_sequence() const {
-	const size_type max_code=128;
-	size_type tab[max_code];
-	
 	std::string cs="";
 	//iterate over columns and built up consensus sequence 
 	for (size_type i=1; i<=length(); ++i) {
 	    
-	    std::fill(tab,tab+max_code,0);
+	    map<char,size_t> tab;
 	    
-	    // iterate over sequences and
+	    // iterate over sequences and count character
 	    for (std::vector<SeqEntry>::const_iterator it=alig.begin(); alig.end()!=it; ++it) {
-		assert((size_type)it->seq()[i] < max_code);
-		tab[(size_type)it->seq()[i]]++;
+		char c=it->seq()[i];
+		if (tab.end()==tab.find(c)) tab[c]==0;
+		tab[c]++;
 	    }
 	    
 	    size_type cur_max=0;
 	    char max_char='N';
-	    for(size_type x=0; x<max_code; ++x) {
-		if (tab[x]>cur_max) {
-		    cur_max=tab[x];
-		    max_char=x;
+	    for(map<char,size_t>::const_iterator it=tab.begin(); tab.end()!=it; ++it) {
+		if (it->second > cur_max) {
+		    cur_max=it->second;
+		    max_char=it->first;
 		}
 	    }
 	    

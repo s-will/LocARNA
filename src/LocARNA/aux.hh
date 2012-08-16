@@ -5,12 +5,66 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <tr1/unordered_map>
 
 //!
 //! auxilliary types and global constants for use in locarna
 //! 
 
+
+// define a hash function for unordered_maps
+namespace std {
+    namespace tr1 {
+	//! @brief hash function for pairs of unsigned ints
+	template<>
+	struct hash<std::pair<size_t,size_t> >
+	{
+	    /** 
+	     * @brief Hash function for pairs of size_t
+	     * 
+	     * @return hash code
+	     */
+	    size_t
+	    operator()(std::pair<size_t,size_t> p) const
+	    { return p.first<<(sizeof(size_t)/2) | p.second; }
+	};
+
+	// //! @brief hash function for strings
+	// template<>
+	// struct hash<std::string>
+	// {
+	//     /** 
+	//      * @brief Hash function for pairs of size_t
+	//      * 
+	//      * @return hash code
+	//      */
+	//     size_t
+	//     operator()(std::pair<size_t,size_t> p) const
+	//     { 
+	// 	unsigned long hash = 5381;
+		
+	// 	for (unsigned int i = 0; i < myStr.length(); i++)
+	// 	    {
+	// 		hash = ((hash << 5) + hash) + myStr[i]; // hash * 33 + cStateString[i]
+	// 	    }
+	// 	return hash;	
+	//     }
+	// };
+
+	// class StringEq {
+	// public:
+	//     bool operator()(const string &a,const string &b) const
+	//     {
+	// 	return (a == b);
+	//     }
+	// };
+
+    }
+}
+
+
 namespace LocARNA {
+
 
     //! general size type
     typedef size_t size_type;
@@ -228,29 +282,6 @@ namespace LocARNA {
      * file ViennaRNA/fold_vars.h
      */
      #define FLT_OR_DBL double
-
-    
-#   ifdef HAVE_LIBRNA	
-    //! @brief  structure for McCaskill matrices pointers
-    //!
-    //! Contains pointers to matrices made accessible through
-    //! get_pf_arrays() and get_bppm() of Vienna librna
-    struct McC_matrices_t {
-	short *S_p;          //!< 'S' array (integer representation of nucleotides)	
-	short *S1_p;	 //!< 'S1' array (2nd integer representation of nucleotides)	
-	char *ptype_p;	 //!< pair type matrix					
-	FLT_OR_DBL *qb_p;	 //!< Q<sup>B</sup> matrix					
-	FLT_OR_DBL *qm_p;	 //!< Q<sup>M</sup> matrix					
-	FLT_OR_DBL *q1k_p;	 //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
-	FLT_OR_DBL *qln_p;	 //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
-	
-	//! @brief base pair probability matrix
-	//! 
-	//! Access elements with get_bppm()
-	FLT_OR_DBL *bppm;
-	
-    };
-#    endif	
 
 }
 

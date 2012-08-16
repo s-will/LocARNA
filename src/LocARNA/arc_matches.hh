@@ -16,27 +16,6 @@
 #include <assert.h>
 
 
-// define a hash function for the hash map used by ArcMatchesIndexed
-//! @todo clean up use of different hash classes in LocARNA code (tr1/gnu)
-namespace std {
-    namespace tr1 {
-	//! defines a new hash function for pairs of ints
-	template<>
-	struct hash<std::pair<size_t,size_t> >
-	{
-	    /** 
-	     * Hash function
-	     * 
-	     * @return hash code for pair of size_t
-	     */
-	    size_t
-	    operator()(std::pair<size_t,size_t> p) const
-	    { return p.first<<(sizeof(size_t)/2) | p.second; }
-	};
-    }
-}
-
-
 namespace LocARNA {
 
     /**

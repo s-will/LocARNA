@@ -12,6 +12,7 @@
 #ifdef HAVE_LIBRNA
 extern "C" {
 //#include <ViennaRNA/fold_vars.h>
+#include <ViennaRNA/data_structures.h>
 #include <ViennaRNA/part_func.h>
 #include <ViennaRNA/fold.h>
 #include <ViennaRNA/utils.h>
@@ -31,68 +32,142 @@ extern "C" {
 
 namespace LocARNA {
 
-    RnaData::RnaData(const std::string &file, bool stacking_, bool keepMcM):
+    // ------------------------------------------------------------
+    // implementation of class McC_matrices_t
+#ifdef HAVE_LIBRNA	
+    McC_matrices_t::McC_matrices_t(size_t length_, bool local_copy_): length(length_),local_copy(local_copy_) {
+	    
+	if (local_copy_) {
+	    McC_matrices_t McCmat_tmp(length,false);
+	    deep_copy(McCmat_tmp);
+	} else {
+	    
+	    // get pointers to McCaskill matrices
+	    get_pf_arrays(&S_p,
+			  &S1_p,
+			  &ptype_p,
+			  &qb_p,
+			  &qm_p,
+			  &q1k_p,
+			  &qln_p);
+	    // get pointer to McCaskill base pair probabilities
+	    bppm = export_bppm();
+	    
+	    iindx = get_iindx(length);
+	    
+	    pf_params_p = get_scaled_pf_parameters();
+	}
+    }
+    
+    void *
+    space_memcpy(void *from,size_t size) {
+	void *p = space(size);
+	memcpy(p,from,size);
+	return p;
+    }
+
+    void
+    McC_matrices_t::deep_copy(const McC_matrices_t &McCmat) {
+	length=McCmat.length;
+
+	size_t size = sizeof(FLT_OR_DBL) * ((length+1)*(length+2)/2);
+	
+	S_p = (short *) space_memcpy(McCmat.S_p,sizeof(short)*(length+2));
+	S1_p = (short *) space_memcpy(McCmat.S1_p,sizeof(short)*(length+2));
+	ptype_p= (char *) space_memcpy(McCmat.ptype_p,sizeof(char)*((length+1)*(length+2)/2));
+	qb_p= (FLT_OR_DBL *) space_memcpy(McCmat.qb_p,size);
+	qm_p= (FLT_OR_DBL *) space_memcpy(McCmat.qm_p,size);
+	bppm= (FLT_OR_DBL *) space_memcpy(McCmat.bppm,size);
+	q1k_p= (FLT_OR_DBL *) space_memcpy(McCmat.q1k_p,sizeof(FLT_OR_DBL)*(length+1));
+	qln_p= (FLT_OR_DBL *) space_memcpy(McCmat.qln_p,sizeof(FLT_OR_DBL)*(length+2));
+	pf_params_p= (pf_paramT *) space_memcpy(McCmat.pf_params_p,sizeof(pf_paramT));
+		
+	iindx= get_iindx(length);
+    }
+
+    McC_matrices_t::~McC_matrices_t() {
+	    if (local_copy) {
+		free_all();
+	    } else {
+		free(iindx);
+	    }
+	}
+
+    void McC_matrices_t::free_all() {
+	free(S_p);
+	free(S1_p);
+	free(ptype_p);
+	free(qb_p);
+	free(qm_p);
+	free(q1k_p);
+	free(qln_p);
+	free(bppm);
+	free(iindx);
+	free(pf_params_p);
+    }
+    
+
+#   endif
+    
+
+    // ------------------------------------------------------------
+    // implementation of class RnaData
+    //
+    RnaData::RnaData(const std::string &file,
+		     bool readPairProbs,
+		     bool readStackingProbs,
+		     bool readInLoopProbs)
+	:
 	sequence(),
-	stacking(stacking_),
 	arc_probs_(0),
 	arc_2_probs_(0),
 	seq_constraints_("")
     {
-#ifdef HAVE_LIBRNA
-	init_McCaskill_pointers();
-#endif
-
-	read(file, keepMcM);
-
+	initFromFile(file, readPairProbs, readStackingProbs, readInLoopProbs);
+	
 	consensus_sequence = MultipleAlignment(sequence).consensus_sequence();	
     }
-    
-#ifdef HAVE_LIBRNA
-
-    
-    RnaData::RnaData(const Sequence &sequence_, bool keepMcM, bool stacking_)
+        
+    RnaData::RnaData(const Sequence &sequence_)
 	: sequence(sequence_),
-	  stacking(stacking_),
+	  pair_probs_available(false),	  
 	  consensus_sequence(MultipleAlignment(sequence).consensus_sequence()),
 	  arc_probs_(0),
 	  arc_2_probs_(0),
 	  seq_constraints_("")
     {
-	if (sequence.row_number()!=1) {
-	    std::cerr << "Construction with multi-row Sequence object is not implemented." << std::endl;
-	    exit(-1);
-	}
-	
+    }
+    
+    RnaData::~RnaData() {
 #ifdef HAVE_LIBRNA
-	init_McCaskill_pointers();
-#endif
+	if (McCmat) {delete McCmat;} 
+#endif //HAVE_LIBRNA
+    }
 
+#ifdef HAVE_LIBRNA
+
+    void
+    RnaData::computeEnsembleProbs(const PFoldParams &params,bool inLoopProbs) {
 	// run McCaskill and get access to results
 	// in McCaskill_matrices
-	compute_McCaskill_matrices();
+	compute_McCaskill_matrices(params,inLoopProbs);
 	
 	// initialize the object from base pair probabilities
 	// Use the same proability threshold as in RNAfold -p !
-	init_from_McCaskill_bppm();	
+	set_arc_probs_from_McCaskill_bppm(10e-6,params.stacking);	
 	
-	// since we have local copies of all McCaskill pf arrays,
+	// since we either have local copies of all McCaskill pf arrays
+	// or don't need them anymore,
 	// we can free the ones of the Vienna lib
 	free_pf_arrays();
-	
-	// optionally deallocate McCaskill matrices
-	if (!keepMcM) {
-	    free_McCaskill_matrices();
-	}
     }
     
     void
-    RnaData::compute_McCaskill_matrices() {	
+    RnaData::compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs) {	
 	if (sequence.row_number()!=1) {
 	    std::cerr << "McCaskill computation with multi-row Sequence object is not implemented." << std::endl;
 	    exit(-1);
 	}
-	
-	assert(sequence.row_number()==1);
 	
 	// use MultipleAlignment to get pointer to c-string of the
 	// first (and only) sequence in object sequence.
@@ -104,22 +179,14 @@ namespace LocARNA {
 	strcpy(c_sequence,seqstring.c_str());
 	
 	char c_structure[length+1];
-	//p_sequence= c_sequence;
 	
-	// std::cout <<"Call fold(" << c_sequence << "," << "c_structure" << ")"<< std::endl;
+	// ----------------------------------------
+	// set folding parameters
+	if (params.noLP) {noLonelyPairs=1;}
 	
+
+	// ----------------------------------------
 	// call fold for setting the pf_scale
-	
-
-	// struct timeval tp;
-	// struct rusage ruse;
-
-	// gettimeofday( &tp, NULL );
-	// double start_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
-
-	// getrusage( RUSAGE_SELF, &ruse );
-	// double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
-
 	double en = fold(c_sequence,c_structure);
 	// std::cout << c_structure << std::endl;
 	free_arrays();
@@ -128,223 +195,117 @@ namespace LocARNA {
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
 	pf_scale = exp(-en/kT/length);
 	
-	// std::cout <<"Call pf_fold(" << c_sequence << "," << "NULL" << ")"<< std::endl;
-	
+	// ----------------------------------------
 	// call pf_fold
-	//time_t start_fold = time (NULL);
-
-
 	pf_fold(c_sequence,c_structure);
-
-   // 	gettimeofday( &tp, NULL );
-   // 	double end_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
-
-   // 	getrusage( RUSAGE_SELF, &ruse );
-   // 	double end_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
-
-   // 	//time_t stop_fold = time (NULL);
-   // // std::cout << "time for folding : " << stop_fold - start_fold << "sec " << std::endl;
-
-   //  std::cout << "time_wall McCaskill_folding = "  << end_fold - start_fold << " sec" << std::endl;
-   // 	std::cout << " time_cpu McCaskill_folding = "  << end_foldR - start_foldR << " sec" << std::endl;
 	
-	
-	McC_matrices_t McCmat;
-
-	// get pointers to McCaskill matrices
-	get_pf_arrays(&McCmat.S_p,
-		      &McCmat.S1_p,
-		      &McCmat.ptype_p,
-		      &McCmat.qb_p,
-		      &McCmat.qm_p,
-		      &McCmat.q1k_p,
-		      &McCmat.qln_p);
-	
-	// get pointer to McCaskill base pair probabilities
-	McCmat.bppm = export_bppm();
-	
+	// ----------------------------------------
+	// get McC data structures and copy
+	// 
 	// since the space referenced by pointers in McCmat will be
 	// overwritten by the next call to pf_fold, we have to copy
 	// the data structures if we want to keep them.
 	//
+	McCmat=new McC_matrices_t(length,inLoopProbs); // here is the local copy (if needed)
 	
-	iindx= get_iindx(sequence.length());
-	
-	unsigned int size;
-	size  = sizeof(FLT_OR_DBL) * ((length+1)*(length+2)/2);
-	S_p   = encode_sequence(c_sequence, 0);
-	S1_p  = encode_sequence(c_sequence, 1);
-	ptype_p= (char *) space(sizeof(char)*((length+1)*(length+2)/2));
-	qb_p= (FLT_OR_DBL *) space(size);
-	qm_p= (FLT_OR_DBL *) space(size);
-	q1k_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
-	qln_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+2));
-	bppm= (FLT_OR_DBL *) space(size);
-	
-	time_t start_copying = time (NULL);
-
-	int i,j;
-	for (j=TURN+2;j<=(int)sequence.length(); j++) {
-	  for (i=j-TURN-1; i>=1; i--) {
-	    ptype_p[iindx[i]-j]= McCmat.ptype_p[iindx[i]-j];
-	    qb_p[iindx[i]-j]= McCmat.qb_p[iindx[i]-j];
-	    qm_p[iindx[i]-j]= McCmat.qm_p[iindx[i]-j];   
-	    bppm[iindx[i]-j]= McCmat.bppm[iindx[i]-j];
-	  }
-	}
-	
-	
-	for (size_type k=1; k<=sequence.length(); k++) {
-	  q1k_p[k]= McCmat.q1k_p[k];
-	  qln_p[k]= McCmat.qln_p[k];
-	}
-	q1k_p[0] = 1.0;
-	qln_p[sequence.length()+1] = 1.0;
-	
-	time_t stop_copying = time (NULL);
-	//std::cout << "time for copying : " << stop_copying - start_copying << "sec " << std::endl;
-
-	// copying of McCaskill pf matrices done
-	
-	
-	// precompute tables for computations
+	// precompute further tables (expMLbase, scale, qm2) for computations
 	// of probabilities unpaired / basepair in loop or external
 	// as they are required for Exparna P functionality
 	//
 	
-	pf_params_p= get_scaled_pf_parameters();
-
-	expMLbase_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
-	scale_p= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(length+1));
-	
-	kT = pf_params_p->kT;   /* kT in cal/mol  */
-
-	/* scaling factors (to avoid overflows) */
-	if (pf_scale == -1) { /* mean energy for random sequences: 184.3*length cal */
-	  pf_scale = exp(-(-185+(pf_params_p->temperature-37.)*7.27)/kT);
-	  if (pf_scale<1) pf_scale=1;
+	if (inLoopProbs) {
+	    expMLbase.resize(length+1);
+	    scale.resize(length+1);
+	    
+	    kT = McCmat->pf_params_p->kT;   /* kT in cal/mol  */
+	    
+	    /* scaling factors (to avoid overflows) */
+	    if (pf_scale == -1) { /* mean energy for random sequences: 184.3*length cal */
+		pf_scale = exp(-(-185+(McCmat->pf_params_p->temperature-37.)*7.27)/kT);
+		if (pf_scale<1) pf_scale=1;
+	    }
+	    scale[0] = 1.;
+	    scale[1] = 1./pf_scale;
+	    expMLbase[0] = 1;
+	    expMLbase[1] = McCmat->pf_params_p->expMLbase/pf_scale;
+	    for (size_t i=2; i<=sequence.length(); i++) {
+		scale[i] = scale[i/2]*scale[i-(i/2)];
+		expMLbase[i] = pow(McCmat->pf_params_p->expMLbase, (double)i) * scale[i];
+	    }
+	    
+	    // ----------------------------------------
+	    // compute the Qm2 matrix
+	    compute_Qm2();
 	}
-	scale_p[0] = 1.;
-	scale_p[1] = 1./pf_scale;
-	expMLbase_p[0] = 1;
-	expMLbase_p[1] = pf_params_p->expMLbase/pf_scale;
-	for (size_t i=2; i<=sequence.length(); i++) {
-	  scale_p[i] = scale_p[i/2]*scale_p[i-(i/2)];
-	  expMLbase_p[i] = pow(pf_params_p->expMLbase, (double)i) * scale_p[i];
-	}
-	
-	time_t start_Qm2 = time (NULL);
-	compute_Qm2();
-	time_t stop_Qm2 = time (NULL);
-	//std::cout << "time for computing Qm2 : " << stop_Qm2 - start_Qm2 << "sec " << std::endl;
-    }
-
-    void
-    RnaData::init_McCaskill_pointers() {
-	S_p= NULL;
-	S1_p= NULL;
-	ptype_p= NULL;
-	qb_p= NULL;
-	qm_p= NULL;
-	q1k_p= NULL;
-	qln_p= NULL;
- 	bppm= NULL;
-	iindx= NULL;
-	qm2= NULL;
-	pf_params_p= NULL;
-	scale_p= NULL;
-	expMLbase_p= NULL;
     }
     
 #endif // HAVE_LIBRNA
 
+    void 
+    RnaData::initFromFile(const std::string &filename,
+			  bool readPairProbs,
+			  bool readStackingProbs,
+			  bool readInLoopProbs			       
+			  ) {
+	assert(!readStackingProbs || readPairProbs);
+	assert(!readInLoopProbs || readPairProbs);
 
-    RnaData::~RnaData() {
-#ifdef HAVE_LIBRNA
-	free_McCaskill_matrices();
-#endif
-    }
-
-#ifdef HAVE_LIBRNA	
-    void
-    RnaData::free_McCaskill_matrices() {
-	
-	if(S_p) free(S_p);
-	if(S1_p) free(S1_p);	 	
-	if(ptype_p) free(ptype_p);	 				
-	if(qb_p) free(qb_p);					
-	if(qm_p) free(qm_p);	 				
-	if(q1k_p) free(q1k_p);	 
-	if(qln_p) free(qln_p);	  
- 	if(bppm) free(bppm);   
-	if(iindx) free(iindx);
-  	if(qm2) free(qm2);
-	if(expMLbase_p) free(expMLbase_p); 
-        if(scale_p) free(scale_p); 
-	if(pf_params_p) free(pf_params_p);
-        
-	init_McCaskill_pointers();	
-    }
-
-#endif
-	
-    
-    // decide on file format and call either readPS or readPP
-    void RnaData::read(const std::string &filename, bool keepMcM) {
-  
 	std::ifstream in(filename.c_str());
 	if (! in.good()) {
 	    std::cerr << "Cannot read "<<filename<<std::endl;
 	    exit(-1);
 	}
-    
+
+	// set to true if probs become available
+	in_loop_probs_available=false;
+	pair_probs_available=false;
+	stacking_probs_available=false;
+
 	std::string s;
 	// read first line and decide about file-format
 	in >> s;
 	in.close();
 	if (s == "%!PS-Adobe-3.0") {
 	    // try reading as dot.ps file (as generated by RNAfold)
-	    readPS(filename);
-	    
-	    //} else if (s == "<ppml>") {
-	    // proprietary PPML file format
-	    //readPPML(filename);
-
-#ifdef HAVE_LIBRNA
-	} else if (s.substr(0,7) == "CLUSTAL") {
-	    // assume multiple alignment format clustalw: read and compute base pair probabilities
-	    readMultipleAlignment(filename, keepMcM, stacking, MultipleAlignment::CLUSTAL);
-	} else if (s[0]=='>') {
-	    // assume multiple alignment format clustalw: read and compute base pair probabilities
-	    readMultipleAlignment(filename, keepMcM, stacking, MultipleAlignment::FASTA);
-#endif   
+	    readPS(filename,readPairProbs,readStackingProbs);
+	} else if (s.substr(0,7) == "CLUSTAL" || s[0]=='>') {
+	    //read to multiple alignment object
+	    MultipleAlignment ma(filename,
+				 (s[0]=='>')
+				 ?MultipleAlignment::FASTA
+				 :MultipleAlignment::CLUSTAL);
+	    // convert to sequence
+	    sequence = Sequence(ma);
 	} else {
 	    // try reading as PP-file (proprietary format, which is easy to read and contains pair probs)
-	    readPP(filename);
+	    readPP(filename,readPairProbs,readStackingProbs,readInLoopProbs);
 	}
-
-    
+	
 	// DUMP for debugging
 	//std::cout << arc_probs_ << std::endl;
 	//std::cout << arc_2_probs_ << std::endl;
-
     }
 
-    void RnaData::readPS(const std::string &filename) {
+    void RnaData::readPS(const std::string &filename,
+			 bool readPairProbs,
+			 bool readStackingProbs
+			 ) {
+	assert(!readStackingProbs || readPairProbs);
+		
+	in_loop_probs_available=false;
+	pair_probs_available=readPairProbs;
+	
+	bool contains_stacking_probs=false;
+	
 	std::ifstream in(filename.c_str());
-    
-	bool contains_stacking_probs=false; // does the file contain probabilities for stacking
-    
+    	
 	std::string s;
 	while (in >> s && s!="/sequence") {
 	    if (s=="stacked") contains_stacking_probs=true;
 	}
-    
-	if (stacking && ! contains_stacking_probs) {
-	    std::cerr << "WARNING: Stacking requested, but no stacking probabilities in dot plot!" << std::endl;
-	}
 
-    
+	stacking_probs_available = readStackingProbs && contains_stacking_probs;
+	
 	in >> s; in >> s;
 
 	std::string seqstr="";
@@ -353,9 +314,9 @@ namespace LocARNA {
 	    // cout << s <<endl;
 	    seqstr+=s;
 	}
-    
+	
 	std::string seqname = seqname_from_filename(filename);
-    
+	
 	//! sequence characters should be upper case, and 
 	//! Ts translated to Us
 	normalize_rna_sequence(seqstr);
@@ -363,7 +324,10 @@ namespace LocARNA {
 	sequence.append_row(seqname,seqstr);
             
 	std::string line;
-    
+	
+	// return when reading of pair probs is not wanted
+	if (!readPairProbs) {return;}
+	
 	while (getline(in,line)) {
 	    if (line.length()>4) {
 		std::string type=line.substr(line.length()-4);
@@ -388,7 +352,7 @@ namespace LocARNA {
 			if (type=="ubox") {
 			    set_arc_prob(i,j,p);
 			}
-			else if (stacking && contains_stacking_probs && type=="lbox") { // read a stacking probability
+			else if (readStackingProbs && contains_stacking_probs && type=="lbox") { // read a stacking probability
 			    set_arc_2_prob(i,j,p); // we store the joint probability of (i,j) and (i+1,j-1)
 			}
 		    }
@@ -397,48 +361,109 @@ namespace LocARNA {
 	}
     }
 
-#ifdef HAVE_LIBRNA
-    //bool flag;
-    void RnaData::readMultipleAlignment(const std::string &filename, bool keepMcM, bool stacking, MultipleAlignment::format_t format) {
-	//read to multiple alignment object
-	MultipleAlignment ma(filename,format);
 
-	// convert to sequence
-	sequence = Sequence(ma);
+    void RnaData::readPP(const std::string &filename,
+			 bool readPairProbs,
+			 bool readStackingProbs,
+			 bool readInLoopProbs
+			 ) {
 	
-	if (sequence.row_number()!=1) {
-	    std::cerr << "ERROR: Cannot handle input from "<<filename<<"."<<std::endl
-		      <<"        Base pair computation from multiple sequence alignment is not implemented." << std::endl;
-	    exit(-1);
+	assert(!readStackingProbs || readPairProbs);
+	assert(!readInLoopProbs || readPairProbs);
+	
+	in_loop_probs_available=false; // this is not (yet) supported!
+	pair_probs_available=readPairProbs;
+	
+	std::ifstream in(filename.c_str());
+	
+	std::string name;
+	std::string seqstr;
+	
+    
+	// ----------------------------------------
+	// read sequence/alignment
+    
+	std::map<std::string,std::string> seq_map;
+    
+	std::string line;
+    
+	while (getline(in,line) && line!="#" ) {
+	    if (line.length()>0 && line[0]!=' ') {
+		std::istringstream in(line);
+		in >> name >> seqstr;
+	    
+		normalize_rna_sequence(seqstr);
+	    
+		if (name != "SCORE:") { // ignore the (usually first) line that begins with SCORE:
+		    if (name == "#C") {
+			seq_constraints_ += seqstr;
+		    } else {
+			seq_map[name] += seqstr;
+		    }
+		}
+	    }
 	}
+    
+	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
+	    // std::cout << "SEQ: " << it->first << " " << it->second << std::endl;
+	    sequence.append_row(it->first,it->second);
+	}
+    
+	// return when reading of pair probs is not wanted
+	if (!readPairProbs) {return;}
 	
-	
-	// run McCaskill and get access to results
-	// in McCaskill_matrices
-	compute_McCaskill_matrices();
-	
-	// initialize the object from base pair probabilities
-	// Use the same proability threshold as in RNAfold -p !
-	init_from_McCaskill_bppm();
-	
-	// since we have local copies of all McCaskill pf arrays,
-	// we can free the ones of the Vienna lib
-	free_pf_arrays();
+	// ----------------------------------------
+	// read base pairs
+    
+	int i,j;
+	double p;
 
-	if (!keepMcM) {
-	    free_McCaskill_matrices();
-	}
+	// std::cout << "LEN: " << len<<std::endl;
 	
+	while( getline(in,line) ) {
+	    std::istringstream in(line);
+      
+	    in>>i>>j>>p;
+      
+	    if ( in.fail() ) continue; // skip lines that do not specify a base pair probability
+      
+	    if (i>=j) {
+		std::cerr << "Error in PP input line \""<<line<<"\" (i>=j).\n"<<std::endl;
+		exit(-1);
+	    }
+      
+	    set_arc_prob(i,j,p);
+      
+	    if (readStackingProbs) {
+		double p2;
+	  
+		if (in >> p2) {
+		    set_arc_2_prob(i,j,p2); // p2 is joint prob of (i,j) and (i+1,j-1)
+		    stacking_probs_available = true;
+		}
+	    }
+	}
+    }
+    
+    void RnaData::clear_arc_probs() {
+	arc_probs_.clear();
+	arc_2_probs_.clear();
+	pair_probs_available=false;
+	stacking_probs_available=false;
     }
 
+
+#ifdef HAVE_LIBRNA
     void
-    RnaData::init_from_McCaskill_bppm(double threshold) {
+    RnaData::set_arc_probs_from_McCaskill_bppm(double threshold, bool stacking) {
+	clear_arc_probs();
+	
 	for( size_t i=1; i <= sequence.length(); i++ ) {
 	    for( size_t j=i+1; j <= sequence.length(); j++ ) {
 		
-		double p= get_bppm(i,j);
+		double p= McCmat->get_bppm(i,j);
 		
-		if (p >= threshold) { // apply very relaxed filter 
+		if (p >= threshold) { // apply filter
 		    set_arc_prob(i,j,p);
 		}
 	    }
@@ -456,65 +481,62 @@ namespace LocARNA {
 	  pl= NULL;
 	  p= NULL;
 	}
+	
+	pair_probs_available=true;
+	stacking_probs_available=stacking;
     }
 
     void
     RnaData::compute_Qm2(){
+	size_type len = sequence.length();
 
-      int len= sequence.length();
-      qm1= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL)*(len+2));
-      qm2= (FLT_OR_DBL *) space(sizeof(FLT_OR_DBL) * ((len+1)*(len+2)/2));
-      FLT_OR_DBL *qqm1= (FLT_OR_DBL*) space(sizeof(FLT_OR_DBL)*(len+2));
+	std::vector<FLT_OR_DBL> qm1(len+2,0);
+	std::vector<FLT_OR_DBL> qqm1(len+2,0);
+	
+	qm2.resize((len+1)*(len+2)/2);
+	
       
-      int index_i,index_j,index_k,type;
-      for (index_i=1; index_i<=len; index_i++)
-	qm1[index_i]=qqm1[index_i]=0;
-     
-      
-      
-      for(index_j= TURN+2; index_j<=len; index_j++){
-      /*
-       *the first inner loop calculates one row of Qm1 that will be needed in the calculation of Qm2  
-       */
-	for(index_i= index_j-TURN-1; index_i>=1; index_i--){
-	 type=get_ptype(index_i,index_j);
-	 qm1[index_i]= qqm1[index_i]*expMLbase_p[1];
-	 if(type){
- 	  qm1[index_i]+= (get_qb(index_i,index_j))* exp_E_MLstem(type, (index_i>1) ? 
-									S1_p[index_i-1] : -1, (index_j<len) ? S1_p[index_j+1] : -1,  pf_params_p);
-
-	  }
-	  //qqm1=qm1;
+	for(size_type index_j= TURN+2; index_j<=len; index_j++) {
+	    // --------------------
+	    // the first inner loop calculates one row of Qm1 that will be needed in the calculation of Qm2  
+	    for(size_type index_i=index_j-TURN-1; index_i>=1; index_i--) {
+		char type=McCmat->get_ptype(index_i,index_j);
+		qm1[index_i]= qqm1[index_i]*expMLbase[1];
+		if(type){
+		    qm1[index_i] +=
+			(McCmat->get_qb(index_i,index_j))
+			* exp_E_MLstem(type,
+				       (index_i>1) ? McCmat->S1_p[index_i-1] : -1, 
+				       (index_j<len) ? McCmat->S1_p[index_j+1] : -1,  
+				       McCmat->pf_params_p);
+		}
+	    }
+	    // --------------------
+	    // this part calculates the Qm2 matrix
+	    if(index_j >= (2*(TURN+2))) {
+		for(size_type index_i = index_j-2*TURN-3; index_i>=1; index_i--) {
+		    qm2[McCmat->idx(index_i,index_j)] = 0;
+		    for(size_type index_k = index_i+2; index_k< index_j-2; index_k++) {
+			qm2[McCmat->idx(index_i+1,index_j-1)] +=
+			    McCmat->get_qm(index_i+1,index_k)*qqm1[index_k+1];
+		    }
+		}
+	    }
+	    // --------------------
+	    // swap row qm1 and qqm1 (in constant time)
+	    qqm1.swap(qm1);
 	}
-	//this part calculates the Qm2 matrix
-	if(index_j >= (2*(TURN+2))){
-	  for(index_i= index_j-2*TURN-3; index_i>=1; index_i--){
-	    qm2[iindx[index_i]-index_j]= 0;
-	      for(index_k= index_i+2; index_k< index_j-2; index_k++){
-		qm2[iindx[index_i+1]-(index_j-1)]+= get_qm(index_i+1,index_k)*qqm1[index_k+1];
-	      
-	      }
-	  }
-	}
-	  for(index_i= index_j-TURN-1; index_i>=1; index_i--){
-	    qqm1[index_i]=qm1[index_i];
-	  }
-	}
-	free(qm1);
-	free(qqm1);
-	qm1= NULL;
-	qqm1= NULL;
     }
 
     
-    int 
+    char
     RnaData::ptype_of_admissible_basepair(size_type i,size_type j) const {
-    	int type = (int)(get_ptype(i,j));
+    	char type = McCmat->get_ptype(i,j);
 	
 	// immediately return 0.0 when i and j cannot pair
 	if ((type==0)
 	    || (((type==3)||(type==4))&&no_closingGU)
-	    || (get_qb(i,j)==0.0)
+	    || (McCmat->get_qb(i,j)==0.0)
 	    || (get_arc_prob(i,j)==0.0))
 	    {
 		return 0;
@@ -525,58 +547,58 @@ namespace LocARNA {
 
     double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j) const {
 	
-	const char *c_sequence=consensus_sequence.c_str();
+	const char *c_sequence=consensus_sequence.c_str(); //!< @todo: check! This looks wrong!
 	
 	FLT_OR_DBL H,I,M;
 	//calculating the Hairpin loop energy contribution
 	
-	int type = ptype_of_admissible_basepair(i,j);
+	char type = ptype_of_admissible_basepair(i,j);
 	
 	// immediately return 0.0 when i and j cannot pair
 	if (type==0) {return 0.0;}
 
-	H = exp_E_Hairpin((int)(j-i-1), type, S1_p[(int)(i+1)], S1_p[(int)(j-1)],
-			  c_sequence+i-1, pf_params_p) * scale_p[(int)(j-i+1)];
+	H = exp_E_Hairpin((int)(j-i-1), type, McCmat->S1_p[i+1], McCmat->S1_p[j-1],
+			  c_sequence+i-1, McCmat->pf_params_p) * scale[j-i+1];
 	
 	I = 0.0;
 	//calculating the Interior loop energy contribution
 
 	int u1;
 	// case 1: i<k<i´<j´<j
-	for (int ip=(int)(k+1); 
-	     ip<=(int)MIN2((int)(i+MAXLOOP+1),(int)(j-TURN-2));
+	for (int ip=k+1; 
+	     ip<=MIN2((int)(i+MAXLOOP+1),(int)(j-TURN-2));
 	     ip++) {
 	    u1 = (int)(ip-i-1);
-	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1)); 
+	    for (int jp = MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1)); 
 		 jp<(int)j;
 		 jp++) {
-		int type2 =(int)(get_ptype(ip,jp));
+		char type2 = McCmat->get_ptype(ip,jp); //!< @todo check! admissible type?
 		if (type2) {
 		    type2 = rtype[type2];
-		    I += get_qb(ip,jp) 
-			* (scale_p[(int)(u1+j-jp+1)] *
+		    I += McCmat->get_qb(ip,jp) 
+			* (scale[u1+j-jp+1] *
 			   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
-					 S1_p[(int)(i+1)],S1_p[(int)(j-1)],
-					 S1_p[ip-1],S1_p[jp+1], pf_params_p));
+					 McCmat->S1_p[i+1],McCmat->S1_p[j-1],
+					 McCmat->S1_p[ip-1],McCmat->S1_p[jp+1], McCmat->pf_params_p));
 		}
 	    }
 	}
 	//case 2: i<i´<j´<k<j
-	for (int ip=(int)(i+1);
-	     ip<=(int)MIN2((int)(i+MAXLOOP+1),(int)(k-TURN-2)); 
+	for (int ip=i+1;
+	     ip<=MIN2((int)(i+MAXLOOP+1),(int)(k-TURN-2)); 
 	     ip++) {
-	    u1 = (int)(ip-i-1);
-	    for (int jp=(int)MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1));
+	    u1 = ip-i-1;
+	    for (int jp=MAX2((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1));
 		 jp<(int)k;
 		 jp++) {
-		int type2 =(int)(get_ptype(ip,jp)) ;
+		char type2 = McCmat->get_ptype(ip,jp); //!< @todo check! admissible type?
 		if (type2) {
 		    type2 = rtype[type2];
-		    I += get_qb(ip,jp)
-			* (scale_p[(int)(u1+j-jp+1)] *
+		    I += McCmat->get_qb(ip,jp)
+			* (scale[(int)(u1+j-jp+1)] *
 			   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
-					 S1_p[(int)(i+1)],S1_p[(int)(j-1)],
-					 S1_p[ip-1],S1_p[jp+1], pf_params_p));
+					 McCmat->S1_p[i+1],McCmat->S1_p[j-1],
+					 McCmat->S1_p[ip-1],McCmat->S1_p[jp+1], McCmat->pf_params_p));
 		}
 	    }
 	}
@@ -584,22 +606,22 @@ namespace LocARNA {
 	//calculating Multiple loop energy contribution
 	M = 0.0;
 	
-	M += qm2[iindx[(int)(k+1)]-((int)(j-1))] * expMLbase_p[(int)(k-i)];
+	M += qm2[McCmat->idx(k+1,j-1)] * expMLbase[k-i];
 
-	M += qm2[iindx[(int)(i+1)]-((int)(k-1))] * expMLbase_p[(int)(j-k)];
+	M += qm2[McCmat->idx(i+1,k-1)] * expMLbase[j-k];
 	    
-	M += get_qm(i+1,k-1) * expMLbase_p[1] *  get_qm(k+1,j-1);
+	M += McCmat->get_qm(i+1,k-1) * expMLbase[1] *  McCmat->get_qm(k+1,j-1);
 	    
 	// multiply with contribution for closing of multiloop
-	M *= pf_params_p->expMLclosing 
-	    * exp_E_MLstem(rtype[type],S1_p[(int)(j-1)],S1_p[(int)(i+1)], pf_params_p)
-	    * scale_p[2]; 
+	M *= McCmat->pf_params_p->expMLclosing 
+	    * exp_E_MLstem(rtype[type],McCmat->S1_p[j-1],McCmat->S1_p[i+1], McCmat->pf_params_p)
+	    * scale[2];
 	
-	return ((H+I+M)/get_qb(i,j))*get_arc_prob(i,j);
+	return ((H+I+M)/McCmat->get_qb(i,j))*get_arc_prob(i,j);
     }
 
     double RnaData::prob_unpaired_external(size_type k) const {
-	return (q1k_p[k-1] * scale_p[1] * qln_p[k+1]) / qln_p[1];
+	return (McCmat->q1k_p[k-1] * scale[1] * McCmat->qln_p[k+1]) / McCmat->qln_p[1];
     }
 
     double
@@ -631,137 +653,59 @@ namespace LocARNA {
 	int u2 =(int)(j-jp-1);
 	
 	Ipp = exp_E_IntLoop(u1,u2, type, rtype[type2],
-			    S1_p[(int)(i+1)],S1_p[(int)(j-1)],
-			    S1_p[ip-1],S1_p[jp+1], pf_params_p)
-	    * scale_p[u1+u2+2];
+			    McCmat->S1_p[(int)(i+1)],
+			    McCmat->S1_p[(int)(j-1)],
+			    McCmat->S1_p[ip-1],
+			    McCmat->S1_p[jp+1],
+			    McCmat->pf_params_p)
+	    * scale[u1+u2+2];
 	
 	//calculating Multiple loop energy contribution
 	//
 	Mpp = 0.0;
 
 	// inner base pairs only right of (ip,jp)
-	Mpp += expMLbase_p[ip-i-1] * get_qm(jp+1,j-1);
+	Mpp += expMLbase[ip-i-1] * McCmat->get_qm(jp+1,j-1);
 	
 	// inner base pairs only left of (ip,jp)
-	Mpp += get_qm(i+1,ip-1) * expMLbase_p[j-jp-1];
+	Mpp += McCmat->get_qm(i+1,ip-1) * expMLbase[j-jp-1];
 	
 	// inner base pairs left and right of (ip,jp)
-	Mpp += get_qm(i+1,ip-1) * get_qm(jp+1,j-1);
+	Mpp += McCmat->get_qm(i+1,ip-1) * McCmat->get_qm(jp+1,j-1);
 	
 	// multiply with factor for inner base pair
-	Mpp *= exp_E_MLstem(type2, S1_p[ip-1], S1_p[jp+1], pf_params_p);
+	Mpp *= exp_E_MLstem(type2,
+			    McCmat->S1_p[ip-1],
+			    McCmat->S1_p[jp+1],
+			    McCmat->pf_params_p);
 	
 	// multiply with factors for closing base pair
-	Mpp *= pf_params_p->expMLclosing
-	    * exp_E_MLstem(rtype[type],S1_p[(int)(j-1)],S1_p[(int)(i+1)], pf_params_p)
-	    * scale_p[2];
+	Mpp *= McCmat->pf_params_p->expMLclosing
+	    * exp_E_MLstem(rtype[type],
+			   McCmat->S1_p[j-1],
+			   McCmat->S1_p[i+1],
+			   McCmat->pf_params_p)
+	    * scale[2];
 	
-	return (get_qb(ip,jp)*(Ipp+Mpp)/get_qb(i,j))*get_arc_prob(i,j);
+	return 
+	    (McCmat->get_qb(ip,jp)
+	     *(Ipp+Mpp)/McCmat->get_qb(i,j))
+	    *get_arc_prob(i,j);
     }
 
     double RnaData::prob_basepair_external(size_type i,size_type j) const {
 	// immediately return 0.0 when i and j cannot pair
 	if (ptype_of_admissible_basepair(i,j)==0) {return 0.0;}
 	
-	return (q1k_p[i-1] * get_qb(i,j) *  qln_p[j+1]) / qln_p[1];
+	return 
+	    (McCmat->q1k_p[i-1]
+	     * McCmat->get_qb(i,j)
+	     * McCmat->qln_p[j+1]
+	     )
+	    / McCmat->qln_p[1];
     }
 
 #endif // HAVE_LIBRNA
-
-    void RnaData::readPP(const std::string &filename) {
-	std::ifstream in(filename.c_str());
-    
-	std::string name;
-	std::string seqstr;
-    
-    
-	// ----------------------------------------
-	// read sequence/alignment
-    
-	std::map<std::string,std::string> seq_map;
-    
-	std::string line;
-    
-	while (getline(in,line) && line!="#" ) {
-	    if (line.length()>0 && line[0]!=' ') {
-		std::istringstream in(line);
-		in >> name >> seqstr;
-	    
-		normalize_rna_sequence(seqstr);
-	    
-		if (name != "SCORE:") { // ignore the (usually first) line that begins with SCORE:
-		    if (name == "#C") {
-			seq_constraints_ += seqstr;
-		    } else {
-			seq_map[name] += seqstr;
-		    }
-		}
-	    }
-	}
-    
-	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
-	    // std::cout << "SEQ: " << it->first << " " << it->second << std::endl;
-	    sequence.append_row(it->first,it->second);
-	}
-    
-	// ----------------------------------------
-	// read base pairs
-    
-	int i,j;
-	double p;
-
-	// std::cout << "LEN: " << len<<std::endl;
-    
-	while( getline(in,line) ) {
-	    std::istringstream in(line);
-      
-	    in>>i>>j>>p;
-      
-	    if ( in.fail() ) continue; // skip lines that do not specify a base pair probability
-      
-	    if (i>=j) {
-		std::cerr << "Error in PP input line \""<<line<<"\" (i>=j).\n"<<std::endl;
-		exit(-1);
-	    }
-      
-	    set_arc_prob(i,j,p);
-      
-	    if (stacking) {
-		double p2;
-	  
-		if (in >> p2) {
-		    set_arc_2_prob(i,j,p2); // p2 is joint prob of (i,j) and (i+1,j-1)
-		}
-	    }      
-	}
-    }
-
-	
-
-    /*
-      void RnaData::readPPML(const std::string &filename) {
-
-      std::ifstream in(filename.c_str());
-    
-      std::string tag;
-      while (in>>tag) {
-      if (tag == "<score>") {
-      readScore(in);
-      } else if  (tag == "<alignment>") {
-      readAlignment(in);
-      } else if(tag == "<bpp>") {
-      readBPP(in);
-      } else if(tag == "<constraints>") {
-      readConstraints(in);
-      }
-      }
-
-      std::string name;
-      std::string seqstr;
-    
-      }
-    */
-
     std::string RnaData::seqname_from_filename(const std::string &s) const {
 	size_type i;
 	size_type j;

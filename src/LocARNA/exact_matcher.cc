@@ -12,6 +12,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 namespace LocARNA {
 
     ExactMatcher::ExactMatcher(const Sequence &seqA_,

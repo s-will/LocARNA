@@ -111,6 +111,10 @@ bool opt_verbose; //!< opt_verbose
 bool opt_local_output; //!< opt_local_output
 bool opt_pos_output; //!< opt_pos_output
 
+bool opt_stacking=false; // not supported
+bool opt_no_lonely_pairs=false; // not supported
+
+
 std::string ribosum_file; //!< ribosum_file
 bool use_ribosum; //!< use_ribosum
 
@@ -246,8 +250,13 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    RnaData rnadataA(bpsfile1,false,false);
-    RnaData rnadataB(bpsfile2,false,false);
+    RnaData rnadataA(bpsfile1,true,opt_stacking,false);
+    RnaData rnadataB(bpsfile2,true,opt_stacking,false);
+
+    // optionally fold
+    PFoldParams pfparams(opt_no_lonely_pairs,opt_stacking);
+    if (!rnadataA.pairProbsAvailable()) {rnadataA.computeEnsembleProbs(pfparams,false);}
+    if (!rnadataB.pairProbsAvailable()) {rnadataB.computeEnsembleProbs(pfparams,false);}
 
     Sequence seqA=rnadataA.get_sequence();
     Sequence seqB=rnadataB.get_sequence();

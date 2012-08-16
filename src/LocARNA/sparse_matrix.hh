@@ -1,28 +1,11 @@
 #ifndef SPARSE_MATRIX_HH
 #define SPARSE_MATRIX_HH
 
-#include <ext/hash_map>
+#include <tr1/unordered_map>
 
-/* in order to save some space we use a hash_map for storing the entries of the sparse
+/* in order to save some space we use a hash for storing the entries of the sparse
    matrices that allow fast acces to the basepairs (i,j) in a structure.
 */
-
-namespace __gnu_cxx {
-    //! defines a new hash function for pairs of ints
-    template<>
-    struct hash<std::pair<size_t,size_t> >
-    {
-	/** 
-	 * Hash function
-	 * 
-	 * 
-	 * @return hash code for pair of size_t
-	 */
-	size_t
-	operator()(std::pair<size_t,size_t> p) const
-	{ return p.first<<(sizeof(size_t)/2) | p.second; }
-    };
-}
 
 namespace LocARNA {
     
@@ -47,7 +30,7 @@ namespace LocARNA {
 
     protected:
 	
-	typedef __gnu_cxx::hash_map<key_t,val_t > map_t; //!< map type  
+	typedef std::tr1::unordered_map<key_t,val_t > map_t; //!< map type  
 	map_t the_map; //!< internal representation of sparse matrix
 	val_t def; //!< default value of matrix entries
     
@@ -55,7 +38,7 @@ namespace LocARNA {
 
 	//! \brief Stl-compatible constant iterator over matrix elements.
 	//!
-	//! Behaves like a __gnu_cxx::hash_map const iterator.
+	//! Behaves like a const iterator of the hash map.
 	typedef typename map_t::const_iterator const_iterator;
 	
 	
@@ -71,7 +54,7 @@ namespace LocARNA {
 	    key_t k;
 	public:
 	    /** 
-	     * Construct as proxy for specified element in given sparse matrix
+	     * @brief Construct as proxy for specified element in given sparse matrix
 	     * 
 	     * @param m_ pointer to sparse matrix
 	     * @param k_ key/index of entry in given sparse matrix
@@ -80,7 +63,7 @@ namespace LocARNA {
 	    element(SparseMatrix<T> *m_,key_t k_): m(m_),k(k_) {}
 
 	    /** 
-	     * Access entry for which the class acts as proxy
+	     * @brief Access entry for which the class acts as proxy
 	     * 
 	     * @return value of matrix entry.
 	     *
@@ -95,7 +78,7 @@ namespace LocARNA {
 	    }
 	    
 	    /** 
-	     * Operator for in place addition 
+	     * @brief Operator for in place addition 
 	     * 
 	     * @param x value
 	     * 
@@ -117,7 +100,7 @@ namespace LocARNA {
 	    }
 	
 	    /** 
-	     * Assignment operator
+	     * @brief Assignment operator
 	     * 
 	     * @param x value
 	     *
@@ -140,7 +123,7 @@ namespace LocARNA {
     
     
 	/** 
-	 * Construct with default value
+	 * @brief Construct with default value
 	 * 
 	 * @param deflt default value of entries
 	 */
@@ -175,7 +158,7 @@ namespace LocARNA {
 	}
 	
 	/** 
-	 * Write access to matrix entry
+	 * @brief Write access to matrix entry
 	 * 
 	 * @param i index first dimension
 	 * @param j index second dimension
@@ -187,7 +170,15 @@ namespace LocARNA {
 	    the_map[std::pair<int,int>(i,j)]=val;
 	}
     
-    
+	/** 
+	 * @brief Clear the matrix
+	 */
+	void
+	clear() {
+	    the_map.clear();
+	}
+
+
 	/** 
 	 * \brief Begin const iterator over matrix entries
 	 * 
@@ -212,7 +203,7 @@ namespace LocARNA {
     };
 
     /** 
-     * Output operator
+     * @brief Output operator
      * 
      * @param out output stream
      * @param m sparse matrix to be writing to stream

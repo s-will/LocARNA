@@ -2,12 +2,12 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.7.2.1], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.7.2.5], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
 AC_SUBST([SO_VERSION], [1:0:1])
-AC_SUBST([API_VERSION], [1.0.1])
+AC_SUBST([API_VERSION], [1.1])
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -150,7 +150,7 @@ else
     AC_DEFINE([NDEBUG])
 fi
 
-CPPFLAGS="$CPPFLAGS -Wno-deprecated"
+## CPPFLAGS="$CPPFLAGS -Wno-deprecated"
 
 
 

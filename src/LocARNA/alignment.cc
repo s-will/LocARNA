@@ -33,7 +33,7 @@ namespace LocARNA {
 				  bool pos_out,
 				  bool clustal_format,
 				  bool write_structure) const {	
-	if (!pos_out) out<<std::endl;
+	if (!pos_out) std::cout<<std::endl;
 	
 	const char loc_blank='~';
 	
