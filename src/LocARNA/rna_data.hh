@@ -54,15 +54,57 @@ namespace LocARNA {
 	    return iindx[i]-j;
 	}
 
+	/** 
+	 * @brief Access matrix bppm
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
 	FLT_OR_DBL get_bppm(size_t i, size_t j) const { return bppm[idx(i,j)]; }
+
+	/** 
+	 * @brief Access matrix ptype
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
 	char get_ptype(size_t i, size_t j) const { return ptype_p[idx(i,j)]; }
+
+	/** 
+	 * @brief Access matrix qb
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
 	FLT_OR_DBL get_qb(size_t i, size_t j) const { return qb_p[idx(i,j)]; }
+
+	/** 
+	 * @brief Access matrix qm
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
 	FLT_OR_DBL get_qm(size_t i, size_t j) const { return qm_p[idx(i,j)]; }
 	
-	//! construct by call to VRNA lib functions and optionally make local copy
+	/** 
+	 * @brief construct by call to VRNA lib functions and optionally make local copy
+	 * 
+	 * @param length_ length of sequence 
+	 * @param local_copy_  if TRUE, copy the data structures; otherwise, only store pointers
+	 */
 	McC_matrices_t(size_t length_, bool local_copy_);
 	
-	//! destruct, optionally free local copy
+	/** 
+	 * @brief destruct, optionally free local copy
+	 */
 	~McC_matrices_t();
 
     private:
@@ -92,8 +134,8 @@ namespace LocARNA {
 	/** 
 	 * Construct with all parameters
 	 * 
-	 * @param noLP 
-	 * @param stacking 
+	 * @param noLP_
+	 * @param stacking_ 
 	 */
 	PFoldParams(bool noLP_,
 		    bool stacking_
@@ -178,10 +220,10 @@ namespace LocARNA {
 	////////////////////////////////////////////////////////////
 	
 	/** 
-	 * Pair type of an admissible basepair.
+	 * @brief Pair type of an admissible basepair.
 	 * 
-	 * @param i 
-	 * @param j 
+	 * @param i left end of base pair
+	 * @param j right end of base pair
 	 * 
 	 * @return pair type unless the base pair is not admissible,
 	 * i.e. it is not complementary or has probability 0.0. Then
@@ -218,9 +260,9 @@ namespace LocARNA {
 		bool readInLoopProbs);
 	
 	/** 
-	 * Construct from sequence, performing partition folding
+	 * @brief Construct from sequence, performing partition folding
 	 * 
-	 * @param sequence_ the RNA sequence as Sequence object
+	 * @param sequence the RNA sequence as Sequence object
 	 *
 	 * @note after construction, the object describes an RNA without
 	 * structure. pairProbsAvailable() will return false until
@@ -234,11 +276,21 @@ namespace LocARNA {
 	//! matrices are kept, they are freed.
 	~RnaData();
 
+	/** 
+	 * @brief Availability of pair probabilities
+	 * 
+	 * @return whether probabilities are available
+	 */
 	bool
 	pairProbsAvailable() const {
 	    return pair_probs_available;
 	}
-
+	
+	/** 
+	 * @brief Availability of "in loop" probabilities
+	 * 
+	 * @return whether probabilities are available
+	 */
 	bool
 	inLoopProbsAvailable() const {
 	    return in_loop_probs_available;
@@ -261,13 +313,13 @@ namespace LocARNA {
 	void
 	computeEnsembleProbs(const PFoldParams &params,bool inLoopProbs);
 	
-	//! get the sequence
+	//! @brief Get the sequence
 	//! @return sequence of RNA
 	const Sequence &get_sequence() const {
 	    return sequence;
 	}
 	
-	//! get the sequence constraints
+	//! @brief Get sequence constraints
 	//! @return string description of sequence constraints of RNA
 	const std::string &get_seq_constraints() const {
 	    return seq_constraints_;

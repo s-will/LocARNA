@@ -447,7 +447,8 @@ namespace LocARNA {
 	/** 
 	 * @brief Score of arc match, given two arcs.
 	 * 
-	 * @param am arc match
+	 * @param arcA base pair in A
+	 * @param arcB base pair in B
 	 * @param stacked is stacked? (optional parameter)
 	 * 
 	 * @return Score of arc match am (potentially stacked)
@@ -463,8 +464,17 @@ namespace LocARNA {
 	score_t arcmatch(const Arc &arcA, const Arc &arcB, bool stacked=false) const;
 
 
-	// Very basic interface, score of aligning a basepair to gap
-	score_t  arcDel(const Arc &arcA, bool gapAorB, bool stacked=false) const;
+	/** 
+	 * @brief Very basic interface, score of aligning a basepair to gap 
+	 * 
+	 * @param arc the base pair
+	 * @param gapAorB whether deleting element in A or B (true for A)
+	 * @param stacked whether the base pair is stacked
+	 * 
+	 * @return 
+	 */
+	score_t  
+	arcDel(const Arc &arc, bool gapAorB, bool stacked=false) const;
 
 	/** 
 	 * @brief Boltzmann weight of score of arc match

@@ -92,7 +92,7 @@ namespace LocARNA {
        BasePairs for the iteration of base pairs in the single structures.
 
        ArcMatches knows about all arc matches that shall be considered for the alignment.
-       Each arc match gets an index between 0..(#arc_matches-1).
+       Each arc match gets an index between 0..(number of arc_matches-1).
        The index is used to access the arc match score, the single arcs of the match,
        the matrix D, ...
    
@@ -107,11 +107,12 @@ namespace LocARNA {
 	typedef std::vector<int>::size_type size_type; //!< type of a size
     
     protected:
-	size_type lenA;
-	size_type lenB;
+	
+	size_type lenA; //!< length of sequence A
+	size_type lenB; //!< length of sequence B
         
-	BasePairs *bpsA;
-	BasePairs *bpsB;
+	BasePairs *bpsA; //!< base pairs of RNA A
+	BasePairs *bpsB; //!< base pairs of RNA B
     
 	/* Constraints and Heuristics */
     
@@ -162,13 +163,30 @@ namespace LocARNA {
 	void
 	init_inner_arc_matchs();
     
-	//! compare two arc match indices by lexicographically comparing their left ends
+	//! Compare two arc match indices by lexicographically comparing their left ends
 	class lex_greater_left_ends {
 	    const ArcMatches &arc_matches;
 	public:
+	    
+	    /** 
+	     * Construct with access to arc matches
+	     * 
+	     * @param arc_matches_ 
+	     */
 	    lex_greater_left_ends(const ArcMatches &arc_matches_)
 		: arc_matches(arc_matches_)
 	    {}
+	    
+	    /** 
+	     * @brief Compare to arc matches
+	     *
+	     * Compares two arc matches by their left ends lexicographically 
+	     *
+	     * @param i index of first arc match
+	     * @param j index of second arc match
+	     *
+	     * @return whether the first arc match is larger than the second
+	     */
 	    bool
 	    operator () (const ArcMatch::idx_type &i, const ArcMatch::idx_type &j) const {
 		size_type ali = arc_matches.arcmatch(i).arcA().left();
