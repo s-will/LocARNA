@@ -378,6 +378,20 @@ namespace LocARNA {
 	type_wrapper operator -(const type_wrapper &x) const {return type_wrapper(val_ - x.val_);}
 	
 	/** 
+	 * @brief add
+	 * @param x 
+	 * @return *this + x
+	 */
+	type_wrapper operator +(const T &x) const {return type_wrapper(val_ + x);}
+	
+	/** 
+	 * @brief subtract
+	 * @param x 
+	 * @return *this - x
+	 */
+	type_wrapper operator -(const T &x) const {return type_wrapper(val_ - x);}
+	
+	/** 
 	 * @brief prefix increment
 	 * @return *this after increment
 	 */

@@ -18,39 +18,57 @@ extern "C" {
 #include "multiple_alignment.hh"
 
 //! @todo implement computation of alifold structure ensemble
+//! @todo ADD PSCORE --- alifold covariance/conservation score
 //! @todo support constraint pf folding
 namespace LocARNA {
 
-#   ifdef HAVE_LIBRNA	
-    //! @brief  structure for McCaskill matrices pointers
-    //!
-    //! Contains pointers to matrices made accessible through
-    //! get_pf_arrays() and get_bppm() of Vienna librna
-    class McC_matrices_t {
-    private:
+#   ifdef HAVE_LIBRNA
+
+    class McC_matrices_base {
+    protected:
 	bool local_copy; //!< whether pointers point to local copies of data structures
-    public:
+
 	size_t length;     //!< sequence length
-	short *S_p;        //!< 'S' array (integer representation of nucleotides)	
-	short *S1_p;	   //!< 'S1' array (2nd integer representation of nucleotides)	
-	char *ptype_p;	   //!< pair type matrix					
-	FLT_OR_DBL *qb_p;  //!< Q<sup>B</sup> matrix					
-	FLT_OR_DBL *qm_p;  //!< Q<sup>M</sup> matrix					
-	FLT_OR_DBL *q1k_p; //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
-	FLT_OR_DBL *qln_p; //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
+
+	FLT_OR_DBL *qb;  //!< Q<sup>B</sup> matrix					
+	FLT_OR_DBL *qm;  //!< Q<sup>M</sup> matrix					
 	
 	FLT_OR_DBL *bppm;  //!< base pair probability matrix
 	
 	int* iindx;        //!< iindx from librna's get_iindx()
 	
-	pf_paramT *pf_params_p; //!< parameters for pf folding
+	/** 
+	 * @brief construct empty
+	 */
+	McC_matrices_base();
+
+	/** 
+	 * @brief initialize
+	 * 
+	 * @param length length of sequence 
+	 */
+	void
+	init(size_t length_);
+
+    public:
+	FLT_OR_DBL *q1k; //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
+	FLT_OR_DBL *qln; //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
+	
+	pf_paramT *pf_params; //!< parameters for pf folding
+	
+		
+	/** 
+	 * @brief destruct, optionally free local copy
+	 */
+	~McC_matrices_base();
+
 	
 	//! \brief index in triagonal matrix
-	size_t idx(size_t i,size_t j) const {
-	    assert(0<=i);
+	size_t iidx(size_t i,size_t j) const {
+	    assert(1<=i);
 	    assert(i<=j);
 	    assert(j<=length);
-	    	    
+
 	    return iindx[i]-j;
 	}
 
@@ -62,17 +80,7 @@ namespace LocARNA {
 	 * 
 	 * @return matrix entry 
 	 */
-	FLT_OR_DBL get_bppm(size_t i, size_t j) const { return bppm[idx(i,j)]; }
-
-	/** 
-	 * @brief Access matrix ptype
-	 * 
-	 * @param i first index
-	 * @param j second index
-	 * 
-	 * @return matrix entry 
-	 */
-	char get_ptype(size_t i, size_t j) const { return ptype_p[idx(i,j)]; }
+	FLT_OR_DBL get_bppm(size_t i, size_t j) const { return bppm[iidx(i,j)]; }
 
 	/** 
 	 * @brief Access matrix qb
@@ -82,7 +90,7 @@ namespace LocARNA {
 	 * 
 	 * @return matrix entry 
 	 */
-	FLT_OR_DBL get_qb(size_t i, size_t j) const { return qb_p[idx(i,j)]; }
+	FLT_OR_DBL get_qb(size_t i, size_t j) const { return qb[iidx(i,j)]; }
 
 	/** 
 	 * @brief Access matrix qm
@@ -92,22 +100,55 @@ namespace LocARNA {
 	 * 
 	 * @return matrix entry 
 	 */
-	FLT_OR_DBL get_qm(size_t i, size_t j) const { return qm_p[idx(i,j)]; }
+	FLT_OR_DBL get_qm(size_t i, size_t j) const { return qm[iidx(i,j)]; }
+	    
+    protected:
+
+	void free_all();
+
+	//! \brief deep copy all data structures 
+	void
+	deep_copy(const McC_matrices_base &McCmat);
+    };
+    
+    //! @brief  structure for McCaskill matrices pointers
+    //!
+    //! Contains pointers to matrices made accessible through
+    //! get_pf_arrays() and get_bppm() of Vienna librna
+    class McC_matrices_t : public McC_matrices_base {
+	char *ptype;	   //!< pair type matrix					
+
+    public:
+
+	char *sequence;  //!< 0-terminated sequence string
+	short *S;        //!< 'S' array (integer representation of nucleotides)	
+	short *S1;	   //!< 'S1' array (2nd integer representation of nucleotides)	
 	
 	/** 
 	 * @brief construct by call to VRNA lib functions and optionally make local copy
 	 * 
-	 * @param length_ length of sequence 
-	 * @param local_copy_  if TRUE, copy the data structures; otherwise, only store pointers
+	 * @param sequence the sequence as 0-terminated C-string 
+	 * @param local_copy  if TRUE, copy the data structures; otherwise, only store pointers
 	 */
-	McC_matrices_t(size_t length_, bool local_copy_);
+	McC_matrices_t(char *sequence, bool local_copy);
 	
 	/** 
 	 * @brief destruct, optionally free local copy
 	 */
 	~McC_matrices_t();
 
-    private:
+
+	/** 
+	 * @brief Access matrix ptype
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
+	char get_ptype(size_t i, size_t j) const { return ptype[iidx(i,j)]; }
+
+    protected:
 
 	void free_all();
 
@@ -115,6 +156,46 @@ namespace LocARNA {
 	void
 	deep_copy(const McC_matrices_t &McCmat);
     };
+
+     //! @brief  structure for Alifold-McCaskill matrices pointers
+    //!
+    //! Contains pointers to matrices made accessible through
+    //! get_alipf_arrays() and get_alibppm() of Vienna librna
+    class McC_ali_matrices_t : public McC_matrices_base {
+    protected:
+	size_t n_seq;     //!< sequence length
+	
+    public:
+
+	short **S;       //!< 'S' array (integer representation of nucleotides)	
+	short **S5;	   //!< 'S5' array
+	short **S3;	   //!< 'S3' array
+	unsigned short  **a2s;  //!< 'a2s' array
+	char **Ss;	   //!< 'Ss' array
+	
+	/** 
+	 * @brief construct by call to VRNA lib functions and optionally make local copy
+	 * 
+	 * @param length_ length of sequence 
+	 * @param local_copy_  if TRUE, copy the data structures; otherwise, only store pointers
+	 */
+	McC_ali_matrices_t(size_t n_seq, size_t length, bool local_copy);
+	
+	/** 
+	 * @brief destruct, optionally free local copy
+	 */
+	~McC_ali_matrices_t();
+
+    protected:
+
+	void free_all();
+
+	//! \brief deep copy all data structures 
+	void
+	deep_copy(const McC_ali_matrices_t &McCmat);
+    };
+    
+
 #    endif	
 
 
@@ -193,9 +274,6 @@ namespace LocARNA {
 	//! whether "in loop" probabilities are availabe
 	bool in_loop_probs_available; 
 	
-	//! consensus sequence as C++ string
-	std::string consensus_sequence;
-
 	//! array for all arc probabilities the array is used when reading
 	//! in the probabilities and for merging probs during pp-output
 	arc_prob_matrix_t arc_probs_; 
@@ -213,10 +291,15 @@ namespace LocARNA {
 	std::vector<FLT_OR_DBL> scale;
 	std::vector<FLT_OR_DBL> expMLbase;
 	
-	McC_matrices_t *McCmat; //!< DP matrix data structures of VRNA's McCaskill algorithm
+	McC_matrices_base *McCmat; //!< DP matrix data structures of VRNA's McCaskill algorithm
 #else
-	void *McCmat_p;
+	void *McCmat;
 #endif
+	
+	//! whether alifold was used to compute the McCaskill matrices
+	bool used_alifold;
+
+
 	////////////////////////////////////////////////////////////
 	
 	/** 
@@ -301,17 +384,18 @@ namespace LocARNA {
 	 * 
 	 * @param params pfolding parameters
 	 * @param inLoopProbs whether in loop probabilities should be made available
-	 * 
+	 * @param use_alifold whether alifold should be used
+	 *
 	 * @todo Support construction from general Sequence objects
 	 * (i.e. multiple rows). 
 	 * This could be done by calling alipf_fold() (in place of
 	 * pf_fold()) in general. See also pre-condition
 	 * compute_McCaskill_matrices()
 	 *
-	 @note fails with multi-sequence 
+	 @pre unless use_alifold, sequence row number has to be 1
 	 */
 	void
-	computeEnsembleProbs(const PFoldParams &params,bool inLoopProbs);
+	computeEnsembleProbs(const PFoldParams &params,bool inLoopProbs, bool use_alifold=false);
 	
 	//! @brief Get the sequence
 	//! @return sequence of RNA
@@ -534,6 +618,26 @@ namespace LocARNA {
 #   ifdef HAVE_LIBRNA
 	// the following methods need linking to librna
 
+    protected:
+	/** 
+	 * \brief Unpaired probabilty of base in a specified loop (alifold) 
+	 *
+	 * alifold-specific version of prob_unpaired_in_loop()
+	 *
+	 * @param k unpaired sequence position
+	 * @param i left end of loop enclosing base pair
+	 * @param j right end of loop enclosing base pair
+	 * 
+	 * @return probability that k is unpaired in the loop closed by i and j
+	 *
+	 * @see prob_unpaired_in_loop()
+	 *
+	 */
+	double
+	prob_unpaired_in_loop_ali(size_type k,
+				  size_type i,
+				  size_type j) const;
+    public:
 
 	/** 
 	 * \brief Unpaired probabilty of base in a specified loop 
@@ -582,6 +686,28 @@ namespace LocARNA {
 	prob_unpaired_external(size_type k) const;
 	
 
+    protected:
+	/** 
+	 * \brief Probabilty of base pair in a specified loop (alifold)
+	 *
+	 *`alifold-specific code
+	 * 
+	 * @param ip left end of inner base pair
+	 * @param jp right end of inner base pair
+	 * @param i left end of loop enclosing base pair
+	 * @param j right end of loop enclosing base pair
+	 * 
+	 * @return probability that (ip,jp) is inner base pair in the loop closed by i and j
+	 *
+	 * @see prob_basepair_in_loop()
+	 */
+	double
+	prob_basepair_in_loop_ali(size_type ip,
+				  size_type jp,
+				  size_type i,
+				  size_type j) const;
+
+    public:
 	/** 
 	 * \brief Probabilty of base pair in a specified loop 
 	 * 
@@ -611,6 +737,7 @@ namespace LocARNA {
 			      size_type i,
 			      size_type j) const;
 
+
 	/** 
 	 * \brief Probabilty of base pair in the external 'loop'
 	 * 
@@ -636,8 +763,7 @@ namespace LocARNA {
 	/** 
 	 * \brief Computes the McCaskill matrices and keeps them accessible
 	 * 
-	 * Allocates and fills the McCaskill matrices. Use
-	 * free_McCaskill_matrices() for freeing the space again.
+	 * Allocates and fills the McCaskill matrices.
 	 *
 	 * @pre sequence_ has exactly one row
 	 *
@@ -645,26 +771,31 @@ namespace LocARNA {
 	 * @param inLoopProbs whether to compute and keep information for in loop probablities
 	 * 
 	 * @note Access to these matrices is required by
-	 * prob_unpaired_in_loop(). The McCaskill algorithm is also
-	 * performed when the RnaData object is constructed from a
-	 * sequence.
+	 * prob_unpaired_in_loop() (with inLoopProbs==true). The
+	 * McCaskill algorithm is also performed when the RnaData
+	 * object is constructed from a sequence.
 	 *
 	 * @note requires linking to librna
-	 * @see prob_unpaired_in_loop(), RnaData(const Sequence &sequence_, bool inLoopProbs), free_McCaskill_matrices()
 	 */
 	void
 	compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs);
 	
+	
+	
 	/** 
-	 * \brief Free the McCaskill partition function matrices
+	 * \brief Computes the McCaskill matrices and keeps them accessible (alifold)
+	 * 
+	 * Allocates and fills the McCaskill alifold matrices. Use
+	 * free_McCaskill_ali_matrices() for freeing the space again.
 	 *
-	 * These matrices are allocated and filled by calling
-	 * compute_McCaskill_matrices()
-	 *
+	 * @param params parameters for partition folding
+	 * @param inLoopProbs whether to compute and keep information for in loop probablities
+	 * 
+	 * @note requires linking to librna
 	 */
 	void
-	free_McCaskill_matrices();
-
+	compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs);
+	
 
 	/** 
 	 * \brief Computes the Qm2 matrix
@@ -672,12 +803,22 @@ namespace LocARNA {
 	 * The method creates and fills the Qm2 matrix needed for
 	 * prob_unpaired_in_loop().
 	 * 
-	 * @pre McCaskill matrices should be computed and accessible.
-	 * 
-	 * @note compute_McCaskill_matrices() calls this method at the end 
+	 * @pre McCaskill matrices are computed and accessible.
 	 */
 	void
 	compute_Qm2();
+
+	/** 
+	 * \brief Computes the Qm2 matrix (alifold)
+	 *
+	 * The method creates and fills the Qm2 matrix needed for
+	 * prob_unpaired_in_loop() if alifold is used.
+	 * 
+	 * @pre McCaskill alifold matrices are computed and accessible.
+	 */
+	void
+	compute_Qm2_ali();
+
 
 	/** 
 	 * \brief Initialize pointers to McCaskill matrices with 0.
