@@ -17,8 +17,8 @@ extern "C" {
 
 #include "multiple_alignment.hh"
 
-//! @todo implement computation of alifold structure ensemble
-//! @todo ADD PSCORE --- alifold covariance/conservation score
+//! @todo return in loop probs of 1 if information for calculating in loop probs is unavailable
+//! @todo support pre-computed in loop probs from tables
 //! @todo support constraint pf folding
 namespace LocARNA {
 
@@ -172,7 +172,9 @@ namespace LocARNA {
 	short **S3;	   //!< 'S3' array
 	unsigned short  **a2s;  //!< 'a2s' array
 	char **Ss;	   //!< 'Ss' array
-	
+    protected:
+	short *pscore; //!< alifold covariance/conservation scores
+    public:
 	/** 
 	 * @brief construct by call to VRNA lib functions and optionally make local copy
 	 * 
@@ -185,6 +187,18 @@ namespace LocARNA {
 	 * @brief destruct, optionally free local copy
 	 */
 	~McC_ali_matrices_t();
+
+
+	/** 
+	 * @brief Access matrix pscore
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
+	short get_pscore(size_t i, size_t j) const { return pscore[iidx(i,j)]; }
+
 
     protected:
 

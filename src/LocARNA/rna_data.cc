@@ -170,7 +170,9 @@ namespace LocARNA {
 			     &qb,
 			     &qm,
 			     &q1k,
-			     &qln);
+			     &qln,
+			     &pscore);
+
 	    // get pointer to McCaskill base pair probabilities
 	    bppm = alipf_export_bppm();	    
 	    
@@ -199,6 +201,8 @@ namespace LocARNA {
 	    Ss[i]  = (char *)           space_memcpy(McCmat.Ss[i], (length+2) * sizeof(char));
 	}
 
+	pscore = (short*) space_memcpy(McCmat.pscore,
+					    ((length+1)*(length+2))/2 * sizeof(short));
     }
 
     McC_ali_matrices_t::~McC_ali_matrices_t() {
@@ -210,6 +214,7 @@ namespace LocARNA {
 
     void McC_ali_matrices_t::free_all() {
 	free_sequence_arrays(n_seq,&S,&S5,&S3,&a2s,&Ss);
+	if (pscore) free(pscore);
     }
 
 #   endif
@@ -781,7 +786,7 @@ namespace LocARNA {
 		
 		qm1[i]= qqm1[i]*expMLbase[1];
 		
-		FLT_OR_DBL qbt1=1;
+		FLT_OR_DBL qbt1=1.0; // collects contribution "inner basepair of multiloop"
 		for (size_t s=0; s<n_seq; s++) {
 		    qbt1 *= exp_E_MLstem(type[s], 
 					 i>1 ? McCmat->S5[s][i] : -1,
@@ -793,10 +798,11 @@ namespace LocARNA {
 	    }
 	    
 	    // --------------------
-	    // calculate the matrix Qm2
+	    // calculate a row of the matrix Qm2
+	    //
 	    if(j >= (2*(TURN+2))) {
 		for(size_type i = j-2*TURN-3; i>=1; i--) {
-		    qm2[McCmat->iidx(i,j)] = 0;
+		    qm2[McCmat->iidx(i+1,j-1)] = 0;
 		    for(size_type k = i+2; k< j-2; k++) {
 			qm2[McCmat->iidx(i+1,j-1)] +=
 			    McCmat->get_qm(i+1,k)*qqm1[k+1];
@@ -954,7 +960,15 @@ namespace LocARNA {
 	}
 	M *= scale[2];
 	
-	return ((H+I+M)/McCmat->get_qb(i,j)) * get_arc_prob(i,j);
+	FLT_OR_DBL Qtotal=H+I+M;
+
+	double kTn   = McCmat->pf_params->kT/10.;   /* kT in cal/mol  */
+
+	// multiply with pscore contribution for closing base pair (i,j),
+	// like in the calculation of Qb(i,j)
+	Qtotal *= exp(McCmat->get_pscore(i,j)/kTn);
+	
+	return (Qtotal/McCmat->get_qb(i,j)) * get_arc_prob(i,j);
     }
     
     double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j) const {
@@ -1128,9 +1142,17 @@ namespace LocARNA {
 	
 	M *= scale[2]; // scale for closing base pair
 	
+	// ------------------------------------------------------------
+	FLT_OR_DBL Qtotal= (I+M) * McCmat->get_qb(ip,jp);
+
+	double kTn   = McCmat->pf_params->kT/10.;   /* kT in cal/mol  */
+
+	// multiply with pscore contribution for closing base pair (i,j),
+	// like in the calculation of Qb(i,j)
+	Qtotal *= exp(McCmat->get_pscore(i,j)/kTn);
+
 	return 
-	    (McCmat->get_qb(ip,jp)
-	     *(I+M)/McCmat->get_qb(i,j))
+	    (Qtotal/McCmat->get_qb(i,j))
 	    *get_arc_prob(i,j);
     }
 

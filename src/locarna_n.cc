@@ -786,8 +786,8 @@ main(int argc, char **argv) {
 	aligner.trace();
 	
 	// for debugging:
-	if (clp.opt_verbose)
-		aligner.get_alignment().write_debug(std::cout);
+	//if (clp.opt_verbose)
+	//    aligner.get_alignment().write_debug(std::cout);
     }
     
     if (clp.opt_normalized || DO_TRACE) { // if we did a trace (one way or
