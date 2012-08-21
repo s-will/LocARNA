@@ -696,7 +696,7 @@ namespace LocARNA {
 	    // iterate over sequences and count character
 	    for (std::vector<SeqEntry>::const_iterator it=alig.begin(); alig.end()!=it; ++it) {
 		char c=it->seq()[i];
-		if (tab.end()==tab.find(c)) tab[c]==0;
+		if (tab.end()==tab.find(c)) tab[c]=0;
 		tab[c]++;
 	    }
 	    

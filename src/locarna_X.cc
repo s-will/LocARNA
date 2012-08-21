@@ -439,9 +439,7 @@ main(int argc, char **argv) {
 	 //output chained EPMs to PS files
 	 if(opt_postscript_output){
 	//	 time_t start_ps = time (NULL);
-	     assert(seqA.rows()==0);
-	     assert(seqB.rows()==0);
-
+	    
 		 if (opt_verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
 		 if (psFile1.size()==0){psFile1 = seqA.names()[0]+"_EPMs.ps";}
 		 if (psFile2.size()==0){psFile2 = seqB.names()[0]+"_EPMs.ps";}

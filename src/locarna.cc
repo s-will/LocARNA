@@ -491,8 +491,8 @@ main(int argc, char **argv) {
 
     // optionally fold
     PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
-    if (!rnadataA.pairProbsAvailable()) {rnadataA.computeEnsembleProbs(pfparams,false,true);}
-    if (!rnadataB.pairProbsAvailable()) {rnadataB.computeEnsembleProbs(pfparams,false,true);}
+    if (!rnadataA.pairProbsAvailable()) {rnadataA.computeEnsembleProbs(pfparams,false);}
+    if (!rnadataB.pairProbsAvailable()) {rnadataB.computeEnsembleProbs(pfparams,false);}
 
 
     Sequence seqA=rnadataA.get_sequence();

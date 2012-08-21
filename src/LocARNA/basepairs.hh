@@ -210,7 +210,7 @@ namespace LocARNA {
 	    sortAdjLists();
 	}
   
-	//! registers a basepair (i,j) with prob and stack_prob
+	//! registers a basepair (i,j),
 	//! maintains the basepair access data structures
 	void register_arc(int i, int j);
 

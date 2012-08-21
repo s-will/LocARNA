@@ -418,7 +418,10 @@ namespace LocARNA {
     };
     
     template <class T>
-    std::ostream & operator << (std::ostream &out,const type_wrapper<T> &x) {out<<x.val();}
+    std::ostream & operator << (std::ostream &out,const type_wrapper<T> &x) {
+	out<<x.val();
+	return out;
+    }
 
     
     //! type-safe index type

@@ -26,10 +26,9 @@ namespace LocARNA {
 
     class McC_matrices_base {
     protected:
-	bool local_copy; //!< whether pointers point to local copies of data structures
-
 	size_t length;     //!< sequence length
-
+	bool local_copy; //!< whether pointers point to local copies of data structures
+	
 	FLT_OR_DBL *qb;  //!< Q<sup>B</sup> matrix					
 	FLT_OR_DBL *qm;  //!< Q<sup>M</sup> matrix					
 	
@@ -326,8 +325,24 @@ namespace LocARNA {
 	 * i.e. it is not complementary or has probability 0.0. Then
 	 * return 0.
 	 */
-	char ptype_of_admissible_basepair(size_type i,size_type j) const;
+	int ptype_of_admissible_basepair(size_type i,size_type j) const;
     
+	
+	/** 
+	 * Test for sufficient fragment length
+	 * 
+	 * @param i left end of fragment
+	 * @param j right end of fragment
+	 * @param minlen minimum length of fragment
+	 *
+	 * @return whether fragment has at least length minlen
+	 */
+	bool
+	frag_len_geq(size_t i, size_t j, size_t minlen) const {
+	    return i+minlen <= j+1;	
+	}
+	
+
     public:
 	/** 
 	 * @brief Construct from file (either pp or dp_ps or clustalw or fasta)
@@ -409,7 +424,7 @@ namespace LocARNA {
 	 @pre unless use_alifold, sequence row number has to be 1
 	 */
 	void
-	computeEnsembleProbs(const PFoldParams &params,bool inLoopProbs, bool use_alifold=false);
+	computeEnsembleProbs(const PFoldParams &params,bool inLoopProbs, bool use_alifold=true);
 	
 	//! @brief Get the sequence
 	//! @return sequence of RNA
