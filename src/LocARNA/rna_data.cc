@@ -311,7 +311,7 @@ namespace LocARNA {
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
 	pf_scale = exp(-en/kT/length);
-	
+
 	// ----------------------------------------
 	// call pf_fold
 	pf_fold(c_sequence,c_structure);
@@ -344,10 +344,11 @@ namespace LocARNA {
 		pf_scale = exp(-(-185+(McCmat->pf_params->temperature-37.)*7.27)/kT);
 		if (pf_scale<1) pf_scale=1;
 	    }
+	    
 	    scale[0] = 1.;
 	    scale[1] = 1./pf_scale;
 	    expMLbase[0] = 1;
-	    expMLbase[1] = McCmat->pf_params->expMLbase/pf_scale;
+	    expMLbase[1] = McCmat->pf_params->expMLbase * scale[1];
 	    for (size_t i=2; i<=sequence.length(); i++) {
 		scale[i] = scale[i/2]*scale[i-(i/2)];
 		expMLbase[i] = pow(McCmat->pf_params->expMLbase, (double)i) * scale[i];
@@ -395,6 +396,7 @@ namespace LocARNA {
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
 	pf_scale = exp(-en/kT/length);
+	
 	
 	// ----------------------------------------
 	// call pf_fold
@@ -720,13 +722,13 @@ namespace LocARNA {
 
 	for(size_type j= TURN+2; j<=len; j++) {
 	    // --------------------
-	    // the first inner loop calculates one row of Qm1 that will be needed in the calculation of Qm2  
+	    // one row of Qm1, which will be needed in the calculation of Qm2  
 	    for(size_type i=j-TURN-1; i>=1; i--) {
 		char type=McCmat->get_ptype(i,j);
 		qm1[i]= qqm1[i]*expMLbase[1];
 		if(type){
 		    qm1[i] +=
-			(McCmat->get_qb(i,j))
+			McCmat->get_qb(i,j)
 			* exp_E_MLstem(type,
 				       (i>1) ? McCmat->S1[i-1] : -1, 
 				       (j<len) ? McCmat->S1[j+1] : -1,  
@@ -734,7 +736,7 @@ namespace LocARNA {
 		}
 	    }
 	    // --------------------
-	    // this part calculates the Qm2 matrix
+	    // calculates one row of the Qm2 matrix
 	    if(j >= (2*(TURN+2))) {
 		for(size_type i = j-2*TURN-3; i>=1; i--) {
 		    qm2[McCmat->iidx(i+1,j-1)] = 0;
@@ -1002,29 +1004,27 @@ namespace LocARNA {
 
 	const char *c_sequence = McCmat->sequence;
 	
-	FLT_OR_DBL H,I,M;
-	//calculating the Hairpin loop energy contribution
 	
 	int type = ptype_of_admissible_basepair(i,j);
 	
 	// immediately return 0.0 when i and j cannot pair
 	if (type==0) {return 0.0;}
 
-	H = exp_E_Hairpin((int)(j-i-1), type, McCmat->S1[i+1], McCmat->S1[j-1],
-			  c_sequence+i-1, McCmat->pf_params) * scale[j-i+1];
+	// ------------------------------------------------------------
+	// Hairpin loop energy contribution
 	
-	I = 0.0;
-	//calculating the Interior loop energy contribution
+	size_t u=j-i-1;
+	FLT_OR_DBL H = exp_E_Hairpin(u, type, McCmat->S1[i+1], McCmat->S1[j-1],
+				     c_sequence+i-1, McCmat->pf_params) * scale[u+2];
+	
+	// ------------------------------------------------------------
+	// Interior loop energy contribution
+	FLT_OR_DBL I = 0.0;
 
-	int u1;
 	// case 1: i<k<i´<j´<j
-	for (int ip=k+1; 
-	     ip<=std::min((int)(i+MAXLOOP+1),(int)(j-TURN-2));
-	     ip++) {
-	    u1 = (int)(ip-i-1);
-	    for (int jp = std::max((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1)); 
-		 jp<(int)j;
-		 jp++) {
+	for (size_t ip=k+1; ip <= std::min(i+MAXLOOP+1,j-TURN-2); ip++) {
+	    size_t u1 = ip-i-1;
+	    for (size_t jp = std::max(ip+TURN+1+MAXLOOP,j-1+u1)-MAXLOOP; jp<j; jp++) {
 		int type2 = McCmat->get_ptype(ip,jp);
 		if (type2) {
 		    type2 = rtype[type2];
@@ -1037,13 +1037,9 @@ namespace LocARNA {
 	    }
 	}
 	//case 2: i<i´<j´<k<j
-	for (int ip=i+1;
-	     ip<=std::min((int)(i+MAXLOOP+1),(int)(k-TURN-2)); 
-	     ip++) {
-	    u1 = ip-i-1;
-	    for (int jp=std::max((int)(ip+TURN+1),(int)(j-1-MAXLOOP+u1));
-		 jp<(int)k;
-		 jp++) {
+	for (size_t ip=i+1; ip<=std::min(i+MAXLOOP+1,k-TURN-2); ip++) {
+	    size_t u1 = ip-i-1;
+	    for (size_t jp=std::max(ip+TURN+1+MAXLOOP,j-1+u1)-MAXLOOP; jp<k; jp++) {
 		int type2 = McCmat->get_ptype(ip,jp);
 		if (type2) {
 		    type2 = rtype[type2];
@@ -1056,29 +1052,28 @@ namespace LocARNA {
 	    }
 	}
 	
-	//calculating Multiple loop energy contribution
-	M = 0.0;
+	// ------------------------------------------------------------
+	// Multiple loop energy contribution
+	FLT_OR_DBL M = 0.0;
 
-	//!@todo these assertions are wrong, fix special cases
-	
 	if ( frag_len_geq(k+1, j-1, 2*(TURN+2)) ) {
-	    M += qm2[McCmat->iidx(k+1,j-1)] * expMLbase[k-i];
+	    M += expMLbase[frag_len(i+1,k)] * qm2[McCmat->iidx(k+1,j-1)];
 	}
 	
 	if ( frag_len_geq(i+1, k-1, 2*(TURN+2)) ) {
-	    M += qm2[McCmat->iidx(i+1,k-1)] * expMLbase[j-k];
+	    M += qm2[McCmat->iidx(i+1,k-1)] * expMLbase[frag_len(k,j-1)];
 	}
 	
 	if ( frag_len_geq(i+1,k-1,TURN+2) && frag_len_geq(k+1,j-1,TURN+2) ) {
 	    M += McCmat->get_qm(i+1,k-1) * expMLbase[1] *  McCmat->get_qm(k+1,j-1);
 	}
-
+	
 	// multiply with contribution for closing of multiloop
 	M *= McCmat->pf_params->expMLclosing 
 	    * exp_E_MLstem((size_t)rtype[type],McCmat->S1[j-1],McCmat->S1[i+1], McCmat->pf_params)
 	    * scale[2];
 	
-	return ((H+I+M)/McCmat->get_qb(i,j))*get_arc_prob(i,j);
+	return ((H+I+M)/McCmat->get_qb(i,j))*McCmat->get_bppm(i,j);
     }
 
     double RnaData::prob_unpaired_external(size_type k) const {
@@ -1194,7 +1189,7 @@ namespace LocARNA {
 
 	return 
 	    (Qtotal/McCmat->get_qb(i,j))
-	    *get_arc_prob(i,j);
+	    *McCmat->get_bppm(i,j);
     }
 
     double
@@ -1236,11 +1231,11 @@ namespace LocARNA {
 	int u2 =(int)(j-jp-1);
 	
 	I = exp_E_IntLoop(u1,u2, type, rtype[type2],
-			    McCmat->S1[(int)(i+1)],
-			    McCmat->S1[(int)(j-1)],
-			    McCmat->S1[ip-1],
-			    McCmat->S1[jp+1],
-			    McCmat->pf_params)
+			  McCmat->S1[(int)(i+1)],
+			  McCmat->S1[(int)(j-1)],
+			  McCmat->S1[ip-1],
+			  McCmat->S1[jp+1],
+			  McCmat->pf_params)
 	    * scale[u1+u2+2];
 	
 	//calculating Multiple loop energy contribution
@@ -1250,12 +1245,12 @@ namespace LocARNA {
 	
 	// inner base pairs only right of (ip,jp)
 	if ( frag_len_geq(jp+1, j-1, TURN+2) ) {
-	    M += expMLbase[ip-i-1] * McCmat->get_qm(jp+1,j-1);
+	    M += expMLbase[frag_len(i+1,ip-1)] * McCmat->get_qm(jp+1,j-1);
 	}
 	
 	// inner base pairs only left of (ip,jp)
 	if ( frag_len_geq(i+1, ip-1, TURN+2) ) {
-	    M += McCmat->get_qm(i+1,ip-1) * expMLbase[j-jp-1];
+	    M += McCmat->get_qm(i+1,ip-1) * expMLbase[frag_len(jp+1,j-1)];
 	}
 	
 	// inner base pairs left and right of (ip,jp)
@@ -1265,9 +1260,9 @@ namespace LocARNA {
 	
 	// multiply with factor for inner base pair
 	M *= exp_E_MLstem(type2,
-			    McCmat->S1[ip-1],
-			    McCmat->S1[jp+1],
-			    McCmat->pf_params);
+			  McCmat->S1[ip-1],
+			  McCmat->S1[jp+1],
+			  McCmat->pf_params);
 	
 	// multiply with factors for closing base pair
 	M *= McCmat->pf_params->expMLclosing
@@ -1277,14 +1272,17 @@ namespace LocARNA {
 			   McCmat->pf_params)
 	    * scale[2];
 	
-	return 
-	    (McCmat->get_qb(ip,jp)
-	     *(I+M)/McCmat->get_qb(i,j))
-	    *get_arc_prob(i,j);
+	FLT_OR_DBL Qtotal = I+M;
+	
+	Qtotal *= McCmat->get_qb(ip,jp);
+	
+	return Qtotal/McCmat->get_qb(i,j)
+	    * McCmat->get_bppm(i,j);
     }
 
     double RnaData::prob_basepair_external(size_type i,size_type j) const {
-	
+	size_t n=sequence.length();
+
 	assert(frag_len_geq(i,j,TURN+2));
 	
 	// immediately return 0.0 when i and j cannot pair
@@ -1292,9 +1290,35 @@ namespace LocARNA {
 	    return 0.0;
 	}
 	
+	FLT_OR_DBL extloop;
+	
+	if (!used_alifold) {
+	    McC_matrices_t *McCmat = static_cast<McC_matrices_t *>(this->McCmat);
+	    extloop = exp_E_ExtLoop(McCmat->get_ptype(i,j),
+				    i>1 ? McCmat->S1[i-1] : -1, 
+				    j<n ? McCmat->S1[j+1] : -1, 
+				    McCmat->pf_params);
+	} else {
+	    McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t *>(this->McCmat);
+	    
+	    size_t n_seq=sequence.row_number();
+	    
+	    extloop=1.0;
+	    
+	    for (size_t s=0; s<n_seq; s++) {
+		int type = pair[McCmat->S[s][i]][McCmat->S[s][j]];
+		if (type==0) type=7;
+			
+		extloop *= exp_E_ExtLoop(type, i>1 ? McCmat->S5[s][i] : -1,
+					 j<n ? McCmat->S3[s][j] : -1,
+					 McCmat->pf_params);
+	    }
+	}
+
 	return 
 	    (McCmat->q1k[i-1]
 	     * McCmat->get_qb(i,j)
+	     * extloop
 	     * McCmat->qln[j+1]
 	     )
 	    / McCmat->qln[1];

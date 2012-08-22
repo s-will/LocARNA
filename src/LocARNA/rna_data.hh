@@ -341,6 +341,19 @@ namespace LocARNA {
 	frag_len_geq(size_t i, size_t j, size_t minlen) const {
 	    return i+minlen <= j+1;	
 	}
+
+	/** 
+	 * Number of bases in a fragment
+	 * 
+	 * @param i left end of fragment
+	 * @param j right end of fragment
+	 *
+	 * @return number of bases in range i..j
+	 */
+	bool
+	frag_len(size_t i, size_t j) const {
+	    return j-i+1;	
+	}
 	
 
     public:

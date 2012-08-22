@@ -10,7 +10,9 @@ main(int argc,char **argv) {
     int retVal=0;
     
     std::string testseqstr="UUACGACUUCGGCCGGAGCGCGGACGUAGCGACGUAGGCGCGAUGCGACGCGACGUGGGAGCGAUCGGCGCGUACGGCGGCAUCGCGGAUCGAUGCGGCAUCG";
-    double minprob=10e-2;
+    //std::string testseqstr="GCGAAAACGC";
+    //std::string testseqstr="GAAAACC";
+    double minprob=10e-6;
     
     Sequence seq("test",testseqstr);    
 
@@ -27,9 +29,18 @@ main(int argc,char **argv) {
     
     BasePairs bps(&rnadata,minprob);
 
+    // iterate over all base pairs
+    for (size_t i=1; i<=seq.length() ; ++i) {
+	const BasePairs::LeftAdjList &adjl = bps.left_adjlist(i);
+	for(BasePairs::LeftAdjList::const_iterator arc=adjl.begin();
+	    arc!=adjl.end() ; ++arc) {
+	    std::cout << (*arc) << ": "<<bps.get_arc_prob(arc->left(),arc->right())<<std::endl;
+	}
+    }
+    std::cout << std::endl;
 
     // ------------------------------------------------------------
-    // Accumulate unpaired in loop probabilities
+    // Accumulate probabilities of disjoint events
     
     // for all positions k
     for (size_t k=1; k<testseqstr.length(); ++k) {
@@ -39,66 +50,100 @@ main(int argc,char **argv) {
 	// iterate over covering base pairs
 	for (size_t i=1; i<k ; ++i) {
 	    const BasePairs::LeftAdjList &adjl = bps.left_adjlist(i);
-	    for(BasePairs::LeftAdjList::const_iterator arc=adjl.begin();
-		arc!=adjl.end() ; ++arc) {
+	    for(BasePairs::LeftAdjList::const_iterator arc=adjl.begin(); arc!=adjl.end() ; ++arc) {
 		
-		if (arc->right()>k) {
-		    double pp = rnadata.prob_unpaired_in_loop(k,arc->left(),arc->right());
-		    p += pp;
-		    std::cout << *arc << ": " << pp << " ";
+		if (arc->right()<=k) continue;
+		
+		double p_unp=0.0;
+		// k unpaired in arc
+		
+		    p_unp = rnadata.prob_unpaired_in_loop(k,arc->left(),arc->right());
+		    
+		if (p_unp>0.0) {
+		    std::cout <<k<<" unpaired in "<<*arc<< ": " <<p_unp<<std::endl;
 		}
-	    }
-	}
-	
-	
-	double pp = rnadata.prob_unpaired_external(k);
-	p += pp;
-	std::cout << "external: " << pp << std::endl;
-
-	
-	std::cout << "accumulated unpaired in loop "<< k  << " : " << p << std::endl;
 		
-    }
-
-    // exit here
-    return retVal;
-
-    // ------------------------------------------------------------
-    // Accumulate basepair in loop probabilities
-    
-    
-    // for all positions k
-    for (size_t k=1; k<testseqstr.length(); ++k) {
-	
-	const BasePairs::LeftAdjList &adjl2 = bps.left_adjlist(k);
-	for(BasePairs::LeftAdjList::const_iterator arc2=adjl2.begin();
-	    arc2!=adjl2.end(); ++arc2) {
-		    
-	    double p=0.0;
-	
-	    // iterate over covering base pairs
-	    for (size_t i=1; i<k ; ++i) {
-		const BasePairs::LeftAdjList &adjl = bps.left_adjlist(i);
-		for(BasePairs::LeftAdjList::const_iterator arc=adjl.begin();
-		    arc!=adjl.end() ; ++arc) {
-		    
+		double p_left=0.0;
+		//k left end of arc2 in arc
+		const BasePairs::LeftAdjList &adjll = bps.left_adjlist(k);
+		for(BasePairs::LeftAdjList::const_iterator arc2=adjll.begin(); arc2!=adjll.end(); ++arc2) {
 		    if (arc2->right()<arc->right()) {
-			double pp=rnadata.prob_basepair_in_loop(arc2->left(),arc2->right(),arc->left(),arc->right());
-
-			p += pp;
-			std::cout << *arc << ": " << pp << " ";
+			p_left += rnadata.prob_basepair_in_loop(arc2->left(),arc2->right(),arc->left(),arc->right());
 		    }
 		}
-	    }
-	    double pp = rnadata.prob_basepair_external(arc2->left(),arc2->right());
-	    p += pp;
-	    std::cout << "external: " << pp << std::endl;
-	    
-	    std::cout << "accumulated base pair in loop "<< (*arc2)  << " : " << p << std::endl;
 		
-	}
-    }
+		if (p_left>0.0) {
+		    std::cout <<k<<" left end in "<<*arc<< ": " <<p_left<<std::endl;
+		}
 
+		
+		// k right end of arc2 in arc
+		// i...k'....k...i'
+		double p_right=0.0;
+		const BasePairs::RightAdjList &adjlr = bps.right_adjlist(k);
+		for(BasePairs::RightAdjList::const_iterator arc2=adjlr.begin(); arc2!=adjlr.end(); ++arc2) {
+		    if (arc2->left()>arc->left()) {
+			p_right += rnadata.prob_basepair_in_loop(arc2->left(),arc2->right(),arc->left(),arc->right());
+		    }
+		}
+		
+		if (p_right>0.0) {
+		    std::cout <<k<<" right end in "<<*arc<< ": " <<p_right<<std::endl;
+		}
+
+		p += p_unp;
+		p += p_left;
+		p += p_right;
+		
+	    }
+	}
+
+	// ------------------------------------------------------------
+	// External
+
+	// k unpaired in external loop
+
+	double p_unp=0.0;
+	// k unpaired in arc
+	
+	p_unp = rnadata.prob_unpaired_external(k);
+	
+	if (p_unp>0.0) {
+	    std::cout <<k<<" unpaired in "<<"external loop"<< ": " <<p_unp<<std::endl;
+	}
+	
+	
+	// k left end of arc2 in external loop
+	double p_left=0.0;
+	const BasePairs::LeftAdjList &adjll = bps.left_adjlist(k);
+	for(BasePairs::LeftAdjList::const_iterator arc2=adjll.begin(); arc2!=adjll.end(); ++arc2) {
+	    p_left += rnadata.prob_basepair_external(arc2->left(),arc2->right());
+	}
+	
+	if (p_left>0.0) {
+	    std::cout <<k<<" left end in "<<"external loop"<< ": " <<p_left<<std::endl;
+	}
+	
+	
+	// k right end of arc2 in external loop
+	double p_right=0.0;
+	const BasePairs::RightAdjList &adjlr = bps.right_adjlist(k);
+	for(BasePairs::RightAdjList::const_iterator arc2=adjlr.begin(); arc2!=adjlr.end(); ++arc2) {
+	    p_right += rnadata.prob_basepair_external(arc2->left(),arc2->right());
+	}
+	
+	if (p_right>0.0) {
+	    std::cout <<k<<" right end in "<<"external loop"<< ": " <<p_right<<std::endl;
+	}
+	
+	p += p_unp;
+	p += p_left;
+	p += p_right;
+	
+		
+	std::cout << "acc prob "<< k  << " : " << p << std::endl;
+	
+    }
 
     return retVal;
 }
