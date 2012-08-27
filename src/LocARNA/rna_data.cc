@@ -202,7 +202,7 @@ namespace LocARNA {
 	}
 
 	pscore = (short*) space_memcpy(McCmat.pscore,
-					    ((length+1)*(length+2))/2 * sizeof(short));
+				       ((length+1)*(length+2))/2 * sizeof(short));
     }
 
     McC_ali_matrices_t::~McC_ali_matrices_t() {
@@ -234,6 +234,7 @@ namespace LocARNA {
 	seq_constraints_(""),
 	used_alifold(false)
     {
+	make_pair_matrix();
 	initFromFile(file, readPairProbs, readStackingProbs, readInLoopProbs);
     }
         
@@ -245,6 +246,7 @@ namespace LocARNA {
 	  seq_constraints_(""),
 	  used_alifold(false)
     {
+	make_pair_matrix();
     }
     
     RnaData::~RnaData() {
@@ -715,7 +717,7 @@ namespace LocARNA {
 	std::vector<FLT_OR_DBL> qqm(len+2,0);
 	std::vector<FLT_OR_DBL> qqm1(len+2,0);
 	
-	qm1.resize((len+1)*(len+2)/2);
+	//qm1.resize((len+1)*(len+2)/2);
 	qm2.resize((len+1)*(len+2)/2);
 	
 	// initialize qqm1
@@ -739,7 +741,7 @@ namespace LocARNA {
 				       McCmat->pf_params);
 		}
 		
-		qm1[McCmat->iidx(i,j)]=qqm[i];
+		//qm1[McCmat->iidx(i,j)]=qqm[i];
 
 		assert(qqm[i] <= McCmat->get_qm(i,j));
 		assert((!frag_len_geq(i,j-1,TURN+2)) || qqm1[i] <= McCmat->get_qm(i,j-1));
@@ -998,8 +1000,7 @@ namespace LocARNA {
 	Qtotal *= exp(McCmat->get_pscore(i,j)/kTn);
 	
 	FLT_OR_DBL p_k_cond_ij = Qtotal/McCmat->get_qb(i,j); 
-	assert(p_k_cond_ij<=1);
-
+	
 	FLT_OR_DBL res = p_k_cond_ij * McCmat->get_bppm(i,j);
 	
 	return res;
@@ -1319,6 +1320,9 @@ namespace LocARNA {
     double RnaData::prob_basepair_external(size_type i,size_type j) const {
 	size_t n=sequence.length();
 
+	assert(1<=i);
+	assert(i<j);
+	assert(j<=n);
 	assert(frag_len_geq(i,j,TURN+2));
 	
 	// immediately return 0.0 when i and j cannot pair
@@ -1344,14 +1348,14 @@ namespace LocARNA {
 	    for (size_t s=0; s<n_seq; s++) {
 		int type = pair[McCmat->S[s][i]][McCmat->S[s][j]];
 		if (type==0) type=7;
-			
+		
 		extloop *= exp_E_ExtLoop(type, i>1 ? McCmat->S5[s][i] : -1,
 					 j<n ? McCmat->S3[s][j] : -1,
 					 McCmat->pf_params);
 	    }
 	}
 
-	return 
+	return
 	    (McCmat->q1k[i-1]
 	     * McCmat->get_qb(i,j)
 	     * extloop

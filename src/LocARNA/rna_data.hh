@@ -158,7 +158,7 @@ namespace LocARNA {
      //! @brief  structure for Alifold-McCaskill matrices pointers
     //!
     //! Contains pointers to matrices made accessible through
-    //! get_alipf_arrays() and get_alibppm() of Vienna librna
+    //! get_alipf_arrays() and alipf_export_bppm() of Vienna librna
     class McC_ali_matrices_t : public McC_matrices_base {
     protected:
 	size_t n_seq;     //!< sequence length
@@ -299,7 +299,7 @@ namespace LocARNA {
 	std::string seq_constraints_; 
 	
 # ifdef HAVE_LIBRNA
-	std::vector<FLT_OR_DBL> qm1; // store qm1 for debugging
+	// std::vector<FLT_OR_DBL> qm1; // store qm1 for debugging
 	std::vector<FLT_OR_DBL> qm2;
 	std::vector<FLT_OR_DBL> scale;
 	std::vector<FLT_OR_DBL> expMLbase;
