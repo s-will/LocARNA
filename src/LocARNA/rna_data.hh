@@ -26,7 +26,7 @@ namespace LocARNA {
 
     class McC_matrices_base {
     protected:
-	size_t length;     //!< sequence length
+    	size_t length;     //!< sequence length
 	bool local_copy; //!< whether pointers point to local copies of data structures
 	
 	FLT_OR_DBL *qb;  //!< Q<sup>B</sup> matrix					
@@ -34,9 +34,8 @@ namespace LocARNA {
 	
 	FLT_OR_DBL *bppm;  //!< base pair probability matrix
 	
-	int* iindx;        //!< iindx from librna's get_iindx()
-	
-	/** 
+    	int* iindx;        //!< iindx from librna's get_iindx()
+    	/** 
 	 * @brief construct empty
 	 */
 	McC_matrices_base();
@@ -300,6 +299,7 @@ namespace LocARNA {
 	std::string seq_constraints_; 
 	
 # ifdef HAVE_LIBRNA
+	std::vector<FLT_OR_DBL> qm1; // store qm1 for debugging
 	std::vector<FLT_OR_DBL> qm2;
 	std::vector<FLT_OR_DBL> scale;
 	std::vector<FLT_OR_DBL> expMLbase;
@@ -350,9 +350,9 @@ namespace LocARNA {
 	 *
 	 * @return number of bases in range i..j
 	 */
-	bool
+	size_t
 	frag_len(size_t i, size_t j) const {
-	    return j-i+1;	
+	    return j+1-i;	
 	}
 	
 

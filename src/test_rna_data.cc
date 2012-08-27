@@ -9,10 +9,13 @@ int
 main(int argc,char **argv) {
     int retVal=0;
     
-    std::string testseqstr="UUACGACUUCGGCCGGAGCGCGGACGUAGCGACGUAGGCGCGAUGCGACGCGACGUGGGAGCGAUCGGCGCGUACGGCGGCAUCGCGGAUCGAUGCGGCAUCG";
-    //std::string testseqstr="GCGAAAACGC";
+    //std::string testseqstr="UUACGACUUCGGCCGGAGCGCGGACGUAGCGACGUAGGCGCGAUGCGACGCGACGUGGGAGCGAUCGGCGCGUACGGCGGCAUCGCGGAUCGAUGCGGCAUCG";
+    std::string testseqstr="AAGGGAUCUAGAAAGCAUUCGGGUUACGGACUCUCUUAAGAGGAUACUUCACUGCGGGCAUGUACCUCCAUGGGGCGAAGCAUAGAGAUUCGCAGUCCAUCUCACUCAUGGAGCACGUCCGGUAUCUAGUUAGAAAACAUUGAGUAUCUAGGUCGGGCGCAGCGGCGGGGGGAGAAGUCGUAAGCGAAUUCUCGCUUAGCGAUUGUUAGAGGAGAGACGUAUGCCAAAAGCGGCCAAACUCUCCGCUGGCGGAAUCAACAGUUCAACACGUGGAUAGUGAAAUCCGGCGAGCUCGUCUUGGUAAUAACUGGUUCAAUUCGUUUGACCGAAAGUCGUCGAACGUAUAAUUCCGCAACCCUCCAACCGAGCAGGUCGGCGCAUGGAGGGUUCCCCCGGUGAAGGGCAAACGCGGAAGGUAGGGUUUACGUUGAGCGUCUUGCCAUCCGUAGCGAAGAAUGAUAACCGAGCACUCCGGGACGUUCUUUUAGCACGAGUGUGAUUUAACGUGUCCGGAGCAGACGCUGAUAUCAGAUGACAUUUCAGUA";
+    //std::string testseqstr="CCCCAGGAAAACCGGAAAACCAGGGG";
     //std::string testseqstr="GAAAACC";
-    double minprob=10e-6;
+    double minprob=1e-6;
+    
+    double theta2=1e-2;
     
     Sequence seq("test",testseqstr);    
 
@@ -59,7 +62,7 @@ main(int argc,char **argv) {
 		
 		    p_unp = rnadata.prob_unpaired_in_loop(k,arc->left(),arc->right());
 		    
-		if (p_unp>0.0) {
+		if (p_unp>=theta2) {
 		    std::cout <<k<<" unpaired in "<<*arc<< ": " <<p_unp<<std::endl;
 		}
 		
@@ -72,7 +75,7 @@ main(int argc,char **argv) {
 		    }
 		}
 		
-		if (p_left>0.0) {
+		if (p_left>=theta2) {
 		    std::cout <<k<<" left end in "<<*arc<< ": " <<p_left<<std::endl;
 		}
 
@@ -83,11 +86,12 @@ main(int argc,char **argv) {
 		const BasePairs::RightAdjList &adjlr = bps.right_adjlist(k);
 		for(BasePairs::RightAdjList::const_iterator arc2=adjlr.begin(); arc2!=adjlr.end(); ++arc2) {
 		    if (arc2->left()>arc->left()) {
-			p_right += rnadata.prob_basepair_in_loop(arc2->left(),arc2->right(),arc->left(),arc->right());
+			double p_add = rnadata.prob_basepair_in_loop(arc2->left(),arc2->right(),arc->left(),arc->right());
+			p_right += p_add;
 		    }
 		}
 		
-		if (p_right>0.0) {
+		if (p_right>=theta2) {
 		    std::cout <<k<<" right end in "<<*arc<< ": " <<p_right<<std::endl;
 		}
 
@@ -108,7 +112,7 @@ main(int argc,char **argv) {
 	
 	p_unp = rnadata.prob_unpaired_external(k);
 	
-	if (p_unp>0.0) {
+	if (p_unp>=theta2) {
 	    std::cout <<k<<" unpaired in "<<"external loop"<< ": " <<p_unp<<std::endl;
 	}
 	
@@ -120,7 +124,7 @@ main(int argc,char **argv) {
 	    p_left += rnadata.prob_basepair_external(arc2->left(),arc2->right());
 	}
 	
-	if (p_left>0.0) {
+	if (p_left>=theta2) {
 	    std::cout <<k<<" left end in "<<"external loop"<< ": " <<p_left<<std::endl;
 	}
 	
@@ -132,7 +136,7 @@ main(int argc,char **argv) {
 	    p_right += rnadata.prob_basepair_external(arc2->left(),arc2->right());
 	}
 	
-	if (p_right>0.0) {
+	if (p_right>=theta2) {
 	    std::cout <<k<<" right end in "<<"external loop"<< ": " <<p_right<<std::endl;
 	}
 	
@@ -140,7 +144,8 @@ main(int argc,char **argv) {
 	p += p_left;
 	p += p_right;
 	
-		
+	
+	std::cout.precision(3);
 	std::cout << "acc prob "<< k  << " : " << p << std::endl;
 	
     }
