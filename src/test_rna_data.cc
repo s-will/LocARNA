@@ -5,59 +5,28 @@
 
 using namespace LocARNA;
 
-int
-main(int argc,char **argv) {
-    int retVal=0;
 
-    double minprob=1e-6;
-    
-    double theta2=1e-2;
-    
-    
-    //std::string testseqstr="UUACGACUUCGGCCGGAGCGCGGACGUAGCGACGUAGGCGCGAUGCGACGCGACGUGGGAGCGAUCGGCGCGUACGGCGGCAUCGCGGAUCGAUGCGGCAUCG";
-    std::string testseqstr="AAGGGAUCUAGAAAGCAUUCGGGUUACGGACUCUCUUAAGAGGAUACUUCACUGCGGGCAUGUACCUCCAUGGGGCGAAGCAUAGAGAUUCGCAGUCCAUCUCACUCAUGGAGCACGUCCGGUAUCUAGUUAGAAAACAUUGAGUAUCUAGGUCGGGCGCAGCGGCGGGGGGAGAAGUCGUAAGCGAAUUCUCGCUUAGCGAUUGUUAGAGGAGAGACGUAUGCCAAAAGCGGCCAAACUCUCCGCUGGCGGAAUCAACAGUUCAACACGUGGAUAGUGAAAUCCGGCGAGCUCGUCUUGGUAAUAACUGGUUCAAUUCGUUUGACCGAAAGUCGUCGAACGUAUAAUUCCGCAACCCUCCAACCGAGCAGGUCGGCGCAUGGAGGGUUCCCCCGGUGAAGGGCAAACGCGGAAGGUAGGGUUUACGUUGAGCGUCUUGCCAUCCGUAGCGAAGAAUGAUAACCGAGCACUCCGGGACGUUCUUUUAGCACGAGUGUGAUUUAACGUGUCCGGAGCAGACGCUGAUAUCAGAUGACAUUUCAGUA";
-    //                      12345678901234567890123456
-    
-    //std::string testseqstr="CCCCAGGAAAACCGGAAAACCAGGGG";
-    //std::string testseqstr="GAAAACC";
-    
-    Sequence seq;
+double minprob=1e-6;
 
-    bool use_alifold=true;
-
-    if (!use_alifold) {
-	seq.append_row("test",testseqstr);
-    } else {
+double theta2=1e-2;
     
-	std::string seq_data[]={
-	    "AF008220",           "GGAGGAUUAG-CUCAGCUGGGAGAGCAUCUG--CC----U-UACAAG--CAGAGGGUCGGCGGUUCGAGCCCGUCAUCCUCCA",
-	    "M68929",             "GCGGAUAUAA-CUUAGGGGUUAAAGUUGCAG--AU----U-GUGGCU--CUGAAAA-CACGGGUUCGAAUCCCGUUAUUCGCC",
-	    "X02172",             "GCCUUUAUAG-CUUAG-UGGUAAAGCGAUAA--AC----U-GAAGAU--UUAUUUACAUGUAGUUCGAUUCUCAUUAAGGGCA",
-	    "Z11880",             "GCCUUCCUAG-CUCAG-UGGUAGAGCGCACG--GC----U-UUUAAC--CGUGUGGUCGUGGGUUCGAUCCCCACGGAAGGCG",
-	    "D10744",             "GGAAAAUUGAUCAUCGGCAAGAUAAGUUAUUUACUAAAUAAUAGGAUUUAAUAACCUGGUGAGUUCGAAUCUCACAUUUUCCG"
-	};
-	
-	for (size_t i=0; i<5; i++) {
-	    seq.append_row(seq_data[2*i],seq_data[2*i+1]);
-	}
-    }
-    
-    seq.write(std::cout);
-        
 
-    RnaData rnadata(seq);
+BasePairs
+fold_sequence(const Sequence &seq, bool use_alifold) {
+
+    RnaData *rnadata = new RnaData(seq);
 
     PFoldParams params(false,false);
-    if (!rnadata.pairProbsAvailable() || !rnadata.inLoopProbsAvailable()) {
-	rnadata.computeEnsembleProbs(params,true,use_alifold);
+    if (!rnadata->pairProbsAvailable() || !rnadata->inLoopProbsAvailable()) {
+	rnadata->computeEnsembleProbs(params,true,use_alifold);
     }
     
-    if (!rnadata.inLoopProbsAvailable()) {
+    if (!rnadata->inLoopProbsAvailable()) {
 	std::cerr << "No in loop probabilities could be computed!"<<std::endl;
 	exit(-1);
     }
     
-    BasePairs bps(&rnadata,minprob);
+    BasePairs bps(rnadata,minprob);
 
     // iterate over all base pairs
     for (size_t i=1; i<=seq.length() ; ++i) {
@@ -68,6 +37,14 @@ main(int argc,char **argv) {
 	}
     }
     std::cout << std::endl;
+
+    return bps;
+}
+
+void
+test_in_loop_probs(const Sequence &seq, const BasePairs &bps) {     
+
+    const RnaData &rnadata = bps.get_rnadata();
 
     // ------------------------------------------------------------
     // Accumulate probabilities of disjoint events
@@ -177,6 +154,56 @@ main(int argc,char **argv) {
 	
     }
 
+
+}
+
+int
+main(int argc,char **argv) {
+    int retVal=0;
+
+    
+    //std::string testseqstr="UUACGACUUCGGCCGGAGCGCGGACGUAGCGACGUAGGCGCGAUGCGACGCGACGUGGGAGCGAUCGGCGCGUACGGCGGCAUCGCGGAUCGAUGCGGCAUCG";
+    //std::string testseqstr="AAGGGAUCUAGAAAGCAUUCGGGUUACGGACUCUCUUAAGAGGAUACUUCACUGCGGGCAUGUACCUCCAUGGGGCGAAGCAUAGAGAUUCGCAGUCCAUCUCACUCAUGGAGCACGUCCGGUAUCUAGUUAGAAAACAUUGAGUAUCUAGGUCGGGCGCAGCGGCGGGGGGAGAAGUCGUAAGCGAAUUCUCGCUUAGCGAUUGUUAGAGGAGAGACGUAUGCCAAAAGCGGCCAAACUCUCCGCUGGCGGAAUCAACAGUUCAACACGUGGAUAGUGAAAUCCGGCGAGCUCGUCUUGGUAAUAACUGGUUCAAUUCGUUUGACCGAAAGUCGUCGAACGUAUAAUUCCGCAACCCUCCAACCGAGCAGGUCGGCGCAUGGAGGGUUCCCCCGGUGAAGGGCAAACGCGGAAGGUAGGGUUUACGUUGAGCGUCUUGCCAUCCGUAGCGAAGAAUGAUAACCGAGCACUCCGGGACGUUCUUUUAGCACGAGUGUGAUUUAACGUGUCCGGAGCAGACGCUGAUAUCAGAUGACAUUUCAGUA";
+    //                      12345678901234567890123456
+    
+    std::string testseqstr="CCCCAGGAAAACCGGAAAACCAGGGG";
+    //std::string testseqstr="GAAAACC";
+    
+    Sequence seq;
+    Sequence mseq;
+
+    seq.append_row("test",testseqstr);
+    
+    std::string seq_data[]={
+	"AF008220",           "GGAGGAUUAG-CUCAGCUGGGAGAGCAUCUG--CC----U-UACAAG--CAGAGGGUCGGCGGUUCGAGCCCGUCAUCCUCCA",
+	"M68929",             "GCGGAUAUAA-CUUAGGGGUUAAAGUUGCAG--AU----U-GUGGCU--CUGAAAA-CACGGGUUCGAAUCCCGUUAUUCGCC",
+	"X02172",             "GCCUUUAUAG-CUUAG-UGGUAAAGCGAUAA--AC----U-GAAGAU--UUAUUUACAUGUAGUUCGAUUCUCAUUAAGGGCA",
+	"Z11880",             "GCCUUCCUAG-CUCAG-UGGUAGAGCGCACG--GC----U-UUUAAC--CGUGUGGUCGUGGGUUCGAUCCCCACGGAAGGCG",
+	    "D10744",             "GGAAAAUUGAUCAUCGGCAAGAUAAGUUAUUUACUAAAUAAUAGGAUUUAAUAACCUGGUGAGUUCGAAUCUCACAUUUUCCG"
+    };
+    
+    for (size_t i=0; i<5; i++) {
+	mseq.append_row(seq_data[2*i],seq_data[2*i+1]);
+    }
+    
+    seq.write(std::cout);
+    BasePairs bps = fold_sequence(seq,false);
+    
+    seq.write(std::cout);
+    BasePairs bpsA = fold_sequence(seq,true);
+    
+    mseq.write(std::cout);
+    BasePairs mbps = fold_sequence(mseq,true);
+
+    seq.write(std::cout);
+    test_in_loop_probs(seq,bpsA);
+
+    seq.write(std::cout);
+    test_in_loop_probs(seq,bps);
+
+    mseq.write(std::cout);
+    test_in_loop_probs(mseq,mbps);
+    
     return retVal;
 }
 

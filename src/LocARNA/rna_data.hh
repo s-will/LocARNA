@@ -674,6 +674,7 @@ namespace LocARNA {
 	 *
 	 * @see prob_unpaired_in_loop()
 	 *
+	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
 	prob_unpaired_in_loop_ali(size_type k,
@@ -702,6 +703,7 @@ namespace LocARNA {
 	 * @pre McCaskill matrices are computed and generated.
 	 * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepMcC)
 	 *
+	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
 	prob_unpaired_in_loop(size_type k,
@@ -723,11 +725,12 @@ namespace LocARNA {
 	 * @pre McCaskill matrices are computed and generated.
 	 * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepMcC)
 	 *
+	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
 	prob_unpaired_external(size_type k) const;
 	
-
+	
     protected:
 	/** 
 	 * \brief Probabilty of base pair in a specified loop (alifold)
@@ -742,6 +745,8 @@ namespace LocARNA {
 	 * @return probability that (ip,jp) is inner base pair in the loop closed by i and j
 	 *
 	 * @see prob_basepair_in_loop()
+	 *
+	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
 	prob_basepair_in_loop_ali(size_type ip,
@@ -772,6 +777,7 @@ namespace LocARNA {
 	 * @pre McCaskill matrices are computed and generated.
 	 * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepMcC)
 	 *
+	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
 	prob_basepair_in_loop(size_type ip,
@@ -796,6 +802,7 @@ namespace LocARNA {
 	 * @pre McCaskill matrices are computed and generated.
 	 * @see compute_McCaskill_matrices(), RnaData(const Sequence &sequence_, bool keepMcC)
 	 *
+	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
 	prob_basepair_external(size_type i,

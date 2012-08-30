@@ -476,6 +476,7 @@ AlignerN::align_D() {
 // compute the alignment score
 infty_score_t
 AlignerN::align() {
+    stopwatch.start("align");
 	// ------------------------------------------------------------
 	// computes D matrix (if not already done) and then does the alignment on the top level
 	// ------------------------------------------------------------
@@ -492,6 +493,7 @@ AlignerN::align() {
 		align_M(r.get_startA()-1, r.get_endA()+1, r.get_startB()-1, r.get_endB()+1, false);
 		return Ms[E_NO_NO]( r.get_endA(), r.get_endB()); //no free end gaps
 	}
+    stopwatch.stop("align");
 }
 
 // ------------------------------------------------------------
@@ -817,7 +819,13 @@ AlignerN::trace(ScoringView sv) {
 }
 
 void
-AlignerN::trace() {trace(def_scoring_view);}
+AlignerN::trace() {
+    stopwatch.start("trace");
+
+    trace(def_scoring_view);
+
+    stopwatch.stop("trace");
+}
 
 
 //! type of a task (used in computing k-best alignment)

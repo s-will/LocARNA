@@ -259,6 +259,9 @@ namespace LocARNA {
 
     void
     RnaData::computeEnsembleProbs(const PFoldParams &params,bool inLoopProbs, bool use_alifold) {
+	
+	stopwatch.start("bpp");
+	
 	assert(use_alifold || sequence.row_number()==1);
 
 	used_alifold=use_alifold;
@@ -287,6 +290,8 @@ namespace LocARNA {
 
 	pair_probs_available=true;
 	in_loop_probs_available=inLoopProbs;
+
+	stopwatch.stop("bpp");
     }
     
     void
@@ -861,6 +866,8 @@ namespace LocARNA {
 	assert(i<k);
 	assert(k<j);
 	
+	if (!in_loop_probs_available) return 1.0;
+	
 	McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t*>( this->McCmat );
 	
         size_t n_seq = sequence.row_number();
@@ -1018,6 +1025,9 @@ namespace LocARNA {
 	assert(i<k);
 	assert(k<j);
 	
+	if (!in_loop_probs_available) return 1.0;
+	
+	
 	if (used_alifold) {
 	    return prob_unpaired_in_loop_ali(k, i, j);
 	}
@@ -1117,6 +1127,9 @@ namespace LocARNA {
     double RnaData::prob_unpaired_external(size_type k) const {
 	assert(1<=k);
 	assert(k<=sequence.length());
+	
+	if (!in_loop_probs_available) return 1.0;
+	
 	return (McCmat->q1k[k-1] * scale[1] * McCmat->qln[k+1]) / McCmat->qln[1];
     }
 
@@ -1126,6 +1139,8 @@ namespace LocARNA {
 				       size_type jp,
 				       size_type i,
 				       size_type j) const {
+
+	if (!in_loop_probs_available) return 1.0;
 	
 	McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t *>(this->McCmat);
 	
@@ -1243,6 +1258,9 @@ namespace LocARNA {
 				   size_type jp,
 				   size_type i,
 				   size_type j) const {
+	
+	if (!in_loop_probs_available) return 1.0;
+
 	if (used_alifold) {
 	    return prob_basepair_in_loop_ali(ip, jp, i, j);
 	}
@@ -1330,6 +1348,9 @@ namespace LocARNA {
     }
 
     double RnaData::prob_basepair_external(size_type i,size_type j) const {
+
+	if (!in_loop_probs_available) return 1.0;
+	
 	size_t n=sequence.length();
 
 	assert(1<=i);

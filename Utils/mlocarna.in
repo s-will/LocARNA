@@ -116,11 +116,6 @@ Minimal prob for constructing guide tree. This probability can be set
 separately for the all-2-all comparison for constructing the guide
 tree and the progressive/iterative alignment steps.
 
-=item  B<--skip-pp>                     
-
-Skip computation of pair probs if the probabilities are already
-existing. Non-existing ones are still computed.
-
 =back
 
 
@@ -274,6 +269,18 @@ Use RNAplfold with window of size ws (default=2*span)
 =item  B<--rnafold-parameter=<file>>
 
 Parameter file for RNAfold (RNAfold's -P option)
+
+=item  B<--skip-pp>                     
+
+Skip computation of pair probs if the probabilities are already
+existing. Non-existing ones are still computed.
+
+=item B<--no-bpp-precomputation>
+
+Switch off precomputation of base pair probabilties. Overwrite
+potentially existing input files.  (compare skip-pp). For use with
+special pairwise aligners (e.g. locarna_n) that recompute the base
+pair probabilities at each invokation.
 
 =back
 
@@ -473,6 +480,8 @@ my $evaluate_alignment;
 
 my $opt_eval_fasta;
 
+my $opt_no_bpp_precomputation;
+
 my $width;
 
 my $max_diff_aln;
@@ -585,6 +594,9 @@ my %options_hash=
      "evaluate" => \$evaluate_alignment,
      
      "eval-fasta" => \$opt_eval_fasta,
+
+     # base pair probability precomputation
+     "no-bpp-precomputation" => \$opt_no_bpp_precomputation,
      
      ## output
      "write-structure" => \$write_structure,
@@ -681,6 +693,8 @@ my @options = #options that are not or not automatically passed to locarna
 
      "evaluate=s",
      "eval-fasta",
+     
+     "no-bpp-precomputation",
 
      "write-structure",
      
@@ -1387,13 +1401,18 @@ sub perform_multiple_alignment($) {
     # compute probability dot-plots
     # (if wanted or if necessary)
     #
-    printmsg 3,"Compute pair probs ...\n";
-    if ($thread_number==1) {
-	compute_all_dotplots($seqs);
-    } else  {
-	compute_all_dotplots_par($thread_number,$seqs);
+    if ($opt_no_bpp_precomputation) {
+	printmsg 3,"Skip precomputation of dot plots.\n";
+	generate_input_files_without_bpps($seqs);
+    } else {
+	printmsg 3,"Compute pair probs ...\n";
+	if ($thread_number==1) {
+	    compute_all_dotplots($seqs);
+	} else  {
+	    compute_all_dotplots_par($thread_number,$seqs);
+	}
     }
-
+    
     ## exit here if only dps shall be computed
     if ($only_dps) {
 	printmsg 1,"Computed only the missing dotplots.\n";
@@ -2281,6 +2300,32 @@ sub compute_all_dotplots_par($$$) {
 	    $cpu_num);
 }
 
+## ----------------------------------------
+## generate input files without base pair probabilties
+sub generate_input_files_without_bpps( $ ) {
+    my ($seqs) = @_;
+    for my $i (0..@$seqs-1) {
+	my $name = $seqs->[$i]->{name}; # the name of the sequence
+	my $ppname="$input_dir/".get_normalized_seqname($name);
+	my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
+	
+	if (! $ignore_constraints) {
+	    my $constraints = sequence_constraint_string($seqs->[$i]);
+	    if (defined($constraints) && ($constraints ne "")) {
+		print "WARNING: Constraints found for sequence $i, but not supported without precomputation of base pair probabilities\n."
+	    }
+	}
+	
+	## write a simple fasta file with the input file name
+	my $fh;
+	open($fh, ">$ppname") || die "Cannot write to $ppname.\n";
+	
+	print $fh ">$name\n";
+	print $fh "$seq_str\n";
+	
+	close ($fh);
+    }
+}
 
 ############################################################
 ## compute_dotplot(i,seqs)
