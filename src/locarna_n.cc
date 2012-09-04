@@ -392,11 +392,12 @@ main(int argc, char **argv) {
 	std::cerr << "Stacking is not supported" << std::endl;
 	exit (-1);
     }
-    if(clp.free_endgaps.compare("----") != 0 )
+  /*  if(clp.free_endgaps.compare("----") != 0 )
     {
 	std::cerr << "Free end gaps is not supported" << std::endl;
 	exit (-1);
     }
+    */
     if (clp.opt_subopt) {
     	std::cerr
       			<< "ERROR: suboptimal alignment not supported."

@@ -10,7 +10,6 @@ using namespace std;
 
 namespace LocARNA {
 
-
 /**
  *  @brief Represents the mapping for sparsification
  *
@@ -74,6 +73,9 @@ private:
 			pos_type cur_pos,
 			const Arc *inner_arc,
 			info_for_pos &struct_pos);
+
+	void valid_pos_external(pos_type cur_pos,const Arc *inner_arc, info_for_pos &struct_pos);
+
 
 
 public:
@@ -140,6 +142,7 @@ public:
 	 * @note use if indexing by the common left end is used
 	 */
 	matidx_t first_valid_mat_pos_before(index_t left_end, seq_pos_t pos)const{
+	    cout << "---- ("<<left_end <<"," << pos << ")"<<first_valid_mat_pos_vecs.at(left_end).size() << endl;
 		return first_valid_mat_pos_vecs.at(left_end).at(pos-left_end);
 	}
 
@@ -242,6 +245,11 @@ private:
 		return rnadata.prob_basepair_in_loop(inner_arc.left(),inner_arc.right(),arc.left(),arc.right())>=prob_basepair_in_loop_threshold;
 	}
 
+	bool is_valid_arc_external(const Arc &inner_arc)const{
+			return rnadata.prob_basepair_external(inner_arc.left(),inner_arc.right())>=prob_basepair_in_loop_threshold;
+	}
+
+
 	/**
 	 * Is pos valid?
 	 * @param arc Arc
@@ -251,8 +259,12 @@ private:
 	 * 		   false, otherwise
 	 */
 	bool is_valid_pos(const Arc &arc,seq_pos_t pos) const{
-		assert(arc.left()<pos && pos<arc.right());
-		return rnadata.prob_unpaired_in_loop(pos,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold;
+	    assert(arc.left()<pos && pos<arc.right());
+	    return rnadata.prob_unpaired_in_loop(pos,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold;
+	}
+
+	bool is_valid_pos_external(seq_pos_t pos) const{
+	    return rnadata.prob_unpaired_external(pos)>=prob_unpaired_in_loop_threshold;
 	}
 
 };

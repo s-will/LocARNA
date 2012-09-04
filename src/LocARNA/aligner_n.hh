@@ -31,8 +31,16 @@ namespace LocARNA {
 class AlignerN {
 public:
 
-	//! type of matrix M
-	typedef ScoreMatrix M_matrix_t;
+    typedef SparsificationMapper::ArcIdx ArcIdx; //!< type of arc index
+    typedef SparsificationMapper::ArcIdxVec ArcIdxVec; //!< vector of arc indices
+    typedef SparsificationMapper::matidx_t matidx_t; //!< type for a matrix position
+    typedef SparsificationMapper::seq_pos_t seq_pos_t; //!< type for a sequence position
+    typedef SparsificationMapper::index_t index_t; //!< type for an index
+
+
+
+    //! type of matrix M
+    typedef ScoreMatrix M_matrix_t;
 
 private:
 
@@ -261,7 +269,10 @@ protected:
 	//! @param sv Scoring view
 	//! 
 	template <class ScoringView>
-	void init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
+	void init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
+
+	template <class ScoringView>
+	infty_score_t getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA,ScoringView sv);
 
 	template <class ScoringView>
 	void compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std::vector<infty_score_t> &blockGapCostsX, bool isA, ScoringView sv );
@@ -306,7 +317,7 @@ protected:
 	//! @returns score of M(i,j) for the arcs left ended by al, bl
 	//!
 	template<class ScoringView>
-	infty_score_t compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_type j, ScoringView sv);
+	infty_score_t compute_M_entry(int state, index_t al, index_t bl, matidx_t index_i, matidx_t index_j,ScoringView sv);
 
 	//! align the loops closed by arcs (al,ar) and (bl,br).
 	//! in structure local alignment, this allows to introduce exclusions
@@ -333,7 +344,7 @@ protected:
 	 * @param sv scoring view 
 	 */
 	template<class ScoringView>
-	void trace_M(int state,int al,int i,int bl,int j,bool top_level,ScoringView sv);
+	void trace_M(int state,pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool tl, ScoringView sv);
 
 	/** 
 	 * \brief standard cases in trace back (without handling of exclusions)

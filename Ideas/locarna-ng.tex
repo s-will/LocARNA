@@ -32,7 +32,7 @@
 \newcommand{\pInLoopA}[2]{\pInLoop{A}{#1}{#2}}
 \newcommand{\pInLoopB}[2]{\pInLoop{B}{#1}{#2}}
 
-\newcommand{\numPos}[3]{seql^\textrm{#1}(#2,#3)}
+\newcommand{\numPos}[3]{seql^\textrm{#1}(#3,#2)}
 \newcommand{\numPosA}[2]{\numPos{A}{#1}{#2}}
 \newcommand{\numPosB}[2]{\numPos{B}{#1}{#2}}
 \newcommand{\seqPos}[2]{seq\_pos^\textrm{#1}(#2)}
@@ -81,9 +81,9 @@
 \maketitle
 
 We describe a new variant of Sankoff's simultaneous folding and
-alignment algorithm that promises higher accurcy compared to existing
+alignment algorithm that promises higher accuracy compared to existing
 fast Sankoff-like algorithms and supports the known heuristic
-accellerations as well as significant novel structural
+accelerations as well as significant novel structural
 sparsification. For sequences of length $n$, the final algorithm runs
 in $O(n^2)$ compared to $O(n^6)$ of the original Sankoff algorithm.
 
@@ -293,7 +293,7 @@ We define the following matrices:
 we compute values for all $a\in P^A$, $b\in P^B$, $i$, $k$
 with $a^l<i<a^r$, $b^l<j<b^r$ as follows;\\ 
 where:  $\seqPos{X}{i}$ is the position of the $i^{th}$ sparsed vector element, within the sequence X.\\
-and $\numPos{X}{i}{j}$ = $\seqPos{X}{j} - \seqPos{X}{i} -1$;
+and $\numPos{X}{i}{j}$ = $\seqPos{X}{i} - \seqPos{X}{j} -1$;
 \begin{align}
   \DTmat{a}{b} &= \max
   \begin{cases}
@@ -306,7 +306,7 @@ and $\numPos{X}{i}{j}$ = $\seqPos{X}{j} - \seqPos{X}{i} -1$;
   \begin{cases}
     \MTmat{a}{b}{i-1}{k-1} + \sigma(i,k) + (\numPosA{i}{i-1} + \numPosB{k}{k-1})\gamma & \unpairedA{i} \unpairedB{k}\\
     \MTmat{a}{b}{i}{k-1} + (\Red{\numPosB{k}{k-1}}+1)\gamma \\
-    \MTmat{a}{b}{i-1}{k} + (\Red{\numPosA{i}{i-1}}+1)\gamma \\
+    \MTmat{a}{b}{i-1}{k} + (\Red{\numPosA{i}{i-1}}+1)\gamma     \\
     \max_{\substack{a'\in P^A,b'\in P^B\\\text{s.t. } a'^r=i, b'^r=k}}\limits \MTmat{a}{b}{a'^l-1}{b'^l-1} + \DTmat{a'}{b'} + \tau(a',b') + \\ \qquad\qquad (\numPosA{a'^l}{a'^l-1} + \numPosB{b'^l}{b'^l-1})\gamma
   \end{cases}\label{recursionM}\\
   %

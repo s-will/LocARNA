@@ -609,27 +609,23 @@ namespace LocARNA {
 
     // Very basic interface
     score_t
-    Scoring::arcDel(const Arc &arcX, bool gapAorB, bool stacked) const { //TODO Important Scoring scheme for aligning an arc to a gap is not defined and implemented!
+    Scoring::arcDel(const Arc &arcX, bool isA, bool stacked) const { //TODO Important Scoring scheme for aligning an arc to a gap is not defined and implemented!
 
 	if (arc_matches->explicit_scores()) { // will not take stacking into account!!!
 	    std::cerr << "ERROR locarna_n explicit scores is not supported!" << std::endl; //TODO: Supporting explicit scores for arcgap
 	    assert( ! arc_matches->explicit_scores());
 	}
-	score_t sequence_contribution=0;
 
 	if (! params->mea_scoring) {
 	    return
-		// base match contribution
-		// (also for arc-match add terms for the base match on both ends, weighted by tau_factor)
-		(params->tau_factor * sequence_contribution / 100)
-		+
 		// base pair weights
-		(
+		gapX(arcX.left(), isA) + gapX(arcX.right(), isA) +
+	        (
 		 stacked
 		 ?
-		 (gapAorB? stack_weightsA[arcX.idx()] : stack_weightsB[arcX.idx()])
+		 (isA? stack_weightsA[arcX.idx()] : stack_weightsB[arcX.idx()])
 		 :
-		 (gapAorB? weightsA[arcX.idx()] : weightsB[arcX.idx()])		//TODO: TO be completed!!
+		 (isA? weightsA[arcX.idx()] : weightsB[arcX.idx()])
 		 );
 	}
 	else
