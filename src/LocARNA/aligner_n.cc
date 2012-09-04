@@ -16,7 +16,7 @@
 
 namespace LocARNA {
 
-bool trace_debugging_output=true;
+bool trace_debugging_output=false;
 
 
 // ------------------------------------------------------------
@@ -289,7 +289,6 @@ AlignerN::init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br, 
 	    }
 	    else */ {
 		seq_pos_t i_prev_seq_pos = mapperA.get_pos_in_seq_new(al,i_index-1); //tocheck: verify i_index==1
-		cout << "i_prev_seq_pos:" << i_prev_seq_pos << endl;
 		indel_score = indel_score + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true, sv) + sv.scoring()->gapA(i_seq_pos); //toask: infty_score_t operator+ overloading
 	    }
 	}
@@ -309,7 +308,6 @@ AlignerN::init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br, 
 	    }
 	    else*/ {
 		seq_pos_t j_prev_seq_pos = mapperB.get_pos_in_seq_new(bl,j_index-1); //tocheck: verify j_index==1
-		cout << "j_prev_seq_pos:" << j_prev_seq_pos << endl;
 
 		indel_score = indel_score + getGapCostBetween(j_prev_seq_pos, j_seq_pos, true, sv) + sv.scoring()->gapB(j_seq_pos); //toask: infty_score_t operator+ overloading
 	    }
@@ -357,7 +355,7 @@ AlignerN::align_M(pos_type al,pos_type ar,pos_type bl,pos_type br, bool allow_ex
     assert(br>0); // if br<=0 we run into trouble below when computing br-1
 
     init_M(E_NO_NO, al, ar, bl, br, def_scoring_view);
-    cout << "init_M finished" << endl;
+    if (trace_debugging_output)	cout << "init_M finished" << endl;
 
     for (matidx_t i_index = 1; i_index < mapperA.number_of_valid_mat_pos(al); i_index++) {
 	//todo:toask: check right side not exceeding ar,br?
@@ -373,7 +371,7 @@ AlignerN::align_M(pos_type al,pos_type ar,pos_type bl,pos_type br, bool allow_ex
 
     assert ( ! allow_exclusion );
 
-    	std::cout << "align_M aligned M is :" << std::endl << Ms[E_NO_NO] << std::endl;
+    if (trace_debugging_output)	std::cout << "align_M aligned M is :" << std::endl << Ms[E_NO_NO] << std::endl;
 }
 
 // compute the entries in the D matrix that
@@ -394,14 +392,14 @@ AlignerN::fill_D_entries(pos_type al, pos_type bl)
 	const Arc &arcA=am.arcA();
 	const Arc &arcB=am.arcB();
 
-	cout << "arcA:" << arcA << " arcB:" << arcB << endl;
+	if (trace_debugging_output)	cout << "arcA:" << arcA << " arcB:" << arcB << endl;
 	seq_pos_t ar_seq_pos = arcA.right();
 	seq_pos_t br_seq_pos = arcB.right();
 
 	matidx_t ar_prev_mat_idx_pos = mapperA.first_valid_mat_pos_before(al, ar_seq_pos);
 	matidx_t br_prev_mat_idx_pos = mapperB.first_valid_mat_pos_before(bl, br_seq_pos);
 
-	cout << "ar_prev_mat_idx_pos:" << ar_prev_mat_idx_pos << " br_prev_mat_idx_pos:" << br_prev_mat_idx_pos << endl;
+	if (trace_debugging_output)	cout << "ar_prev_mat_idx_pos:" << ar_prev_mat_idx_pos << " br_prev_mat_idx_pos:" << br_prev_mat_idx_pos << endl;
 
 	seq_pos_t ar_prev_seq_pos = mapperA.get_pos_in_seq_new(al, ar_prev_mat_idx_pos);
 	infty_score_t jumpGapCostA = getGapCostBetween(ar_prev_seq_pos, ar_seq_pos, true, sv);
@@ -412,7 +410,7 @@ AlignerN::fill_D_entries(pos_type al, pos_type bl)
 	infty_score_t m= Ms[0](ar_prev_mat_idx_pos, br_prev_mat_idx_pos) + jumpGapCostA + jumpGapCostB;
 	infty_score_t ia= IAmat(ar_prev_mat_idx_pos,arcB.idx()) + jumpGapCostA;
 	infty_score_t ib= IBmat(arcA.idx(),br_prev_mat_idx_pos) + jumpGapCostB;
-	cout << "m=" << m << " ia=" << ia << " ib=" << ib << endl;
+	if (trace_debugging_output)	cout << "m=" << m << " ia=" << ia << " ib=" << ib << endl;
 	assert (! params->STRUCT_LOCAL);
 
 	D(am) = std::max(m, ia);
@@ -496,7 +494,7 @@ AlignerN::align_D() {
 	    assert(! params->no_lonely_pairs);
 
 	    fill_D_entries(al,bl);
-	    cout << "D filled" << endl;
+	    if (trace_debugging_output)	cout << "D filled" << endl;
 
 	}
     }
@@ -554,9 +552,9 @@ void AlignerN::trace_IX (pos_type xl, matidx_t i_index, const Arc &arcY, bool is
     {
 	for (size_type k = arcY.left()+1; k < arcY.right(); k++) {
 	    if (isA)
-		alignment.append(-1,k);
+		alignment.append(-2,k);
 	    else
-		alignment.append(k,-1);
+		alignment.append(k,-2);
 	}
 	return;
     }
@@ -571,9 +569,9 @@ void AlignerN::trace_IX (pos_type xl, matidx_t i_index, const Arc &arcY, bool is
 	    for ( size_type k = i_prev_seq_pos + 1; k <= i_seq_pos; k++)
 	    {
 		if (isA)
-		    alignment.append(k, -1);
+		    alignment.append(k, -2);
 		else
-		    alignment.append(-1, k);
+		    alignment.append(-2, k);
 	    }
 	    return;
 	}
@@ -596,23 +594,23 @@ void AlignerN::trace_IX (pos_type xl, matidx_t i_index, const Arc &arcY, bool is
 	    {
 		alignment.add_basepairA(arcX.left(), arcX.right());
 		for (size_type k = xl+1; k <= arcX.left(); k++) {
-		    alignment.append(k, -1);
+		    alignment.append(k, -2);
 		}
 
 		trace_D(arcX, arcY, sv);
 
-		alignment.append(arcX.right(), -1);
+		alignment.append(arcX.right(), -2);
 	    }
 	    else
 	    {
 		alignment.add_basepairB(arcX.left(), arcX.right());
 		for (size_type k = xl+1; k <= arcX.left(); k++) {
-		    alignment.append(-1, k);
+		    alignment.append(-2, k);
 		}
 
 		trace_D(arcY, arcX, sv);
 
-		alignment.append(-1, arcX.right());
+		alignment.append(-2, arcX.right());
 
 	    }
 	}
@@ -700,19 +698,32 @@ void AlignerN::trace_M_noex(int state,pos_type al, matidx_t i_index, pos_type bl
     assert (state == E_NO_NO);
     M_matrix_t &M=Ms[state];
 
+
     seq_pos_t i_seq_pos = mapperA.get_pos_in_seq_new(al, i_index);
     seq_pos_t j_seq_pos = mapperB.get_pos_in_seq_new(bl, j_index);
-    seq_pos_t i_prev_seq_pos = mapperA.get_pos_in_seq_new(al, i_index-1); //TODO: Check border i_index==1,0
-    seq_pos_t j_prev_seq_pos = mapperB.get_pos_in_seq_new(bl, j_index-1); //TODO: Check border j_index==1,0
+    if ( i_seq_pos == al && j_seq_pos == bl )
+    	return;
+
+
+    seq_pos_t i_prev_seq_pos = 0;
+    if ( i_seq_pos > al )
+	i_prev_seq_pos = mapperA.get_pos_in_seq_new(al, i_index-1); //TODO: Check border i_index==1,0
+    seq_pos_t j_prev_seq_pos = 0;
+    if (j_seq_pos > bl )
+	j_prev_seq_pos = mapperB.get_pos_in_seq_new(bl, j_index-1); //TODO: Check border j_index==1,0
     bool constraints_alowed_edge = true; // constraints are not considered,  params->constraints.allowed_edge(i_seq_pos, j_seq_pos)
     bool constraints_aligned_pos_A = false; // TOcheck: Probably unnecessary, constraints are not considered
     bool constraints_aligned_pos_B = false; // TOcheck: Probably unnecessaryconstraints are not considered
     // determine where we get M(i,j) from
 
+
+
     // std::cout << i << " " << j << " " << sv.scoring()->basematch(i,j)<<std::endl;
 
     // match
-    if ( constraints_alowed_edge
+
+    if (  i_seq_pos > al && j_seq_pos > bl &&
+	    constraints_alowed_edge
 	    && mapperA.pos_unpaired(al, i_index) && mapperB.pos_unpaired(bl, j_index)
 	    && M(i_index,j_index) ==  M(i_index-1, j_index-1) + sv.scoring()->basematch(i_seq_pos, j_seq_pos)
 	    + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true, sv) + getGapCostBetween(j_prev_seq_pos, j_seq_pos, false, sv) ) {
@@ -720,7 +731,7 @@ void AlignerN::trace_M_noex(int state,pos_type al, matidx_t i_index, pos_type bl
 
 	trace_M(state, al, i_index-1, bl, j_index-1, tl, sv);
 
-	for ( size_type k = i_prev_seq_pos + 1; k < i_seq_pos; k++)
+/*	for ( size_type k = i_prev_seq_pos + 1; k < i_seq_pos; k++)
 	{
 	    alignment.append(k, -1);
 	}
@@ -728,34 +739,39 @@ void AlignerN::trace_M_noex(int state,pos_type al, matidx_t i_index, pos_type bl
 	{
 	    alignment.append(-1, k);
 	}
+	*/
 	alignment.append(i_seq_pos,j_seq_pos);
 	return;
     }
 
     if ( sv.scoring()->indel_opening() == 0 ) { // base del and ins, linear cost
 	// del
-	if ( !constraints_aligned_pos_A
+	if (  i_seq_pos > al &&
+		!constraints_aligned_pos_A
 		&& M(i_index,j_index) ==
 			M(i_index-1, j_index) + sv.scoring()->gapA(i_seq_pos) + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true, sv) )
 	{
 	    trace_M(state, al, i_index-1, bl, j_index, tl, sv);
-	    for ( size_type k = i_prev_seq_pos + 1; k <= i_seq_pos; k++)
+	    alignment.append(i_seq_pos, -1 );
+	    /* for ( size_type k = i_prev_seq_pos + 1; k <= i_seq_pos; k++)
 	    {
 		alignment.append(k, -1);
-	    }
+	    }*/
 	    return;
 	}
 
 	// ins
-	if ( !constraints_aligned_pos_B
+	if (  j_seq_pos > bl &&
+		!constraints_aligned_pos_B
 		&& M(i_index,j_index) ==
 			M(i_index,j_index-1) + sv.scoring()->gapB(j_seq_pos) + getGapCostBetween( j_prev_seq_pos, j_seq_pos, false, sv))
 	{
 	    trace_M(state, al, i_index, bl, j_index-1, tl, sv);
-	    for ( size_type k = j_prev_seq_pos + 1; k <= j_seq_pos; k++)
+	    alignment.append(-1, j_seq_pos);
+	    /*for ( size_type k = j_prev_seq_pos + 1; k <= j_seq_pos; k++)
 	    {
 		alignment.append(-1, k);
-	    }
+	    }*/
 	    return;
 	}
 
@@ -802,7 +818,7 @@ void AlignerN::trace_M_noex(int state,pos_type al, matidx_t i_index, pos_type bl
 
         	    trace_M(state, al, arcA_left_index_before, bl, arcB_left_index_before, tl, sv);
 
-        	    for ( size_type k = arcA_left_seq_pos_before + 1; k < arcA.left(); k++)
+        	    /*for ( size_type k = arcA_left_seq_pos_before + 1; k < arcA.left(); k++)
         	    {
         		alignment.append(k, -1);
         	    }
@@ -810,6 +826,7 @@ void AlignerN::trace_M_noex(int state,pos_type al, matidx_t i_index, pos_type bl
         	    {
         		alignment.append(-1, k);
         	    }
+        	    */
         	    alignment.add_basepairA(arcA.left(), arcA.right());
         	    alignment.add_basepairB(arcB.left(), arcB.right());
         	    alignment.append(arcA.left(),arcB.left());
@@ -847,19 +864,27 @@ AlignerN::trace_M(int state,pos_type al, matidx_t i_index, pos_type bl, matidx_t
     seq_pos_t j_seq_pos = mapperB.get_pos_in_seq_new(bl, j_index);
     if (trace_debugging_output) std::cout << "******trace_M***** " << " al:" << al << " i:" << i_seq_pos <<" bl:"<< bl << " j:" << j_seq_pos << " :: " <<  M(i_index,j_index) << std::endl;
 
-    if ( i_seq_pos <= al) {
-	for (int k = bl+1; k <= j_seq_pos; k++) { //TODO: end gaps cost is not free
-	    alignment.append(-1,k);
-	}
-	return;
-    }
+//    if ( i_seq_pos <= al ) {
+//	for (int k = bl+1; k <= j_seq_pos; k++) { //TODO: end gaps cost is not free
+//
+//	    if ( ((al == r.get_startA()-1) && mapperB.is_valid_pos_external(k))
+//		    || ( (al != r.get_startA()-1) && mapperB.is_valid_pos((k)) )
+//		alignment.append(-1,k);
+//
+//
+//	}
+//    }
 
-    if (j_seq_pos <= bl) {
-	for (int k = al+1;k <= i_seq_pos; k++) {
-	    alignment.append(k,-1); //TODO: end gaps cost is not free
-	}
-	return;
-    }
+//    if (j_seq_pos <= bl) {
+//	for (int k = al+1;k <= i_seq_pos; k++) {
+//
+//	    if ( ((bl == r.get_startB()-1) && mapperA.is_valid_pos_external(k))
+//		    || ( (bl != r.get_startB()-1) && mapperA.is_valid_pos(k)) )
+//		alignment.append(k,-1);
+//
+//	}
+//	return;
+//    }
 
 
     switch(state) {
@@ -889,15 +914,15 @@ AlignerN::trace(ScoringView sv) {
     seq_pos_t last_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_mat_idx_pos_B);
 
     trace_M(E_NO_NO, ps_al, last_mat_idx_pos_A, ps_bl, last_mat_idx_pos_B, true, sv); //TODO: right side for trace_M differs with align_M
-    for ( size_type k = last_seq_pos_A + 1; k <= r.get_endA(); k++)//tocheck: check the correctness
+/*    for ( size_type k = last_seq_pos_A + 1; k <= r.get_endA(); k++)//tocheck: check the correctness
     {
-	alignment.append(k, -1);
+		alignment.append(k, -1);
     }
     for ( size_type k = last_seq_pos_B + 1; k <= r.get_endB(); k++)//tocheck: check the correctness
     {
-	alignment.append(-1, k);
+	    alignment.append(-1, k);
     }
-
+*/
 }
 
 void

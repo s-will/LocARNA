@@ -247,7 +247,7 @@ private:
 			return rnadata.prob_basepair_external(inner_arc.left(),inner_arc.right())>=prob_basepair_in_loop_threshold;
 	}
 
-
+public:
 	/**
 	 * Is pos valid?
 	 * @param arc Arc
@@ -260,7 +260,6 @@ private:
 	    assert(arc.left()<pos && pos<arc.right());
 	    return rnadata.prob_unpaired_in_loop(pos,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
 	}
-
 	bool is_valid_pos_external(seq_pos_t pos) const{
 	    return rnadata.prob_unpaired_external(pos)>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
 	}

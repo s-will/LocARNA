@@ -261,8 +261,8 @@ option_def my_options[] = {
     {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
-    {"prob_unpaired_in_loop_threshold",'p',0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
-    {"prob_basepair_in_loop_threshold",'p',0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
+    {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
+    {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
 //    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},

@@ -49,7 +49,7 @@ void SparsificationMapper::compute_mapping_idx_left_ends(){
 
 	info_for_pos struct_pos;
 	size_type seq_length = rnadata.get_sequence().length();
-	std::cout << "compute_mapping_idx_left_ends: seq_length=" << seq_length << std::endl;
+//	std::cout << "compute_mapping_idx_left_ends: seq_length=" << seq_length << std::endl;
 	info_valid_seq_pos_vecs.resize(seq_length+1);
 	valid_mat_pos_vecs_before_eq.resize(seq_length+1);
 	//go over all left ends
@@ -92,8 +92,8 @@ void SparsificationMapper::compute_mapping_idx_left_ends(){
 		if (max_info_vec_size < max_size )
 		    max_info_vec_size = max_size;
 	}
-	cout << "max_info_vec_size " << max_info_vec_size << endl;
-	cout << "valid positions for indices " << info_valid_seq_pos_vecs << endl;
+//	cout << "max_info_vec_size " << max_info_vec_size << endl;
+//	cout << "valid positions for indices " << info_valid_seq_pos_vecs << endl;
 }
 
 void SparsificationMapper::valid_pos_external(pos_type cur_pos,const Arc *inner_arc, info_for_pos &struct_pos){
