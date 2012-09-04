@@ -2,6 +2,7 @@
 #define SPARSIFICATION_MAPPER_HH
 
 #include <iostream>
+#include <limits>
 #include "basepairs.hh"
 #include "rna_data.hh"
 #include "aux.hh"
@@ -55,7 +56,7 @@ private:
 
 	//! for each index and each sequence position the first valid position in the matrix before the sequence position is stored \n
 	//! index_t->seq_pos_t->matidx_t
-	vector<vector<matidx_t> > first_valid_mat_pos_vecs;
+	vector<vector<matidx_t> > valid_mat_pos_vecs_before_eq;
 
 	//! for each index and each sequence position all valid arcs that have the sequence position as common left end are stored \n
 	//! index_t->seq_pos_t->ArcIdxVec
@@ -134,6 +135,13 @@ public:
 		return info_valid_seq_pos_vecs.at(idx).at(pos).valid_arcs;
 	}
 
+	matidx_t first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
+	    if (left_end == numeric_limits<index_t>::max())
+		left_end = index;
+	    assert (pos >= left_end); //tocheck
+	    return valid_mat_pos_vecs_before_eq.at(index).at(pos-left_end);
+	}
+
 	/**
 	 * gives the first valid matrix position before a sequence position
 	 * @param left_end the index left end
@@ -141,20 +149,9 @@ public:
 	 * @return the first valid matrix position before the position pos at the index left_end
 	 * @note use if indexing by the common left end is used
 	 */
-	matidx_t first_valid_mat_pos_before(index_t left_end, seq_pos_t pos)const{
-	    cout << "---- ("<<left_end <<"," << pos << ")"<<first_valid_mat_pos_vecs.at(left_end).size() << endl;
-		return first_valid_mat_pos_vecs.at(left_end).at(pos-left_end);
-	}
-
-	/**
-	 * gives the first valid matrix position before a sequence position
-	 * @param arc arc that is used as an index
-	 * @param pos sequence position
-	 * @return the first valid matrix position before the position pos for the arc index
-	 * @note use if indexing by the arc indices is used
-	 */
-	matidx_t first_valid_mat_pos_before(const Arc &arc, seq_pos_t pos)const{
-		return first_valid_mat_pos_vecs.at(arc.idx()).at(pos-arc.left());
+	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
+	    assert (pos > left_end);
+	    return first_valid_mat_pos_before_eq(index, pos-1, left_end);
 	}
 
 	/**
@@ -197,22 +194,23 @@ public:
 	 *  matching without a gap is possible from pos if the sequence position that corresponds to
 	 *  the first valid matrix position before pos is directly adjacent to pos
 	 */
+	/*
 	bool matching_without_gap_possible(const Arc &arc, seq_pos_t pos)const{
 		const pos_type &mat_pos = first_valid_mat_pos_before(arc,pos);
 		return get_pos_in_seq_new(arc.idx(),mat_pos)==pos-1;
 	}
-
+*/
 	/**
 	 * gives all valid arcs with common left end from a sequence position
 	 * @param arc arc that is used as an index
 	 * @param pos sequence position
 	 * @return vector of all valid arcs with common left end pos for the arc index
 	 */
-	const ArcIdxVec &
+/*	const ArcIdxVec &
 	valid_arcs_left_adj(const Arc &arc, seq_pos_t pos) const{
 		return left_adj_vec.at(arc.idx()).at(pos-arc.left());
 	}
-
+*/
 	/**
 	 * is sequential matching possible?
 	 * @param idx arc index
@@ -260,11 +258,11 @@ private:
 	 */
 	bool is_valid_pos(const Arc &arc,seq_pos_t pos) const{
 	    assert(arc.left()<pos && pos<arc.right());
-	    return rnadata.prob_unpaired_in_loop(pos,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold;
+	    return rnadata.prob_unpaired_in_loop(pos,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
 	}
 
 	bool is_valid_pos_external(seq_pos_t pos) const{
-	    return rnadata.prob_unpaired_external(pos)>=prob_unpaired_in_loop_threshold;
+	    return rnadata.prob_unpaired_external(pos)>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
 	}
 
 };

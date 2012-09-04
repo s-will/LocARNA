@@ -263,11 +263,9 @@ AlignerN::init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br, 
 	std::cout << "init_state al: " << al << " bl: " << bl << " ar: " << ar << " br: " << br << std::endl;
 
     M_matrix_t &M = Ms[state];
-    cout << "l267" << endl;
 
     // al,bl can only be reached in states, where this is legal with cost 0 for empty alignment
     M(0,0) = (infty_score_t)0;
-    cout << "l271" << endl;
 
     //	std::cout << "COL is"<<bl<<" AL: "<<al<<" AR: "<<ar<<std::endl;
 
@@ -277,7 +275,6 @@ AlignerN::init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br, 
     // handling of anchor constraints:
     // anchored positions must not be excluded,
     // nor deleted
-    cout << "l278" << endl;
     matidx_t i_index;
     for (i_index = 1; i_index < mapperA.number_of_valid_mat_pos(al); i_index++) {
 
@@ -298,9 +295,6 @@ AlignerN::init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br, 
 	}
 	M(i_index,0) = indel_score;
     }
-
-    cout << "l301" << endl;
-
 
     // init first row al
     //
@@ -404,8 +398,8 @@ AlignerN::fill_D_entries(pos_type al, pos_type bl)
 	seq_pos_t ar_seq_pos = arcA.right();
 	seq_pos_t br_seq_pos = arcB.right();
 
-	matidx_t ar_prev_mat_idx_pos = mapperA.first_valid_mat_pos_before(al, ar_seq_pos); //tocheck: ar or ar-1?
-	matidx_t br_prev_mat_idx_pos = mapperB.first_valid_mat_pos_before(bl, br_seq_pos); //tocheck: ar or ar-1?
+	matidx_t ar_prev_mat_idx_pos = mapperA.first_valid_mat_pos_before(al, ar_seq_pos);
+	matidx_t br_prev_mat_idx_pos = mapperB.first_valid_mat_pos_before(bl, br_seq_pos);
 
 	cout << "ar_prev_mat_idx_pos:" << ar_prev_mat_idx_pos << " br_prev_mat_idx_pos:" << br_prev_mat_idx_pos << endl;
 

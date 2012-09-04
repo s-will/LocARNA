@@ -6,7 +6,7 @@ void SparsificationMapper::compute_mapping_idx_arcs(){
 	info_for_pos struct_pos;
 	left_adj_vec.resize(bps.num_bps());
 	info_valid_seq_pos_vecs.resize(bps.num_bps());
-	first_valid_mat_pos_vecs.resize(bps.num_bps());
+	valid_mat_pos_vecs_before_eq.resize(bps.num_bps());
 	for(size_type k=0;k<bps.num_bps();k++){
 		pos_type max_size = 0;
 		struct_pos.reset();
@@ -15,7 +15,7 @@ void SparsificationMapper::compute_mapping_idx_arcs(){
 		struct_pos.unpaired=true;
 		struct_pos.seq_pos=arc.left();
 		info_valid_seq_pos_vecs.at(k).push_back(struct_pos);
-		first_valid_mat_pos_vecs.at(k).push_back(0);
+		valid_mat_pos_vecs_before_eq.at(k).push_back(0);
 		left_adj_vec.at(k).resize(arc.right()-arc.left());
 		//compute mapping
 		for(size_type j=arc.left()+1;j<arc.right();j++){
@@ -32,11 +32,12 @@ void SparsificationMapper::compute_mapping_idx_arcs(){
 				struct_pos.seq_pos=j;//-arc.left();
 				struct_pos.valid_arcs.push_back(inner_arc->idx());
 			}
-			first_valid_mat_pos_vecs.at(k).push_back(info_valid_seq_pos_vecs.at(k).size()-1);
 			if(struct_pos.seq_pos==j){
 				info_valid_seq_pos_vecs.at(k).push_back(struct_pos);
 				max_size++;
 			}
+			valid_mat_pos_vecs_before_eq.at(k).push_back(info_valid_seq_pos_vecs.at(k).size()-1);
+
 		}
 		if (max_info_vec_size > max_size )
 		    max_info_vec_size = max_size;
@@ -50,7 +51,7 @@ void SparsificationMapper::compute_mapping_idx_left_ends(){
 	size_type seq_length = rnadata.get_sequence().length();
 	std::cout << "compute_mapping_idx_left_ends: seq_length=" << seq_length << std::endl;
 	info_valid_seq_pos_vecs.resize(seq_length+1);
-	first_valid_mat_pos_vecs.resize(seq_length+1);
+	valid_mat_pos_vecs_before_eq.resize(seq_length+1);
 	//go over all left ends
 	for(pos_type cur_left_end=0;cur_left_end<=seq_length;cur_left_end++){
 		size_type max_size = 0;
@@ -59,7 +60,7 @@ void SparsificationMapper::compute_mapping_idx_left_ends(){
 		struct_pos.unpaired=true;
 		struct_pos.seq_pos=cur_left_end;
 		info_valid_seq_pos_vecs.at(cur_left_end).push_back(struct_pos);
-		first_valid_mat_pos_vecs.at(cur_left_end).push_back(0);
+		valid_mat_pos_vecs_before_eq.at(cur_left_end).push_back(0);
 		pos_type max_right_end= (bps.left_adjlist(cur_left_end).begin()==bps.left_adjlist(cur_left_end).end()) ? 0
 				:(--bps.left_adjlist(cur_left_end).end())->right();
 		if (cur_left_end == 0)
@@ -79,14 +80,14 @@ void SparsificationMapper::compute_mapping_idx_left_ends(){
 			    else
 				iterate_left_adj_list(cur_left_end,cur_pos,&(*inner_arc),struct_pos);
 			}
-			first_valid_mat_pos_vecs.at(cur_left_end).push_back(info_valid_seq_pos_vecs.at(cur_left_end).size()-1);
 			if(struct_pos.seq_pos==cur_pos){
 				info_valid_seq_pos_vecs.at(cur_left_end).push_back(struct_pos);
 				max_size++;
 			}
+			valid_mat_pos_vecs_before_eq.at(cur_left_end).push_back(info_valid_seq_pos_vecs.at(cur_left_end).size()-1);
+
 		}
-		if (max_right_end != 0)
-		    first_valid_mat_pos_vecs.at(cur_left_end).push_back(info_valid_seq_pos_vecs.at(cur_left_end).size()-1); //toask: ask Christina for max_right
+//		if (max_right_end != 0)		    valid_mat_pos_vecs_before_eq.at(cur_left_end).push_back(info_valid_seq_pos_vecs.at(cur_left_end).size()-1); //toask: ask Christina for max_right
 
 		if (max_info_vec_size < max_size )
 		    max_info_vec_size = max_size;
@@ -98,13 +99,13 @@ void SparsificationMapper::compute_mapping_idx_left_ends(){
 void SparsificationMapper::valid_pos_external(pos_type cur_pos,const Arc *inner_arc, info_for_pos &struct_pos){
 
     if(!inner_arc){
-	if(true) // todo: !!UNCOMMENT!!is_valid_pos_external(cur_pos))
+	if(is_valid_pos_external(cur_pos))
 	{
 	    struct_pos.unpaired=true;
 	    struct_pos.seq_pos=cur_pos;
 	}
     }
-    else if(true)//todo: !!UNCOMMENT!! is_valid_arc_external(*inner_arc))
+    else if(is_valid_arc_external(*inner_arc))
     {
 	struct_pos.valid_arcs.push_back(inner_arc->idx());
 	struct_pos.seq_pos=cur_pos;
