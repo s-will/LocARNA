@@ -115,7 +115,7 @@ protected:
 		/**
 		 * Construct for AlignerN object
 		 *
-		 * @param aligner The aligner object
+		 * @param alignerN The aligner object
 		 */
 		UnmodifiedScoringViewN(const AlignerN *alignerN): alignerN_(alignerN) {};
 

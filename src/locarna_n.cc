@@ -512,17 +512,21 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
+    PFoldParams params(clp.no_lonely_pairs,clp.opt_stacking);
 
-    MultipleAlignment maA(clp.file1,MultipleAlignment::FASTA);
-    MultipleAlignment maB(clp.file2,MultipleAlignment::FASTA);
-    //    cout << "name1: " << maA.seqentry(0).name() << endl;
-    //    cout << "name2: " << maB.seqentry(0).name() << endl;
-    Sequence seqA(maA);
-    Sequence seqB(maB);
+    RnaData rnadataA(clp.file1,true,clp.opt_stacking,true);
+    if (!rnadataA.pairProbsAvailable() || !rnadataA.inLoopProbsAvailable()) {
+	rnadataA.computeEnsembleProbs(params,true);
+    }
 
-    RnaData rnadataA(seqA,true,clp.opt_stacking);
-    RnaData rnadataB(seqB,true,clp.opt_stacking);
+    RnaData rnadataB(clp.file2,true,clp.opt_stacking,true);
+    if (!rnadataB.pairProbsAvailable() || !rnadataB.inLoopProbsAvailable()) {
+	rnadataB.computeEnsembleProbs(params,true);
+    }
 
+    Sequence seqA=rnadataA.get_sequence();
+    Sequence seqB=rnadataB.get_sequence();
+    
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
@@ -811,8 +815,8 @@ main(int argc, char **argv) {
 	aligner.trace();
 	
 	// for debugging:
-	if (clp.opt_verbose)
-		aligner.get_alignment().write_debug(std::cout);
+	//if (clp.opt_verbose)
+	//    aligner.get_alignment().write_debug(std::cout);
     }
     
     if (clp.opt_normalized || DO_TRACE) { // if we did a trace (one way or

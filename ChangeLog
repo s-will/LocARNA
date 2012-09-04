@@ -349,4 +349,6 @@ Aug, 2012
 	Change interface of scoring such that gapA (gapB) depends on only
 	positions in sequence A (B), resp.
 	(1.7.2.1)
-	
+	Major improvements of the RnaData class and its interface
+	Some clean up
+	(1.7.2.5)

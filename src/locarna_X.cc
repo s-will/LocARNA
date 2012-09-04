@@ -53,7 +53,7 @@ VERSION_STRING = (std::string)PACKAGE_STRING;
 
 double min_prob; // only pairs with a probability of at least min_prob are taken into account
 
-// bool no_lonely_pairs; // no lonely pairs option
+bool no_lonely_pairs=false; // no lonely pairs option (currently not supported)
 
 int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
@@ -222,21 +222,28 @@ main(int argc, char **argv) {
     getrusage( RUSAGE_SELF, &ruse );
     double startR_preproc = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
     
-    MultipleAlignment maA(file1,MultipleAlignment::FASTA);
-    MultipleAlignment maB(file2,MultipleAlignment::FASTA);
-//    cout << "name1: " << maA.seqentry(0).name() << endl;
-//    cout << "name2: " << maB.seqentry(0).name() << endl;
-    
-    Sequence seqA(maA);
-    Sequence seqB(maB);
-
     gettimeofday( &tp, NULL );
     double start_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
     getrusage( RUSAGE_SELF, &ruse );
     double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
-    RnaData rnadataA(seqA,true,opt_stacking);
-    RnaData rnadataB(seqB,true,opt_stacking);
+    PFoldParams params(no_lonely_pairs,opt_stacking);
+
+    RnaData rnadataA(file1,true,opt_stacking,true);
+    if (!rnadataA.pairProbsAvailable() || !rnadataA.inLoopProbsAvailable()) {
+	rnadataA.computeEnsembleProbs(params,true);
+    }
+
+    RnaData rnadataB(file2,true,opt_stacking,true);
+    if (!rnadataB.pairProbsAvailable() || !rnadataB.inLoopProbsAvailable()) {
+	rnadataB.computeEnsembleProbs(params,true);
+    }
+
+    Sequence seqA=rnadataA.get_sequence();
+    Sequence seqB=rnadataB.get_sequence();
+    
+    MultipleAlignment maA(seqA);
+    MultipleAlignment maB(seqB);
 
     gettimeofday( &tp, NULL );
     double end_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
@@ -432,9 +439,10 @@ main(int argc, char **argv) {
 	 //output chained EPMs to PS files
 	 if(opt_postscript_output){
 	//	 time_t start_ps = time (NULL);
+	    
 		 if (opt_verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
-		 if (psFile1.size()==0){psFile1 = maA.seqentry(0).name()+"_EPMs.ps";}
-		 if (psFile2.size()==0){psFile2 = maB.seqentry(0).name()+"_EPMs.ps";}
+		 if (psFile1.size()==0){psFile1 = seqA.names()[0]+"_EPMs.ps";}
+		 if (psFile2.size()==0){psFile2 = seqB.names()[0]+"_EPMs.ps";}
 
 		 myChaining.MapToPS(maA.consensus_sequence(), maB.consensus_sequence(), myLCSEPM, psFile1,psFile2);
 //		 time_t stop_ps = time (NULL);

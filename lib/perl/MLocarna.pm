@@ -1690,7 +1690,7 @@ sub extract_score_matrix_from_alignments($$) {
 	    
 	    my @aln = @{ $pairwise_alns[$a][$b] };
 		
-	    $aln[0] =~ /Score: ([\d\.\-]+)/ || die "Cannot extract score from $aln[0].\n";
+	    $aln[0] =~ /Score: ([\d\.\-]+)/ || die "Cannot extract score for sequence $a vs. $b.\n";
 	    my $score=$1;
 	    
 	    $score_matrix[$a][$b] = $score;

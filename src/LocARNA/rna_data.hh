@@ -17,31 +17,275 @@ extern "C" {
 
 #include "multiple_alignment.hh"
 
+//! @todo return in loop probs of 1 if information for calculating in loop probs is unavailable
+//! @todo support pre-computed in loop probs from tables
+//! @todo support constraint pf folding
 namespace LocARNA {
 
-    //! @brief Represents the raw input data for an RNA
+#   ifdef HAVE_LIBRNA
+
+    class McC_matrices_base {
+    protected:
+    	size_t length;     //!< sequence length
+	bool local_copy; //!< whether pointers point to local copies of data structures
+	
+	FLT_OR_DBL *qb;  //!< Q<sup>B</sup> matrix					
+	FLT_OR_DBL *qm;  //!< Q<sup>M</sup> matrix					
+	
+	FLT_OR_DBL *bppm;  //!< base pair probability matrix
+	
+    	int* iindx;        //!< iindx from librna's get_iindx()
+    	/** 
+	 * @brief construct empty
+	 */
+	McC_matrices_base();
+
+	/** 
+	 * @brief initialize
+	 * 
+	 * @param length length of sequence 
+	 */
+	void
+	init(size_t length_);
+
+    public:
+	FLT_OR_DBL *q1k; //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
+	FLT_OR_DBL *qln; //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
+	
+	pf_paramT *pf_params; //!< parameters for pf folding
+	
+		
+	/** 
+	 * @brief destruct, optionally free local copy
+	 */
+	~McC_matrices_base();
+
+	
+	//! \brief index in triagonal matrix
+	size_t iidx(size_t i,size_t j) const {
+	    assert(1<=i);
+	    assert(i<=j);
+	    assert(j<=length);
+
+	    return iindx[i]-j;
+	}
+
+	/** 
+	 * @brief Access matrix bppm
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
+	FLT_OR_DBL get_bppm(size_t i, size_t j) const { return bppm[iidx(i,j)]; }
+
+	/** 
+	 * @brief Access matrix qb
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
+	FLT_OR_DBL get_qb(size_t i, size_t j) const { return qb[iidx(i,j)]; }
+
+	/** 
+	 * @brief Access matrix qm
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
+	FLT_OR_DBL get_qm(size_t i, size_t j) const { return qm[iidx(i,j)]; }
+	    
+    protected:
+
+	void free_all();
+
+	//! \brief deep copy all data structures 
+	void
+	deep_copy(const McC_matrices_base &McCmat);
+    };
+    
+    //! @brief  structure for McCaskill matrices pointers
     //!
-    //! Stores the set of base pairs and the RNA sequence
+    //! Contains pointers to matrices made accessible through
+    //! get_pf_arrays() and get_bppm() of Vienna librna
+    class McC_matrices_t : public McC_matrices_base {
+	char *ptype;	   //!< pair type matrix					
+
+    public:
+
+	char *sequence;  //!< 0-terminated sequence string
+	short *S;        //!< 'S' array (integer representation of nucleotides)	
+	short *S1;	   //!< 'S1' array (2nd integer representation of nucleotides)	
+	
+	/** 
+	 * @brief construct by call to VRNA lib functions and optionally make local copy
+	 * 
+	 * @param sequence the sequence as 0-terminated C-string 
+	 * @param local_copy  if TRUE, copy the data structures; otherwise, only store pointers
+	 */
+	McC_matrices_t(char *sequence, bool local_copy);
+	
+	/** 
+	 * @brief destruct, optionally free local copy
+	 */
+	~McC_matrices_t();
+
+
+	/** 
+	 * @brief Access matrix ptype
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
+	char get_ptype(size_t i, size_t j) const { return ptype[iidx(i,j)]; }
+
+    protected:
+
+	void free_all();
+
+	//! \brief deep copy all data structures 
+	void
+	deep_copy(const McC_matrices_t &McCmat);
+    };
+
+     //! @brief  structure for Alifold-McCaskill matrices pointers
     //!
-    //! Reads, maintains and provides access to the set of basepairs of
-    //! one RNA together with their pair probabilities 
+    //! Contains pointers to matrices made accessible through
+    //! get_alipf_arrays() and alipf_export_bppm() of Vienna librna
+    class McC_ali_matrices_t : public McC_matrices_base {
+    protected:
+	size_t n_seq;     //!< sequence length
+	
+    public:
+
+	short **S;       //!< 'S' array (integer representation of nucleotides)	
+	short **S5;	   //!< 'S5' array
+	short **S3;	   //!< 'S3' array
+	unsigned short  **a2s;  //!< 'a2s' array
+	char **Ss;	   //!< 'Ss' array
+    protected:
+	short *pscore; //!< alifold covariance/conservation scores
+    public:
+	/** 
+	 * @brief construct by call to VRNA lib functions and optionally make local copy
+	 * 
+	 * @param length_ length of sequence 
+	 * @param local_copy_  if TRUE, copy the data structures; otherwise, only store pointers
+	 */
+	McC_ali_matrices_t(size_t n_seq, size_t length, bool local_copy);
+	
+	/** 
+	 * @brief destruct, optionally free local copy
+	 */
+	~McC_ali_matrices_t();
+
+
+	/** 
+	 * @brief Access matrix pscore
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * 
+	 * @return matrix entry 
+	 */
+	short get_pscore(size_t i, size_t j) const { return pscore[iidx(i,j)]; }
+
+
+    protected:
+
+	void free_all();
+
+	//! \brief deep copy all data structures 
+	void
+	deep_copy(const McC_ali_matrices_t &McCmat);
+    };
+    
+
+#    endif	
+
+
+    //! \brief Parameters for partition folding
     //!
-    //! Input formats: pp or dp_ps (including stacking probabilities).
+    //! Describes certain parameters for the partition folding of 
+    //! a sequence or alignment.
     //!
-    //! Supports the definition of sequence constraints in pp files.
+    //! @see RnaData
     //!
+    class PFoldParams {
+	friend class RnaData;
+	
+	bool noLP;
+	bool stacking;
+    public:
+	/** 
+	 * Construct with all parameters
+	 * 
+	 * @param noLP_
+	 * @param stacking_ 
+	 */
+	PFoldParams(bool noLP_,
+		    bool stacking_
+		    )
+	    : noLP(noLP_),
+	      stacking(stacking_) 
+	{}
+    };
+
+    /*
+    * @brief Represents the raw structure ensemble data for an RNA
+    *
+    * Stores the set of base pairs and the RNA sequence. Can partition fold
+    * RNAs, stores dynamic programming matrices of the McCaskill algorithm.
+    * Computes special "in loop" probabilities.
+    *
+    * Maintains and provides access to the set of basepairs of
+    * one RNA together with the ensemble probabilities. 
+    *
+    * Reads pp or dp_ps files (including stacking probabilities), furthermore clustal and fasta.
+    *
+    * Supports the definition of sequence constraints in pp files.
+    *
+    *
+    * Use cases for construction from file: 1) standard usage for LocARNA
+    * (read input from file, compute base pair probs only if initialized from sequence-only file format,
+    * don't read or compute in loop probs):
+    * RnaData r=RnaData(file,true,opt_stacking,false);
+    * if (!r.pairProbsAvailable()) {r.computeEnsembleProbs(params,false);}
+    * 2) always recompute probabilities, no in loop probabilities:
+    * RnaData r=RnaData(file,false);
+    * r.computeEnsembleProbs(params,false);
+    * 3) always recompute probabilities and in loop probabilities:
+    * RnaData r=RnaData(file,false);
+    * r.computeEnsembleProbs(params,true);
+    * 4) standard case for LocARNA-ng: compute base pair probs only if initialized from sequence-only
+    * file format, but compute in loop probabilities if not
+    * available in input file; in the latter case recompute pair probabilities for consistency:
+    * RnaData r=RnaData(file,true,opt_stacking,true);
+    * if (!r.pairProbsAvailable() || !r.inLoopProbsAvailable()) {r.computeEnsembleProbs(params,true);}
+    */
     class RnaData {
     public:
 	//! type for matrix of arc probabilities
-	//! @note we use a sparse matrix for arc probabilities
 	typedef SparseMatrix<double> arc_prob_matrix_t;
     private:
 	Sequence sequence; //!< the sequence
-	bool stacking; //!< whether to support stacking
-
-	//! consensus sequence as C++ string
-	std::string consensus_sequence;
-
+	
+	//! whether pair probabilities are availabe
+	bool pair_probs_available; 
+	
+	//! whether stacking probabilities are available
+	bool stacking_probs_available; 
+	
+	//! whether "in loop" probabilities are availabe
+	bool in_loop_probs_available; 
+	
 	//! array for all arc probabilities the array is used when reading
 	//! in the probabilities and for merging probs during pp-output
 	arc_prob_matrix_t arc_probs_; 
@@ -54,50 +298,28 @@ namespace LocARNA {
 	//! string description of sequence constraints
 	std::string seq_constraints_; 
 	
-	FILE *myfile;
-
-	////////////////////////////////////////////////////////////
-	// Attributes to store copies of the McCaskill matrices of pf_fold
-	// and corresponding access methods
-	//
-	// It would be nice to encapsulate them in a class.
 # ifdef HAVE_LIBRNA
-	FLT_OR_DBL *qm1;
-	FLT_OR_DBL *qm2;
-	FLT_OR_DBL *scale_p;
-	pf_paramT *pf_params_p;
-	FLT_OR_DBL *expMLbase_p;
+	// std::vector<FLT_OR_DBL> qm1; // store qm1 for debugging
+	std::vector<FLT_OR_DBL> qm2;
+	std::vector<FLT_OR_DBL> scale;
+	std::vector<FLT_OR_DBL> expMLbase;
 	
-	short *S_p;          //!< 'S' array (integer representation of nucleotides)	
-	short *S1_p;	 //!< 'S1' array (2nd integer representation of nucleotides)	
-	char *ptype_p;	 //!< pair type matrix					
-	FLT_OR_DBL *qb_p;	 //!< Q<sup>B</sup> matrix					
-	FLT_OR_DBL *qm_p;	 //!< Q<sup>M</sup> matrix					
-	FLT_OR_DBL *q1k_p;	 //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
-	FLT_OR_DBL *qln_p;	 //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
-	
-	//! @brief base pair probability matrix
-	//! 
-	//! Access elements with get_bppm()
-	FLT_OR_DBL *bppm;
-	
-	int* iindx; //!< iindx from librna's get_iindx()
-	
-	//! \brief Get entry in bppm matrix 
-	//! 
-	//! @note Performs index computation via iindx
-	FLT_OR_DBL get_bppm(size_t i, size_t j) const { return bppm[iindx[i]-j]; }
-	char get_ptype(size_t i, size_t j) const { return ptype_p[iindx[i]-j]; }
-	FLT_OR_DBL get_qb(size_t i, size_t j) const { return qb_p[iindx[i]-j]; }
-	FLT_OR_DBL get_qm(size_t i, size_t j) const { return qm_p[iindx[i]-j]; }
+	McC_matrices_base *McCmat; //!< DP matrix data structures of VRNA's McCaskill algorithm
+#else
+	void *McCmat;
 #endif
+	
+	//! whether alifold was used to compute the McCaskill matrices
+	bool used_alifold;
+
+
 	////////////////////////////////////////////////////////////
 	
 	/** 
-	 * Pair type of an admissible basepair.
+	 * @brief Pair type of an admissible basepair.
 	 * 
-	 * @param i 
-	 * @param j 
+	 * @param i left end of base pair
+	 * @param j right end of base pair
 	 * 
 	 * @return pair type unless the base pair is not admissible,
 	 * i.e. it is not complementary or has probability 0.0. Then
@@ -105,66 +327,154 @@ namespace LocARNA {
 	 */
 	int ptype_of_admissible_basepair(size_type i,size_type j) const;
     
-    public:
-	/** 
-	 * @brief Construct from file (either pp or dp_ps or clustalw)
-	 *
-	 * Reads the sequence/alignment, the base pairs and their
-	 * probabilities from the input file. Tries to guess whether
-	 * the input is in pp, dp_ps, or clustalw format. In the
-	 * latter case, which works only when linking to librna, the
-	 * pair probabilities are predicted and it is possible to
-	 * keep the DP-matrices for later use.
-	 *
-	 * @param file input file name
-	 * @param keepMcM if TRUE, keep the McCaskill matrices for use in methods prob_unpaired/basepair_in_loop/external
-	 * @param stacking whether to use stacking
-	 */
-	RnaData(const std::string &file, bool keepMcM, bool stacking);
 	
 	/** 
-	 * Construct from sequence, predicting the basepairs
+	 * Test for sufficient fragment length
 	 * 
-	 * @param sequence_ the RNA sequence as Sequence object 
-	 * @param keepMcM     if TRUE, keep the McCaskill matrices for use in methods prob_unpaired/basepair_in_loop/external
-	 * @param stacking whether to use stacking
+	 * @param i left end of fragment
+	 * @param j right end of fragment
+	 * @param minlen minimum length of fragment
 	 *
-	 * @note requires linking to librna
-	 * @see prob_unpaired_in_loop()
-	 * @pre sequence_ has exactly one row
-	 * @todo Support construction from general Sequence objects
-	 * (i.e. multiple rows). 
-	 * This could be done by calling alipf_fold() (in place of
-	 * pf_fold()) in general. See also pre-condition
-	 * compute_McCaskill_matrices()
+	 * @return whether fragment has at least length minlen
 	 */
-	RnaData(const Sequence &sequence_, bool keepMcM=false, bool stacking=false);
+	bool
+	frag_len_geq(size_t i, size_t j, size_t minlen) const {
+	    return i+minlen <= j+1;	
+	}
+
+	/** 
+	 * Number of bases in a fragment
+	 * 
+	 * @param i left end of fragment
+	 * @param j right end of fragment
+	 *
+	 * @return number of bases in range i..j
+	 */
+	size_t
+	frag_len(size_t i, size_t j) const {
+	    return j+1-i;	
+	}
 	
 
+    public:
+	/** 
+	 * @brief Construct from file (either pp or dp_ps or clustalw or fasta)
+	 *
+	 * Reads the sequence/alignment, the and base pair
+	 * probabilities from the input file. Tries to guess whether
+	 * the input is in pp, dp_ps, or clustalw format. In the
+	 * latter case, which works only with linking to librna, the
+	 * pair probabilities are predicted and it is possible to keep
+	 * the DP-matrices for later use.
+	 *
+	 * @param file input file name
+	 * @param readPairProbs read pair probabilities if file format contains pair probabilities
+	 * @param readStackingProbs read stacking probabilities if available and readPairProbs
+	 * @param readInLoopProbs read in loop probabilities if file format contains them
+	 *
+	 * @note if readInLoopProbs, don't read pair probs unless in loop probs are available
+
+	 * @note if !readPairProbs the object describes an RNA without
+	 * structure. pairProbsAvailable() will return false until
+	 * pair probs are made available, e.g., calling
+	 * computeEnsembleProbs().
+	 */
+	RnaData(const std::string &file,
+		bool readPairProbs,
+		bool readStackingProbs,
+		bool readInLoopProbs);
+	
+	/** 
+	 * @brief Construct from sequence, performing partition folding
+	 * 
+	 * @param sequence the RNA sequence as Sequence object
+	 *
+	 * @note after construction, the object describes an RNA without
+	 * structure. pairProbsAvailable() will return false until
+	 * pair probs are made available, e.g., calling computeEnsembleProbs().
+	 */
+	RnaData(const Sequence &sequence);
+	
 	//! \brief Clean up.
 	//!
 	//! In most cases does nothing. If McCaskill
 	//! matrices are kept, they are freed.
 	~RnaData();
+
+	/** 
+	 * @brief Availability of pair probabilities
+	 * 
+	 * @return whether probabilities are available
+	 */
+	bool
+	pairProbsAvailable() const {
+	    return pair_probs_available;
+	}
+	
+	/** 
+	 * @brief Availability of "in loop" probabilities
+	 * 
+	 * @return whether probabilities are available
+	 */
+	bool
+	inLoopProbsAvailable() const {
+	    return in_loop_probs_available;
+	}
     
-	//! get the sequence
+	/** 
+	 * \brief (re)compute the pair probabilities
+	 * 
+	 * @param params pfolding parameters
+	 * @param inLoopProbs whether in loop probabilities should be made available
+	 * @param use_alifold whether alifold should be used
+	 *
+	 * @todo Support construction from general Sequence objects
+	 * (i.e. multiple rows). 
+	 * This could be done by calling alipf_fold() (in place of
+	 * pf_fold()) in general. See also pre-condition
+	 * compute_McCaskill_matrices()
+	 *
+	 @pre unless use_alifold, sequence row number has to be 1
+	 */
+	void
+	computeEnsembleProbs(const PFoldParams &params,bool inLoopProbs, bool use_alifold=true);
+	
+	//! @brief Get the sequence
 	//! @return sequence of RNA
 	const Sequence &get_sequence() const {
 	    return sequence;
 	}
-    
-	//! get the sequence constraints
+	
+	//! @brief Get sequence constraints
 	//! @return string description of sequence constraints of RNA
 	const std::string &get_seq_constraints() const {
 	    return seq_constraints_;
 	}
     
+	/** 
+	 * \brief Allow object to forget in loop probabilities
+	 * @todo implement; currently does nothing
+	 */
+	void forgetInLoopProbs() {/* do nothing */};
     
     private:
     
     
 	// ------------------------------------------------------------
 	// reading methods
+
+
+	//! \brief read sequence and base pairs from dp.ps file
+	//! 
+	//! @param filename name of input file
+	//! @param readPairProbs read pair probabilities if file format contains pair probabilities
+	//! @param readStackingProbs read stacking probabilities if available and readPairProbs
+	//!
+	//! @note dp.ps is the output format of RNAfold (and related
+	//! tools) of the Vienna RNA package
+	void readPS(const std::string &filename, 
+		    bool readPairProbs,
+		    bool readStackingProbs);
     
 	//! \brief read basepairs and sequence from a pp-format file
 	//! 
@@ -178,83 +488,42 @@ namespace LocARNA {
 	//! (i,j) and (i+1,j+1) simultaneously. If p2 is not given set probability to 0.
 	//!
 	//! @param filename name of input file
+	//! @param readPairProbs read pair probabilities if file format contains pair probabilities
+	//! @param readStackingProbs read stacking probabilities if available and readPairProbs
+	//! @param readInLoopProbs read in loop probabilities if file format contains them
 	//!
 	//! @post object is initialized with information from file
-	void readPP(const std::string &filename);
-    
-	//! @brief read basepairs and sequence from a ppml-format file.
-	//! 
-	//! @note ppml is a currently NOT IMPLEMENTED, only envisioned xml-like file format.
-	//! @todo Implement (or decide to drop)
-	//!
-	//! @note ppml is a proprietary format of LocARNA,
-	//! which represents a single RNA sequence or a multiple alignment
-	//! together with the base pair probabilities of the RNAs
-	//! it contains 
-	//! * the SP-score of the alignment, tag <score> (optionally)
-	//! * the multiple sequence alignment in aln-format, tag <alignment>
-	//! * the base pair probs, tags <bpp_N>
-	//! * the stacked base pair probs, tags <bpp_stack_N>
-	//! * (alternatively: fix secondary structure)
-	//! * alternatively or in addition: consensus pair probabilities, tag <bpp>, <bpp_stack>
-	//! * constraints on structure, tag <strcons>
-	//! * constraints on sequence, tag <seqcons>
-	//!
-	//! having single bpp allows to
-	//!   * SP-score the multiple alignment in the ppml and/or the result of alignment
-	//!   (* rebuild a guide tree from the multiple alignment)
-	//!   * eventually rethink the scoring via consensus bpp (going to SP score)
-	//!
-	//! expect "brackets" <ppml> ... </ppml>
-	//!
-	//! @param filename name of input file
-	//!
-	//! @post object is initialized with information from file
-	//!
-	void readPPML(const std::string &filename);
-    
-	//! read basepairs and sequence from a dp-format ps file
-	//! dp is written by RNAfold -p
-	void readPS(const std::string &filename);
-    
-	/** 
-	 * Read multiple alignment from file and run base pair computation
-	 *
-	 * Supports the input formats understood by class MultipleAlignment
-	 * @note Currently, MultipleAlignment supports only CLUSTAL format
-	 * @see MultipleAlignment(std::istream &in)
-	 *
-	 * @param filename input filename
-	 * @param keepMcM whether to keep McCaskill matrices
-	 * @param stacking whether to use stacking
-	 * @param format file format of multiple alignment file (CLUSTAL or FASTA)
-	 *
-	 * @note Currently, the name is misleading. See todo.
-	 *
-	 * @todo Support true multiple alignments, currently only
-	 * single sequences are supported.
-	 *
-	 */
-	void readMultipleAlignment(const std::string &filename, 
-				   bool keepMcC, bool stacking,
-				   MultipleAlignment::format_t format
-				   );
+	void readPP(const std::string &filename, 
+		    bool readPairProbs,
+		    bool readStackingProbs,
+		    bool readInLoopProbs
+		    );
 	
-	
-	//! \brief read baepairs and sequence from a file
-	//! (autodetect file format)
+	//! \brief read sequence and optionally base pairs from a file
+	//! (autodetect file format: pp, dp.ps, aln, fa)
 	//!
 	//! @param filename the input file
-	//! @param keepMcM if TRUE, keep the McCaskill matrices for use in prob_unpaired_in_loop(). This works only if file is in clustalw format!
+	//!
 	//! @post object is initialized from file
 	//!
-	void read(const std::string &filename, bool keepMcM=false);
+	void
+	initFromFile(const std::string &filename, 
+		     bool readPairProbs,
+		     bool readStackingProbs,
+		     bool readInLoopProbs);
 
 	// ------------------------------------------------------------
-	// init from bppm
+	// init from computed pair probabilities
+	
 	
 	/** 
-	 * Initialize from base pair probability matrix
+	 * \brief clear the arc probabilities and stacking probabilities
+	 */
+	void
+	clear_arc_probs();
+
+	/**
+	 * Set arc probs from computed base pair probability matrix
 	 * 
 	 * @pre Base pair probability matrix is computed (and still
 	 * accessible). Usually after call of compute_McCaskill_matrices().
@@ -263,16 +532,13 @@ namespace LocARNA {
 	 * pairs with larger or equal probability. Use default
 	 * threshold as in RNAfold -p.
 	 *
-	 * @todo what about stacking probabilities?
 	 */
 	void
-	init_from_McCaskill_bppm(double threshold=1e-6);
-	
+	set_arc_probs_from_McCaskill_bppm(double threshold, bool stacking);
 	
 	// ------------------------------------------------------------
 	// set methods
-    
-    
+	
 	/** 
 	 * Set probability of basepair
 	 * 
@@ -301,18 +567,6 @@ namespace LocARNA {
 	    assert(i<j);
 	    arc_2_probs_.set(i,j,p);
 	}
-	
-// 	/**
-// 	 * printing the base pair probabilities to file
-// 	 */
-// 	void print_probab(){
-// 	  myfile= fopen("basepairs.txt","a");
-// 	  fprintf(myfile, "Position 1\tPosition2\tProbability\n");
-// 	  for(size_t i=1; i<=sequence.length(); i++)
-// 	    for(size_t j= i+1; j<=sequence.length(); j++)
-// 	      fprintf(myfile, "%i\t%i\t%e\n", (int)i, (int)j, get_arc_prob(i,j));
-// 	  fclose(myfile);
-// 	}
     
     public:
 	// ------------------------------------------------------------
@@ -348,6 +602,14 @@ namespace LocARNA {
 	
 	    return arc_2_probs_(i,j)/get_arc_prob(i+1,j-1);
 	}
+
+		
+	//! \brief get length of sequence
+	//! \return sequence length
+	size_type get_length() const {
+	  return sequence.length();
+	}
+	
 
 	// ------------------------------------------------------------
 	// compute probabilities paired upstream, downstream, and unpaired
@@ -395,16 +657,29 @@ namespace LocARNA {
 		- prob_paired_downstream(i);
 	}
 
-		
-	//! \brief get length of sequence
-	//! \return sequence length
-	size_type get_length() const {
-	  return sequence.length();
-	}
-	
 #   ifdef HAVE_LIBRNA
 	// the following methods need linking to librna
 
+    protected:
+	/** 
+	 * \brief Unpaired probabilty of base in a specified loop (alifold) 
+	 *
+	 * alifold-specific version of prob_unpaired_in_loop()
+	 *
+	 * @param k unpaired sequence position
+	 * @param i left end of loop enclosing base pair
+	 * @param j right end of loop enclosing base pair
+	 * 
+	 * @return probability that k is unpaired in the loop closed by i and j
+	 *
+	 * @see prob_unpaired_in_loop()
+	 *
+	 */
+	double
+	prob_unpaired_in_loop_ali(size_type k,
+				  size_type i,
+				  size_type j) const;
+    public:
 
 	/** 
 	 * \brief Unpaired probabilty of base in a specified loop 
@@ -453,6 +728,28 @@ namespace LocARNA {
 	prob_unpaired_external(size_type k) const;
 	
 
+    protected:
+	/** 
+	 * \brief Probabilty of base pair in a specified loop (alifold)
+	 *
+	 *`alifold-specific code
+	 * 
+	 * @param ip left end of inner base pair
+	 * @param jp right end of inner base pair
+	 * @param i left end of loop enclosing base pair
+	 * @param j right end of loop enclosing base pair
+	 * 
+	 * @return probability that (ip,jp) is inner base pair in the loop closed by i and j
+	 *
+	 * @see prob_basepair_in_loop()
+	 */
+	double
+	prob_basepair_in_loop_ali(size_type ip,
+				  size_type jp,
+				  size_type i,
+				  size_type j) const;
+
+    public:
 	/** 
 	 * \brief Probabilty of base pair in a specified loop 
 	 * 
@@ -482,6 +779,7 @@ namespace LocARNA {
 			      size_type i,
 			      size_type j) const;
 
+
 	/** 
 	 * \brief Probabilty of base pair in the external 'loop'
 	 * 
@@ -507,38 +805,39 @@ namespace LocARNA {
 	/** 
 	 * \brief Computes the McCaskill matrices and keeps them accessible
 	 * 
-	 * Allocates and fills the McCaskill matrices. Use
-	 * free_McCaskill_matrices() for freeing the space again.
+	 * Allocates and fills the McCaskill matrices.
 	 *
 	 * @pre sequence_ has exactly one row
 	 *
+	 * @param params parameters for partition folding
+	 * @param inLoopProbs whether to compute and keep information for in loop probablities
+	 * 
 	 * @note Access to these matrices is required by
-	 * prob_unpaired_in_loop(). The McCaskill algorithm is also
-	 * performed when the RnaData object is constructed from a
-	 * sequence.
-	 *
-	 * @todo If we don't want to keep the McCaskill matrices, the
-	 * method will unnessarily produce local copies of the
-	 * McCaskill matrices and compute the Qm2 matrix. Probably,
-	 * the overhead is usually negligible. However, this could be
-	 * optimized.
+	 * prob_unpaired_in_loop() (with inLoopProbs==true). The
+	 * McCaskill algorithm is also performed when the RnaData
+	 * object is constructed from a sequence.
 	 *
 	 * @note requires linking to librna
-	 * @see prob_unpaired_in_loop(), RnaData(const Sequence &sequence_, bool keepMcM), free_McCaskill_matrices()
 	 */
 	void
-	compute_McCaskill_matrices();
+	compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs);
+	
+	
 	
 	/** 
-	 * \brief Free the McCaskill partition function matrices
+	 * \brief Computes the McCaskill matrices and keeps them accessible (alifold)
+	 * 
+	 * Allocates and fills the McCaskill alifold matrices. Use
+	 * free_McCaskill_ali_matrices() for freeing the space again.
 	 *
-	 * These matrices are allocated and filled by calling
-	 * compute_McCaskill_matrices()
-	 *
+	 * @param params parameters for partition folding
+	 * @param inLoopProbs whether to compute and keep information for in loop probablities
+	 * 
+	 * @note requires linking to librna
 	 */
 	void
-	free_McCaskill_matrices();
-
+	compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs);
+	
 
 	/** 
 	 * \brief Computes the Qm2 matrix
@@ -546,12 +845,22 @@ namespace LocARNA {
 	 * The method creates and fills the Qm2 matrix needed for
 	 * prob_unpaired_in_loop().
 	 * 
-	 * @pre McCaskill matrices should be computed and accessible.
-	 * 
-	 * @note compute_McCaskill_matrices() calls this method at the end 
+	 * @pre McCaskill matrices are computed and accessible.
 	 */
 	void
 	compute_Qm2();
+
+	/** 
+	 * \brief Computes the Qm2 matrix (alifold)
+	 *
+	 * The method creates and fills the Qm2 matrix needed for
+	 * prob_unpaired_in_loop() if alifold is used.
+	 * 
+	 * @pre McCaskill alifold matrices are computed and accessible.
+	 */
+	void
+	compute_Qm2_ali();
+
 
 	/** 
 	 * \brief Initialize pointers to McCaskill matrices with 0.

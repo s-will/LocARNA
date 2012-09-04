@@ -485,8 +485,15 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
     
-    RnaData rnadataA(clp.file1,false,clp.opt_stacking);
-    RnaData rnadataB(clp.file2,false,clp.opt_stacking);
+
+    RnaData rnadataA(clp.file1,true,clp.opt_stacking,false);
+    RnaData rnadataB(clp.file2,true,clp.opt_stacking,false);
+
+    // optionally fold
+    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
+    if (!rnadataA.pairProbsAvailable()) {rnadataA.computeEnsembleProbs(pfparams,false);}
+    if (!rnadataB.pairProbsAvailable()) {rnadataB.computeEnsembleProbs(pfparams,false);}
+
 
     Sequence seqA=rnadataA.get_sequence();
     Sequence seqB=rnadataB.get_sequence();
