@@ -3,6 +3,7 @@
 
 #include "sequence.hh"
 #include "basepairs.hh"
+#include "sparsification_mapper.hh"
 #include "arc_matches.hh"
 #include "alignment.hh"
 
@@ -12,6 +13,7 @@
 #include "matrices.hh"
 
 #include "aligner_restriction.hh"
+
 
 namespace LocARNA {
 
@@ -29,8 +31,16 @@ namespace LocARNA {
 class AlignerN {
 public:
 
-	//! type of matrix M
-	typedef ScoreMatrix M_matrix_t;
+    typedef SparsificationMapper::ArcIdx ArcIdx; //!< type of arc index
+    typedef SparsificationMapper::ArcIdxVec ArcIdxVec; //!< vector of arc indices
+    typedef SparsificationMapper::matidx_t matidx_t; //!< type for a matrix position
+    typedef SparsificationMapper::seq_pos_t seq_pos_t; //!< type for a sequence position
+    typedef SparsificationMapper::index_t index_t; //!< type for an index
+
+
+
+    //! type of matrix M
+    typedef ScoreMatrix M_matrix_t;
 
 private:
 
@@ -42,6 +52,9 @@ protected:
 
 	const Sequence &seqA; //!< sequence A
 	const Sequence &seqB; //!< sequence B
+
+	const SparsificationMapper& mapperA;
+	const SparsificationMapper& mapperB;
 
 	const ArcMatches &arc_matches; //!< the potential arc matches between A and B
 
@@ -256,8 +269,13 @@ protected:
 	//! @param sv Scoring view
 	//! 
 	template <class ScoringView>
-	void init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
+	void init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
 
+	template <class ScoringView>
+	infty_score_t getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA,ScoringView sv);
+
+	template <class ScoringView>
+	void compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std::vector<infty_score_t> &blockGapCostsX, bool isA, ScoringView sv );
 
 	//! \brief compute IA/IB value of single element
 	//!
@@ -269,7 +287,7 @@ protected:
 	//! @returns score of IX(i,arcX) for the left end arc element i
 	//! 
 	template<class ScoringView>
-	infty_score_t compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, ScoringView sv);
+	infty_score_t compute_IX(pos_type xl, const Arc& arcY, pos_type i, std::vector<infty_score_t> const& blockGapCostsX, bool isA, ScoringView sv);
 
 	//! \brief fills all IA values using default scoring scheme
 	//!
@@ -299,7 +317,7 @@ protected:
 	//! @returns score of M(i,j) for the arcs left ended by al, bl
 	//!
 	template<class ScoringView>
-	infty_score_t compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_type j, ScoringView sv);
+	infty_score_t compute_M_entry(int state, index_t al, index_t bl, matidx_t index_i, matidx_t index_j,ScoringView sv);
 
 	//! align the loops closed by arcs (al,ar) and (bl,br).
 	//! in structure local alignment, this allows to introduce exclusions
@@ -326,7 +344,7 @@ protected:
 	 * @param sv scoring view 
 	 */
 	template<class ScoringView>
-	void trace_M(int state,int al,int i,int bl,int j,bool top_level,ScoringView sv);
+	void trace_M(int state,pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool tl, ScoringView sv);
 
 	/** 
 	 * \brief standard cases in trace back (without handling of exclusions)
@@ -473,6 +491,8 @@ public:
 	//! construct with sequences and corresponding arc matches
 	AlignerN(const Sequence &seqA,
 			const Sequence &seqB,
+			const SparsificationMapper &mapperA,
+			const SparsificationMapper &mapperB,
 			const ArcMatches &arc_matches,
 			const AlignerParams *ap,
 			const Scoring *s

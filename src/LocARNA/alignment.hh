@@ -95,6 +95,7 @@ namespace LocARNA {
 
 	/**
 	   Write in clustal format
+	   @todo: broken for empty alignments ~
 	*/
 	void write_clustal(std::ostream &out, int width, infty_score_t score,
 			   bool opt_local_out=false,bool opt_pos_out=false,
