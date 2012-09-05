@@ -1395,9 +1395,162 @@ namespace LocARNA {
 	     * McCmat->qln[j+1]
 	     )
 	    / McCmat->qln[1];
+
+    }
+    
+    std::ostream &
+    RnaData::write_unpaired_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const {
+	
+	// write lines for loops closed by base pairs
+	for(arc_prob_matrix_t::size_type i=1; i<=sequence.length(); ++i) {
+	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence.length(); ++j) {
+		if (arc_probs_(i,j)>threshold1) {
+		    bool had_entries=false;
+		    for(arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
+			double p=prob_unpaired_in_loop(k,i,j);
+			if (p>threshold2) {
+			    if (!had_entries) {out << i << " " << j; had_entries=true;}
+			    out << " " << k << " " << p;
+			}
+		    }
+		    if (had_entries) out << std::endl;
+		}
+	    }
+	}
+	
+	// write lines for external loop
+	
+	bool had_entries=false;
+	for(arc_prob_matrix_t::size_type k=1; k<=sequence.length(); ++k) {
+	    double p=prob_unpaired_external(k);
+	    if (p>threshold2) {
+		if (!had_entries) {out << 0 << " " << (sequence.length()+1); had_entries=true;}
+		out << " " << k << " " << p;
+	    }
+	}
+	if (had_entries) out << std::endl;
+    }
+    
+	
+    std::ostream &
+    RnaData::write_basepair_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const {
+	// write lines for loops closed by base pairs
+	for(arc_prob_matrix_t::size_type i=1; i<=sequence.length(); ++i) {
+	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence.length(); ++j) {
+		if (arc_probs_(i,j)>threshold1) {
+		    bool had_entries=false;
+		    for(arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
+			for(arc_prob_matrix_t::size_type jp=ip+1; jp<=j-1; ++jp) {
+			    double p=prob_basepair_in_loop(ip,jp,i,j);
+			    if (p>threshold2) {
+				if (!had_entries) {out << i << " " << j; had_entries=true;}
+				out << " " << ip << " " << jp << " " << p;
+			    }
+			}
+		    }
+		    if (had_entries) out << std::endl;
+		}
+	    }
+	}
+	
+	// write lines for external loop
+	bool had_entries=false;
+	for(arc_prob_matrix_t::size_type ip=1; ip<=sequence.length(); ++ip) {
+	    for(arc_prob_matrix_t::size_type jp=ip+1; jp<=sequence.length(); ++jp) {
+		double p=prob_basepair_external(ip,jp);
+		if (p>threshold2) {
+		    if (!had_entries) {out << 0 << " " << (sequence.length()+1); had_entries=true;}
+		    out << " " << ip << " " << jp << " " << p;
+		}
+	    }
+	}
+	if (had_entries) out << std::endl;
     }
 
+
+    std::ostream &
+    RnaData::write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3) const {
+	for(arc_prob_matrix_t::size_type i=1; i<=sequence.length(); ++i) {
+	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence.length(); ++j) {
+		
+		if (arc_probs_(i,j)>threshold1) {
+		    out << i << " " << j;
+		    
+		    // write base pair and stacking probability
+		    out << " " << arc_probs_(i,j);
+		    if (arc_2_probs_(i,j)>threshold1) {
+			out << " " << arc_2_probs_(i,j);
+		    }
+		    out << " ;";
+		    
+		    // write unpaired in loop
+		    for(arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
+			double p=prob_unpaired_in_loop(k,i,j);
+			if (p>threshold2) {
+			    out << " " << k << " " << p;
+			}
+		    }
+		    
+		    out << " ;";
+		    
+		    for(arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
+			for(arc_prob_matrix_t::size_type jp=ip+1; jp<=j-1; ++jp) {
+			    double p=prob_basepair_in_loop(ip,jp,i,j);
+			    if (p>threshold3) {
+				out << " " << ip << " " << jp << " " << p;
+			    }
+			}
+		    }
+		    out << std::endl;
+		}
+	    }
+	}
+
+	// write lines for external loop
+
+	out << 0 << " " << (sequence.length()+1) << "1 1 ;";
+	for(arc_prob_matrix_t::size_type k=1; k<=sequence.length(); ++k) {
+	    double p=prob_unpaired_external(k);
+	    if (p>threshold2) {
+		out << " " << k << " " << p;
+	    }
+	}
+	out << ";";
+	
+	for(arc_prob_matrix_t::size_type ip=1; ip<=sequence.length(); ++ip) {
+	    for(arc_prob_matrix_t::size_type jp=ip+1; jp<=sequence.length(); ++jp) {
+		double p=prob_basepair_external(ip,jp);
+		if (p>threshold3) {
+		    out << " " << ip << " " << jp << " " << p;
+		}
+	    }
+	}
+	out << std::endl;
+	
+    }
+
+
 #endif // HAVE_LIBRNA
+
+    std::ostream &
+    RnaData::write_basepair_probs(std::ostream &out,double threshold) const {
+	for(arc_prob_matrix_t::size_type i=1; i<=sequence.length(); ++i) {
+	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence.length(); ++j) {
+		
+		if (arc_probs_(i,j)>threshold) {
+		    out << i << " " << j;
+		    
+		    // write base pair and stacking probability
+		    out << " " << arc_probs_(i,j);
+		    if (arc_2_probs_(i,j)>threshold) {
+			out << " " << arc_2_probs_(i,j);
+		    }
+		}
+	    }
+	}
+    }
+    
+
     std::string RnaData::seqname_from_filename(const std::string &s) const {
 	size_type i;
 	size_type j;
@@ -1419,3 +1572,4 @@ namespace LocARNA {
     }
 
 }
+

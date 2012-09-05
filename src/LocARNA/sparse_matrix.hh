@@ -24,15 +24,18 @@ namespace LocARNA {
     template <class T>
     class SparseMatrix {
     public:
+	
+  	typedef T value_t; //!< type of matrix entries
 
-  	typedef T val_t; //!< type of matrix entries
-	typedef std::pair<size_t,size_t> key_t; //!< type of matrix "index"
+	typedef size_t size_type; //!< usual definition of size_type
+
+	typedef std::pair<size_type,size_type> key_t; //!< type of matrix index pair
 
     protected:
 	
-	typedef std::tr1::unordered_map<key_t,val_t > map_t; //!< map type  
+	typedef std::tr1::unordered_map<key_t,value_t > map_t; //!< map type  
 	map_t the_map; //!< internal representation of sparse matrix
-	val_t def; //!< default value of matrix entries
+	value_t def; //!< default value of matrix entries
     
     public:
 
@@ -69,7 +72,7 @@ namespace LocARNA {
 	     *
 	     * If entry does not exist, return the default value
 	     */
-	    operator val_t() {
+	    operator value_t() {
 		const_iterator it = m->the_map.find(k);
 		if ( it == m->the_map.end() ) 
 		    return m->def;
@@ -89,7 +92,7 @@ namespace LocARNA {
 	     * @note If entry does not exist, x is added to the default value
 	     */
 	    element
-	    operator +=(val_t x) {
+	    operator +=(value_t x) {
 		const_iterator it = m->the_map.find(k);
 		if ( it == m->the_map.end() ) 
 		    m->the_map[k] = m->def + x;
@@ -111,7 +114,7 @@ namespace LocARNA {
 	     * @note If x equals the default value, and the entry exists it is erased
 	     */
 	    element
-	    operator =(val_t x) {
+	    operator =(value_t x) {
 		if (x!=m->def) {
 		    m->the_map[k] = x;
 		} else {
@@ -127,7 +130,7 @@ namespace LocARNA {
 	 * 
 	 * @param deflt default value of entries
 	 */
-	SparseMatrix(val_t deflt) : the_map(),def(deflt) {}
+	SparseMatrix(value_t deflt) : the_map(),def(deflt) {}
     
 	/** 
 	 * \brief Access to matrix element
@@ -137,7 +140,7 @@ namespace LocARNA {
 	 *
 	 * @return proxy to matrix entry (i,j)
 	 */
-	element operator() (size_t i, size_t j) {
+	element operator() (size_type i, size_type j) {
 	    return element(this,key_t(i,j));
 	}
     
@@ -149,7 +152,7 @@ namespace LocARNA {
 	 *
 	 * @return matrix entry (i,j)
 	 */
-	const val_t & operator() (size_t i, size_t j) const {
+	const value_t & operator() (size_type i, size_type j) const {
 	    const_iterator it = the_map.find(key_t(i,j));
 	    if ( it == the_map.end() ) 
 		return def;
@@ -166,7 +169,7 @@ namespace LocARNA {
 	 *
 	 * @post writes entry. If entry didn't exist already it is created.
 	 */
-	void set(size_t i, size_t j, const val_t &val) {
+	void set(size_type i, size_type j, const value_t &val) {
 	    the_map[std::pair<int,int>(i,j)]=val;
 	}
     

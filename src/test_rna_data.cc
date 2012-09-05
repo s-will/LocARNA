@@ -28,16 +28,6 @@ fold_sequence(const Sequence &seq, bool use_alifold) {
     
     BasePairs bps(rnadata,minprob);
 
-    // iterate over all base pairs
-    for (size_t i=1; i<=seq.length() ; ++i) {
-	const BasePairs::LeftAdjList &adjl = bps.left_adjlist(i);
-	for(BasePairs::LeftAdjList::const_iterator arc=adjl.begin();
-	    arc!=adjl.end() ; ++arc) {
-	    std::cout << (*arc) << ": "<<bps.get_arc_prob(arc->left(),arc->right())<<std::endl;
-	}
-    }
-    std::cout << std::endl;
-
     return bps;
 }
 
@@ -64,7 +54,7 @@ test_in_loop_probs(const Sequence &seq, const BasePairs &bps) {
 		double p_unp=0.0;
 		// k unpaired in arc
 		
-		    p_unp = rnadata.prob_unpaired_in_loop(k,arc->left(),arc->right());
+		p_unp = rnadata.prob_unpaired_in_loop(k,arc->left(),arc->right());
 		    
 		if (p_unp>=theta2) {
 		    std::cout <<k<<" unpaired in "<<*arc<< ": " <<p_unp<<std::endl;
@@ -157,6 +147,34 @@ test_in_loop_probs(const Sequence &seq, const BasePairs &bps) {
 
 }
 
+std::ostream &write_ext_pp(std::ostream &out,const Sequence &seq, const BasePairs &bps, double theta1, double theta2, double theta3) {
+    const RnaData &rnadata = bps.get_rnadata();
+    
+    out.precision(4);
+    out << std::fixed;
+
+    seq.write(out);
+    out << std::endl << "# base pair" << std::endl;
+    rnadata.write_basepair_and_in_loop_probs(out,theta1,theta2,theta3);
+    return out;
+}
+
+std::ostream &write_ext_pp2(std::ostream &out,const Sequence &seq, const BasePairs &bps, double theta1, double theta2, double theta3) {
+    const RnaData &rnadata = bps.get_rnadata();
+    
+    out.precision(4);
+    out << std::fixed;
+
+    seq.write(out);
+    out << std::endl << "# base pair" << std::endl;
+    rnadata.write_basepair_probs(out,theta1);
+    out << std::endl << "# unpaired in loop" << std::endl;
+    rnadata.write_unpaired_in_loop_probs(out,theta1,theta2);
+    out << std::endl << "# base pair in loop" << std::endl;
+    rnadata.write_basepair_in_loop_probs(out,theta1,theta3);
+    return out;
+}
+
 int
 main(int argc,char **argv) {
     int retVal=0;
@@ -182,20 +200,22 @@ main(int argc,char **argv) {
 	    "D10744",             "GGAAAAUUGAUCAUCGGCAAGAUAAGUUAUUUACUAAAUAAUAGGAUUUAAUAACCUGGUGAGUUCGAAUCUCACAUUUUCCG"
     };
     
-    for (size_t i=0; i<5; i++) {
+    for (size_t i=4; i<5; i++) {
 	mseq.append_row(seq_data[2*i],seq_data[2*i+1]);
     }
     
-    seq.write(std::cout);
+    // seq.write(std::cout);   
+
+    // seq.write(std::cout);
+    
+    // mseq.write(std::cout);
+    
     BasePairs bps = fold_sequence(seq,false);
-    
-    seq.write(std::cout);
     BasePairs bpsA = fold_sequence(seq,true);
-    
-    mseq.write(std::cout);
     BasePairs mbps = fold_sequence(mseq,true);
 
-    seq.write(std::cout);
+    /*
+      seq.write(std::cout);
     test_in_loop_probs(seq,bpsA);
 
     seq.write(std::cout);
@@ -203,7 +223,12 @@ main(int argc,char **argv) {
 
     mseq.write(std::cout);
     test_in_loop_probs(mseq,mbps);
+
+    std::cout << "------------------------------------------------------------"<<std::endl;
+    */
     
+    write_ext_pp(std::cout,mseq,mbps,0.0005,0.00001,0.00001);
+
     return retVal;
 }
 

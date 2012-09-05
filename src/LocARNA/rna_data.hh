@@ -17,9 +17,8 @@ extern "C" {
 
 #include "multiple_alignment.hh"
 
-//! @todo return in loop probs of 1 if information for calculating in loop probs is unavailable
 //! @todo support pre-computed in loop probs from tables
-//! @todo support constraint pf folding
+//! @todo support constrained pf folding
 namespace LocARNA {
 
 #   ifdef HAVE_LIBRNA
@@ -897,8 +896,175 @@ namespace LocARNA {
 	 * provide a sequence name. In particular this is the case for
 	 * postscript dotplot files.
 	 */
-	std::string seqname_from_filename(const std::string &s) const;
+	std::string
+	seqname_from_filename(const std::string &s) const;
 
+	
+	// ------------------------------------------------------------
+	// Methods for reading and writing probabilities
+	//
+	
+	/** 
+	 * @brief Read base pair probabilities
+	 * 
+	 * @param in Input stream
+	 * @param threshold Probability threshold
+	 *
+	 * Read all probabilities greater than the given threshold.
+	 * Read lines i j p, where p is probability of base pair (i,j).
+	 * 
+	 * @return input stream
+	 *
+	 * @note throws LocARNA::failure on parsing errors, throws std::istream::failure on IO errors
+	 * @note stop reading on line __END__
+	 *
+	 * @todo design precise exception behavior of read/write methods (compare to std::istream/std::ostream) 
+	 * @todo implement; use in reading pp files
+	 *
+	 */
+	std::istream &
+	read_base_pair_probs(std::istream &in,double thresholds);
+	
+	/** 
+	 * @brief Read unpaired in loop probabilities
+	 * 
+	 * @param in Input stream
+	 * @param threshold Probability threshold
+	 *
+	 * Read all probabilities greater than the given threshold 2
+	 * for loops that are more probable than threshold 1.  Read
+	 * lines k i j p, where p is probability of k unpaired in loop
+	 * (i,j).
+	 *
+	 * Include unpaired in external loop probabilities; encode
+	 * with pseudo basepair (i,j)=(0,n+1).
+	 *
+	 * @return input stream
+	 *
+	 * @note throws LocARNA::failure on parsing errors, throws std::istream::failure on IO errors
+	 * @note stop reading on line __END__
+	 *
+	 * @todo implement
+	 *
+	 */
+	std::istream &
+	read_unpaired_in_loop_probs(std::istream &in,double threshold1,double threshold2);
+	
+	/** 
+	 * @brief Read base pair in loop probabilities
+	 * 
+	 * @param in Input stream
+	 * @param threshold Probability threshold
+	 *
+	 * Read all probabilities greater than the given threshold 2
+	 * for loops that are more probable than threshold 1.
+	 * Read lines ip jp i j p, where p is probability of base
+	 * pair (ip,jp) in loop (i,j).
+	 *
+	 * Include base pair in external loop probabilities; encode
+	 * with pseudo basepair (i,j)=(0,n+1).
+	 *
+	 * @return input stream
+	 *
+	 * @note throws LocARNA::failure on parsing errors, throws std::istream::failure on IO errors
+	 * @note stop reading on line __END__
+	 *
+	 * @todo implement
+	 *
+	 */
+	std::istream &
+	read_base_pair_in_loop_probs(std::istream &in,double threshold1,double threshold2);
+
+
+	/** 
+	 * @brief Write base pair probabilities
+	 * 
+	 * @param out Output stream
+	 * @param threshold Probability threshold
+	 *
+	 * Write all probabilities greater than the given threshold.
+	 * Write lines i j p, where p is probability of base pair (i,j).
+	 * 
+	 * @return output stream
+	 *
+	 * @note throws std::ostream::failure on IO errors
+	 *
+	 * @todo implement; use in writing pp files
+	 *
+	 */
+	std::ostream &
+	write_basepair_probs(std::ostream &out,double threshold) const;
+	
+	/** 
+	 * @brief Write unpaired in loop probabilities
+	 * 
+	 * @param out Output stream
+	 * @param threshold Probability threshold
+	 *
+	 * Write all probabilities greater than the given threshold 2
+	 * for loops that are more probable than threshold 1.
+	 * Write lines i j k_1 p_1 ... k_n p_n, where p_x is probability of k_x unpaired
+	 * in loop (i,j).
+	 *
+	 * Include unpaired in external loop probabilities; encode
+	 * with pseudo basepair (i,j)=(0,n+1).
+	 *
+	 * @return output stream
+	 *
+	 * @note throws std::ostream::failure on IO errors
+	 *
+	 * @todo implement
+	 *
+	 */
+	std::ostream &
+	write_unpaired_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const;
+	
+	/** 
+	 * @brief Write base pair in loop probabilities
+	 * 
+	 * @param out Output stream
+	 * @param threshold Probability threshold
+	 *
+	 * Write all probabilities greater than the given threshold 2
+	 * for loops that are more probable than threshold 1.
+	 * Write lines ip jp i j p, where p is probability of base
+	 * pair (ip,jp) in loop (i,j).
+	 *
+	 * Include base pair in external loop probabilities; encode
+	 * with pseudo basepair (i,j)=(0,n+1).
+	 *
+	 * @return output stream
+	 *
+	 * @note throws std::ostream::failure on IO errors
+	 *
+	 * @todo implement
+	 *
+	 */
+	std::ostream &
+	write_basepair_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const;
+
+	
+/** 
+	 * @brief Write base pair and in loop probabilities
+	 * 
+	 * @param out Output stream
+	 * @param threshold1 Probability threshold 1 (base pairs)
+	 * @param threshold2 Probability threshold 2 (unpaired in loop)
+	 * @param threshold3 Probability threshold 3 (base pair in loop)
+	 *
+	 * Include base pair in external loop probabilities; encode
+	 * with pseudo basepair (i,j)=(0,n+1).
+	 *
+	 * @return output stream
+	 *
+	 * @note throws std::ostream::failure on IO errors
+	 *
+	 * @todo implement
+	 *
+	 */
+	std::ostream &
+	write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3) const;
+		
     };
 
 }

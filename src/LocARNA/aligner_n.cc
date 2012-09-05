@@ -110,7 +110,8 @@ AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, Scoring
 						IX(i-1, arcY, isA) + sv.scoring()->gapX(i, isA));
 	}
 
-
+	
+	/*
 	//---------------------cost computation for left sided gap blocks ----------------------------
 	//TODO: blockGapCosts can be computed just once and reused in method calls, variable can be transformed to an upper level attribute
 	std::vector<infty_score_t> blockGapCostsX;
@@ -146,13 +147,15 @@ AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, Scoring
 		blockGapCostsX[lastPos - xl ] = gap_score;
 	}
 	//-------------------------------------------------------------------------------------
-
+	*/
+	
 	for (BasePairs::RightAdjList::const_iterator arcX = adjlX.begin();
 			arcX != adjlX.end() && arcX->left() > xl  ; ++arcX) {
-		infty_score_t new_score = blockGapCostsX[arcX->left() - xl ]
-		                                         + sv.scoring()->gapX(i, isA)
-		                                         + sv.D(*arcX, arcY, isA ) //todo: ugly code!
-		                                         + sv.scoring()->arcDel (*arcX, isA);
+	    infty_score_t new_score = //blockGapCostsX[arcX->left() - xl ]
+		sv.D(*arcX, arcY, isA ) //todo: ugly code!
+		+ sv.scoring()->gapX(i, isA)*(arcX->left() - xl) // ATTENTION: this is just a quick hack; this is not correct
+		+ sv.scoring()->gapX(i, isA)
+		+ sv.scoring()->arcDel (*arcX, isA);
 
 		if (new_score > max_score) {
 			max_score = new_score;
@@ -168,6 +171,7 @@ AlignerN::compute_IX(pos_type xl, const Arc& arcY, pos_type i, bool isA, Scoring
 //
 // if lonely basepairs are disallowed, there is special treatment
 //
+//! @todo SW: computing the arcmatch score in the inner loop can be very expensive, in particular this is expensive when ribosum scoring is used with tau!=0 (=> consider to precompute scores)
 template<class ScoringView>
 infty_score_t
 AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_type j,ScoringView sv) {
@@ -178,7 +182,7 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 //	std::cout << "compute_M_entry al: " << al << " bl: " << bl << " i: " << i << " j: " << j << std::endl;
 	M_matrix_t &M = Ms[state];
 
-	infty_score_t max_score = infty_score_t::neg_infty;
+	tainted_infty_score_t max_score = infty_score_t::neg_infty; //use of tainted infty scores is somewhat faster
 
 	// base match
 	if (params->constraints.allowed_edge(i,j)) {
@@ -187,16 +191,18 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 
 
 	// base del
-	max_score = std::max(max_score, M(i-1,j) + sv.scoring()->gapA(i));
+	max_score = std::max(max_score, TaintedInftyInt(M(i-1,j) + sv.scoring()->gapA(i)));
 
 	// base ins
-	max_score = std::max(max_score, M(i,j-1) + sv.scoring()->gapB(j));
+	max_score = std::max(max_score, TaintedInftyInt(M(i,j-1) + sv.scoring()->gapB(j)));
 
 	// arc match
 
 	// standard case for arc match (without restriction to lonely pairs)
 	//
-	//TODO: Instead of common_right_end_list, two iterative loops of right_adjlist could be used. That might be more efficient but arc match scores are not available for an arbitrary pair of arcs
+	// Instead of common_right_end_list, two iterative loops of right_adjlist could be used. That might be more efficient but arc match scores are not available for an arbitrary pair of arcs
+	// SW: my last tests don't show a large difference between the two variants below anymore
+#if true
 	for(ArcMatchIdxVec::const_iterator it=arc_matches.common_right_end_list( i, j ).begin();
 			arc_matches.common_right_end_list(i,j).end() != it; ++it ) {
 
@@ -210,17 +216,34 @@ AlignerN::compute_M_entry(int state, pos_type al, pos_type bl, pos_type i, pos_t
 
 		if ( xl > al && yl > bl)
 		{
-			infty_score_t new_score =  M(arcX.left()-1,arcY.left()-1) + sv.D(arcX,arcY) + sv.scoring()->arcmatch(am);
+		    tainted_infty_score_t new_score =  M(arcX.left()-1,arcY.left()-1) + sv.D(arcX,arcY) + sv.scoring()->arcmatch(am);
 			if (new_score > max_score) {
 				max_score=new_score;
 //				std::cout << "compute_M_entry arcs " << arcX << " , " << arcY << " new score: " << new_score << "arc match score: " << sv.scoring()->arcmatch(am) << std::endl;
 			}
 		}
 	}
+#else
+	const BasePairs::RightAdjList &adjlA = bpsA.right_adjlist(i);
+	const BasePairs::RightAdjList &adjlB = bpsB.right_adjlist(j);
+	
+	// for all pairs of arcs in A and B that have right ends i and j, respectively
+	//
+	for (BasePairs::RightAdjList::const_iterator arcX=adjlA.begin();
+	     arcX!=adjlA.end() && arcX->left() > al  ; ++arcX) {
+	    for (BasePairs::RightAdjList::const_iterator arcY=adjlB.begin();
+		 arcY!=adjlB.end() && arcY->left() > bl ; ++arcY) {
+		
+		tainted_infty_score_t new_score =  M(arcX->left()-1,arcY->left()-1) + sv.D(*arcX,*arcY) + sv.scoring()->arcmatch(*arcX,*arcY);
+		if (new_score > max_score) {
+		    max_score=new_score;
+		    // std::cout << "compute_M_entry arcs " << arcX << " , " << arcY << " new score: " << new_score << "arc match score: " << sv.scoring()->arcmatch(am) << std::endl;
+		}
+	    }
+	}
+#endif
 
 	return max_score;
-
-
 
 }
 
@@ -395,17 +418,17 @@ AlignerN::fill_D_entries(pos_type al, pos_type bl)
 // compute all entries D
 void
 AlignerN::align_D() {
-	// for al in r.get_endA() .. r.get_startA
-	for (pos_type al=r.get_endA()+1; al>r.get_startA(); ) { al--;
-//	std::cout << "align_D al: " << al << std:.endl;
+    // for al in r.get_endA() .. r.get_startA
+    for (pos_type al=r.get_endA()+1; al>r.get_startA(); ) { al--;
+	//	std::cout << "align_D al: " << al << std:.endl;
 	const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
 	if ( adjlA.empty() )
-	{
-//		std::cout << "empty left_adjlist(al)" << endl;
+	    {
+		//		std::cout << "empty left_adjlist(al)" << endl;
 		continue;
-	}
-//	pos_type max_bl = std::min(r.get_endB(),params->trace_controller.max_col(al)); //TODO: check trace_controller or not? It seems not!
-//	pos_type min_bl = std::max(r.get_startB(),params->trace_controller.min_col(al));
+	    }
+	//	pos_type max_bl = std::min(r.get_endB(),params->trace_controller.max_col(al)); //TODO: check trace_controller or not? It seems not!
+	//	pos_type min_bl = std::max(r.get_startB(),params->trace_controller.min_col(al));
 
 	pos_type max_bl = r.get_endB(); //tracecontroller not considered
 	pos_type min_bl = r.get_startB(); //tracecontroller not considered
@@ -413,63 +436,82 @@ AlignerN::align_D() {
 	// for bl in max_bl .. min_bl
 	for (pos_type bl=max_bl+1; bl > min_bl;) { bl--;
 
-	const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
+	    const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
 
-	if ( adjlB.empty() )
-	{
-//		std::cout << "empty left_adjlist(bl)" << endl;
-		continue;
+	    if ( adjlB.empty() )
+		{
+		    //		std::cout << "empty left_adjlist(bl)" << endl;
+		    continue;
+		}
+
+	    //	std::cout << "size of left_adjlist(bl): " << adjlB.size() << std::endl;
+	    // ------------------------------------------------------------
+	    // old code for finding maximum arc ends:
+	    
+	    // pos_type max_ar=adjlA.begin()->right();	//tracecontroller not considered
+	    // pos_type max_br=adjlB.begin()->right();
+
+	    // //find the rightmost possible basepair for left base al
+	    // for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
+	    // 	 arcA != adjlA.end(); arcA++)
+	    // 	{
+	    // 	    if (max_ar < arcA->right() )
+	    // 		max_ar = arcA->right();
+	    // 	}
+	    // //find the rightmost possible basepair for left base bl
+	    // for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
+	    // 	 arcB != adjlB.end(); arcB++)
+	    // 	{
+	    // 	    if (max_br < arcB->right() )
+	    // 		max_br = arcB->right();
+	    // 	}
+	    
+	    // ------------------------------------------------------------
+	    // from aligner.cc: find maximum arc ends
+	    pos_type max_ar=al;
+	    pos_type max_br=bl;
+	    
+	    // get the maximal right ends of any arc match with left ends (al,bl)
+	    // in noLP mode, we don't consider cases without immediately enclosing arc match
+	    assert(params->no_lonely_pairs==false);
+	    arc_matches.get_max_right_ends(al,bl,&max_ar,&max_br,params->no_lonely_pairs);
+	    
+	     // check whether there is an arc match at all
+	    if (al==max_ar || bl == max_br) continue;
+	    
+
+	    align_M(al,max_ar,bl,max_br,params->STRUCT_LOCAL);
+
+	    for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
+		 arcB != adjlB.end(); arcB++)
+		{
+		    fill_IA_entries(al, *arcB, max_ar );
+		}
+
+	    for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
+		 arcA != adjlA.end(); arcA++)
+		{
+		    fill_IB_entries(*arcA, bl, max_br );
+		}
+
+
+
+
+
+	    //std::cout << al << ","<<bl<<":"<<std::endl
+	    //	      << Ms[E_NO_NO] << std::endl;
+
+	    // ------------------------------------------------------------
+	    // fill D matrix entries
+	    //
+	    assert(! params->no_lonely_pairs);
+
+	    fill_D_entries(al,bl);
+
 	}
-//	std::cout << "size of left_adjlist(bl): " << adjlB.size() << std::endl;
-	pos_type max_ar=adjlA.begin()->right();	//tracecontroller not considered
-	pos_type max_br=adjlB.begin()->right();
+    }
 
-	//find the rightmost possible basepair for left base al
-	for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-			arcA != adjlA.end(); arcA++)
-	{
-		if (max_ar < arcA->right() )
-			max_ar = arcA->right();
-	}
-	//find the rightmost possible basepair for left base bl
-	for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-			arcB != adjlB.end(); arcB++)
-	{
-		if (max_br < arcB->right() )
-			max_br = arcB->right();
-	}
-	align_M(al,max_ar,bl,max_br,params->STRUCT_LOCAL);
-
-	for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-			arcB != adjlB.end(); arcB++)
-	{
-		fill_IA_entries(al, *arcB, max_ar );
-	}
-
-	for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-			arcA != adjlA.end(); arcA++)
-	{
-		fill_IB_entries(*arcA, bl, max_br );
-	}
-
-
-
-
-
-	//std::cout << al << ","<<bl<<":"<<std::endl
-	//	      << Ms[E_NO_NO] << std::endl;
-
-	// ------------------------------------------------------------
-	// fill D matrix entries
-	//
-		assert(! params->no_lonely_pairs);
-
-		fill_D_entries(al,bl);
-
-	}
-	}
-
-	D_created=true; // now the matrix D is built up
+    D_created=true; // now the matrix D is built up
 }
 
 
