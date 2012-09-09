@@ -245,11 +245,15 @@ namespace LocARNA {
 	double prob_min() const; //!< return minimal probability
     
 
-	/*
-	//! access to rnadata
-	const RnaData *get_rnadata() const {return rnadata;}
-	*/
-    
+	/** 
+	 * @brief Access to corresponding RnaData object
+	 * 
+	 * @return reference to RnaData object
+	 */
+	const RnaData &get_rnadata() const {
+	    return *rnadata;
+	}
+
 	/* pass through some methods to rnadata
        
 	   This prepares support of the case, where we don't have rnadata
@@ -287,7 +291,6 @@ namespace LocARNA {
 	    if (rnadata) return rnadata->prob_unpaired( i );
 	    else return 1.0;
 	}
-
 
     };
 

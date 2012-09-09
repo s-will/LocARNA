@@ -311,8 +311,6 @@ option_def my_options[] = {
 
 // ------------------------------------------------------------
 
-
-
 // ------------------------------------------------------------
 // MAIN
 
@@ -326,6 +324,8 @@ option_def my_options[] = {
  */
 int
 main(int argc, char **argv) {
+
+    stopwatch.start("total");
 
     typedef std::vector<int>::size_type size_type;
 
@@ -516,11 +516,19 @@ main(int argc, char **argv) {
 
     RnaData rnadataA(clp.file1,true,clp.opt_stacking,true);
     if (!rnadataA.pairProbsAvailable() || !rnadataA.inLoopProbsAvailable()) {
+	if (clp.opt_verbose) {
+	    std::cout << "Compute ensemble probabilities for first input sequence."
+		      << std::endl;
+	}
 	rnadataA.computeEnsembleProbs(params,true);
     }
 
     RnaData rnadataB(clp.file2,true,clp.opt_stacking,true);
     if (!rnadataB.pairProbsAvailable() || !rnadataB.inLoopProbsAvailable()) {
+	if (clp.opt_verbose) {
+	    std::cout << "Compute ensemble probabilities for second input sequence."
+		      << std::endl;
+	}
 	rnadataB.computeEnsembleProbs(params,true);
     }
 
@@ -881,6 +889,8 @@ main(int argc, char **argv) {
 	    }
 	}
     }
+    
+    stopwatch.stop("total");
     
     // ----------------------------------------
     // DONE

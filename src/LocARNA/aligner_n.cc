@@ -455,23 +455,41 @@ AlignerN::align_D() {
 		continue;
 	    }
 
-	    pos_type max_ar=adjlA.begin()->right();
-	    pos_type max_br=adjlB.begin()->right();
+	    // ------------------------------------------------------------
+	    // old code for finding maximum arc ends:
+	    
+	    // pos_type max_ar=adjlA.begin()->right();	//tracecontroller not considered
+	    // pos_type max_br=adjlB.begin()->right();
 
-	    //find the rightmost possible basepair with left base al
-	    for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-		    arcA != adjlA.end(); arcA++)
-	    {
-		if (max_ar < arcA->right() )
-		    max_ar = arcA->right();
-	    }
-	    //find the rightmost possible basepair for left base bl
-	    for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-		    arcB != adjlB.end(); arcB++)
-	    {
-		if (max_br < arcB->right() )
-		    max_br = arcB->right();
-	    }
+	    // //find the rightmost possible basepair for left base al
+	    // for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
+	    // 	 arcA != adjlA.end(); arcA++)
+	    // 	{
+	    // 	    if (max_ar < arcA->right() )
+	    // 		max_ar = arcA->right();
+	    // 	}
+	    // //find the rightmost possible basepair for left base bl
+	    // for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
+	    // 	 arcB != adjlB.end(); arcB++)
+	    // 	{
+	    // 	    if (max_br < arcB->right() )
+	    // 		max_br = arcB->right();
+	    // 	}
+	    
+	    // ------------------------------------------------------------
+	    // from aligner.cc: find maximum arc ends
+	    pos_type max_ar=al;
+	    pos_type max_br=bl;
+	    
+	    // get the maximal right ends of any arc match with left ends (al,bl)
+	    // in noLP mode, we don't consider cases without immediately enclosing arc match
+	    assert(params->no_lonely_pairs==false);
+	    arc_matches.get_max_right_ends(al,bl,&max_ar,&max_br,params->no_lonely_pairs);
+	    
+	     // check whether there is an arc match at all
+	    if (al==max_ar || bl == max_br) continue;
+	    
+
 	    //compute matrix M
 	    align_M(al,max_ar,bl,max_br,params->STRUCT_LOCAL);
 
@@ -924,7 +942,13 @@ AlignerN::trace(ScoringView sv) {
 }
 
 void
-AlignerN::trace() {trace(def_scoring_view);}
+AlignerN::trace() {
+    stopwatch.start("trace");
+
+    trace(def_scoring_view);
+
+    stopwatch.stop("trace");
+}
 
 
 //! type of a task (used in computing k-best alignment)

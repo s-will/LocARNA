@@ -7,6 +7,9 @@
 #include <vector>
 #include <algorithm>
 #include <tr1/unordered_map>
+#include <assert.h>
+
+#include <sys/time.h> // for gettimeofday
 
 //!
 //! auxilliary types and global constants for use in locarna
@@ -29,37 +32,6 @@ namespace std {
 	    operator()(std::pair<size_t,size_t> p) const
 	    { return p.first<<(sizeof(size_t)/2) | p.second; }
 	};
-
-	// //! @brief hash function for strings
-	// template<>
-	// struct hash<std::string>
-	// {
-	//     /** 
-	//      * @brief Hash function for pairs of size_t
-	//      * 
-	//      * @return hash code
-	//      */
-	//     size_t
-	//     operator()(std::pair<size_t,size_t> p) const
-	//     { 
-	// 	unsigned long hash = 5381;
-		
-	// 	for (unsigned int i = 0; i < myStr.length(); i++)
-	// 	    {
-	// 		hash = ((hash << 5) + hash) + myStr[i]; // hash * 33 + cStateString[i]
-	// 	    }
-	// 	return hash;	
-	//     }
-	// };
-
-	// class StringEq {
-	// public:
-	//     bool operator()(const string &a,const string &b) const
-	//     {
-	// 	return (a == b);
-	//     }
-	// };
-
     }
 }
 
@@ -246,7 +218,7 @@ namespace LocARNA {
 	 * @post x is added at end of *this (like push_back)
 	 */
 	plusvector& operator += (const T &x) {
-	    push_back(x);
+	    this->push_back(x);
 	    return *this;
 	}
     };
@@ -427,7 +399,120 @@ namespace LocARNA {
     //! type-safe index type
     //! this is useful to distinguish index type from other types that are defined as unsigned int
     typedef type_wrapper<size_t> index_t;
+    
 
+
+    
+    /**
+     * @brief control a set of named stop watch like timers
+     */
+    class StopWatch {
+    private:
+	struct timer_t {
+	    bool running; //!<whether the timer is running
+	    double last_start; //!< last start time
+	    double total; //!< total accumulated time
+	    size_t cycles; //!<number of start/stop cycles
+	    
+	    timer_t(): running(false), last_start(0.0), total(0.0), cycles(0) {}
+	};
+
+	//! type of map to store named timers
+	typedef std::tr1::unordered_map<std::string,timer_t> map_t;
+	
+	map_t timers;
+	
+	bool print_on_exit;
+
+    public:
+	
+	StopWatch(bool print_on_exit=true);
+	~StopWatch();
+	
+	
+	void
+	set_print_on_exit(bool print_on_exit);
+	
+	/** 
+	 * @brief start a named timer
+	 * 
+	 * @param name timer name
+	 * 
+	 * @return success
+	 */
+	bool
+	start(const std::string &name);
+	
+	/** 
+	 * @brief stop a named timer
+	 * 
+	 * @param name timer name
+	 * 
+	 * @return success
+	 */
+	bool
+	stop(const std::string &name);
+
+	/** 
+	 * @brief test whether named timer is running
+	 * 
+	 * @param name timer name
+	 * 
+	 * @return running?
+	 */
+	bool
+	is_running(const std::string &name) const;
+
+	/** 
+	 * @brief current total time of a named timer
+	 * 
+	 * @param name timer name
+	 * 
+	 * @return time (if running add time since start)
+	 */
+	double
+	current_total(const std::string &name) const;
+	
+	/** 
+	 * @brief current start/stop cycles of a named timer
+	 * 
+	 * @param name timer name
+	 * 
+	 * @return cycles (including started cycle if running)
+	 */
+	size_t current_cycles(const std::string &name) const;
+	
+	/** 
+	 * @brief print information for one timer
+	 * 
+	 * @param out output stream
+	 * @param name 
+	 *
+	 * @note determine current running time for running timers
+	 *
+	 * @return output stream
+	 */
+	std::ostream &
+	print_info(std::ostream &out,const std::string &name) const;
+
+	/** 
+	 * @brief print information for all timers
+	 * 
+	 * @param out output stream
+	 * 
+	 * @return output stream
+	 * @todo implement
+	 */
+	std::ostream &
+	print_info(std::ostream &out) const;
+
+	
+    private:
+	double current_time () const;
+    };
+
+    //! global StopWatch object
+    extern StopWatch stopwatch;
 }
 
 
