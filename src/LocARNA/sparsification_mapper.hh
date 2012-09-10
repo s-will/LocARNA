@@ -150,7 +150,8 @@ public:
 	 * @note use if indexing by the common left end is used
 	 */
 	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
-	    assert (pos > left_end);
+	    if (left_end == numeric_limits<index_t>::max())
+		assert (pos > index);
 	    return first_valid_mat_pos_before_eq(index, pos-1, left_end);
 	}
 

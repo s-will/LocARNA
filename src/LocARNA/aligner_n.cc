@@ -96,6 +96,8 @@ AlignerN::~AlignerN() {
 template<class ScoringView>
 infty_score_t AlignerN::getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA, ScoringView sv) //todo: Precompute the matrix?!
 {
+    if (trace_debugging_output)
+	cout << "getGapCostBetween: leftSide:" <<  leftSide << " rightSide:" << rightSide << "isA:" << isA << endl;
     assert(leftSide < rightSide);
     if (leftSide >= rightSide)
 	return infty_score_t::neg_infty;
@@ -392,6 +394,11 @@ void AlignerN::fill_D_entries(pos_type al, pos_type bl)
 	//define variables for sequence positions & sparsed indices
 	seq_pos_t ar_seq_pos = arcA.right();
 	seq_pos_t br_seq_pos = arcB.right();
+
+	if (trace_debugging_output)
+	    cout << "arcA:" << arcA << " arcB:" << arcB << "ar_seq_pos" << ar_seq_pos << "br_seq_pos" << br_seq_pos << endl;
+
+
 	matidx_t ar_prev_mat_idx_pos = mapperA.first_valid_mat_pos_before(al, ar_seq_pos);
 	matidx_t br_prev_mat_idx_pos = mapperB.first_valid_mat_pos_before(bl, br_seq_pos);
 
@@ -488,7 +495,7 @@ AlignerN::align_D() {
 	    
 	     // check whether there is an arc match at all
 	    if (al==max_ar || bl == max_br) continue;
-	    
+
 
 	    //compute matrix M
 	    align_M(al,max_ar,bl,max_br,params->STRUCT_LOCAL);
@@ -535,14 +542,15 @@ AlignerN::align() {
 	// align toplevel globally with potentially free endgaps (as given by description params->free_endgaps)
 	//return align_top_level_free_endgaps(); //tomark: implement align_top_level_free_endgaps()
 	seq_pos_t ps_al = r.get_startA()-1;
-	seq_pos_t ps_ar = r.get_endB()+1;
+	seq_pos_t ps_ar = r.get_endA()+1;
 	seq_pos_t ps_bl = r.get_startB()-1;
 	seq_pos_t ps_br = r.get_endB()+1;
 	matidx_t last_index_A = mapperA.number_of_valid_mat_pos(ps_al)-1;
 	seq_pos_t last_valid_seq_pos_A = mapperA.get_pos_in_seq_new(ps_al, last_index_A);
 	matidx_t last_index_B = mapperB.number_of_valid_mat_pos(ps_bl)-1;
 	seq_pos_t last_valid_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_index_B);
-
+	if(trace_debugging_output)
+	    cout << "Align top level with ps_al, last_index_A, ps_bl, last_index_B," << ps_al << last_index_A << ps_bl << last_index_B << endl;
 	align_M(ps_al, last_index_A, ps_bl, last_index_B, false); //tocheck: always use get_startA-1 (not zero) in sparsification_mapper and other parts
 	return Ms[E_NO_NO]( last_index_A, last_index_B)
 						+ getGapCostBetween( last_valid_seq_pos_A, ps_ar, true, def_scoring_view)  //toask: where should we care about non_default scoring views
