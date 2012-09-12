@@ -1051,6 +1051,7 @@ namespace LocARNA {
 	 * @param threshold1 Probability threshold 1 (base pairs)
 	 * @param threshold2 Probability threshold 2 (unpaired in loop)
 	 * @param threshold3 Probability threshold 3 (base pair in loop)
+	 * @param write_probs whether to write probabilities of in loop positions and base pairs above threshold 
 	 *
 	 * Include base pair in external loop probabilities; encode
 	 * with pseudo basepair (i,j)=(0,n+1).
@@ -1063,7 +1064,7 @@ namespace LocARNA {
 	 *
 	 */
 	std::ostream &
-	write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3) const;
+	write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3, bool write_probs, bool diff_encoding) const;
 		
     };
 

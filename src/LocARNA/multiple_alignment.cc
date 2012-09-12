@@ -210,19 +210,19 @@ namespace LocARNA {
 		    sin.get(sb);
 		    description=sb.str();
 		}
-	    
+		
+		seqstr="";
 		getline(in,line);
 		while(in.good() && (line.size()==0 || line[0]!='>')) {
 		    // remove whitespace and add to seqstr
 		    std::istringstream sin(line);
-		    seqstr="";
 		    std::string seqstr1;
 		    while(sin >> seqstr1) {
 			seqstr += seqstr1;
 		    }
 		    getline(in,line);
 		}
-	    
+		
 		alig.push_back( SeqEntry(name,description,seqstr) );
 	    }
 	}

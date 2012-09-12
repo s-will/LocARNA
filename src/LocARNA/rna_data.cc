@@ -1429,6 +1429,7 @@ namespace LocARNA {
 	    }
 	}
 	if (had_entries) out << std::endl;
+    	return out;
     }
     
 	
@@ -1465,16 +1466,62 @@ namespace LocARNA {
 	    }
 	}
 	if (had_entries) out << std::endl;
+    	return out;
     }
-
-
+    
+    
     std::ostream &
-    RnaData::write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3) const {
+    RnaData::write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3, bool write_probs, bool diff_encoding) const {
+	
+	size_t i=0;
+	size_t j=sequence.length()+1;
+
+	arc_prob_matrix_t::size_type last_i=i;
+	arc_prob_matrix_t::size_type last_j=j;
+	
+
+	// write line for external loop
+	
+	out << (diff_encoding?(int)i-(int)last_i:(int)i) << " " << (diff_encoding?(int)last_j-(int)j:(int)j)<< " 1 ;";
+	
+	arc_prob_matrix_t::size_type last_k=i;
+	for(arc_prob_matrix_t::size_type k=1; k<=sequence.length(); ++k) {
+	    double p=prob_unpaired_external(k);
+	    if (p>threshold2) {
+		out << " " << (diff_encoding?(k-last_k):k);
+		if (write_probs) out << " " << p;
+		last_k=k;
+	    }
+	}
+	out << ";";
+	
+	arc_prob_matrix_t::size_type last_ip=i;
+	arc_prob_matrix_t::size_type last_jp=j;
+	for(arc_prob_matrix_t::size_type ip=1; ip<=sequence.length(); ++ip) {
+	    for(arc_prob_matrix_t::size_type jp=sequence.length(); jp>ip; --jp) {
+		if (arc_probs_(ip,jp)>threshold1) {
+		    double p=prob_basepair_external(ip,jp);
+		    if (p>threshold3) {
+			out << " " << (diff_encoding?(int)ip-(int)last_ip:(int)ip) << " " << (diff_encoding?(int)last_jp-(int)jp:(int)jp);
+			if (write_probs) out << " " << p;
+			last_ip=ip;
+			last_jp=jp;
+		    }
+		}
+	    }
+	}
+	out << std::endl;
+
+	
+	// write lines for internal loops
 	for(arc_prob_matrix_t::size_type i=1; i<=sequence.length(); ++i) {
 	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence.length(); ++j) {
 		
 		if (arc_probs_(i,j)>threshold1) {
-		    out << i << " " << j;
+		    
+		    out << (diff_encoding?(int)i-(int)last_i:(int)i) << " " << (diff_encoding?(int)last_j-(int)j:(int)j);
+		    last_i=i; 
+		    last_j=j;
 		    
 		    // write base pair and stacking probability
 		    out << " " << arc_probs_(i,j);
@@ -1484,20 +1531,30 @@ namespace LocARNA {
 		    out << " ;";
 		    
 		    // write unpaired in loop
+		    arc_prob_matrix_t::size_type last_k=i;
 		    for(arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
 			double p=prob_unpaired_in_loop(k,i,j);
 			if (p>threshold2) {
-			    out << " " << k << " " << p;
+			    out << " " << (diff_encoding?(k-last_k):k);
+			    if (write_probs) out << " " << p;
+			    last_k=k;
 			}
 		    }
 		    
 		    out << " ;";
 		    
+		    arc_prob_matrix_t::size_type last_ip=i;
+		    arc_prob_matrix_t::size_type last_jp=j;
+		    
 		    for(arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
-			for(arc_prob_matrix_t::size_type jp=ip+1; jp<=j-1; ++jp) {
+			for(arc_prob_matrix_t::size_type jp=j-1; jp>ip ; --jp) {
 			    double p=prob_basepair_in_loop(ip,jp,i,j);
 			    if (p>threshold3) {
-				out << " " << ip << " " << jp << " " << p;
+				
+				out << " " << (diff_encoding?(int)ip-(int)last_ip:(int)ip) << " " << (diff_encoding?(int)last_jp-(int)jp:(int)jp);
+				if (write_probs) out << " " << p;
+				last_ip=ip;
+				last_jp=jp;
 			    }
 			}
 		    }
@@ -1506,27 +1563,7 @@ namespace LocARNA {
 	    }
 	}
 
-	// write lines for external loop
-
-	out << 0 << " " << (sequence.length()+1) << "1 1 ;";
-	for(arc_prob_matrix_t::size_type k=1; k<=sequence.length(); ++k) {
-	    double p=prob_unpaired_external(k);
-	    if (p>threshold2) {
-		out << " " << k << " " << p;
-	    }
-	}
-	out << ";";
-	
-	for(arc_prob_matrix_t::size_type ip=1; ip<=sequence.length(); ++ip) {
-	    for(arc_prob_matrix_t::size_type jp=ip+1; jp<=sequence.length(); ++jp) {
-		double p=prob_basepair_external(ip,jp);
-		if (p>threshold3) {
-		    out << " " << ip << " " << jp << " " << p;
-		}
-	    }
-	}
-	out << std::endl;
-	
+	return out;	
     }
 
 
@@ -1548,9 +1585,9 @@ namespace LocARNA {
 		}
 	    }
 	}
+	return out;
     }
     
-
     std::string RnaData::seqname_from_filename(const std::string &s) const {
 	size_type i;
 	size_type j;

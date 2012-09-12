@@ -154,12 +154,12 @@ std::ostream &write_ext_pp(std::ostream &out,const Sequence &seq, const BasePair
     out << std::fixed;
 
     seq.write(out);
-    out << std::endl << "# base pair" << std::endl;
-    rnadata.write_basepair_and_in_loop_probs(out,theta1,theta2,theta3);
+    out << std::endl << "#" << std::endl;
+    rnadata.write_basepair_and_in_loop_probs(out,theta1,theta2,theta3,false,false);
     return out;
 }
 
-std::ostream &write_ext_pp2(std::ostream &out,const Sequence &seq, const BasePairs &bps, double theta1, double theta2, double theta3) {
+std::ostream &write_ext_pp_variation(std::ostream &out,const Sequence &seq, const BasePairs &bps, double theta1, double theta2, double theta3) {
     const RnaData &rnadata = bps.get_rnadata();
     
     out.precision(4);
@@ -227,8 +227,7 @@ main(int argc,char **argv) {
     std::cout << "------------------------------------------------------------"<<std::endl;
     */
     
-    write_ext_pp(std::cout,mseq,mbps,0.0005,0.00001,0.00001);
+    write_ext_pp(std::cout,mseq,mbps,0.0005,0.0001,0.0001);
 
     return retVal;
 }
-
