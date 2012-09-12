@@ -287,7 +287,7 @@ protected:
 	//! @returns score of IX(i,arcX) for the left end arc element i
 	//! 
 	template<class ScoringView>
-	infty_score_t compute_IX(pos_type xl, const Arc& arcY, pos_type i, std::vector<infty_score_t> const& blockGapCostsX, bool isA, ScoringView sv);
+	infty_score_t compute_IX(pos_type xl, const Arc& arcY, pos_type i,bool isA, ScoringView sv);
 
 	//! \brief fills all IA values using default scoring scheme
 	//!
