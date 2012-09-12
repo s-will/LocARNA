@@ -41,7 +41,8 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
 	LocARNA/aligner_p.hh LocARNA/stral_score.hh			\
 	LocARNA/trace_controller.hh LocARNA/evaluator.hh		\
-	LocARNA/multiple_alignment.hh LocARNA/ribosum85_60.icc
+	LocARNA/multiple_alignment.hh LocARNA/ribosum85_60.icc          \
+	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh
 
 
 ## binary programs
