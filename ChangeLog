@@ -352,3 +352,5 @@ Aug, 2012
 	Major improvements of the RnaData class and its interface
 	Some clean up
 	(1.7.2.5)
+	Some bug fixes, support for graph kernel guide tree
+	(1.7.2.6)
