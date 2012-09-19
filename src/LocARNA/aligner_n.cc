@@ -311,7 +311,7 @@ AlignerN::init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br, 
 	    else*/ {
 		seq_pos_t j_prev_seq_pos = mapperB.get_pos_in_seq_new(bl,j_index-1);
 
-		indel_score = indel_score + getGapCostBetween(j_prev_seq_pos, j_seq_pos, true, sv) + sv.scoring()->gapB(j_seq_pos); //toask: infty_score_t operator+ overloading
+		indel_score = indel_score + getGapCostBetween(j_prev_seq_pos, j_seq_pos, false, sv) + sv.scoring()->gapB(j_seq_pos); //toask: infty_score_t operator+ overloading
 	    }
 	}
 	M(0,j_index) = indel_score;
