@@ -192,28 +192,24 @@ namespace LocARNA {
         
 	std::string name;
 	std::string description;
-	std::string seqstr;
-    
+	
 	std::string line;
     
 	getline(in,line);
-    
-	while(in.good()) {
+
+	while(!in.fail()) {
 	
-	    if (line.length()>0) {
-	    
-		if (line[0]=='>') {
-		    std::istringstream sin(line);
-		    sin.get(); // this eats '>'
-		    sin >> name; // gets the first non-whitespace substring after '>' of the line
-		    std::stringbuf sb;
-		    sin.get(sb);
-		    description=sb.str();
-		}
+	    if (line.length()>0 && line[0]=='>') {
+		std::istringstream sin(line);
+		sin.get(); // this eats '>'
+		sin >> name; // gets the first non-whitespace substring after '>' of the line
+		std::stringbuf sb;
+		sin.get(sb);
+		description=sb.str();
 		
-		seqstr="";
-		getline(in,line);
-		while(in.good() && (line.size()==0 || line[0]!='>')) {
+		std::string seqstr="";
+    		getline(in,line);
+		while(!in.fail() && (line.size()==0 || line[0]!='>')) {
 		    // remove whitespace and add to seqstr
 		    std::istringstream sin(line);
 		    std::string seqstr1;
