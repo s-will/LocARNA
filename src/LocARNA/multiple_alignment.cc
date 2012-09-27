@@ -107,7 +107,7 @@ namespace LocARNA {
 	std::vector<int>::size_type alisize = a.size();
     
 	for (size_type i=0; i<alisize; i++) {
-	    if ( a[i]==-1 ) {
+	    if ( a[i]<0 ) {
 		for (size_type k=0; k<seqA.row_number(); k++) {
 		    aliA[k] += '-';
 		}
@@ -116,7 +116,7 @@ namespace LocARNA {
 		    aliA[k] += seqA[a[i]][k];
 		}
 	    }
-	    if ( b[i]==-1 ) {
+	    if ( b[i]<0 ) {
 		for (size_type k=0; k<seqB.row_number(); k++) {
 		    aliB[k] += '-';
 		}
