@@ -39,6 +39,8 @@ AlignerN::AlignerN(const AlignerN &a)
  IAmat(a.IAmat),
  IBmat(a.IBmat),
  Ms(a.Ms),
+ gapCostAmat(a.gapCostAmat),
+ gapCostBmat(a.gapCostBmat),
  min_i(a.min_i),
  min_j(a.min_j),
  max_i(a.max_i),
@@ -84,6 +86,10 @@ AlignerN::AlignerN(const Sequence &seqA_,
 	Ms[k].resize(mapperA.get_max_info_vec_size()+1,mapperB.get_max_info_vec_size()+1);
     }
 
+        gapCostAmat.resize(seqA.length()+3, seqA.length()+3);
+        gapCostBmat.resize(seqB.length()+3, seqB.length()+3);
+
+
 }
 
 
@@ -92,6 +98,38 @@ AlignerN::~AlignerN() {
     if (mod_scoring!=0) delete mod_scoring;
 }
 
+template <class ScoringView>
+void AlignerN::computeGapCosts(bool isA, ScoringView sv)
+{
+    if (trace_debugging_output)	cout << "computeGapCosts " << (isA?'A':'B') << std::endl;
+    const Sequence& seqX = isA?seqA:seqB;
+    ScoreMatrix& gapCostXmat = isA?gapCostAmat:gapCostBmat;
+    for( pos_type leftSide = 0;  leftSide <= seqX.length(); leftSide++)
+    {
+	infty_score_t gap_score = (infty_score_t)0;
+	gapCostXmat(leftSide, leftSide) = gap_score;
+	for( pos_type lastPos = leftSide+1;  lastPos <= seqX.length(); lastPos++)
+	{
+	    if ( (isA && params->constraints.aligned_in_a(lastPos))
+		    || ( !isA && params->constraints.aligned_in_b(lastPos)) ) {
+		gap_score = infty_score_t::neg_infty;
+//		break;
+	    }
+	    else {
+		gap_score += sv.scoring()->gapX( lastPos, isA);
+	    }
+
+	    gapCostXmat(leftSide,lastPos+1) = gap_score;
+	}
+	/*for (;lastPos <= seqX.length(); lastPos++)
+	{
+	    gapCostXmat(leftSide,lastPos+1) = gap_score;
+	}*/
+    }
+    if (trace_debugging_output)
+  	cout << "computed computeGapCosts " << (isA?'A':'B') << std::endl;
+
+}
 // Compute/Returns aligning to the gap, the sequence range between leftSide & rightSide, not including right/left side
 template<class ScoringView>
 infty_score_t AlignerN::getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA, ScoringView sv) //todo: Precompute the matrix?!
@@ -101,7 +139,7 @@ infty_score_t AlignerN::getGapCostBetween( pos_type leftSide, pos_type rightSide
     assert(leftSide < rightSide);
     if (leftSide >= rightSide)
 	return infty_score_t::neg_infty;
-
+/*
     infty_score_t gap_score = (infty_score_t)0;
     for (pos_type lastPos = leftSide+1; lastPos < rightSide; lastPos++)
     {
@@ -114,7 +152,12 @@ infty_score_t AlignerN::getGapCostBetween( pos_type leftSide, pos_type rightSide
 	}
 
     }
-    return gap_score;
+
+//    if (leftSide > 0 && ( (isA && rightSide < seqA.length()) || (!isA && rightSide < seqB.length()) ) )
+    if ( trace_debugging_output && !((isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) == gap_score) )
+	cout << "gap_score:" << gap_score.is_neg_infty() <<" "<< gap_score << "gapCostXmat:" << (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) << endl;
+	assert ( (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) == gap_score  );
+*/    return (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide));
 }
 
 /*
@@ -433,7 +476,11 @@ void AlignerN::fill_D_entries(pos_type al, pos_type bl)
 // compute all entries D
 void
 AlignerN::align_D() {
+    computeGapCosts(true, def_scoring_view);//gap costs A //tocheck:always def_score view!
+    computeGapCosts(false, def_scoring_view);//gap costs B //tocheck:always def_score view!
+
     // for al in r.get_endA() .. r.get_startA
+
     for (pos_type al=r.get_endA()+1; al>r.get_startA(); ) {
 	al--;
 	if (trace_debugging_output) std::cout << "align_D al: " << al << std::endl;
@@ -521,7 +568,6 @@ AlignerN::align_D() {
 	    fill_D_entries(al,bl);
 	}
     }
-
     D_created=true; // now the matrix D is built up
 }
 
