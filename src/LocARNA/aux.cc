@@ -117,7 +117,7 @@ namespace LocARNA {
 	    out << " " 
 		<< std::setw(14) << std::left <<name 
 		<< " "
-		<< std::setw(8) << std::right << std::fixed << std::setprecision(2) << current_total(name) 
+		<< std::setw(8) << std::right << std::fixed << std::setprecision(4) << current_total(name)
 		<< "s ("
 		<<current_cycles(name)
 		<<" cycles)" << std::left << std::endl;

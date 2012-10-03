@@ -39,6 +39,8 @@ AlignerN::AlignerN(const AlignerN &a)
  IAmat(a.IAmat),
  IBmat(a.IBmat),
  Ms(a.Ms),
+ gapCostAmat(a.gapCostAmat),
+ gapCostBmat(a.gapCostBmat),
  min_i(a.min_i),
  min_j(a.min_j),
  max_i(a.max_i),
@@ -84,6 +86,10 @@ AlignerN::AlignerN(const Sequence &seqA_,
 	Ms[k].resize(mapperA.get_max_info_vec_size()+1,mapperB.get_max_info_vec_size()+1);
     }
 
+        gapCostAmat.resize(seqA.length()+3, seqA.length()+3);
+        gapCostBmat.resize(seqB.length()+3, seqB.length()+3);
+
+
 }
 
 
@@ -92,16 +98,46 @@ AlignerN::~AlignerN() {
     if (mod_scoring!=0) delete mod_scoring;
 }
 
-// Compute/Returns aligning to the gap, the sequence range between leftSide & rightSide, not including right/left side
-template<class ScoringView>
-infty_score_t AlignerN::getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA, ScoringView sv) //todo: Precompute the matrix?!
+template <class ScoringView>
+void AlignerN::computeGapCosts(bool isA, ScoringView sv)
 {
-    if (trace_debugging_output)
-	cout << "getGapCostBetween: leftSide:" <<  leftSide << " rightSide:" << rightSide << "isA:" << isA << endl;
-    assert(leftSide < rightSide);
-    if (leftSide >= rightSide)
-	return infty_score_t::neg_infty;
+    if (trace_debugging_output)	cout << "computeGapCosts " << (isA?'A':'B') << std::endl;
+    const Sequence& seqX = isA?seqA:seqB;
+    ScoreMatrix& gapCostXmat = isA?gapCostAmat:gapCostBmat;
+    for( pos_type leftSide = 0;  leftSide <= seqX.length(); leftSide++)
+    {
+	infty_score_t gap_score = (infty_score_t)0;
+	gapCostXmat(leftSide, leftSide) = gap_score;
+	for( pos_type lastPos = leftSide+1;  lastPos <= seqX.length(); lastPos++)
+	{
+	    if ( (isA && params->constraints.aligned_in_a(lastPos))
+		    || ( !isA && params->constraints.aligned_in_b(lastPos)) ) {
+		gap_score = infty_score_t::neg_infty;
+//		break;
+	    }
+	    else {
+		gap_score += sv.scoring()->gapX( lastPos, isA);
+	    }
 
+	    gapCostXmat(leftSide,lastPos+1) = gap_score;
+	}
+	/*for (;lastPos <= seqX.length(); lastPos++)
+	{
+	    gapCostXmat(leftSide,lastPos+1) = gap_score;
+	}*/
+    }
+    if (trace_debugging_output)
+  	cout << "computed computeGapCosts " << (isA?'A':'B') << std::endl;
+
+}
+// Compute/Returns aligning to the gap, the sequence range between leftSide & rightSide, not including right/left side
+inline
+infty_score_t AlignerN::getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA) //todo: Precompute the matrix?!
+{
+//    if (trace_debugging_output)	cout << "getGapCostBetween: leftSide:" <<  leftSide << " rightSide:" << rightSide << "isA:" << isA << endl;
+    assert(leftSide < rightSide);
+//    if (leftSide >= rightSide)	return infty_score_t::neg_infty;
+/*
     infty_score_t gap_score = (infty_score_t)0;
     for (pos_type lastPos = leftSide+1; lastPos < rightSide; lastPos++)
     {
@@ -114,7 +150,13 @@ infty_score_t AlignerN::getGapCostBetween( pos_type leftSide, pos_type rightSide
 	}
 
     }
-    return gap_score;
+
+//    if (leftSide > 0 && ( (isA && rightSide < seqA.length()) || (!isA && rightSide < seqB.length()) ) )
+    if ( trace_debugging_output && !((isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) == gap_score) )
+	cout << "gap_score:" << gap_score.is_neg_infty() <<" "<< gap_score << "gapCostXmat:" << (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) << endl;
+	assert ( (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) == gap_score  );
+*/
+    return (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide));
 }
 
 /*
@@ -174,7 +216,7 @@ infty_score_t AlignerN::compute_IX(index_t xl, const Arc& arcY, matidx_t i_index
 
     //base insertion/deletion
     if ( !constraints_aligned_pos  ) {
-	infty_score_t ins_del_score = IX(i_index-1, arcY, isA) + sv.scoring()->gapX(i_seq_pos, isA) + getGapCostBetween(i_prev_seq_pos, i_seq_pos, isA, sv);
+	infty_score_t ins_del_score = IX(i_index-1, arcY, isA) + sv.scoring()->gapX(i_seq_pos, isA) + getGapCostBetween(i_prev_seq_pos, i_seq_pos, isA);
 
 	max_score = std::max( max_score, ins_del_score);
     }
@@ -184,7 +226,7 @@ infty_score_t AlignerN::compute_IX(index_t xl, const Arc& arcY, matidx_t i_index
     {
 	const Arc& arcX = bpsX.arc(*arcIdx);
 	infty_score_t new_score =  sv.D(arcX, arcY, isA) + sv.scoring()->arcDel(arcX, isA)
-						    + getGapCostBetween(xl, arcX.left(), isA, sv);
+						    + getGapCostBetween(xl, arcX.left(), isA);
 
 	if (new_score > max_score) {
 	    max_score = new_score;
@@ -216,15 +258,15 @@ AlignerN::compute_M_entry(int state, index_t al, index_t bl, matidx_t i_index, m
     if ( constraints_alowed_edge &&
 	    mapperA.pos_unpaired(al, i_index) && mapperB.pos_unpaired(bl, j_index) ) {
 	max_score = M(i_index-1, j_index-1) + sv.scoring()->basematch(i_seq_pos, j_seq_pos)
-							+ getGapCostBetween(i_prev_seq_pos, i_seq_pos, true, sv) + getGapCostBetween(j_prev_seq_pos, j_seq_pos, false, sv);//todo: precompute range gapcosts with memoru complexity O(n^2)?
+							+ getGapCostBetween(i_prev_seq_pos, i_seq_pos, true) + getGapCostBetween(j_prev_seq_pos, j_seq_pos, false);//todo: precompute range gapcosts with memoru complexity O(n^2)?
     }
 
     // base del
-    infty_score_t del_score = M(i_index-1, j_index) + sv.scoring()->gapA(i_seq_pos) + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true, sv);
+    infty_score_t del_score = M(i_index-1, j_index) + sv.scoring()->gapA(i_seq_pos) + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true);
     max_score = std::max(max_score,  del_score );
 
     // base ins
-    infty_score_t ins_score = M(i_index,j_index-1) + sv.scoring()->gapB(j_seq_pos) + getGapCostBetween( j_prev_seq_pos, j_seq_pos, false, sv);
+    infty_score_t ins_score = M(i_index,j_index-1) + sv.scoring()->gapB(j_seq_pos) + getGapCostBetween( j_prev_seq_pos, j_seq_pos, false);
     max_score = std::max(max_score, ins_score);
 
     //list of valid arcs ending at i/j
@@ -246,8 +288,8 @@ AlignerN::compute_M_entry(int state, index_t al, index_t bl, matidx_t i_index, m
 	    seq_pos_t arcB_left_seq_pos_before = mapperB.get_pos_in_seq_new(bl, arcB_left_index_before);
 
 	    infty_score_t arc_match_score =  M(arcA_left_index_before, arcB_left_index_before) + sv.D( arcA, arcB ) +  sv.scoring()->arcmatch(arcA, arcB) //toask: Should I also care about scoring scheme for IA,IB?
-								    + getGapCostBetween( arcA_left_seq_pos_before, arcA.left(), true, sv)
-								    + getGapCostBetween( arcB_left_seq_pos_before, arcB.left(), false, sv);
+								    + getGapCostBetween( arcA_left_seq_pos_before, arcA.left(), true)
+								    + getGapCostBetween( arcB_left_seq_pos_before, arcB.left(), false);
 	    if (arc_match_score > max_score) {
 		max_score = arc_match_score;
 //		if (trace_debugging_output)	std::cout << "compute_M_entry arcs " << arcX << " , " << arcY << " new score: " << new_score << "arc match score: " << sv.scoring()->arcmatch(am) << std::endl;
@@ -293,7 +335,7 @@ AlignerN::init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br, 
 	    }
 	    else */ {
 		seq_pos_t i_prev_seq_pos = mapperA.get_pos_in_seq_new(al,i_index-1);
-		indel_score = indel_score + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true, sv) + sv.scoring()->gapA(i_seq_pos); //toask: infty_score_t operator+ overloading
+		indel_score = indel_score + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true) + sv.scoring()->gapA(i_seq_pos); //toask: infty_score_t operator+ overloading
 	    }
 	}
 	M(i_index,0) = indel_score;
@@ -311,7 +353,7 @@ AlignerN::init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br, 
 	    else*/ {
 		seq_pos_t j_prev_seq_pos = mapperB.get_pos_in_seq_new(bl,j_index-1);
 
-		indel_score = indel_score + getGapCostBetween(j_prev_seq_pos, j_seq_pos, false, sv) + sv.scoring()->gapB(j_seq_pos); //toask: infty_score_t operator+ overloading
+		indel_score = indel_score + getGapCostBetween(j_prev_seq_pos, j_seq_pos, false) + sv.scoring()->gapB(j_seq_pos); //toask: infty_score_t operator+ overloading
 	    }
 	}
 	M(0,j_index) = indel_score;
@@ -350,7 +392,8 @@ void AlignerN::align_M(pos_type al,pos_type ar,pos_type bl,pos_type br, bool all
     init_M(E_NO_NO, al, ar, bl, br, def_scoring_view);
 
     if (trace_debugging_output)	cout << "init_M finished" << endl;
-
+    if (al==0 && bl==0)
+	stopwatch.start("compute_m entries top level");
     //iterate through valid entries
     for (matidx_t i_index = 1; i_index < mapperA.number_of_valid_mat_pos(al); i_index++) {
 	/*
@@ -363,6 +406,9 @@ void AlignerN::align_M(pos_type al,pos_type ar,pos_type bl,pos_type br, bool all
 	    Ms[E_NO_NO](i_index,j_index) = compute_M_entry(E_NO_NO,al,bl,i_index,j_index,def_scoring_view); //toask: where should we care about non_default scoring views
 	}
     }
+    if (al==0 && bl==0)
+	stopwatch.stop("compute_m entries top level");
+
 
     assert ( ! allow_exclusion );
 
@@ -406,10 +452,10 @@ void AlignerN::fill_D_entries(pos_type al, pos_type bl)
 	    cout << "arcA:" << arcA << " arcB:" << arcB << " ar_prev_mat_idx_pos:" << ar_prev_mat_idx_pos << " br_prev_mat_idx_pos:" << br_prev_mat_idx_pos << endl;
 
 	seq_pos_t ar_prev_seq_pos = mapperA.get_pos_in_seq_new(al, ar_prev_mat_idx_pos);
-	infty_score_t jumpGapCostA = getGapCostBetween(ar_prev_seq_pos, ar_seq_pos, true, sv);
+	infty_score_t jumpGapCostA = getGapCostBetween(ar_prev_seq_pos, ar_seq_pos, true);
 
 	seq_pos_t br_prev_seq_pos = mapperB.get_pos_in_seq_new(bl, br_prev_mat_idx_pos);
-	infty_score_t jumpGapCostB = getGapCostBetween(br_prev_seq_pos, br_seq_pos, false, sv);
+	infty_score_t jumpGapCostB = getGapCostBetween(br_prev_seq_pos, br_seq_pos, false);
 
 	//M,IA,IB scores
 	infty_score_t m= Ms[0](ar_prev_mat_idx_pos, br_prev_mat_idx_pos) + jumpGapCostA + jumpGapCostB;
@@ -433,7 +479,11 @@ void AlignerN::fill_D_entries(pos_type al, pos_type bl)
 // compute all entries D
 void
 AlignerN::align_D() {
+    computeGapCosts(true, def_scoring_view);//gap costs A //tocheck:always def_score view!
+    computeGapCosts(false, def_scoring_view);//gap costs B //tocheck:always def_score view!
+
     // for al in r.get_endA() .. r.get_startA
+
     for (pos_type al=r.get_endA()+1; al>r.get_startA(); ) {
 	al--;
 	if (trace_debugging_output) std::cout << "align_D al: " << al << std::endl;
@@ -498,21 +548,29 @@ AlignerN::align_D() {
 
 
 	    //compute matrix M
+//	    stopwatch.start("compM");
 	    align_M(al,max_ar,bl,max_br,params->STRUCT_LOCAL);
+//	    stopwatch.stop("compM");
+
 
 	    //compute IA
+//	    stopwatch.start("compIA");
 	    for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
 		    arcB != adjlB.end(); arcB++)
 	    {
 		fill_IA_entries(al, *arcB, max_ar );
 	    }
+//	    stopwatch.stop("compIA");
 
 	    //comput IB
+//	    stopwatch.start("compIB");
 	    for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
 		    arcA != adjlA.end(); arcA++)
 	    {
 		fill_IB_entries(*arcA, bl, max_br );
 	    }
+//	    stopwatch.stop("compIB");
+
 
 	    // ------------------------------------------------------------
 	    // now fill matrix D entries
@@ -521,7 +579,6 @@ AlignerN::align_D() {
 	    fill_D_entries(al,bl);
 	}
     }
-
     D_created=true; // now the matrix D is built up
 }
 
@@ -532,7 +589,12 @@ AlignerN::align() {
     // ------------------------------------------------------------
     // computes D matrix (if not already done) and then does the alignment on the top level
     // ------------------------------------------------------------
-    if (!D_created) align_D();
+    if (!D_created)
+    {
+	stopwatch.start("alignD");
+	align_D();
+	stopwatch.stop("alignD");
+    }
 
     if (params->SEQU_LOCAL) {
 	std::cerr << "SEQU_LOCAL is not supported by locarna_n\n" << std::endl;
@@ -551,10 +613,14 @@ AlignerN::align() {
 	seq_pos_t last_valid_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_index_B);
 	if(trace_debugging_output)
 	    cout << "Align top level with ps_al, last_index_A, ps_bl, last_index_B," << ps_al << last_index_A << ps_bl << last_index_B << endl;
+
+	stopwatch.start("align top level");
 	align_M(ps_al, last_index_A, ps_bl, last_index_B, false); //tocheck: always use get_startA-1 (not zero) in sparsification_mapper and other parts
+	stopwatch.stop("align top level");
+
 	return Ms[E_NO_NO]( last_index_A, last_index_B)
-						+ getGapCostBetween( last_valid_seq_pos_A, ps_ar, true, def_scoring_view)  //toask: where should we care about non_default scoring views
-						+ getGapCostBetween( last_valid_seq_pos_B, ps_br, false, def_scoring_view) ; //no free end gaps
+						+ getGapCostBetween( last_valid_seq_pos_A, ps_ar, true)  //toask: where should we care about non_default scoring views
+						+ getGapCostBetween( last_valid_seq_pos_B, ps_br, false) ; //no free end gaps
     }
 }
 
@@ -587,7 +653,7 @@ void AlignerN::trace_IX (pos_type xl, matidx_t i_index, const Arc &arcY, bool is
 
 	if( !constraints_aligned_pos
 		&&
-		IX(i_index, arcY, isA) == IX(i_index-1, arcY, isA) + sv.scoring()->gapX(i_seq_pos, isA) + getGapCostBetween(i_prev_seq_pos, i_seq_pos, isA, sv) )
+		IX(i_index, arcY, isA) == IX(i_index-1, arcY, isA) + sv.scoring()->gapX(i_seq_pos, isA) + getGapCostBetween(i_prev_seq_pos, i_seq_pos, isA) )
 	{
 	    trace_IX( xl, i_index-1, arcY, isA, sv);
 	    for ( size_type k = i_prev_seq_pos + 1; k <= i_seq_pos; k++)
@@ -609,7 +675,7 @@ void AlignerN::trace_IX (pos_type xl, matidx_t i_index, const Arc &arcY, bool is
     for (ArcIdxVec::const_iterator arcIdx = arcIdxVecX.begin(); arcIdx != arcIdxVecX.end(); ++arcIdx)
     {
 	const Arc& arcX = bpsX.arc(*arcIdx);
-	infty_score_t current_score =  sv.D(arcX, arcY, isA) + sv.scoring()->arcDel(arcX, isA) + getGapCostBetween(xl, arcX.left(), isA, sv);
+	infty_score_t current_score =  sv.D(arcX, arcY, isA) + sv.scoring()->arcDel(arcX, isA) + getGapCostBetween(xl, arcX.left(), isA);
 
 	if ( IX(i_index, arcY, isA) == current_score) {
 
@@ -657,11 +723,11 @@ void AlignerN::trace_D(const Arc &arcA, const Arc &arcB, ScoringView sv) {
     seq_pos_t br_seq_pos = arcB.right();
     seq_pos_t ar_prev_mat_idx_pos = mapperA.first_valid_mat_pos_before(al, ar_seq_pos);
     seq_pos_t ar_prev_seq_pos = mapperA.get_pos_in_seq_new(al, ar_prev_mat_idx_pos);
-    infty_score_t jumpGapCostA = getGapCostBetween(ar_prev_seq_pos, ar_seq_pos, true, sv);
+    infty_score_t jumpGapCostA = getGapCostBetween(ar_prev_seq_pos, ar_seq_pos, true);
 
     matidx_t br_prev_mat_idx_pos = mapperB.first_valid_mat_pos_before(bl, br_seq_pos); //tocheck: ar or ar-1?
     seq_pos_t br_prev_seq_pos = mapperB.get_pos_in_seq_new(bl, br_prev_mat_idx_pos);
-    infty_score_t jumpGapCostB = getGapCostBetween(br_prev_seq_pos, br_seq_pos, false, sv);
+    infty_score_t jumpGapCostB = getGapCostBetween(br_prev_seq_pos, br_seq_pos, false);
 
     // --------------------
     // case of stacking: not supported
@@ -750,7 +816,7 @@ void AlignerN::trace_M_noex(int state,pos_type al, matidx_t i_index, pos_type bl
 	    constraints_alowed_edge
 	    && mapperA.pos_unpaired(al, i_index) && mapperB.pos_unpaired(bl, j_index)
 	    && M(i_index,j_index) ==  M(i_index-1, j_index-1) + sv.scoring()->basematch(i_seq_pos, j_seq_pos)
-	    + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true, sv) + getGapCostBetween(j_prev_seq_pos, j_seq_pos, false, sv) ) {
+	    + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true) + getGapCostBetween(j_prev_seq_pos, j_seq_pos, false) ) {
 	if (trace_debugging_output) std::cout << "base match " << i_index << " , " << j_index << std::endl;
 
 	trace_M(state, al, i_index-1, bl, j_index-1, tl, sv);
@@ -773,7 +839,7 @@ void AlignerN::trace_M_noex(int state,pos_type al, matidx_t i_index, pos_type bl
 	if (  i_seq_pos > al &&
 		!constraints_aligned_pos_A
 		&& M(i_index,j_index) ==
-			M(i_index-1, j_index) + sv.scoring()->gapA(i_seq_pos) + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true, sv) )
+			M(i_index-1, j_index) + sv.scoring()->gapA(i_seq_pos) + getGapCostBetween(i_prev_seq_pos, i_seq_pos, true) )
 	{
 	    trace_M(state, al, i_index-1, bl, j_index, tl, sv);
 	    alignment.append(i_seq_pos, -1 );
@@ -788,7 +854,7 @@ void AlignerN::trace_M_noex(int state,pos_type al, matidx_t i_index, pos_type bl
 	if (  j_seq_pos > bl &&
 		!constraints_aligned_pos_B
 		&& M(i_index,j_index) ==
-			M(i_index,j_index-1) + sv.scoring()->gapB(j_seq_pos) + getGapCostBetween( j_prev_seq_pos, j_seq_pos, false, sv))
+			M(i_index,j_index-1) + sv.scoring()->gapB(j_seq_pos) + getGapCostBetween( j_prev_seq_pos, j_seq_pos, false))
 	{
 	    trace_M(state, al, i_index, bl, j_index-1, tl, sv);
 	    alignment.append(-1, j_seq_pos);
@@ -834,8 +900,8 @@ void AlignerN::trace_M_noex(int state,pos_type al, matidx_t i_index, pos_type bl
 
 
         	infty_score_t loop_match_score =  M(arcA_left_index_before, arcB_left_index_before) + sv.D( arcA, arcB ) +  sv.scoring()->arcmatch(arcA, arcB) //toask: Should I also care about scoring scheme for IA,IB?
-            									    + getGapCostBetween( arcA_left_seq_pos_before, arcA.left(), true, sv)
-            									    + getGapCostBetween( arcB_left_seq_pos_before, arcB.left(), false, sv);
+            									    + getGapCostBetween( arcA_left_seq_pos_before, arcA.left(), true)
+            									    + getGapCostBetween( arcB_left_seq_pos_before, arcB.left(), false);
         	if ( M(i_index, j_index) == loop_match_score ) {
 
         	    if (trace_debugging_output) std::cout << "arcmatch "<< arcA <<";"<< arcB << " :: "   << std::endl;

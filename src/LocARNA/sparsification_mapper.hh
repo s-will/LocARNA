@@ -134,7 +134,6 @@ public:
 	valid_arcs_right_adj(index_t idx, matidx_t pos) const {
 		return info_valid_seq_pos_vecs.at(idx).at(pos).valid_arcs;
 	}
-
 	matidx_t first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
 	    if (left_end == numeric_limits<index_t>::max())
 		left_end = index;
@@ -149,9 +148,9 @@ public:
 	 * @return the first valid matrix position before the position pos at the index left_end
 	 * @note use if indexing by the common left end is used
 	 */
+	inline
 	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
-	    if (left_end == numeric_limits<index_t>::max())
-		assert (pos > index);
+//	    if (left_end == numeric_limits<index_t>::max())		assert (pos > index);
 	    return first_valid_mat_pos_before_eq(index, pos-1, left_end);
 	}
 
@@ -161,6 +160,7 @@ public:
 	 * @param pos matrix position
 	 * @return the sequence position that corresponds to the matrix position at the index idx
 	 */
+	inline
 	seq_pos_t get_pos_in_seq_new(index_t idx, matidx_t pos) const{
 		assert(pos>=0 && pos<number_of_valid_mat_pos(idx));
 		return (info_valid_seq_pos_vecs.at(idx).at(pos).seq_pos);//+arc.left();

@@ -78,6 +78,9 @@ protected:
 	//! right now for the locarna_n only one M matrix is used (no exclusions)
 	std::vector<M_matrix_t> Ms;
 
+	ScoreMatrix gapCostAmat;
+	ScoreMatrix gapCostBmat;
+
 
 	int min_i; //!< subsequence of A left end, not used in locarna_n
 	int min_j; //!< subsequence of B left end, not used in locarna_n
@@ -272,7 +275,9 @@ protected:
 	void init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
 
 	template <class ScoringView>
-	infty_score_t getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA,ScoringView sv);
+	void computeGapCosts(bool isA, ScoringView sv);
+
+	infty_score_t getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA);
 
 	template <class ScoringView>
 	void compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std::vector<infty_score_t> &blockGapCostsX, bool isA, ScoringView sv );
