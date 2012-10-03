@@ -132,7 +132,7 @@ sub abs_dir {
   if (!is_abs_dir($path)) {
     $abs_dir = cw_dir().'/'.$path;
   }
-  $abs_dir =~ s/\/.\//\//g;
+  $abs_dir =~ s/\/\.\//\//g;
   $abs_dir =~ s/\/+/\//g;
 
   return($abs_dir);
