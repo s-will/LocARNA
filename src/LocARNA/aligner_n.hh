@@ -277,8 +277,7 @@ protected:
 	template <class ScoringView>
 	void computeGapCosts(bool isA, ScoringView sv);
 
-	template <class ScoringView>
-	infty_score_t getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA,ScoringView sv);
+	infty_score_t getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA);
 
 	template <class ScoringView>
 	void compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std::vector<infty_score_t> &blockGapCostsX, bool isA, ScoringView sv );

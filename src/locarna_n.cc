@@ -325,7 +325,7 @@ option_def my_options[] = {
 int
 main(int argc, char **argv) {
 
-    stopwatch.start("total");
+    stopwatch.start("total_n");
 
     typedef std::vector<int>::size_type size_type;
 
@@ -890,7 +890,7 @@ main(int argc, char **argv) {
 	}
     }
     
-    stopwatch.stop("total");
+    stopwatch.stop("total_n");
     
     // ----------------------------------------
     // DONE

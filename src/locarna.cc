@@ -332,6 +332,7 @@ option_def my_options[] = {
  */
 int
 main(int argc, char **argv) {
+    stopwatch.start("total");
 
 #ifdef MEASURE_TIME
 	struct timeval tp;
@@ -871,6 +872,8 @@ main(int argc, char **argv) {
     cout << endl << "time_wall main = " << setprecision(3) << end - start << " sec" << endl;
     cout << "time_cpu main = " << setprecision(3) << endR - startR << " sec" << endl << endl;
 #endif
+
+    stopwatch.stop("total");
 
     // ----------------------------------------
     // DONE
