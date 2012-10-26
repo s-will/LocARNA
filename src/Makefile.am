@@ -78,7 +78,7 @@ nodist_locarna_bin_SOURCES = LocARNA/ribosum85_60.icc
 
 ribosum2cc_SOURCES = ribosum2cc.cc
 
-locarnap_fit_SOURCES = fit.cc fitonoff.cc LocARNA/options.hh fitonoff.hh
+locarnap_fit_SOURCES = fit.cc LocARNA/fitonoff.cc LocARNA/options.hh LocARNA/fitonoff.hh
 
 locarna_deviation_SOURCES = deviation.cc
 

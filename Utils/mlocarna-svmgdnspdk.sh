@@ -11,12 +11,14 @@ SVMSGDNSPDK=/home/costa/Projects/svmsgdnspdk/svmsgdnspdk
 MLOCARNA=/usr/local/user/locarna-1.7.2/bin/mlocarna
 
 FASTA_FILENAME=$1
-PARAMS="-wins 200 -shift 100 -stack -t 3 -M 3" ## -t grammar abstraction level ## -M number of shapes 
+PARAMS="-wins 200 -shift 100 -stack -t 3 -M 3" ## -stack: extra stack vertices -t grammar abstraction level (of RNAshape) ## -M number of shapes 
 
 echo "Run $FASTA2SHREP $PARAMS -fasta $FASTA_FILENAME"
 rm -rf GSPAN/
 time $FASTA2SHREP $PARAMS -fasta $FASTA_FILENAME ## writes output directory GSPAN
 bzcat GSPAN/*bz2 > $FASTA_FILENAME.gspan
+
+#gspan format defines graphs
 
 RADIUS=2
 DISTANCE=4
@@ -24,7 +26,7 @@ DISTANCE=4
 echo "Run $SVMSGDNSPDK -d $FASTA_FILENAME.gspan -R $RADIUS -D $DISTANCE -gt DIRECTED -a MATRIX"
 $SVMSGDNSPDK -d $FASTA_FILENAME.gspan -R $RADIUS -D $DISTANCE -gt DIRECTED -a MATRIX ##-R = radius # -D = distance # -gt = graph type # -a = action
 
-MATRIX_FILENAME="matrix_R${RADIUS}D${DISTANCE}.mtx"
+MATRIX_FILENAME="matrix_R${RADIUS}D${DISTANCE}.mtx" # changed in new version to ~  $FASTA_FILENAME_R${RADIUS}D${DISTANCE}.mtx 
 
 ## the produced matrix file has entries in [0,1] => convert it
 cat $MATRIX_FILENAME | awk -v FACTOR=10000 '{for(i=1;i<=NF;i++){if (i==NR){printf("0 ")} else{ printf("%d ",$(i)*FACTOR)}} print ""}' > $MATRIX_FILENAME.converted

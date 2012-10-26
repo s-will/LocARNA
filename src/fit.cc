@@ -14,9 +14,10 @@
 #include <fstream>
 #include <sstream>
 
-#include "fitonoff.hh"
+#include "LocARNA/fitonoff.hh"
 
 using  namespace std;
+using namespace LocARNA;
 
 // --------------------------------------------------
 // subs for reading input
@@ -41,8 +42,6 @@ read_number_sequence(istream &in,numseq_t &numseq) {
 // Options
 //
 #include <LocARNA/options.hh>
-
-using namespace LocARNA;
 
 const std::string
 VERSION_STRING = (std::string)PACKAGE_STRING;
