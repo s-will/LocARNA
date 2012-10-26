@@ -110,7 +110,28 @@ File with similarity matrix. The similarities in the matrix are used
 to construct the guide tree for the progressive alignment. This saves
 the calculation of pairwise all-vs-all similarities.
 
-=item B<-P, --tree-min-prob=<f>>       
+
+=item B<--graphkernel>
+
+Use the graphkernel for constructing the guide tree. 
+
+=item B<--svmsgdnspdk[=<program>]>
+
+Specify the svmsgdnspdk program (potentially including path). Default:
+use "svmsgdnspdk" in path.
+
+=item B<--fasta2shrep=<program>>
+
+Program "fasta2shrep" for generating graphs from the input sequences
+for use with the graph kernel guide tree generation (potentially
+including path). Default: use "fasta2shrep_gspan.pl" in path.
+
+=item B<--fasta2shrep-options=<args>>
+
+Command line arguments for fasta2shrep. Default: "-wins 200 -shift 50
+-stack -t 3 -M 3".
+
+=item B<-P, --tree-min-prob=<f>>
 
 Minimal prob for constructing guide tree. This probability can be set
 separately for the all-2-all comparison for constructing the guide
@@ -336,6 +357,8 @@ use warnings;
 
 use Cwd 'abs_path';
 
+use File::Path;
+
 ########################################
 ## threading support
 ##
@@ -417,6 +440,24 @@ my $pw_aligner_p_options="";
 my $tree_file;
 my $similarity_matrix_file;
 my $tgtdir;
+
+my $graphkernel;
+my $svmsgdnspdk="svmsgdnspdk";
+my $svmsgdnspdk_radius=2;
+my $svmsgdnspdk_distance=4;
+
+my $fasta2shrep="fasta2shrep_gspan.pl";
+
+
+##########
+# default options of fasta2shrep. In particular, specify
+# -wins window size
+# -shift window shift in percent of window size
+# -stack extra stack vertices 
+# -t grammar abstraction level (of RNAshape) 
+# -M number of shapes
+#
+my $fasta2shrep_options="-wins 200 -shift 50 -stack -t 3 -M 3";
 
 my $seqs_file; ## filename of fasta file with input sequences 
 
@@ -536,6 +577,13 @@ my %options_hash=
 
      "similarity-matrix" => \$similarity_matrix_file,
 
+     "graphkernel" => \$graphkernel,
+     "svmsgdnspdk" => \$svmsgdnspdk,
+     "svmsgdnspdk-radius" => \$svmsgdnspdk_radius,
+     "svmsgdnspdk-distance" => \$svmsgdnspdk_distance,
+     "fasta2shrep" => \$fasta2shrep,
+     "fasta2shrep-options" => \$fasta2shrep_options,
+     
      "outdir" => \$tgtdir,
 
      # controlling the mode of operation
@@ -658,6 +706,14 @@ my @options = #options that are not or not automatically passed to locarna
 
      "treefile=s",
      "similarity-matrix=s",
+
+     "graphkernel",
+     "svmsgdnspdk=s",
+     "svmsgdnspdk-radius=s",
+     "svmsgdnspdk-distance=s",
+     "fasta2shrep=s",
+     "fasta2shrep-options=s",
+
      "outdir|tgtdir=s",
 
      "min-bm-prob=f",
@@ -1525,6 +1581,64 @@ sub perform_multiple_alignment($) {
 		
     } elsif ($#names == 1) { # for only two sequences, tree is unique
 	$tree="(".quotemeta($names[0]).",".quotemeta($names[1]).")";
+    } elsif ($graphkernel) {
+	
+	sub noop_system {
+	    print "$@\n";
+	}
+	
+	## RECALL: here the current directory is the target directory
+
+	my $cmd="$fasta2shrep $fasta2shrep_options -fasta input/input.fa -tmp graphkernel/tmp -o graphkernel";
+	print "Run $cmd\n";
+
+	if (-d "graphkernel") {
+	    print "  Remove directory graphkernel\n";
+	    File::Path::rmtree "graphkernel";
+	}
+	
+	mkdir "graphkernel";
+	mkdir "graphkernel/tmp";
+	
+	## Run fasta2shrep; writes output directory
+	system "$cmd";
+	
+	File::Path::rmtree "graphkernel/tmp";
+	
+	## write results to .gspan file
+	system "bzcat graphkernel/*.bz2 > graphkernel/gspan";
+	system "rm graphkernel/*.bz2";
+	
+# note: the gspan format defines graphs
+
+	$cmd = "$svmsgdnspdk -i graphkernel/gspan -r $svmsgdnspdk_radius -d $svmsgdnspdk_distance -gt DIRECTED -a MATRIX";
+	print "Run $cmd\n";
+
+	system "$cmd";
+	
+	# system "bzip2 graphkernel/gspan"; ## keep the gspan file but compress it
+	# OR
+	unlink "graphkernel/gspan";
+	
+	## name of the generated matrix file
+	my $matrix_filename="graphkernel/gspan.mtx";
+	
+	## read matrix file
+	my $score_matrix = read_2D_matrix($matrix_filename,int(@names),int(@names));
+	
+	## convert it
+	for my $i (0..@$score_matrix-1) {
+	    my $row=$score_matrix->[$i];
+	    for my $j (0..@$row-1) {
+		$score_matrix->[$i][$j] *= 10000;
+	    }
+	}
+	
+	## write it to results directory
+	write_2D_matrix("$results_dir/result.matrix",$score_matrix);
+	
+	$tree = upgma_tree(\@names,$score_matrix);
+		
     } else {
 	# --------------------------------------------------
 	# compute score matrix for guide tree
@@ -1554,7 +1668,7 @@ sub perform_multiple_alignment($) {
     } # end generation of tree
 
     
-    open(TREE,">$results_dir/result.tree")|| die "Cannot write to $tgtdir/result.tree";
+    open(TREE,">$results_dir/result.tree")|| die "Cannot write to $results_dir/result.tree";
     print TREE "$tree\n";
     close TREE;
 
