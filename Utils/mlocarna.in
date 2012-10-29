@@ -1601,7 +1601,7 @@ sub perform_multiple_alignment($) {
 	mkdir "graphkernel/tmp";
 	
 	## Run fasta2shrep; writes output directory
-	system "$cmd";
+	system("$cmd")==0 || die "Cannot run $cmd";
 	
 	File::Path::rmtree "graphkernel/tmp";
 	
@@ -1614,7 +1614,7 @@ sub perform_multiple_alignment($) {
 	$cmd = "$svmsgdnspdk -i graphkernel/gspan -r $svmsgdnspdk_radius -d $svmsgdnspdk_distance -gt DIRECTED -a MATRIX";
 	print "Run $cmd\n";
 
-	system "$cmd";
+	system("$cmd")==0 || die "Cannot run $cmd";
 	
 	# system "bzip2 graphkernel/gspan"; ## keep the gspan file but compress it
 	# OR
