@@ -180,7 +180,7 @@ namespace LocARNA {
 	std::ifstream in(arcmatch_scores_file.c_str());
     
 	// catch error while opening
-	if (!in.good()) {
+	if (!in.is_open()) {
 	    std::cerr << "Cannot open file "<<arcmatch_scores_file<<" for reading arcmatch-scores."<<std::endl;
 	    exit(-1);
 	}
@@ -269,7 +269,7 @@ namespace LocARNA {
 	std::ofstream out(arcmatch_scores_file.c_str());
     
 	// catch error while opening
-	if (!out.good()) {
+	if (!out.is_open()) {
 	    std::cerr << "Cannot open file "<<arcmatch_scores_file<<" for writing arcmatch-scores."<<std::endl;
 	    exit(-1);
 	}

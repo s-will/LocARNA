@@ -456,6 +456,16 @@ namespace LocARNA {
 	 */
 	void forgetInLoopProbs() {/* do nothing */};
     
+	
+	/** 
+	 * @brief Write rna data in pp format to stream
+	 * 
+	 * @param out output stream 
+	 *
+	 */
+	 std::ostream &write_pp(std::ostream &out) const;
+	
+
     private:
     
     
@@ -915,10 +925,10 @@ namespace LocARNA {
 	 * 
 	 * @return input stream
 	 *
-	 * @note throws LocARNA::failure on parsing errors, throws std::istream::failure on IO errors
+	 * @note throws LocARNA::failure on parsing errors
+	 *
 	 * @note stop reading on line __END__
 	 *
-	 * @todo design precise exception behavior of read/write methods (compare to std::istream/std::ostream) 
 	 * @todo implement; use in reading pp files
 	 *
 	 */
@@ -941,7 +951,8 @@ namespace LocARNA {
 	 *
 	 * @return input stream
 	 *
-	 * @note throws LocARNA::failure on parsing errors, throws std::istream::failure on IO errors
+	 * @note throws LocARNA::failure on parsing errors
+	 *
 	 * @note stop reading on line __END__
 	 *
 	 * @todo implement
@@ -966,7 +977,8 @@ namespace LocARNA {
 	 *
 	 * @return input stream
 	 *
-	 * @note throws LocARNA::failure on parsing errors, throws std::istream::failure on IO errors
+	 * @note throws LocARNA::failure on parsing errors
+	 *
 	 * @note stop reading on line __END__
 	 *
 	 * @todo implement
@@ -986,8 +998,6 @@ namespace LocARNA {
 	 * Write lines i j p, where p is probability of base pair (i,j).
 	 * 
 	 * @return output stream
-	 *
-	 * @note throws std::ostream::failure on IO errors
 	 *
 	 * @todo implement; use in writing pp files
 	 *
@@ -1011,8 +1021,6 @@ namespace LocARNA {
 	 *
 	 * @return output stream
 	 *
-	 * @note throws std::ostream::failure on IO errors
-	 *
 	 * @todo implement
 	 *
 	 */
@@ -1035,8 +1043,6 @@ namespace LocARNA {
 	 *
 	 * @return output stream
 	 *
-	 * @note throws std::ostream::failure on IO errors
-	 *
 	 * @todo implement
 	 *
 	 */
@@ -1057,8 +1063,6 @@ namespace LocARNA {
 	 * with pseudo basepair (i,j)=(0,n+1).
 	 *
 	 * @return output stream
-	 *
-	 * @note throws std::ostream::failure on IO errors
 	 *
 	 * @todo implement
 	 *

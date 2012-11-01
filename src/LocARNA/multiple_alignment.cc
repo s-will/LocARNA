@@ -35,8 +35,8 @@ namespace LocARNA {
 	try {
 	    ifstream in(filename.c_str());
     
-	    if (!in.good()) {
-		throw(std::ifstream::failure("Cannot read file "+filename+"."));
+	    if (!in.is_open()) {
+		throw(std::ifstream::failure("Cannot open file "+filename+" for reading."));
 	    }
 	
 	    if (format==FASTA) {
@@ -197,7 +197,7 @@ namespace LocARNA {
     
 	getline(in,line);
 
-	while(!in.fail()) {
+	while(in) {
 	
 	    if (line.length()>0 && line[0]=='>') {
 		std::istringstream sin(line);
@@ -209,7 +209,7 @@ namespace LocARNA {
 		
 		std::string seqstr="";
     		getline(in,line);
-		while(!in.fail() && (line.size()==0 || line[0]!='>')) {
+		while((in) && (line.size()==0 || line[0]!='>')) {
 		    // remove whitespace and add to seqstr
 		    std::istringstream sin(line);
 		    std::string seqstr1;

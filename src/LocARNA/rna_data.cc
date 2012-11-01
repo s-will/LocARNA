@@ -481,8 +481,8 @@ namespace LocARNA {
 	assert(!readInLoopProbs || readPairProbs);
 
 	std::ifstream in(filename.c_str());
-	if (! in.good()) {
-	    std::cerr << "Cannot read "<<filename<<std::endl;
+	if (! in.is_open()) {
+	    std::cerr << "Cannot open "<<filename<<" for reading."<<std::endl;
 	    exit(-1);
 	}
 

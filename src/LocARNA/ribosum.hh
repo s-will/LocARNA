@@ -173,7 +173,7 @@ public:
      */
     RibosumFreq(const std::string &filename):Ribosum() {
 	std::ifstream in(filename.c_str());
-	if (!in.good()) {
+	if (!in.is_open()) {
 	    std::cerr << "Cannot open file "<<filename<<" for reading ribosum data."<<std::endl;
 	    exit(-1);
 	}
