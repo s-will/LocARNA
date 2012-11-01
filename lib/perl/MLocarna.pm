@@ -84,6 +84,8 @@ print_normalized_sequence_names_hash
 
 nnamepair
 
+alifold_mfe
+
 );
 
 our %EXPORT_TAGS = ();
