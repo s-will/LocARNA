@@ -515,21 +515,21 @@ main(int argc, char **argv) {
     PFoldParams params(clp.no_lonely_pairs,clp.opt_stacking);
 
     RnaData rnadataA(clp.file1,true,clp.opt_stacking,true);
-    if (!rnadataA.pairProbsAvailable() || !rnadataA.inLoopProbsAvailable()) {
+    if (!rnadataA.pair_probs_available() || !rnadataA.in_loop_probs_available()) {
 	if (clp.opt_verbose) {
 	    std::cout << "Compute ensemble probabilities for first input sequence."
 		      << std::endl;
 	}
-	rnadataA.computeEnsembleProbs(params,true);
+	rnadataA.compute_ensemble_probs(params,true);
     }
 
     RnaData rnadataB(clp.file2,true,clp.opt_stacking,true);
-    if (!rnadataB.pairProbsAvailable() || !rnadataB.inLoopProbsAvailable()) {
+    if (!rnadataB.pair_probs_available() || !rnadataB.in_loop_probs_available()) {
 	if (clp.opt_verbose) {
 	    std::cout << "Compute ensemble probabilities for second input sequence."
 		      << std::endl;
 	}
-	rnadataB.computeEnsembleProbs(params,true);
+	rnadataB.compute_ensemble_probs(params,true);
     }
 
     Sequence seqA=rnadataA.get_sequence();

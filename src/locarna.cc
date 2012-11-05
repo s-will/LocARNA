@@ -492,19 +492,19 @@ main(int argc, char **argv) {
 
     // optionally fold
     PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
-    if (!rnadataA.pairProbsAvailable()) {
+    if (!rnadataA.pair_probs_available()) {
 	if (clp.opt_verbose) {
 	    std::cout << "Compute ensemble probabilities for first input sequence."
 		      << std::endl;
 	}
-	rnadataA.computeEnsembleProbs(pfparams,false,true);
+	rnadataA.compute_ensemble_probs(pfparams,false,true);
     }
-    if (!rnadataB.pairProbsAvailable()) {
+    if (!rnadataB.pair_probs_available()) {
 	if (clp.opt_verbose) {
 	    std::cout << "Compute ensemble probabilities for second input sequence."
 		      << std::endl;
 	}
-	rnadataB.computeEnsembleProbs(pfparams,false,true);
+	rnadataB.compute_ensemble_probs(pfparams,false,true);
     }
 
 

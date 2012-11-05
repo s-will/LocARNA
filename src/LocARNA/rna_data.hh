@@ -256,18 +256,18 @@ namespace LocARNA {
     * (read input from file, compute base pair probs only if initialized from sequence-only file format,
     * don't read or compute in loop probs):
     * RnaData r=RnaData(file,true,opt_stacking,false);
-    * if (!r.pairProbsAvailable()) {r.computeEnsembleProbs(params,false);}
+    * if (!r.pair_probs_available()) {r.compute_ensemble_probs(params,false);}
     * 2) always recompute probabilities, no in loop probabilities:
     * RnaData r=RnaData(file,false);
-    * r.computeEnsembleProbs(params,false);
+    * r.compute_ensemble_probs(params,false);
     * 3) always recompute probabilities and in loop probabilities:
     * RnaData r=RnaData(file,false);
-    * r.computeEnsembleProbs(params,true);
+    * r.compute_ensemble_probs(params,true);
     * 4) standard case for LocARNA-ng: compute base pair probs only if initialized from sequence-only
     * file format, but compute in loop probabilities if not
     * available in input file; in the latter case recompute pair probabilities for consistency:
     * RnaData r=RnaData(file,true,opt_stacking,true);
-    * if (!r.pairProbsAvailable() || !r.inLoopProbsAvailable()) {r.computeEnsembleProbs(params,true);}
+    * if (!r.pair_probs_available() || !r.in_loop_probs_available()) {r.compute_ensemble_probs(params,true);}
     */
     class RnaData {
     public:
@@ -277,13 +277,13 @@ namespace LocARNA {
 	Sequence sequence; //!< the sequence
 	
 	//! whether pair probabilities are availabe
-	bool pair_probs_available; 
+	bool pair_probs_available_; 
 	
 	//! whether stacking probabilities are available
-	bool stacking_probs_available; 
+	bool stacking_probs_available_; 
 	
 	//! whether "in loop" probabilities are availabe
-	bool in_loop_probs_available; 
+	bool in_loop_probs_available_; 
 	
 	//! array for all arc probabilities the array is used when reading
 	//! in the probabilities and for merging probs during pp-output
@@ -374,9 +374,9 @@ namespace LocARNA {
 	 * @note if readInLoopProbs, don't read pair probs unless in loop probs are available
 
 	 * @note if !readPairProbs the object describes an RNA without
-	 * structure. pairProbsAvailable() will return false until
+	 * structure. pair_probs_available() will return false until
 	 * pair probs are made available, e.g., calling
-	 * computeEnsembleProbs().
+	 * compute_ensemble_probs().
 	 */
 	RnaData(const std::string &file,
 		bool readPairProbs,
@@ -389,8 +389,8 @@ namespace LocARNA {
 	 * @param sequence the RNA sequence as Sequence object
 	 *
 	 * @note after construction, the object describes an RNA without
-	 * structure. pairProbsAvailable() will return false until
-	 * pair probs are made available, e.g., calling computeEnsembleProbs().
+	 * structure. pair_probs_available() will return false until
+	 * pair probs are made available, e.g., calling compute_ensemble_probs().
 	 */
 	RnaData(const Sequence &sequence);
 	
@@ -406,8 +406,8 @@ namespace LocARNA {
 	 * @return whether probabilities are available
 	 */
 	bool
-	pairProbsAvailable() const {
-	    return pair_probs_available;
+	pair_probs_available() const {
+	    return pair_probs_available_;
 	}
 	
 	/** 
@@ -416,8 +416,8 @@ namespace LocARNA {
 	 * @return whether probabilities are available
 	 */
 	bool
-	inLoopProbsAvailable() const {
-	    return in_loop_probs_available;
+	in_loop_probs_available() const {
+	    return in_loop_probs_available_;
 	}
     
 	/** 
@@ -436,7 +436,7 @@ namespace LocARNA {
 	 @pre unless use_alifold, sequence row number has to be 1
 	 */
 	void
-	computeEnsembleProbs(const PFoldParams &params,bool inLoopProbs, bool use_alifold=true);
+	compute_ensemble_probs(const PFoldParams &params,bool inLoopProbs, bool use_alifold=true);
 	
 	//! @brief Get the sequence
 	//! @return sequence of RNA
@@ -454,7 +454,7 @@ namespace LocARNA {
 	 * \brief Allow object to forget in loop probabilities
 	 * @todo implement; currently does nothing
 	 */
-	void forgetInLoopProbs() {/* do nothing */};
+	void forget_in_loop_probs() {/* do nothing */};
     
 	
 	/** 
@@ -463,9 +463,9 @@ namespace LocARNA {
 	 * @param out output stream 
 	 *
 	 */
-	 std::ostream &write_pp(std::ostream &out) const;
+	std::ostream &write_pp(std::ostream &out) const;
 	
-
+	
     private:
     
     
@@ -481,10 +481,10 @@ namespace LocARNA {
 	//!
 	//! @note dp.ps is the output format of RNAfold (and related
 	//! tools) of the Vienna RNA package
-	void readPS(const std::string &filename, 
-		    bool readPairProbs,
-		    bool readStackingProbs);
-    
+	void read_ps(const std::string &filename, 
+		     bool readPairProbs,
+		     bool readStackingProbs);
+	
 	//! \brief read basepairs and sequence from a pp-format file
 	//! 
 	//! @note pp is a proprietary format of LocARNA
@@ -502,11 +502,11 @@ namespace LocARNA {
 	//! @param readInLoopProbs read in loop probabilities if file format contains them
 	//!
 	//! @post object is initialized with information from file
-	void readPP(const std::string &filename, 
-		    bool readPairProbs,
-		    bool readStackingProbs,
-		    bool readInLoopProbs
-		    );
+	void read_pp(const std::string &filename, 
+		     bool readPairProbs,
+		     bool readStackingProbs,
+		     bool readInLoopProbs
+		     );
 	
 	//! \brief read sequence and optionally base pairs from a file
 	//! (autodetect file format: pp, dp.ps, aln, fa)
@@ -516,11 +516,11 @@ namespace LocARNA {
 	//! @post object is initialized from file
 	//!
 	void
-	initFromFile(const std::string &filename, 
-		     bool readPairProbs,
-		     bool readStackingProbs,
-		     bool readInLoopProbs);
-
+	init_from_file(const std::string &filename, 
+		       bool readPairProbs,
+		       bool readStackingProbs,
+		       bool readInLoopProbs);
+	
 	// ------------------------------------------------------------
 	// init from computed pair probabilities
 	

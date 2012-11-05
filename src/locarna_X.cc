@@ -230,13 +230,13 @@ main(int argc, char **argv) {
     PFoldParams params(no_lonely_pairs,opt_stacking);
 
     RnaData rnadataA(file1,true,opt_stacking,true);
-    if (!rnadataA.pairProbsAvailable() || !rnadataA.inLoopProbsAvailable()) {
-	rnadataA.computeEnsembleProbs(params,true);
+    if (!rnadataA.pair_probs_available() || !rnadataA.in_loop_probs_available()) {
+	rnadataA.compute_ensemble_probs(params,true);
     }
 
     RnaData rnadataB(file2,true,opt_stacking,true);
-    if (!rnadataB.pairProbsAvailable() || !rnadataB.inLoopProbsAvailable()) {
-	rnadataB.computeEnsembleProbs(params,true);
+    if (!rnadataB.pair_probs_available() || !rnadataB.in_loop_probs_available()) {
+	rnadataB.compute_ensemble_probs(params,true);
     }
 
     Sequence seqA=rnadataA.get_sequence();

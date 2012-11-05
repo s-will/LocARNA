@@ -17,11 +17,11 @@ fold_sequence(const Sequence &seq, bool use_alifold) {
     RnaData *rnadata = new RnaData(seq);
 
     PFoldParams params(false,false);
-    if (!rnadata->pairProbsAvailable() || !rnadata->inLoopProbsAvailable()) {
-	rnadata->computeEnsembleProbs(params,true,use_alifold);
+    if (!rnadata->pair_probs_available() || !rnadata->in_loop_probs_available()) {
+	rnadata->compute_ensemble_probs(params,true,use_alifold);
     }
     
-    if (!rnadata->inLoopProbsAvailable()) {
+    if (!rnadata->in_loop_probs_available()) {
 	std::cerr << "No in loop probabilities could be computed!"<<std::endl;
 	exit(-1);
     }
