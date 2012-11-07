@@ -22,7 +22,8 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc LocARNA/options.cc	\
 	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
 	LocARNA/trace_controller.cc LocARNA/evaluator.cc		\
 	LocARNA/multiple_alignment.cc LocARNA/aligner_n.cc		\
-	LocARNA/sparsification_mapper.cc	
+	LocARNA/sparsification_mapper.cc	                        \
+	LocARNA/mcc_matrices.cc
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -42,7 +43,8 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/aligner_p.hh LocARNA/stral_score.hh			\
 	LocARNA/trace_controller.hh LocARNA/evaluator.hh		\
 	LocARNA/multiple_alignment.hh LocARNA/ribosum85_60.icc          \
-	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh
+	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh           \
+	LocARNA/mcc_matrices.hh
 
 
 ## binary programs

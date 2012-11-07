@@ -139,10 +139,7 @@ namespace LocARNA {
     Sequence::write(std::ostream &out,
 		    size_type start, 
 		    size_type end) const
-    {
-	// write from position start to position end to out
-	// prefix output by names
-    
+    {    
 	for (size_type i=0; i<rows_; i++) {
 	    int ow=out.width(26);
 	    out << std::left << names_[i]<<" ";

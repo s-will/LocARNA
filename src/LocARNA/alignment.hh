@@ -55,7 +55,7 @@ namespace LocARNA {
 	}
 
 	/**
-	   Append an alignment edge
+	   \brief Append an alignment edge
 	*/
 	void append(int i, int j) {
 	    a_.push_back(i);
@@ -63,7 +63,7 @@ namespace LocARNA {
 	}
 
 	/**
-	   Add a basepair to the structure of A
+	   \brief Add a basepair to the structure of A
 	*/
 	void add_basepairA(int i, int j) {
 	    strA_[i]='(';
@@ -71,7 +71,7 @@ namespace LocARNA {
 	}
 
 	/**
-	   Add a basepair to the structure of B
+	   \brief Add a basepair to the structure of B
 	*/
 	void add_basepairB(int i, int j) {
 	    strB_[i]='(';
@@ -79,9 +79,11 @@ namespace LocARNA {
 	}
 
 	/**
-	   Write the alignment to stream out,
-	   with line-width (without name) width
-	   If opt_local_out, then output only sequence-locally aligned part
+	   \brief Write the alignment to output stream
+	   
+	   Write to stream out with line-width (without name) width If
+	   opt_local_out, then output only sequence-locally aligned
+	   part
        
 	   Writes in kind of clustal format without heading line
 	*/
@@ -132,6 +134,8 @@ namespace LocARNA {
 	 * @param seq_constraints sequence constraints
 	 * @param width output width
 	 * @param use_alifold whether to use alifold for consensus dot plot computation
+	 *
+	 * @todo consensus computation and writing of pp file should be separated
 	 */
 	void write_pp(std::ostream &out,
 		      const BasePairs &bpsA,
