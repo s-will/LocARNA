@@ -816,12 +816,21 @@ help_msg() if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 
+## option --version
+
+if ($version) {
+   system("$bindir/locarna --version");
+   exit(0);
+}
+
+
 # parameter mfasta file
 if ($#ARGV == 0) {
     $seqs_file = $ARGV[0];
 }else {
     help_msg();
 }
+
 
 
 sub help_msg {
@@ -851,15 +860,6 @@ if ($moreverbose) {
     $verbose=1;
     $MLocarna::Aux::verbosemode=1;
 }
-
-
-## option --version
-
-if ($version) {
-   system("$bindir/locarna --version");
-   exit(0);
-}
-
 
 
 
