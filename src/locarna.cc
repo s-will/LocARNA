@@ -332,7 +332,6 @@ option_def my_options[] = {
  */
 int
 main(int argc, char **argv) {
-    stopwatch.start("total");
 
 #ifdef MEASURE_TIME
 	struct timeval tp;
@@ -376,6 +375,8 @@ main(int argc, char **argv) {
 	printf("\n");
 	exit(-1);
     }
+
+    stopwatch.start("total");
     
     if (clp.opt_verbose) {
 	print_options(my_options);
