@@ -19,21 +19,6 @@
 
 //#include <math.h>
 
-// define MEASURE_TIME for measuring the run-time of locarna directly
-// (without the need for time on the command line)
-// 
-#undef MEASURE_TIME
-#ifdef MEASURE_TIME
-// time : for getrusage()
-#include <sys/resource.h>
-#include <sys/types.h>
-// for gettimeofday()
-#include <sys/time.h>
-// for setprecision
-#include <iomanip>
-#endif
-
-
 #include <LocARNA/sequence.hh>
 #include <LocARNA/basepairs.hh>
 #include <LocARNA/alignment.hh>
@@ -332,17 +317,6 @@ option_def my_options[] = {
  */
 int
 main(int argc, char **argv) {
-
-#ifdef MEASURE_TIME
-	struct timeval tp;
-	struct rusage ruse;
-
-	gettimeofday( &tp, NULL );
-	double start = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
-
-	getrusage( RUSAGE_SELF, &ruse );
-	double startR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
-#endif
 
     typedef std::vector<int>::size_type size_type;
 
@@ -864,16 +838,6 @@ main(int argc, char **argv) {
 	}
     }
     
-#ifdef MEASURE_TIME
-    gettimeofday( &tp, NULL );
-    double end = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
-
-    getrusage( RUSAGE_SELF, &ruse );
-    double endR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
-    cout << endl << "time_wall main = " << setprecision(3) << end - start << " sec" << endl;
-    cout << "time_cpu main = " << setprecision(3) << endR - startR << " sec" << endl << endl;
-#endif
-
     stopwatch.stop("total");
 
     // ----------------------------------------

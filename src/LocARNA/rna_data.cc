@@ -29,13 +29,6 @@ extern "C" {
 
 #include "mcc_matrices.hh"
 
-
-// // for getrusage()
-// #include <sys/resource.h>
-// #include <sys/types.h>
-// // for gettimeofday()
-// #include <sys/time.h>
-
 namespace LocARNA {
 
 
