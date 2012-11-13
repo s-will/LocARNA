@@ -44,6 +44,7 @@ namespace LocARNA {
 	arc_probs_(0),
 	arc_2_probs_(0),
 	seq_constraints_(""),
+	McCmat(0),
 	used_alifold(false)
     {
 	init_from_file(file, readPairProbs, readStackingProbs, readInLoopProbs);
@@ -55,6 +56,7 @@ namespace LocARNA {
 	  arc_probs_(0),
 	  arc_2_probs_(0),
 	  seq_constraints_(""),
+	  McCmat(0),
 	  used_alifold(false)
     {
     }

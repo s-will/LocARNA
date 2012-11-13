@@ -357,4 +357,6 @@ Aug, 2012
 	Include graph kernel guide tree support in mlocarna
 	(1.7.2.7)
 	Some cleanup, release.
+	Fix bug (missing initialization) in RnaData
 	(1.7.3)
+
