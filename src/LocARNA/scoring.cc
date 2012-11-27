@@ -426,13 +426,13 @@ namespace LocARNA {
 	const size_type rowsB = seqB.row_number();
 
 	double score=0;
-	int gapless_combinations=0;
+	int considered_combinations=0;
 
 	const Alphabet<char> &alphabet = ribosum->alphabet();
 
 	for(size_type i=0; i<rowsA; i++) { // run through all combinations of rows in A and B
 	    for(size_type j=0; j<rowsB; j++) {
-		// wie sollen gaps behandelt werden?
+		// how to handle gaps?
 		// current solution: ignore gap entries
 
 		if (seqA[arcA.left()][i]!='-'
@@ -440,13 +440,13 @@ namespace LocARNA {
 		    && seqB[arcB.left()][j]!='-'
 		    && seqB[arcB.right()][j]!='-') {
 
-		    gapless_combinations++;
-
 		    if (alphabet.in(seqA[arcA.left()][i])
 			&& alphabet.in(seqA[arcA.right()][i])
 			&& alphabet.in(seqB[arcB.left()][j])
 			&& alphabet.in(seqB[arcB.right()][j])) {
-
+			
+			considered_combinations++;
+			
 			score+=
 			    log(
 				ribosum->arcmatch_prob( seqA[arcA.left()][i],seqA[arcA.right()][i],
@@ -462,8 +462,10 @@ namespace LocARNA {
 		}
 	    }
 	}
-
-	return round2score(100.0 * score / gapless_combinations);
+	
+	if (considered_combinations==0) return 0;
+	
+	return round2score(100.0 * score / considered_combinations);
     }
 
 
