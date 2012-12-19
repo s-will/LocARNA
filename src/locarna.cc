@@ -12,6 +12,7 @@
 
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <vector>
 
@@ -197,6 +198,8 @@ struct command_line_parameters {
 
     bool opt_normalized; //!< whether to do normalized alignment
     int normalized_L; //!< normalized_L
+
+    bool opt_score_components;
 };
 
 
@@ -244,6 +247,7 @@ option_def my_options[] = {
     {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
     {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
+    {"score-components",0,&clp.opt_score_components,O_NO_ARG,0,O_NODEFAULT,"","Output components of the score (experimental)"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
@@ -765,6 +769,69 @@ main(int argc, char **argv) {
 	
 	// for debugging:
 	// aligner.get_alignment().write_debug(std::cout);
+
+
+	// if score components should be reported
+	if (clp.opt_score_components) {
+	    // get alignment and compute contributions by sequence similarity and gap cost
+	    const Alignment &alignment = aligner.get_alignment();
+	    
+	    // under development: I do the calculations here until I decide where to put the code
+	    
+	    std::cout << "WARNING: reporting score components is still experimental." << std::endl;
+	    std::cout << "         This does not work properly for some less standard scoring types, e.g. free end gaps." << std::endl;
+
+	    const std::vector<int> &a = alignment.get_a();
+	    const std::vector<int> &b = alignment.get_b();
+	    
+	    score_t seq_sim=0;
+	    score_t gap_cost=0; // count linear component of gap cost
+	    score_t gap_numA=0; // count number of gap openings in A
+	    score_t gap_numB=0; // count number of gap openings in B
+	    
+	    // implement support for free end-gaps later
+	    // FreeEndgapsDescription feg=aligner_params.free_endgaps;
+	    // bool freeA = feg.allow_left_1();
+	    // bool freeB = feg.allow_left_2();
+	    
+	    bool openA=false; // is a gap open in A
+	    bool openB=false; // is a gap open in B
+	    
+	    for (size_t k=0; k< a.size(); k++) {
+		if (a[k]>0 && b[k]>0) {
+		    seq_sim += scoring.basematch(a[k],b[k]);
+		}
+		if (a[k]<0) {
+		    if (!openA) {
+			gap_numA++;
+			openA=true;
+		    }
+		    gap_cost += scoring.gapA(b[k]);
+		} else {
+		    openA=false;
+		}
+
+		if (b[k]<0) {
+		    if (!openB) {
+			gap_numB++;
+			openB=true;
+		    }
+		    gap_cost += scoring.gapB(a[k]);
+		} else {
+		    openB=false;
+		}
+	    }
+	    
+	    
+	    score_t total_gap_cost = gap_cost + (gap_numA+gap_numB)*scoring.indel_opening();
+	    
+	    std::cout << "#SCORE total        " << setw(8) << score<<std::endl;
+	    std::cout << "#SCORE seq_sim      " << setw(8) << seq_sim<<std::endl;
+	    std::cout << "#SCORE gap_penalty  "
+		//<<gap_cost<<"+"<<(gap_numA+gap_numB)<<"*("<<scoring.indel_opening()<<") = "
+		      << setw(8) << total_gap_cost<<std::endl;
+	    std::cout << "#SCORE str_contrib  " << setw(8) << score-seq_sim-total_gap_cost<<std::endl;
+	}
     }
     
     if (clp.opt_normalized || DO_TRACE) { // if we did a trace (one way or
