@@ -359,4 +359,6 @@ Aug, 2012
 	Some cleanup, release.
 	Fix bug (missing initialization) in RnaData
 	(1.7.3)
-
+	Fix bug. Quotes in fasta-names caused failure when
+	generating pps via locarna_rnafold_pp in mlocarna.
+	(1.7.3.1)

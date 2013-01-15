@@ -23,6 +23,7 @@ our @EXPORT      = qw(
 printmsg
 printerr
 systemverb
+systemverb_withinput
 dhp
 chp
 subtract_list
@@ -85,6 +86,19 @@ sub systemverb($) {
     my ($cmd)=@_;
     printmsg 1,"$cmd\n";
     printmsg 1,readpipe("$cmd");
+}
+
+########################################
+## make systemcall with input and print call if verbose-mode
+sub systemverb_withinput($$) {
+    my ($input,$cmd)=@_;
+    printmsg 1,"+++$input+++ >>> $cmd\n";
+    
+    $cmd.=">/dev/null" unless $verbosemode>0;
+    my $fh;
+    open($fh,"|$cmd");
+    print $fh $input;
+    close $fh;
 }
 
 

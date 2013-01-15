@@ -2472,6 +2472,9 @@ sub compute_dotplot($$) {
     my $RNAfoldp_redirect="";
     my $convert_to_pp=1;
     my $seqname;
+    ## Note: in the case of using locarna_rnafold_pp, we do directly
+    ## produce a the pp file in the input sub-directory. Since no dp file is produced,
+    ## caching of dp files does not work.
     ##
     if ($HAVE_RNAFOLD_PP && ($RNAfold_args eq "") && (!defined($plfold_span)) 
 	&& (!$stacking) && ((! defined($constraints)) || ($constraints eq ""))) {
@@ -2488,7 +2491,7 @@ sub compute_dotplot($$) {
 	    $RNAfoldp = "$RNAplfold -L $plfold_span -W $plfold_winsize $RNAfold_args";
 	}
     }
-    
+
     my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
     
     ##
@@ -2540,9 +2543,11 @@ sub compute_dotplot($$) {
 	    elsif ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#S"}) {
 		# if a structure constraint is defined do constraint folding
 		my $constraint_string = $seqs->[$i]->{"ANNO\#S"};
-		systemverb "printf '>$seqname\n$seq_str\n$constraint_string' | $RNAfoldp -C $RNAfoldp_redirect";
+		systemverb_withinput(">$seqname\n$seq_str\n$constraint_string\n",
+				     "$RNAfoldp -C $RNAfoldp_redirect");
 	    } else {
-		systemverb "printf '>$seqname\n$seq_str' | $RNAfoldp $RNAfoldp_redirect";
+		systemverb_withinput(">$seqname\n$seq_str\n",
+				     "$RNAfoldp $RNAfoldp_redirect");
 	    }
 	    
 	    if (defined($dp_cache)) {
