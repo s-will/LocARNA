@@ -28,19 +28,19 @@
 // for setprecision
 #include <iomanip>
 
-#include <LocARNA/sequence.hh>
-#include <LocARNA/basepairs.hh>
+#include "LocARNA/sequence.hh"
+#include "LocARNA/basepairs.hh"
 
-//#include <LocARNA/exact_matcher.hh>
+//#include "LocARNA/exact_matcher.hh"
 
-#include <LocARNA/rna_data.hh>
-#include <LocARNA/arc_matches.hh>
-#include <LocARNA/match_probs.hh>
+#include "LocARNA/rna_data.hh"
+#include "LocARNA/arc_matches.hh"
+#include "LocARNA/match_probs.hh"
 
-#include <LocARNA/anchor_constraints.hh>
-#include <LocARNA/trace_controller.hh>
+#include "LocARNA/anchor_constraints.hh"
+#include "LocARNA/trace_controller.hh"
 
-#include <LocARNA/exact_matcher.hh>
+#include "LocARNA/exact_matcher.hh"
 
 
 using namespace std;
@@ -96,7 +96,7 @@ string clustal_output;
 //
 // Options
 //
-#include <LocARNA/options.hh>
+#include "LocARNA/options.hh"
 
 using namespace LocARNA;
 
@@ -475,7 +475,7 @@ main(int argc, char **argv) {
 }
 
 #else // HAVE_LIBRNA
-#include "iostream"
+#include <iostream>
 int
 main() {
     std::cerr
