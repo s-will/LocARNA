@@ -21,18 +21,18 @@
 
 #include <math.h>
 
-#include <LocARNA/sequence.hh>
-#include <LocARNA/basepairs.hh>
-#include <LocARNA/aligner_p.hh>
-#include <LocARNA/rna_data.hh>
-#include <LocARNA/arc_matches.hh>
-#include <LocARNA/match_probs.hh>
-#include <LocARNA/ribosum.hh>
-#include <LocARNA/anchor_constraints.hh>
-#include <LocARNA/trace_controller.hh>
-#include <LocARNA/multiple_alignment.hh>
+#include "LocARNA/sequence.hh"
+#include "LocARNA/basepairs.hh"
+#include "LocARNA/aligner_p.hh"
+#include "LocARNA/rna_data.hh"
+#include "LocARNA/arc_matches.hh"
+#include "LocARNA/match_probs.hh"
+#include "LocARNA/ribosum.hh"
+#include "LocARNA/anchor_constraints.hh"
+#include "LocARNA/trace_controller.hh"
+#include "LocARNA/multiple_alignment.hh"
 
-#include <LocARNA/ribosum85_60.icc>
+#include "LocARNA/ribosum85_60.icc"
 
 using namespace std;
 
@@ -101,7 +101,7 @@ bool opt_pp_out; //!< opt_pp_out
 //
 // Options
 //
-#include <LocARNA/options.hh>
+#include "LocARNA/options.hh"
 
 using namespace LocARNA;
 
