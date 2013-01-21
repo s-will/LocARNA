@@ -183,7 +183,7 @@ main(int argc, char **argv) {
     }
     std::cerr << "ERROR: locarna_rnafold_pp requires linking against Vienna librna.\n";
     std::cerr << "This program was compiled without configure option --enable-librna."<<std::endl;
-    std::cerr << "Please reconfigure and recompile in order to use this program. \n";
+    std::cerr << "Please reconfigure and recompile to activate this program. \n";
     exit(-1);
 }
 #endif

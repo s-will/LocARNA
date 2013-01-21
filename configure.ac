@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.7.3.1], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.7.5], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
@@ -81,29 +81,48 @@ AC_SUBST(CPPFLAGS,[""])
 AC_SUBST(LIBS,[""])
 AC_SUBST(LIBDEFS,[""]) # defines that have to be set when using the LocARNA library
 
-# if we want linking to librna
-if test "$ENABLE_LIBRNA" = "yes" ; then
-   # if --with-vrna given, add to flags for CPP and LD
-   if test "$with_vrna" != "" ; then
-      VRNA_LDFLAGS="-L$with_vrna/lib"
-      VRNA_CPPFLAGS="-I$with_vrna/include"
 
-     # add vienna rna ld and cpp flags
-     LDFLAGS="$VRNA_LDFLAGS $LDFLAGS"
-     CPPFLAGS="$VRNA_CPPFLAGS $CPPFLAGS"
-   fi
-   
-   # Check for Vienna RNA library (primitive check for one header) 
-   AC_CHECK_HEADER([ViennaRNA/fold.h],
-		   [],
- 		   [VRNA_OK=false])
-
-   ## link the Vienna library
-   LIBS="-lRNA $LIBS"
-   
-   LIBDEFS="$LIBDEFS -DHAVE_LIBRNA"
-   AC_DEFINE([HAVE_LIBRNA])
+# set PKG_CONFIG_PATH
+if test "$with_vrna" != "" ; then
+   export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
 fi
+
+AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
+    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.0.7],[],[VRNA_OK=false])
+    AC_DEFINE([HAVE_LIBRNA])
+    LDFLAGS="$VRNA_LIBS $LDFLAGS"
+
+    if test "$with_vrna" != "" ; then
+        VRNA_CFLAGS="$VRNA_CFLAGS -I$with_vrna/include"
+    fi
+    CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
+])
+AM_CONDITIONAL([HAVE_LIBRNA],[test "$ENABLE_LIBRNA" = "yes"])
+
+
+####################
+## whether to build locarna_X / ExpARNA-P functionality
+
+AC_MSG_CHECKING([whether to build components for ExpARNA-P and SPARSE functionality])
+AC_ARG_WITH([sparse],
+    AC_HELP_STRING(
+        [--with-sparse],
+        [Build components relying on extra sparsification.]
+    ),
+    [with_sparse="yes"],
+    [with_sparse="no"]
+)
+AC_MSG_RESULT([$with_sparse])
+
+if test "$with_sparse $ENABLE_LIBRNA" = "yes no" ; then
+   AC_MSG_NOTICE([=================================================================])
+   AC_MSG_NOTICE([ERROR: Building 'with-sparse' requires linking to VRNA (enable-librna)])
+   AC_MSG_NOTICE()
+   exit -1;
+fi
+
+AM_CONDITIONAL([BUILD_SPARSE],[test "$with_sparse" = "yes"])
+
 
 
 # ------------------------------
@@ -142,7 +161,7 @@ AC_ARG_ENABLE([debug],
     ),
     debug_it="$enableval"
 )
-AC_MSG_RESULT($debug_it)
+AC_MSG_RESULT([$debug_it])
 if test x"$debug_it" = x"yes"; then
     AC_DEFINE([DEBUG])
     CPPFLAGS="$CPPFLAGS -g -Wall"
@@ -167,7 +186,7 @@ AC_ARG_ENABLE([link-static],
     link_statically="$enableval"
 )
 
-AC_MSG_RESULT($link_statically)
+AC_MSG_RESULT([$link_statically])
 if test x"$link_statically" = x"yes"; then
    LDFLAGS="$LDFLAGS -all-static"
 fi
@@ -184,7 +203,7 @@ AC_ARG_ENABLE([large-pf],
     ),
     use_large_pf="$enableval"
 )
-AC_MSG_RESULT($use_large_pf)
+AC_MSG_RESULT([$use_large_pf])
 if test x"$use_large_pf" = x"yes"; then
     LIBDEFS="$LIBDEFS -DVERY_LARGE_PF"
     AC_DEFINE([VERY_LARGE_PF])
@@ -218,7 +237,8 @@ if test "$VRNA_OK" = "false" ; then
    fi
    
    AC_MSG_NOTICE()
-   AC_MSG_NOTICE([The Vienna RNA package (version >= 1.8) is required for compiling.])
+   AC_MSG_NOTICE([The Vienna RNA package (>=1.8) is required for compiling;])
+   AC_MSG_NOTICE([linking (--enable-librna) requires version >= 2.0.8.])
    AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/~ivo/RNA/.])
    AC_MSG_NOTICE()
     

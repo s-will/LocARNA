@@ -359,6 +359,11 @@ Aug, 2012
 	Some cleanup, release.
 	Fix bug (missing initialization) in RnaData
 	(1.7.3)
+Jan, 2013
 	Fix bug. Quotes in fasta-names caused failure when
 	generating pps via locarna_rnafold_pp in mlocarna.
 	(1.7.3.1)
+        Resolve rnalib dependency. New configure option with-sparse
+	is now required to compile with ExpARNA-P and SPARSE functionality.
+	(1.7.5)
+	

@@ -25,9 +25,10 @@ extern "C" {
     FLT_OR_DBL *alipf_export_bppm(void);
 }
 
+#include "mcc_matrices.hh"
+
 #endif // HAVE_LIBRNA
 
-#include "mcc_matrices.hh"
 
 namespace LocARNA {
 

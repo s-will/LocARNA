@@ -1,5 +1,3 @@
-#ifdef HAVE_LIBRNA
-
 #include <iostream>
 
 #include "aux.hh"
@@ -208,6 +206,3 @@ namespace LocARNA {
     }
 
 } // end namespace LocARNA
-
-
-#   endif // HAVE_LIBRNA

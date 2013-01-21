@@ -9,6 +9,9 @@
 extern "C" {
 #include <ViennaRNA/fold_vars.h>
 }
+
+#include "mcc_matrices.hh"
+
 #endif
 
 #include "sequence.hh"
@@ -17,7 +20,6 @@ extern "C" {
 
 #include "multiple_alignment.hh"
 
-#include "mcc_matrices.hh"
 
 
 //! @todo support pre-computed in loop probs from tables

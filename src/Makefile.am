@@ -21,9 +21,8 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc LocARNA/options.cc	\
 	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
 	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
 	LocARNA/trace_controller.cc LocARNA/evaluator.cc		\
-	LocARNA/multiple_alignment.cc LocARNA/aligner_n.cc		\
-	LocARNA/sparsification_mapper.cc	                        \
-	LocARNA/mcc_matrices.cc
+	LocARNA/multiple_alignment.cc
+
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -42,17 +41,38 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
 	LocARNA/aligner_p.hh LocARNA/stral_score.hh			\
 	LocARNA/trace_controller.hh LocARNA/evaluator.hh		\
-	LocARNA/multiple_alignment.hh LocARNA/ribosum85_60.icc          \
-	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh           \
-	LocARNA/mcc_matrices.hh
-
+	LocARNA/multiple_alignment.hh LocARNA/ribosum85_60.icc
 
 ## binary programs
 ##
 ##   use extension .bin for binary locarna to avoid name collission in src dir
 ##
 bin_PROGRAMS = locarna.bin ribosum2cc locarna_p locarnap_fit	\
-               locarna_deviation locarna_rnafold_pp locarna_X locarna_n 
+               locarna_deviation locarna_rnafold_pp
+
+
+if HAVE_LIBRNA
+    libLocARNA_@API_VERSION@_la_SOURCES += \
+        LocARNA/mcc_matrices.cc
+    nobase_library_include_HEADERS += \
+        LocARNA/mcc_matrices.hh
+endif
+
+
+## whether to build components that depend on strong 
+## probabilistic sparsification via the sparsification mapper
+## requiring direct access to the McCaskill matrices
+if BUILD_SPARSE
+    libLocARNA_@API_VERSION@_la_SOURCES += \
+	LocARNA/aligner_n.cc LocARNA/sparsification_mapper.cc \
+	LocARNA/exact_matcher.cc
+
+    nobase_library_include_HEADERS += \
+	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh \
+        LocARNA/exact_matcher.hh
+
+    bin_PROGRAMS += locarna_X locarna_n
+endif
 
 #remove the extension .bin for installation
 transform = s/\.bin$$//
@@ -71,7 +91,7 @@ dist_locarna_bin_SOURCES = locarna.cc
 
 locarna_p_SOURCES = locarna_p.cc
 
-locarna_X_SOURCES = locarna_X.cc LocARNA/exact_matcher.hh LocARNA/exact_matcher.cc 
+locarna_X_SOURCES = locarna_X.cc 
 
 locarna_n_SOURCES = locarna_n.cc
 

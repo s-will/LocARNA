@@ -1,6 +1,3 @@
-// compile only when libRNA is available for linking
-#ifdef HAVE_LIBRNA
-
 #include "sequence.hh"
 #include "arc_matches.hh"
 
@@ -2136,6 +2133,3 @@ namespace LocARNA {
 	outfile.close();
     }
 } //end namespace
-
-
-#endif // HAVE_LIBRNA

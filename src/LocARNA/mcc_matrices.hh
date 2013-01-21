@@ -1,15 +1,12 @@
 #ifndef LOCARNA_MCC_MATRICES_HH
 #define LOCARNA_MCC_MATRICES_HH
 
-#ifdef HAVE_LIBRNA
 extern "C" {
 #include <ViennaRNA/fold_vars.h>
 #include <ViennaRNA/params.h>
 }
-#endif
 
 namespace LocARNA {
-#   ifdef HAVE_LIBRNA
 
     class McC_matrices_base {
     protected:
@@ -194,9 +191,6 @@ namespace LocARNA {
 	deep_copy(const McC_ali_matrices_t &McCmat);
     };
     
-
-#    endif	
-
 } // end namespace LocARNA
 
 

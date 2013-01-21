@@ -471,6 +471,7 @@ main(int argc, char **argv) {
 
     // optionally fold
     PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
+#if HAVE_LIBRNA
     if (!rnadataA.pair_probs_available()) {
 	if (clp.opt_verbose) {
 	    std::cout << "Compute ensemble probabilities for first input sequence."
@@ -485,6 +486,15 @@ main(int argc, char **argv) {
 	}
 	rnadataB.compute_ensemble_probs(pfparams,false,true);
     }
+#else
+    if (!rnadataA.pair_probs_available() || !rnadataB.pair_probs_available()) {
+	std::cerr
+	    << "WARNING: Input contains no pair probabilities for one or both sequences,"<<std::endl
+	    << "         but their computation is disabled (recompile/reconfigure to enable)."<<std::endl
+	    << "         Continue without pair probabilities."
+	    << std::endl;
+    }
+#endif
 
 
     Sequence seqA=rnadataA.get_sequence();
