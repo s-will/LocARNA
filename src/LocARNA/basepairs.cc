@@ -135,7 +135,7 @@ namespace LocARNA {
 	    
 		double p = rnadata.get_arc_prob(i,j);
 	    
-	    
+		/*
 		double p2=0;
 		double p_cond=0;
 
@@ -143,7 +143,7 @@ namespace LocARNA {
 		    p2 = rnadata.get_arc_2_prob(i,j);
 		    p_cond = p2/rnadata.get_arc_prob(i+1,j-1);
 		}
-	    
+		*/
 	    
 		if ( (p >= min_prob) /* || (p2 >= min_prob) */ ) {
 		

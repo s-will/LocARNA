@@ -9,7 +9,7 @@ namespace LocARNA {
 
 Ribosum::Ribosum(const std::string &filename) {
     std::ifstream in(filename.c_str());
-    if (!in.good()) {
+    if (!in) {
 	std::cerr << "Cannot open file "<<filename<<" for reading ribosum data."<<std::endl;
 	exit(-1);
     }

@@ -52,44 +52,60 @@ namespace LocARNA {
     private:
 	std::vector<AliColumn> seq_;
     
-	//! store the profile of the alignment using
-	//! absolute frequencies
-	//! the first index is the sequence position,
-	//! the second index is the alphabet index
-	//std::vector<std::vector<profile_type> > profile_;
-    
 	//! number of rows/sequences in the alignment
 	size_type rows_;
     
 	//! names of the sequences in the alignment
 	std::vector<std::string> names_;
-    
+
 	/*
-	//! fill the profile entries at column i
-	void
-	fill_profile(Sequence::size_type i);
-    
-	//! fill all profile entries
-	void
-	fill_profile();
-    
-	//! increase profile size by 1 and fill
-	void
-	inc_profile();
+	 not implemented idea: maintain sequence profiles with sequences.
+	 
+	 // store the profile of the alignment using
+	 // absolute frequencies
+	 // the first index is the sequence position,
+	 // the second index is the alphabet index
+	
+	 std::vector<std::vector<profile_type> > profile_;
+
+	 //! fill the profile entries at column i
+	 void
+	 fill_profile(Sequence::size_type i);
+	 
+	 //! fill all profile entries
+	 void
+	 fill_profile();
+	 
+	 //! increase profile size by 1 and fill
+	 void
+	 inc_profile();
 	*/
 	
     
     public: 
     
-	//! \brief Construct sequence as empty
-	//!
+	/**
+	 * \brief Construct sequence as empty
+	 *
+	*/
 	Sequence(): seq_(),
-		    //profile_(),
 		    rows_() {}; 
 
-	//! \brief Construct from MultipleAlignment
-	//! @param ma the multiple Alignment
-	//!
+	/**
+	 * \brief Construct from name and sequence string
+	 *
+	*/
+	Sequence(const std::string &name, const std::string &seqstr): 
+	    seq_(),
+	    rows_() {
+	    append_row(name,seqstr);
+	}; 
+
+	/**
+	 * \brief Construct from MultipleAlignment
+	 * @param ma the multiple Alignment
+	 *
+	*/
 	Sequence(const MultipleAlignment &ma);
 	
 	/** 
@@ -100,37 +116,36 @@ namespace LocARNA {
 	 * @post The buffer is initialized with one row with speficied
 	 * name and of length 0
 	 */    
-	void init_buffer(const std::string &name);
+	void
+	init_buffer(const std::string &name);
     
 	/** 
 	 * \brief Initializes the buffer for the rows in seq with the names and alphabet from seq
 	 * 
 	 * @param seq sequence
 	 */
-	void init_buffer(const Sequence &seq);
+	void
+	init_buffer(const Sequence &seq);
 	
 	// ------------------------------------------------------------
 	// get sequence information
     
-	//! return sequence length
-	size_type length() const {return seq_.size();}
+	/** \brief return sequence length
+	 */
+	size_type
+	length() const {return seq_.size();}
     
-	//! @returns number of rows/sequences in the alignment
+	/**
+	 * \brief Number of rows/sequences in alignment
+	 *
+	 * @returns number of rows
+	 */
 	size_type row_number() const {return rows_;}
-
-	/*
-	//! read access to name by index
-	//! @param i index in 1..number of rows
-	//! @returns i-th name
-	const std::string &get_name(size_type i) const {return names_[i-1];};
-	*/
-
-	//static const Alphabet<char> &alphabet() { return alphabet_; }
-
+	
 	/** 
 	 * Access alignment column
 	 * 
-	 * @param i 
+	 * @param i column index 
 	 * 
 	 * @return reference to alignment column with index i (1-based)
 	 */
@@ -146,8 +161,12 @@ namespace LocARNA {
 	const AliColumn &operator [](size_type i) const {return seq_[i-1];}
 
 	// ------------------------------------------------------------
-	//! \brief read-only access to names vector
-	//! @return vector of sequence names
+	
+	/**
+	 * \brief Read-only access to names vector
+	 *
+	 * @return vector of sequence names
+	*/
 	const std::vector<std::string> &
 	names() const {
 	    return names_;
@@ -155,7 +174,7 @@ namespace LocARNA {
     
 	// ----------------------------------------
 	// get profile information
-
+	
 	//! look up profile information by character
 	//profile_type operator ()(size_type i, char j) const {return profile_[i-1][alphabet_.idx(j)];}
     
@@ -176,35 +195,66 @@ namespace LocARNA {
 	 */
 	void append_row(const std::string &name, const std::string &seqstr);
 
-	//! append a sequence
+	/**
+	 * \brief Append a sequence
+	 *
+	 * @param s sequence that is appended
+	 *
+	 */
 	void operator += (const Sequence &s);
     
-	//! append a new column
+	/**
+	 * \brief Append a column
+	 *
+	 * @param c column that is appended
+	 *
+	 */
 	void operator += (const AliColumn &c);
     
-	//! append a character (in all rows)
+	/**
+	 * \brief Append the same character to each row
+	 *
+	 * @param c character that is appended
+	 *
+	 */
 	void operator += (char c);
 
 	// ------------------------------------------------------------
     
-	//! revert the sequence
+	/**
+	 * \brief reverse the sequence
+	 */
 	void reverse();
     
 	// ------------------------------------------------------------
 	// output
     
-	//! output sequence
+	/**
+	 * \brief Write sequence to output stream
+	 *
+	 * @param out output stream
+	 *
+	 * Writes one line "<name> <seq>" for each single sequence.
+	 */
 	void write(std::ostream &out) const;
-
-	//! output subsequence
-	void write(std::ostream &out, size_type start, size_type end) const;
 	
+	/**
+	 * \brief Write subsequence to stream 
+	 *
+	 * Write from position start to position end to output stream
+	 * out; write lines "<name> <seq>"
+	 *
+	*/
+	void write(std::ostream &out, size_type start, size_type end) const;
+
 	// ------------------------------------------------------------
 	// DEBUGGING
     
-	//! check whether the sequence contains characters from the
-	//! given alphabet only and, if warn, print warnings otherwise.
-	//! @return whether all characters are in the alphabet
+	/**
+	 * check whether the sequence contains characters from the
+	 * given alphabet only and, if warn, print warnings otherwise.
+	 * @return whether all characters are in the alphabet
+	*/
 	bool checkAlphabet(const Alphabet<char> &alphabet,bool warn=false) const;
 
     };

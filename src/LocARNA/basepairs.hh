@@ -18,7 +18,6 @@
 
 namespace LocARNA {
 
-
     //! \brief Represents a base pair
     //! 
     //! stores base pair left end, right end
@@ -211,7 +210,7 @@ namespace LocARNA {
 	    sortAdjLists();
 	}
   
-	//! registers a basepair (i,j) with prob and stack_prob
+	//! registers a basepair (i,j),
 	//! maintains the basepair access data structures
 	void register_arc(int i, int j);
 
@@ -221,7 +220,7 @@ namespace LocARNA {
 	    return left_[i];
 	}
 	
-	//! returns the list of arcs with left end i
+	//! returns the list of arcs with left end i //TODO: comment: right or left?
 	const RightAdjList & right_adjlist(int i) const { return right_[i];}
 
 	//! accesses basepair by (i,j)
@@ -246,11 +245,15 @@ namespace LocARNA {
 	double prob_min() const; //!< return minimal probability
     
 
-	/*
-	//! access to rnadata
-	const RnaData *get_rnadata() const {return rnadata;}
-	*/
-    
+	/** 
+	 * @brief Access to corresponding RnaData object
+	 * 
+	 * @return reference to RnaData object
+	 */
+	const RnaData &get_rnadata() const {
+	    return *rnadata;
+	}
+
 	/* pass through some methods to rnadata
        
 	   This prepares support of the case, where we don't have rnadata
@@ -288,7 +291,6 @@ namespace LocARNA {
 	    if (rnadata) return rnadata->prob_unpaired( i );
 	    else return 1.0;
 	}
-
 
     };
 

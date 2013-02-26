@@ -1,6 +1,8 @@
 #include "aux.hh"
+#include <iomanip>
 
 namespace LocARNA {
+    
 
     failure::~failure() throw() {};
     
@@ -34,4 +36,7 @@ namespace LocARNA {
 	}
     }
 
+    // global stop watch
+    StopWatch stopwatch;
 }
+

@@ -332,4 +332,38 @@ Mar, 2012
 	usage by the type system. Consequently, it is more flexible. It avoids
 	a bug in normalized alignment and helps to clean up the Exparna-P code.
 	(1.7.1)
+Apr/May, 2012
+        Add reading of score matrix in mlocarna
+	Fix bug in probabilistic mode, which did not allow '#' in sequence names
+	Fix bugs in output of score matrix
+	Fix drawdplin
+June, 2012
+	Fix bug in trace controller
+	(1.7.2)
+	Add locarna_n code, alpha status
+Aug, 2012
+	Fix a bug related to use of trace controller (max-diff) with free
+	endgaps.
+	Fix autodetection of input multiple alignment file format,
+	i.e. FASTA vs. CLUSTAL.
+	Change interface of scoring such that gapA (gapB) depends on only
+	positions in sequence A (B), resp.
+	(1.7.2.1)
+	Major improvements of the RnaData class and its interface
+	Some clean up
+	(1.7.2.5)
+	Some bug fixes, support for graph kernel guide tree
+	(1.7.2.6)
+	Include graph kernel guide tree support in mlocarna
+	(1.7.2.7)
+	Some cleanup, release.
+	Fix bug (missing initialization) in RnaData
+	(1.7.3)
+Jan, 2013
+	Fix bug. Quotes in fasta-names caused failure when
+	generating pps via locarna_rnafold_pp in mlocarna.
+	(1.7.3.1)
+        Resolve rnalib dependency. New configure option with-sparse
+	is now required to compile with ExpARNA-P and SPARSE functionality.
+	(1.7.5)
 	

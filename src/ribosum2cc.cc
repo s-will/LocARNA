@@ -2,8 +2,8 @@
 #include <iostream>
 #include <string>
 
-#include <LocARNA/ribosum.hh>
-#include <LocARNA/matrices.hh>
+#include "LocARNA/ribosum.hh"
+#include "LocARNA/matrices.hh"
 
 using namespace std;
 using namespace LocARNA;

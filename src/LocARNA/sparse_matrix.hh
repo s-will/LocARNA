@@ -1,28 +1,11 @@
 #ifndef SPARSE_MATRIX_HH
 #define SPARSE_MATRIX_HH
 
-#include <ext/hash_map>
+#include <tr1/unordered_map>
 
-/* in order to save some space we use a hash_map for storing the entries of the sparse
+/* in order to save some space we use a hash for storing the entries of the sparse
    matrices that allow fast acces to the basepairs (i,j) in a structure.
 */
-
-namespace __gnu_cxx {
-    //! defines a new hash function for pairs of ints
-    template<>
-    struct hash<std::pair<size_t,size_t> >
-    {
-	/** 
-	 * Hash function
-	 * 
-	 * 
-	 * @return hash code for pair of size_t
-	 */
-	size_t
-	operator()(std::pair<size_t,size_t> p) const
-	{ return p.first<<(sizeof(size_t)/2) | p.second; }
-    };
-}
 
 namespace LocARNA {
     
@@ -41,21 +24,24 @@ namespace LocARNA {
     template <class T>
     class SparseMatrix {
     public:
+	
+  	typedef T value_t; //!< type of matrix entries
 
-  	typedef T val_t; //!< type of matrix entries
-	typedef std::pair<size_t,size_t> key_t; //!< type of matrix "index"
+	typedef size_t size_type; //!< usual definition of size_type
+
+	typedef std::pair<size_type,size_type> key_t; //!< type of matrix index pair
 
     protected:
 	
-	typedef __gnu_cxx::hash_map<key_t,val_t > map_t; //!< map type  
+	typedef std::tr1::unordered_map<key_t,value_t > map_t; //!< map type  
 	map_t the_map; //!< internal representation of sparse matrix
-	val_t def; //!< default value of matrix entries
+	value_t def; //!< default value of matrix entries
     
     public:
 
 	//! \brief Stl-compatible constant iterator over matrix elements.
 	//!
-	//! Behaves like a __gnu_cxx::hash_map const iterator.
+	//! Behaves like a const iterator of the hash map.
 	typedef typename map_t::const_iterator const_iterator;
 	
 	
@@ -71,7 +57,7 @@ namespace LocARNA {
 	    key_t k;
 	public:
 	    /** 
-	     * Construct as proxy for specified element in given sparse matrix
+	     * @brief Construct as proxy for specified element in given sparse matrix
 	     * 
 	     * @param m_ pointer to sparse matrix
 	     * @param k_ key/index of entry in given sparse matrix
@@ -80,13 +66,13 @@ namespace LocARNA {
 	    element(SparseMatrix<T> *m_,key_t k_): m(m_),k(k_) {}
 
 	    /** 
-	     * Access entry for which the class acts as proxy
+	     * @brief Access entry for which the class acts as proxy
 	     * 
 	     * @return value of matrix entry.
 	     *
 	     * If entry does not exist, return the default value
 	     */
-	    operator val_t() {
+	    operator value_t() {
 		const_iterator it = m->the_map.find(k);
 		if ( it == m->the_map.end() ) 
 		    return m->def;
@@ -95,7 +81,7 @@ namespace LocARNA {
 	    }
 	    
 	    /** 
-	     * Operator for in place addition 
+	     * @brief Operator for in place addition 
 	     * 
 	     * @param x value
 	     * 
@@ -106,7 +92,7 @@ namespace LocARNA {
 	     * @note If entry does not exist, x is added to the default value
 	     */
 	    element
-	    operator +=(val_t x) {
+	    operator +=(value_t x) {
 		const_iterator it = m->the_map.find(k);
 		if ( it == m->the_map.end() ) 
 		    m->the_map[k] = m->def + x;
@@ -117,7 +103,7 @@ namespace LocARNA {
 	    }
 	
 	    /** 
-	     * Assignment operator
+	     * @brief Assignment operator
 	     * 
 	     * @param x value
 	     *
@@ -128,7 +114,7 @@ namespace LocARNA {
 	     * @note If x equals the default value, and the entry exists it is erased
 	     */
 	    element
-	    operator =(val_t x) {
+	    operator =(value_t x) {
 		if (x!=m->def) {
 		    m->the_map[k] = x;
 		} else {
@@ -140,11 +126,11 @@ namespace LocARNA {
     
     
 	/** 
-	 * Construct with default value
+	 * @brief Construct with default value
 	 * 
 	 * @param deflt default value of entries
 	 */
-	SparseMatrix(val_t deflt) : the_map(),def(deflt) {}
+	SparseMatrix(value_t deflt) : the_map(),def(deflt) {}
     
 	/** 
 	 * \brief Access to matrix element
@@ -154,7 +140,7 @@ namespace LocARNA {
 	 *
 	 * @return proxy to matrix entry (i,j)
 	 */
-	element operator() (size_t i, size_t j) {
+	element operator() (size_type i, size_type j) {
 	    return element(this,key_t(i,j));
 	}
     
@@ -166,7 +152,7 @@ namespace LocARNA {
 	 *
 	 * @return matrix entry (i,j)
 	 */
-	const val_t & operator() (size_t i, size_t j) const {
+	const value_t & operator() (size_type i, size_type j) const {
 	    const_iterator it = the_map.find(key_t(i,j));
 	    if ( it == the_map.end() ) 
 		return def;
@@ -175,7 +161,7 @@ namespace LocARNA {
 	}
 	
 	/** 
-	 * Write access to matrix entry
+	 * @brief Write access to matrix entry
 	 * 
 	 * @param i index first dimension
 	 * @param j index second dimension
@@ -183,11 +169,19 @@ namespace LocARNA {
 	 *
 	 * @post writes entry. If entry didn't exist already it is created.
 	 */
-	void set(size_t i, size_t j, const val_t &val) {
+	void set(size_type i, size_type j, const value_t &val) {
 	    the_map[std::pair<int,int>(i,j)]=val;
 	}
     
-    
+	/** 
+	 * @brief Clear the matrix
+	 */
+	void
+	clear() {
+	    the_map.clear();
+	}
+
+
 	/** 
 	 * \brief Begin const iterator over matrix entries
 	 * 
@@ -212,7 +206,7 @@ namespace LocARNA {
     };
 
     /** 
-     * Output operator
+     * @brief Output operator
      * 
      * @param out output stream
      * @param m sparse matrix to be writing to stream

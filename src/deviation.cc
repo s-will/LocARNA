@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
-#include <LocARNA/multiple_alignment.hh>
+#include "LocARNA/multiple_alignment.hh"
 
 using namespace LocARNA;
 

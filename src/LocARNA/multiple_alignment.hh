@@ -376,7 +376,7 @@ public:
      *
      * @return consensus sequence as string
      */
-    const std::string consensus_sequence() const;
+    std::string consensus_sequence() const;
     
 private:
     //! @brief Deviation of a pairwise alignment from a pairwise reference alignment

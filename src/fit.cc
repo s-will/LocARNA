@@ -14,9 +14,10 @@
 #include <fstream>
 #include <sstream>
 
-#include "fitonoff.hh"
+#include "LocARNA/fitonoff.hh"
 
 using  namespace std;
+using namespace LocARNA;
 
 // --------------------------------------------------
 // subs for reading input
@@ -40,9 +41,7 @@ read_number_sequence(istream &in,numseq_t &numseq) {
 //
 // Options
 //
-#include <LocARNA/options.hh>
-
-using namespace LocARNA;
+#include "LocARNA/options.hh"
 
 const std::string
 VERSION_STRING = (std::string)PACKAGE_STRING;
@@ -142,7 +141,7 @@ main(int argc, char **argv) {
     //
     FitOnOff fns(numseq,delta_ab,delta_ba,beta);
     
-    double viterbi_score;
+    // double viterbi_score;
     
     //optimize
     pair<double,double> opt = fns.optimize(c0,c1);
@@ -154,12 +153,14 @@ main(int argc, char **argv) {
 	double on=std::max(c0,c1);
 	double off=std::min(c0,c1);
 	
-	viterbi_score = fns.best_once_on(off,on);
+	//viterbi_score = 
+	fns.best_once_on(off,on);
 	c0=off;
 	c1=on;
     } else {
 	// run viterbi algo with optimal c0,c1
-	viterbi_score = fns.viterbi(c0,c1,true);
+	//viterbi_score = 
+	fns.viterbi(c0,c1,true);
     }
     // ----------------------------------------
     // write best fit

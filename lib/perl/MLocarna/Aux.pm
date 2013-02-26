@@ -23,6 +23,7 @@ our @EXPORT      = qw(
 printmsg
 printerr
 systemverb
+systemverb_withinput
 dhp
 chp
 subtract_list
@@ -30,6 +31,7 @@ project_seq
 is_gap
 aln_length
 aln_size
+aln_names
 consensus_sequence
 );
 
@@ -84,6 +86,19 @@ sub systemverb($) {
     my ($cmd)=@_;
     printmsg 1,"$cmd\n";
     printmsg 1,readpipe("$cmd");
+}
+
+########################################
+## make systemcall with input and print call if verbose-mode
+sub systemverb_withinput($$) {
+    my ($input,$cmd)=@_;
+    printmsg 1,"+++$input+++ >>> $cmd\n";
+    
+    $cmd.=">/dev/null" unless $verbosemode>0;
+    my $fh;
+    open($fh,"|$cmd");
+    print $fh $input;
+    close $fh;
 }
 
 
@@ -161,8 +176,48 @@ sub project_seq($) {
 
 ########################################
 ## return size of alignment, i.e. number of sequences in the alignment
+## @param $aln ref to alignment hash
+##
+## ATTENTION: aln is not allowed to contain constraint extensions!
 sub aln_size($) {
     my $aln = shift;
+    
+    my @ks = keys %$aln;
+
+    #if (grep /#[S,C,LONG]$/,@ks) {
+    #	print STDERR "WARNING: Potentially you discovered a bug in mlocarna. Please avoid sequence names that end in #S, #C or #LONG: @ks\n";
+    #}
+    
+    return $#ks+1;
+}
+
+########################################
+## return sequence names of the alignment
+## @param $aln ref to alignment hash
+##
+## ATTENTION: aln is not allowed to contain constraint extensions!
+sub aln_names($) {
+    my $aln = shift;
+    
+    my @ks = keys %$aln;
+
+    #if (grep /#[S,C,LONG]$/,@ks) {
+    #	print STDERR "WARNING: Potentially you discovered a bug in mlocarna. Please avoid sequence names that end in #S, #C or #LONG: @ks\n";
+    #}
+    
+    return @ks;
+}
+
+########################################
+## return size of alignment, i.e. number of sequences in the alignment
+## @param $aln ref to alignment hash
+##
+## ATTENTION: sequence names in aln are not allowed to contain symbols '#',
+## since this symbol is reserved for the constraint tags
+##
+sub aln_size_with_constraints($) {
+    my $aln = shift;
+    
     my @ks = keys %$aln;
     @ks = grep !/#/,@ks;
     return $#ks+1;

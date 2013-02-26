@@ -1,17 +1,42 @@
 #ifndef LOCARNA_AUX_HH
 #define LOCARNA_AUX_HH
 
+#include <iostream>
 #include <exception>
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <assert.h>
+
+#include "stopwatch.hh"
 
 //!
 //! auxilliary types and global constants for use in locarna
 //! 
 
-namespace LocARNA {
 
+// define a hash function for unordered_maps
+namespace std {
+    namespace tr1 {
+	//! @brief hash function for pairs of unsigned ints
+	template<>
+	struct hash<std::pair<size_t,size_t> >
+	{
+	    /** 
+	     * @brief Hash function for pairs of size_t
+	     * 
+	     * @return hash code
+	     */
+	    size_t
+	    operator()(std::pair<size_t,size_t> p) const
+	    { return p.first<<(sizeof(size_t)/2) | p.second; }
+	};
+    }
+}
+
+
+namespace LocARNA {
+    
     //! general size type
     typedef size_t size_type;
     
@@ -50,7 +75,7 @@ namespace LocARNA {
      * - conversion from and to std::string
      * - access via operator []
      * - length method
-    */
+     */
     class string1 {
 	std::string s_;
     public:
@@ -192,7 +217,7 @@ namespace LocARNA {
 	 * @post x is added at end of *this (like push_back)
 	 */
 	plusvector& operator += (const T &x) {
-	    push_back(x);
+	    this->push_back(x);
 	    return *this;
 	}
     };
@@ -227,31 +252,155 @@ namespace LocARNA {
      * @note By defining this here, we get rid of dependency of header
      * file ViennaRNA/fold_vars.h
      */
-     #define FLT_OR_DBL double
+#    define FLT_OR_DBL double
+    
+    
+    /**
+     * @brief generic type_wrapper class
+     * 
+     * wrap a comparable type with +/- operations
+     *
+     */
+    template<class T>
+    class type_wrapper {
+    	T val_;
+    public:
+
+	/**
+	 * @brief default constructor
+	 */
+	type_wrapper(): val_() {}
+	
+	/**
+	 * @brief conversion constructor
+	 */
+	explicit type_wrapper(const T &i): val_(i) {}	
+	
+	/**
+	 * @brief copy constructor
+	 */
+	type_wrapper(const type_wrapper &idx): val_(idx.val()) {}
+
+	/**
+	 * @brief casting to T
+	 *
+	 * @note We don't use explicit cast for compatibility, since this is
+	 * available with c++0x only:
+	 * explicit operator T() const {return val_;}
+	 * instead we define this "named cast"
+	 */
+	const T &val() const {return val_;}
+
+	/** 
+	 * @brief equal
+	 * @param x 
+	 * @return *this == x
+	 */
+	bool operator ==(const type_wrapper &x) const {return val_ == x.val_;}
+
+	
+	/** 
+	 * @brief inequal 
+	 * @param x 
+	 * @return *this != x
+	 */
+	bool operator !=(const type_wrapper &x) const {return val_ != x.val_;}
+
+	/** 
+	 * @brief less equal
+	 * @param x 
+	 * @return *this <= x
+	 */
+	bool operator <=(const type_wrapper &x) const {return val_ <= x.val_;}
+
+	/** 
+	 * @brief less
+	 * @param x 
+	 * @return *this < x
+	 */
+	bool operator  <(const type_wrapper &x) const {return val_ <  x.val_;}
+
+	/** 
+	 * @brief greater equal
+	 * @param x 
+	 * @return *this >= x
+	 */
+	bool operator >=(const type_wrapper &x) const {return val_ >= x.val_;}
+
+	/** 
+	 * @brief greater
+	 * @param x 
+	 * @return *this > x
+	 */
+	bool operator  >(const type_wrapper &x) const {return val_ >  x.val_;}
+	
+	/** 
+	 * @brief add
+	 * @param x 
+	 * @return *this + x
+	 */
+	type_wrapper operator +(const type_wrapper &x) const {return type_wrapper(val_ + x.val_);}
+	
+	/** 
+	 * @brief subtract
+	 * @param x 
+	 * @return *this - x
+	 */
+	type_wrapper operator -(const type_wrapper &x) const {return type_wrapper(val_ - x.val_);}
+	
+	/** 
+	 * @brief add
+	 * @param x 
+	 * @return *this + x
+	 */
+	type_wrapper operator +(const T &x) const {return type_wrapper(val_ + x);}
+	
+	/** 
+	 * @brief subtract
+	 * @param x 
+	 * @return *this - x
+	 */
+	type_wrapper operator -(const T &x) const {return type_wrapper(val_ - x);}
+	
+	/** 
+	 * @brief prefix increment
+	 * @return *this after increment
+	 */
+	const type_wrapper &operator ++() {++val_; return *this;}
+	
+	/** 
+	 * @brief prefix decrement
+	 * @return *this after decrement
+	 */
+	const type_wrapper &operator --() {--val_; return *this;}
+
+	/** 
+	 * @brief postfix increment
+	 * @return *this before increment
+	 */
+	const type_wrapper &operator ++(int) {type_wrapper<T> tmp(*this); ++val_; return tmp;}
+	
+	/** 
+	 * @brief postfix decrement
+	 * @return *this before decrement
+	 */
+	const type_wrapper &operator --(int) {type_wrapper<T> tmp(*this); --val_; return tmp;}
+
+    };
+    
+    template <class T>
+    std::ostream & operator << (std::ostream &out,const type_wrapper<T> &x) {
+	out<<x.val();
+	return out;
+    }
 
     
-#   ifdef HAVE_LIBRNA	
-    //! @brief  structure for McCaskill matrices pointers
-    //!
-    //! Contains pointers to matrices made accessible through
-    //! get_pf_arrays() and get_bppm() of Vienna librna
-    struct McC_matrices_t {
-	short *S_p;          //!< 'S' array (integer representation of nucleotides)	
-	short *S1_p;	 //!< 'S1' array (2nd integer representation of nucleotides)	
-	char *ptype_p;	 //!< pair type matrix					
-	FLT_OR_DBL *qb_p;	 //!< Q<sup>B</sup> matrix					
-	FLT_OR_DBL *qm_p;	 //!< Q<sup>M</sup> matrix					
-	FLT_OR_DBL *q1k_p;	 //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
-	FLT_OR_DBL *qln_p;	 //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
-	
-	//! @brief base pair probability matrix
-	//! 
-	//! Access elements with get_bppm()
-	FLT_OR_DBL *bppm;
-	
-    };
-#    endif	
-
+    //! type-safe index type
+    //! this is useful to distinguish index type from other types that are defined as unsigned int
+    typedef type_wrapper<size_t> index_t;
+    
+    //! global StopWatch object
+    extern StopWatch stopwatch;
 }
 
 

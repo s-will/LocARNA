@@ -21,18 +21,18 @@
 
 #include <math.h>
 
-#include <LocARNA/sequence.hh>
-#include <LocARNA/basepairs.hh>
-#include <LocARNA/aligner_p.hh>
-#include <LocARNA/rna_data.hh>
-#include <LocARNA/arc_matches.hh>
-#include <LocARNA/match_probs.hh>
-#include <LocARNA/ribosum.hh>
-#include <LocARNA/anchor_constraints.hh>
-#include <LocARNA/trace_controller.hh>
-#include <LocARNA/multiple_alignment.hh>
+#include "LocARNA/sequence.hh"
+#include "LocARNA/basepairs.hh"
+#include "LocARNA/aligner_p.hh"
+#include "LocARNA/rna_data.hh"
+#include "LocARNA/arc_matches.hh"
+#include "LocARNA/match_probs.hh"
+#include "LocARNA/ribosum.hh"
+#include "LocARNA/anchor_constraints.hh"
+#include "LocARNA/trace_controller.hh"
+#include "LocARNA/multiple_alignment.hh"
 
-#include <LocARNA/ribosum85_60.icc>
+#include "LocARNA/ribosum85_60.icc"
 
 using namespace std;
 
@@ -101,7 +101,7 @@ bool opt_pp_out; //!< opt_pp_out
 //
 // Options
 //
-#include <LocARNA/options.hh>
+#include "LocARNA/options.hh"
 
 using namespace LocARNA;
 
@@ -110,6 +110,10 @@ bool opt_version; //!< opt_version
 bool opt_verbose; //!< opt_verbose
 bool opt_local_output; //!< opt_local_output
 bool opt_pos_output; //!< opt_pos_output
+
+bool opt_stacking=false; // not supported
+bool opt_no_lonely_pairs=false; // not supported
+
 
 std::string ribosum_file; //!< ribosum_file
 bool use_ribosum; //!< use_ribosum
@@ -246,8 +250,23 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    RnaData rnadataA(bpsfile1);
-    RnaData rnadataB(bpsfile2);
+    RnaData rnadataA(bpsfile1,true,opt_stacking,false);
+    RnaData rnadataB(bpsfile2,true,opt_stacking,false);
+
+    // optionally fold
+    PFoldParams pfparams(opt_no_lonely_pairs,opt_stacking);
+ #if HAVE_LIBRNA
+    if (!rnadataA.pair_probs_available()) {rnadataA.compute_ensemble_probs(pfparams,false);}
+    if (!rnadataB.pair_probs_available()) {rnadataB.compute_ensemble_probs(pfparams,false);}
+#else
+    if (!rnadataA.pair_probs_available() || !rnadataB.pair_probs_available()) {
+	std::cerr
+	    << "WARNING: Input contains no pair probabilities for one or both sequences,"<<std::endl
+	    << "         but their computation is disabled (recompile/reconfigure to enable)."<<std::endl
+	    << "         Continue without pair probabilities."
+	    << std::endl;
+    }
+#endif
 
     Sequence seqA=rnadataA.get_sequence();
     Sequence seqB=rnadataB.get_sequence();

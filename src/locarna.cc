@@ -12,6 +12,7 @@
 
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <vector>
 
@@ -19,33 +20,18 @@
 
 //#include <math.h>
 
-// define MEASURE_TIME for measuring the run-time of locarna directly
-// (without the need for time on the command line)
-// 
-#undef MEASURE_TIME
-#ifdef MEASURE_TIME
-// time : for getrusage()
-#include <sys/resource.h>
-#include <sys/types.h>
-// for gettimeofday()
-#include <sys/time.h>
-// for setprecision
-#include <iomanip>
-#endif
-
-
-#include <LocARNA/sequence.hh>
-#include <LocARNA/basepairs.hh>
-#include <LocARNA/alignment.hh>
-#include <LocARNA/aligner.hh>
-#include <LocARNA/evaluator.hh>
-#include <LocARNA/rna_data.hh>
-#include <LocARNA/arc_matches.hh>
-#include <LocARNA/match_probs.hh>
-#include <LocARNA/ribosum.hh>
-#include <LocARNA/anchor_constraints.hh>
-#include <LocARNA/trace_controller.hh>
-#include <LocARNA/ribosum85_60.icc>
+#include "LocARNA/sequence.hh"
+#include "LocARNA/basepairs.hh"
+#include "LocARNA/alignment.hh"
+#include "LocARNA/aligner.hh"
+#include "LocARNA/evaluator.hh"
+#include "LocARNA/rna_data.hh"
+#include "LocARNA/arc_matches.hh"
+#include "LocARNA/match_probs.hh"
+#include "LocARNA/ribosum.hh"
+#include "LocARNA/anchor_constraints.hh"
+#include "LocARNA/trace_controller.hh"
+#include "LocARNA/ribosum85_60.icc"
 
 
 using namespace std;
@@ -63,7 +49,7 @@ VERSION_STRING = (std::string)PACKAGE_STRING;
 //
 // Options
 //
-#include <LocARNA/options.hh>
+#include "LocARNA/options.hh"
 
 //! \brief Switch on/off trace back
 //! @note never made it into command line
@@ -212,6 +198,8 @@ struct command_line_parameters {
 
     bool opt_normalized; //!< whether to do normalized alignment
     int normalized_L; //!< normalized_L
+
+    bool opt_score_components;
 };
 
 
@@ -259,6 +247,7 @@ option_def my_options[] = {
     {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
     {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
+    {"score-components",0,&clp.opt_score_components,O_NO_ARG,0,O_NODEFAULT,"","Output components of the score (experimental)"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
@@ -333,17 +322,6 @@ option_def my_options[] = {
 int
 main(int argc, char **argv) {
 
-#ifdef MEASURE_TIME
-	struct timeval tp;
-	struct rusage ruse;
-
-	gettimeofday( &tp, NULL );
-	double start = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
-
-	getrusage( RUSAGE_SELF, &ruse );
-	double startR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
-#endif
-
     typedef std::vector<int>::size_type size_type;
 
     // ------------------------------------------------------------
@@ -375,6 +353,8 @@ main(int argc, char **argv) {
 	printf("\n");
 	exit(-1);
     }
+
+    stopwatch.start("total");
     
     if (clp.opt_verbose) {
 	print_options(my_options);
@@ -421,16 +401,17 @@ main(int argc, char **argv) {
 	    ribosum = new Ribosum85_60;
 	} else {
 	    ribosum = new RibosumFreq(clp.ribosum_file);
-	}	
-	/*
-	  std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
-	  <<" C: "<< ribosum->base_nonstruct_prob('C')
-	  <<" G: "<< ribosum->base_nonstruct_prob('G')
-	  <<" U: "<< ribosum->base_nonstruct_prob('U')
-	  << std::endl;
+	}
 	
-	  ribosum->print_basematch_scores_corrected();
-	*/
+	// if (clp.opt_verbose) {
+	//   std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
+	//   <<" C: "<< ribosum->base_nonstruct_prob('C')
+	//   <<" G: "<< ribosum->base_nonstruct_prob('G')
+	//   <<" U: "<< ribosum->base_nonstruct_prob('U')
+	//   << std::endl;
+	
+	//   ribosum->print_basematch_scores_corrected();
+	// }
     }
     
     // ----------------------------------------
@@ -484,8 +465,37 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
     
-    RnaData rnadataA(clp.file1,clp.opt_stacking);
-    RnaData rnadataB(clp.file2,clp.opt_stacking);
+
+    RnaData rnadataA(clp.file1,true,clp.opt_stacking,false);
+    RnaData rnadataB(clp.file2,true,clp.opt_stacking,false);
+
+    // optionally fold
+    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
+#if HAVE_LIBRNA
+    if (!rnadataA.pair_probs_available()) {
+	if (clp.opt_verbose) {
+	    std::cout << "Compute ensemble probabilities for first input sequence."
+		      << std::endl;
+	}
+	rnadataA.compute_ensemble_probs(pfparams,false,true);
+    }
+    if (!rnadataB.pair_probs_available()) {
+	if (clp.opt_verbose) {
+	    std::cout << "Compute ensemble probabilities for second input sequence."
+		      << std::endl;
+	}
+	rnadataB.compute_ensemble_probs(pfparams,false,true);
+    }
+#else
+    if (!rnadataA.pair_probs_available() || !rnadataB.pair_probs_available()) {
+	std::cerr
+	    << "WARNING: Input contains no pair probabilities for one or both sequences,"<<std::endl
+	    << "         but their computation is disabled (recompile/reconfigure to enable)."<<std::endl
+	    << "         Continue without pair probabilities."
+	    << std::endl;
+    }
+#endif
+
 
     Sequence seqA=rnadataA.get_sequence();
     Sequence seqB=rnadataB.get_sequence();
@@ -735,7 +745,7 @@ main(int argc, char **argv) {
 	}
 	if (!clp.sequ_local) { // important: in the Aligner class, we rely on this
 	    std::cerr 
-		<< "ERROR: Normalized alignment requires option --sequ_local."<<std::endl;
+		<< "ERROR: Normalized alignment requires option --sequ-local."<<std::endl;
 	    exit(-1);
 	}
 	
@@ -769,6 +779,69 @@ main(int argc, char **argv) {
 	
 	// for debugging:
 	// aligner.get_alignment().write_debug(std::cout);
+
+
+	// if score components should be reported
+	if (clp.opt_score_components) {
+	    // get alignment and compute contributions by sequence similarity and gap cost
+	    const Alignment &alignment = aligner.get_alignment();
+	    
+	    // under development: I do the calculations here until I decide where to put the code
+	    
+	    std::cout << "WARNING: reporting score components is still experimental." << std::endl;
+	    std::cout << "         This does not work properly for some less standard scoring types, e.g. free end gaps." << std::endl;
+
+	    const std::vector<int> &a = alignment.get_a();
+	    const std::vector<int> &b = alignment.get_b();
+	    
+	    score_t seq_sim=0;
+	    score_t gap_cost=0; // count linear component of gap cost
+	    score_t gap_numA=0; // count number of gap openings in A
+	    score_t gap_numB=0; // count number of gap openings in B
+	    
+	    // implement support for free end-gaps later
+	    // FreeEndgapsDescription feg=aligner_params.free_endgaps;
+	    // bool freeA = feg.allow_left_1();
+	    // bool freeB = feg.allow_left_2();
+	    
+	    bool openA=false; // is a gap open in A
+	    bool openB=false; // is a gap open in B
+	    
+	    for (size_t k=0; k< a.size(); k++) {
+		if (a[k]>0 && b[k]>0) {
+		    seq_sim += scoring.basematch(a[k],b[k]);
+		}
+		if (a[k]<0) {
+		    if (!openA) {
+			gap_numA++;
+			openA=true;
+		    }
+		    gap_cost += scoring.gapA(b[k]);
+		} else {
+		    openA=false;
+		}
+
+		if (b[k]<0) {
+		    if (!openB) {
+			gap_numB++;
+			openB=true;
+		    }
+		    gap_cost += scoring.gapB(a[k]);
+		} else {
+		    openB=false;
+		}
+	    }
+	    
+	    
+	    score_t total_gap_cost = gap_cost + (gap_numA+gap_numB)*scoring.indel_opening();
+	    
+	    std::cout << "#SCORE total        " << setw(8) << score<<std::endl;
+	    std::cout << "#SCORE seq_sim      " << setw(8) << seq_sim<<std::endl;
+	    std::cout << "#SCORE gap_penalty  "
+		//<<gap_cost<<"+"<<(gap_numA+gap_numB)<<"*("<<scoring.indel_opening()<<") = "
+		      << setw(8) << total_gap_cost<<std::endl;
+	    std::cout << "#SCORE str_contrib  " << setw(8) << score-seq_sim-total_gap_cost<<std::endl;
+	}
     }
     
     if (clp.opt_normalized || DO_TRACE) { // if we did a trace (one way or
@@ -842,15 +915,7 @@ main(int argc, char **argv) {
 	}
     }
     
-#ifdef MEASURE_TIME
-    gettimeofday( &tp, NULL );
-    double end = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
-
-    getrusage( RUSAGE_SELF, &ruse );
-    double endR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
-    cout << endl << "time_wall main = " << setprecision(3) << end - start << " sec" << endl;
-    cout << "time_cpu main = " << setprecision(3) << endR - startR << " sec" << endl << endl;
-#endif
+    stopwatch.stop("total");
 
     // ----------------------------------------
     // DONE

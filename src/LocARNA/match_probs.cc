@@ -37,7 +37,7 @@ namespace  LocARNA {
     
     MatchProbs::ProbConsParameter::ProbConsParameter(const std::string &filename) {
 	std::ifstream in(filename.c_str());
-	if (!in.good()) {
+	if (!in.is_open()) {
 	    std::cerr << "Cannot open file "<<filename<<" for reading."<<std::endl;
 	    exit(-1);
 	}

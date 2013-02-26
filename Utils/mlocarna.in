@@ -100,18 +100,42 @@ Additional option string for the probabilistic pairwise alignment (def="").
 
 =item  B<--treefile>                    
 
-Guide tree file. If given, the computation of the guide tree is skiped and the given one is used.
+File with guide tree in NEWICK format. The given tree is used as guide
+tree for the progressive alignment. This saves the calculation of
+pairwise all-vs-all similarities and construction of the guide tree.
 
-=item B<-P, --tree-min-prob=<f>>       
+=item B<--similarity-matrix> 
 
-Minimal prob for constructing guide tree.This probability can be set
+File with similarity matrix. The similarities in the matrix are used
+to construct the guide tree for the progressive alignment. This saves
+the calculation of pairwise all-vs-all similarities.
+
+
+=item B<--graphkernel>
+
+Use the graphkernel for constructing the guide tree. 
+
+=item B<--svmsgdnspdk[=<program>]>
+
+Specify the svmsgdnspdk program (potentially including path). Default:
+use "svmsgdnspdk" in path.
+
+=item B<--fasta2shrep=<program>>
+
+Program "fasta2shrep" for generating graphs from the input sequences
+for use with the graph kernel guide tree generation (potentially
+including path). Default: use "fasta2shrep_gspan.pl" in path.
+
+=item B<--fasta2shrep-options=<args>>
+
+Command line arguments for fasta2shrep. Default: "-wins 200 -shift 50
+-stack -t 3 -M 3".
+
+=item B<-P, --tree-min-prob=<f>>
+
+Minimal prob for constructing guide tree. This probability can be set
 separately for the all-2-all comparison for constructing the guide
 tree and the progressive/iterative alignment steps.
-
-=item  B<--skip-pp>                     
-
-Skip computation of pair probs if the probabilities are already
-existing. Non-existing ones are still computed.
 
 =back
 
@@ -267,6 +291,18 @@ Use RNAplfold with window of size ws (default=2*span)
 
 Parameter file for RNAfold (RNAfold's -P option)
 
+=item  B<--skip-pp>                     
+
+Skip computation of pair probs if the probabilities are already
+existing. Non-existing ones are still computed.
+
+=item B<--no-bpp-precomputation>
+
+Switch off precomputation of base pair probabilties. Overwrite
+potentially existing input files.  (compare skip-pp). For use with
+special pairwise aligners (e.g. locarna_n) that recompute the base
+pair probabilities at each invokation.
+
 =back
 
 =head2 Multithreading
@@ -320,6 +356,8 @@ use strict;
 use warnings;
 
 use Cwd 'abs_path';
+
+use File::Path;
 
 ########################################
 ## threading support
@@ -400,7 +438,26 @@ my $pw_aligner_options="";
 my $pw_aligner_p_options="";
 
 my $tree_file;
+my $similarity_matrix_file;
 my $tgtdir;
+
+my $graphkernel;
+my $svmsgdnspdk="svmsgdnspdk";
+my $svmsgdnspdk_radius=2;
+my $svmsgdnspdk_distance=4;
+
+my $fasta2shrep="fasta2shrep_gspan.pl";
+
+
+##########
+# default options of fasta2shrep. In particular, specify
+# -wins window size
+# -shift window shift in percent of window size
+# -stack extra stack vertices 
+# -t grammar abstraction level (of RNAshape) 
+# -M number of shapes
+#
+my $fasta2shrep_options="-wins 200 -shift 50 -stack -t 3 -M 3";
 
 my $seqs_file; ## filename of fasta file with input sequences 
 
@@ -464,6 +521,8 @@ my $evaluate_alignment;
 
 my $opt_eval_fasta;
 
+my $opt_no_bpp_precomputation;
+
 my $width;
 
 my $max_diff_aln;
@@ -515,6 +574,16 @@ my %options_hash=
      "ignore-constraints" => \$ignore_constraints,
      
      "treefile" => \$tree_file,
+
+     "similarity-matrix" => \$similarity_matrix_file,
+
+     "graphkernel" => \$graphkernel,
+     "svmsgdnspdk" => \$svmsgdnspdk,
+     "svmsgdnspdk-radius" => \$svmsgdnspdk_radius,
+     "svmsgdnspdk-distance" => \$svmsgdnspdk_distance,
+     "fasta2shrep" => \$fasta2shrep,
+     "fasta2shrep-options" => \$fasta2shrep_options,
+     
      "outdir" => \$tgtdir,
 
      # controlling the mode of operation
@@ -573,6 +642,9 @@ my %options_hash=
      "evaluate" => \$evaluate_alignment,
      
      "eval-fasta" => \$opt_eval_fasta,
+
+     # base pair probability precomputation
+     "no-bpp-precomputation" => \$opt_no_bpp_precomputation,
      
      ## output
      "write-structure" => \$write_structure,
@@ -633,6 +705,15 @@ my @options = #options that are not or not automatically passed to locarna
      "consistency-transformation",
 
      "treefile=s",
+     "similarity-matrix=s",
+
+     "graphkernel",
+     "svmsgdnspdk=s",
+     "svmsgdnspdk-radius=s",
+     "svmsgdnspdk-distance=s",
+     "fasta2shrep=s",
+     "fasta2shrep-options=s",
+
      "outdir|tgtdir=s",
 
      "min-bm-prob=f",
@@ -668,6 +749,8 @@ my @options = #options that are not or not automatically passed to locarna
 
      "evaluate=s",
      "eval-fasta",
+     
+     "no-bpp-precomputation",
 
      "write-structure",
      
@@ -733,12 +816,21 @@ help_msg() if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 
+## option --version
+
+if ($version) {
+   system("$bindir/locarna --version");
+   exit(0);
+}
+
+
 # parameter mfasta file
 if ($#ARGV == 0) {
     $seqs_file = $ARGV[0];
 }else {
     help_msg();
 }
+
 
 
 sub help_msg {
@@ -768,15 +860,6 @@ if ($moreverbose) {
     $verbose=1;
     $MLocarna::Aux::verbosemode=1;
 }
-
-
-## option --version
-
-if ($version) {
-   system("$bindir/locarna --version");
-   exit(0);
-}
-
 
 
 
@@ -1110,6 +1193,8 @@ sub main {
     ## and make paths to later used files absolute
     ##
     if (defined($tree_file)) { $tree_file = abs_path($tree_file); }
+    if (defined($similarity_matrix_file)) { 
+	$similarity_matrix_file = abs_path($similarity_matrix_file); }
     if (defined($dp_cache))  { $dp_cache  = abs_path($dp_cache);  }
     
     mkdir "$tgtdir/$input_dir";
@@ -1372,13 +1457,18 @@ sub perform_multiple_alignment($) {
     # compute probability dot-plots
     # (if wanted or if necessary)
     #
-    printmsg 3,"Compute pair probs ...\n";
-    if ($thread_number==1) {
-	compute_all_dotplots($seqs);
-    } else  {
-	compute_all_dotplots_par($thread_number,$seqs);
+    if ($opt_no_bpp_precomputation) {
+	printmsg 3,"Skip precomputation of dot plots.\n";
+	generate_input_files_without_bpps($seqs);
+    } else {
+	printmsg 3,"Compute pair probs ...\n";
+	if ($thread_number==1) {
+	    compute_all_dotplots($seqs);
+	} else  {
+	    compute_all_dotplots_par($thread_number,$seqs);
+	}
     }
-
+    
     ## exit here if only dps shall be computed
     if ($only_dps) {
 	printmsg 1,"Computed only the missing dotplots.\n";
@@ -1468,6 +1558,9 @@ sub perform_multiple_alignment($) {
     my $tree;
 
     if (defined($tree_file)) {
+
+	printmsg 3,"Read guide tree from file. \n";
+
 	open(TREE,"$tree_file") || die "Cannot read $tree_file for reading tree\n";
 	$tree=<TREE>;
 	chomp($tree);
@@ -1478,8 +1571,74 @@ sub perform_multiple_alignment($) {
 	
 	close TREE;
 	
+    } elsif (defined($similarity_matrix_file)) {
+	
+	my $score_matrix = read_2D_matrix($similarity_matrix_file,int(@names),int(@names));
+	
+	write_2D_matrix("$results_dir/result.matrix",$score_matrix);
+	
+	$tree = upgma_tree(\@names,$score_matrix);
+		
     } elsif ($#names == 1) { # for only two sequences, tree is unique
 	$tree="(".quotemeta($names[0]).",".quotemeta($names[1]).")";
+    } elsif ($graphkernel) {
+	
+	sub noop_system {
+	    print "$@\n";
+	}
+	
+	## RECALL: here the current directory is the target directory
+
+	my $cmd="$fasta2shrep $fasta2shrep_options -fasta input/input.fa -tmp graphkernel/tmp -o graphkernel";
+	print "Run $cmd\n";
+
+	if (-d "graphkernel") {
+	    print "  Remove directory graphkernel\n";
+	    File::Path::rmtree "graphkernel";
+	}
+	
+	mkdir "graphkernel";
+	mkdir "graphkernel/tmp";
+	
+	## Run fasta2shrep; writes output directory
+	system("$cmd")==0 || die "Cannot run $cmd";
+	
+	File::Path::rmtree "graphkernel/tmp";
+	
+	## write results to .gspan file
+	system "bzcat graphkernel/*.bz2 > graphkernel/gspan";
+	system "rm graphkernel/*.bz2";
+	
+# note: the gspan format defines graphs
+
+	$cmd = "$svmsgdnspdk -i graphkernel/gspan -r $svmsgdnspdk_radius -d $svmsgdnspdk_distance -gt DIRECTED -a MATRIX";
+	print "Run $cmd\n";
+
+	system("$cmd")==0 || die "Cannot run $cmd";
+	
+	# system "bzip2 graphkernel/gspan"; ## keep the gspan file but compress it
+	# OR
+	unlink "graphkernel/gspan";
+	
+	## name of the generated matrix file
+	my $matrix_filename="graphkernel/gspan.mtx";
+	
+	## read matrix file
+	my $score_matrix = read_2D_matrix($matrix_filename,int(@names),int(@names));
+	
+	## convert it
+	for my $i (0..@$score_matrix-1) {
+	    my $row=$score_matrix->[$i];
+	    for my $j (0..@$row-1) {
+		$score_matrix->[$i][$j] *= 10000;
+	    }
+	}
+	
+	## write it to results directory
+	write_2D_matrix("$results_dir/result.matrix",$score_matrix);
+	
+	$tree = upgma_tree(\@names,$score_matrix);
+		
     } else {
 	# --------------------------------------------------
 	# compute score matrix for guide tree
@@ -1509,7 +1668,7 @@ sub perform_multiple_alignment($) {
     } # end generation of tree
 
     
-    open(TREE,">$results_dir/result.tree")|| die "Cannot write to $tgtdir/result.tree";
+    open(TREE,">$results_dir/result.tree")|| die "Cannot write to $results_dir/result.tree";
     print TREE "$tree\n";
     close TREE;
 
@@ -2255,6 +2414,32 @@ sub compute_all_dotplots_par($$$) {
 	    $cpu_num);
 }
 
+## ----------------------------------------
+## generate input files without base pair probabilties
+sub generate_input_files_without_bpps( $ ) {
+    my ($seqs) = @_;
+    for my $i (0..@$seqs-1) {
+	my $name = $seqs->[$i]->{name}; # the name of the sequence
+	my $ppname="$input_dir/".get_normalized_seqname($name);
+	my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
+	
+	if (! $ignore_constraints) {
+	    my $constraints = sequence_constraint_string($seqs->[$i]);
+	    if (defined($constraints) && ($constraints ne "")) {
+		print "WARNING: Constraints found for sequence $i, but not supported without precomputation of base pair probabilities\n."
+	    }
+	}
+	
+	## write a simple fasta file with the input file name
+	my $fh;
+	open($fh, ">$ppname") || die "Cannot write to $ppname.\n";
+	
+	print $fh ">$name\n";
+	print $fh "$seq_str\n";
+	
+	close ($fh);
+    }
+}
 
 ############################################################
 ## compute_dotplot(i,seqs)
@@ -2287,6 +2472,9 @@ sub compute_dotplot($$) {
     my $RNAfoldp_redirect="";
     my $convert_to_pp=1;
     my $seqname;
+    ## Note: in the case of using locarna_rnafold_pp, we do directly
+    ## produce a the pp file in the input sub-directory. Since no dp file is produced,
+    ## caching of dp files does not work.
     ##
     if ($HAVE_RNAFOLD_PP && ($RNAfold_args eq "") && (!defined($plfold_span)) 
 	&& (!$stacking) && ((! defined($constraints)) || ($constraints eq ""))) {
@@ -2303,7 +2491,7 @@ sub compute_dotplot($$) {
 	    $RNAfoldp = "$RNAplfold -L $plfold_span -W $plfold_winsize $RNAfold_args";
 	}
     }
-    
+
     my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
     
     ##
@@ -2355,9 +2543,11 @@ sub compute_dotplot($$) {
 	    elsif ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#S"}) {
 		# if a structure constraint is defined do constraint folding
 		my $constraint_string = $seqs->[$i]->{"ANNO\#S"};
-		systemverb "printf '>$seqname\n$seq_str\n$constraint_string' | $RNAfoldp -C $RNAfoldp_redirect";
+		systemverb_withinput(">$seqname\n$seq_str\n$constraint_string\n",
+				     "$RNAfoldp -C $RNAfoldp_redirect");
 	    } else {
-		systemverb "printf '>$seqname\n$seq_str' | $RNAfoldp $RNAfoldp_redirect";
+		systemverb_withinput(">$seqname\n$seq_str\n",
+				     "$RNAfoldp $RNAfoldp_redirect");
 	    }
 	    
 	    if (defined($dp_cache)) {

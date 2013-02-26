@@ -28,19 +28,19 @@
 // for setprecision
 #include <iomanip>
 
-#include <LocARNA/sequence.hh>
-#include <LocARNA/basepairs.hh>
+#include "LocARNA/sequence.hh"
+#include "LocARNA/basepairs.hh"
 
-//#include <LocARNA/exact_matcher.hh>
+//#include "LocARNA/exact_matcher.hh"
 
-#include <LocARNA/rna_data.hh>
-#include <LocARNA/arc_matches.hh>
-#include <LocARNA/match_probs.hh>
+#include "LocARNA/rna_data.hh"
+#include "LocARNA/arc_matches.hh"
+#include "LocARNA/match_probs.hh"
 
-#include <LocARNA/anchor_constraints.hh>
-#include <LocARNA/trace_controller.hh>
+#include "LocARNA/anchor_constraints.hh"
+#include "LocARNA/trace_controller.hh"
 
-#include <LocARNA/exact_matcher.hh>
+#include "LocARNA/exact_matcher.hh"
 
 
 using namespace std;
@@ -53,7 +53,7 @@ VERSION_STRING = (std::string)PACKAGE_STRING;
 
 double min_prob; // only pairs with a probability of at least min_prob are taken into account
 
-// bool no_lonely_pairs; // no lonely pairs option
+bool no_lonely_pairs=false; // no lonely pairs option (currently not supported)
 
 int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
@@ -75,7 +75,7 @@ int alpha_2; //parameter for structural score
 int alpha_3; //parameter for stacking score
 LocARNA::score_t easier_scoring_par;
 int difference_to_opt_score;
-int min_score;
+int min_subopt_score;
 double subopt_range;
 int am_threshold;
 double coverage_cutoff;
@@ -102,7 +102,7 @@ string chained_epm_list_output;
 //
 // Options
 //
-#include <LocARNA/options.hh>
+#include "LocARNA/options.hh"
 
 using namespace LocARNA;
 
@@ -137,7 +137,7 @@ option_def my_options[] = {
     {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Multiplier for stacking score, 0 means no stacking contribution"},
     {"suboptimal",0,&opt_suboptimal,O_NO_ARG,0,O_NODEFAULT,"suboptimal_traceback","Use a suboptimal traceback for the computation of the exact pattern matchings"},
     {"difference_to_optimal_score",0,0,O_ARG_INT,&difference_to_opt_score,"10","threshold","Threshold for suboptimal traceback"},
-    {"min_score",0,0,O_ARG_INT,&min_score,"3","min","Minimal score of a traced EPM"},
+    {"min_subopt_score",0,0,O_ARG_INT,&min_subopt_score,"3","min","Minimal suboptimal score"},
     {"am-threshold",0,0,O_ARG_INT,&am_threshold,"3","am","Minimal arcmatch score in F matrix"},
     {"suboptimal-range",0,0,O_ARG_DOUBLE,&subopt_range,"0.0","range","trace EPMs within that range of best EPM score"},
     {"coverage-cutoff",0,0,O_ARG_DOUBLE,&coverage_cutoff,"0.5","cov","Skip chaining if best EPM has larger coverage on shortest seq"},
@@ -236,21 +236,28 @@ main(int argc, char **argv) {
     getrusage( RUSAGE_SELF, &ruse );
     double startR_preproc = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
     
-    MultipleAlignment maA(file1,MultipleAlignment::FASTA);
-    MultipleAlignment maB(file2,MultipleAlignment::FASTA);
-//    cout << "name1: " << maA.seqentry(0).name() << endl;
-//    cout << "name2: " << maB.seqentry(0).name() << endl;
-    
-    Sequence seqA(maA);
-    Sequence seqB(maB);
-
     gettimeofday( &tp, NULL );
     double start_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
     getrusage( RUSAGE_SELF, &ruse );
     double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
-    RnaData rnadataA(seqA,true,opt_stacking);
-    RnaData rnadataB(seqB,true,opt_stacking);
+    PFoldParams params(no_lonely_pairs,opt_stacking);
+
+    RnaData rnadataA(file1,true,opt_stacking,true);
+    if (!rnadataA.pair_probs_available() || !rnadataA.in_loop_probs_available()) {
+	rnadataA.compute_ensemble_probs(params,true);
+    }
+
+    RnaData rnadataB(file2,true,opt_stacking,true);
+    if (!rnadataB.pair_probs_available() || !rnadataB.in_loop_probs_available()) {
+	rnadataB.compute_ensemble_probs(params,true);
+    }
+
+    Sequence seqA=rnadataA.get_sequence();
+    Sequence seqB=rnadataB.get_sequence();
+    
+    MultipleAlignment maA(seqA);
+    MultipleAlignment maB(seqB);
 
     gettimeofday( &tp, NULL );
     double end_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
@@ -364,7 +371,7 @@ main(int argc, char **argv) {
 		    alpha_2,
 		    alpha_3,
 		    difference_to_opt_score,
-		    min_score,
+		    min_subopt_score,
 		    easier_scoring_par,
 		    subopt_range,
 		    am_threshold,
@@ -464,8 +471,8 @@ main(int argc, char **argv) {
     	if(opt_postscript_output){
     		//	 time_t start_ps = time (NULL);
     		if (opt_verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
-    		if (psFile1.size()==0){psFile1 = maA.seqentry(0).name()+"_EPMs.ps";}
-    		if (psFile2.size()==0){psFile2 = maB.seqentry(0).name()+"_EPMs.ps";}
+    		if (psFile1.size()==0){psFile1 = seqA.names()[0]+"_EPMs.ps";}
+    		if (psFile2.size()==0){psFile2 = seqB.names()[0]+"_EPMs.ps";}
 
     		myChaining.MapToPS(maA.consensus_sequence(), maB.consensus_sequence(), myLCSEPM, psFile1,psFile2);
     		//		 time_t stop_ps = time (NULL);
@@ -506,7 +513,7 @@ main(int argc, char **argv) {
 }
 
 #else // HAVE_LIBRNA
-#include "iostream"
+#include <iostream>
 int
 main() {
     std::cerr

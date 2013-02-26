@@ -395,9 +395,6 @@ namespace LocARNA {
 	//! subtract from each element of a score_t Matrix m a value x
 	void
 	subtract(Matrix<score_t> &m,score_t x) const;
-
-	//! score arc match, does *NOT* support explicit arc match scores
-	score_t arcmatch(const Arc &arcA, const Arc &arcB, bool stacked=false) const;
     
     public:
 	// ------------------------------------------------------------
@@ -435,8 +432,49 @@ namespace LocARNA {
 	 * @param stacked is stacked? (optional parameter)
 	 * 
 	 * @return Score of arc match am (potentially stacked)
+	 *
+	 * @note This method supports explicit arc match scores. Such
+	 * scores are required for the probabilistic mode of
+	 * (m)locarna.
+	 *
+	 * @note This method should be prefered over arcmatch(const
+	 * Arc &arcA, const Arc &arcB, bool stacked=false) unless
+	 * explicit arc match scores are not needed and the use of
+	 * this method would be too inefficient.
 	 */
 	score_t arcmatch(const ArcMatch &am, bool stacked=false) const;
+
+	/** 
+	 * @brief Score of arc match, given two arcs.
+	 * 
+	 * @param arcA base pair in A
+	 * @param arcB base pair in B
+	 * @param stacked is stacked? (optional parameter)
+	 * 
+	 * @return Score of arc match am (potentially stacked)
+	 *
+	 * @note This method does not support explicit arc match
+	 * scores, since this would require to know the arcmatch
+	 * object.
+	 *
+	 * @note Using this method is disallowed if
+	 * arc_matches->explicit_scores()==true (This results in a
+	 * run-time error if !NDEBUG).
+	 */
+	score_t arcmatch(const Arc &arcA, const Arc &arcB, bool stacked=false) const;
+
+
+	/** 
+	 * @brief Very basic interface, score of aligning a basepair to gap 
+	 * 
+	 * @param arc the base pair
+	 * @param gapAorB whether deleting element in A or B (true for A)
+	 * @param stacked whether the base pair is stacked
+	 * 
+	 * @return 
+	 */
+	score_t  
+	arcDel(const Arc &arc, bool gapAorB, bool stacked=false) const;
 
 	/** 
 	 * @brief Boltzmann weight of score of arc match
@@ -462,13 +500,27 @@ namespace LocARNA {
 
 	/** 
 	 * Score of deletion
+	 *
+	 * @param alignedToGap position in A or B
+	 * @param gapInA whether symbol in A (true) or B (false) is aligned to gap
+	 *
+	 * @return score of deletion : posA <--> posB
+	 */
+	score_t gapX(size_type alignedToGap, bool gapInA) const {
+	    if (gapInA)
+		return gapA(alignedToGap);
+	    else
+		return gapB(alignedToGap);
+	}
+
+	/**
+	 * Score of deletion
 	 * 
 	 * @param posA position in A
-	 * @param posB position in B
 	 * 
 	 * @return score of deletion of posA after posB
 	 */
-	score_t gapA(size_type posA, size_type posB) const {
+	score_t gapA(size_type posA) const {
 	    assert(1<=posA && posA <= seqA.length());
 
 	    return gapcost_tabA[posA];
@@ -478,11 +530,10 @@ namespace LocARNA {
 	 * @brief Boltzmann weight of score of deletion
 	 * 
 	 * @param posA position in A
-	 * @param posB position in B
 	 * 
 	 * @return Boltzmann weight of score of deletion of posA after posB
 	 */
-	pf_score_t exp_gapA(size_type posA, size_type posB) const {
+	pf_score_t exp_gapA(size_type posA) const {
 	    assert(1<=posA && posA <= seqA.length());
 	    return exp_gapcost_tabA[posA];
 	}
@@ -490,12 +541,11 @@ namespace LocARNA {
 	/** 
 	 * Score of insertion
 	 * 
-	 * @param posA position in A
 	 * @param posB position in B
 	 * 
 	 * @return score of insertion of posB after posA
 	 */
-	score_t gapB(size_type posA, size_type posB) const {
+	score_t gapB(size_type posB) const {
 	    assert(1<=posB && posB <= seqB.length());
 
 	    return gapcost_tabB[posB];
@@ -504,12 +554,11 @@ namespace LocARNA {
 	/** 
 	 * @brief Boltzmann weight of score of insertion
 	 * 
-	 * @param posA position in A
 	 * @param posB position in B
 	 * 
 	 * @return Boltzmann weight of score of insertion of posB after posA
 	 */
-	pf_score_t exp_gapB(size_type posA, size_type posB) const {
+	pf_score_t exp_gapB(size_type posB) const {
 	    assert(1<=posB && posB <= seqB.length());
 
 	    return exp_gapcost_tabB[posB];

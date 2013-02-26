@@ -165,8 +165,8 @@ Aligner::align_noex(int state, pos_type al, pos_type bl, pos_type i, pos_type j,
     if ( (! params->constraints.aligned_in_a(i)) ) {
       // due to constraints, i can be deleted
       E[j] = 
-	std::max( E[j] + sv.scoring()->gapA(i,j),
-		  M(i-1,j) + sv.scoring()->gapA(i,j) + sv.scoring()->indel_opening() );
+	std::max( E[j] + sv.scoring()->gapA(i),
+		  M(i-1,j) + sv.scoring()->gapA(i) + sv.scoring()->indel_opening() );
     } else {
       // due to constraints, i cannot be deleted
       E[j] = infty_score_t::neg_infty;
@@ -175,8 +175,8 @@ Aligner::align_noex(int state, pos_type al, pos_type bl, pos_type i, pos_type j,
     // compute F entry
     if ( (! params->constraints.aligned_in_b(j)) ) {
       // due to constraints, j can be inserted
-      F=std::max( F + sv.scoring()->gapB(i,j),
-		  M(i,j-1) + sv.scoring()->gapB(i,j) + sv.scoring()->indel_opening() );
+      F=std::max( F + sv.scoring()->gapB(j),
+		  M(i,j-1) + sv.scoring()->gapB(j) + sv.scoring()->indel_opening() );
     } else {
       // due to constraints, j cannot be inserted
       F = infty_score_t::neg_infty;
@@ -347,7 +347,7 @@ Aligner::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type b
 		indel_score=infty_score_t::neg_infty;
 	    }
 	    else if (!exclA && globalA) {
-		indel_score += sv.scoring()->gapA(i,bl);
+		indel_score += sv.scoring()->gapA(i);
 	    }
 	}
 	M(i,bl) = (infty_score_t)indel_score;
@@ -375,7 +375,7 @@ Aligner::init_state(int state, pos_type al, pos_type ar, pos_type bl, pos_type b
 	  indel_score=infty_score_t::neg_infty;
 	}
 	else if (!exclB && globalB && !indel_score.is_neg_infty()) {
-	  indel_score += sv.scoring()->gapB(al,j);
+	  indel_score += sv.scoring()->gapB(j);
 	}
       }
       M(al,j) = (infty_score_t)indel_score;
@@ -732,7 +732,7 @@ Aligner::align_top_level_free_endgaps() {
     // search maximum to the right of (or at) rightmost anchor constraint
     //
     AnchorConstraints::size_pair_t right_anchor = params->constraints.rightmost_anchor();
-    AnchorConstraints::size_pair_t left_anchor  = params->constraints.leftmost_anchor();
+    //AnchorConstraints::size_pair_t left_anchor  = params->constraints.leftmost_anchor();
     
     for (pos_type i=r.get_startA(); i<=r.get_endA(); i++) {
 	Fs[E_NO_NO]=infty_score_t::neg_infty;
@@ -755,10 +755,10 @@ Aligner::align_top_level_free_endgaps() {
     
     if (params->free_endgaps.allow_right_2()) {
 	// search maximum in the rightmost row r.get_endB()
-	// pay attention for anchor constraints
+	// pay attention for anchor constraints AND trace controller
 	
 	for (pos_type i=std::max(right_anchor.first+1,r.get_startA()); i<=r.get_endA(); i++) {
-	    if ( M(i,r.get_endB()) > max_score ) {
+	    if ( params->trace_controller.max_col(i)>=r.get_endB() && M(i,r.get_endB()) > max_score ) {
 		max_score = M(i,r.get_endB());
 		max_i=i; 
 		max_j=r.get_endB();
@@ -768,9 +768,14 @@ Aligner::align_top_level_free_endgaps() {
     
     if (params->free_endgaps.allow_right_1()) {
 	// search maximum in the last column r.get_endA()
-	// pay attention for anchor constraints
+	// pay attention for anchor constraints AND trace controller
 	
-	for (pos_type j=std::max(right_anchor.second+1,r.get_startB()); j<=r.get_endB(); j++) {
+	// limit entries due to trace controller
+	pos_type min_col = std::max(std::max(right_anchor.second+1,r.get_startB()),params->trace_controller.min_col(r.get_endA()));
+	pos_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(r.get_endA()));
+
+	
+	for (pos_type j=min_col; j<=max_col; j++) {
 	    if ( M(r.get_endA(),j) > max_score ) {
 		max_score = M(r.get_endA(),j);
 		max_i=r.get_endA();
@@ -1036,7 +1041,7 @@ Aligner::trace_noex(int state,pos_type oal,pos_type i,
 	// del
 	if ( (!params->constraints.aligned_in_a(i))
 	     && params->trace_controller.is_valid(i-1,j)
-	     && M(i,j) == M(i-1,j)+sv.scoring()->gapA(i,j)) {
+	     && M(i,j) == M(i-1,j)+sv.scoring()->gapA(i)) {
 	    trace_in_arcmatch(state,oal,i-1,obl,j,tl,sv);
 	    alignment.append(i,-1);
 	    return;
@@ -1044,7 +1049,7 @@ Aligner::trace_noex(int state,pos_type oal,pos_type i,
 	// ins
 	if ( (!params->constraints.aligned_in_b(j))
 	     && params->trace_controller.is_valid(i,j-1)
-	     && M(i,j) == M(i,j-1)+sv.scoring()->gapB(i,j)) {
+	     && M(i,j) == M(i,j-1)+sv.scoring()->gapB(j)) {
 	    trace_in_arcmatch(state,oal,i,obl,j-1,tl,sv);
 	    alignment.append(-1,j);
 	    return;
@@ -1063,7 +1068,7 @@ Aligner::trace_noex(int state,pos_type oal,pos_type i,
 	    // (it is safe to break, because of trace controller's monotonicity)
 	    if (! params->trace_controller.is_valid(i-k,j)) break;
 
-	    gap_cost += sv.scoring()->gapA(i-k+1,j);
+	    gap_cost += sv.scoring()->gapA(i-k+1);
 	    
 	    if ( M(i,j) == M(i-k,j) + gap_cost) {
 		// gap in A of length k
@@ -1086,7 +1091,7 @@ Aligner::trace_noex(int state,pos_type oal,pos_type i,
 	    // (it is safe to break, because of trace controller's monotonicity)
 	    if (! params->trace_controller.is_valid(i,j-k)) break;
 
-	    gap_cost += sv.scoring()->gapB(i,j-k+1);
+	    gap_cost += sv.scoring()->gapB(j-k+1);
 	    if (M(i,j) == M(i,j-k) + gap_cost) {
 		// gap in B of length k
 		trace_in_arcmatch(state,oal,i,obl,j-k,tl,sv);

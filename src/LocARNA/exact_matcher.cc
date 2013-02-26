@@ -1,10 +1,9 @@
-// compile only when libRNA is available for linking
-#ifdef HAVE_LIBRNA
-
 #include "sequence.hh"
 #include "arc_matches.hh"
 #include "exact_matcher.hh"
 #include <iostream>
+
+using namespace std;
 
 namespace LocARNA {
 
@@ -25,7 +24,7 @@ bool debug_trace_F_heuristic = false;
 			       const int &alpha_2_,
 			       const int &alpha_3_,
 			       const int &difference_to_opt_score_,
-			       const int &min_score_,
+			       const int &min_subopt_score_,
 			       const int &easier_scoring_par_,
 			       const double &subopt_range_,
 			       const int &am_threshold_,
@@ -44,7 +43,7 @@ bool debug_trace_F_heuristic = false;
 	  alpha_2(alpha_2_),
 	  alpha_3(alpha_3_),
 	  difference_to_opt_score(difference_to_opt_score_*100),
-	  min_score(min_score_*100),
+	  min_subopt_score(min_subopt_score_*100),
 	  easier_scoring_par(easier_scoring_par_),
 	  subopt_range(subopt_range_),
 	  am_threshold(am_threshold_*100),
@@ -1896,7 +1895,7 @@ bool debug_trace_F_heuristic = false;
     	//validate connectivity of the epm
     	for(int k=0;k<2;++k){
 
-    		vector<EPM::pair_size_t_pat_vec > arcmatches_to_validate;
+    		std::vector<EPM::pair_size_t_pat_vec > arcmatches_to_validate;
     		bool gap = true;
     		arcmatches_to_validate.push_back(EPM::pair_size_t_pat_vec(0,pat_vec_size-1));
 
@@ -2163,6 +2162,10 @@ bool debug_trace_F_heuristic = false;
 	score = myScore;
     };
 
+    string& PatternPair::get_struct()
+    {
+	return structure;
+    };
 
     //--------------------------------------------------------------------------
     // class PatternPairMap
@@ -2285,7 +2288,7 @@ bool debug_trace_F_heuristic = false;
     	out << "epm_id\t score\t structure\t positions" << endl;
     	for(PatternPairMap::patListCITER it = pat_pair_list.begin(); it != pat_pair_list.end();++it,++i){
     		const PatternPair &pat_pair = **it;
-    		out << i << "\t" << pat_pair.getScore() << "\t" << pat_pair.get_struct() <<  "\t";
+    		//out << i << "\t" << pat_pair.getScore() << "\t" << pat_pair.get_struct() <<  "\t"; //todo: fix
     		const intVec &pat1 = pat_pair.getFirstPat().getPat();
     		const intVec &pat2 = pat_pair.getSecPat().getPat();
     		intVec::const_iterator it_pat1 = pat1.begin();
@@ -2293,7 +2296,7 @@ bool debug_trace_F_heuristic = false;
     		for(; it_pat1 != pat1.end(), it_pat2 != pat2.end(); ++it_pat1, ++it_pat2){
     			out << *it_pat1 <<  ":" << *it_pat2 << " ";
     		}
-    		out << endl;
+    		out << std::endl;
     	}
     	return out;
     }
@@ -2358,7 +2361,7 @@ bool debug_trace_F_heuristic = false;
 	    {
 		calculatePatternBoundaries(*myPair);
 
-		//  to EPM_table
+		// add EPM to EPM_table
 		EPM_Table2[(*myPair)->getOutsideBounds().first.second][(*myPair)->getOutsideBounds().second.second].push_back(*myPair);
 
 		// add all inside Holes from current EPM to holeOrdering multimap, sorted by holes size and exact position
@@ -2432,7 +2435,7 @@ bool debug_trace_F_heuristic = false;
     void LCSEPM::calculateHoles3()
     {
 	intPPairPTR lastHole 			= NULL;
-	PatternPairMap::SelfValuePTR lastEPM 	= NULL;
+	//PatternPairMap::SelfValuePTR lastEPM 	= NULL;
 	int lastHoleScore 			= 0;
 	int skippedHoles			= 0;
 	for (HoleMapCITER2 t = holeOrdering2.begin();t != holeOrdering2.end();++t)
@@ -2456,9 +2459,9 @@ bool debug_trace_F_heuristic = false;
 		    (*t).second->setEPMScore(	(*t).second->getScore() + holeScore );
 
 		    //cout << "score new " << (*t).second->getScore() << endl;
-
+		    
 		    lastHole = (*t).first;
-		    lastEPM = (*t).second;
+		    //lastEPM = (*t).second;
 		    lastHoleScore = holeScore;
 		} else{
 		    // add score of last hole to current EPM
@@ -2850,6 +2853,3 @@ bool debug_trace_F_heuristic = false;
 	outfile.close();
     }
 } //end namespace
-
-
-#endif // HAVE_LIBRNA

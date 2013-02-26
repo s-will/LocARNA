@@ -22,8 +22,10 @@ namespace LocARNA {
 	const Sequence &seqA_;
 	const Sequence &seqB_;
     
-	std::vector<int> a_;
-	std::vector<int> b_;
+	std::vector<int> a_; //!< a_[i] is the position in seq A of
+			     //!the i-th alignment edge
+	std::vector<int> b_; //!< b_[i] is the position in seq B of
+			     //!the i-th alignment edge
 
 	std::vector<char> strA_;
 	std::vector<char> strB_;
@@ -53,7 +55,7 @@ namespace LocARNA {
 	}
 
 	/**
-	   Append an alignment edge
+	   \brief Append an alignment edge
 	*/
 	void append(int i, int j) {
 	    a_.push_back(i);
@@ -61,7 +63,7 @@ namespace LocARNA {
 	}
 
 	/**
-	   Add a basepair to the structure of A
+	   \brief Add a basepair to the structure of A
 	*/
 	void add_basepairA(int i, int j) {
 	    strA_[i]='(';
@@ -69,7 +71,7 @@ namespace LocARNA {
 	}
 
 	/**
-	   Add a basepair to the structure of B
+	   \brief Add a basepair to the structure of B
 	*/
 	void add_basepairB(int i, int j) {
 	    strB_[i]='(';
@@ -77,9 +79,11 @@ namespace LocARNA {
 	}
 
 	/**
-	   Write the alignment to stream out,
-	   with line-width (without name) width
-	   If opt_local_out, then output only sequence-locally aligned part
+	   \brief Write the alignment to output stream
+	   
+	   Write to stream out with line-width (without name) width If
+	   opt_local_out, then output only sequence-locally aligned
+	   part
        
 	   Writes in kind of clustal format without heading line
 	*/
@@ -93,6 +97,7 @@ namespace LocARNA {
 
 	/**
 	   Write in clustal format
+	   @todo: broken for empty alignments ~
 	*/
 	void write_clustal(std::ostream &out, int width, infty_score_t score,
 			   bool opt_local_out=false,bool opt_pos_out=false,
@@ -129,6 +134,8 @@ namespace LocARNA {
 	 * @param seq_constraints sequence constraints
 	 * @param width output width
 	 * @param use_alifold whether to use alifold for consensus dot plot computation
+	 *
+	 * @todo consensus computation and writing of pp file should be separated
 	 */
 	void write_pp(std::ostream &out,
 		      const BasePairs &bpsA,

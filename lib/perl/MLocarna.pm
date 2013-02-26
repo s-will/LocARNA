@@ -46,6 +46,7 @@ clone_hash
 read_aln
 write_aln
 project_aln
+project_alnloh
 aln_h2loh
 write_clustalw_loh
 aln_length_atleastonematch
@@ -66,6 +67,8 @@ write_pp
 
 write_2D_matrix
 
+read_2D_matrix
+
 new_intermediate_name
 
 extract_score_matrix_from_alignments
@@ -80,6 +83,8 @@ forget_normalized_seqnames
 print_normalized_sequence_names_hash
 
 nnamepair
+
+alifold_mfe
 
 );
 
@@ -1452,6 +1457,41 @@ sub project_aln {
 }
 
 ########################################
+## project_alnloh($aln ref of alignment in loh represenation)
+##
+## project multiple alignment to subset of names
+## removes only-gap columns (operate in place!)
+##
+sub project_alnloh {
+    my $aln = shift;
+    
+    my $len = length($aln->[0]{seq}); ## number of alignment columns
+
+    for (my $col=0; $col<$len; ) {
+	my $allgap=1;
+	foreach my $row (0..@$aln-1) {
+	    my $rowseq = $aln->[$row]{seq};
+	    # print "$name $row $col\n";
+	    if (! is_gap(substr($rowseq,$col,1))) {
+		$allgap=0;
+		last;
+	    }
+	}
+	if ($allgap) {
+	    # remove alignment column i
+	    foreach my $row (0..@$aln-1) {
+		substr($aln->[$row]{seq},$col,1) = "";
+	    }
+	    $len--;
+	} else {
+	    $col++;
+	}
+    }
+    
+    return $aln;
+}
+
+########################################
 ## aln_length_atleastonematch($aln ref of alignment)
 ##
 ## returns number of alignment columns with at least one match
@@ -1473,6 +1513,45 @@ sub aln_length_atleastonematch($) {
     return $mylen;
 }
 
+
+########################################
+## read_2D_matrix($file string, $n uint, $m uint)
+##
+## read a $nx$m-matrix from file, matrix entries are
+## separated by white space, rows are separated by new line
+##
+########################################
+sub read_2D_matrix {
+    my ($file,$n,$m) = @_;
+    
+    my @matrix=();
+
+    my $MAT;
+
+    open($MAT,"$file") || die "Cannot read matrix $file\n";
+    
+    for (my $a=0; $a<$n; $a++) {
+	my $line;
+	if ($line=<$MAT>) {
+	    
+	    chomp $line;
+	    $line=~s/^\s+//;
+	    
+	    my @row=split /\s+/,$line;
+	    if (int(@row) != $m) {
+		die "Expect $m entries per row while reading matrix from $file; found ".int(@row)."\n";
+	    }
+	    
+	    push @matrix, [ @row ]; 
+	}
+	else {
+	    die "Expect $n rows while reading matrix from $file, found ".($a-1)."\n";
+	}
+    }
+    close $MAT;
+    
+    return \@matrix;
+}
 
 ########################################
 ## write_2D_matrix($file string, $matrix ref of 2D array)
@@ -1613,7 +1692,7 @@ sub extract_score_matrix_from_alignments($$) {
 	    
 	    my @aln = @{ $pairwise_alns[$a][$b] };
 		
-	    $aln[0] =~ /Score: ([\d\.\-]+)/ || die "Cannot extract score from $aln[0].\n";
+	    $aln[0] =~ /Score: ([\d\.\-]+)/ || die "Cannot extract score for sequence $a vs. $b.\n";
 	    my $score=$1;
 	    
 	    $score_matrix[$a][$b] = $score;

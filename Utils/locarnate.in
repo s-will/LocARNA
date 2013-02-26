@@ -568,7 +568,7 @@ sub calculate_pairwise_alignments {
         my $code = system($call);
         if ($code) {
           locarnate::Error::error('Can\'t perform locARNA calculation'.
-                            ' (developed under locarna 1.4.5)');
+                            ' (developed under locarna 1.4.5, call:'.$call.')');
         }
       }
     }
@@ -658,7 +658,7 @@ sub parse_pair_alignments {
 
       for (my $k = 0; $k < $alignment->sequence_size(); ++$k) {
         my $seq = $alignment->sequence($k, 'seq');
-        if ($seq =~ m/([^ACGUTRYMKWSBDHVNacgutrymkwsbdhvn\-~])/) {
+        if ($seq =~ m/([^ACGUTRYMKWSBDHVNacgutrymkwsbdhvn\-~_])/) {
           locarnate::Error::error('Sequence '.($k + 1).' in "'.$file_name.
                             '" is no valid RNA alignment sequence');
         }

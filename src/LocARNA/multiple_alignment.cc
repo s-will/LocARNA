@@ -35,8 +35,8 @@ namespace LocARNA {
 	try {
 	    ifstream in(filename.c_str());
     
-	    if (!in.good()) {
-		throw(std::ifstream::failure("Cannot read file"+filename+"."));
+	    if (!in.is_open()) {
+		throw(std::ifstream::failure("Cannot open file "+filename+" for reading."));
 	    }
 	
 	    if (format==FASTA) {
@@ -107,7 +107,7 @@ namespace LocARNA {
 	std::vector<int>::size_type alisize = a.size();
     
 	for (size_type i=0; i<alisize; i++) {
-	    if ( a[i]==-1 ) {
+	    if ( a[i]<0 ) {
 		for (size_type k=0; k<seqA.row_number(); k++) {
 		    aliA[k] += '-';
 		}
@@ -116,7 +116,7 @@ namespace LocARNA {
 		    aliA[k] += seqA[a[i]][k];
 		}
 	    }
-	    if ( b[i]==-1 ) {
+	    if ( b[i]<0 ) {
 		for (size_type k=0; k<seqB.row_number(); k++) {
 		    aliB[k] += '-';
 		}
@@ -192,37 +192,33 @@ namespace LocARNA {
         
 	std::string name;
 	std::string description;
-	std::string seqstr;
-    
+	
 	std::string line;
     
 	getline(in,line);
-    
-	while(in.good()) {
+
+	while(in) {
 	
-	    if (line.length()>0) {
-	    
-		if (line[0]=='>') {
-		    std::istringstream sin(line);
-		    sin.get(); // this eats '>'
-		    sin >> name; // gets the first non-whitespace substring after '>' of the line
-		    std::stringbuf sb;
-		    sin.get(sb);
-		    description=sb.str();
-		}
-	    
-		getline(in,line);
-		while(in.good() && (line.size()==0 || line[0]!='>')) {
+	    if (line.length()>0 && line[0]=='>') {
+		std::istringstream sin(line);
+		sin.get(); // this eats '>'
+		sin >> name; // gets the first non-whitespace substring after '>' of the line
+		std::stringbuf sb;
+		sin.get(sb);
+		description=sb.str();
+		
+		std::string seqstr="";
+    		getline(in,line);
+		while((in) && (line.size()==0 || line[0]!='>')) {
 		    // remove whitespace and add to seqstr
 		    std::istringstream sin(line);
-		    seqstr="";
 		    std::string seqstr1;
 		    while(sin >> seqstr1) {
 			seqstr += seqstr1;
 		    }
 		    getline(in,line);
 		}
-	    
+		
 		alig.push_back( SeqEntry(name,description,seqstr) );
 	    }
 	}
@@ -685,29 +681,27 @@ namespace LocARNA {
     
     }
 
-    const std::string
+    std::string
     MultipleAlignment::consensus_sequence() const {
-	const size_type max_code=128;
-	size_type tab[max_code];
-	
 	std::string cs="";
 	//iterate over columns and built up consensus sequence 
 	for (size_type i=1; i<=length(); ++i) {
 	    
-	    std::fill(tab,tab+max_code,0);
+	    map<char,size_t> tab;
 	    
-	    // iterate over sequences and
+	    // iterate over sequences and count character
 	    for (std::vector<SeqEntry>::const_iterator it=alig.begin(); alig.end()!=it; ++it) {
-		assert((size_type)it->seq()[i] < max_code);
-		tab[(size_type)it->seq()[i]]++;
+		char c=it->seq()[i];
+		if (tab.end()==tab.find(c)) tab[c]=0;
+		tab[c]++;
 	    }
 	    
 	    size_type cur_max=0;
 	    char max_char='N';
-	    for(size_type x=0; x<max_code; ++x) {
-		if (tab[x]>cur_max) {
-		    cur_max=tab[x];
-		    max_char=x;
+	    for(map<char,size_t>::const_iterator it=tab.begin(); tab.end()!=it; ++it) {
+		if (it->second > cur_max) {
+		    cur_max=it->second;
+		    max_char=it->first;
 		}
 	    }
 	    

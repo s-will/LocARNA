@@ -14,22 +14,22 @@
  */
 /************************************************************/
 
-#include "stdlib.h"
+#include <stdlib.h>
 #include <iostream>
 
 #ifdef HAVE_LIBRNA
 
-#include "math.h"
+#include <math.h>
 
 #include <string.h>
 #include <sstream>
 #include <string>
 
 extern "C" {
-#include "ViennaRNA/fold_vars.h"
-#include "ViennaRNA/fold.h"
-#include "ViennaRNA/part_func.h"
-#include "ViennaRNA/utils.h"
+#include <ViennaRNA/fold_vars.h>
+#include <ViennaRNA/fold.h>
+#include <ViennaRNA/part_func.h>
+#include <ViennaRNA/utils.h>
 }
 
 const   double sfact         = 1.07; // from RNAfold code
@@ -183,7 +183,7 @@ main(int argc, char **argv) {
     }
     std::cerr << "ERROR: locarna_rnafold_pp requires linking against Vienna librna.\n";
     std::cerr << "This program was compiled without configure option --enable-librna."<<std::endl;
-    std::cerr << "Please reconfigure and recompile in order to use this program. \n";
+    std::cerr << "Please reconfigure and recompile to activate this program. \n";
     exit(-1);
 }
 #endif

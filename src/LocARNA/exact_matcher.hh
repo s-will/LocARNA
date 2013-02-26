@@ -7,268 +7,246 @@
 #include <list>
 #include <algorithm>
 #include <limits>
+#include <tr1/unordered_map>
 
 extern "C"
 {
-        #include <ViennaRNA/fold_vars.h>
-	#include <ViennaRNA/utils.h>
-	#include <ViennaRNA/PS_dot.h>
-	#include <ViennaRNA/fold.h>
-	int    PS_rna_plot(char *string, char *structure, char *file);
-	int    PS_rna_plot_a(char *string, char *structure, char *file, char *pre, char *post);
-	float  fold(const char *sequence, char *structure);
+#include <ViennaRNA/fold_vars.h>
+#include <ViennaRNA/utils.h>
+#include <ViennaRNA/PS_dot.h>
+#include <ViennaRNA/fold.h>
+    int    PS_rna_plot(char *string, char *structure, char *file);
+    int    PS_rna_plot_a(char *string, char *structure, char *file, char *pre, char *post);
+    float  fold(const char *sequence, char *structure);
 }
-
-using namespace std;
 
 namespace LocARNA {
 
-//typedef size_t 					size_type;
-typedef vector<unsigned int> 			intVec;
-typedef pair<unsigned int,unsigned int> 	intPair;
-typedef pair<intPair, intPair> 			intPPair;
-typedef const intPPair* 			intPPairPTR;
-typedef vector<intPPair>::const_iterator	IntPPairCITER;
+    typedef size_t 					size_type;
+    typedef std::vector<unsigned int> 			intVec;
+    typedef std::pair<unsigned int,unsigned int> 	intPair;
+    typedef std::pair<intPair, intPair> 			intPPair;
+    typedef const intPPair* 			intPPairPTR;
+    typedef std::vector<intPPair>::const_iterator	IntPPairCITER;
 
-class StringHash
-{
-   public:
-      size_t operator()(const string &myStr) const
-      {
-         unsigned long hash = 5381;
 
-         for (unsigned int i = 0; i < myStr.length(); i++)
-         {
-            hash = ((hash << 5) + hash) + myStr[i]; // hash * 33 + cStateString[i]
-         }
-         return hash;
-   }
-};
-
-class StringEq {
-public:
-   bool operator()(const string &a,const string &b) const
-   {
-      return (a == b);
-   }
-};
 
 class SinglePattern
 {
 public:
       SinglePattern(){};
-      SinglePattern(const string& myId_,const string& seqId_,const intVec& mySinglePattern_)
+      SinglePattern(const std::string& myId_,const std::string& seqId_,const intVec& mySinglePattern_)
       	      	      	      :myId(myId_),seqId(seqId_),pattern(mySinglePattern_)
       	      	      	      {};
 
 	virtual ~SinglePattern() { pattern.clear(); };
 
-   const string&        getmyId()  const { return myId; };
-   const string&	getseqId() const {return seqId; };
-   const intVec&        getPat() const { return pattern; };
+	const std::string&        getmyId()  const { return myId; };
+	const std::string&	getseqId() const {return seqId; };
+	const intVec&        getPat() const { return pattern; };
 
-private:
+    private:
 
-      string         myId;
-      string	     seqId;
-      intVec         pattern;
-};
+	std::string         myId;
+	std::string	     seqId;
+	intVec         pattern;
+    };
 
-//--------------------------------------------------------------------------
-// class PatternPair
-//    is able to manage an EPM, consists of 2 singlepatterns, one in each RNA
-//--------------------------------------------------------------------------
-class PatternPair
-   {
-      public:
-      PatternPair(){};
-      PatternPair(const string& myId,const SinglePattern& myFirstPat,const SinglePattern& mySecPat, const string& structure_, int& score_)
-                  : id(myId),first(myFirstPat),second(mySecPat), structure(structure_), EPMscore(score_)
-      {
-	      if (first.getPat().size() != second.getPat().size()){
-		      cerr << "Error! PatternPair cannot be constructed due to different sizes of SinglePatterns!" << endl;
-      	      }
-	      score = EPMscore;
-	      size = first.getPat().size();
-      };
+    //--------------------------------------------------------------------------
+    // class PatternPair
+    //    is able to manage an EPM, consists of 2 singlepatterns, one in each RNA
+    //--------------------------------------------------------------------------
+    class PatternPair
+    {
+    public:
+	PatternPair(){};
+	PatternPair(const std::string& myId,const SinglePattern& myFirstPat,const SinglePattern& mySecPat, const std::string& structure_, int& score_)
+	    : id(myId),first(myFirstPat),second(mySecPat), structure(structure_), EPMscore(score_)
+	{
+	    if (first.getPat().size() != second.getPat().size()){
+		std::cerr << "Error! PatternPair cannot be constructed due to different sizes of SinglePatterns!" << std::endl;
+	    }
+	    score = EPMscore;
+	    size = first.getPat().size();
+	};
 
-      virtual ~PatternPair()
-      {
-    	insideBounds.clear();
-      };
+	virtual ~PatternPair()
+	{
+	    insideBounds.clear();
+	};
 
-      const string& 		getId() const { return id; };
-      const int& 		getSize() const { return size; };
-      const SinglePattern& 	getFirstPat() const { return first; };
-      const SinglePattern& 	getSecPat() const { return second;};
-      	      void		resetBounds();
-      	      void		setOutsideBounds(intPPair myPPair);
-      const   intPPair 		getOutsideBounds() const { return outsideBounds; };
-      	      void		addInsideBounds(intPPair myPPair);
-      const   vector<intPPair>& getInsideBounds() const { return insideBounds; };
+	const std::string& 		getId() const { return id; };
+	const int& 		getSize() const { return size; };
+	const SinglePattern& 	getFirstPat() const { return first; };
+	const SinglePattern& 	getSecPat() const { return second;};
+	void		resetBounds();
+	void		setOutsideBounds(intPPair myPPair);
+	const   intPPair 		getOutsideBounds() const { return outsideBounds; };
+	void		addInsideBounds(intPPair myPPair);
+	const   std::vector<intPPair>& getInsideBounds() const { return insideBounds; };
 
-			void			setEPMScore(int myScore);
+	void			setEPMScore(int myScore);
 	const		int 			getScore() const { return score;  };
 	const		int 			getEPMScore() const { return EPMscore; };
-      const string& get_struct() const { return structure; };
+ 	std::string& get_struct();
 
-      private:
-         string         	id;
-         int            	size;
-         SinglePattern  	first;
-         SinglePattern  	second;
+    private:
+	std::string         	id;
+	int            	size;
+	SinglePattern  	first;
+	SinglePattern  	second;
 	  
-	 string 		structure;
-         int				score;
-         int				EPMscore;
-         vector<intPPair>   insideBounds;
-         intPPair           outsideBounds;
-   };
+	std::string 		structure;
+	int				score;
+	int				EPMscore;
+	std::vector<intPPair>   insideBounds;
+	intPPair           outsideBounds;
+    };
    
-//--------------------------------------------------------------------------
-// class PatternPairMap
-//    manage a set of EPMs (PatternPair)
-//--------------------------------------------------------------------------
-class PatternPairMap
-{
-   public:
-	  typedef  PatternPair                                  selfValueTYPE;
-	  typedef  PatternPair*				               		SelfValuePTR;
+    //--------------------------------------------------------------------------
+    // class PatternPairMap
+    //    manage a set of EPMs (PatternPair)
+    //--------------------------------------------------------------------------
+    class PatternPairMap
+    {
+    public:
+	typedef  PatternPair                                  selfValueTYPE;
+	typedef  PatternPair*				               		SelfValuePTR;
 
-      typedef  multimap<int,SelfValuePTR,greater<int> >     orderedMapTYPE;
-      typedef  orderedMapTYPE::const_iterator               orderedMapCITER;
-      typedef  orderedMapTYPE::iterator                     orderedMapITER;
-      typedef  list<SelfValuePTR>                           patListTYPE;
-      typedef  patListTYPE::iterator                        patListITER;
-      typedef  patListTYPE::const_iterator                  patListCITER;
-      typedef  __gnu_cxx::hash_map<string,SelfValuePTR,StringHash,StringEq> PatternIdMapTYPE;
+	typedef  std::multimap<int,SelfValuePTR,std::greater<int> >     orderedMapTYPE;
+	typedef  orderedMapTYPE::const_iterator               orderedMapCITER;
+	typedef  orderedMapTYPE::iterator                     orderedMapITER;
+	typedef  std::list<SelfValuePTR>                           patListTYPE;
+	typedef  patListTYPE::iterator                        patListITER;
+	typedef  patListTYPE::const_iterator                  patListCITER;
+	typedef  std::tr1::unordered_map<std::string,SelfValuePTR> PatternIdMapTYPE;
 
 
-         PatternPairMap();
-         PatternPairMap(const PatternPairMap& myPairMap)
-                           :patternList(myPairMap.patternList),
-                            patternOrderedMap(myPairMap.patternOrderedMap),
-                            idMap(myPairMap.idMap)  { minPatternSize = 100000;};
+	PatternPairMap();
+	PatternPairMap(const PatternPairMap& myPairMap)
+	    :patternList(myPairMap.patternList),
+	     patternOrderedMap(myPairMap.patternOrderedMap),
+	     idMap(myPairMap.idMap)  { minPatternSize = 100000;};
 
-      virtual ~PatternPairMap();
+	virtual ~PatternPairMap();
 
-               void              add( const string& id,
-                                      const SinglePattern& first,
-                                      const SinglePattern& second,
-				      const string& structure,
-				      int score
-				    );
-               void              add(const SelfValuePTR value);
-               void              makeOrderedMap();
-               void              updateFromMap();
-      const    PatternPair&      getPatternPair(const string& id)const;
-      const    SelfValuePTR      getPatternPairPTR(const string& id)const;
-      const    patListTYPE&      getList() const;
-      const    orderedMapTYPE&   getOrderedMap() const;
-               orderedMapTYPE&   getOrderedMap2();
-      const    int               size()   const;
-      	       int		 getMapBases();
-      	       int  	         getMapEPMScore();
-      const    int		 getMinPatternSize() const { return minPatternSize; };
+	void              add( const std::string& id,
+			       const SinglePattern& first,
+			       const SinglePattern& second,
+			       const std::string& structure,
+			       int score
+			       );
+	void              add(const SelfValuePTR value);
+	void              makeOrderedMap();
+	void              updateFromMap();
+	const    PatternPair&      getPatternPair(const std::string& id)const;
+	const    SelfValuePTR      getPatternPairPTR(const std::string& id)const;
+	const    patListTYPE&      getList() const;
+	const    orderedMapTYPE&   getOrderedMap() const;
+	orderedMapTYPE&   getOrderedMap2();
+	const    int               size()   const;
+	int		 getMapBases();
+	int  	         getMapEPMScore();
+	const    int		 getMinPatternSize() const { return minPatternSize; };
 
-   private:
+    private:
 
-     patListTYPE        patternList;
-     orderedMapTYPE     patternOrderedMap;
-     PatternIdMapTYPE   idMap;
-     int minPatternSize;
-};
+	patListTYPE        patternList;
+	orderedMapTYPE     patternOrderedMap;
+	PatternIdMapTYPE   idMap;
+	int minPatternSize;
+    };
 
 // write pattern list of the PatternPairMap to stream
 std::ostream &operator << (std::ostream &out, const PatternPairMap::patListTYPE &pat_pair_map);
 
 
-class LCSEPM
-{
+    class LCSEPM
+    {
     public:
 
-			LCSEPM(const	Sequence& 		seqA_,
-				const	Sequence& 		seqB_,
-				const 	PatternPairMap& myPatterns,
-					PatternPairMap& myLCSEPM,
-				const	int&		EPM_min_size_ )
+	LCSEPM(const	Sequence& 		seqA_,
+	       const	Sequence& 		seqB_,
+	       const 	PatternPairMap& myPatterns,
+	       PatternPairMap& myLCSEPM,
+	       const	int&		EPM_min_size_ )
 
-    	                                   :seqA(seqA_),
-					    seqB(seqB_),
-					    matchedEPMs(myLCSEPM),
-    	                                    patterns(myPatterns),
-    	                                    EPM_min_size(EPM_min_size_){};
+	    :seqA(seqA_),
+	     seqB(seqB_),
+	     matchedEPMs(myLCSEPM),
+	     patterns(myPatterns),
+	     EPM_min_size(EPM_min_size_){};
 		
 	virtual		~LCSEPM();
 
-	void 		MapToPS(const string& sequenceA, const string& sequenceB, PatternPairMap& myMap, const string& file1, const string& file2);
+	void 		MapToPS(const std::string& sequenceA, const std::string& sequenceB, PatternPairMap& myMap, const std::string& file1, const std::string& file2);
         void		calculateLCSEPM();
 
         //! outputs anchor constraints to be used as input for locarna
-        void		output_locarna(const string& sequenceA, const string& sequenceB, const string& outfile);
-        void		output_clustal(const string& outfile_name);
+        void		output_locarna(const std::string& sequenceA, const std::string& sequenceB, const std::string& outfile);
+        void		output_clustal(const std::string& outfile_name);
 
-   private:
+    private:
 
         struct HoleCompare2 {
-        	bool operator()(const intPPairPTR & h1, const intPPairPTR & h2) const {
-        		// first compare size of holes
-                        if (h1->first.second - h1->first.first-1 < h2->first.second - h2->first.first-1){
-                        	return true; }
-                        // compare if holes are identical in both structures
-                        if (h1->first.second - h1->first.first-1 == h2->first.second - h2->first.first-1){
-                        	if ((h1->first.first == h2->first.first) && (h1->first.second == h2->first.second) &&
-                        	    (h1->second.first==h2->second.first) && (h1->second.second==h2->second.second))
-                        	{ return true; }
-                        }
+	    bool operator()(const intPPairPTR & h1, const intPPairPTR & h2) const {
+		// first compare size of holes
+		if (h1->first.second - h1->first.first-1 < h2->first.second - h2->first.first-1){
+		    return true; }
+		// compare if holes are identical in both structures
+		if (h1->first.second - h1->first.first-1 == h2->first.second - h2->first.first-1){
+		    if ((h1->first.first == h2->first.first) && (h1->first.second == h2->first.second) &&
+			(h1->second.first==h2->second.first) && (h1->second.second==h2->second.second))
+			{ return true; }
+		}
 
-                        return false;
-        	}
+		return false;
+	    }
         };
 
-        typedef     multimap<intPPairPTR,PatternPairMap::SelfValuePTR,HoleCompare2>	HoleOrderingMapTYPE2;
+        typedef     std::multimap<intPPairPTR,PatternPairMap::SelfValuePTR,HoleCompare2>	HoleOrderingMapTYPE2;
         typedef     HoleOrderingMapTYPE2::const_iterator HoleMapCITER2;
 
 
         void    preProcessing			();
         void    calculateHoles3			();
 	void    calculatePatternBoundaries	(PatternPair* myPair);
-        void 	calculateTraceback2		(const int i,const int j,const int k,const int l,vector < vector<int> > holeVec);
-        int 	D_rec2				(const int& i,const  int& j,const int& k,const int& l,vector < vector<int> >& D_h,const bool debug);
+        void 	calculateTraceback2		(const int i,const int j,const int k,const int l,std::vector < std::vector<int> > holeVec);
+        int 	D_rec2				(const int& i,const  int& j,const int& k,const int& l,std::vector < std::vector<int> >& D_h,const bool debug);
 
         int 	max3				(int a, int b, int c)
-        						{
-        							int tmp = a>b? a:b;
-        							return (tmp>c? tmp:c);
-        						};
+	{
+	    int tmp = a>b? a:b;
+	    return (tmp>c? tmp:c);
+	};
 	
 	//!@brief returns the structure of the given sequence
 	char* getStructure(PatternPairMap& myMap, bool firstSeq, int length);
 	
-	string intvec2str(const std::vector<unsigned int>& V, const std::string delim){
-	      stringstream oss;
-	      copy(V.begin(), V.end(), ostream_iterator<unsigned int>(oss, delim.c_str()));
-	      string tmpstr;
-	      tmpstr = oss.str();
-	      if (tmpstr.length()>0) tmpstr.erase(tmpstr.end()-1);
-	      return tmpstr;
-	  }
-
-	string upperCase(string seq){
-	  string s= "";
-	  for(unsigned int i= 0; i<seq.length(); i++)
-	    s+= toupper(seq[i]);
-	  return s;
+	std::string intvec2str(const std::vector<unsigned int>& V, const std::string delim){
+	    std::stringstream oss;
+	    copy(V.begin(), V.end(), std::ostream_iterator<unsigned int>(oss, delim.c_str()));
+	    std::string tmpstr;
+	    tmpstr = oss.str();
+	    if (tmpstr.length()>0) tmpstr.erase(tmpstr.end()-1);
+	    return tmpstr;
 	}
 
-	vector< vector <vector<PatternPairMap::SelfValuePTR> > >	EPM_Table2;
-		HoleOrderingMapTYPE2    		holeOrdering2;
+	std::string upperCase(const std::string &seq){
+	    std::string s= "";
+	    for(unsigned int i= 0; i<seq.length(); i++)
+		s+= toupper(seq[i]);
+	    return s;
+	}
+
+	std::vector< std::vector <std::vector<PatternPairMap::SelfValuePTR> > >	EPM_Table2;
+	HoleOrderingMapTYPE2    		holeOrdering2;
 	const 	Sequence&				seqA;
 	const 	Sequence& 				seqB;
-		PatternPairMap&				matchedEPMs;
+	PatternPairMap&				matchedEPMs;
         const 	PatternPairMap&         		patterns;
 	const int& 					EPM_min_size;
-};
+    };
 
 
 /**
@@ -282,7 +260,7 @@ class Mapping{
 public:
 
 	typedef size_type ArcIdx; //!< type of arc index
-	typedef vector<ArcIdx> ArcIdxVec; //!< vector of arc indices
+	typedef std::vector<ArcIdx> ArcIdxVec; //!< vector of arc indices
 	typedef pos_type matidx_t;
 	typedef pos_type seq_pos_t;
 	typedef size_type index_t;
@@ -304,7 +282,7 @@ public:
 	typedef std::vector<int> pos_vec;
 	typedef std::vector<pos_vec> bp_mapping;
 
-	typedef vector<info_for_pos> InfoForPosVec; //!< vector of struct info_for_pos that is assigned to the index (either common left end or arc index)
+	typedef std::vector<info_for_pos> InfoForPosVec; //!< vector of struct info_for_pos that is assigned to the index (either common left end or arc index)
 
 
 private:
@@ -318,19 +296,19 @@ private:
 
 	//! for each index all valid sequence positions with additional information is stored
 	//! index_t->matidx_t->info_for_pos
-	vector<InfoForPosVec> info_valid_seq_pos_vecs;
+	std::vector<InfoForPosVec> info_valid_seq_pos_vecs;
 
 	//! for each index and each sequence position the first valid position in the matrix before the sequence position is stored
 	//! index_t->seq_pos_t->matidx_t
-	vector<vector<matidx_t> > first_valid_mat_pos_vecs; //todo: not use anymore!
+	std::vector<std::vector<matidx_t> > first_valid_mat_pos_vecs; //todo: not use anymore!
 
 	//! for each index and each sequence position the first valid position in the matrix before the sequence position is stored \n
 	//! index_t->seq_pos_t->matidx_t
-	vector<vector<matidx_t> > valid_mat_pos_vecs_before_eq;
+	std::vector<std::vector<matidx_t> > valid_mat_pos_vecs_before_eq;
 
 	//! for each index and each sequence position all valid arcs that have the sequence position as common left end are stored
 	//! index_t->seq_pos_t->ArcIdxVec
-	vector<vector<ArcIdxVec > > left_adj_vec; //ArcIdx->positions->valid_arcmatches
+	std::vector<std::vector<ArcIdxVec > > left_adj_vec; //ArcIdx->positions->valid_arcmatches
 
 
 
@@ -433,15 +411,15 @@ public:
 		return first_valid_mat_pos_vecs.at(arc.idx()).at(pos-arc.left());
 	}*/
 
-	matidx_t first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
-		if (left_end == numeric_limits<index_t>::max()) left_end = index;
+	matidx_t first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos, index_t left_end = std::numeric_limits<index_t>::max())const{
+		if (left_end == std::numeric_limits<index_t>::max()) left_end = index;
 		assert (pos >= left_end); //tocheck
 		assert(valid_mat_pos_vecs_before_eq.size()>index && valid_mat_pos_vecs_before_eq.at(index).size()>pos-left_end);
 		return valid_mat_pos_vecs_before_eq.at(index).at(pos-left_end);
 	}
 
 	inline
-	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
+	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = std::numeric_limits<index_t>::max())const{
 		//	    if (left_end == numeric_limits<index_t>::max())		assert (pos > index);
 		assert(pos>0);
 		return first_valid_mat_pos_before_eq(index, pos-1, left_end);
@@ -524,9 +502,9 @@ public:
 	/////New
 	// gives the index that stores the first sequence position that is greater than or equal to min_col
 	// if it does not exist, return num_pos
-	matidx_t idx_geq(index_t index, seq_pos_t min_col, index_t left_end = numeric_limits<index_t>::max()) const{
+	matidx_t idx_geq(index_t index, seq_pos_t min_col, index_t left_end = std::numeric_limits<index_t>::max()) const{
 
-		if (left_end == numeric_limits<index_t>::max())
+		if (left_end == std::numeric_limits<index_t>::max())
 			left_end = index;
 
 		size_t num_pos = number_of_valid_mat_pos(index);
@@ -551,9 +529,9 @@ public:
 	// gives the index position after the index position that stores the first sequence position
 	// that is less than or equal to max_col
 	// if it does not exist return 0
-	matidx_t idx_after_leq(index_t index, seq_pos_t max_col, index_t left_end = numeric_limits<index_t>::max()) const{
+	matidx_t idx_after_leq(index_t index, seq_pos_t max_col, index_t left_end = std::numeric_limits<index_t>::max()) const{
 
-		if (left_end == numeric_limits<index_t>::max())
+		if (left_end == std::numeric_limits<index_t>::max())
 			left_end = index;
 
 		size_t num_pos = number_of_valid_mat_pos(index);
@@ -634,22 +612,22 @@ private:
 };
 
 
-std::ostream &operator << (std::ostream &out, const vector<Mapping::info_for_pos> &pos_vecs_);
-std::ostream &operator << (std::ostream &out, const vector<vector<Mapping::info_for_pos> > &pos_vecs_);
+std::ostream &operator << (std::ostream &out, const std::vector<Mapping::info_for_pos> &pos_vecs_);
+std::ostream &operator << (std::ostream &out, const std::vector<std::vector<Mapping::info_for_pos> > &pos_vecs_);
 
 // prints pair
 template <class T1, class T2>
-std::ostream& operator << (std::ostream& out, const pair<T1,T2>& pair){
+std::ostream& operator << (std::ostream& out, const std::pair<T1,T2>& pair){
 	return out << "(" << pair.first << "," << pair.second << ") ";
 }
 
 // prints vector
 template <class T>
-std::ostream& operator << (std::ostream& out, const vector<T>& vec){
-	for(typename vector<T>::const_iterator it = vec.begin();it!=vec.end();it++){
+std::ostream& operator << (std::ostream& out, const std::vector<T>& vec){
+	for(typename std::vector<T>::const_iterator it = vec.begin();it!=vec.end();it++){
 		out << *it << " ";
 	}
-	return out << endl;
+	return out << std::endl;
 }
 
 
@@ -667,8 +645,8 @@ private:
 
 public:
 
-	typedef pair<matidx_t,matidx_t> matpos_t; //!< a type for a position in a sparsified matrix
-	typedef pair<seqpos_t,seqpos_t> pair_seqpos_t; //!< a type for a pair of positions in the sequences
+	typedef std::pair<matidx_t,matidx_t> matpos_t; //!< a type for a position in a sparsified matrix
+	typedef std::pair<seqpos_t,seqpos_t> pair_seqpos_t; //!< a type for a pair of positions in the sequences
 
 private:
 	const Mapping &mappingA; //!< mapped positions of sequence A
@@ -709,7 +687,7 @@ public:
 	 * 					default setting is the index for sequence B if indexing by the left ends is used
 	 */
 	matidx_t min_col_idx(index_t indexA, index_t indexB, matidx_t idx_i,
-			index_t left_endB =  numeric_limits<index_t>::max()) const{
+			index_t left_endB =  std::numeric_limits<index_t>::max()) const{
 
 		seqpos_t i = mappingA.get_pos_in_seq_new(indexA,idx_i);
 		return mappingB.idx_geq(indexB,min_col(i),left_endB);
@@ -725,7 +703,7 @@ public:
 	 * 					default setting is the index for sequence B if indexing by the left ends is used
 	 */
 	matidx_t idx_after_max_col_idx(index_t indexA, index_t indexB, matidx_t idx_i,
-			index_t left_endB =  numeric_limits<index_t>::max()) const{
+			index_t left_endB =  std::numeric_limits<index_t>::max()) const{
 
 		seqpos_t i = mappingA.get_pos_in_seq_new(indexA,idx_i);
 		return mappingB.idx_after_leq(indexB,max_col(i),left_endB);
@@ -741,7 +719,7 @@ public:
 	 * 					default setting is the index for sequence B if indexing by the left ends is used
 	 */
 	matpos_t first_valid_mat_pos_before_with_tc(index_t indexA, index_t indexB,pair_seqpos_t cur_pos_seq,
-			index_t left_endA =  numeric_limits<index_t>::max(), index_t left_endB =  numeric_limits<index_t>::max())const{
+			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
 
 		seqpos_t i = cur_pos_seq.first;
 		seqpos_t j = cur_pos_seq.second;
@@ -858,16 +836,16 @@ public:
 	typedef SparseTraceController::matpos_t matpos_t; //!< a type for a position in a sparsified matrix
 	typedef Mapping::ArcIdx ArcIdx; //!< arc index
 	typedef SparseTraceController::pair_seqpos_t pair_seqpos_t; //!< pair of positions in sequence A and B
-	typedef pair<ArcIdx,ArcIdx> PairArcIdx; //!< pair of arc indices
-	typedef vector<PairArcIdx> PairArcIdxVec; //!< a vector of pairs of arc indices
+	typedef std::pair<ArcIdx,ArcIdx> PairArcIdx; //!< pair of arc indices
+	typedef std::vector<PairArcIdx> PairArcIdxVec; //!< a vector of pairs of arc indices
 
 	//! type for elements of the pattern vector, <position in seq A, position in sequence B, structure>
 	typedef triple<seqpos_t,seqpos_t,char> el_pat_vec;
 
-	typedef vector<el_pat_vec> pat_vec_t; //!< type for pattern vector
+	typedef std::vector<el_pat_vec> pat_vec_t; //!< type for pattern vector
 	//typedef std::vector<int>::size_type size_type;  //!< type of a size
 
-	typedef pair<pat_vec_t::size_type,pat_vec_t::size_type> pair_size_t_pat_vec;
+	typedef std::pair<pat_vec_t::size_type,pat_vec_t::size_type> pair_size_t_pat_vec;
 
 private:
 
@@ -1023,28 +1001,28 @@ public:
 	}
 
 	//! prints the EPM
-	void print_epm(ostream &out, bool verbose) const{
+	void print_epm(std::ostream &out, bool verbose) const{
 		if(verbose){
-			out << "_________________________________________________" << endl;
+			out << "_________________________________________________" << std::endl;
 		}
-		out << "epm with score " << this->score << endl;
+		out << "epm with score " << this->score << std::endl;
 		out << " ";
 		for(pat_vec_t::const_iterator it=pat_vec.begin();it!=pat_vec.end();++it){
 			out << it->first << ":" << it->second << " ";
 		}
-		out << endl;
+		out << std::endl;
 		out << " ";
 		for(pat_vec_t::const_iterator it=pat_vec.begin();it!=pat_vec.end();++it){
 			out << it->third;
 		}
-		out << endl;
+		out << std::endl;
 		if(verbose){
-			out << "score " << score << endl;
-			out << "pos " << this->cur_pos.first << "," << this->cur_pos.second << endl;
-			out << "state " << this->state << endl;
-			out << "tolerance left " << this->max_tol_left << endl;
-			out << "am_to_do " << am_to_do << endl;
-			out << "______________________________________________________" << endl;
+			out << "score " << score << std::endl;
+			out << "pos " << this->cur_pos.first << "," << this->cur_pos.second << std::endl;
+			out << "state " << this->state << std::endl;
+			out << "tolerance left " << this->max_tol_left << std::endl;
+			out << "am_to_do " << am_to_do << std::endl;
+			out << "______________________________________________________" << std::endl;
 		}
 	}
 };
@@ -1108,8 +1086,8 @@ class ExactMatcher {
 	typedef EPM::PairArcIdx PairArcIdx; //!< type for pair of arc indices
 	typedef EPM::PairArcIdxVec PairArcIdxVec; //!< type for vector of pairs of arc indices
 
-	typedef vector<EPM> epm_cont_t; //!< the container used for temporarily storing the EPMs
-	typedef pair<score_t,epm_cont_t > el_map_am_to_do_t; //!< type for storing for a given tolerance the list of epms
+	typedef std::vector<EPM> epm_cont_t; //!< the container used for temporarily storing the EPMs
+	typedef std::pair<score_t,epm_cont_t > el_map_am_to_do_t; //!< type for storing for a given tolerance the list of epms
 	typedef std::map<PairArcIdx,el_map_am_to_do_t > map_am_to_do_t; //!< a map that stores for pairs of arc indices the tolerance
 																	// that is used for backtracing and the found EPMs
 private:
@@ -1509,7 +1487,7 @@ private:
      *
      */
     void fill_epm(const map_am_to_do_t &map_am_to_do, size_type vec_idx,
-    		vector<score_t> &max_tol_left_up_to_pos, vector<const EPM*> &epms_to_insert,
+    		std::vector<score_t> &max_tol_left_up_to_pos, std::vector<const EPM*> &epms_to_insert,
     		score_t min_score, size_type pos_cur_epm, epm_cont_t &found_epms);
 
     // --------------------------------------------
