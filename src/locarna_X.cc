@@ -41,6 +41,7 @@
 #include "LocARNA/trace_controller.hh"
 
 #include "LocARNA/exact_matcher.hh"
+#include "LocARNA/sparsification_mapper.hh"
 
 
 using namespace std;
@@ -245,12 +246,14 @@ main(int argc, char **argv) {
 
     RnaData rnadataA(file1,true,opt_stacking,true);
     if (!rnadataA.pair_probs_available() || !rnadataA.in_loop_probs_available()) {
-	rnadataA.compute_ensemble_probs(params,true);
+	//rnadataA.compute_ensemble_probs(params,true);
+    	rnadataA.compute_ensemble_probs(params,true,false);
     }
 
     RnaData rnadataB(file2,true,opt_stacking,true);
     if (!rnadataB.pair_probs_available() || !rnadataB.in_loop_probs_available()) {
-	rnadataB.compute_ensemble_probs(params,true);
+	//rnadataB.compute_ensemble_probs(params,true);
+    	rnadataB.compute_ensemble_probs(params,true,false);
     }
 
     Sequence seqA=rnadataA.get_sequence();
@@ -331,27 +334,21 @@ main(int argc, char **argv) {
     //
     
     //time_t start_mapping = time (NULL);
-    Mapping mappingA(bpsA,
+    SparsificationMapper sparse_mapperA(bpsA,
     		rnadataA,
     		prob_unpaired_in_loop_threshold,
     		prob_basepair_in_loop_threshold,
     		false
-    		//prob_unpaired_external_threshold,
-    		//prob_basepair_external_threshold
-    		//prob_unpaired_in_F_threshold
     		);
 
-    Mapping mappingB(bpsB,
+    SparsificationMapper sparse_mapperB(bpsB,
     		rnadataB,
     		prob_unpaired_in_loop_threshold,
     		prob_basepair_in_loop_threshold,
     		false
-    		//prob_unpaired_external_threshold,
-    		//prob_basepair_external_threshold
-    		//prob_unpaired_in_F_threshold
     		);
 
-    SparseTraceController sparse_trace_controller(mappingA,mappingB,trace_controller);
+    SparseTraceController sparse_trace_controller(sparse_mapperA,sparse_mapperB,trace_controller);
 
     //time_t stop_mapping = time (NULL);
     //cout << "time for mapping: " << stop_mapping - start_mapping << "sec " << endl;

@@ -195,23 +195,23 @@ public:
 	 *  matching without a gap is possible from pos if the sequence position that corresponds to
 	 *  the first valid matrix position before pos is directly adjacent to pos
 	 */
-	/*
+
 	bool matching_without_gap_possible(const Arc &arc, seq_pos_t pos)const{
-		const pos_type &mat_pos = first_valid_mat_pos_before(arc,pos);
+		const pos_type &mat_pos = first_valid_mat_pos_before(arc.idx(),pos,arc.left());
 		return get_pos_in_seq_new(arc.idx(),mat_pos)==pos-1;
 	}
-*/
+
 	/**
 	 * gives all valid arcs with common left end from a sequence position
 	 * @param arc arc that is used as an index
 	 * @param pos sequence position
 	 * @return vector of all valid arcs with common left end pos for the arc index
 	 */
-/*	const ArcIdxVec &
+	const ArcIdxVec &
 	valid_arcs_left_adj(const Arc &arc, seq_pos_t pos) const{
 		return left_adj_vec.at(arc.idx()).at(pos-arc.left());
 	}
-*/
+
 	/**
 	 * is sequential matching possible?
 	 * @param idx arc index
@@ -220,13 +220,66 @@ public:
 	 * 				 to the matrix positions pos and pos-1 are adjacent \n
 	 * 		   false, otherwise
 	 */
-	bool seq_matching(ArcIdx idx,matidx_t pos)const {
+	/*bool seq_matching(ArcIdx idx,matidx_t pos)const {
 		return info_valid_seq_pos_vecs.at(idx).at(pos-1).seq_pos+1
 				==info_valid_seq_pos_vecs.at(idx).at(pos).seq_pos;
-	}
+	}*/
 
 	//! class destructor
 	virtual ~SparsificationMapper(){
+	}
+
+	// gives the index that stores the first sequence position that is greater than or equal to min_col
+	// if it does not exist, return num_pos
+	matidx_t idx_geq(index_t index, seq_pos_t min_col, index_t left_end = std::numeric_limits<index_t>::max()) const{
+
+		if (left_end == std::numeric_limits<index_t>::max())
+			left_end = index;
+
+		size_t num_pos = number_of_valid_mat_pos(index);
+		seq_pos_t last_mapped_seq_pos = get_pos_in_seq_new(index,num_pos-1);
+
+		// if the position min_col is smaller than or equal to the left end (first mapped position), return 0
+		if(min_col<=left_end) return 0;
+
+		// if the position min_col is greater than the last mapped sequence position, the position does not exists
+		// return the number of valid positions
+		if(min_col>last_mapped_seq_pos) return num_pos;
+
+		// the matrix position after the first valid position before the position min_col (first matrix position that
+		// stores a sequence position that is greater than or equal to min_col-1)
+		matidx_t idx_geq = first_valid_mat_pos_before_eq(index,min_col-1,left_end)+1;
+
+		assert(get_pos_in_seq_new(index,idx_geq)>=min_col && !(get_pos_in_seq_new(index,idx_geq-1)>=min_col));
+
+		return idx_geq;
+	}
+
+	// gives the index position after the index position that stores the first sequence position
+	// that is less than or equal to max_col
+	// if it does not exist return 0
+	matidx_t idx_after_leq(index_t index, seq_pos_t max_col, index_t left_end = std::numeric_limits<index_t>::max()) const{
+
+		if (left_end == std::numeric_limits<index_t>::max())
+			left_end = index;
+
+		size_t num_pos = number_of_valid_mat_pos(index);
+		seq_pos_t last_mapped_seq_pos = get_pos_in_seq_new(index,num_pos-1);
+
+		// if the position max_col is smaller than the left_end (first mapped position), return 0
+		if(max_col<left_end) return 0;
+
+		// if the position max_col is greater than or equal to the last mapped sequence position,
+		// return the number of positions
+		if(max_col>=last_mapped_seq_pos) return num_pos;
+
+		// the matrix position after the first matrix position before or equal the sequence position max_col
+		// (last matrix position that stores a sequence position that is lower than or equal max_col)
+		matidx_t idx_after_leq = first_valid_mat_pos_before_eq(index,max_col,left_end)+1;
+
+		assert(get_pos_in_seq_new(index,idx_after_leq-1)<=max_col && !(get_pos_in_seq_new(index,idx_after_leq)<=max_col));
+
+		return idx_after_leq;
 	}
 
 private:

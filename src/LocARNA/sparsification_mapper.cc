@@ -8,7 +8,7 @@ void SparsificationMapper::compute_mapping_idx_arcs(){
 	info_valid_seq_pos_vecs.resize(bps.num_bps());
 	valid_mat_pos_vecs_before_eq.resize(bps.num_bps());
 	for(size_type k=0;k<bps.num_bps();k++){
-		pos_type max_size = 0;
+		//pos_type max_size = 0;
 		struct_pos.reset();
 		const Arc &arc = bps.arc(k);
 		//add initialization
@@ -34,13 +34,15 @@ void SparsificationMapper::compute_mapping_idx_arcs(){
 			}
 			if(struct_pos.seq_pos==j){
 				info_valid_seq_pos_vecs.at(k).push_back(struct_pos);
-				max_size++;
+				//max_size++;
 			}
 			valid_mat_pos_vecs_before_eq.at(k).push_back(info_valid_seq_pos_vecs.at(k).size()-1);
 
 		}
-		if (max_info_vec_size > max_size )
-		    max_info_vec_size = max_size;
+		size_type max_size = info_valid_seq_pos_vecs.at(k).size();
+		if (max_info_vec_size < max_size) max_info_vec_size = max_size;
+		//if (max_info_vec_size > max_size )
+		//    max_info_vec_size = max_size;
 	}
 	//cout << "valid positions for indices " << info_valid_seq_pos_vecs << endl;
 }

@@ -7,7 +7,9 @@
 #include <list>
 #include <algorithm>
 #include <limits>
+#include <iterator>
 #include <tr1/unordered_map>
+#include "sparsification_mapper.hh"
 
 extern "C"
 {
@@ -88,7 +90,7 @@ public:
 	void			setEPMScore(int myScore);
 	const		int 			getScore() const { return score;  };
 	const		int 			getEPMScore() const { return EPMscore; };
- 	std::string& get_struct();
+ 	const std::string& get_struct() const{return structure;};
 
     private:
 	std::string         	id;
@@ -250,398 +252,15 @@ std::ostream &operator << (std::ostream &out, const PatternPairMap::patListTYPE 
 
 
 /**
- *  @brief Represents the mapping for sparsification
- *
- *	The datastructures are either indexed by the ArcIdx (in Exparna_P)
- *	or by the common left end (Locarna_ng).
- */
-class Mapping{
-
-public:
-
-	typedef size_type ArcIdx; //!< type of arc index
-	typedef std::vector<ArcIdx> ArcIdxVec; //!< vector of arc indices
-	typedef pos_type matidx_t;
-	typedef pos_type seq_pos_t;
-	typedef size_type index_t;
-
-	//! a struct to represent all necessary information for all valid sequence positions
-	struct info_for_pos{
-		seq_pos_t seq_pos; //!< the sequence position
-		bool unpaired; //!< if true, the sequence position can occur unpaired
-		ArcIdxVec valid_arcs; //!< a vector of arcs with common right end from the sequence position
-
-		//! resets the content of the struct
-		void reset(){
-			this->seq_pos=0;
-			this->valid_arcs.clear();
-			this->unpaired=false;
-		}
-	};
-
-	typedef std::vector<int> pos_vec;
-	typedef std::vector<pos_vec> bp_mapping;
-
-	typedef std::vector<info_for_pos> InfoForPosVec; //!< vector of struct info_for_pos that is assigned to the index (either common left end or arc index)
-
-
-private:
-
-	const BasePairs &bps;
-	const RnaData &rnadata;
-	const double prob_unpaired_in_loop_threshold;
-	const double prob_basepair_in_loop_threshold;
-
-	size_type max_info_vec_size;
-
-	//! for each index all valid sequence positions with additional information is stored
-	//! index_t->matidx_t->info_for_pos
-	std::vector<InfoForPosVec> info_valid_seq_pos_vecs;
-
-	//! for each index and each sequence position the first valid position in the matrix before the sequence position is stored
-	//! index_t->seq_pos_t->matidx_t
-	std::vector<std::vector<matidx_t> > first_valid_mat_pos_vecs; //todo: not use anymore!
-
-	//! for each index and each sequence position the first valid position in the matrix before the sequence position is stored \n
-	//! index_t->seq_pos_t->matidx_t
-	std::vector<std::vector<matidx_t> > valid_mat_pos_vecs_before_eq;
-
-	//! for each index and each sequence position all valid arcs that have the sequence position as common left end are stored
-	//! index_t->seq_pos_t->ArcIdxVec
-	std::vector<std::vector<ArcIdxVec > > left_adj_vec; //ArcIdx->positions->valid_arcmatches
-
-
-
-	//bp_mapping pos_vecs; //! mapping from the new positions to the sequence positions (i.e. which positions relative to the beginning of the arc are valid)
-	//bp_mapping new_pos_vecs; //!mapping from the sequence positions to the new positions;
-	//!sequence positions are relative to the beginning of the arc
-	//!vec contains -1 if sequence position isn't valid
-
-
-	//void compute_mapping();
-
-	//! computes the datastructures for sparsification mapping based on indexing the arcs
-	void compute_mapping_idx_arcs();
-
-	//! computes the datastructures for sparsification mapping based on indexing the common left ends
-	void compute_mapping_idx_left_ends();
-
-	//! checks if the cur_pos is valid (inner_arc=0) under any arc with common left end
-	//! checks if inner_arc is valid (inner_arc!=0) under any arc with common left end
-	void iterate_left_adj_list(pos_type cur_left_end,
-			pos_type cur_pos,
-			const Arc *inner_arc,
-			info_for_pos &struct_pos);
-
-
-public:
-	/**
-	 * Constructor
-	 *
-	 * @param bps_ Basepairs
-	 * @param rnadata_ RnaData
-	 * @param prob_unpaired_in_loop_threshold_ probability threshold for unpaired position under a loop
-	 * @param prob_basepair_in_loop_threshold_ probability threshold for basepair under a loop
-	 * @param index_left_ends specifies whether the datastructures are indexed
-	 * 		  by the common left end (true) or by the arc index (false)
-	 */
-	Mapping(const BasePairs &bps_,
-			const RnaData &rnadata_,
-			double prob_unpaired_in_loop_threshold_,
-			double prob_basepair_in_loop_threshold_,
-			bool index_left_ends):
-				bps(bps_),
-				rnadata(rnadata_),
-				prob_unpaired_in_loop_threshold(prob_unpaired_in_loop_threshold_),
-				prob_basepair_in_loop_threshold(prob_basepair_in_loop_threshold_),
-				max_info_vec_size(0)
-	{
-		if(index_left_ends){
-			compute_mapping_idx_left_ends();
-		}
-		else{
-			compute_mapping_idx_arcs();
-		}
-	}
-
-	size_type get_max_info_vec_size() const{
-		return max_info_vec_size;
-	}
-
-	/**
-	 * gives all valid positions with additional information for an index
-	 * @param idx index
-	 * @return vector of all valid positions with additional information at index
-	 */
-	const InfoForPosVec &
-	valid_seq_positions(index_t idx) const{
-		return info_valid_seq_pos_vecs.at(idx);
-	}
-
-	/**
-	 * gives all valid arcs that end at a matrix position
-	 * @param idx index
-	 * @param pos matrix position
-	 * @return vector of all valid arcs with the common right end pos
-	 */
-	const ArcIdxVec &
-	valid_arcs_right_adj(index_t idx, matidx_t pos) const {
-		return info_valid_seq_pos_vecs.at(idx).at(pos).valid_arcs;
-	}
-
-	/**
-	 * gives the first valid matrix position before a sequence position
-	 * @param left_end the index left end
-	 * @param pos sequence position
-	 * @return the first valid matrix position before the position pos at the index left_end
-	 * @note use if indexing by the common left end is used
-	 */
-	/*matidx_t first_valid_mat_pos_before(index_t left_end, seq_pos_t pos)const{
-		return first_valid_mat_pos_vecs.at(left_end).at(pos-left_end);
-	}*/
-
-	/**
-	 * gives the first valid matrix position before a sequence position
-	 * @param arc arc that is used as an index
-	 * @param pos sequence position
-	 * @return the first valid matrix position before the position pos for the arc index
-	 * @note use if indexing by the arc indices is used
-	 */
-	/*matidx_t first_valid_mat_pos_before(const Arc &arc, seq_pos_t pos)const{
-		return first_valid_mat_pos_vecs.at(arc.idx()).at(pos-arc.left());
-	}*/
-
-	matidx_t first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos, index_t left_end = std::numeric_limits<index_t>::max())const{
-		if (left_end == std::numeric_limits<index_t>::max()) left_end = index;
-		assert (pos >= left_end); //tocheck
-		assert(valid_mat_pos_vecs_before_eq.size()>index && valid_mat_pos_vecs_before_eq.at(index).size()>pos-left_end);
-		return valid_mat_pos_vecs_before_eq.at(index).at(pos-left_end);
-	}
-
-	inline
-	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = std::numeric_limits<index_t>::max())const{
-		//	    if (left_end == numeric_limits<index_t>::max())		assert (pos > index);
-		assert(pos>0);
-		return first_valid_mat_pos_before_eq(index, pos-1, left_end);
-	}
-
-	/**
-	 * maps a matrix position to the corresponding sequence position
-	 * @param idx index
-	 * @param pos matrix position
-	 * @return the sequence position that corresponds to the matrix position at the index idx
-	 */
-	seq_pos_t get_pos_in_seq_new(index_t idx, matidx_t pos) const{
-		assert(pos>=0 && pos<number_of_valid_mat_pos(idx));
-		return (info_valid_seq_pos_vecs.at(idx).at(pos).seq_pos);//+arc.left();
-	}
-
-	/**
-	 * gives the number of valid matrix positions for the index
-	 * @param idx index
-	 * @return the number of valid matrix positions for idx
-	 */
-	size_type number_of_valid_mat_pos(index_t idx) const{
-		return info_valid_seq_pos_vecs.at(idx).size();
-	}
-
-	/**
-	 * Is a matrix position unpaired?
-	 * @param idx index
-	 * @param pos matrix position
-	 * @return true, if pos can occur unpaired
-	 * 		   false, otherwise
-	 */
-	bool pos_unpaired(index_t idx,matidx_t pos)const{
-		return info_valid_seq_pos_vecs.at(idx).at(pos).unpaired;
-	}
-
-	/**
-	 * Is a matrix position unpaired?
-	 * @param Arc arc that is used as an index
-	 * @param pos sequence position
-	 * @return true, if matching without a gap is possible from pos for the arc index
-	 * 		   false, otherwise
-	 *  matching without a gap is possible from pos if the sequence position that corresponds to
-	 *  the first valid matrix position before pos is directly adjacent to pos
-	 */
-	bool matching_without_gap_possible(const Arc &arc, seq_pos_t pos)const{
-		//const pos_type &mat_pos = first_valid_mat_pos_before(arc,pos);
-		const matidx_t &mat_pos = this->first_valid_mat_pos_before(arc.idx(),pos,arc.left());
-		return get_pos_in_seq_new(arc.idx(),mat_pos)==pos-1;
-	}
-
-	/**
-	 * gives all valid arcs with common left end from a sequence position
-	 * @param Arc arc that is used as an index
-	 * @param pos sequence position
-	 * @return vector of all valid arcs with common left end pos for the arc index
-	 */
-	const ArcIdxVec &
-	valid_arcs_left_adj(const Arc &arc, seq_pos_t pos) const{
-		return left_adj_vec.at(arc.idx()).at(pos-arc.left());
-	}
-
-	/**
-	 * is sequential matching possible?
-	 * @param idx arc index
-	 * @param pos matrix position
-	 * @return true, if the sequence positions that corresponds
-	 * 				 to the matrix positions pos and pos-1 are adjacent
-	 * 		   false, otherwise
-	 */
-	bool seq_matching(ArcIdx idx,matidx_t pos)const {
-		return info_valid_seq_pos_vecs.at(idx).at(pos-1).seq_pos+1
-				==info_valid_seq_pos_vecs.at(idx).at(pos).seq_pos;
-	}
-
-	//! class destructor
-	virtual ~Mapping(){
-	}
-
-	/////New
-	// gives the index that stores the first sequence position that is greater than or equal to min_col
-	// if it does not exist, return num_pos
-	matidx_t idx_geq(index_t index, seq_pos_t min_col, index_t left_end = std::numeric_limits<index_t>::max()) const{
-
-		if (left_end == std::numeric_limits<index_t>::max())
-			left_end = index;
-
-		size_t num_pos = number_of_valid_mat_pos(index);
-		seq_pos_t last_mapped_seq_pos = get_pos_in_seq_new(index,num_pos-1);
-
-		// if the position min_col is smaller than or equal to the left end (first mapped position), return 0
-		if(min_col<=left_end) return 0;
-
-		// if the position min_col is greater than the last mapped sequence position, the position does not exists
-		// return the number of valid positions
-		if(min_col>last_mapped_seq_pos) return num_pos;
-
-		// the matrix position after the first valid position before the position min_col (first matrix position that
-		// stores a sequence position that is greater than or equal to min_col-1)
-		matidx_t idx_geq = first_valid_mat_pos_before_eq(index,min_col-1,left_end)+1;
-
-		assert(get_pos_in_seq_new(index,idx_geq)>=min_col && !(get_pos_in_seq_new(index,idx_geq-1)>=min_col));
-
-		return idx_geq;
-	}
-
-	// gives the index position after the index position that stores the first sequence position
-	// that is less than or equal to max_col
-	// if it does not exist return 0
-	matidx_t idx_after_leq(index_t index, seq_pos_t max_col, index_t left_end = std::numeric_limits<index_t>::max()) const{
-
-		if (left_end == std::numeric_limits<index_t>::max())
-			left_end = index;
-
-		size_t num_pos = number_of_valid_mat_pos(index);
-		seq_pos_t last_mapped_seq_pos = get_pos_in_seq_new(index,num_pos-1);
-
-		// if the position max_col is smaller than the left_end (first mapped position), return 0
-		if(max_col<left_end) return 0;
-
-		// if the position max_col is greater than or equal to the last mapped sequence position,
-		// return the number of positions
-		if(max_col>=last_mapped_seq_pos) return num_pos;
-
-		// the matrix position after the first matrix position before or equal the sequence position max_col
-		// (last matrix position that stores a sequence position that is lower than or equal max_col)
-		matidx_t idx_after_leq = first_valid_mat_pos_before_eq(index,max_col,left_end)+1;
-
-		assert(get_pos_in_seq_new(index,idx_after_leq-1)<=max_col && !(get_pos_in_seq_new(index,idx_after_leq)<=max_col));
-
-		return idx_after_leq;
-	}
-	//end New
-
-
-	//!is sequential matching from position new_pos-1 to position new_pos possible?
-	/*bool seq_matching_old(size_type arcIdx,size_type new_pos)const {
-		return pos_vecs.at(arcIdx).at(new_pos-1)+1==pos_vecs.at(arcIdx).at(new_pos);
-	}*/
-
-	//!returns the sequence position corresponding to the position new_pos in the matrix
-	/*int get_pos_in_seq_old(const Arc &arc, size_type new_pos) const{
-		return pos_vecs.at(arc.idx()).at(new_pos)+arc.left();
-	}*/
-
-	//!returns the new position in the matrix corresponding to the position pos in the sequence
-	//!returns -1 if position pos isn't valid
-	/*int get_pos_in_new_seq_old(const Arc &arc, size_type pos) const{
-		return new_pos_vecs.at(arc.idx()).at(pos-arc.left());
-	}*/
-
-	//!returns the number of valid positions for a basepair with index arcIdx
-	/*int number_of_valid_pos_old(size_type arcIdx) const{
-		return pos_vecs.at(arcIdx).size();
-	}*/
-
-	//for debugging
-	//void print_vec() const;
-
-private:
-
-	/**
-	 * Is the inner_arc valid?
-	 * @param inner_arc inner arc
-	 * @param arc Arc
-	 * @return true, if the probability that the inner_arc occurs in the loop closed by the arc is
-	 * 				 is greater or equal to the threshold for a basepair under a loop
-	 * 		   false, otherwise
-	 */
-	bool is_valid_arc(const Arc &inner_arc,const Arc &arc)const{
-		assert(inner_arc.left()>arc.left() && inner_arc.right()<arc.right());
-		//if(rnadata.prob_basepair_in_loop(inner_arc.left(),inner_arc.right(),arc.left(),arc.right())>1) cout << "prob arc " << rnadata.prob_basepair_in_loop(inner_arc.left(),inner_arc.right(),arc.left(),arc.right()) << endl;
-		return rnadata.prob_basepair_in_loop(inner_arc.left(),inner_arc.right(),arc.left(),arc.right())>=prob_basepair_in_loop_threshold;
-	}
-
-	/**
-	 * Is pos valid?
-	 * @param arc Arc
-	 * @param pos sequence position
-	 * @return true, if the probability that the inner_arc occurs in the loop closed by the arc is
-	 * 				 is greater or equal to the threshold for a basepair under a loop
-	 * 		   false, otherwise
-	 */
-	bool is_valid_pos(const Arc &arc,seq_pos_t pos) const{
-		assert(arc.left()<pos && pos<arc.right());
-		//if(rnadata.prob_unpaired_in_loop(pos,arc.left(),arc.right())>1) cout << "prob pos " << rnadata.prob_unpaired_in_loop(pos,arc.left(),arc.right()) << endl;
-		return rnadata.prob_unpaired_in_loop(pos,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold;
-	}
-
-};
-
-
-std::ostream &operator << (std::ostream &out, const std::vector<Mapping::info_for_pos> &pos_vecs_);
-std::ostream &operator << (std::ostream &out, const std::vector<std::vector<Mapping::info_for_pos> > &pos_vecs_);
-
-// prints pair
-template <class T1, class T2>
-std::ostream& operator << (std::ostream& out, const std::pair<T1,T2>& pair){
-	return out << "(" << pair.first << "," << pair.second << ") ";
-}
-
-// prints vector
-template <class T>
-std::ostream& operator << (std::ostream& out, const std::vector<T>& vec){
-	for(typename std::vector<T>::const_iterator it = vec.begin();it!=vec.end();it++){
-		out << *it << " ";
-	}
-	return out << std::endl;
-}
-
-
-
-/**
  * \brief combines the TraceController with the Mapper for both sequences
  */
 class SparseTraceController: public TraceController{
 
 private:
 
-	typedef Mapping::matidx_t matidx_t; //!< type for the matrix index
-	typedef Mapping::seq_pos_t seqpos_t; //!< type for a position in a sequence
-	typedef Mapping::index_t index_t; //!< index type for accessing the data structures
+	typedef SparsificationMapper::matidx_t matidx_t; //!< type for the matrix index
+	typedef SparsificationMapper::seq_pos_t seqpos_t; //!< type for a position in a sequence
+	typedef SparsificationMapper::index_t index_t; //!< index type for accessing the data structures
 
 public:
 
@@ -649,15 +268,15 @@ public:
 	typedef std::pair<seqpos_t,seqpos_t> pair_seqpos_t; //!< a type for a pair of positions in the sequences
 
 private:
-	const Mapping &mappingA; //!< mapped positions of sequence A
-    const Mapping &mappingB; //!< mapped positions of sequence B
+	const SparsificationMapper &sparse_mapperA; //!< sparsification mapper for sequence A
+    const SparsificationMapper &sparse_mapperB; //!< sparsification mapper for sequence B
 	//const TraceController &trace_controller;
 
 public:
-	SparseTraceController(const Mapping &mappingA_,const Mapping &mappingB_,const TraceController &trace_controller_):
+	SparseTraceController(const SparsificationMapper &sparse_mapperA_,const SparsificationMapper &sparse_mapperB_,const TraceController &trace_controller_):
 		TraceController::TraceController(trace_controller_),
-		mappingA(mappingA_),
-		mappingB(mappingB_)
+		sparse_mapperA(sparse_mapperA_),
+		sparse_mapperB(sparse_mapperB_)
 		//trace_controller(trace_controller_)
 
 	{
@@ -666,14 +285,14 @@ public:
 
 	virtual ~SparseTraceController(){}; //!< destructor
 
-	//! returns reference to mappingA
-	const Mapping& get_mappingA() const{
-		return mappingA;
+	//! returns reference to sparsification mapper for sequence A
+	const SparsificationMapper& get_sparse_mapperA() const{
+		return sparse_mapperA;
 	}
 
-	//! returns reference to mappingB
-	const Mapping& get_mappingB() const{
-		return mappingB;
+	//!  returns reference to sparsification mapper for sequence B
+	const SparsificationMapper& get_sparse_mapperB() const{
+		return sparse_mapperB;
 	}
 
 
@@ -689,8 +308,8 @@ public:
 	matidx_t min_col_idx(index_t indexA, index_t indexB, matidx_t idx_i,
 			index_t left_endB =  std::numeric_limits<index_t>::max()) const{
 
-		seqpos_t i = mappingA.get_pos_in_seq_new(indexA,idx_i);
-		return mappingB.idx_geq(indexB,min_col(i),left_endB);
+		seqpos_t i = sparse_mapperA.get_pos_in_seq_new(indexA,idx_i);
+		return sparse_mapperB.idx_geq(indexB,min_col(i),left_endB);
 	}
 
 	/**
@@ -705,8 +324,8 @@ public:
 	matidx_t idx_after_max_col_idx(index_t indexA, index_t indexB, matidx_t idx_i,
 			index_t left_endB =  std::numeric_limits<index_t>::max()) const{
 
-		seqpos_t i = mappingA.get_pos_in_seq_new(indexA,idx_i);
-		return mappingB.idx_after_leq(indexB,max_col(i),left_endB);
+		seqpos_t i = sparse_mapperA.get_pos_in_seq_new(indexA,idx_i);
+		return sparse_mapperB.idx_after_leq(indexB,max_col(i),left_endB);
 	}
 
 	/**
@@ -726,8 +345,8 @@ public:
 		matidx_t min_col,idx_after_max_col;
 
 		// find valid matrix position based on the SparsificationMapper
-		matidx_t cur_row = mappingA.first_valid_mat_pos_before(indexA,i,left_endA);
-		matidx_t col_before = mappingB.first_valid_mat_pos_before(indexB,j,left_endB);
+		matidx_t cur_row = sparse_mapperA.first_valid_mat_pos_before(indexA,i,left_endA);
+		matidx_t col_before = sparse_mapperB.first_valid_mat_pos_before(indexB,j,left_endB);
 
 		bool valid_pos_found = false;
 
@@ -775,8 +394,8 @@ public:
 	 */
 	pair_seqpos_t get_pos_in_seq_new(index_t idxA, index_t idxB,//const Arc &a, const Arc &b,
 			const matpos_t &cur_pos) const{
-		return pair_seqpos_t(mappingA.get_pos_in_seq_new(idxA,cur_pos.first),
-				mappingB.get_pos_in_seq_new(idxB,cur_pos.second));
+		return pair_seqpos_t(sparse_mapperA.get_pos_in_seq_new(idxA,cur_pos.first),
+				sparse_mapperB.get_pos_in_seq_new(idxB,cur_pos.second));
 	}
 
 	/**
@@ -804,8 +423,8 @@ public:
 	 */
 	bool pos_unpaired(index_t idxA, index_t idxB,
 			matpos_t pos) const{
-		return mappingA.pos_unpaired(idxA,pos.first)
-			   && mappingB.pos_unpaired(idxB,pos.second);
+		return sparse_mapperA.pos_unpaired(idxA,pos.first)
+			   && sparse_mapperB.pos_unpaired(idxB,pos.second);
 	}
 
 	/**
@@ -832,9 +451,9 @@ class EPM{
 
 public:
 
-	typedef Mapping::seq_pos_t seqpos_t; //!< a type for a sequence position
+	typedef SparsificationMapper::seq_pos_t seqpos_t; //!< a type for a sequence position
 	typedef SparseTraceController::matpos_t matpos_t; //!< a type for a position in a sparsified matrix
-	typedef Mapping::ArcIdx ArcIdx; //!< arc index
+	typedef SparsificationMapper::ArcIdx ArcIdx; //!< arc index
 	typedef SparseTraceController::pair_seqpos_t pair_seqpos_t; //!< pair of positions in sequence A and B
 	typedef std::pair<ArcIdx,ArcIdx> PairArcIdx; //!< pair of arc indices
 	typedef std::vector<PairArcIdx> PairArcIdxVec; //!< a vector of pairs of arc indices
@@ -1063,6 +682,12 @@ public:
 
 };
 
+// prints pair
+template <class T1, class T2>
+std::ostream& operator << (std::ostream& out, const std::pair<T1,T2>& pair){
+	return out << "(" << pair.first << "," << pair.second << ") ";
+}
+
 template <class T1>
 T1 max3(const T1 &first,const T1 &second, const T1 &third){
 	return max(max(first,second),third);
@@ -1075,11 +700,11 @@ T1 max4(const T1 &first,const T1 &second, const T1 &third, const T1 &fourth){
 
 class ExactMatcher {
 
-	typedef Mapping::ArcIdx ArcIdx; //!< type for the arc index
-	typedef Mapping::ArcIdxVec ArcIdxVec; //!< type for a vector of arc indices
-	typedef Mapping::matidx_t matidx_t; //!< type for a matrix index
-	typedef Mapping::seq_pos_t seqpos_t; //!< type for a sequence position
-	typedef Mapping::index_t index_t; //!< index type for accessing the mapped positions (arc index for Exparna_P)
+	typedef SparsificationMapper::ArcIdx ArcIdx; //!< type for the arc index
+	typedef SparsificationMapper::ArcIdxVec ArcIdxVec; //!< type for a vector of arc indices
+	typedef SparsificationMapper::matidx_t matidx_t; //!< type for a matrix index
+	typedef SparsificationMapper::seq_pos_t seqpos_t; //!< type for a sequence position
+	typedef SparsificationMapper::index_t index_t; //!< index type for accessing the mapped positions (arc index for Exparna_P)
 	typedef SparseTraceController::matpos_t matpos_t; //!< type for a position in a matrix
 	typedef SparseTraceController::pair_seqpos_t pair_seqpos_t; //!< type for a pair of sequence positions
 
@@ -1111,8 +736,8 @@ private:
     const BasePairs &bpsB; //!< base pairs of B
     const SparseTraceController &sparse_trace_controller; //!< combines the mapperA,mapperB and the trace_controller
     													  // (valid positions in the matrix)
-    const Mapping &mappingA; //!< mapped positions of sequence A
-    const Mapping &mappingB; //!< mapped positions of sequence B
+    const SparsificationMapper &sparse_mapperA; //!< sparsification mapper for sequence A
+    const SparsificationMapper &sparse_mapperB; //!< sparsification mapper for sequence B
     PatternPairMap &foundEPMs; //!< stores all traced EPMs in the datastructure PatternPairMap (needed for the chaining)
 
     ScoreMatrix L; //!< matrix that stores the best matching from the left
@@ -1129,7 +754,7 @@ private:
 
     score_t difference_to_opt_score; //!< in the suboptimal traceback all EPMs which are at most difference_to_opt_score
     								 // worse than the optimal score are considered
-    score_t min_score; //!< minimal score of a traced EPM
+    score_t min_subopt_score; //!< minimal score of a traced EPM
     score_t easier_scoring_par; //!< use only sequential (*alpha_1) and a constant structural score alpha (easier_scoring_par)
     							//!< for each matched base of a basepair
     double subopt_range; //!< trace EPMs within that range of best EPM score"
