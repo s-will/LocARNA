@@ -207,6 +207,7 @@ option_def my_options[] = {
  */
 int
 main(int argc, char **argv) {
+    //stopwatch.set_print_on_exit(true);
 
     typedef std::vector<int>::size_type size_type;
 
