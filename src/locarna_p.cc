@@ -255,9 +255,21 @@ main(int argc, char **argv) {
 
     // optionally fold
     PFoldParams pfparams(opt_no_lonely_pairs,opt_stacking);
- #if HAVE_LIBRNA
-    if (!rnadataA.pair_probs_available()) {rnadataA.compute_ensemble_probs(pfparams,false);}
-    if (!rnadataB.pair_probs_available()) {rnadataB.compute_ensemble_probs(pfparams,false);}
+#if HAVE_LIBRNA
+    if (!rnadataA.pair_probs_available()) {
+	if (opt_verbose) {
+	    std::cout << "Compute ensemble probabilities for first input sequence."
+		      << std::endl;
+	}
+	rnadataA.compute_ensemble_probs(pfparams,false,true);
+    }
+    if (!rnadataB.pair_probs_available()) {
+	if (opt_verbose) {
+	    std::cout << "Compute ensemble probabilities for second input sequence."
+		      << std::endl;
+	}
+	rnadataB.compute_ensemble_probs(pfparams,false,true);
+    }
 #else
     if (!rnadataA.pair_probs_available() || !rnadataB.pair_probs_available()) {
 	std::cerr
