@@ -9,7 +9,7 @@ namespace LocARNA {
 
 //todo: remove
 bool debug = false;
-bool debug_trace_G =false;
+bool debug_trace_G = false;
 bool debug_VG = false;
 bool debug_trace_LGLR_subopt = false;
 bool debug_trace_F_heuristic = false;
@@ -1117,7 +1117,7 @@ bool debug_trace_F_heuristic = false;
 
     	//debugging
     	cout << "number epms " << found_epms.size() << endl;
-    	if(found_epms.size()<1000) cout << "found epms " << found_epms << endl << endl;
+    	//if(found_epms.size()<1000) cout << "found epms " << found_epms << endl << endl;
     }
 
     // computes the suboptimal traceback through the L, G_A, G_AB and LR matrices
@@ -1125,7 +1125,7 @@ bool debug_trace_F_heuristic = false;
     void ExactMatcher::trace_LGLR_suboptimal(const Arc &a, const Arc &b,
     		score_t max_tol, epm_cont_t &found_epms, bool recurse){
 
-    	if(debug_trace_LGLR_subopt) cout << "trace AGB suboptimal new of am :" << a << "," << b << endl;
+    	if(debug_trace_LGLR_subopt) cout << "trace AGB suboptimal of am :" << a << "," << b << endl;
     	if(debug_trace_LGLR_subopt) cout << "with tol left " << max_tol << endl;
     	if(debug_trace_LGLR_subopt) cout << "D(a,b) " << D(a,b) << endl;
 
@@ -1194,7 +1194,7 @@ bool debug_trace_F_heuristic = false;
     		while(found_epms.at(pos_cur_epm).get_cur_pos()!=matpos_t(0,0) ||
     				(found_epms.at(pos_cur_epm).get_state()!=in_L && found_epms.at(pos_cur_epm).get_state()!=in_LR)){
 
-    			const matpos_t &cur_mat_pos = found_epms.at(pos_cur_epm).get_cur_pos();
+    			matpos_t cur_mat_pos = found_epms.at(pos_cur_epm).get_cur_pos();
 
     			pos_type idx_i = cur_mat_pos.first;
     			pos_type idx_j = cur_mat_pos.second;
@@ -1210,10 +1210,13 @@ bool debug_trace_F_heuristic = false;
     			seq_pos_to_be_matched = sparse_trace_controller.get_pos_in_seq_new(idxA,idxB,cur_mat_pos);
     			matpos_t mat_pos_diag;
 
+    			if(debug_trace_LGLR_subopt) cout << "cur mat pos " << cur_mat_pos << endl;
+    			if(debug_trace_LGLR_subopt) cout << "state " << found_epms.at(pos_cur_epm).get_state() << endl;
+
     			// sequential matching
     			if(sparse_trace_controller.pos_unpaired(idxA,idxB,matpos_t(idx_i,idx_j))){
 
-    				mat_pos_diag=matpos_t(idx_i-1,idx_j-1); // we don't use the Trace Controller so far
+    				mat_pos_diag = matpos_t(idx_i-1,idx_j-1); // we don't use the Trace Controller so far
 
     				// score contribution without the score for the next matrix position
     				score_t score_contr = found_epms.at(pos_cur_epm).get_max_tol_left()
@@ -1431,6 +1434,8 @@ bool debug_trace_F_heuristic = false;
 			const poss_L_LR &pot_new_poss, poss_L_LR &poss, size_type pos_cur_epm,
 			epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do){
 
+		if(debug_trace_G) cout << "trace G suboptimal " << endl;
+
 		list<poss_in_G> poss_G;
 		poss_G.push_back(poss_in_G(pot_new_poss.first,pot_new_poss.second,pot_new_poss.third)); // initialization
 
@@ -1441,6 +1446,8 @@ bool debug_trace_F_heuristic = false;
 			matidx_t idx_i = cur_poss.third.first;
 			matidx_t idx_j = cur_poss.third.second;
 			int cur_state = cur_poss.first;
+
+			if(debug_trace_G) cout << "mat pos " << cur_poss.third << endl;
 
 			switch(cur_state){
 
@@ -1515,6 +1522,8 @@ bool debug_trace_F_heuristic = false;
     bool ExactMatcher::is_valid_gap(const Arc &a, const Arc &b,
     		const poss_L_LR &pot_new_poss){
 
+    	if(debug_VG) cout << "is_valid_gap " << endl;
+
     	const ArcIdx idxA = a.idx();
     	const ArcIdx idxB = b.idx();
 
@@ -1526,6 +1535,7 @@ bool debug_trace_F_heuristic = false;
     	// be extended anymore
     	if(cur_idx_i == sparse_mapperA.number_of_valid_mat_pos(idxA)-1 ||
     	   cur_idx_j == sparse_mapperB.number_of_valid_mat_pos(idxB)-1){
+    		if(debug_VG) cout << "last column or row in matrix L " << endl;
     		return true;
     	}
 
@@ -1587,6 +1597,7 @@ bool debug_trace_F_heuristic = false;
 
     		if(seqA[pos_right_G_seq.first] == seqB[pos_right_G_seq.second] // matching nucleotides
     		   && sparse_trace_controller.pos_unpaired(idxA,idxB,pos_right_G) ){ // and unpaired
+
     			if(debug_VG) cout << "not maximally extended to the right sequentially " << endl;
     			return false;
     		}
@@ -1604,8 +1615,13 @@ bool debug_trace_F_heuristic = false;
     				const Arc &inner_b = bpsB.arc(*itB);
     				if(!score_for_am(inner_a,inner_b).is_finite()) continue;
 
+    				if(debug_VG) cout << "inner am " << inner_a << "," << inner_b << endl;
+    				if(debug_VG) cout << "pos right L seq " << pos_right_L_seq << endl;
+
     				// if arc match fits into the gap, the epm is not maximally extended
     				if(inner_a.left()>pos_right_L_seq.first && inner_b.left()>pos_right_L_seq.second){
+
+    					if(debug_VG) cout << " not maximally extended to the right structurally " << endl;
     					return false;
     				}
     			}
@@ -1642,8 +1658,11 @@ bool debug_trace_F_heuristic = false;
     			const Arc &inner_b = bpsB.arc(*itB);
     			if(!score_for_am(inner_a,inner_b).is_finite()) continue;
 
+    			if(debug_VG) cout << "inner am " << inner_a << "," << inner_b << endl;
+    			if(debug_VG) cout << "pos lfet LR seq " << pos_left_LR_seq << endl;
+
     			// if arc match fits into the gap, the epm is not maximally extended
-    			if(inner_a.right()<pos_left_LR_seq.first && inner_b.left()<pos_left_LR_seq.second){
+    			if(inner_a.right()<pos_left_LR_seq.first && inner_b.right()<pos_left_LR_seq.second){
     				if(debug_VG) cout << "not maximally extended to the left structurally " << endl;
     				return false;
     			}
