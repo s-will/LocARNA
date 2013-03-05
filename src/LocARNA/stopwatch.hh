@@ -30,7 +30,7 @@ namespace LocARNA {
 
     public:
 	
-	StopWatch(bool print_on_exit=true);
+	StopWatch(bool print_on_exit=false);
 	~StopWatch();
 	
 	

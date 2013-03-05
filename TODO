@@ -1,9 +1,1 @@
 Usually a lot ;)
-
-In particular:
-
-in reliability_profile eliminate use of tmp file
-
-clean up chaos with types size_type, pos_type
-
-introduce proper use of namespace locarna
