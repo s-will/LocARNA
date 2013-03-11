@@ -12,7 +12,8 @@ bool debug = false;
 bool debug_trace_G = false;
 bool debug_VG = false;
 bool debug_trace_LGLR_subopt = false;
-bool debug_trace_F_heuristic = false;
+bool debug_trace_F = false;
+bool debug_store_new_poss = false;
 
 	// Constructor
     ExactMatcher::ExactMatcher(const Sequence &seqA_,
@@ -505,6 +506,7 @@ bool debug_trace_F_heuristic = false;
     	//trace EPMs
     	if(suboptimal) trace_EPMs_suboptimal();
     		else trace_EPMs_heuristic();
+    	cout << "found #EPMs " << foundEPMs.size() << endl;
     }
 
 
@@ -651,7 +653,7 @@ bool debug_trace_F_heuristic = false;
 
     	while(!(F(i,j)==(infty_score_t)0)){
 
-    		if(debug_trace_F_heuristic) cout << "i,j " << i << "," << j << endl;
+    		if(debug_trace_F) cout << "i,j " << i << "," << j << endl;
 
     		assert(i>=1 && j>=1);
     		assert(sparse_trace_controller.is_valid(i,j));
@@ -991,6 +993,8 @@ bool debug_trace_F_heuristic = false;
 
     	if(max_length/min_seq_length>cutoff_coverage){
 
+    		cout << "add the best EPM as the coverage is high enough " << endl;
+
     		//don't do suboptimal traceback if the coverage of the best EPM is above the coverage cutoff
     		best_epm.set_score(max_in_F);
     		add_foundEPM(best_epm);
@@ -1021,7 +1025,7 @@ bool debug_trace_F_heuristic = false;
     // threshold that ends in (i,j)
     void ExactMatcher::trace_F_suboptimal(pos_type i,pos_type j,score_t max_tol,bool recurse){
 
-    	if(debug) cout << "trace F suboptimal from pos " << i << "," << j << " with max tol " << max_tol << endl;
+    	if(debug_trace_F) cout << "trace F suboptimal from pos " << i << "," << j << " with max tol " << max_tol << endl;
     	assert(F(i,j).is_finite());
 
     	epm_cont_t found_epms;
@@ -1044,6 +1048,8 @@ bool debug_trace_F_heuristic = false;
 
     	while(!finished){
     		while(!(F(cur_pos.first,cur_pos.second)==(infty_score_t)0)){
+
+    			if(debug_trace_F) cout << "cur pos " << cur_pos << endl;
 
     			pos_type i= cur_pos.first;
     			pos_type j =cur_pos.second;
@@ -1113,10 +1119,10 @@ bool debug_trace_F_heuristic = false;
     	}
 
     	// check whether the EPM list doesn't contain duplicates and only maximally extended EPMs
-    	assert(validate_epm_list(found_epms));
+    	//assert(validate_epm_list(found_epms)); //todo: fix
 
     	//debugging
-    	cout << "number epms " << found_epms.size() << endl;
+    	//cout << "number epms " << found_epms.size() << endl;
     	//if(found_epms.size()<1000) cout << "found epms " << found_epms << endl << endl;
     }
 
@@ -1360,6 +1366,11 @@ bool debug_trace_F_heuristic = false;
     		const poss_L_LR &new_poss, poss_L_LR &poss, size_type pos_cur_epm,
     		epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do){
 
+    	if(debug_store_new_poss){
+    		cout << "store new poss " << new_poss << endl;
+    		cout << "poss " << poss << endl;
+    	}
+
     	assert(new_poss.first==in_L || new_poss.first==in_LR || new_poss.first==in_F);
     	assert(new_poss.second.is_finite());
 
@@ -1383,9 +1394,14 @@ bool debug_trace_F_heuristic = false;
 
     		// sequential match
     		if(new_poss.fourth == PairArcIdx(bpsA.num_bps(),bpsB.num_bps())){
+
+    			if(debug_store_new_poss) cout << "store sequential match " << endl;
     			const pair_seqpos_t &cur_pos_seq = new_poss.fifth;
 
-    			if(cur_pos_seq!=pair_seqpos_t(a.right(),b.right())){
+    			if(debug_store_new_poss && cur_pos_seq==pair_seqpos_t(a.right(),b.right())) cout << "don't store cur position seq as it is the right ends of the arcs " << endl;
+
+    			if(new_poss.first==in_F || cur_pos_seq!=pair_seqpos_t(a.right(),b.right())){
+
     				// store the sequence positions of the match
     				cur_epm->add(cur_pos_seq.first,cur_pos_seq.second,'.');
     			}
@@ -1393,6 +1409,8 @@ bool debug_trace_F_heuristic = false;
 
     		// structural match
     		else{
+
+    			if(debug_store_new_poss) cout << "store structural match " << endl;
 
     			// adds the right and left ends of the arc match and
     			// stores the index of the arc match
