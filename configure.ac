@@ -32,7 +32,8 @@ AC_PATH_PROG([POD2MAN],[pod2man],false)
 
 
 # Vienna RNA package library path support, if not installed in standard directory/path
-VRNA_OK=true;
+VRNA_OK=true
+VRNALIB_OK=true
 
 AC_ARG_WITH([vrna],
     AC_HELP_STRING(
@@ -88,7 +89,7 @@ if test "$with_vrna" != "" ; then
 fi
 
 AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
-    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.0.7],[],[VRNA_OK=false])
+    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.0.7],[],[VRNALIB_OK=false])
     AC_DEFINE([HAVE_LIBRNA])
     LDFLAGS="$VRNA_LIBS $LDFLAGS"
 
@@ -235,10 +236,27 @@ if test "$VRNA_OK" = "false" ; then
       AC_MSG_NOTICE([Cannot find Vienna RNA package in standard path. For using a])
       AC_MSG_NOTICE([non-standard path, please specify with --with-vrna=PREFIX.])
    fi
+fi
+
+if test "$VRNALIB_OK" = "false" ; then
+   AC_MSG_NOTICE([=================================================================])
+   AC_MSG_NOTICE([ERROR:])
+   AC_MSG_NOTICE()
    
+   if test "$with_vrna" != "" ; then
+      AC_MSG_NOTICE([Cannot find Vienna RNA package pkgconfig file RNAlib2.pc in '$with_vrna/lib/pkgconfig'.])
+   else
+      AC_MSG_NOTICE([Cannot find Vienna RNA package pkgconfig file RNAlib2.pc in default path.])
+      AC_MSG_NOTICE([If the package is not installed, please install it first; otherwise note])
+      AC_MSG_NOTICE([that, in particular, /usr/local/lib/pkgconfig is often not in this path.])
+      AC_MSG_NOTICE([Set PKG_CONFIG_PATH appropriately or use option --with-vrna=PREFIX for easy remedy.])
+   fi
+fi
+   
+if test "$VRNA_OK" = "false" -o "$VRNALIB_OK" = "false" ; then
    AC_MSG_NOTICE()
    AC_MSG_NOTICE([The Vienna RNA package (>=1.8) is required for compiling;])
-   AC_MSG_NOTICE([linking (--enable-librna) requires version >= 2.0.8.])
+   AC_MSG_NOTICE([linking (--enable-librna) requires version >= 2.1.0.])
    AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/~ivo/RNA/.])
    AC_MSG_NOTICE()
     
