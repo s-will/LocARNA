@@ -321,7 +321,8 @@ sub read_fasta {
     }
  
     my @fasta = ();
-    
+    my @read_names = ();
+
     my $line=<$fh>;
     while(defined($line)) {
 	if ($line=~/^>\s*(\S+)\s*(.*)/) {
@@ -329,7 +330,7 @@ sub read_fasta {
 	    my $description=$2;
 	    
 	    ## check for duplicate names in fasta
-	    if (grep($name, (map {$_{"name"}} @fasta)) > 0) {
+	    if (grep(/^$name$/, @read_names)) {
 		print "Duplicate name \"$name\" in fasta input. ";
 		my $bar="foo bar bar";
 		if (length($description)>0) {
@@ -339,7 +340,8 @@ sub read_fasta {
 		print "whereas the rest of the line \"$bar\" (after the blank) is interpreted as description.\n";
 		exit(-1);
 	    }
-	    
+	    push @read_names, $name;
+
 	    my $seq = { name  => $name,
 			descr => $description };
 	    
