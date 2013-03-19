@@ -328,6 +328,18 @@ sub read_fasta {
 	    my $name=$1;
 	    my $description=$2;
 	    
+	    ## check for duplicate names in fasta
+	    if (grep($name, (map {$_{"name"}} @fasta)) > 0) {
+		print "Duplicate name \"$name\" in fasta input. ";
+		my $bar="foo bar bar";
+		if (length($description)>0) {
+		    $bar=$description;
+		}
+		print "Note that in \">$name $bar\", only \"$name\" is the name, ";
+		print "whereas the rest of the line \"$bar\" (after the blank) is interpreted as description.\n";
+		exit(-1);
+	    }
+	    
 	    my $seq = { name  => $name,
 			descr => $description };
 	    
