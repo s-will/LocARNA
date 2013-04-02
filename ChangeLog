@@ -366,7 +366,8 @@ Jan, 2013
         Resolve rnalib dependency. New configure option with-sparse
 	is now required to compile with ExpARNA-P and SPARSE functionality.
 	(1.7.5)
+Mar, 2013
 	Merge in new sparsification related code.
 	Added fasta input check in mlocarna.
 	(1.7.6)
-	
+

@@ -1385,7 +1385,7 @@ bool debug_trace_F_heuristic = false;
     		if(new_poss.fourth == PairArcIdx(bpsA.num_bps(),bpsB.num_bps())){
     			const pair_seqpos_t &cur_pos_seq = new_poss.fifth;
 
-    			if(cur_pos_seq!=pair_seqpos_t(a.right(),b.right())){
+    			if(new_poss.first==in_F || cur_pos_seq!=pair_seqpos_t(a.right(),b.right())){
     				// store the sequence positions of the match
     				cur_epm->add(cur_pos_seq.first,cur_pos_seq.second,'.');
     			}
