@@ -192,10 +192,10 @@ Aligner::align_noex(int state, pos_type al, pos_type bl, pos_type i, pos_type j,
     }
     
     // base del
-    max_score=std::max(max_score, (TaintedInftyInt)E[j]);
+    max_score=std::max(max_score, (tainted_infty_score_t)E[j]);
     
     // base ins
-    max_score=std::max(max_score, (TaintedInftyInt)F);
+    max_score=std::max(max_score, (tainted_infty_score_t)F);
 
     // arc match
     
