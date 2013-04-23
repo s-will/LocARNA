@@ -23,7 +23,7 @@ fold_sequence(const Sequence &seq, bool use_alifold) {
     
     if (!rnadata->in_loop_probs_available()) {
 	std::cerr << "No in loop probabilities could be computed!"<<std::endl;
-	exit(-1);
+	throw -1;
     }
     
     BasePairs bps(rnadata,minprob);
@@ -210,24 +210,29 @@ main(int argc,char **argv) {
     
     // mseq.write(std::cout);
     
-    BasePairs bps = fold_sequence(seq,false);
-    BasePairs bpsA = fold_sequence(seq,true);
-    BasePairs mbps = fold_sequence(mseq,true);
-
-    /*
-      seq.write(std::cout);
-    test_in_loop_probs(seq,bpsA);
-
-    seq.write(std::cout);
-    test_in_loop_probs(seq,bps);
-
-    mseq.write(std::cout);
-    test_in_loop_probs(mseq,mbps);
-
-    std::cout << "------------------------------------------------------------"<<std::endl;
-    */
+    try {
+	BasePairs bps = fold_sequence(seq,false);
+	BasePairs bpsA = fold_sequence(seq,true);
+	BasePairs mbps = fold_sequence(mseq,true);
     
-    write_ext_pp(std::cout,mseq,mbps,0.0005,0.0001,0.0001);
-
+	/*
+	  seq.write(std::cout);
+	  test_in_loop_probs(seq,bpsA);
+	  
+	  seq.write(std::cout);
+	  test_in_loop_probs(seq,bps);
+	  
+	  mseq.write(std::cout);
+	  test_in_loop_probs(mseq,mbps);
+	  
+	  std::cout << "------------------------------------------------------------"<<std::endl;
+	*/
+	
+	write_ext_pp(std::cout,mseq,mbps,0.0005,0.0001,0.0001);
+	
+    } catch(int retVal) {
+	return retVal;
+    }
+    
     return retVal;
 }

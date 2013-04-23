@@ -302,8 +302,9 @@ namespace LocARNA {
 
 	std::ifstream in(filename.c_str());
 	if (! in.is_open()) {
-	    std::cerr << "Cannot open "<<filename<<" for reading."<<std::endl;
-	    exit(-1);
+	    std::ostringstream err;
+	    err << "Cannot open "<<filename<<" for reading.";
+	    throw failure(err.str());
 	}
 
 	// set to true if probs become available
@@ -397,7 +398,6 @@ namespace LocARNA {
 		
 		    if (! (1<=i && i<j && j<=sequence.length())) {
 			std::cerr << "WARNING: Input dotplot "<<filename<<" contains invalid line " << line << " (indices out of range)" << std::endl;
-			//exit(-1);
 		    } else {
 			if (type=="ubox") {
 			    set_arc_prob(i,j,p);
@@ -478,8 +478,9 @@ namespace LocARNA {
 	    if ( in.fail() ) continue; // skip lines that do not specify a base pair probability
       
 	    if (i>=j) {
-		std::cerr << "Error in PP input line \""<<line<<"\" (i>=j).\n"<<std::endl;
-		exit(-1);
+		std::ostringstream err;
+		err << "Error in PP input line \""<<line<<"\" (i>=j).\n"<<std::endl;
+		throw failure(err.str());
 	    }
       
 	    set_arc_prob(i,j,p);

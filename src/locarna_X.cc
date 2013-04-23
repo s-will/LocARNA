@@ -195,12 +195,12 @@ main(int argc, char **argv) {
 	print_help(argv[0],my_options);
 
 	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
-	exit(0);
+	return 0;
     }
 
     if (opt_version || opt_verbose) {
 	cout << VERSION_STRING<<endl;
-	if (opt_version) exit(0); else cout <<endl;
+	if (opt_version) return 0; else cout <<endl;
     }
 
     if (!process_success) {
@@ -209,7 +209,7 @@ main(int argc, char **argv) {
       printf("USAGE: ");
       print_usage(argv[0],my_options);
       printf("\n");
-      exit(-1);
+      return -1;
     }
     
     if (opt_verbose) {

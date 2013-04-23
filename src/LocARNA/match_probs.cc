@@ -38,8 +38,9 @@ namespace  LocARNA {
     MatchProbs::ProbConsParameter::ProbConsParameter(const std::string &filename) {
 	std::ifstream in(filename.c_str());
 	if (!in.is_open()) {
-	    std::cerr << "Cannot open file "<<filename<<" for reading."<<std::endl;
-	    exit(-1);
+	    std::ostringstream err;
+	    err << "Cannot open file "<<filename<<" for reading.";
+	    throw failure(err.str());
 	}
 	
 	try {
@@ -93,9 +94,11 @@ namespace  LocARNA {
 		throw(std::ifstream::failure("Cannot read background probabilities."));
 	    }
 	} catch (std::ifstream::failure e) {
-	    std::cerr << "Cannot parse "<<filename<<". " <<e.what()<< std::endl
-		      << "File not in probcons parameter format. Now exiting." << std::endl;
-	    exit(-1);
+	    std::stringstream err;
+	    
+	    err << "Cannot parse "<<filename<<". " <<e.what()<< std::endl
+		<< "File not in probcons parameter format.";
+	    throw failure(err.str());
 	}
     }
 
@@ -448,36 +451,6 @@ namespace  LocARNA {
     
 	// std::cout << "Probs:" << std::endl << probs << std::endl;
     }
-
-    /*
-      void
-      MatchProbs::read(const std::string &filename) {
-      std::ifstream in(filename.c_str());
-      read(in);
-      }
-
-
-      std::istream &
-      MatchProbs::read(std::istream &in) {
-      size_type x,y;
-      try {
-	
-      in >> x >> y;
-	
-      if (x<=0 || y<=0) throw std::istream::failure("Found invalid dimensions.");
-	
-      probs.resize(x,y);
-	
-      in >> probs;
-	
-      } catch (std::istream::failure e) {
-      std::cerr << "Parse error "<<e.what()<<std::endl;
-      exit(-1);
-      }
-    
-      return in;
-      }
-    */
 
 
     void

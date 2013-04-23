@@ -342,12 +342,12 @@ main(int argc, char **argv) {
 	print_help(argv[0],my_options);
 
 	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
-	exit(0);
+	return 0;
     }
 
     if (clp.opt_version || clp.opt_verbose) {
 	cout << "locarna ("<< VERSION_STRING<<")"<<endl;
-	if (clp.opt_version) exit(0); else cout <<endl;
+	if (clp.opt_version) return 0; else cout <<endl;
     }
 
     if (!process_success) {
@@ -356,7 +356,7 @@ main(int argc, char **argv) {
 	printf("USAGE: ");
 	print_usage(argv[0],my_options);
 	printf("\n");
-	exit(-1);
+	return -1;
     }
     
     if (clp.opt_verbose) {
@@ -369,41 +369,41 @@ main(int argc, char **argv) {
     if ( clp.struct_local )
     {
 	std::cerr << "Exclusions is not supported" << std::endl;
-	exit (-1);
+	return -1;
     }
     if ( clp.indel_opening_score != 0 )
     {
 	std::cerr << "Affine gap cost is not supported" << std::endl;
-	exit (-1);
+	return -1;
     }
 
 
     if( clp.no_lonely_pairs )
     {
 	std::cerr << "No lonely pairs option is not supported" << std::endl;
-	exit (-1);
+	return -1;
     }
     if( clp.sequ_local )
     {
 	std::cerr << "Local sequence alignment is not supported" << std::endl;
-	exit (-1);
+	return -1;
     }
     if( clp.opt_stacking )
     {
 	std::cerr << "Stacking is not supported" << std::endl;
-	exit (-1);
+	return -1;
     }
   /*  if(clp.free_endgaps.compare("----") != 0 )
     {
 	std::cerr << "Free end gaps is not supported" << std::endl;
-	exit (-1);
+	return -1;
     }
     */
     if (clp.opt_subopt) {
     	std::cerr
       			<< "ERROR: suboptimal alignment not supported."
       			<<std::endl;
-        exit(-1);
+        return -1;
     }
 
 
@@ -413,17 +413,17 @@ main(int argc, char **argv) {
     // parameter consistency
     if (clp.opt_read_arcmatch_scores && clp.opt_read_arcmatch_probs) {
 	std::cerr << "You cannot specify arc match score and probabilities file simultaneously."<<std::endl;
-	exit(-1);
+	return -1;
     }
     
     if (clp.probability_scale<=0) {
 	std::cerr << "Probability scale must be greater 0."<<std::endl;
-	exit(-1);
+	return -1;
     }
     
     if (clp.struct_weight<0) {
 	std::cerr << "Structure weight must be greater equal 0."<<std::endl;
-	exit(-1);
+	return -1;
     }
 
     // ----------------------------------------
@@ -505,7 +505,7 @@ main(int argc, char **argv) {
 	Evaluator e(clp.file1,clp.file2,&scoring_params);
 	std::cout <<"SCORE: "<< e.eval() << std::endl;
 	
-	std::exit(0);
+	return 0;
     }
     
     
@@ -548,7 +548,7 @@ main(int argc, char **argv) {
     //
     if (clp.max_diff_pw_alignment!="" && clp.max_diff_alignment_file!="") {
 	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
-	exit(-1);
+	return -1;
     }
 
     // construct TraceController and check inconsistency for with multiplicity of sequences
@@ -561,7 +561,7 @@ main(int argc, char **argv) {
     } else if (clp.max_diff_pw_alignment!="") {
 	if ( seqA.row_number()!=1 || seqB.row_number()!=1 ) {
 	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
-	    exit(-1);
+	    return -1;
 	}
 	
 	multiple_ref_alignment = new MultipleAlignment(seqA.names()[0],seqB.names()[0],clp.max_diff_pw_alignment);
@@ -681,7 +681,7 @@ main(int argc, char **argv) {
 			      <<" of basematch probabilities."<<std::endl;
 		    print_usage(argv[0],my_options);
 		    std::cerr << std::endl;
-		    exit(-1);
+		    return -1;
 		}
 		if (clp.opt_verbose) {
 		    std::cout << "Compute match probabilities using pairHMM."<<std::endl; 
@@ -714,7 +714,7 @@ main(int argc, char **argv) {
 	    }
 
 	    match_probs->write_sparse(clp.matchprobs_file,1.0/clp.probability_scale);
-	    if (!clp.opt_write_arcmatch_scores) exit(0); // else we exit there!
+	    if (!clp.opt_write_arcmatch_scores) return 0; // else we exit there!
 	}
     }
    
@@ -729,7 +729,7 @@ main(int argc, char **argv) {
 	    std::cout << "Write arcmatch scores to file "<< clp.arcmatch_scores_file<<" and exit."<<std::endl;
 	}
 	arc_matches->write_arcmatch_scores(clp.arcmatch_scores_file,scoring);
-	exit(0);
+	return 0;
     }
         
 
@@ -768,7 +768,7 @@ main(int argc, char **argv) {
 			   clp.opt_pos_output,
 			   clp.opt_write_structure
 			   );
-	exit(0);
+	return 0;
 	*/
     }
     
@@ -779,7 +779,7 @@ main(int argc, char **argv) {
     	  std::cerr
     			<< "ERROR: Normalized alignment not supported."
     			<<std::endl;
-      exit(-1);
+      return -1;
 
 
 	// do some option consistency checks and output errors
@@ -788,12 +788,12 @@ main(int argc, char **argv) {
 		<< "ERROR: Normalized structure local alignment not supported."
 		<<std::endl
 		<< "LocARNA ignores struct_local option."<<std::endl;
-	    exit(-1);
+	    return -1;
 	}
 	if (!clp.sequ_local) { // important: in the Aligner class, we rely on this
 	    std::cerr 
 		<< "ERROR: Normalized alignment requires option --sequ_local."<<std::endl;
-	    exit(-1);
+	    return -1;
 	}
 //	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
 	
@@ -865,7 +865,7 @@ main(int argc, char **argv) {
 						      );
 	    } else {
 		cerr << "Cannot write to "<<clp.clustal_out<<endl<<"! Exit.";
-		exit(-1);
+		return -1;
 	    }
 	}
 	if (clp.opt_pp_out) {
@@ -886,7 +886,7 @@ main(int argc, char **argv) {
 			     clp.opt_alifold_consensus_dp);
 	    } else {
 		cerr << "Cannot write to "<<clp.pp_out<<endl<<"! Exit.";
-		exit(-1);
+		return -1;
 	    }
 	}
     }
@@ -895,5 +895,5 @@ main(int argc, char **argv) {
     
     // ----------------------------------------
     // DONE
-    exit(0);
+    return 0;
 }

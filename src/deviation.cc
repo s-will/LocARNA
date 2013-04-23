@@ -38,12 +38,12 @@ main(int argc, char **argv) {
 	if ((std::string)argv[1]=="--help" || (std::string)argv[1]=="-h") {
 	    usage();
 	}
-	exit(0);
+	return 0;
     }
     
     if (argc!=3) {
 	usage();
-	exit(-1);
+	return -1;
     }
     
     MultipleAlignment ma((std::string)argv[1]);
@@ -59,5 +59,5 @@ main(int argc, char **argv) {
 
     std::cout << "Deviation SPS: " << refma.avg_deviation_score(ma) << std::endl;
 
-    exit(0);
+    return 0;
 }

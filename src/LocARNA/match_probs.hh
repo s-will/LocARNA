@@ -46,6 +46,7 @@ namespace LocARNA {
 	//! read probcons parameter file
 	//! and compute match probabilities
 	//! for the two given sequences
+	//! @throws failure
 	void
 	pairHMM_probs(const Sequence &seqA,
 		      const Sequence &seqB,
@@ -171,7 +172,9 @@ namespace LocARNA {
 	    /** 
 	     * Construct from file
 	     * 
-	     * @param filename 
+	     * @param filename
+	     *
+	     * @throws failure
 	     */
 	    ProbConsParameter(const std::string &filename);
 	};

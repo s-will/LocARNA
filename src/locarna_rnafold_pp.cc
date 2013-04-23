@@ -57,8 +57,6 @@ usage() {
 	<< std::endl	
 	<< "Reads the input sequence in simplified fasta format from stdin (no linebreaks!)."<<std::endl 
 	<< "Writes pp-format to stdout." << std::endl;
-
-    exit(-1);
 }
 
 /** 
@@ -80,13 +78,15 @@ main(int argc, char **argv) {
 	    } else {
 		std::cerr << "Option -p requires argument."<<std::endl;
 		usage();
+		return -1;
 	    }
 	} else if ( std::string(argv[i]).compare("--TEST") == 0 ) {
 	    std::cout << "1";
-	    exit(0);
+	    return 0;
 	} else {
 	    std::cerr << "Unknown command line argument: "<<argv[i]<<std::endl;
 	    usage();
+	    return -1;
 	}
     }
     
@@ -168,7 +168,7 @@ main(int argc, char **argv) {
 
     free(structure);
     
-    exit(0);
+    return 0;
 }
 
 #else
@@ -179,11 +179,11 @@ int
 main(int argc, char **argv) {
     if ( argc==2 && std::string(argv[1]).compare("--TEST") == 0 ) {
 	std::cout << "0";
-	exit(-1);
+	return -1;
     }
     std::cerr << "ERROR: locarna_rnafold_pp requires linking against Vienna librna.\n";
     std::cerr << "This program was compiled without configure option --enable-librna."<<std::endl;
     std::cerr << "Please reconfigure and recompile to activate this program. \n";
-    exit(-1);
+    return -1;
 }
 #endif

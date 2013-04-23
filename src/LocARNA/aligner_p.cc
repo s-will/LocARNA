@@ -6,6 +6,7 @@
 #include <math.h>
 #include <assert.h>
 #include <iomanip>
+#include <sstream>
 // #include <queue>
 
 
@@ -1006,8 +1007,9 @@ AlignerP::compute_arcmatch_probabilities() {
 	//std::cout << arcA << " " << arcB << ": " << D(arcA,arcB) << " " << Dprime(arcA,arcB) << " " <<  am_prob(arcA.idx(),arcB.idx()) <<  std::endl;  
 	
 	if (! (am_prob(arcA.idx(),arcB.idx())<=1) ) {
-	    std::cerr << "ERROR: am prob " << arcA <<" " << arcB <<" " << am_prob(arcA.idx(),arcB.idx())<<std::endl;
-	    exit(-1);
+	    std::ostringstream err;
+	    err << "ERROR: am prob " << arcA <<" " << arcB <<" " << am_prob(arcA.idx(),arcB.idx());
+	    throw failure(err.str());
 	}
     }
     //std::cout<<"Arc match probs calculated"<<endl;
@@ -1165,8 +1167,9 @@ AlignerP::compute_basematch_probabilities( bool basematch_probs_include_arcmatch
 	    
 	    //assert(bm_prob(i,j)<=1);
 	    if (bm_prob(i,j)>1) {
-		std::cerr << "ERROR: bm prob " << i <<" " << j <<" " << bm_prob(i,j)<<std::endl;
-		exit(-1);
+		std::ostringstream err;
+		err << "ERROR: bm prob " << i <<" " << j <<" " << bm_prob(i,j);
+		throw failure(err.str());
 	    }
 	}
     }

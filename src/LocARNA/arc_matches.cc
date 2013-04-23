@@ -181,8 +181,9 @@ namespace LocARNA {
     
 	// catch error while opening
 	if (!in.is_open()) {
-	    std::cerr << "Cannot open file "<<arcmatch_scores_file<<" for reading arcmatch-scores."<<std::endl;
-	    exit(-1);
+	    std::ostringstream err;
+	    err << "Cannot open file "<<arcmatch_scores_file<<" for reading arcmatch-scores.";
+	    throw failure(err.str());
 	}
      
 	size_type i;
@@ -217,8 +218,9 @@ namespace LocARNA {
 		 || i>j || j>lenA
 		 || k>l || l>lenB)
 		{
-		    std::cerr <<"Cannot read arc match scores. Invalid line "<<lineno <<": " <<line <<std::endl; 
-		    exit(-1);
+		    std::ostringstream err;
+		    err <<"Cannot read arc match scores. Invalid line "<<lineno <<": " <<line; 
+		    throw failure(err.str());
 		}
 	
 	    lines.push_back(tuple5(i,j,k,l,score));
@@ -270,8 +272,9 @@ namespace LocARNA {
     
 	// catch error while opening
 	if (!out.is_open()) {
-	    std::cerr << "Cannot open file "<<arcmatch_scores_file<<" for writing arcmatch-scores."<<std::endl;
-	    exit(-1);
+	    std::ostringstream err;
+	    err << "Cannot open file "<<arcmatch_scores_file<<" for writing arcmatch-scores.";
+	    throw failure(err.str());
 	}
     
 	for (size_type i=0; i<num_arc_matches(); i++) {

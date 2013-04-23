@@ -597,8 +597,7 @@ AlignerN::align() {
     }
 
     if (params->SEQU_LOCAL) {
-	std::cerr << "SEQU_LOCAL is not supported by locarna_n\n" << std::endl;
-	exit(-1);
+	throw failure("SEQU_LOCAL is not supported by locarna_n");
     } else { // sequence global alignment
 
 	// align toplevel globally with potentially free endgaps (as given by description params->free_endgaps)

@@ -227,12 +227,12 @@ main(int argc, char **argv) {
 	print_help(argv[0],my_options);
 
 	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
-	exit(0);
+	return 0;
     }
 
     if (opt_version || opt_verbose) {
 	cout << "locarna_p ("<< VERSION_STRING<<")"<<endl;
-	if (opt_version) exit(0); else cout <<endl;
+	if (opt_version) return 0; else cout <<endl;
     }
 
     if (!process_success) {
@@ -240,7 +240,7 @@ main(int argc, char **argv) {
 	printf("USAGE: ");
 	print_usage(argv[0],my_options);
 	printf("\n");
-	exit(-1);
+	return -1;
     }
 
     if (opt_verbose)
@@ -298,7 +298,7 @@ main(int argc, char **argv) {
     //
     if (max_diff_pw_alignment!="" && max_diff_alignment_file!="") {
 	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
-	exit(-1);
+	return -1;
     }
 
     // construct TraceController and check inconsistency for with multiplicity of sequences
@@ -311,7 +311,7 @@ main(int argc, char **argv) {
     } else if (max_diff_pw_alignment!="") {
 	if ( seqA.row_number()!=1 || seqB.row_number()!=1 ) {
 	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
-	    exit(-1);
+	    return -1;
 	}
 	
 	multiple_ref_alignment = new MultipleAlignment(seqA.names()[0],seqB.names()[0],max_diff_pw_alignment);
@@ -464,7 +464,7 @@ main(int argc, char **argv) {
 	    aligner.write_arcmatch_probabilities(out);
 	} else {
 	    cerr << "Cannot write to "<<arcmatch_probs_file<<"! Exit."<<endl;
-	    exit(-1);
+	    return -1;
 	}
     }
 	
@@ -487,7 +487,7 @@ main(int argc, char **argv) {
 	    aligner.write_basematch_probabilities(out);
 	} else {
 	    cerr << "Cannot write to "<<basematch_probs_file<<"! Exit."<<endl;
-	    exit(-1);
+	    return -1;
 	}
     }
 
@@ -543,5 +543,5 @@ main(int argc, char **argv) {
     if (ribosum) delete ribosum;
     
     // DONE
-    exit(0);
+    return 0;
 }

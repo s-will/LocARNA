@@ -26,6 +26,7 @@
  ************************************************************/
 
 #include "options.hh"
+#include "aux.hh"
 #include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -182,7 +183,7 @@ namespace LocARNA {
 					options[i].deflt);
 		    if (!success) {
 			printf("INTERNAL ERROR. Option --%s: parsing of default argument failed\n",options[i].longname.c_str());
-			exit(-1);
+			throw(failure(""));
 		    }
 		}
 	    }
@@ -468,7 +469,7 @@ namespace LocARNA {
     decode_argument(void *argument, int arg_type, const std::string &optarg) {
 	if (argument == 0) {
 	    fprintf(stderr,"process_options: no argument variable\n");
-	    exit(-1);
+	    throw failure("");
 	}
   
 	int success=0;
@@ -505,7 +506,7 @@ namespace LocARNA {
 	    break;
 	default:
 	    fprintf(stderr,"process_options: unknown argument type\n");
-	    exit(-1);
+	    throw failure("");
 	    break;
 	}
     

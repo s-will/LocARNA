@@ -476,8 +476,10 @@ namespace LocARNA {
 	    if ( min_col_vector[i] > max_col_vector[i] 
 		 || 
 		 ((i>0) &&  (max_col_vector[i-1]+1<min_col_vector[i]))) {
-		std::cerr << "Inconsistent trace range due to max-diff heuristic" << std::endl;
-		exit(-1); // ATTENTION: think later what to do about that
+		
+		std::ostringstream err;
+		err << "Inconsistent trace range due to max-diff heuristic";
+		throw failure(err.str());
 	    }
 	}
     }

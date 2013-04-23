@@ -50,28 +50,4 @@ namespace LocARNA {
 	return out;
     }
     
-    int
-    infty_int_test() {
-	
-	InftyInt x = InftyInt::neg_infty + 1;
-	InftyInt y = (InftyInt)20;
-	InftyInt z = InftyInt::neg_infty;
-	InftyInt w = InftyInt::neg_infty;
-	
-	TaintedInftyInt res1 = x + y + 30;
-	TaintedInftyInt res2 = x + z + w + 600;
-	
-	TaintedInftyInt res = max(res1,res2);
-	
-	std::cout << "Finite range: [" << InftyInt::min_finite() << "," << InftyInt::max_finite() << "]" << std::endl;
-		
-	std::cout << res <<std::endl;
-	
-	return 0;
-    }
-    
 }
-
-// main() {
-//     exit(LocARNA::infty_int_test());
-// }

@@ -1,4 +1,5 @@
 #include "ribosum.hh"
+#include "aux.hh"
 
 #include <string>
 #include <fstream>
@@ -10,8 +11,9 @@ namespace LocARNA {
 Ribosum::Ribosum(const std::string &filename) {
     std::ifstream in(filename.c_str());
     if (!in) {
-	std::cerr << "Cannot open file "<<filename<<" for reading ribosum data."<<std::endl;
-	exit(-1);
+	std::ostringstream err;
+	err << "Cannot open file "<<filename<<" for reading ribosum data.";
+	throw failure(err.str());
     }
 
     read_ribosum(in);
@@ -68,9 +70,10 @@ Ribosum::read_ribosum(std::istream &in) {
 	getline(in,line);
 	
     } catch (std::ifstream::failure e) {
-	std::cerr << "Cannot parse ribosum input. " <<e.what()<< std::endl
-		  << "File not in ribosum format." << std::endl;
-	exit(-1);
+	std::ostringstream err;
+	err << "Cannot parse ribosum input. " <<e.what()<< std::endl
+	    << "File not in ribosum format.";
+	throw failure(err.str());
     }
 }
 
@@ -197,9 +200,10 @@ RibosumFreq::read_matrix(std::istream &in,
 		in >> mat(i,j);
 	
     } catch(std::ifstream::failure e) {
-	std::cerr << "Cannot parse ribosum frequency input. " <<e.what()<< std::endl
-		  << "File not in extended ribosum format." << std::endl;
-	exit(-1);
+	std::ostringstream err;
+	err << "Cannot parse ribosum frequency input. " <<e.what()<< std::endl
+	    << "File not in extended ribosum format.";
+	throw failure(err.str());
     }
 }
 
