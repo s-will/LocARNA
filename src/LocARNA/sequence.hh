@@ -89,7 +89,19 @@ namespace LocARNA {
 	 *
 	*/
 	Sequence(): seq_(),
-		    rows_() {}; 
+		    rows_(0),
+		    names_() {}; 
+	
+	/* Copy constructor is generated implicitely */
+	// /**
+	//  * \brief Copy construct sequence
+	//  *
+	// */
+	// Sequence(const Sequence &sequence): 
+	//     seq_(sequence.seq_),
+	//     rows_(sequence.rows_),
+	//     names_(sequence.names_) {
+	// };
 
 	/**
 	 * \brief Construct from name and sequence string
@@ -97,7 +109,8 @@ namespace LocARNA {
 	*/
 	Sequence(const std::string &name, const std::string &seqstr): 
 	    seq_(),
-	    rows_() {
+	    rows_(0),
+	    names_() {
 	    append_row(name,seqstr);
 	}; 
 

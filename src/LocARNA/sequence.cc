@@ -16,7 +16,8 @@ namespace LocARNA {
 
     Sequence::Sequence(const MultipleAlignment &ma):
 	 seq_(),
-	 rows_(0)
+	 rows_(),
+	 names_()
     {
 	for(MultipleAlignment::const_iterator it=ma.begin(); ma.end()!=it; ++it) {
 	    append_row(it->name(),it->seq().to_string());
