@@ -371,7 +371,7 @@ Alignment::write_alifold_consensus_dot_plot(std::ostream &out, double cutoff) co
     // free heap space
     delete [] structure;
     for (size_t i=0; i<ma.size(); i++) {
-	delete sequences[i];
+	delete [] sequences[i];
     }
     delete [] sequences;
 
