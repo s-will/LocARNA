@@ -42,6 +42,7 @@ namespace LocARNA {
 	/** 
 	 * @brief destruct, optionally free local copy
 	 */
+	virtual
 	~McC_matrices_base();
 
 	
@@ -117,6 +118,7 @@ namespace LocARNA {
 	/** 
 	 * @brief destruct, optionally free local copy
 	 */
+	virtual 
 	~McC_matrices_t();
 
 
@@ -168,6 +170,7 @@ namespace LocARNA {
 	/** 
 	 * @brief destruct, optionally free local copy
 	 */
+	virtual
 	~McC_ali_matrices_t();
 
 
