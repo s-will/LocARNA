@@ -9,9 +9,9 @@
 extern "C" {
 #include <ViennaRNA/fold_vars.h>
 }
-
-#include "mcc_matrices.hh"
-
+namespace LocARNA {
+    class McC_matrices_base;
+}
 #endif
 
 #include "sequence.hh"
@@ -110,7 +110,7 @@ namespace LocARNA {
 	//! immediately inner pair (i+1,j-1) are formed simultaneously;
 	//! analogous to arc_probs_
 	arc_prob_matrix_t arc_2_probs_; 
-    
+	
 	//! string description of sequence constraints
 	std::string seq_constraints_; 
 	
@@ -201,7 +201,7 @@ namespace LocARNA {
 		bool readInLoopProbs);
 	
 	/** 
-	 * @brief Construct from sequence, performing partition folding
+	 * @brief Construct from sequence
 	 * 
 	 * @param sequence the RNA sequence as Sequence object
 	 *
@@ -216,7 +216,7 @@ namespace LocARNA {
 	//! In most cases does nothing. If McCaskill
 	//! matrices are kept, they are freed.
 	~RnaData();
-
+	
 	/** 
 	 * @brief Availability of pair probabilities
 	 * 
@@ -720,15 +720,6 @@ namespace LocARNA {
 	 */
 	void
 	compute_Qm2_ali();
-
-
-	/** 
-	 * \brief Initialize pointers to McCaskill matrices with 0.
-	 *
-	 * Used to avoid freeing unallocated space in free_McCaskill_matrices().
-	 */
-	void
-	init_McCaskill_pointers();
 
 #   endif // HAVE_LIBRNA
 

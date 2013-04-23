@@ -42,6 +42,9 @@ namespace LocARNA {
 		     bool readInLoopProbs)
 	:
 	sequence(),
+	pair_probs_available_(false),
+	stacking_probs_available_(false),
+	in_loop_probs_available_(false),
 	arc_probs_(0),
 	arc_2_probs_(0),
 	seq_constraints_(""),
@@ -53,19 +56,23 @@ namespace LocARNA {
         
     RnaData::RnaData(const Sequence &sequence_)
 	: sequence(sequence_),
-	  pair_probs_available_(false),	  
-	  arc_probs_(0),
-	  arc_2_probs_(0),
-	  seq_constraints_(""),
-	  McCmat(0),
+	  pair_probs_available_(false),
+	  stacking_probs_available_(false),
+	  in_loop_probs_available_(false),
+	  arc_probs_(0), // init sparse matrix with default 0
+	  arc_2_probs_(0), // init sparse matrix with default 0
+	  seq_constraints_(""), // empty sequence constraints string
+	  McCmat(0L), // 0 pointer
 	  used_alifold(false)
     {
     }
     
     RnaData::~RnaData() {
 #ifdef HAVE_LIBRNA
-	if (McCmat) {delete McCmat;} 
-#endif //HAVE_LIBRNA
+	if (McCmat) {
+	    delete McCmat;
+	}
+#endif
     }
 
 #ifdef HAVE_LIBRNA
@@ -276,10 +283,10 @@ namespace LocARNA {
 
 	//free c_sequences and c_structure
 	for (size_t i=0; i<n_seq; i++) {
-	    delete c_sequences[i];
+	    delete [] c_sequences[i];
 	}
-	delete c_sequences;
-	delete c_structure;
+	delete [] c_sequences;
+	delete [] c_structure;
     }
     
 #endif // HAVE_LIBRNA
@@ -681,18 +688,18 @@ namespace LocARNA {
 	
 	if (!in_loop_probs_available_) return 1.0;
 	
-	McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t*>( this->McCmat );
+	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t*>( this->McCmat );
 	
         size_t n_seq = sequence.row_number();
 	
 	// immediately return 0.0 if i and j do not pair
-	if (get_arc_prob(i,j)==0.0 || McCmat->get_qb(i,j)==0.0) {return 0.0;}
+	if (get_arc_prob(i,j)==0.0 || MCm->get_qb(i,j)==0.0) {return 0.0;}
 	
 	// get base pair types for i,j of all sequences
 	std::vector<int> type(n_seq);
 	
 	for (size_t s=0; s<n_seq; ++s) {
-	    type[s] = pair[McCmat->S[s][i]][McCmat->S[s][j]];
+	    type[s] = pair[MCm->S[s][i]][MCm->S[s][j]];
 	    if (type[s]==0) type[s]=7;
 	}
 
@@ -703,16 +710,16 @@ namespace LocARNA {
 	FLT_OR_DBL H=1.0;
 	
 	for (size_t s=0; s<n_seq; s++) {
-	    size_t u = McCmat->a2s[s][j-1]-McCmat->a2s[s][i];
-	    if (McCmat->a2s[s][i]<1) continue;
+	    size_t u = MCm->a2s[s][j-1]-MCm->a2s[s][i];
+	    if (MCm->a2s[s][i]<1) continue;
 	    char loopseq[10];
 	    if (u<7){
-		strncpy(loopseq, McCmat->Ss[s]+McCmat->a2s[s][i]-1, 10);
+		strncpy(loopseq, MCm->Ss[s]+MCm->a2s[s][i]-1, 10);
 	    }
 	    H *= exp_E_Hairpin(u, type[s],
-			       McCmat->S3[s][i], McCmat->S5[s][j], 
+			       MCm->S3[s][i], MCm->S5[s][j], 
 			       loopseq, 
-			       McCmat->pf_params);
+			       MCm->pf_params);
         }
         H *= scale[j-i+1];
     
@@ -728,24 +735,24 @@ namespace LocARNA {
 		
 		FLT_OR_DBL qloop=1.0;
 		
-		if (McCmat->get_qb(ip,jp)==0) {
+		if (MCm->get_qb(ip,jp)==0) {
 		    continue;
 		}
 		
 		for (size_t s=0; s<n_seq; s++) {
-		    size_t u1 = McCmat->a2s[s][ip-1] - McCmat->a2s[s][i];
-		    size_t u2 = McCmat->a2s[s][j-1] - McCmat->a2s[s][jp];
+		    size_t u1 = MCm->a2s[s][ip-1] - MCm->a2s[s][i];
+		    size_t u2 = MCm->a2s[s][j-1] - MCm->a2s[s][jp];
 		    
-		    int type_2 = pair[McCmat->S[s][jp]][McCmat->S[s][ip]]; 
+		    int type_2 = pair[MCm->S[s][jp]][MCm->S[s][ip]]; 
 		    if (type_2 == 0) type_2 = 7;
 		    
 		    qloop *= exp_E_IntLoop( u1, u2,
 					    type[s], type_2,
-					    McCmat->S3[s][i],
-					    McCmat->S5[s][j],
-					    McCmat->S5[s][ip],
-					    McCmat->S3[s][jp],
-					    McCmat->pf_params
+					    MCm->S3[s][i],
+					    MCm->S5[s][j],
+					    MCm->S5[s][ip],
+					    MCm->S3[s][jp],
+					    MCm->pf_params
 					    );
 		}
 		
@@ -764,23 +771,23 @@ namespace LocARNA {
 		}
 		
 		for (size_t s=0; s<n_seq; s++) {
-		    size_t u1 = McCmat->a2s[s][ip-1] - McCmat->a2s[s][i];
-		    size_t u2 = McCmat->a2s[s][j-1] - McCmat->a2s[s][jp];
+		    size_t u1 = MCm->a2s[s][ip-1] - MCm->a2s[s][i];
+		    size_t u2 = MCm->a2s[s][j-1] - MCm->a2s[s][jp];
 		    
-		    int type_2 = pair[McCmat->S[s][jp]][McCmat->S[s][ip]]; 
+		    int type_2 = pair[MCm->S[s][jp]][MCm->S[s][ip]]; 
 		    if (type_2 == 0) type_2 = 7;
 		    
 		    qloop *= exp_E_IntLoop( u1, u2,
 					    type[s], type_2,
-					    McCmat->S3[s][i],
-					    McCmat->S5[s][j],
-					    McCmat->S5[s][ip],
-					    McCmat->S3[s][jp],
-					    McCmat->pf_params
+					    MCm->S3[s][i],
+					    MCm->S5[s][j],
+					    MCm->S5[s][ip],
+					    MCm->S3[s][jp],
+					    MCm->pf_params
 					    );
 		}
 		
-		I += McCmat->get_qb(ip,jp) * scale[ip-i+j-jp] * qloop;
+		I += MCm->get_qb(ip,jp) * scale[ip-i+j-jp] * qloop;
 	    }
 	}
     
@@ -795,17 +802,17 @@ namespace LocARNA {
 	// valid entries of qm2 have space for 2 inner base pairs,
 	// i.e. at least length of "(...)(...)" (for TURN=3)
 	if ( frag_len_geq(k+1, j-1, 2*(TURN+2)) ) {
-	    M += qm2[McCmat->iidx(k+1,j-1)] * expMLbase[k-i];
+	    M += qm2[MCm->iidx(k+1,j-1)] * expMLbase[k-i];
 	}
 	
 	// no base pair >= k
 	if ( frag_len_geq(i+1,k-1,2*(TURN+2)) ) {
-	    M += qm2[McCmat->iidx(i+1,k-1)] * expMLbase[j-k];
+	    M += qm2[MCm->iidx(i+1,k-1)] * expMLbase[j-k];
 	}
 	
 	// base pairs <k and >k
 	if ( frag_len_geq(i+1,k-1,TURN+2) && frag_len_geq(k+1,j-1,TURN+2) ) {
-	    M += McCmat->get_qm(i+1,k-1) * expMLbase[1] *  McCmat->get_qm(k+1,j-1);
+	    M += MCm->get_qm(i+1,k-1) * expMLbase[1] *  MCm->get_qm(k+1,j-1);
 	}
 	
 	// multiply with contribution for closing of multiloop
@@ -813,22 +820,22 @@ namespace LocARNA {
 	for (size_t s=0; s<n_seq; s++) {
 	    int tt = rtype[type[s]];
 	    
-	    M *= McCmat->pf_params->expMLclosing 
-		* exp_E_MLstem(tt,McCmat->S5[s][j],McCmat->S3[s][i], McCmat->pf_params);
+	    M *= MCm->pf_params->expMLclosing 
+		* exp_E_MLstem(tt,MCm->S5[s][j],MCm->S3[s][i], MCm->pf_params);
 	}
 	M *= scale[2];
 	
 	FLT_OR_DBL Qtotal=H+I+M;
 	
-	double kTn   = McCmat->pf_params->kT/10.;   /* kT in cal/mol  */
+	double kTn   = MCm->pf_params->kT/10.;   /* kT in cal/mol  */
 	
 	// multiply with pscore contribution for closing base pair (i,j),
 	// like in the calculation of Qb(i,j)
-	Qtotal *= exp(McCmat->get_pscore(i,j)/kTn);
+	Qtotal *= exp(MCm->get_pscore(i,j)/kTn);
 	
-	FLT_OR_DBL p_k_cond_ij = Qtotal/McCmat->get_qb(i,j); 
+	FLT_OR_DBL p_k_cond_ij = Qtotal/MCm->get_qb(i,j); 
 	
-	FLT_OR_DBL res = p_k_cond_ij * McCmat->get_bppm(i,j);
+	FLT_OR_DBL res = p_k_cond_ij * MCm->get_bppm(i,j);
 	
 	return res;
     }
@@ -846,9 +853,9 @@ namespace LocARNA {
 	}
 	
 	assert(!used_alifold);
-	McC_matrices_t *McCmat = static_cast<McC_matrices_t *>(this->McCmat);
+	McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat);
 
-	const char *c_sequence = McCmat->sequence;
+	const char *c_sequence = MCm->sequence;
 	
 	
 	int type = ptype_of_admissible_basepair(i,j);
@@ -860,8 +867,8 @@ namespace LocARNA {
 	// Hairpin loop energy contribution
 	
 	size_t u=j-i-1;
-	FLT_OR_DBL H = exp_E_Hairpin(u, type, McCmat->S1[i+1], McCmat->S1[j-1],
-				     c_sequence+i-1, McCmat->pf_params) * scale[u+2];
+	FLT_OR_DBL H = exp_E_Hairpin(u, type, MCm->S1[i+1], MCm->S1[j-1],
+				     c_sequence+i-1, MCm->pf_params) * scale[u+2];
 	
 	// ------------------------------------------------------------
 	// Interior loop energy contribution
@@ -871,14 +878,14 @@ namespace LocARNA {
 	for (size_t ip=k+1; ip <= std::min(i+MAXLOOP+1,j-TURN-2); ip++) {
 	    size_t u1 = ip-i-1;
 	    for (size_t jp = std::max(ip+TURN+1+MAXLOOP,j-1+u1)-MAXLOOP; jp<j; jp++) {
-		int type2 = McCmat->get_ptype(ip,jp);
+		int type2 = MCm->get_ptype(ip,jp);
 		if (type2) {
 		    type2 = rtype[type2];
-		    I += McCmat->get_qb(ip,jp) 
+		    I += MCm->get_qb(ip,jp) 
 			* (scale[u1+j-jp+1] *
 			   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
-					 McCmat->S1[i+1],McCmat->S1[j-1],
-					 McCmat->S1[ip-1],McCmat->S1[jp+1], McCmat->pf_params));
+					 MCm->S1[i+1],MCm->S1[j-1],
+					 MCm->S1[ip-1],MCm->S1[jp+1], MCm->pf_params));
 		}
 	    }
 	}
@@ -886,14 +893,14 @@ namespace LocARNA {
 	for (size_t ip=i+1; ip<=std::min(i+MAXLOOP+1,k-TURN-2); ip++) {
 	    size_t u1 = ip-i-1;
 	    for (size_t jp=std::max(ip+TURN+1+MAXLOOP,j-1+u1)-MAXLOOP; jp<k; jp++) {
-		int type2 = McCmat->get_ptype(ip,jp);
+		int type2 = MCm->get_ptype(ip,jp);
 		if (type2) {
 		    type2 = rtype[type2];
-		    I += McCmat->get_qb(ip,jp)
+		    I += MCm->get_qb(ip,jp)
 			* (scale[(int)(u1+j-jp+1)] *
 			   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
-					 McCmat->S1[i+1],McCmat->S1[j-1],
-					 McCmat->S1[ip-1],McCmat->S1[jp+1], McCmat->pf_params));
+					 MCm->S1[i+1],MCm->S1[j-1],
+					 MCm->S1[ip-1],MCm->S1[jp+1], MCm->pf_params));
 		}
 	    }
 	}
@@ -908,31 +915,31 @@ namespace LocARNA {
 
 	// bases <=k unpaired
 	if ( frag_len_geq(k+1, j-1, 2*(TURN+2)) ) {
-	    M1 = expMLbase[frag_len(i+1,k)] * qm2[McCmat->iidx(k+1,j-1)];
+	    M1 = expMLbase[frag_len(i+1,k)] * qm2[MCm->iidx(k+1,j-1)];
 	}
 	
 	// bases >=k unpaired
 	if ( frag_len_geq(i+1, k-1, 2*(TURN+2)) ) {
-	    M2 = qm2[McCmat->iidx(i+1,k-1)] * expMLbase[frag_len(k,j-1)];
+	    M2 = qm2[MCm->iidx(i+1,k-1)] * expMLbase[frag_len(k,j-1)];
 	}
 	
 	// innner base pairs left and right of k
 	if ( frag_len_geq(i+1,k-1,TURN+2) && frag_len_geq(k+1,j-1,TURN+2) ) {
-	    M3 = McCmat->get_qm(i+1,k-1) * expMLbase[1] *  McCmat->get_qm(k+1,j-1);
+	    M3 = MCm->get_qm(i+1,k-1) * expMLbase[1] *  MCm->get_qm(k+1,j-1);
 	}
 	
 	M=M1+M2+M3;
 	
 	// multiply with contribution for closing of multiloop
-	M *= McCmat->pf_params->expMLclosing 
-	    * exp_E_MLstem(rtype[type],McCmat->S1[j-1],McCmat->S1[i+1], McCmat->pf_params)
+	M *= MCm->pf_params->expMLclosing 
+	    * exp_E_MLstem(rtype[type],MCm->S1[j-1],MCm->S1[i+1], MCm->pf_params)
 	    * scale[2];
 	
 	FLT_OR_DBL Qtotal = H+I+M;
 
-	FLT_OR_DBL p_k_cond_ij = Qtotal/McCmat->get_qb(i,j); 
+	FLT_OR_DBL p_k_cond_ij = Qtotal/MCm->get_qb(i,j); 
 
-	FLT_OR_DBL res = p_k_cond_ij * McCmat->get_bppm(i,j);
+	FLT_OR_DBL res = p_k_cond_ij * MCm->get_bppm(i,j);
 	
 	return res;
     }
@@ -955,17 +962,17 @@ namespace LocARNA {
 
 	if (!in_loop_probs_available_) return 1.0;
 	
-	McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t *>(this->McCmat);
+	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(this->McCmat);
 	
 	size_t n_seq = sequence.row_number();
 	
 	// note: the following tests cover the case that the distances of i,j and ip,jp are too small
 
 	// immediately return 0.0 if i and j do not pair
-	if (get_arc_prob(i,j)==0.0 || McCmat->get_qb(i,j)==0.0) {return 0.0;}
+	if (get_arc_prob(i,j)==0.0 || MCm->get_qb(i,j)==0.0) {return 0.0;}
 	
 	// immediately return 0.0 when ip and jp cannot pair
-	if (get_arc_prob(ip,jp)==0.0 || McCmat->get_qb(ip,jp)==0.0) {return 0.0;}
+	if (get_arc_prob(ip,jp)==0.0 || MCm->get_qb(ip,jp)==0.0) {return 0.0;}
 	
 	assert(frag_len_geq(i,j,TURN+4));
 	assert(frag_len_geq(ip,jp,TURN+2));
@@ -979,10 +986,10 @@ namespace LocARNA {
 	std::vector<int> type2(n_seq);
 	
 	for (size_t s=0; s<n_seq; ++s) {
-	    type[s] = pair[McCmat->S[s][i]][McCmat->S[s][j]];
+	    type[s] = pair[MCm->S[s][i]][MCm->S[s][j]];
 	    if (type[s]==0) type[s]=7;
 
-	    type2[s] = pair[McCmat->S[s][ip]][McCmat->S[s][jp]];
+	    type2[s] = pair[MCm->S[s][ip]][MCm->S[s][jp]];
 	    if (type2[s]==0) type2[s]=7;
 	}
 
@@ -999,16 +1006,16 @@ namespace LocARNA {
 	    I = 1.0;
 	    for (size_t s=0; s<n_seq; s++) {
 		
-		size_t u1 = McCmat->a2s[s][ip-1] - McCmat->a2s[s][i];
-		size_t u2 = McCmat->a2s[s][j-1] - McCmat->a2s[s][jp];
+		size_t u1 = MCm->a2s[s][ip-1] - MCm->a2s[s][i];
+		size_t u2 = MCm->a2s[s][j-1] - MCm->a2s[s][jp];
 		
 		I *= exp_E_IntLoop(u1,u2,
 				   type[s], rtype[type2[s]],
-				   McCmat->S3[s][i],
-				   McCmat->S5[s][j],
-				   McCmat->S5[s][ip],
-				   McCmat->S3[s][jp],
-				   McCmat->pf_params);
+				   MCm->S3[s][i],
+				   MCm->S5[s][j],
+				   MCm->S5[s][ip],
+				   MCm->S3[s][jp],
+				   MCm->pf_params);
 	    }
 	    I *= scale[ip-i+j-jp];
 	}
@@ -1020,32 +1027,32 @@ namespace LocARNA {
 
 	// inner base pairs only right of (ip,jp)
 	if ( frag_len_geq(jp+1, j-1, TURN+2) ) {
-	    M += expMLbase[frag_len(i+1,ip-1)] * McCmat->get_qm(jp+1,j-1);
+	    M += expMLbase[frag_len(i+1,ip-1)] * MCm->get_qm(jp+1,j-1);
 	}
 	
 	// inner base pairs only left of (ip,jp)
 	if ( frag_len_geq(i+1, ip-1, TURN+2) ) {
-	    M += McCmat->get_qm(i+1,ip-1) * expMLbase[frag_len(jp+1,j-1)];
+	    M += MCm->get_qm(i+1,ip-1) * expMLbase[frag_len(jp+1,j-1)];
 	}
 	
 	// inner base pairs left and right of (ip,jp)
 	if ( frag_len_geq(i+1, ip-1, TURN+2) && frag_len_geq(jp+1, j-1, TURN+2) ) {
-	    M += McCmat->get_qm(i+1,ip-1) * McCmat->get_qm(jp+1,j-1);
+	    M += MCm->get_qm(i+1,ip-1) * MCm->get_qm(jp+1,j-1);
 	}
 	
 	for (size_t s=0; s<n_seq; s++) {
 	    // multiply with factor for inner base pair
 	    M *= exp_E_MLstem(type2[s],
-			      McCmat->S5[s][ip],
-			      McCmat->S3[s][jp],
-			      McCmat->pf_params);
+			      MCm->S5[s][ip],
+			      MCm->S3[s][jp],
+			      MCm->pf_params);
 	    
 	    // multiply with factors for closing base pair
-	    M *= McCmat->pf_params->expMLclosing
+	    M *= MCm->pf_params->expMLclosing
 		* exp_E_MLstem(rtype[type[s]],
-			       McCmat->S5[s][j],
-			       McCmat->S3[s][i],
-			       McCmat->pf_params);
+			       MCm->S5[s][j],
+			       MCm->S3[s][i],
+			       MCm->pf_params);
 	}
 	
 	M *= scale[2]; // scale for closing base pair
@@ -1053,17 +1060,17 @@ namespace LocARNA {
 	// ------------------------------------------------------------
 	FLT_OR_DBL Qtotal= (I+M);
 	
-	Qtotal *= McCmat->get_qb(ip,jp);
+	Qtotal *= MCm->get_qb(ip,jp);
 
 	// multiply with pscore contribution for closing base pair (i,j),
 	// like in the calculation of Qb(i,j)
-	double kTn   = McCmat->pf_params->kT/10.;   /* kT in cal/mol  */
-	Qtotal *= exp(McCmat->get_pscore(i,j)/kTn);
+	double kTn   = MCm->pf_params->kT/10.;   /* kT in cal/mol  */
+	Qtotal *= exp(MCm->get_pscore(i,j)/kTn);
 
 	
 	return
-	    (Qtotal/McCmat->get_qb(i,j))
-	    *McCmat->get_bppm(i,j);
+	    (Qtotal/MCm->get_qb(i,j))
+	    *MCm->get_bppm(i,j);
     }
 
     double
@@ -1079,7 +1086,7 @@ namespace LocARNA {
 	}
 	
 	assert(!used_alifold);
-	McC_matrices_t *McCmat = static_cast<McC_matrices_t *>(this->McCmat);
+	McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat);
 	
 
 	// note: I and M are computed without factor get_qb(ip,jp),
@@ -1109,11 +1116,11 @@ namespace LocARNA {
 	
 	if (u1+u2 <= MAXLOOP) {
 	    I = exp_E_IntLoop(u1,u2, type, rtype[type2],
-			      McCmat->S1[(int)(i+1)],
-			      McCmat->S1[(int)(j-1)],
-			      McCmat->S1[ip-1],
-			      McCmat->S1[jp+1],
-			      McCmat->pf_params)
+			      MCm->S1[(int)(i+1)],
+			      MCm->S1[(int)(j-1)],
+			      MCm->S1[ip-1],
+			      MCm->S1[jp+1],
+			      MCm->pf_params)
 		* scale[u1+u2+2];
 	}
 	
@@ -1124,40 +1131,40 @@ namespace LocARNA {
 	
 	// inner base pairs only right of (ip,jp)
 	if ( frag_len_geq(jp+1, j-1, TURN+2) ) {
-	    M += expMLbase[frag_len(i+1,ip-1)] * McCmat->get_qm(jp+1,j-1);
+	    M += expMLbase[frag_len(i+1,ip-1)] * MCm->get_qm(jp+1,j-1);
 	}
 	
 	// inner base pairs only left of (ip,jp)
 	if ( frag_len_geq(i+1, ip-1, TURN+2) ) {
-	    M += McCmat->get_qm(i+1,ip-1) * expMLbase[frag_len(jp+1,j-1)];
+	    M += MCm->get_qm(i+1,ip-1) * expMLbase[frag_len(jp+1,j-1)];
 	}
 	
 	// inner base pairs left and right of (ip,jp)
 	if ( frag_len_geq(i+1, ip-1, TURN+2) && frag_len_geq(jp+1, j-1, TURN+2) ) {
-	    M += McCmat->get_qm(i+1,ip-1) * McCmat->get_qm(jp+1,j-1);
+	    M += MCm->get_qm(i+1,ip-1) * MCm->get_qm(jp+1,j-1);
 	}
 	
 	// multiply with factor for inner base pair
 	M *= exp_E_MLstem(type2,
-			  McCmat->S1[ip-1],
-			  McCmat->S1[jp+1],
-			  McCmat->pf_params);
+			  MCm->S1[ip-1],
+			  MCm->S1[jp+1],
+			  MCm->pf_params);
 	
 	// multiply with factors for closing base pair
-	M *= McCmat->pf_params->expMLclosing
+	M *= MCm->pf_params->expMLclosing
 	    * exp_E_MLstem(rtype[type],
-			   McCmat->S1[j-1],
-			   McCmat->S1[i+1],
-			   McCmat->pf_params)
+			   MCm->S1[j-1],
+			   MCm->S1[i+1],
+			   MCm->pf_params)
 	    * scale[2];
 	
 	FLT_OR_DBL Qtotal = I+M;
 	
-	Qtotal *= McCmat->get_qb(ip,jp);
+	Qtotal *= MCm->get_qb(ip,jp);
 	
 	
-	return Qtotal/McCmat->get_qb(i,j)
-	    * McCmat->get_bppm(i,j);
+	return Qtotal/MCm->get_qb(i,j)
+	    * MCm->get_bppm(i,j);
     }
 
     double RnaData::prob_basepair_external(size_type i,size_type j) const {
@@ -1179,25 +1186,25 @@ namespace LocARNA {
 	FLT_OR_DBL extloop;
 	
 	if (!used_alifold) {
-	    McC_matrices_t *McCmat = static_cast<McC_matrices_t *>(this->McCmat);
-	    extloop = exp_E_ExtLoop(McCmat->get_ptype(i,j),
-				    i>1 ? McCmat->S1[i-1] : -1, 
-				    j<n ? McCmat->S1[j+1] : -1, 
-				    McCmat->pf_params);
+	    McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat);
+	    extloop = exp_E_ExtLoop(MCm->get_ptype(i,j),
+				    i>1 ? MCm->S1[i-1] : -1, 
+				    j<n ? MCm->S1[j+1] : -1, 
+				    MCm->pf_params);
 	} else {
-	    McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t *>(this->McCmat);
+	    McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(this->McCmat);
 	    
 	    size_t n_seq=sequence.row_number();
 	    
 	    extloop=1.0;
 	    
 	    for (size_t s=0; s<n_seq; s++) {
-		int type = pair[McCmat->S[s][i]][McCmat->S[s][j]];
+		int type = pair[MCm->S[s][i]][MCm->S[s][j]];
 		if (type==0) type=7;
 		
-		extloop *= exp_E_ExtLoop(type, i>1 ? McCmat->S5[s][i] : -1,
-					 j<n ? McCmat->S3[s][j] : -1,
-					 McCmat->pf_params);
+		extloop *= exp_E_ExtLoop(type, i>1 ? MCm->S5[s][i] : -1,
+					 j<n ? MCm->S3[s][j] : -1,
+					 MCm->pf_params);
 	    }
 	}
 
@@ -1415,9 +1422,10 @@ namespace LocARNA {
 
 	std::string name=s.substr(i,j-i);
 
-	if (name.length()>3 && name.substr(name.length()-3,3) == "_dp")
-	    name=name.substr(0,name.length()-3);
-    
+	if (name.length()>3 && name.substr(name.length()-3,3) == "_dp") {
+	    return name.substr(0,name.length()-3);
+	}
+	
 	return name;
     }
 
