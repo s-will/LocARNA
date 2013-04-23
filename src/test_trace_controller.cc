@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include <strstream>
+#include <sstream>
 
 #include "LocARNA/sequence.hh"
 #include "LocARNA/multiple_alignment.hh"
@@ -48,7 +48,7 @@ int main(int argc, char**argv) {
     // 4         *
     // 5          *
     
-    std::istrstream example_ma_istream(example_ma.c_str());
+    std::istringstream example_ma_istream(example_ma.c_str());
     
     MultipleAlignment ma(example_ma_istream);
     
