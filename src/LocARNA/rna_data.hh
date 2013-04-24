@@ -91,7 +91,7 @@ namespace LocARNA {
 	//! type for matrix of arc probabilities
 	typedef SparseMatrix<double> arc_prob_matrix_t;
     private:
-	Sequence sequence; //!< the sequence
+	Sequence sequence_; //!< the sequence
 	
 	//! whether pair probabilities are availabe
 	bool pair_probs_available_; 
@@ -116,17 +116,17 @@ namespace LocARNA {
 	
 # ifdef HAVE_LIBRNA
 	// std::vector<FLT_OR_DBL> qm1; // store qm1 for debugging
-	std::vector<FLT_OR_DBL> qm2;
-	std::vector<FLT_OR_DBL> scale;
-	std::vector<FLT_OR_DBL> expMLbase;
+	std::vector<FLT_OR_DBL> qm2_;
+	std::vector<FLT_OR_DBL> scale_;
+	std::vector<FLT_OR_DBL> expMLbase_;
 	
-	McC_matrices_base *McCmat; //!< DP matrix data structures of VRNA's McCaskill algorithm
+	McC_matrices_base *McCmat_; //!< DP matrix data structures of VRNA's McCaskill algorithm
 #else
-	void *McCmat;
+	void *McCmat_;
 #endif
 	
 	//! whether alifold was used to compute the McCaskill matrices
-	bool used_alifold;
+	bool used_alifold_;
 
 
 	////////////////////////////////////////////////////////////
@@ -259,7 +259,7 @@ namespace LocARNA {
 	//! @return sequence of RNA
 	const Sequence &
 	get_sequence() const {
-	    return sequence;
+	    return sequence_;
 	}
 	
 	//! @brief Get sequence constraints
@@ -460,7 +460,7 @@ namespace LocARNA {
 	//! \brief get length of sequence
 	//! \return sequence length
 	size_type get_length() const {
-	  return sequence.length();
+	  return sequence_.length();
 	}
 	
 
@@ -476,7 +476,7 @@ namespace LocARNA {
 	double prob_paired_upstream(size_type i) const {
 	    double prob_paired=0.0;
 	
-	    for (size_type j=i+1; j<=sequence.length(); j++) {
+	    for (size_type j=i+1; j<=sequence_.length(); j++) {
 		prob_paired += arc_probs_(i,j); 
 	    }
 	
