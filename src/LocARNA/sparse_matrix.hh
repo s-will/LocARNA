@@ -34,8 +34,8 @@ namespace LocARNA {
     protected:
 	
 	typedef std::tr1::unordered_map<key_t,value_t > map_t; //!< map type  
-	map_t the_map; //!< internal representation of sparse matrix
-	value_t def; //!< default value of matrix entries
+	map_t the_map_; //!< internal representation of sparse matrix
+	value_t def_; //!< default value of matrix entries
     
     public:
 
@@ -53,8 +53,8 @@ namespace LocARNA {
 	//! structure and the corresponding non-sparse matrix.
 	class element {
 	private:
-	    SparseMatrix<T> *m;
-	    key_t k;
+	    SparseMatrix<T> *m_;
+	    key_t k_;
 	public:
 	    /** 
 	     * @brief Construct as proxy for specified element in given sparse matrix
@@ -63,7 +63,7 @@ namespace LocARNA {
 	     * @param k_ key/index of entry in given sparse matrix
 	     *
 	     */
-	    element(SparseMatrix<T> *m_,key_t k_): m(m_),k(k_) {}
+	    element(SparseMatrix<T> *m,key_t k): m_(m),k_(k) {}
 
 	    /** 
 	     * @brief Access entry for which the class acts as proxy
@@ -73,9 +73,9 @@ namespace LocARNA {
 	     * If entry does not exist, return the default value
 	     */
 	    operator value_t() {
-		const_iterator it = m->the_map.find(k);
-		if ( it == m->the_map.end() ) 
-		    return m->def;
+		const_iterator it = m_->the_map_.find(k_);
+		if ( it == m_->the_map_.end() ) 
+		    return m_->def_;
 		else 
 		    return it->second;
 	    }
@@ -93,11 +93,11 @@ namespace LocARNA {
 	     */
 	    element
 	    operator +=(value_t x) {
-		const_iterator it = m->the_map.find(k);
-		if ( it == m->the_map.end() ) 
-		    m->the_map[k] = m->def + x;
+		const_iterator it = m_->the_map_.find(k_);
+		if ( it == m_->the_map_.end() ) 
+		    m_->the_map_[k_] = m_->def_ + x;
 		else 
-		    m->the_map[k] += x;
+		    m_->the_map_[k_] += x;
 	    
 		return *this;
 	    }
@@ -115,10 +115,10 @@ namespace LocARNA {
 	     */
 	    element
 	    operator =(value_t x) {
-		if (x!=m->def) {
-		    m->the_map[k] = x;
+		if (x!=m_->def_) {
+		    m_->the_map_[k_] = x;
 		} else {
-		    m->the_map.erase(k);
+		    m_->the_map_.erase(k_);
 		}
 		return *this;
 	    }
@@ -130,7 +130,7 @@ namespace LocARNA {
 	 * 
 	 * @param deflt default value of entries
 	 */
-	SparseMatrix(value_t deflt) : the_map(),def(deflt) {}
+	SparseMatrix(value_t def) : the_map_(),def_(def) {}
     
 	/** 
 	 * \brief Access to matrix element
@@ -153,9 +153,9 @@ namespace LocARNA {
 	 * @return matrix entry (i,j)
 	 */
 	const value_t & operator() (size_type i, size_type j) const {
-	    const_iterator it = the_map.find(key_t(i,j));
-	    if ( it == the_map.end() ) 
-		return def;
+	    const_iterator it = the_map_.find(key_t(i,j));
+	    if ( it == the_map_.end() ) 
+		return def_;
 	    else 
 		return it->second;
 	}
@@ -170,7 +170,7 @@ namespace LocARNA {
 	 * @post writes entry. If entry didn't exist already it is created.
 	 */
 	void set(size_type i, size_type j, const value_t &val) {
-	    the_map[std::pair<int,int>(i,j)]=val;
+	    the_map_[std::pair<int,int>(i,j)]=val;
 	}
     
 	/** 
@@ -178,7 +178,7 @@ namespace LocARNA {
 	 */
 	void
 	clear() {
-	    the_map.clear();
+	    the_map_.clear();
 	}
 
 
@@ -190,7 +190,7 @@ namespace LocARNA {
 	 * @see end()
 	 */
 	const_iterator begin() const {
-	    return the_map.begin();
+	    return the_map_.begin();
 	}
 	
 	/** 
@@ -200,7 +200,7 @@ namespace LocARNA {
 	 * @see begin()
 	 */
 	const_iterator end() const {
-	    return the_map.end();
+	    return the_map_.end();
 	}
 	
     };
