@@ -39,8 +39,12 @@ namespace LocARNA {
 #ifndef NDEBUG
 	if (params->ribosum) {
 	    // check sequences
-	    seqA.checkAlphabet(Alphabet<char>((char*)"ACGUN-",6),true);
-	    seqB.checkAlphabet(Alphabet<char>((char*)"ACGUN-",6),true);
+	    if (!seqA.checkAlphabet(Alphabet<char>((char*)"ACGUN-",6))
+		||
+		!seqB.checkAlphabet(Alphabet<char>((char*)"ACGUN-",6))
+		) {
+		std::cerr << "WARNING: unsupported sequence characters found." <<std::endl;
+	    }
 	}
 #endif
 
@@ -379,7 +383,7 @@ namespace LocARNA {
 	// compute geometric mean
 	for(size_type i=0; i<rowsA; i++) { // run through all combinations of rows in A and B
 	    for(size_type j=0; j<rowsB; j++) {
-		// wie sollen gaps behandelt werden?
+		// how to handle gaps?
 		// current solution: ignore gap entries
 
 		if (seqA[arcA.left()][i]!='-'

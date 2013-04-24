@@ -314,7 +314,7 @@ main(int argc, char **argv) {
 	    return -1;
 	}
 	
-	multiple_ref_alignment = new MultipleAlignment(seqA.names()[0],seqB.names()[0],max_diff_pw_alignment);
+	multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),seqB.seqentry(0).name(),max_diff_pw_alignment);
     }
 
     // if (multiple_ref_alignment) {

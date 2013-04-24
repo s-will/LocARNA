@@ -469,8 +469,8 @@ main(int argc, char **argv) {
     	if(opt_postscript_output){
     		//	 time_t start_ps = time (NULL);
     		if (opt_verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
-    		if (psFile1.size()==0){psFile1 = seqA.names()[0]+"_EPMs.ps";}
-    		if (psFile2.size()==0){psFile2 = seqB.names()[0]+"_EPMs.ps";}
+    		if (psFile1.size()==0){psFile1 = seqA.seqentry(0).name()+"_EPMs.ps";}
+    		if (psFile2.size()==0){psFile2 = seqB.seqentry(0).name()+"_EPMs.ps";}
 
     		myChaining.MapToPS(maA.consensus_sequence(), maB.consensus_sequence(), myLCSEPM, psFile1,psFile2);
     		//		 time_t stop_ps = time (NULL);

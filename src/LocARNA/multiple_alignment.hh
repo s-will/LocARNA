@@ -7,6 +7,7 @@
 #include <map>
 
 #include "aux.hh"
+#include "alphabet.hh"
 
 #include <assert.h>
 
@@ -17,7 +18,6 @@
 namespace LocARNA {
 
 class Alignment;
-class Sequence;
 
 /**
  * @brief Represents a multiple alignment
@@ -32,13 +32,6 @@ class Sequence;
  *
  * Sequences positions and column indices are 1..len.
  *
- * @note The class Sequence also represents a multiple alignment, but
- * does so in a different way. The major difference is that Sequence
- * structures the matrix column-wise, which is well suited for use in
- * an alignment algorithm. This class features the more traditional
- * row-wise view.
- *
- * @see Sequence
  */
 class MultipleAlignment {
         
@@ -160,16 +153,80 @@ public:
 	//!   if column col contains a gap, then pos1 is the sequence position left of the gap or 0 and pos2 the position right of the gap or sequence length+1
 	pos_pair_t
 	col_to_pos(pos_type col) const;
+
+	/** 
+	 * \brief reverse sequence
+	 * 
+	 */
+	void reverse() {
+	    seq_.reverse();
+	}
+	
+	/** 
+	 * \brief append character to sequence
+	 * @param c character
+	 */
+	void push_back(char c) {
+	    seq_.push_back(c);
+	}
+
+    };
+
+    /**
+     * \brief read only proxy class representing a column of the alignment 
+     *
+     * Allow read only access to the symbols in the column by their row index
+     */
+    class AliColumn {
+	const MultipleAlignment &ma_;
+	size_type col_index_;
+    public:
+	AliColumn(const MultipleAlignment &ma,size_type col_index): ma_(ma),col_index_(col_index) {}
+	
+	const char &
+	operator [](size_type row_index) const {return ma_.seqentry(row_index).seq()[col_index_];}
+
+	size_type 
+	size() const {return ma_.row_number();}
+
+	/** 
+	 * Test equality
+	 * 
+	 * @param ac second alignment column
+	 * 
+	 * @return whether columns are equal
+	 */
+	bool
+	operator ==(const AliColumn &ac) const {
+	    bool ret = this->size()==ac.size();
+	    for (size_type i=0; ret && i<size(); i++) {
+		ret = ret && (this->ma_.seqentry(i).seq()[col_index_] == ac.ma_.seqentry(i).seq()[col_index_]);
+	    }
+	    return ret;
+	}
+
+	/** 
+	 * Test inequality
+	 * 
+	 * @param ac second alignment column
+	 * 
+	 * @return whether columns are equal
+	 */
+	bool
+	operator !=(const AliColumn &ac) const {
+	    return !(*this == ac);
+	}
+
     };
     
 private:
-    std::vector<SeqEntry> alig;
+    std::vector<SeqEntry> alig_;
     
     typedef std::map<std::string,size_type> str2idx_map_t;
 
     //! association between names and indices, use to 
     //! locate sequences by name in log time
-    str2idx_map_t name2idx; 
+    str2idx_map_t name2idx_;
     
     //! create the map for translating names to indices
     void
@@ -198,7 +255,6 @@ private:
     //!
     //! @note Sequences can be multiline, white space in sequences is ignored.
     //! @note The order of sequences in the stream is preserved.
-    //! @todo Introduce class abstraction for reading/writing of fasta files
     void
     read_aln_fasta(std::istream &in);
     
@@ -211,6 +267,9 @@ public:
     //! @todo Use in output, introduce AUTO for automatic detection of input format
     enum format_t {CLUSTAL,FASTA};
 
+    //! \brief Construct empty
+    MultipleAlignment();
+    
     //! @brief Construct from file
     //!
     //! @param file name of input file
@@ -225,10 +284,6 @@ public:
     //! @param format file format (CLUSTAL or FASTA) 
     //! @throw failure on read problems
     MultipleAlignment(std::istream &in, format_t format=CLUSTAL);
-
-    //! @brief Construct from sequence object
-    //! @param sequence the sequence 
-    MultipleAlignment(const Sequence &sequence);
     
     //! \brief Construct as pairwise alignment from names and strings
     //! @param nameA name of sequence A
@@ -236,16 +291,15 @@ public:
     //! @param alistrings alignment strings of sequence A and B concatenated by '&'
     //! recognized gap symbols in the alignment string gap_symbols
     MultipleAlignment(const std::string &nameA, const std::string &nameB, const std::string &alistrings);
-
-
+    
     //! \brief Construct from Alignment object
     //! @param alignment object of type Alignment
     MultipleAlignment(const Alignment &alignment);
     
-    //! \brief Size of multiple aligment
-    //! @return number of name/sequence pairs in alignment
+    //! \brief Number of rows of multiple aligment
+    //! @return number of rows
     size_type
-    size() const { return alig.size(); }
+    row_number() const { return alig_.size(); }
     
     //! @brief Test whether alignment is proper
     //! @return whether all sequences have the same length
@@ -258,20 +312,20 @@ public:
     //! sequences have the same length!
     //! @return length of first sequence in alignment
     pos_type 
-    length() const { return alig[0].seq().length(); }
+    length() const { return alig_[0].seq().length(); }
     
     //! @brief Begin for read-only traversal of name/sequence pairs
     //! @return begin iterator
     const_iterator
     begin() const {
-	return alig.begin();
+	return alig_.begin();
     }
     
     //! @brief End for read-only traversal of name/sequence pairs
     //! @return end iterator
     const_iterator
     end() const {
-	return alig.end();
+	return alig_.end();
     }
     
     //! @brief Test whether name exists
@@ -288,8 +342,8 @@ public:
     //! @return index of name/sequence pair with given name
     size_type
     index(const std::string &name) const {
-	str2idx_map_t::const_iterator it = name2idx.find(name);
-	assert(it!=name2idx.end());
+	str2idx_map_t::const_iterator it = name2idx_.find(name);
+	assert(it!=name2idx_.end());
 	return it->second;
     }
     
@@ -300,7 +354,7 @@ public:
     //! @return sequence (including gaps) with given index
     const SeqEntry &
     seqentry(size_type index) const {
-	return alig[index];
+	return alig_[index];
     }
     
     //! \brief Access name/sequence pair by name
@@ -309,7 +363,7 @@ public:
     //! @return sequence (including gaps) with given name
     const SeqEntry &
     seqentry(const std::string &name) const {
-	return alig[index(name)];
+	return alig_[index(name)];
     }
     
 
@@ -377,6 +431,86 @@ public:
      * @return consensus sequence as string
      */
     std::string consensus_sequence() const;
+    
+    /** 
+     * Access alignment column
+     * 
+     * @param i column index 
+     * 
+     * @return reference to alignment column with index i (1-based)
+     */
+    AliColumn
+    column(size_type col_index) const {
+	return AliColumn(*this,col_index);
+    }
+
+    /** 
+     * \brief Append sequence entry
+     * 
+     * @param seqentry new sequence entry
+     *
+     * @pre *this is empty or entry must have same size as *this
+     */
+    void
+    append(const SeqEntry &seqentry);
+    
+    /**
+     * \brief Append a column
+     *
+     * @param c column that is appended
+     *
+     */
+    void operator += (const AliColumn &c);
+    
+    /**
+     * \brief Append the same character to each row
+     *
+     * @param c character that is appended
+     *
+     */
+    void operator += (char c);
+    
+    /**
+     * \brief reverse the multiple alignment
+     */
+    void reverse();
+
+
+    // ------------------------------------------------------------
+    // output
+    
+    /**
+     * \brief Write alignment to stream
+     *
+     * @param out output stream
+     *
+     * Writes one line "<name> <seq>" for each single sequence.
+     */
+    void write(std::ostream &out) const;
+    
+    /**
+     * \brief Write sub-alignment to stream 
+     *
+     * Write from position start to position end to output stream
+     * out; write lines "<name> <seq>"
+     *
+     * @param out output stream
+     * @param start start column
+     * @param end end column
+     */
+    void write(std::ostream &out, size_type start, size_type end) const;
+    
+    /**
+     * \brief check character constraints
+     * check whether the alignment contains characters from
+     * the given alphabet only and, if warn, print warnings otherwise.
+     *
+     * @param alphabet alphabet of admissible characters
+     * @param warn if true, print warnings
+     *
+     * @return whether all characters are in the alphabet
+     */
+    bool checkAlphabet(const Alphabet<char> &alphabet) const;
     
 private:
     //! @brief Deviation of a pairwise alignment from a pairwise reference alignment

@@ -4,7 +4,6 @@
 
 #include "multiple_alignment.hh"
 
-#include "sequence.hh"
 #include "alignment.hh"
 
 #include <limits>
@@ -15,6 +14,9 @@ using namespace std;
 
 namespace LocARNA {
 
+    MultipleAlignment::MultipleAlignment() {
+    }
+    
     MultipleAlignment::MultipleAlignment(std::istream &in, format_t format) {
 	if (!in.good()) {
 	    throw(failure("Cannot read input stream."));
@@ -28,8 +30,6 @@ namespace LocARNA {
 
 	create_name2idx_map();
     }
-
-
 
     MultipleAlignment::MultipleAlignment(const std::string &filename, format_t format) {
 	try {
@@ -53,27 +53,6 @@ namespace LocARNA {
 	create_name2idx_map();
     }
 
-
-
-    MultipleAlignment::MultipleAlignment(const Sequence &sequence) {
-	size_type rows = sequence.row_number();
-    
-	for (size_type i=0; i<rows; i++) {
-	    std::string name = sequence.names()[i];
-	
-	    std::string seq="";
-	
-	    for (size_type j=1; j<=sequence.length(); ++j) {
-		seq += sequence[j][i];
-	    }
-	
-	    alig.push_back(SeqEntry(name,seq));
-	}
-    
-	create_name2idx_map();
-    }
-    
-
     MultipleAlignment::MultipleAlignment(const std::string &nameA, const std::string &nameB, const std::string &alistrings) {
 	size_t separator_pos=alistrings.find("&");
     
@@ -88,8 +67,8 @@ namespace LocARNA {
 	    throw failure("Alignment strings of unequal length."); 
 	}
     
-	alig.push_back(SeqEntry(nameA,aliA));
-	alig.push_back(SeqEntry(nameB,aliB));
+	alig_.push_back(SeqEntry(nameA,aliA));
+	alig_.push_back(SeqEntry(nameB,aliB));
 
 	create_name2idx_map();
     }
@@ -113,7 +92,7 @@ namespace LocARNA {
 		}
 	    } else {
 		for (size_type k=0; k<seqA.row_number(); k++) {
-		    aliA[k] += seqA[a[i]][k];
+		    aliA[k] += seqA.column(a[i])[k];
 		}
 	    }
 	    if ( b[i]<0 ) {
@@ -122,19 +101,16 @@ namespace LocARNA {
 		}
 	    } else {
 		for (size_type k=0; k<seqB.row_number(); k++) {
-		    aliB[k] += seqB[b[i]][k];
+		    aliB[k] += seqB.column(b[i])[k];
 		}
 	    }
 	}
     
-	const std::vector<std::string> namesA = seqA.names();
-	const std::vector<std::string> namesB = seqB.names();
-    
 	for (size_type k=0; k<seqA.row_number();k++) {
-	    alig.push_back(SeqEntry(namesA[k],aliA[k]));
+	    alig_.push_back(SeqEntry(seqA.seqentry(k).name(),aliA[k]));
 	}
 	for (size_type k=0; k<seqB.row_number();k++) {
-	    alig.push_back(SeqEntry(namesB[k],aliB[k]));
+	    alig_.push_back(SeqEntry(seqB.seqentry(k).name(),aliB[k]));
 	}
     }
 
@@ -142,13 +118,12 @@ namespace LocARNA {
     void
     MultipleAlignment::create_name2idx_map() {
 	for (std::vector<SeqEntry>::size_type i=0;
-	     i<alig.size();
+	     i<alig_.size();
 	     ++i) {
-	    name2idx[alig[i].name()]=i;
+	    name2idx_[alig_[i].name()]=i;
 	}
     }
 
- 
     void
     MultipleAlignment::read_aln_clustalw(std::istream &in) {
         
@@ -182,7 +157,7 @@ namespace LocARNA {
     
 	// store the name/sequence pairs in the vector alig
 	for (std::vector<std::string>::const_iterator it=names.begin(); it!=names.end(); ++it) {
-	    alig.push_back( SeqEntry(*it,seq_map[*it]) );
+	    alig_.push_back( SeqEntry(*it,seq_map[*it]) );
 	}
     }
 
@@ -219,7 +194,7 @@ namespace LocARNA {
 		    getline(in,line);
 		}
 		
-		alig.push_back( SeqEntry(name,description,seqstr) );
+		alig_.push_back( SeqEntry(name,description,seqstr) );
 	    }
 	}
     }
@@ -299,10 +274,10 @@ namespace LocARNA {
     MultipleAlignment::is_proper() const {
 	// Iterate through all sequences (with gaps) and check for equal lengths
 	bool proper = true;
-	std::vector<SeqEntry>::const_iterator it = alig.begin();
+	std::vector<SeqEntry>::const_iterator it = alig_.begin();
 	size_t length = it->seq().length();
 	++it;
-	while (proper && (it != alig.end())) {
+	while (proper && (it != alig_.end())) {
 	    proper = proper && (length == it->seq().length());
 	}
 	return proper;
@@ -370,9 +345,9 @@ namespace LocARNA {
 	size_type d=0;
     
 	//traverse all pairs of sequences in *this and ma
-	for (size_type x=0; x<ma.alig.size(); x++) {
+	for (size_type x=0; x<ma.alig_.size(); x++) {
 	    const std::string &namex = ma.seqentry(x).name();
-	    for (size_type y=x+1; y<ma.alig.size(); y++) {
+	    for (size_type y=x+1; y<ma.alig_.size(); y++) {
 		const std::string &namey = ma.seqentry(y).name();
 	    
 		size_type d2 =
@@ -392,9 +367,9 @@ namespace LocARNA {
 	
 	
 	//traverse all pairs of sequences in *this and ma
-	for (size_type x=0; x<ma.alig.size(); x++) {
+	for (size_type x=0; x<ma.alig_.size(); x++) {
 	    const std::string &namex = ma.seqentry(x).name();
-	    for (size_type y=x+1; y<ma.alig.size(); y++) {
+	    for (size_type y=x+1; y<ma.alig_.size(); y++) {
 		const std::string &namey = ma.seqentry(y).name();
 		
 		size_t len1 = seqentry(namex).length_wogaps(); 
@@ -427,7 +402,7 @@ namespace LocARNA {
 	    }
 	}
 	
-	size_t K=ma.size();
+	size_t K=ma.row_number();
 	
 	return sps*2.0/K/(K-1);
     }
@@ -438,9 +413,9 @@ namespace LocARNA {
 	
 	
 	//traverse all pairs of sequences in *this and ma
-	for (size_type x=0; x<ma.alig.size(); x++) {
+	for (size_type x=0; x<ma.alig_.size(); x++) {
 	    const std::string &namex = ma.seqentry(x).name();
-	    for (size_type y=x+1; y<ma.alig.size(); y++) {
+	    for (size_type y=x+1; y<ma.alig_.size(); y++) {
 		const std::string &namey = ma.seqentry(y).name();
 		
 		size_t len1 = seqentry(namex).length_wogaps(); 
@@ -461,7 +436,7 @@ namespace LocARNA {
 	    }
 	}
 	
-	size_t K=ma.size();
+	size_t K=ma.row_number();
 	
 	return score*2.0/K/(K-1);
     }
@@ -522,9 +497,9 @@ namespace LocARNA {
 	size_t exclusive_matches=0; // count matches in ma that are not found in reference
 	
 	//traverse all pairs of sequences in *this and ma
-	for (size_type x=0; x<ma.alig.size(); x++) {
+	for (size_type x=0; x<ma.alig_.size(); x++) {
 	    const std::string &namex = ma.seqentry(x).name();
-	    for (size_type y=x+1; y<ma.alig.size(); y++) {
+	    for (size_type y=x+1; y<ma.alig_.size(); y++) {
 		const std::string &namey = ma.seqentry(y).name();
 				
 		// compute pairwise score
@@ -675,8 +650,8 @@ namespace LocARNA {
     void
     MultipleAlignment::print_debug(ostream &out) const {
     
-	for (size_type i=0; i<alig.size(); ++i) {
-	    out << alig[i].name() << " \t" << alig[i].seq().to_string()<<std::endl;
+	for (size_type i=0; i<alig_.size(); ++i) {
+	    out << alig_[i].name() << " \t" << alig_[i].seq().to_string()<<std::endl;
 	} 
     
     }
@@ -690,7 +665,7 @@ namespace LocARNA {
 	    map<char,size_t> tab;
 	    
 	    // iterate over sequences and count character
-	    for (std::vector<SeqEntry>::const_iterator it=alig.begin(); alig.end()!=it; ++it) {
+	    for (std::vector<SeqEntry>::const_iterator it=alig_.begin(); alig_.end()!=it; ++it) {
 		char c=it->seq()[i];
 		if (tab.end()==tab.find(c)) tab[c]=0;
 		tab[c]++;
@@ -709,6 +684,66 @@ namespace LocARNA {
 	}
 	
 	return cs;
+    }
+
+    void 
+    MultipleAlignment::write(std::ostream &out,
+			     size_type start, 
+			     size_type end) const
+    {
+	for (size_type i=0; i<row_number(); i++) {
+	    int ow=out.width(26);
+	    out << std::left << alig_[i].name()<<" ";
+	    out.width(ow);
+	
+	    for (size_type j=start; j<=end; j++) {
+		out << alig_[i].seq()[j];
+	    }
+	    out << std::endl;
+	}
+    }
+
+    void MultipleAlignment::write(std::ostream &out) const {
+	write(out,1,length());
+    }
+    
+    
+    void MultipleAlignment::reverse() {
+	for (std::vector<SeqEntry>::iterator it=alig_.begin(); alig_.end()!=it; ++it) {
+	    it->reverse();
+	}
+    }
+    
+    bool 
+    MultipleAlignment::checkAlphabet(const Alphabet<char> &alphabet) const {
+	for (const_iterator it=begin(); end()!=it; ++it) {
+	    for (size_type i=1; i<=it->seq().length(); i++) {
+		if (!alphabet.in( it->seq()[i] )) {
+		    return false;
+		}
+	    }
+	}
+	
+    	return true;
+    }
+
+    void MultipleAlignment::append(const SeqEntry &seqentry) {
+	name2idx_[seqentry.name()]=alig_.size(); // keep map name->index up to date 	
+	alig_.push_back(seqentry);
+    }
+    
+    void
+    MultipleAlignment::operator += (const AliColumn &c) {
+	for (size_type i=0; i<alig_.size(); ++i) {
+	    alig_[i].push_back(c[i]);
+	}
+    }
+
+    void
+    MultipleAlignment::operator += (char c) {    
+	for (size_type i=0; i<alig_.size(); ++i) {
+	    alig_[i].push_back(c);
+	}
     }
 
 } // end namespace 

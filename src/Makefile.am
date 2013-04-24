@@ -14,7 +14,7 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 lib_LTLIBRARIES=libLocARNA-@API_VERSION@.la
 
 libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
-	LocARNA/stopwatch.cc LocARNA/options.cc LocARNA/sequence.cc	\
+	LocARNA/sequence.cc LocARNA/stopwatch.cc LocARNA/options.cc	\
 	LocARNA/basepairs.cc LocARNA/alignment.cc LocARNA/rna_data.cc	\
 	LocARNA/scoring.cc LocARNA/infty_int.cc				\
 	LocARNA/match_probs.cc LocARNA/ribosum.cc			\

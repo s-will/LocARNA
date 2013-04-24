@@ -6,10 +6,9 @@
 
 #include "aux.hh"
 #include "multiple_alignment.hh"
+#include "sequence.hh"
 
 namespace LocARNA {
-
-    class Sequence;
     
     /**
      * \brief Represents a range of traces

@@ -81,14 +81,14 @@ namespace LocARNA {
     public:
 	
 	/** 
-	 * Construct from std::string
+	 * \brief Construct from std::string
 	 * 
 	 * @param s string
 	 */
 	string1(const std::string &s): s_(" "+s) {}
 	
 	/** 
-	 * Copy constructor
+	 * \brief Copy constructor
 	 * 
 	 * @param s string (of type string1)
 	 */
@@ -104,7 +104,7 @@ namespace LocARNA {
 	}
     
 	/** 
-	 * Read access
+	 * \brief Read access
 	 * 
 	 * @param i index 
 	 * 
@@ -116,7 +116,7 @@ namespace LocARNA {
 	}
     
 	/** 
-	 * Read/write access
+	 * \brief Read/write access
 	 * 
 	 * @param i index 
 	 * 
@@ -128,7 +128,7 @@ namespace LocARNA {
 	}
     
 	/** 
-	 * Provides length
+	 * \brief Provide length
 	 * 
 	 * @return length of string
 	 */
@@ -137,7 +137,7 @@ namespace LocARNA {
 	}
     
 	/** 
-	 * Assignment operator
+	 * \brief Assignment operator
 	 * 
 	 * @param s string
 	 * 
@@ -145,6 +145,25 @@ namespace LocARNA {
 	 * @post *this equals s
 	 */
 	const string1 &operator =(const string1 &s) {s_ = s.s_; return *this;}
+
+	/** 
+	 * \brief reverse string
+	 * 
+	 */
+	void
+	reverse() {
+	    std::reverse(s_.begin()+1,s_.end());
+	}
+
+	/** 
+	 * \brief push back character
+	 * 
+	 * @param c character 
+	 */
+	void
+	push_back(char c) {
+	    s_.push_back(c);
+	}
     
     };
 

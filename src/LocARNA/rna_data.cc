@@ -372,7 +372,7 @@ namespace LocARNA {
 	//! Ts translated to Us
 	normalize_rna_sequence(seqstr);
         
-	sequence.append_row(seqname,seqstr);
+	sequence.append(Sequence::SeqEntry(seqname,seqstr));
             
 	std::string line;
 	
@@ -456,7 +456,7 @@ namespace LocARNA {
     
 	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
 	    // std::cout << "SEQ: " << it->first << " " << it->second << std::endl;
-	    sequence.append_row(it->first,it->second);
+	    sequence.append(Sequence::SeqEntry(it->first,it->second));
 	}
     
 	// return when reading of pair probs is not wanted

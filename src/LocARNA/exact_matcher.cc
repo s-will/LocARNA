@@ -567,8 +567,8 @@ bool debug_trace_F_heuristic = false;
 
     	static int count = 0;
 
-    	static string seq1_id = seqA.names()[0];
-    	static string seq2_id = seqB.names()[0];
+    	static string seq1_id = seqA.seqentry(0).name();
+    	static string seq2_id = seqB.seqentry(0).name();
 
     	++count;
     	//todo: remove again
@@ -2633,9 +2633,9 @@ bool debug_trace_F_heuristic = false;
 	seq2_2 += "#2";
 	seq2_3 += "#3";
 
-	outLocARNAfile << ">"<< seqA.names()[0] << endl << upperCase(sequenceA) << endl;
+	outLocARNAfile << ">"<< seqA.seqentry(0).name() << endl << upperCase(sequenceA) << endl;
 	outLocARNAfile << seq1_1 << endl << seq1_2 << endl << seq1_3 << endl;
-	outLocARNAfile << ">"<<seqB.names()[0] << endl << upperCase(sequenceB) << endl;
+	outLocARNAfile << ">"<<seqB.seqentry(0).name() << endl << upperCase(sequenceB) << endl;
 	outLocARNAfile << seq2_1 << endl << seq2_2 << endl << seq2_3 << endl << endl;
 
 	outLocARNAfile.close();
@@ -2718,8 +2718,8 @@ bool debug_trace_F_heuristic = false;
 
 	outfile << "CLUSTAL W (1.83) multiple sequence alignment --- expaRNA 0.7.2 - exact pattern Alignment of RNA --- Score: "<< matchingsLCSEPM.size() << endl <<endl;
 
-	string tmp1 = seqA.names()[0] +"      ";
-	string tmp2 = seqB.names()[0] +"      ";
+	string tmp1 = seqA.seqentry(0).name() +"      ";
+	string tmp2 = seqB.seqentry(0).name() +"      ";
 	if (tmp1.length() < tmp2.length())
 	    tmp1.resize(tmp2.length(),' ');
 	else

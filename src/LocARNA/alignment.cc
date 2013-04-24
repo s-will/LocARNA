@@ -55,21 +55,24 @@ void Alignment::write_clustal(std::ostream &out,
 	std::cout << std::endl;
      */
 
-    std::vector<Sequence> aliString;
-
-    aliString.resize(4,Sequence());
-
-    Sequence &aliStrA=aliString[0];
-    Sequence &aliSeqA=aliString[1];
-    Sequence &aliSeqB=aliString[2];
-    Sequence &aliStrB=aliString[3];
-
-    aliStrA.init_buffer("");
-    aliSeqA.init_buffer(seqA_);
-    aliSeqB.init_buffer(seqB_);
-    aliStrB.init_buffer("");
-
-
+    Sequence aliStrA;
+    Sequence aliSeqA;
+    Sequence aliSeqB;
+    Sequence aliStrB;
+    
+    // ----------------------------------------
+    // for new sequence objects, generate appropriately named sequence entries with empty sequences 
+    aliStrA.append(Sequence::SeqEntry("",""));
+    aliStrB.append(Sequence::SeqEntry("",""));
+    //
+    for(Sequence::const_iterator it=seqA_.begin(); seqA_.end()!=it; ++it)
+	aliSeqA.append(Sequence::SeqEntry(it->name(),""));
+    //
+    for(Sequence::const_iterator it=seqB_.begin(); seqB_.end()!=it; ++it)
+	aliSeqB.append(Sequence::SeqEntry(it->name(),""));
+    // ----------------------------------------
+    
+    
     int lastA=1; // bases consumed in sequence A
     int lastB=1; // ---------- "" ------------ B
 
@@ -141,6 +144,7 @@ void Alignment::write_clustal(std::ostream &out,
     //	if (seqA_.row_number()==1 && seqB_.row_number()==1)
     //	    out << "SCORE: "<<score<<std::endl;
 
+
     if (alisize>0) {
 	size_type local_start_A=a_[0]; //!< pos where local alignment starts for A
 	size_type local_start_B=b_[0]; //!< pos where local alignment starts for B
@@ -166,19 +170,19 @@ void Alignment::write_clustal(std::ostream &out,
 	    out << "\t+" << local_start_A << std::endl;
 	    out << "\t+" << local_start_B << std::endl;
 	}
-
+	
 	if (!pos_out || local_out) {
 	    out<<std::endl;
 
 	    while (k <= length) {
 
 		if (write_structure)
-		    aliString[0].write( out, k, std::min(length,k+width-1) );
-		aliString[1].write( out, k, std::min(length,k+width-1) );
-		aliString[2].write( out, k, std::min(length,k+width-1) );
+		    aliStrA.write( out, k, std::min(length,k+width-1) );
+		aliSeqA.write( out, k, std::min(length,k+width-1) );
+		aliSeqB.write( out, k, std::min(length,k+width-1) );
 
 		if (write_structure)
-		    aliString[3].write( out, k, std::min(length,k+width-1) );
+		    aliStrB.write( out, k, std::min(length,k+width-1) );
 
 		out<<std::endl;
 		k+=width;
@@ -329,13 +333,13 @@ Alignment::write_alifold_consensus_dot_plot(std::ostream &out, double cutoff) co
 
     // construct sequences array from sequences in alignment
     MultipleAlignment ma(*this); // generate multiple alignment from alignment object
-    sequences = new char *[ma.size()+1];
-    for (size_t i=0; i<ma.size(); i++) {
+    sequences = new char *[ma.row_number()+1];
+    for (size_t i=0; i<ma.row_number(); i++) {
 	sequences[i] = new char[ma.length()+1];
 	// copy ma row to sequences[i]
 	strcpy(sequences[i],ma.seqentry(i).seq().to_string().c_str());
     }
-    sequences[ma.size()]=NULL;
+    sequences[ma.row_number()]=NULL;
 
     int length = strlen(sequences[0]);
     char *structure = new char[length+1];
@@ -370,7 +374,7 @@ Alignment::write_alifold_consensus_dot_plot(std::ostream &out, double cutoff) co
 
     // free heap space
     delete [] structure;
-    for (size_t i=0; i<ma.size(); i++) {
+    for (size_t i=0; i<ma.row_number(); i++) {
 	delete [] sequences[i];
     }
     delete [] sequences;

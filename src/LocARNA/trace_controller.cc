@@ -8,7 +8,7 @@
 #include "aux.hh"
 #include "trace_controller.hh"
 #include "multiple_alignment.hh"
-#include "sequence.hh"
+#include "matrices.hh"
 
 #include <math.h>
 #include <assert.h>
@@ -378,13 +378,13 @@ namespace LocARNA {
 	    std::vector<TraceRange> trs;
 
 	    //  iterate over all pairs of rows in the multiple alignment of seqA and seqB
-	    for (size_type i=0; i<maSeqA.size(); ++i) {
+	    for (size_type i=0; i<maSeqA.row_number(); ++i) {
 		const SeqEntry &seqentryA = maSeqA.seqentry(i);
 		// get alignment string in reference corresponding to seqentryA
 		const std::string &nameA = seqentryA.name();
 		const SeqEntry &ref_seqentryA = ma->seqentry(nameA);
 	
-		for (size_type j=0; j<maSeqB.size(); ++j) {
+		for (size_type j=0; j<maSeqB.row_number(); ++j) {
 		    const SeqEntry &seqentryB = maSeqB.seqentry(j);
 		    // get alignment string in reference corresponding to seqentryB
 		    const std::string &nameB = seqentryB.name();
