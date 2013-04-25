@@ -222,13 +222,13 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// call fold for setting the pf_scale
-	double en = alifold(c_sequences,c_structure);
+	double min_free_energy = alifold(c_sequences,c_structure);
 	// std::cout << c_structure << std::endl;
 	free_alifold_arrays();
 	
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
-	pf_scale = exp(-en/kT/length);
+	pf_scale = exp(-min_free_energy/kT/length);
 	
 	
 	// ----------------------------------------

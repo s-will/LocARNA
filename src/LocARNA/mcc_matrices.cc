@@ -36,7 +36,7 @@ namespace LocARNA {
     }
 
     McC_matrices_base::McC_matrices_base()
-	: length(0),local_copy(false),qb(0),qm(0),bppm(0),iindx(0),q1k(0),qln(0)	
+	: length(0),local_copy(false),qb(0),qm(0),bppm(0),iindx(0),q1k(0),qln(0)
     {}
 
     void
@@ -72,25 +72,23 @@ namespace LocARNA {
 
     McC_matrices_base::~McC_matrices_base() {
 	if (local_copy) {
-	    free_all();
-	} else {
-	    free(iindx);
+	    free_all_local();
 	}
+	if (iindx) free(iindx);
+	if (pf_params) free(pf_params);
     }
 
-    void McC_matrices_base::free_all() {
+    void McC_matrices_base::free_all_local() {
 	if (qb) free(qb);
 	if (qm) free(qm);
 	if (q1k) free(q1k);
 	if (qln) free(qln);
-	if (iindx) free(iindx);
-	if (pf_params) free(pf_params);
+	if (bppm) free(bppm);
     }
     
     // ----------------------------------------
 
-    McC_matrices_t::McC_matrices_t(char *sequence, bool local_copy) {
-	
+    McC_matrices_t::McC_matrices_t(char *sequence, bool local_copy) {	
 	if (local_copy) {
 	    McC_matrices_t McCmat_tmp(sequence,false);
 	    deep_copy(McCmat_tmp);
@@ -111,7 +109,7 @@ namespace LocARNA {
 	    // get pointer to McCaskill base pair probabilities
 	    bppm = export_bppm();	    
 	    
-	    pf_params = get_scaled_pf_parameters();
+	    pf_params = get_scaled_pf_parameters(); //allocates space for pf_params!
 	}
     }
 
@@ -164,7 +162,7 @@ namespace LocARNA {
 	    // get pointer to McCaskill base pair probabilities
 	    bppm = alipf_export_bppm();	    
 	    
-	    pf_params = get_scaled_alipf_parameters(n_seq);
+	    pf_params = get_scaled_alipf_parameters(n_seq); // allocates space
 	}
     }
     

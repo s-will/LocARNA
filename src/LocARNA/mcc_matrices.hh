@@ -87,7 +87,7 @@ namespace LocARNA {
 	    
     protected:
 
-	void free_all();
+	void free_all_local();
 
 	//! \brief deep copy all data structures 
 	void
