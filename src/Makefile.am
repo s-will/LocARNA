@@ -45,7 +45,7 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/ribosum85_60.icc LocARNA/rna_structure.hh		\
 	LocARNA/confusion_matrix.hh LocARNA/discrete_distribution.hh	\
 	LocARNA/string1.hh LocARNA/type_wrapper.hh			\
-	LocARNA/global_stopwatch.hh
+	LocARNA/global_stopwatch.hh LocARNA/tuples.hh
 
 ## binary programs
 ##
