@@ -23,7 +23,6 @@
 #include "LocARNA/basepairs.hh"
 #include "LocARNA/alignment.hh"
 #include "LocARNA/aligner_n.hh"
-#include "LocARNA/evaluator.hh"
 #include "LocARNA/rna_data.hh"
 #include "LocARNA/arc_matches.hh"
 #include "LocARNA/match_probs.hh"
@@ -194,8 +193,6 @@ struct command_line_parameters {
     int mea_gamma; //!< mea gamma
     int probability_scale; //!< probability scale
 
-    bool opt_eval; //!< whether to evaluate
-
     bool opt_normalized; //!< whether to do normalized alignment
     int normalized_L; //!< normalized_L
 
@@ -298,13 +295,10 @@ option_def my_options[] = {
 //    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
 
-/*    {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Mode of operation"},
-    {"eval",0,&clp.opt_eval,O_NO_ARG,0,O_NODEFAULT,"","Turn on evaluation mode"},
-*/
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
-    {"",0,0,O_ARG_STRING,&clp.file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
-    {"",0,0,O_ARG_STRING,&clp.file2,O_NODEFAULT,"file 2","Basepairs input file 2 (dp dir in eval mode)"},
+    {"",0,0,O_ARG_STRING,&clp.file1,O_NODEFAULT,"file 1","Basepairs input file 1"},
+    {"",0,0,O_ARG_STRING,&clp.file2,O_NODEFAULT,"file 2","Basepairs input file 2"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -491,22 +485,6 @@ main(int argc, char **argv) {
 				 clp.probability_scale
 				 );
 
-    
-    // ----------------------------------------
-    // CHOOSE MODE OF OPERATION
-    //
-    // whether to do evaluation
-    //
-    
-    if (clp.opt_eval) {
-	std::cout <<"Evaluation Mode"<<std::endl;
-	std::cout <<"==============="<<std::endl;
-	
-	Evaluator e(clp.file1,clp.file2,&scoring_params);
-	std::cout <<"SCORE: "<< e.eval() << std::endl;
-	
-	return 0;
-    }
     
     
     // ------------------------------------------------------------
