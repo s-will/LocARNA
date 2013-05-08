@@ -601,7 +601,7 @@ namespace LocARNA {
     score_t
     Scoring::arcmatch(const ArcMatch &am, bool stacked) const {
 	score_t score;
-	if (arc_matches->explicit_scores()) { // will not take stacking into account!!!
+	if (arc_matches->explicit_scores()) { // does not take stacking into account!!!
 	    score = arc_matches->get_score(am)  - 4*lambda_;
 	} else {	
 	    const  Arc &arcA = am.arcA();
