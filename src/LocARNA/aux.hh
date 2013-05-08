@@ -36,6 +36,9 @@ namespace std {
 
 
 namespace LocARNA {
+
+    //! type of the locarna score as defined by the class Scoring
+    typedef long int score_t;
     
     //! general size type
     typedef size_t size_type;
@@ -45,7 +48,13 @@ namespace LocARNA {
     
     //! interpret these symbol as gaps when reading alignments
     const std::string gap_symbols = "-~.";
-
+    
+    //! @brief Test for gap symbol
+    //! @param c character to be tested
+    //! @returns whether c codes for a gap
+    //! according to global constant gap_symbols
+    bool is_gap_symbol(char c);
+    
     //! Simple exception class that supports a text message
     class failure : public std::exception {
 	//! message that is reported by what
@@ -65,108 +74,7 @@ namespace LocARNA {
 	//! @return message
 	virtual const char* what() const throw();
     };
-
  
-    /** 
-     * @brief A simple 1-based string
-	
-     * Features:
-     * - based on  c++ std::string class, but offers very limited interface
-     * - conversion from and to std::string
-     * - access via operator []
-     * - length method
-     */
-    class string1 {
-	std::string s_;
-    public:
-	
-	/** 
-	 * \brief Construct from std::string
-	 * 
-	 * @param s string
-	 */
-	string1(const std::string &s): s_(" "+s) {}
-	
-	/** 
-	 * \brief Copy constructor
-	 * 
-	 * @param s string (of type string1)
-	 */
-	string1(const string1 &s): s_(s.s_) {}
-	
-	/** 
-	 * Convert to std::string
-	 *
-	 * @return converted string
-	 */
-	std::string to_string() const {
-	    return s_.substr(1,length());
-	}
-    
-	/** 
-	 * \brief Read access
-	 * 
-	 * @param i index 
-	 * 
-	 * @return ith character of string
-	 * @note 1-based
-	 */
-	const char& operator [](size_type i) const {
-	    return s_[i];
-	}
-    
-	/** 
-	 * \brief Read/write access
-	 * 
-	 * @param i index 
-	 * 
-	 * @return (reference to) ith character of string
-	 * @note 1-based
-	 */
-	char& operator [](size_type i) {
-	    return s_[i];
-	}
-    
-	/** 
-	 * \brief Provide length
-	 * 
-	 * @return length of string
-	 */
-	size_type length() const {
-	    return s_.length()-1;
-	}
-    
-	/** 
-	 * \brief Assignment operator
-	 * 
-	 * @param s string
-	 * 
-	 * @return *this
-	 * @post *this equals s
-	 */
-	const string1 &operator =(const string1 &s) {s_ = s.s_; return *this;}
-
-	/** 
-	 * \brief reverse string
-	 * 
-	 */
-	void
-	reverse() {
-	    std::reverse(s_.begin()+1,s_.end());
-	}
-
-	/** 
-	 * \brief push back character
-	 * 
-	 * @param c character 
-	 */
-	void
-	push_back(char c) {
-	    s_.push_back(c);
-	}
-    
-    };
-
 
     //! @brief Represents a 3-tuple
     //!
@@ -272,151 +180,7 @@ namespace LocARNA {
      * file ViennaRNA/fold_vars.h
      */
 #    define FLT_OR_DBL double
-    
-    
-    /**
-     * @brief generic type_wrapper class
-     * 
-     * wrap a comparable type with +/- operations
-     *
-     */
-    template<class T>
-    class type_wrapper {
-    	T val_;
-    public:
-
-	/**
-	 * @brief default constructor
-	 */
-	type_wrapper(): val_() {}
-	
-	/**
-	 * @brief conversion constructor
-	 */
-	explicit type_wrapper(const T &i): val_(i) {}	
-	
-	/**
-	 * @brief copy constructor
-	 */
-	type_wrapper(const type_wrapper &idx): val_(idx.val()) {}
-
-	/**
-	 * @brief casting to T
-	 *
-	 * @note We don't use explicit cast for compatibility, since this is
-	 * available with c++0x only:
-	 * explicit operator T() const {return val_;}
-	 * instead we define this "named cast"
-	 */
-	const T &val() const {return val_;}
-
-	/** 
-	 * @brief equal
-	 * @param x 
-	 * @return *this == x
-	 */
-	bool operator ==(const type_wrapper &x) const {return val_ == x.val_;}
-
-	
-	/** 
-	 * @brief inequal 
-	 * @param x 
-	 * @return *this != x
-	 */
-	bool operator !=(const type_wrapper &x) const {return val_ != x.val_;}
-
-	/** 
-	 * @brief less equal
-	 * @param x 
-	 * @return *this <= x
-	 */
-	bool operator <=(const type_wrapper &x) const {return val_ <= x.val_;}
-
-	/** 
-	 * @brief less
-	 * @param x 
-	 * @return *this < x
-	 */
-	bool operator  <(const type_wrapper &x) const {return val_ <  x.val_;}
-
-	/** 
-	 * @brief greater equal
-	 * @param x 
-	 * @return *this >= x
-	 */
-	bool operator >=(const type_wrapper &x) const {return val_ >= x.val_;}
-
-	/** 
-	 * @brief greater
-	 * @param x 
-	 * @return *this > x
-	 */
-	bool operator  >(const type_wrapper &x) const {return val_ >  x.val_;}
-	
-	/** 
-	 * @brief add
-	 * @param x 
-	 * @return *this + x
-	 */
-	type_wrapper operator +(const type_wrapper &x) const {return type_wrapper(val_ + x.val_);}
-	
-	/** 
-	 * @brief subtract
-	 * @param x 
-	 * @return *this - x
-	 */
-	type_wrapper operator -(const type_wrapper &x) const {return type_wrapper(val_ - x.val_);}
-	
-	/** 
-	 * @brief add
-	 * @param x 
-	 * @return *this + x
-	 */
-	type_wrapper operator +(const T &x) const {return type_wrapper(val_ + x);}
-	
-	/** 
-	 * @brief subtract
-	 * @param x 
-	 * @return *this - x
-	 */
-	type_wrapper operator -(const T &x) const {return type_wrapper(val_ - x);}
-	
-	/** 
-	 * @brief prefix increment
-	 * @return *this after increment
-	 */
-	const type_wrapper &operator ++() {++val_; return *this;}
-	
-	/** 
-	 * @brief prefix decrement
-	 * @return *this after decrement
-	 */
-	const type_wrapper &operator --() {--val_; return *this;}
-
-	/** 
-	 * @brief postfix increment
-	 * @return *this before increment
-	 */
-	const type_wrapper &operator ++(int) {type_wrapper<T> tmp(*this); ++val_; return tmp;}
-	
-	/** 
-	 * @brief postfix decrement
-	 * @return *this before decrement
-	 */
-	const type_wrapper &operator --(int) {type_wrapper<T> tmp(*this); --val_; return tmp;}
-
-    };
-    
-    template <class T>
-    std::ostream & operator << (std::ostream &out,const type_wrapper<T> &x) {
-	out<<x.val();
-	return out;
-    }
-
-    
-    //! type-safe index type
-    //! this is useful to distinguish index type from other types that are defined as unsigned int
-    typedef type_wrapper<size_t> index_t;
+        
     
     //! global StopWatch object
     extern StopWatch stopwatch;

@@ -11,6 +11,11 @@ namespace LocARNA {
 	//exception::what();
 	return msg_.c_str();
     }
+    
+    bool
+    is_gap_symbol(char c) {
+	return gap_symbols.find(c)!=std::string::npos;
+    }
 
     /**
      * \brief Converts char to upper case
@@ -24,7 +29,6 @@ namespace LocARNA {
     };
 	
     void transform_toupper(std::string &s) {
-
 	std::transform(s.begin(),s.end(),s.begin(),ToUpper());
     }
 
