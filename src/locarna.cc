@@ -30,7 +30,7 @@
 #include "LocARNA/anchor_constraints.hh"
 #include "LocARNA/trace_controller.hh"
 #include "LocARNA/ribosum85_60.icc"
-
+#include "LocARNA/global_stopwatch.hh"
 
 using namespace std;
 using namespace LocARNA;

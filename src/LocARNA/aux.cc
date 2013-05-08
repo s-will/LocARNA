@@ -1,9 +1,8 @@
 #include "aux.hh"
 #include <iomanip>
+#include <algorithm>
 
 namespace LocARNA {
-    
-
     failure::~failure() throw() {};
     
     const char *
@@ -39,8 +38,5 @@ namespace LocARNA {
 	    if (seq[i]=='T') seq[i]='U';
 	}
     }
-
-    // global stop watch
-    StopWatch stopwatch;
 }
 

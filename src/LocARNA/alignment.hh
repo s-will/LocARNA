@@ -1,7 +1,11 @@
 #ifndef LOCARNA_ALIGNMENT_HH
 #define LOCARNA_ALIGNMENT_HH
 
+#include <iosfwd>
+#include "aux.hh"
 #include "scoring_fwd.hh"
+
+//namespace std {template <class T> class vector;}
 
 namespace LocARNA {
     

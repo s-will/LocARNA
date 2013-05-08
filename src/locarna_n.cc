@@ -32,6 +32,7 @@
 #include "LocARNA/ribosum85_60.icc"
 #include "LocARNA/multiple_alignment.hh"
 #include "LocARNA/sparsification_mapper.hh"
+#include "LocARNA/global_stopwatch.hh"
 
 using namespace std;
 using namespace LocARNA;

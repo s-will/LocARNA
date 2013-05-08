@@ -10,6 +10,9 @@
 
 #include "multiple_alignment.hh"
 
+#include "global_stopwatch.hh"
+
+
 #ifdef HAVE_LIBRNA
 extern "C" {
 //#include <ViennaRNA/fold_vars.h>

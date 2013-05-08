@@ -22,7 +22,7 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/aligner.cc LocARNA/stral_score.cc			\
 	LocARNA/aligner_p.cc LocARNA/trace_controller.cc		\
 	LocARNA/multiple_alignment.cc LocARNA/rna_structure.cc		\
-	LocARNA/confusion_matrix.cc
+	LocARNA/confusion_matrix.cc LocARNA/global_stopwatch.cc
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -44,7 +44,8 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/trace_controller.hh LocARNA/multiple_alignment.hh	\
 	LocARNA/ribosum85_60.icc LocARNA/rna_structure.hh		\
 	LocARNA/confusion_matrix.hh LocARNA/discrete_distribution.hh	\
-	LocARNA/string1.hh LocARNA/type_wrapper.hh
+	LocARNA/string1.hh LocARNA/type_wrapper.hh			\
+	LocARNA/global_stopwatch.hh
 
 ## binary programs
 ##

@@ -4,8 +4,6 @@
 #include <iosfwd>
 #include <exception>
 #include <string>
-#include <vector>
-#include <algorithm>
 #include <assert.h>
 #include <tr1/unordered_map>
 
@@ -29,13 +27,10 @@ namespace std {
     }
 }
 
-#include "stopwatch.hh"
 
 //!
 //! auxilliary types and global constants for use in locarna
 //! 
-
-
 
 
 namespace LocARNA {
@@ -122,33 +117,6 @@ namespace LocARNA {
 
     // ------------------------------------------------------------
     // transformation of strings
-
-    /**
-     * \brief Implements a vector with += operator
-     *
-     * The class provides an alternate syntax for push_back.
-     * 
-     * @see Alignment::write_pp() for usage example
-     */
-    template<class T>
-    class plusvector: public std::vector<T> {
-
-    public:
-	
-	/** 
-	 * @brief Add an element to end of vector
-	 * 
-	 * @param x vector element
-	 * 
-	 * @return *this
-	 * @post x is added at end of *this (like push_back)
-	 */
-	plusvector& operator += (const T &x) {
-	    this->push_back(x);
-	    return *this;
-	}
-    };
-
     
     /** 
      * Convert string to all upper case
@@ -182,8 +150,6 @@ namespace LocARNA {
 #    define FLT_OR_DBL double
         
     
-    //! global StopWatch object
-    extern StopWatch stopwatch;
 }
 
 

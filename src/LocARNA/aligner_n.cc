@@ -1,3 +1,6 @@
+#include "aux.hh"
+#include "global_stopwatch.hh"
+
 #include "aligner_n.hh"
 #include "anchor_constraints.hh"
 #include "trace_controller.hh"
