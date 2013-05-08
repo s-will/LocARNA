@@ -1,6 +1,7 @@
 #include <math.h>
 
-#include "alignment.hh"
+#include "alignment_impl.hh"
+
 #include "basepairs.hh"
 #include "rna_data.hh"
 #include "scoring.hh"
@@ -19,22 +20,30 @@ extern "C" {
 
 namespace LocARNA {
 
+    Alignment::Alignment(const Sequence &seqA, 
+			 const Sequence &seqB)
+	: pimpl_(new AlignmentImpl(this,seqA,seqB)) {
+	clear();
+    }
+    
 
     Alignment::Alignment(const Sequence &seqA, 
 			 const Sequence &seqB, 
 			 const string1 &alistrA,
 			 const string1 &alistrB)
-	: seqA_(seqA),seqB_(seqB) {
+	: pimpl_(new AlignmentImpl(this,seqA,seqB)) {
 	throw failure("Alignment::Alignment(...) constructor from alignment strings not implemented.");
 	
 	assert(alistrA.length()==alistrB.length());
 
-	size_t posA;
-	size_t posB;
+	//size_t posA;
+	//size_t posB;
 	for(size_t i=0; i<alistrA.length(); ++i) {
 	    //...
 	}
     }
+
+    Alignment::~Alignment() { delete pimpl_; }
 
     void
     Alignment::set_consensus_structure(const RnaStructure &structure) {
@@ -44,6 +53,34 @@ namespace LocARNA {
     void
     Alignment::set_structures(const RnaStructure &structureA,const RnaStructure &structureB) {
 	throw("Alignment::set_structures(...) not implemented");
+    }
+
+    void Alignment::clear() {
+	pimpl_->strA_.resize(pimpl_->seqA_.length()+1);
+	pimpl_->strB_.resize(pimpl_->seqB_.length()+1);
+	for (std::vector<char>::iterator it=pimpl_->strA_.begin(); it!=pimpl_->strA_.end(); ++it) *it='.';
+	for (std::vector<char>::iterator it=pimpl_->strB_.begin(); it!=pimpl_->strB_.end(); ++it) *it='.';
+	
+	pimpl_->a_.clear();
+	pimpl_->b_.clear();
+    }
+
+    void 
+    Alignment::append(int i, int j) {
+	pimpl_->a_.push_back(i);
+	pimpl_->b_.push_back(j);
+    }
+
+    void
+    Alignment::add_basepairA(int i, int j) {
+	pimpl_->strA_[i]='(';
+	pimpl_->strA_[j]=')';
+    }
+    
+    void
+    Alignment::add_basepairB(int i, int j) {
+	pimpl_->strB_[i]='(';
+	pimpl_->strB_[j]=')';
     }
 
     score_t
@@ -82,9 +119,9 @@ namespace LocARNA {
 
 	const char loc_blank='~';
 
-	size_type alisize=a_.size();
+	size_type alisize=pimpl_->a_.size();
 
-	assert(b_.size()==a_.size());
+	assert(pimpl_->b_.size()==pimpl_->a_.size());
 
 	/* DEBUGGING output
 	   std::cout <<"a: " << a_.size()<<std::endl;
@@ -110,10 +147,10 @@ namespace LocARNA {
 	aliStrA.append(Sequence::SeqEntry("",""));
 	aliStrB.append(Sequence::SeqEntry("",""));
 	//
-	for(Sequence::const_iterator it=seqA_.begin(); seqA_.end()!=it; ++it)
+	for(Sequence::const_iterator it=pimpl_->seqA_.begin(); pimpl_->seqA_.end()!=it; ++it)
 	    aliSeqA.append(Sequence::SeqEntry(it->name(),""));
 	//
-	for(Sequence::const_iterator it=seqB_.begin(); seqB_.end()!=it; ++it)
+	for(Sequence::const_iterator it=pimpl_->seqB_.begin(); pimpl_->seqB_.end()!=it; ++it)
 	    aliSeqB.append(Sequence::SeqEntry(it->name(),""));
 	// ----------------------------------------
     
@@ -126,76 +163,76 @@ namespace LocARNA {
 	    //out << "("<<a_[i]<<","<<b_[i]<<") "; out.flush();
 
 	    if (!local_out) {
-		for (int j=lastA; j<a_[i]; j++) {
-		    aliStrA += strA_[j];
-		    aliSeqA += seqA_[j]; lastA++;
+		for (int j=lastA; j<pimpl_->a_[i]; j++) {
+		    aliStrA += pimpl_->strA_[j];
+		    aliSeqA += pimpl_->seqA_[j]; lastA++;
 		    aliSeqB += loc_blank;
 		    aliStrB += loc_blank;
 		}
-		for (int j=lastB; j<b_[i]; j++) {
+		for (int j=lastB; j<pimpl_->b_[i]; j++) {
 		    aliStrA += loc_blank;
 		    aliSeqA += loc_blank;
-		    aliSeqB += seqB_[j]; lastB++;
-		    aliStrB += strB_[j];
+		    aliSeqB += pimpl_->seqB_[j]; lastB++;
+		    aliStrB += pimpl_->strB_[j];
 		}
 	    }
 
-	    if ( a_[i]==-1 ) {
+	    if ( pimpl_->a_[i]==-1 ) {
 		aliStrA += '-';
 		aliSeqA += '-';
-	    } else if ( a_[i]==-2 ) {
+	    } else if ( pimpl_->a_[i]==-2 ) {
 		aliStrA += '_';
 		aliSeqA += '_';
 	    } else {
-		aliStrA += strA_[a_[i]]; lastA++;
-		aliSeqA += seqA_[a_[i]];
+		aliStrA += pimpl_->strA_[pimpl_->a_[i]]; lastA++;
+		aliSeqA += pimpl_->seqA_[pimpl_->a_[i]];
 	    }
-	    if ( b_[i]==-1 ) {
+	    if ( pimpl_->b_[i]==-1 ) {
 		aliStrB += '-';
 		aliSeqB += '-';
 	    }
-	    else if ( b_[i]==-2 ) {
+	    else if ( pimpl_->b_[i]==-2 ) {
 		aliStrB += '_';
 		aliSeqB += '_';
 	    } else {
-		aliStrB += strB_[b_[i]]; lastB++;
-		aliSeqB += seqB_[b_[i]];
+		aliStrB += pimpl_->strB_[pimpl_->b_[i]]; lastB++;
+		aliSeqB += pimpl_->seqB_[pimpl_->b_[i]];
 	    }
 	}
 
 
 	if (!local_out) {
-	    for (size_type j=lastA; j<=seqA_.length(); j++) {
-		aliStrA += strA_[j];
-		aliSeqA += seqA_[j]; lastA++;
+	    for (size_type j=lastA; j<=pimpl_->seqA_.length(); j++) {
+		aliStrA += pimpl_->strA_[j];
+		aliSeqA += pimpl_->seqA_[j]; lastA++;
 		aliSeqB += loc_blank;
 		aliStrB += loc_blank;
 	    }
-	    for (size_type j=lastB; j<=seqB_.length(); j++) {
+	    for (size_type j=lastB; j<=pimpl_->seqB_.length(); j++) {
 		aliStrA += loc_blank;
 		aliSeqA += loc_blank;
-		aliSeqB += seqB_[j]; lastB++;
-		aliStrB += strB_[j];
+		aliSeqB += pimpl_->seqB_[j]; lastB++;
+		aliStrB += pimpl_->strB_[j];
 	    }
 	}
 
 	if (clustal_format) {
 	    out << "CLUSTAL W --- "<<PACKAGE_STRING; // <<" - Local Alignment of RNA"
-	    if (seqA_.row_number()==1 && seqB_.row_number()==1)
+	    if (pimpl_->seqA_.row_number()==1 && pimpl_->seqB_.row_number()==1)
 		out  <<" --- Score: " <<score;
 	    out  <<std::endl<<std::endl;
 	}
 	//else if (!pos_out)
-	//	if (seqA_.row_number()==1 && seqB_.row_number()==1)
+	//	if (pimpl_->seqA_.row_number()==1 && pimpl_->seqB_.row_number()==1)
 	//	    out << "SCORE: "<<score<<std::endl;
 
 
 	if (alisize>0) {
-	    size_type local_start_A=a_[0]; //!< pos where local alignment starts for A
-	    size_type local_start_B=b_[0]; //!< pos where local alignment starts for B
+	    size_type local_start_A=pimpl_->a_[0]; //!< pos where local alignment starts for A
+	    size_type local_start_B=pimpl_->b_[0]; //!< pos where local alignment starts for B
 
-	    size_type local_end_A=a_[alisize-1]; //!< pos where local alignment ends for A
-	    size_type local_end_B=b_[alisize-1]; //!< pos where local alignment ends for B
+	    size_type local_end_A=pimpl_->a_[alisize-1]; //!< pos where local alignment ends for A
+	    size_type local_end_B=pimpl_->b_[alisize-1]; //!< pos where local alignment ends for B
 
 	    size_type length=aliSeqA.length();
 	    size_type k=1;
@@ -255,7 +292,7 @@ namespace LocARNA {
 			     bool use_alifold) const {
 
 
-	size_type alisize = a_.size();
+	size_type alisize = pimpl_->a_.size();
 
 	int lastA=1; // bases consumed in sequence A
 	int lastB=1; // ---------- "" ------------ B
@@ -265,31 +302,31 @@ namespace LocARNA {
 
 	for (size_type i=0; i<alisize; i++) {
 	    // out << "("<<a_[i]<<","<<b_[i]<<") "; out.flush();
-	    for (int j=lastA; j<a_[i]; j++) {
+	    for (int j=lastA; j<pimpl_->a_[i]; j++) {
 		aliA += j; lastA++;
 		aliB += -2;
 	    }
-	    for (int j=lastB; j<b_[i]; j++) {
+	    for (int j=lastB; j<pimpl_->b_[i]; j++) {
 		aliA += -2;
 		aliB += j; lastB++;
 	    }
-	    if ( a_[i] < 0 ) {
+	    if ( pimpl_->a_[i] < 0 ) {
 		aliA += -1;
 	    } else {
-		aliA += a_[i]; lastA++;
+		aliA += pimpl_->a_[i]; lastA++;
 	    }
-	    if ( b_[i] < 0 ) {
+	    if ( pimpl_->b_[i] < 0 ) {
 		aliB += -1;
 	    } else {
-		aliB += b_[i]; lastB++;
+		aliB += pimpl_->b_[i]; lastB++;
 	    }
 	}
 
-	for (size_type j=lastA; j<=seqA_.length(); j++) {
+	for (size_type j=lastA; j<=pimpl_->seqA_.length(); j++) {
 	    aliA += j; lastA++;
 	    aliB += -2;
 	}
-	for (size_type j=lastB; j<=seqB_.length(); j++) {
+	for (size_type j=lastB; j<=pimpl_->seqB_.length(); j++) {
 	    aliA += -2;
 	    aliB += j; lastB++;
 	}
@@ -346,24 +383,50 @@ namespace LocARNA {
 	    double p_minB = bpsB.prob_min();
 	    double p_minMean =
 		exp(
-		    (log(p_minA)*seqA_.row_number()
-		     + log(p_minB)*seqB_.row_number())
-		    / (seqA_.row_number() + seqB_.row_number())
+		    (log(p_minA)*pimpl_->seqA_.row_number()
+		     + log(p_minB)*pimpl_->seqB_.row_number())
+		    / (pimpl_->seqA_.row_number() + pimpl_->seqB_.row_number())
 		    );
 
-	    write_alifold_consensus_dot_plot(out,p_minMean);
+	    pimpl_->write_alifold_consensus_dot_plot(out,p_minMean);
 	    return;
 	}
 #    endif
 
 	assert(use_alifold==false /*HAVE_LIBRNA undefined*/);
-	write_consensus_dot_plot(out,aliA,aliB,bpsA,bpsB,scoring);
+	pimpl_->write_consensus_dot_plot(out,aliA,aliB,bpsA,bpsB,scoring);
 
     }
 
+
+    size_type
+    Alignment::get_local_startA() const {return pimpl_->a_[0];}
+    
+    size_type
+    Alignment::get_local_endA() const {return pimpl_->a_[pimpl_->a_.size()-1];}
+    
+    size_type
+    Alignment::get_local_startB()  const {return pimpl_->b_[0];}
+	
+    size_type
+    Alignment::get_local_endB() const {return pimpl_->b_[pimpl_->b_.size()-1];}
+
+    const Sequence &
+    Alignment::get_seqA() const {return pimpl_->seqA_;} 
+
+    const Sequence &
+    Alignment::get_seqB() const {return pimpl_->seqB_;} 
+
+    const std::vector<int> &
+    Alignment::get_a() const {return pimpl_->a_;} 
+
+    const std::vector<int> &
+    Alignment::get_b() const {return pimpl_->b_;} 
+
+
 #ifdef HAVE_LIBRNA
     void
-    Alignment::write_alifold_consensus_dot_plot(std::ostream &out, double cutoff) const {
+    AlignmentImpl::write_alifold_consensus_dot_plot(std::ostream &out, double cutoff) const {
 	char **sequences;
 
 	plist *pl;
@@ -377,7 +440,7 @@ namespace LocARNA {
 	oldAliEn = 0;
 
 	// construct sequences array from sequences in alignment
-	MultipleAlignment ma(*this); // generate multiple alignment from alignment object
+	MultipleAlignment ma(*self_); // generate multiple alignment from alignment object
 	sequences = new char *[ma.row_number()+1];
 	for (size_t i=0; i<ma.row_number(); i++) {
 	    sequences[i] = new char[ma.length()+1];
@@ -430,7 +493,7 @@ namespace LocARNA {
 #endif
 
     void
-    Alignment::write_consensus_dot_plot(std::ostream &out,
+    AlignmentImpl::write_consensus_dot_plot(std::ostream &out,
 					const plusvector<int> &aliA,
 					const plusvector<int> &aliB,
 					const BasePairs &bpsA,
@@ -502,8 +565,8 @@ namespace LocARNA {
     }
 
     double
-    Alignment::average_probs(double pA, double pB, double p_min,
-			     double p_expA, double p_expB) const {
+    AlignmentImpl::average_probs(double pA, double pB, double p_min,
+				 double p_expA, double p_expB) const {
 
 	/*
 	  probably better, something like
@@ -530,7 +593,7 @@ namespace LocARNA {
 	return p;
     }
 
-    void Alignment::write_debug(std::ostream &out) const {
+    void AlignmentImpl::write_debug(std::ostream &out) const {
 
 	for (size_type i=0; i<a_.size(); i++) {
 	    out << a_[i] << " ";
