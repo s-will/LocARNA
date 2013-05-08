@@ -43,7 +43,7 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/trace_controller.hh LocARNA/multiple_alignment.hh	\
 	LocARNA/ribosum85_60.icc LocARNA/rna_structure.hh		\
 	LocARNA/confusion_matrix.hh LocARNA/discrete_distribution.hh	\
-	string1.hh type_wrapper.hh
+	LocARNA/string1.hh LocARNA/type_wrapper.hh
 
 ## binary programs
 ##
