@@ -1,6 +1,7 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <limits>
 
 #include "aux.hh"
 #include "rna_data.hh"
@@ -49,7 +50,9 @@ namespace LocARNA {
 	arc_2_probs_(0),
 	seq_constraints_(""),
 	McCmat_(0L),
-	used_alifold_(false)
+	used_alifold_(false),
+	min_free_energy_(std::numeric_limits<double>::infinity()),
+	min_free_energy_structure_("")
     {
 	init_from_file(file, readPairProbs, readStackingProbs, readInLoopProbs);
     }
@@ -63,7 +66,9 @@ namespace LocARNA {
 	  arc_2_probs_(0), // init sparse matrix with default 0
 	  seq_constraints_(""), // empty sequence constraints string
 	  McCmat_(0L), // 0 pointer
-	  used_alifold_(false)
+	  used_alifold_(false),
+	  min_free_energy_(std::numeric_limits<double>::infinity()),
+	  min_free_energy_structure_("")
     {
     }
     
@@ -136,13 +141,14 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// call fold for setting the pf_scale
-	double en = fold(c_sequence,c_structure);
+	min_free_energy_ = fold(c_sequence,c_structure);
+	min_free_energy_structure_ = c_structure;
 	// std::cout << c_structure << std::endl;
 	free_arrays();
 	
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
-	pf_scale = exp(-en/kT/length);
+	pf_scale = exp(-min_free_energy_/kT/length);
 
 	// ----------------------------------------
 	// call pf_fold
@@ -222,13 +228,14 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// call fold for setting the pf_scale
-	double min_free_energy = alifold(c_sequences,c_structure);
+	min_free_energy_ = alifold(c_sequences,c_structure);
+	min_free_energy_structure_ = c_structure;
 	// std::cout << c_structure << std::endl;
 	free_alifold_arrays();
 	
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
-	pf_scale = exp(-min_free_energy/kT/length);
+	pf_scale = exp(-min_free_energy_/kT/length);
 	
 	
 	// ----------------------------------------

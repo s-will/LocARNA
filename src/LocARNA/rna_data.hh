@@ -128,6 +128,8 @@ namespace LocARNA {
 	//! whether alifold was used to compute the McCaskill matrices
 	bool used_alifold_;
 
+	double min_free_energy_; //!< minimum free energy (if computed anyway)
+	std::string min_free_energy_structure_; //!< minimum free energy structure (if computed)
 
 	////////////////////////////////////////////////////////////
 	
@@ -275,7 +277,34 @@ namespace LocARNA {
 	 */
 	void
 	forget_in_loop_probs() {/* do nothing */};
-    
+
+	/** 
+	 * \brief get minimum free energy
+	 *
+	 * @note this returns the mfe only if the sequence was folded
+	 * by the object, e.g. in compute_ensemble_probs(); otherwise
+	 * returns infinity
+	 * 
+	 * @return mfe (if available)
+	 */
+	double
+	get_min_free_energy() const {
+	    return min_free_energy_;
+	}
+
+	/** 
+	 * \brief get minimum free energy structure
+	 *
+	 * @note this returns the mfe structure only if the sequence was folded
+	 * by the object, e.g. in compute_ensemble_probs(); otherwise
+	 * returns empty string
+	 * 
+	 * @return mfes structure (if available)
+	 */
+	std::string
+	get_min_free_energy_structure() const {
+	    return min_free_energy_structure_;
+	}
 	
 	/** 
 	 * @brief Write rna data in pp format to stream
