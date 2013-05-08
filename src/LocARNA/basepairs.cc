@@ -9,6 +9,7 @@
 
 #include <math.h>
 
+#include "aux.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
 
@@ -169,6 +170,37 @@ namespace LocARNA {
 	}
 	sortAdjLists();
     }
+
+    
+    BasePairs::size_type
+    BasePairs::get_length_from_rnadata() const {
+	return rnadata->get_sequence().length();
+    }
+
+    double
+    BasePairs::get_arc_prob(size_type i, size_type j) const {
+	if (rnadata) return rnadata->get_arc_prob( i, j );
+	else return 0.0;
+    }
+    
+    double 
+    BasePairs::get_arc_2_prob(size_type i, size_type j) const {
+	if (rnadata) return rnadata->get_arc_2_prob( i, j );
+	else return 0.0;
+    }
+
+    double
+    BasePairs::get_arc_stack_prob(size_type i, size_type j) const {
+	if (rnadata) return rnadata->get_arc_stack_prob( i, j );
+	else return 0.0;
+    }
+
+    double
+    BasePairs::prob_unpaired(size_type i) const {
+	if (rnadata) return rnadata->prob_unpaired( i );
+	else return 1.0;
+    }
+
 
     /** 
      * Output operator for writing arc to output stream

@@ -8,15 +8,15 @@
 #include <set>
 #include <assert.h>
 
-#include "sequence.hh"
-
+#include "aux.hh"
 #include "params.hh"
-
 #include "sparse_matrix.hh"
 
-#include "rna_data.hh"
 
 namespace LocARNA {
+
+    class RnaData;
+    class Sequence;
 
     //! \brief Represents a base pair
     //! 
@@ -124,12 +124,12 @@ namespace LocARNA {
     */
     class BasePairs
     {
-	typedef size_t size_type;
     private:
 	const RnaData *rnadata;
 	double min_prob;
 
     public:
+	typedef size_t size_type;
 	
 	/* types for data structures for the access of an arc in the structure,
 	   by its right end, its left end, or left and right end 
@@ -186,7 +186,7 @@ namespace LocARNA {
 	    rnadata(rnadata_),
 	    min_prob(min_prob_),  
 	    arcs_(-1),
-	    len_(rnadata_->get_sequence().length())
+	    len_(get_length_from_rnadata())
 	{
 	    generateBPLists(*rnadata);
 	}
@@ -267,31 +267,24 @@ namespace LocARNA {
 	}*/
     
 	//! returns probability of basepair (i,j)
-	double get_arc_prob(size_type i, size_type j) const {
-	    if (rnadata) return rnadata->get_arc_prob( i, j );
-	    else return 0.0;
-	}
+	double get_arc_prob(size_type i, size_type j) const;
     
 	//! returns probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
-	double get_arc_2_prob(size_type i, size_type j) const {
-	    if (rnadata) return rnadata->get_arc_2_prob( i, j );
-	    else return 0.0;
-	}
+	double get_arc_2_prob(size_type i, size_type j) const;
 
 	//! returns probability of basepairs (i,j) stacked,
 	//! i.e. (i,j) under condition (i+1,j-1)
-	double get_arc_stack_prob(size_type i, size_type j) const {
-	    if (rnadata) return rnadata->get_arc_stack_prob( i, j );
-	    else return 0.0;
-	}
+	double get_arc_stack_prob(size_type i, size_type j) const;
 
 	//! returns probability that a position i is unpaired
 	//! O(sequence.length()) implementation
-	double prob_unpaired(size_type i) const {
-	    if (rnadata) return rnadata->prob_unpaired( i );
-	    else return 1.0;
-	}
+	double prob_unpaired(size_type i) const;
 
+
+    private:
+	size_type
+	get_length_from_rnadata() const;
+	
     };
 
 }
