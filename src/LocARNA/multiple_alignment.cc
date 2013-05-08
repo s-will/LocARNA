@@ -5,6 +5,7 @@
 #include "multiple_alignment.hh"
 
 #include "alignment.hh"
+#include "rna_structure.hh"
 
 #include <limits>
 
@@ -54,23 +55,23 @@ namespace LocARNA {
     }
 
     MultipleAlignment::MultipleAlignment(const std::string &nameA, const std::string &nameB, const std::string &alistrings) {
-	size_t separator_pos=alistrings.find("&");
+    	size_t separator_pos=alistrings.find("&");
     
-	if (separator_pos==string::npos) {
-	    throw failure("No separator in string of alignment strings."); 
-	}
+    	if (separator_pos==std::string::npos) {
+    	    throw failure("No separator in string of alignment strings."); 
+    	}
     
-	const string aliA = alistrings.substr(0,separator_pos);
-	const string aliB = alistrings.substr(separator_pos+1);
+    	const std::string aliA = alistrings.substr(0,separator_pos);
+    	const std::string aliB = alistrings.substr(separator_pos+1);
     
-	if (aliA.length() != aliB.length()) {
-	    throw failure("Alignment strings of unequal length."); 
-	}
+    	if (aliA.length() != aliB.length()) {
+    	    throw failure("Alignment strings of unequal length."); 
+    	}
     
-	alig_.push_back(SeqEntry(nameA,aliA));
-	alig_.push_back(SeqEntry(nameB,aliB));
+    	alig_.push_back(SeqEntry(nameA,aliA));
+    	alig_.push_back(SeqEntry(nameB,aliB));
 
-	create_name2idx_map();
+    	create_name2idx_map();
     }
 
     MultipleAlignment::MultipleAlignment(const Alignment &alignment) {
@@ -200,11 +201,6 @@ namespace LocARNA {
     }
     
 
-    bool
-    MultipleAlignment::SeqEntry::is_gap_symbol(char c) {
-	return gap_symbols.find(c)!=string::npos;
-    }
-
     size_type
     MultipleAlignment::SeqEntry::length_wogaps() const {
 	size_type len = 0;
@@ -311,8 +307,8 @@ namespace LocARNA {
 	    size_type dprime=numeric_limits<size_type>::max();
 	
 	    if (c1>0) {
-		if (!SeqEntry::is_gap_symbol(a1[c1])) i1++;
-		if (!SeqEntry::is_gap_symbol(a2[c1])) j1++;
+		if (!is_gap_symbol(a1[c1])) i1++;
+		if (!is_gap_symbol(a2[c1])) j1++;
 	    }
 
 	    size_type i2=0;
@@ -320,8 +316,8 @@ namespace LocARNA {
 	    for (size_type c2=0; c2<=ref1.length(); c2++) {
 	    
 		if (c2>0) {
-		    if (!SeqEntry::is_gap_symbol(ref1[c2])) i2++;
-		    if (!SeqEntry::is_gap_symbol(ref2[c2])) j2++;
+		    if (!is_gap_symbol(ref1[c2])) i2++;
+		    if (!is_gap_symbol(ref2[c2])) j2++;
 		}
 
 		size_type dc =
@@ -455,11 +451,11 @@ namespace LocARNA {
 
 	for (size_t col=1; col<=len; col++) {
 	    int entry=-1;
-	    if (!MultipleAlignment::SeqEntry::is_gap_symbol(t[col])) {
+	    if (!is_gap_symbol(t[col])) {
 		posT++;
 		entry=posT;
 	    }
-	    if (!MultipleAlignment::SeqEntry::is_gap_symbol(s[col])) {
+	    if (!is_gap_symbol(s[col])) {
 		res.push_back(entry);
 	    }
 	}
@@ -479,10 +475,10 @@ namespace LocARNA {
 	res.push_back(-1);
 
 	for (size_t col=1; col<=len; col++) {
-	    if (!MultipleAlignment::SeqEntry::is_gap_symbol(t[col])) {
+	    if (!is_gap_symbol(t[col])) {
 		posT++;
 	    }
-	    if (!MultipleAlignment::SeqEntry::is_gap_symbol(s[col])) {
+	    if (!is_gap_symbol(s[col])) {
 		res.push_back(posT);
 	    }
 	}
@@ -529,8 +525,8 @@ namespace LocARNA {
 	assert(len_a == a2.seq().length());
 
 	for (size_t col=1; col<=len_a; col++) {
-	    if ((!MultipleAlignment::SeqEntry::is_gap_symbol(a1.seq()[col]))
-		&& (!MultipleAlignment::SeqEntry::is_gap_symbol(a2.seq()[col]))
+	    if ((!is_gap_symbol(a1.seq()[col]))
+		&& (!is_gap_symbol(a2.seq()[col]))
 		) {
 		matches++;
 	    }
@@ -559,7 +555,7 @@ namespace LocARNA {
 	// count exclusive matches alignments a
 	size_t i=1;
 	for (size_t col=1; col<=len_a; col++) {
-	    if (!MultipleAlignment::SeqEntry::is_gap_symbol(a1.seq()[col])) {
+	    if (!is_gap_symbol(a1.seq()[col])) {
 		
 		if (
 		    (matchvecA[i]!=-1)
@@ -596,7 +592,7 @@ namespace LocARNA {
 	// count common matches in the two alignments
 	size_t i=1;
 	for (size_t col=1; col<=len_a; col++) {
-	    if (!MultipleAlignment::SeqEntry::is_gap_symbol(a1.seq()[col])) {
+	    if (!is_gap_symbol(a1.seq()[col])) {
 		
 		// add one to score, if position i of the first
 		// sequence is matched to the same position by both
@@ -633,7 +629,7 @@ namespace LocARNA {
 	// count common matches in the two alignments
 	size_t i=1;
 	for (size_t col=1; col<=len_a; col++) {
-	    if (!MultipleAlignment::SeqEntry::is_gap_symbol(a1.seq()[col])) {
+	    if (!is_gap_symbol(a1.seq()[col])) {
 		
 		double j_A = matchvecA[i] + ((matchvecA[i]==matchvecA[i-1])?0.5:0); 
 		double j_Ref = matchvecRef[i] + ((matchvecRef[i]==matchvecRef[i-1])?0.5:0); 
@@ -745,5 +741,31 @@ namespace LocARNA {
 	    alig_[i].push_back(c);
 	}
     }
+
+    score_t 
+    MultipleAlignment::evaluate(const std::vector<const BasePairs*> &basepairs_vec,
+				const Scoring &scoring,
+				const RnaStructure &consensus_structure) const {
+	score_t score;
+	
+	for (size_t i=0; i<row_number(); ++i) {
+	    for (size_t j=i+1; j<row_number(); ++j) {
+		Alignment pairwise_alignment = 
+		    Alignment(basepairs_vec[i]->get_rnadata().get_sequence(),
+			      basepairs_vec[j]->get_rnadata().get_sequence(),
+			      seqentry(i).seq(),
+			      seqentry(j).seq());
+		pairwise_alignment.set_consensus_structure(consensus_structure);
+		score += pairwise_alignment.evaluate(*basepairs_vec[i],
+						     *basepairs_vec[j],
+						     scoring);
+	    }
+	}
+	
+	throw failure("MultipleAlignment::evaluate not implemented.");
+	return 0;
+    }
+
+    
 
 } // end namespace 

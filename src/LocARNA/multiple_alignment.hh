@@ -7,17 +7,20 @@
 #include <map>
 
 #include "aux.hh"
-#include "alphabet.hh"
+#include "string1.hh"
 
 #include <assert.h>
 
-#include <exception>
-
 #include <iostream>
+
 
 namespace LocARNA {
 
-class Alignment;
+    class Alignment;
+    template<class T> class Alphabet;
+    class BasePairs;
+    class Scoring;
+    class RnaStructure;
 
 /**
  * @brief Represents a multiple alignment
@@ -56,11 +59,6 @@ public:
 	
     public:
 
-	//! @brief Defines gap symbol for this class
-	//! @param c character to be tested
-	//! @returns whether c codes for a gap
-	static bool is_gap_symbol(char c);
-	
 	/** 
 	 * @brief Construct from strings name and seq
 	 * 
@@ -282,7 +280,7 @@ public:
     //!
     //! @param in input stream with alignment in clustalW-like format
     //! @param format file format (CLUSTAL or FASTA) 
-    //! @throw failure on read problems
+    //! @throw failure on read errors
     MultipleAlignment(std::istream &in, format_t format=CLUSTAL);
     
     //! \brief Construct as pairwise alignment from names and strings
@@ -549,7 +547,7 @@ private:
 			 const SeqEntry &ref2,
 			 bool score_common_gaps
 			 );
-
+    
     /** 
      * @brief Determine matching positions for each string position
      * 
@@ -636,8 +634,32 @@ private:
 
 public:
 
-    //! @brief Print contents of object to stream
-    //! @param out output stream
+    /**
+     * @brief Evaluate the multiple alignment by locarna score
+     * @param scoring_params scoring parameters
+     * @param basepairs_vec vector of pointers to BasePairs objects for each sequence
+     * @param consensus_structure consensus structure of alignment
+     *
+     * @note sequence entries in ma and objects in basepairs_vec have
+     * to correspond to each other in the given order; the two objects
+     * must have the same size. The sequences have to match! Length of
+     * consensus structure has to match alignment length.
+     *
+     *
+     * @return score of the multiple alignment for given ensembles,
+     * consensus structure, and scoring
+     */
+    score_t 
+    evaluate(const std::vector<const BasePairs*> &basepairs_vec,
+	     const Scoring &scoring,
+	     const RnaStructure &consensus_structure) const;
+    
+    
+
+    /** 
+     * @brief Print contents of object to stream
+     * @param out output stream
+     */
     void print_debug(std::ostream &out=std::cout) const;
 };
 

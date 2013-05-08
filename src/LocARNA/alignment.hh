@@ -19,6 +19,7 @@ namespace LocARNA {
      *	Supports construction of the alignment during traceback.
      */
     class Alignment {
+
 	const Sequence &seqA_;
 	const Sequence &seqB_;
     
@@ -41,6 +42,43 @@ namespace LocARNA {
 	    clear();
 	}
 
+	/**
+	 * \brief Construct alignment from sequences and alignment strings
+	 *
+	 * @param seqA First sequence
+	 * @param seqB Second sequence
+	 * @param alistrA First alignment string
+	 * @param alistrB Second alignment string
+	 *
+	 * Construct with empty structure
+	 *
+	 * @note alistrA and alistrB are required to have the same
+	 * length, do not have gap symbols at the same positions, have
+	 * as many non-gap characters as their corresponding sequence
+	 * Only the position of gap characters is relevant; the actual
+	 * non-gap characters can be arbitrary (e.g. consensus
+	 * symbols).  The gap character is defined by
+	 * global function LocARNA::is_gap_symbol().
+	 * @todo implement
+	 */
+	Alignment(const Sequence &seqA, const Sequence &seqB, const string1 &alistrA, const string1 &alistrB);
+	
+	/**
+	 * \brief Set consensus structure of the alignment
+	 * @param structure consensus structure
+	 */
+	void
+	set_consensus_structure(const RnaStructure &structure);
+
+	/**
+	 * \brief Set structures of the alignment
+	 * @param structureA structure A
+	 * @param structureB structure B
+	 */
+	void
+	set_structures(const RnaStructure &structureA,const RnaStructure &structureB);
+	
+	
 	/**
 	   Delete the alignment edges and reset structure
 	*/
@@ -179,6 +217,34 @@ namespace LocARNA {
 	//! vector b is the vector of second components of the aligment
 	//! edges. Entries are positions of sequence B or -1 for gap
 	const std::vector<int> &get_b() const {return b_;} 
+
+	/** 
+	 * Evaluate alignment by LocARNA score
+	 * 
+	 * @param bpsA    base pairs of RNA A
+	 * @param bpsB    base pairs of RNA B
+	 * @param scoring Scoring object for RNAs A and B
+	 * 
+	 * @return locarna score of the alignment
+	 */
+	score_t
+	evaluate(const BasePairs &bpsA,
+		 const BasePairs &bpsB, 
+		 const Scoring &scoring) const;
+	
+	/** 
+	 * Evaluate alignment by LocARNA score (finding the optimal consensus structure)
+	 * 
+	 * @param bpsA    base pairs of RNA A
+	 * @param bpsB    base pairs of RNA B
+	 * @param scoring Scoring object for RNAs A and B
+	 * 
+	 * @return locarna score of the alignment
+	 */
+	score_t
+	evaluate_optimize_consensus_structure(const BasePairs &bpsA,
+		 const BasePairs &bpsB, 
+		 const Scoring &scoring) const;
 	
     private:
 	void
