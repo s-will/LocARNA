@@ -7,6 +7,10 @@
 #include "rna_data.hh"
 #include "aux.hh"
 
+// use for type safe index_t
+// #include "type_wrapper.hh"
+
+
 using namespace std;
 
 namespace LocARNA {
@@ -25,7 +29,14 @@ public:
 	typedef vector<ArcIdx> ArcIdxVec; //!< vector of arc indices
 	typedef pos_type matidx_t; //!< type for a matrix position
 	typedef pos_type seq_pos_t; //!< type for a sequence position
-	typedef size_t index_t; //!< type for an index
+    
+        // note: the type safe index_t breaks current code, since
+        // casts to size_t need to be explicite (using index_t's val()-method)
+        // //! type-safe index type this is useful to distinguish index type
+        // //! from other types that are defined as unsigned int
+        // typedef type_wrapper<size_t> index_t;
+    
+        typedef size_t index_t; //!< type for an index
 
 	//! a struct to represent all necessary information for all valid sequence positions
 	struct info_for_pos{
