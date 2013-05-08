@@ -7,12 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <assert.h>
-
-#include "stopwatch.hh"
-
-//!
-//! auxilliary types and global constants for use in locarna
-//! 
+#include <tr1/unordered_map>
 
 
 // define a hash function for unordered_maps
@@ -33,6 +28,14 @@ namespace std {
 	};
     }
 }
+
+#include "stopwatch.hh"
+
+//!
+//! auxilliary types and global constants for use in locarna
+//! 
+
+
 
 
 namespace LocARNA {

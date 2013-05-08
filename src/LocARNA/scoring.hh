@@ -2,14 +2,17 @@
 #define LOCARNA_SCORING_HH
 
 #include <math.h>
+#include <vector>
 
+#include "aux.hh"
+
+#include "scoring_fwd.hh"
 #include "matrices.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
 #include "ribosum.hh"
 #include "match_probs.hh"
 
-#include "scoring_fwd.hh"
 
 namespace LocARNA {
 
@@ -20,6 +23,13 @@ namespace LocARNA {
     class Scoring;
     class ArcMatches;
     class ArcMatch;
+
+    //! matrix of scores supporting infinity
+    typedef std::vector<infty_score_t> ScoreVector;
+
+    //! Vector of partition functions
+    typedef std::vector<pf_score_t> PFScoreVector;
+    
 
     //! matrix of scores supporting infinity
     typedef Matrix<infty_score_t> ScoreMatrix;

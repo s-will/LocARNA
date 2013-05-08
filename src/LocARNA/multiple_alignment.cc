@@ -2,13 +2,13 @@
 #include <sstream>
 #include <fstream>
 
-#include "multiple_alignment.hh"
-
 #include "alphabet.hh"
+#include "rna_structure.hh"
+#include "sequence.hh"
+#include "rna_data.hh"
 #include "basepairs.hh"
 #include "alignment.hh"
-#include "sequence.hh"
-#include "rna_structure.hh"
+#include "multiple_alignment.hh"
 
 #include <limits>
 

@@ -5,6 +5,7 @@
 #include <vector>
 #include <tr1/unordered_map>
 
+#include "aux.hh"
 #include "scoring.hh"
 #include "sequence.hh"
 #include "rna_data.hh"

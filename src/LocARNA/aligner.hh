@@ -1,6 +1,7 @@
 #ifndef LOCARNA_ALIGNER_HH
 #define LOCARNA_ALIGNER_HH
 
+#include "aux.hh"
 #include "sequence.hh"
 #include "basepairs.hh"
 #include "arc_matches.hh"

@@ -1,8 +1,8 @@
 #ifndef LOCARNA_SEQUENCE_HH
 #define LOCARNA_SEQUENCE_HH
 
-#include "multiple_alignment.hh"
 #include <vector>
+#include "multiple_alignment.hh"
 
 namespace LocARNA {
     

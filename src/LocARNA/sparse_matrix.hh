@@ -1,6 +1,8 @@
 #ifndef SPARSE_MATRIX_HH
 #define SPARSE_MATRIX_HH
 
+#include <iostream>
+
 #include <tr1/unordered_map>
 
 /* in order to save some space we use a hash for storing the entries of the sparse
