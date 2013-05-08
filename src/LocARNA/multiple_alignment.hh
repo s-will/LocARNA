@@ -1,13 +1,14 @@
 #ifndef LOCARNA_MULTIPLE_ALIGNMENT_HH
 #define LOCARNA_MULTIPLE_ALIGNMENT_HH
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <vector>
 #include <map>
 
 #include "aux.hh"
 #include "string1.hh"
+#include "scoring_fwd.hh"
 
 #include <assert.h>
 

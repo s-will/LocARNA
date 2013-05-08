@@ -2,7 +2,7 @@
 #define LOCARNA_STOPWATCH_HH
 
 #include <tr1/unordered_map>
-#include <iostream>
+#include <iosfwd>
 #include <string>
 
 

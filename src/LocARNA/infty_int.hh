@@ -2,7 +2,7 @@
 #define LOCARNA_INFTY_INT_HH
 
 #include <algorithm>
-#include <iostream>
+#include <iosfwd>
 #include <assert.h>
 
 namespace LocARNA {

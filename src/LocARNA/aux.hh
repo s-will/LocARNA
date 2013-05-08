@@ -1,7 +1,7 @@
 #ifndef LOCARNA_AUX_HH
 #define LOCARNA_AUX_HH
 
-#include <iostream>
+#include <iosfwd>
 #include <exception>
 #include <string>
 #include <vector>
@@ -37,9 +37,6 @@ namespace std {
 
 namespace LocARNA {
 
-    //! type of the locarna score as defined by the class Scoring
-    typedef long int score_t;
-    
     //! general size type
     typedef size_t size_type;
     

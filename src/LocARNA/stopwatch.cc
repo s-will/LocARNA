@@ -1,7 +1,9 @@
 #include "stopwatch.hh"
 #include <sys/time.h>
 #include <assert.h>
+#include <iostream>
 #include <iomanip>
+
 
 
 namespace LocARNA {

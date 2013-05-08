@@ -1,7 +1,7 @@
 #ifndef LOCARNA_ALIGNMENT_HH
 #define LOCARNA_ALIGNMENT_HH
 
-#include "scoring.hh"
+#include "scoring_fwd.hh"
 
 namespace LocARNA {
     
@@ -10,6 +10,8 @@ namespace LocARNA {
     class Sequence;
     class RnaStructure;
     class string1;
+    class Scoring;
+    class AnchorConstraints;
 
     /** 
      * \brief Represents a structure-annotated sequence alignment

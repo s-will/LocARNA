@@ -4,11 +4,15 @@
 
 #include "multiple_alignment.hh"
 
+#include "alphabet.hh"
+#include "basepairs.hh"
 #include "alignment.hh"
+#include "sequence.hh"
 #include "rna_structure.hh"
 
 #include <limits>
 
+#include <math.h>
 #include <stdlib.h>
 
 using namespace std;

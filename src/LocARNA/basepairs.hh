@@ -2,7 +2,7 @@
 #define LOCARNA_BASEPAIRS_HH
 
 
-#include<iostream>
+#include<iosfwd>
 
 #include <vector>
 #include <set>

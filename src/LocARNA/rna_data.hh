@@ -1,7 +1,7 @@
 #ifndef LOCARNA_RNA_DATA_HH
 #define LOCARNA_RNA_DATA_HH
 
-#include <iostream>
+#include <iosfwd>
 
 #include "aux.hh"
 

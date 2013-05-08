@@ -7,7 +7,7 @@
 
 #include <exception>
 
-#include <iostream>
+#include <iosfwd>
 
 #include "aux.hh"
 
