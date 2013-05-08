@@ -27,8 +27,8 @@ namespace LocARNA {
 	std::string raliB="";
 
 	for (size_t i=1; i<=lenAli;i++) {
-	    if (!(SeqEntry::is_gap_symbol(aliA.seq()[i])
-		  && SeqEntry::is_gap_symbol(aliB.seq()[i])
+	    if (!(is_gap_symbol(aliA.seq()[i])
+		  && is_gap_symbol(aliB.seq()[i])
 		  )) {
 		raliA+=aliA.seq()[i];
 		raliB+=aliB.seq()[i];
