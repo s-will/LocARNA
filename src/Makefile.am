@@ -35,9 +35,9 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/sparse_matrix.hh LocARNA/sequence.hh			\
 	LocARNA/basepairs.hh LocARNA/alignment.hh			\
 	LocARNA/alignment_impl.hh LocARNA/rna_data.hh			\
-	LocARNA/params.hh LocARNA/scoring.hh LocARNA/infty_int.hh	\
-	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
-	LocARNA/alphabet.icc LocARNA/ribosum.hh				\
+	LocARNA/rna_data_impl.hh LocARNA/params.hh LocARNA/scoring.hh	\
+	LocARNA/infty_int.hh LocARNA/match_probs.hh			\
+	LocARNA/alphabet.hh LocARNA/alphabet.icc LocARNA/ribosum.hh	\
 	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
 	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
 	LocARNA/aligner_p.hh LocARNA/stral_score.hh			\

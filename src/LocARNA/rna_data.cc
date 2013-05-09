@@ -4,7 +4,8 @@
 #include <limits>
 
 #include "aux.hh"
-#include "rna_data.hh"
+
+#include "rna_data_impl.hh"
 
 #include "alphabet.hh"
 
@@ -45,6 +46,16 @@ namespace LocARNA {
 		     bool readStackingProbs,
 		     bool readInLoopProbs)
 	:
+	pimpl_(new RnaDataImpl(this,file,readPairProbs,readStackingProbs,readInLoopProbs)) {
+    }
+
+    RnaDataImpl::RnaDataImpl(RnaData *self,
+			     const std::string &file,
+			     bool readPairProbs,
+			     bool readStackingProbs,
+			     bool readInLoopProbs)
+	:
+	self_(self),
 	sequence_(),
 	pair_probs_available_(false),
 	stacking_probs_available_(false),
@@ -61,7 +72,12 @@ namespace LocARNA {
     }
         
     RnaData::RnaData(const Sequence &sequence)
-	: sequence_(sequence),
+	: pimpl_(new RnaDataImpl(this,sequence)) {
+    }
+    
+    RnaDataImpl::RnaDataImpl(RnaData *self,const Sequence &sequence)
+	: self_(self),
+	  sequence_(sequence),
 	  pair_probs_available_(false),
 	  stacking_probs_available_(false),
 	  in_loop_probs_available_(false),
@@ -71,17 +87,108 @@ namespace LocARNA {
 	  McCmat_(0L), // 0 pointer
 	  used_alifold_(false),
 	  min_free_energy_(std::numeric_limits<double>::infinity()),
-	  min_free_energy_structure_("")
-    {
+	  min_free_energy_structure_("") {
     }
     
     RnaData::~RnaData() {
-#ifdef HAVE_LIBRNA
+	delete pimpl_;
+    }
+
+    RnaDataImpl::~RnaDataImpl() {
+#     ifdef HAVE_LIBRNA
 	if (McCmat_) {
 	    delete McCmat_;
 	}
-#endif
+#     endif
     }
+
+    bool
+    RnaData::pair_probs_available() const {
+	return pimpl_->pair_probs_available_;
+    }
+
+    bool
+    RnaData::in_loop_probs_available() const {
+	return pimpl_->in_loop_probs_available_;
+    }
+
+    const Sequence &
+    RnaData::get_sequence() const {
+	return pimpl_->sequence_;
+    }
+
+    const std::string &
+    RnaData::get_seq_constraints() const {
+	return pimpl_->seq_constraints_;
+    }
+
+    double
+    RnaData::get_min_free_energy() const {
+	return pimpl_->min_free_energy_;
+    }
+
+    std::string
+    RnaData::get_min_free_energy_structure() const {
+	return pimpl_->min_free_energy_structure_;
+    }
+    
+    double
+    RnaData::get_arc_prob(size_type i, size_type j) const {
+	assert(i<j);
+	return pimpl_->arc_probs_(i,j);
+    }
+    
+    double 
+    RnaData::get_arc_2_prob(size_type i, size_type j) const {
+	assert(i<j); 
+	return pimpl_->arc_2_probs_(i,j);
+    }
+
+    double
+    RnaData::get_arc_stack_prob(size_type i, size_type j) const {
+	assert(i<j);
+	assert(get_arc_prob(i+1,j-1)>0); 
+	
+	return pimpl_->arc_2_probs_(i,j)/get_arc_prob(i+1,j-1);
+    }
+    
+    //! \brief get length of sequence
+    //! \return sequence length
+    size_type
+    RnaData::get_length() const {
+	return pimpl_->sequence_.length();
+    }
+    
+    double 
+    RnaData::prob_paired_upstream(size_type i) const {
+	double prob_paired=0.0;
+	
+	for (size_type j=i+1; j<=get_length(); j++) {
+	    prob_paired += pimpl_->arc_probs_(i,j); 
+	}
+	
+	return prob_paired;
+    }
+    
+    double
+    RnaData::prob_paired_downstream(size_type i) const {
+	double prob_paired=0.0;
+	
+	for (size_type j=1; j<i; j++) {
+	    prob_paired += pimpl_->arc_probs_(j,i); 
+	}
+	
+	return prob_paired;
+    }
+    
+    double
+    RnaData::prob_unpaired(size_type i) const {
+	return 
+	    1.0
+	    - prob_paired_upstream(i)
+	    - prob_paired_downstream(i);
+    }
+    
 
 #ifdef HAVE_LIBRNA
 
@@ -90,40 +197,40 @@ namespace LocARNA {
 	
 	stopwatch.start("bpp");
 	
-	assert(use_alifold || sequence_.row_number()==1);
+	assert(use_alifold || pimpl_->sequence_.row_number()==1);
 
-	used_alifold_=use_alifold;
+	pimpl_->used_alifold_=use_alifold;
 
 	// run McCaskill and get access to results
 	// in McCaskill_matrices
 	if (!use_alifold) {
-	    compute_McCaskill_matrices(params,inLoopProbs);
+	    pimpl_->compute_McCaskill_matrices(params,inLoopProbs);
 	} else {
 	    make_pair_matrix();
-	    compute_McCaskill_alifold_matrices(params,inLoopProbs);
+	    pimpl_->compute_McCaskill_alifold_matrices(params,inLoopProbs);
 	}
 	
 	// initialize the object from base pair probabilities
 	// Use the same proability threshold as in RNAfold -p !
-	set_arc_probs_from_McCaskill_bppm(10e-6,params.stacking);
+	pimpl_->set_arc_probs_from_McCaskill_bppm(10e-6,params.stacking);
 	
 	// since we either have local copies of all McCaskill pf arrays
 	// or don't need them anymore,
 	// we can free the ones of the Vienna lib
-	if (!used_alifold_) {
+	if (!pimpl_->used_alifold_) {
 	    free_pf_arrays();
 	} else {
 	    free_alipf_arrays();
 	}
 
-	pair_probs_available_=true;
-	in_loop_probs_available_=inLoopProbs;
+	pimpl_->pair_probs_available_=true;
+	pimpl_->in_loop_probs_available_=inLoopProbs;
 
 	stopwatch.stop("bpp");
     }
     
     void
-    RnaData::compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs) {
+    RnaDataImpl::compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs) {
 	assert(sequence_.row_number()==1);
 
 	// use MultipleAlignment to get pointer to c-string of the
@@ -132,7 +239,9 @@ namespace LocARNA {
 	size_t length = sequence_.length();
 	
 	char c_sequence[length+1];
-	std::string seqstring = MultipleAlignment(sequence_).seqentry(0).seq().to_string();
+	std::string seqstring = 
+	    MultipleAlignment(sequence_).seqentry(0).seq().to_string();
+	
 	strcpy(c_sequence,seqstring.c_str());
 	
 	char c_structure[length+1];
@@ -164,7 +273,8 @@ namespace LocARNA {
 	// overwritten by the next call to pf_fold, we have to copy
 	// the data structures if we want to keep them.
 	//
-	McCmat_ = new McC_matrices_t(c_sequence,inLoopProbs); // makes local copy (if needed)
+	McCmat_ = 
+	    new McC_matrices_t(c_sequence,inLoopProbs); // makes local copy (if needed)
 	
 	// precompute further tables (expMLbase, scale, qm2) for computations
 	// of probabilities unpaired / basepair in loop or external
@@ -182,17 +292,25 @@ namespace LocARNA {
 	    
 	    /* scaling factors (to avoid overflows) */
 	    if (pf_scale == -1) { /* mean energy for random sequences: 184.3*length cal */
-		pf_scale = exp(-(-185+(McCmat_->pf_params->temperature-37.)*7.27)/kT);
+		pf_scale = 
+		    exp(-(-185+(McCmat_->pf_params->temperature-37.)*7.27)/kT);
 		if (pf_scale<1) pf_scale=1;
 	    }
 	    
 	    scale_[0] = 1.;
 	    scale_[1] = 1./pf_scale;
 	    expMLbase_[0] = 1;
-	    expMLbase_[1] = McCmat_->pf_params->expMLbase * scale_[1];
+	    expMLbase_[1] = 
+		McCmat_->pf_params->expMLbase * scale_[1];
+	    
 	    for (size_t i=2; i<=sequence_.length(); i++) {
-		scale_[i] = scale_[i/2]*scale_[i-(i/2)]; // scale_[i] = pow(scale_[1],(double)i)
-		expMLbase_[i] = pow(McCmat_->pf_params->expMLbase, (double)i) * scale_[i];
+		
+		// due to the folowing: scale_[i] = pow(scale_[1],(double)i)
+		scale_[i] = 
+		    scale_[i/2]*scale_[i-(i/2)];
+ 
+		expMLbase_[i] = 
+		    pow(McCmat_->pf_params->expMLbase, (double)i) * scale_[i];
 	    }
 	
 	    
@@ -204,7 +322,7 @@ namespace LocARNA {
 
 
     void
-    RnaData::compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs) {
+    RnaDataImpl::compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs) {
 	
 	size_t length = sequence_.length();
 	size_t n_seq = sequence_.row_number();
@@ -252,7 +370,8 @@ namespace LocARNA {
 	// overwritten by the next call to pf_fold, we have to copy
 	// the data structures if we want to keep them.
 	//
-	McCmat_=new McC_ali_matrices_t(n_seq,length,inLoopProbs); // makes local copy (if needed)
+	McCmat_ =
+	    new McC_ali_matrices_t(n_seq,length,inLoopProbs); // makes local copy (if needed)
 	
 	// precompute further tables (expMLbase, scale, qm2) for computations
 	// of probabilities unpaired / basepair in loop or external
@@ -272,7 +391,8 @@ namespace LocARNA {
 	    
 	    /* scaling factors (to avoid overflows) */
 	    if (scaling_factor == -1) { /* mean energy for random sequences: 184.3*length cal */
-		scaling_factor = exp(-(-185+(McCmat_->pf_params->temperature-37.)*7.27)/kT);
+		scaling_factor = 
+		    exp(-(-185+(McCmat_->pf_params->temperature-37.)*7.27)/kT);
 		if (scaling_factor<1) scaling_factor=1;
 		McCmat_->pf_params->pf_scale=scaling_factor;
 	    }
@@ -280,10 +400,13 @@ namespace LocARNA {
 	    scale_[1] = 1./scaling_factor;
 
 	    expMLbase_[0] = 1;
-	    expMLbase_[1] = McCmat_->pf_params->expMLbase/scaling_factor;
+	    expMLbase_[1] = 
+		McCmat_->pf_params->expMLbase/scaling_factor;
 	    for (size_t i=2; i<=sequence_.length(); i++) {
-		scale_[i] = scale_[i/2]*scale_[i-(i/2)];
-		expMLbase_[i] = pow(McCmat_->pf_params->expMLbase, (double)i) * scale_[i];
+		scale_[i] = 
+		    scale_[i/2]*scale_[i-(i/2)];
+		expMLbase_[i] = 
+		    pow(McCmat_->pf_params->expMLbase, (double)i) * scale_[i];
 	    }
 	    
 	    // ----------------------------------------
@@ -302,7 +425,7 @@ namespace LocARNA {
 #endif // HAVE_LIBRNA
 
     void 
-    RnaData::init_from_file(const std::string &filename,
+    RnaDataImpl::init_from_file(const std::string &filename,
 			    bool readPairProbs,
 			    bool readStackingProbs,
 			    bool readInLoopProbs			       
@@ -347,10 +470,10 @@ namespace LocARNA {
 	//std::cout << arc_2_probs_ << std::endl;
     }
 
-    void RnaData::read_ps(const std::string &filename,
-			  bool readPairProbs,
-			  bool readStackingProbs
-			  ) {
+    void RnaDataImpl::read_ps(const std::string &filename,
+			      bool readPairProbs,
+			      bool readStackingProbs
+			      ) {
 	assert(!readStackingProbs || readPairProbs);
 		
 	in_loop_probs_available_=false;
@@ -422,7 +545,7 @@ namespace LocARNA {
     }
 
 
-    void RnaData::read_pp(const std::string &filename,
+    void RnaDataImpl::read_pp(const std::string &filename,
 			  bool readPairProbs,
 			  bool readStackingProbs,
 			  bool readInLoopProbs
@@ -506,7 +629,7 @@ namespace LocARNA {
 	}
     }
     
-    void RnaData::clear_arc_probs() {
+    void RnaDataImpl::clear_arc_probs() {
 	arc_probs_.clear();
 	arc_2_probs_.clear();
 	pair_probs_available_=false;
@@ -516,7 +639,7 @@ namespace LocARNA {
 
 #ifdef HAVE_LIBRNA
     void
-    RnaData::set_arc_probs_from_McCaskill_bppm(double threshold, bool stacking) {
+    RnaDataImpl::set_arc_probs_from_McCaskill_bppm(double threshold, bool stacking) {
 	clear_arc_probs();
 	
 	for( size_t i=1; i <= sequence_.length(); i++ ) {
@@ -548,7 +671,7 @@ namespace LocARNA {
     }
 
     void
-    RnaData::compute_Qm2(){
+    RnaDataImpl::compute_Qm2(){
 	assert(!used_alifold_);
 	McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_);
 
@@ -609,7 +732,7 @@ namespace LocARNA {
 
 
     void
-    RnaData::compute_Qm2_ali(){
+    RnaDataImpl::compute_Qm2_ali(){
 	assert(used_alifold_);
 	assert(McCmat_);
 	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(this->McCmat_);
@@ -674,7 +797,7 @@ namespace LocARNA {
     }
 
     int
-    RnaData::ptype_of_admissible_basepair(size_type i,size_type j) const {
+    RnaDataImpl::ptype_of_admissible_basepair(size_type i,size_type j) const {
 	assert(!used_alifold_);
 	McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_);
 
@@ -684,7 +807,7 @@ namespace LocARNA {
 	if ((type==0)
 	    || (((type==3)||(type==4))&&no_closingGU)
 	    || (MCm->get_qb(i,j)==0.0)
-	    || (get_arc_prob(i,j)==0.0))
+	    || (self_->get_arc_prob(i,j)==0.0))
 	    {
 		return 0;
 	    }
@@ -692,19 +815,18 @@ namespace LocARNA {
 	return type;
     }
 
-    double RnaData::prob_unpaired_in_loop_ali(size_type k,size_type i,size_type j) const {
+    double RnaDataImpl::prob_unpaired_in_loop_ali(size_type k,size_type i,size_type j) const {
     	assert(frag_len_geq(i,j,TURN+2));
 	assert(i<k);
 	assert(k<j);
-	
-	if (!in_loop_probs_available_) return 1.0;
+	assert(in_loop_probs_available_);
 	
 	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t*>(this->McCmat_);
 	
         size_t n_seq = sequence_.row_number();
 	
 	// immediately return 0.0 if i and j do not pair
-	if (get_arc_prob(i,j)==0.0 || MCm->get_qb(i,j)==0.0) {return 0.0;}
+	if (self_->get_arc_prob(i,j)==0.0 || MCm->get_qb(i,j)==0.0) {return 0.0;}
 	
 	// get base pair types for i,j of all sequences
 	std::vector<int> type(n_seq);
@@ -851,20 +973,28 @@ namespace LocARNA {
 	return res;
     }
     
-    double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j) const {
+    double 
+    RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j) const {
 	assert(i+TURN+1 <= j);
 	assert(i<k);
 	assert(k<j);
 	
-	if (!in_loop_probs_available_) return 1.0;
+	if (!pimpl_->in_loop_probs_available_) return 1.0;
 	
 	
-	if (used_alifold_) {
-	    return prob_unpaired_in_loop_ali(k, i, j);
+	if (pimpl_->used_alifold_) {
+	    return pimpl_->prob_unpaired_in_loop_ali(k, i, j);
+	} else {
+	    return pimpl_->prob_unpaired_in_loop_noali(k, i, j);
 	}
-	
+    }
+    
+    double 
+    RnaDataImpl::prob_unpaired_in_loop_noali(size_type k,size_type i,size_type j) const {
 	assert(!used_alifold_);
-	McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_);
+	assert(in_loop_probs_available_);
+
+	McC_matrices_t *MCm = static_cast<McC_matrices_t *>(McCmat_);
 
 	const char *c_sequence = MCm->sequence;
 	
@@ -955,23 +1085,25 @@ namespace LocARNA {
 	return res;
     }
 
-    double RnaData::prob_unpaired_external(size_type k) const {
+    double 
+    RnaData::prob_unpaired_external(size_type k) const {
 	assert(1<=k);
-	assert(k<=sequence_.length());
+	assert(k<=pimpl_->sequence_.length());
 	
-	if (!in_loop_probs_available_) return 1.0;
+	if (!pimpl_->in_loop_probs_available_) return 1.0;
 	
-	return (McCmat_->q1k[k-1] * scale_[1] * McCmat_->qln[k+1]) / McCmat_->qln[1];
+	return 
+	    (pimpl_->McCmat_->q1k[k-1] * pimpl_->scale_[1] * pimpl_->McCmat_->qln[k+1])
+	    / pimpl_->McCmat_->qln[1];
     }
 
 
     double
-    RnaData::prob_basepair_in_loop_ali(size_type ip,
-				       size_type jp,
-				       size_type i,
-				       size_type j) const {
-
-	if (!in_loop_probs_available_) return 1.0;
+    RnaDataImpl::prob_basepair_in_loop_ali(size_type ip,
+					   size_type jp,
+					   size_type i,
+					   size_type j) const {
+	assert(in_loop_probs_available_);
 	
 	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(this->McCmat_);
 	
@@ -980,10 +1112,10 @@ namespace LocARNA {
 	// note: the following tests cover the case that the distances of i,j and ip,jp are too small
 
 	// immediately return 0.0 if i and j do not pair
-	if (get_arc_prob(i,j)==0.0 || MCm->get_qb(i,j)==0.0) {return 0.0;}
+	if (self_->get_arc_prob(i,j)==0.0 || MCm->get_qb(i,j)==0.0) {return 0.0;}
 	
 	// immediately return 0.0 when ip and jp cannot pair
-	if (get_arc_prob(ip,jp)==0.0 || MCm->get_qb(ip,jp)==0.0) {return 0.0;}
+	if (self_->get_arc_prob(ip,jp)==0.0 || MCm->get_qb(ip,jp)==0.0) {return 0.0;}
 	
 	assert(frag_len_geq(i,j,TURN+4));
 	assert(frag_len_geq(ip,jp,TURN+2));
@@ -1090,12 +1222,23 @@ namespace LocARNA {
 				   size_type i,
 				   size_type j) const {
 	
-	if (!in_loop_probs_available_) return 1.0;
+	if (!pimpl_->in_loop_probs_available_) return 1.0;
 
-	if (used_alifold_) {
-	    return prob_basepair_in_loop_ali(ip, jp, i, j);
+	if (pimpl_->used_alifold_) {
+	    return pimpl_->prob_basepair_in_loop_ali(ip, jp, i, j);
+	} else {
+	    return pimpl_->prob_basepair_in_loop_noali(ip, jp, i, j);
 	}
+    }
+    
+
+    double
+    RnaDataImpl::prob_basepair_in_loop_noali(size_type ip,
+					     size_type jp,
+					     size_type i,
+					     size_type j) const {
 	
+	assert(in_loop_probs_available_);
 	assert(!used_alifold_);
 	McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_);
 	
@@ -1180,32 +1323,32 @@ namespace LocARNA {
 
     double RnaData::prob_basepair_external(size_type i,size_type j) const {
 
-	if (!in_loop_probs_available_) return 1.0;
+	if (!pimpl_->in_loop_probs_available_) return 1.0;
 	
-	size_t n=sequence_.length();
+	size_t n=pimpl_->sequence_.length();
 
 	assert(1<=i);
 	assert(i<j);
 	assert(j<=n);
-	assert(frag_len_geq(i,j,TURN+2));
+	assert(pimpl_->frag_len_geq(i,j,TURN+2));
 	
 	// immediately return 0.0 when i and j cannot pair
-	if (get_arc_prob(i,j)==0.0 || McCmat_->get_qb(i,j)==0.0) {
+	if (get_arc_prob(i,j)==0.0 || pimpl_->McCmat_->get_qb(i,j)==0.0) {
 	    return 0.0;
 	}
 	
 	FLT_OR_DBL extloop;
 	
-	if (!used_alifold_) {
-	    McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_);
+	if (!pimpl_->used_alifold_) {
+	    McC_matrices_t *MCm = static_cast<McC_matrices_t *>(pimpl_->McCmat_);
 	    extloop = exp_E_ExtLoop(MCm->get_ptype(i,j),
 				    i>1 ? MCm->S1[i-1] : -1, 
 				    j<n ? MCm->S1[j+1] : -1, 
 				    MCm->pf_params);
 	} else {
-	    McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(this->McCmat_);
+	    McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(pimpl_->McCmat_);
 	    
-	    size_t n_seq=sequence_.row_number();
+	    size_t n_seq=pimpl_->sequence_.row_number();
 	    
 	    extloop=1.0;
 	    
@@ -1220,12 +1363,12 @@ namespace LocARNA {
 	}
 
 	return
-	    (McCmat_->q1k[i-1]
-	     * McCmat_->get_qb(i,j)
+	    (pimpl_->McCmat_->q1k[i-1]
+	     * pimpl_->McCmat_->get_qb(i,j)
 	     * extloop
-	     * McCmat_->qln[j+1]
+	     * pimpl_->McCmat_->qln[j+1]
 	     )
-	    / McCmat_->qln[1];
+	    / pimpl_->McCmat_->qln[1];
 
     }
     
@@ -1233,14 +1376,16 @@ namespace LocARNA {
     RnaData::write_unpaired_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const {
 	
 	// write lines for loops closed by base pairs
-	for(arc_prob_matrix_t::size_type i=1; i<=sequence_.length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence_.length(); ++j) {
-		if (arc_probs_(i,j)>threshold1) {
+	for(arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
+	    for(arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
+		if (pimpl_->arc_probs_(i,j)>threshold1) {
 		    bool had_entries=false;
 		    for(arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
 			double p=prob_unpaired_in_loop(k,i,j);
 			if (p>threshold2) {
-			    if (!had_entries) {out << i << " " << j; had_entries=true;}
+			    if (!had_entries) {
+				out << i << " " << j; had_entries=true;
+			    }
 			    out << " " << k << " " << p;
 			}
 		    }
@@ -1252,10 +1397,12 @@ namespace LocARNA {
 	// write lines for external loop
 	
 	bool had_entries=false;
-	for(arc_prob_matrix_t::size_type k=1; k<=sequence_.length(); ++k) {
+	for(arc_prob_matrix_t::size_type k=1; k<=get_length(); ++k) {
 	    double p=prob_unpaired_external(k);
 	    if (p>threshold2) {
-		if (!had_entries) {out << 0 << " " << (sequence_.length()+1); had_entries=true;}
+		if (!had_entries) {
+			out << 0 << " " << (get_length()+1); had_entries=true;
+		    }
 		out << " " << k << " " << p;
 	    }
 	}
@@ -1267,9 +1414,9 @@ namespace LocARNA {
     std::ostream &
     RnaData::write_basepair_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const {
 	// write lines for loops closed by base pairs
-	for(arc_prob_matrix_t::size_type i=1; i<=sequence_.length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence_.length(); ++j) {
-		if (arc_probs_(i,j)>threshold1) {
+	for(arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
+	    for(arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
+		if (pimpl_->arc_probs_(i,j)>threshold1) {
 		    bool had_entries=false;
 		    for(arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
 			for(arc_prob_matrix_t::size_type jp=ip+1; jp<=j-1; ++jp) {
@@ -1287,11 +1434,11 @@ namespace LocARNA {
 	
 	// write lines for external loop
 	bool had_entries=false;
-	for(arc_prob_matrix_t::size_type ip=1; ip<=sequence_.length(); ++ip) {
-	    for(arc_prob_matrix_t::size_type jp=ip+1; jp<=sequence_.length(); ++jp) {
+	for(arc_prob_matrix_t::size_type ip=1; ip<=get_length(); ++ip) {
+	    for(arc_prob_matrix_t::size_type jp=ip+1; jp<=get_length(); ++jp) {
 		double p=prob_basepair_external(ip,jp);
 		if (p>threshold2) {
-		    if (!had_entries) {out << 0 << " " << (sequence_.length()+1); had_entries=true;}
+		    if (!had_entries) {out << 0 << " " << (get_length()+1); had_entries=true;}
 		    out << " " << ip << " " << jp << " " << p;
 		}
 	    }
@@ -1305,7 +1452,7 @@ namespace LocARNA {
     RnaData::write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3, bool write_probs, bool diff_encoding) const {
 	
 	size_t i=0;
-	size_t j=sequence_.length()+1;
+	size_t j=get_length()+1;
 
 	arc_prob_matrix_t::size_type last_i=i;
 	arc_prob_matrix_t::size_type last_j=j;
@@ -1316,7 +1463,7 @@ namespace LocARNA {
 	out << (diff_encoding?(int)i-(int)last_i:(int)i) << " " << (diff_encoding?(int)last_j-(int)j:(int)j)<< " 1 ;";
 	
 	arc_prob_matrix_t::size_type last_k=i;
-	for(arc_prob_matrix_t::size_type k=1; k<=sequence_.length(); ++k) {
+	for(arc_prob_matrix_t::size_type k=1; k<=get_length(); ++k) {
 	    double p=prob_unpaired_external(k);
 	    if (p>threshold2) {
 		out << " " << (diff_encoding?(k-last_k):k);
@@ -1328,9 +1475,9 @@ namespace LocARNA {
 	
 	arc_prob_matrix_t::size_type last_ip=i;
 	arc_prob_matrix_t::size_type last_jp=j;
-	for(arc_prob_matrix_t::size_type ip=1; ip<=sequence_.length(); ++ip) {
-	    for(arc_prob_matrix_t::size_type jp=sequence_.length(); jp>ip; --jp) {
-		if (arc_probs_(ip,jp)>threshold1) {
+	for(arc_prob_matrix_t::size_type ip=1; ip<=get_length(); ++ip) {
+	    for(arc_prob_matrix_t::size_type jp=get_length(); jp>ip; --jp) {
+		if (pimpl_->arc_probs_(ip,jp)>threshold1) {
 		    double p=prob_basepair_external(ip,jp);
 		    if (p>threshold3) {
 			out << " " << (diff_encoding?(int)ip-(int)last_ip:(int)ip) << " " << (diff_encoding?(int)last_jp-(int)jp:(int)jp);
@@ -1345,19 +1492,19 @@ namespace LocARNA {
 
 	
 	// write lines for internal loops
-	for(arc_prob_matrix_t::size_type i=1; i<=sequence_.length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence_.length(); ++j) {
+	for(arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
+	    for(arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
 		
-		if (arc_probs_(i,j)>threshold1) {
+		if (pimpl_->arc_probs_(i,j)>threshold1) {
 		    
 		    out << (diff_encoding?(int)i-(int)last_i:(int)i) << " " << (diff_encoding?(int)last_j-(int)j:(int)j);
 		    last_i=i; 
 		    last_j=j;
 		    
 		    // write base pair and stacking probability
-		    out << " " << arc_probs_(i,j);
-		    if (arc_2_probs_(i,j)>threshold1) {
-			out << " " << arc_2_probs_(i,j);
+		    out << " " << pimpl_->arc_probs_(i,j);
+		    if (pimpl_->arc_2_probs_(i,j)>threshold1) {
+			out << " " << pimpl_->arc_2_probs_(i,j);
 		    }
 		    out << " ;";
 		    
@@ -1402,16 +1549,16 @@ namespace LocARNA {
 
     std::ostream &
     RnaData::write_basepair_probs(std::ostream &out,double threshold) const {
-	for(arc_prob_matrix_t::size_type i=1; i<=sequence_.length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence_.length(); ++j) {
+	for(arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
+	    for(arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
 		
-		if (arc_probs_(i,j)>threshold) {
+		if (pimpl_->arc_probs_(i,j)>threshold) {
 		    out << i << " " << j;
 		    
 		    // write base pair and stacking probability
-		    out << " " << arc_probs_(i,j);
-		    if (arc_2_probs_(i,j)>threshold) {
-			out << " " << arc_2_probs_(i,j);
+		    out << " " << pimpl_->arc_probs_(i,j);
+		    if (pimpl_->arc_2_probs_(i,j)>threshold) {
+			out << " " << pimpl_->arc_2_probs_(i,j);
 		    }
 		}
 	    }
@@ -1419,7 +1566,7 @@ namespace LocARNA {
 	return out;
     }
     
-    std::string RnaData::seqname_from_filename(const std::string &s) const {
+    std::string RnaDataImpl::seqname_from_filename(const std::string &s) const {
 	size_type i;
 	size_type j;
     
@@ -1448,17 +1595,17 @@ namespace LocARNA {
 		      double thresh3) const
     {
     
-	size_type length=sequence_.length();
+	size_type length=get_length();
     
 	// write sequence
 	for(size_type k=1; k<=length; k+=width) {
-	    sequence_.write( out, k, std::min(length,k+width-1) );
+	    pimpl_->sequence_.write( out, k, std::min(length,k+width-1) );
 	    out <<std::endl;
 	}
 
 	// write constraints
-	if (seq_constraints_ != "") {
-	    out << "#C "<<seq_constraints_<<std::endl;
+	if (pimpl_->seq_constraints_ != "") {
+	    out << "#C "<<pimpl_->seq_constraints_<<std::endl;
 	}
     
 	// write separator
