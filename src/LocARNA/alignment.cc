@@ -43,8 +43,20 @@ namespace LocARNA {
 	}
     }
 
+    Alignment::Alignment(const Alignment &alignment)
+	: pimpl_(new AlignmentImpl(*alignment.pimpl_))
+    {
+    }
+    
     Alignment::~Alignment() { delete pimpl_; }
 
+    Alignment &
+    Alignment::operator =(const Alignment &alignment)
+    {
+	pimpl_ = new AlignmentImpl(*alignment.pimpl_);
+	return *this;
+    }
+    
     void
     Alignment::set_consensus_structure(const RnaStructure &structure) {
 	throw("Alignment::set_consensus_structure(...) not implemented");

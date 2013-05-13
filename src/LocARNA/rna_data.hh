@@ -134,6 +134,21 @@ namespace LocARNA {
 	 */
 	RnaData(const Sequence &sequence);
 	
+	/** 
+	 * @brief copy constructor
+	 * @param rna_data object to be copied
+	 * Copies implementation object (not only pointer) 
+	 */
+	RnaData(const RnaData &rna_data);
+
+	/** 
+	 * @brief assignment operator
+	 * @param rna_data object to be assigned
+	 * Assigns implementation object (not only pointer) 
+	 */
+	RnaData &operator =(const RnaData &rna_data);
+	
+	
 	//! \brief Clean up.
 	//!
 	//! In most cases does nothing. If McCaskill

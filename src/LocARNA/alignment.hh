@@ -59,6 +59,21 @@ namespace LocARNA {
 	Alignment(const Sequence &seqA, const Sequence &seqB,
 		  const string1 &alistrA, const string1 &alistrB);
 	
+	/** 
+	 * @brief copy constructor
+	 * @param rna_data object to be copied
+	 * Copies implementation object (not only pointer) 
+	 */
+	Alignment(const Alignment &alignment);
+
+	/** 
+	 * @brief assignment operator
+	 * @param rna_data object to be assigned
+	 * Assigns implementation object (not only pointer) 
+	 */
+	Alignment &operator =(const Alignment &alignment);
+
+
 	/**
 	 * \brief Set consensus structure of the alignment
 	 * @param structure consensus structure
