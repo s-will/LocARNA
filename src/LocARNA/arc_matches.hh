@@ -33,6 +33,7 @@ namespace LocARNA {
     public:
 	typedef std::vector<int>::size_type size_type; //!< size type
 	typedef size_type idx_type; //!< type of arc match index
+	typedef BasePairs__Arc Arc;
     private:
 	const Arc *arcA_; //!< the arc in A
 	const Arc *arcB_; //!< the arc in B
@@ -108,7 +109,7 @@ namespace LocARNA {
     class ArcMatches {
     public:
 	typedef std::vector<int>::size_type size_type; //!< type of a size
-    
+	typedef BasePairs__Arc Arc;    
     protected:
 	
 	size_type lenA; //!< length of sequence A

@@ -30,7 +30,7 @@ namespace LocARNA {
  */
 class AlignerN {
 public:
-
+    typedef BasePairs__Arc Arc;
     typedef SparsificationMapper::ArcIdx ArcIdx; //!< type of arc index
     typedef SparsificationMapper::ArcIdxVec ArcIdxVec; //!< vector of arc indices
     typedef SparsificationMapper::matidx_t matidx_t; //!< type for a matrix position

@@ -453,6 +453,7 @@ public:
 class EPM{
 
 public:
+    typedef BasePairs__Arc Arc; //!< arc class of BasePairs
 
 	typedef SparsificationMapper::seq_pos_t seqpos_t; //!< a type for a sequence position
 	typedef SparseTraceController::matpos_t matpos_t; //!< a type for a position in a sparsified matrix
@@ -677,6 +678,7 @@ T1 max4(const T1 &first,const T1 &second, const T1 &third, const T1 &fourth){
 }
 
 class ExactMatcher {
+    typedef BasePairs__Arc Arc; //!< use arc class of base pairs
 
 	typedef SparsificationMapper::ArcIdx ArcIdx; //!< type for the arc index
 	typedef SparsificationMapper::ArcIdxVec ArcIdxVec; //!< type for a vector of arc indices

@@ -19,6 +19,8 @@ namespace LocARNA {
 	//! @note 'typedef RMtrix<infty_score_t> M_matrix_t;' didn't improve performance
 	typedef ScoreMatrix M_matrix_t;
 
+	typedef BasePairs__Arc Arc;
+	
 	
 	const Scoring *scoring_; //!< the scores
 	Scoring *mod_scoring_; //!< used in normalized scoring, when we need to modify the scoring

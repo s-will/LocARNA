@@ -25,7 +25,7 @@ namespace LocARNA {
 class SparsificationMapper{
 
 public:
-
+    typedef BasePairs__Arc Arc;
 	typedef size_t ArcIdx; //!< type of arc index
 	typedef vector<ArcIdx> ArcIdxVec; //!< vector of arc indices
 	typedef pos_type matidx_t; //!< type for a matrix position
@@ -83,9 +83,9 @@ private:
 	//! checks if the cur_pos is valid (inner_arc=0) under any arc with common left end
 	//! checks if inner_arc is valid (inner_arc!=0) under any arc with common left end
 	void iterate_left_adj_list(pos_type cur_left_end,
-			pos_type cur_pos,
-			const Arc *inner_arc,
-			info_for_pos &struct_pos);
+				   pos_type cur_pos,
+				   const Arc *inner_arc,
+				   info_for_pos &struct_pos);
 
 	void valid_pos_external(pos_type cur_pos,const Arc *inner_arc, info_for_pos &struct_pos);
 

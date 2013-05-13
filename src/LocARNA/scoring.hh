@@ -22,10 +22,10 @@ namespace LocARNA {
     class RibosumFreq;
     class Scoring;
     class Sequence;
-    class Arc;
+    class BasePairs;
+    class BasePairs__Arc;
     class ArcMatches;
     class ArcMatch;
-    class BasePairs;
     class MatchProbs;
     
     //! matrix of scores supporting infinity
@@ -214,7 +214,8 @@ namespace LocARNA {
     //! 
     class Scoring {
     public:
-    
+	typedef BasePairs__Arc Arc;
+	
     private:
 	const ScoringParams *params; //!< a collection of parameters for scoring
     
@@ -453,7 +454,7 @@ namespace LocARNA {
 	 * arc_matches->explicit_scores()==true (This results in a
 	 * run-time error if !NDEBUG).
 	 */
-	score_t arcmatch(const Arc &arcA, const Arc &arcB, bool stacked=false) const;
+	score_t arcmatch(const BasePairs__Arc &arcA, const BasePairs__Arc &arcB, bool stacked=false) const;
 
 
 	/** 
@@ -466,7 +467,7 @@ namespace LocARNA {
 	 * @return 
 	 */
 	score_t  
-	arcDel(const Arc &arc, bool gapAorB, bool stacked=false) const;
+	arcDel(const BasePairs__Arc &arc, bool gapAorB, bool stacked=false) const;
 
 	/** 
 	 * @brief Boltzmann weight of score of arc match

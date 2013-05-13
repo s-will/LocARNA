@@ -82,12 +82,12 @@ namespace LocARNA {
     */
 
     /*! compare right ends of arcs (for sorting) */
-    bool operator < (const LeftAdjEntry &e1,const LeftAdjEntry &e2) {
+    bool operator < (const BasePairs::LeftAdjEntry &e1,const BasePairs::LeftAdjEntry &e2) {
 	return e1.right()<e2.right();
     }
 
     /*! compare left ends of arcs (for sorting) */
-    bool operator < (const RightAdjEntry &e1,const RightAdjEntry &e2) {
+    bool operator < (const BasePairs::RightAdjEntry &e1,const BasePairs::RightAdjEntry &e2) {
 	return e1.left()>e2.left();
     }
 
@@ -212,7 +212,7 @@ namespace LocARNA {
      * 
      * @return output stream after writing arc
      */
-    std::ostream &operator <<(std::ostream &out, const Arc &arc) {
+    std::ostream &operator <<(std::ostream &out, const BasePairs::Arc &arc) {
 	return out <<"("<< arc.idx()<<":"<<arc.left()<<","<<arc.right()<<")"; 
     }
 

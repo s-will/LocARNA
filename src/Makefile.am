@@ -15,8 +15,8 @@ lib_LTLIBRARIES=libLocARNA-@API_VERSION@.la
 
 libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/sequence.cc LocARNA/stopwatch.cc LocARNA/options.cc	\
-	LocARNA/basepairs.cc LocARNA/arc.cc LocARNA/alignment.cc	\
-	LocARNA/rna_data.cc LocARNA/scoring.cc LocARNA/infty_int.cc	\
+	LocARNA/basepairs.cc LocARNA/alignment.cc LocARNA/rna_data.cc	\
+	LocARNA/scoring.cc LocARNA/infty_int.cc				\
 	LocARNA/match_probs.cc LocARNA/ribosum.cc			\
 	LocARNA/anchor_constraints.cc LocARNA/arc_matches.cc		\
 	LocARNA/aligner.cc LocARNA/stral_score.cc			\
@@ -33,12 +33,11 @@ library_includedir=$(includedir)/LocARNA-$(API_VERSION)
 nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/stopwatch.hh LocARNA/options.hh LocARNA/matrix.hh	\
 	LocARNA/matrices.hh LocARNA/sparse_matrix.hh			\
-	LocARNA/sequence.hh LocARNA/basepairs.hh LocARNA/arc.hh		\
-	LocARNA/alignment.hh LocARNA/alignment_impl.hh			\
-	LocARNA/rna_data.hh LocARNA/rna_data_impl.hh			\
-	LocARNA/params.hh LocARNA/scoring.hh LocARNA/infty_int.hh	\
-	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
-	LocARNA/alphabet.icc LocARNA/ribosum.hh				\
+	LocARNA/sequence.hh LocARNA/basepairs.hh LocARNA/alignment.hh	\
+	LocARNA/alignment_impl.hh LocARNA/rna_data.hh			\
+	LocARNA/rna_data_impl.hh LocARNA/params.hh LocARNA/scoring.hh	\
+	LocARNA/infty_int.hh LocARNA/match_probs.hh			\
+	LocARNA/alphabet.hh LocARNA/alphabet.icc LocARNA/ribosum.hh	\
 	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
 	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
 	LocARNA/aligner_impl.hh LocARNA/aligner_p.hh			\

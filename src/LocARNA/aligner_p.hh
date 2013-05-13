@@ -15,6 +15,7 @@ namespace LocARNA {
 
     class Sequence;
     class BasePairs;
+    class BasePairs__Arc;
     class ArcMatch;
     class ArcMatches;
 
@@ -48,6 +49,8 @@ namespace LocARNA {
     public:
 	typedef size_t size_type; //!< size type
 	typedef std::pair<size_type,size_type> size_pair; //!< pair of size_type
+    
+	typedef BasePairs__Arc Arc;
     protected:
 	const Scoring *scoring; //!< the scores
     

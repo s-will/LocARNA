@@ -16,6 +16,7 @@ namespace LocARNA {
     class RnaData;
     class Sequence;
 
+
     //! \brief Represents a base pair
     //! 
     //! stores base pair left end, right end
@@ -24,7 +25,14 @@ namespace LocARNA {
     //! @note index uniqueness is not guaranteed by the class
     //! itself but can be used to locate the arc in a vector
     //! by the caller
-    class Arc {
+    //!
+    //! @note To indicate the relation to the BasePair class, we define
+    //! with prefix BasePairs__.  Using a nested class does not work
+    //! properly (C++ does not support forward references to nested
+    //! classes.) Using a namespace caused problems when sorting the
+    //! adjacency lists.
+    //!
+    class BasePairs__Arc {
     private:
 	size_t idx_;
 	size_t left_;
@@ -38,7 +46,7 @@ namespace LocARNA {
 	 * @param left  Left position of arc
 	 * @param right  Right position of arc
 	 */
-	Arc(size_t idx, size_t left, size_t right):
+	BasePairs__Arc(size_t idx, size_t left, size_t right):
 	    idx_(idx), left_(left), right_(right)
 	{}
 	
@@ -63,49 +71,7 @@ namespace LocARNA {
 	 */
 	size_t idx() const {return idx_;}
     };
-
-    std::ostream &operator <<(std::ostream &out, const Arc &arc);
-
-
-    //! Vector of arcs
-    typedef std::vector<Arc> arc_vec_t;
     
-    /**
-     * @brief Entry in a left adjacency list
-     *
-     * @see RightAdjEntry
-     *
-     * @note Deriving the class(es) from Arc is not equivalent to a
-     * type definition, like typedef Arc LeftAdjEntry, since it
-     * supports overloading of the operator < for left and right
-     * adjacency list entries (in contrast to typedef!).
-     * Damn you C++ :).
-     */
-    class LeftAdjEntry : public Arc {
-    public:
-	/** 
-	 * Construct from arc 
-	 * 
-	 * @param a arc
-	 */
-	LeftAdjEntry(const Arc &a): Arc(a) {}
-    };
-
-    /**
-     * @brief Entry in a right adjacency list
-     * @see LeftAdjEntry
-     */
-    class RightAdjEntry : public Arc {
-    public:
-	/** 
-	 * Construct from arc 
-	 * 
-	 * @param a arc
-	 */
-	RightAdjEntry(const Arc &a): Arc(a) {}
-    };
-
-
 
     // ============================================================
     /**
@@ -129,6 +95,46 @@ namespace LocARNA {
 
     public:
 	typedef size_t size_type;
+
+	typedef BasePairs__Arc Arc;
+	
+	/**
+	 * @brief Entry in a left adjacency list
+	 *
+	 * @see RightAdjEntry
+	 *
+	 * @note Deriving the class(es) from Arc is not equivalent to a
+	 * type definition, like typedef Arc LeftAdjEntry, since it
+	 * supports overloading of the operator < for left and right
+	 * adjacency list entries (in contrast to typedef!).
+	 * Damn you C++ :).
+	 */
+	class LeftAdjEntry : public Arc {
+	public:
+	    /** 
+	     * Construct from arc 
+	     * 
+	     * @param a arc
+	     */
+	    LeftAdjEntry(const Arc &a): Arc(a) {}
+	};
+	
+	/**
+	 * @brief Entry in a right adjacency list
+	 * @see LeftAdjEntry
+	 */
+	class RightAdjEntry : public Arc {
+	public:
+	    /** 
+	     * Construct from arc 
+	     * 
+	     * @param a arc
+	     */
+	    RightAdjEntry(const Arc &a): Arc(a) {}
+	};
+
+	//! Vector of arcs
+	typedef std::vector<Arc> arc_vec_t;
 	
 	/* types for data structures for the access of an arc in the structure,
 	   by its right end, its left end, or left and right end 
@@ -285,6 +291,9 @@ namespace LocARNA {
 	get_length_from_rnadata() const;
 	
     };
+
+    std::ostream &operator <<(std::ostream &out, const BasePairs::Arc &arc);
+
 
 }
 #endif
