@@ -20,6 +20,7 @@
 //#include <math.h>
 
 #include "LocARNA/sequence.hh"
+#include "LocARNA/scoring.hh"
 #include "LocARNA/basepairs.hh"
 #include "LocARNA/alignment.hh"
 #include "LocARNA/aligner.hh"

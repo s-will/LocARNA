@@ -2,41 +2,41 @@
 #define LOCARNA_ALIGNER_HH
 
 #include "aux.hh"
-#include "sequence.hh"
-#include "basepairs.hh"
-#include "arc_matches.hh"
-#include "alignment.hh"
+#include "scoring_fwd.hh"
+#include "rna_structure.hh"
 
-#include "params.hh"
-#include "scoring.hh"
-
-#include "matrix.hh"
-
-#include "aligner_restriction.hh"
 
 namespace LocARNA {
+
     class AlignerImpl;
 
-	/**
-	 * \brief Implements comparison by member second
-	 *
-	 * Templated function class implementing a comparison operator for
-	 * member second of class T.
-	 * @note used for priority queue in Aligner::suboptimal
+    class Sequence;
+    class AlignerParams;
+    class ArcMatches;
+    class Alignment;
+    
+    class AlignerRestriction;
+    
+    /**
+     * \brief Implements comparison by member second
+     *
+     * Templated function class implementing a comparison operator for
+     * member second of class T.
+     * @note used for priority queue in Aligner::suboptimal
+     */
+    template <class T>
+    class greater_second {
+    public:
+	/** 
+	 * Compare members second of class T
+	 * 
+	 * @return whether a.second smaller b.second
 	 */
-	template <class T>
-	class greater_second {
-	public:
-	    /** 
-	     * Compare members second of class T
-	     * 
-	     * @return whether a.second smaller b.second
-	     */
-	    bool operator() (const T& a, const T&b) {
-		return a.second < b.second;
-	    }
-	};
-
+	bool operator() (const T& a, const T&b) {
+	    return a.second < b.second;
+	}
+    };
+    
     
     /**
      * \brief Implements locarna alignment algorithm

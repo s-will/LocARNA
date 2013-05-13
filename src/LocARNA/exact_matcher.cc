@@ -2,6 +2,7 @@
 #include "arc_matches.hh"
 #include "exact_matcher.hh"
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 

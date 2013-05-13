@@ -9,7 +9,7 @@
 
 #include <iosfwd>
 
-#include "aux.hh"
+//#include "aux.hh"
 
 namespace LocARNA {
 

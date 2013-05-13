@@ -1,5 +1,8 @@
 #include "arc_matches.hh"
 #include "trace_controller.hh"
+#include "anchor_constraints.hh"
+#include "rna_data.hh"
+#include "scoring.hh"
 
 #include <fstream>
 #include <sstream>
@@ -8,7 +11,13 @@
 namespace LocARNA {
 
 
-    bool ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
+    ArcMatches::~ArcMatches() {
+	delete bpsA;
+	delete bpsB;
+    }
+
+    bool
+    ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
 	bool valid = 
 	    match_controller.is_valid_match(arcA.left(),arcB.left())
 	    &&

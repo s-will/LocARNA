@@ -8,10 +8,8 @@
 #include <set>
 #include <assert.h>
 
-#include "aux.hh"
 #include "params.hh"
 #include "sparse_matrix.hh"
-
 
 namespace LocARNA {
 
@@ -67,6 +65,7 @@ namespace LocARNA {
     };
 
     std::ostream &operator <<(std::ostream &out, const Arc &arc);
+
 
     //! Vector of arcs
     typedef std::vector<Arc> arc_vec_t;

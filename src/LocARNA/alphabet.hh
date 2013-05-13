@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <map>
+#include <iosfwd>
+#include <assert.h>
 
 namespace LocARNA {
 

@@ -22,7 +22,8 @@ namespace LocARNA {
     typedef double pf_score_t;
 #endif
 
-
+    class Scoring;
+    
 } // end namespace LocARNA
 
 #endif // LOCARNA_SCORING_FWD_HH

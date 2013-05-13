@@ -4,12 +4,17 @@
 #include <iostream>
 
 #include <tr1/unordered_map>
+#include "aux.hh"
 
 /* in order to save some space we use a hash for storing the entries of the sparse
    matrices that allow fast acces to the basepairs (i,j) in a structure.
 */
 
+
+
+
 namespace LocARNA {
+
     
     /**
      * \brief Represents a sparse 2D matrix
@@ -34,8 +39,8 @@ namespace LocARNA {
 	typedef std::pair<size_type,size_type> key_t; //!< type of matrix index pair
 
     protected:
-	
-	typedef std::tr1::unordered_map<key_t,value_t > map_t; //!< map type  
+		
+	typedef std::tr1::unordered_map<key_t,value_t,pair_of_size_t_hash > map_t; //!< map type  
 	map_t the_map_; //!< internal representation of sparse matrix
 	value_t def_; //!< default value of matrix entries
     

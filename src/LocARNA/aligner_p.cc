@@ -88,12 +88,26 @@ AlignerP::AlignerP(const Sequence &seqA_,
 }
 
 
+
 // ====================================================================================================
 // ====================================================================================================
 // INSIDE ALGORITHM
 // ====================================================================================================
 // ====================================================================================================
 
+
+    //! returns lvalue of matrix D
+    pf_score_t &//SparsePFScoreMatrix::element
+    AlignerP::D(const ArcMatch &am) {
+	return Dmat(am.arcA().idx(),am.arcB().idx());
+    }
+
+    //! returns lvalue of matrix D
+    pf_score_t &//SparsePFScoreMatrix::element
+    AlignerP::D(const Arc &arcA,const Arc &arcB) {
+	return Dmat(arcA.idx(),arcB.idx());
+    }
+    
 
 //===========================================================================
 // Initialization of inside matrices  M,E,F
@@ -546,6 +560,18 @@ AlignerP::align_reverse(size_type al, size_type ar, size_type bl, size_type br, 
 // OUTSIDE ALGORITHM
 // ====================================================================================================
 // ====================================================================================================
+
+    //! returns lvalue of matrix D'
+    pf_score_t &//SparsePFScoreMatrix::element
+    AlignerP::Dprime(const ArcMatch &am) {
+	return Dmatprime(am.arcA().idx(),am.arcB().idx());
+    }
+    
+    //! returns lvalue of matrix D'
+    pf_score_t &//SparsePFScoreMatrix::element
+    AlignerP::Dprime(const Arc &arcA,const Arc &arcB) {
+	return Dmatprime(arcA.idx(),arcB.idx());
+    }
 
 
 // helper functions for optimization

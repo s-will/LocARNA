@@ -1,6 +1,8 @@
 #ifndef LOCARNA_ALIGNER_RESTRICTION
 #define LOCARNA_ALIGNER_RESTRICTION
 
+#include <iostream>
+
 namespace LocARNA {
 
     /**

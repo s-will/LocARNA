@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "aux.hh"
+#include "sequence.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
 
@@ -202,6 +203,7 @@ namespace LocARNA {
     }
 
 
+
     /** 
      * Output operator for writing arc to output stream
      * 
@@ -215,3 +217,4 @@ namespace LocARNA {
     }
 
 }
+

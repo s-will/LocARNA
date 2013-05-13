@@ -8,22 +8,26 @@
 
 #include "scoring_fwd.hh"
 #include "matrix.hh"
-#include "basepairs.hh"
-#include "rna_data.hh"
-#include "ribosum.hh"
-#include "match_probs.hh"
 
+#ifndef NDEBUG
+#include "sequence.hh"
+#endif
 
 namespace LocARNA {
 
 
     //#define MEA_SCORING_OLD
 
+    
     class RibosumFreq;
     class Scoring;
+    class Sequence;
+    class Arc;
     class ArcMatches;
     class ArcMatch;
-
+    class BasePairs;
+    class MatchProbs;
+    
     //! matrix of scores supporting infinity
     typedef std::vector<infty_score_t> ScoreVector;
 

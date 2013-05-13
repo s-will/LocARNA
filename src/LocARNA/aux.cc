@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <algorithm>
 
+
 namespace LocARNA {
     failure::~failure() throw() {};
     

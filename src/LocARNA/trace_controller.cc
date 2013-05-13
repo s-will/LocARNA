@@ -6,6 +6,7 @@
 #include <limits>
 
 #include "aux.hh"
+#include "sequence.hh"
 #include "trace_controller.hh"
 #include "multiple_alignment.hh"
 #include "matrix.hh"
@@ -44,11 +45,11 @@ namespace LocARNA {
 
 
     TraceRange::TraceRange(const SeqEntry &pseqA,
-					    const SeqEntry &pseqB,
-					    const SeqEntry &paliA,
-					    const SeqEntry &paliB,
-					    size_type delta) {
-    
+			   const SeqEntry &pseqB,
+			   const SeqEntry &paliA,
+			   const SeqEntry &paliB,
+			   size_type delta) {
+	
 	// pseqA and pseqB can contain gaps, therefore we call these strings profile sequences    
 
 	assert(paliA.seq().length() == paliB.seq().length());
@@ -335,7 +336,11 @@ namespace LocARNA {
 
     /* Construct from MultipleAlignment (as needed for progressive alignment) */
 
-    TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta_,bool relaxed_merging_)
+    TraceController::TraceController(const Sequence &seqA,
+				     const Sequence &seqB,
+				     const MultipleAlignment *ma, 
+				     int delta_,
+				     bool relaxed_merging_)
 	: delta(delta_),
 	  relaxed_merging(relaxed_merging_)
     {

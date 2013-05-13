@@ -30,6 +30,7 @@
 
 #include "sequence.hh"
 #include "alphabet.hh"
+#include "rna_data.hh"
 #include "ribosum.hh"
 #include "stral_score.hh"
 

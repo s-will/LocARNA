@@ -6,9 +6,10 @@
 
 #include "aux.hh"
 #include "multiple_alignment.hh"
-#include "sequence.hh"
 
 namespace LocARNA {
+
+    class Sequence;
     
     /**
      * \brief Represents a range of traces
@@ -193,7 +194,11 @@ namespace LocARNA {
 	 *  min and max, the delta constraint holds for all pairs of
 	 *  sequences in seqA and seqB.
 	 */
-	TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta,bool relaxed_merging=false);
+	TraceController(const Sequence &seqA, 
+			const Sequence &seqB, 
+			const MultipleAlignment *ma, 
+			int delta,
+			bool relaxed_merging=false);
 
 	//! \brief Virtual destructor
 	virtual

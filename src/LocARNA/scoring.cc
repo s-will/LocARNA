@@ -1,8 +1,10 @@
+#include "alphabet.hh"
+#include "sequence.hh"
 #include "scoring.hh"
 #include "rna_data.hh"
-#include "sequence.hh"
-#include "alphabet.hh"
 #include "arc_matches.hh"
+#include "match_probs.hh"
+#include "ribosum.hh"
 
 
 #include <math.h>

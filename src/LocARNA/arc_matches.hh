@@ -5,20 +5,22 @@
 #include <vector>
 #include <tr1/unordered_map>
 
+#include "scoring_fwd.hh"
 #include "aux.hh"
-#include "scoring.hh"
-#include "sequence.hh"
-#include "rna_data.hh"
+#include "matrix.hh"
 #include "basepairs.hh"
-#include "anchor_constraints.hh"
-
-#include "trace_controller.hh"
 
 #include <assert.h>
 
 
 namespace LocARNA {
-
+    class Scoring;
+    class Sequence;
+    class RnaData;
+    class AnchorConstraints;
+    class TraceController;
+    class MatchController;
+    
     /**
      * @brief Represents a match of two base pairs (arc match) 
      *
@@ -287,10 +289,7 @@ namespace LocARNA {
 		   const AnchorConstraints &constraints);
     
 	//! clean up base pair objects
-	~ArcMatches() {
-	    delete bpsA;
-	    delete bpsB;
-	}
+	~ArcMatches();
     
 	// for the mea probabilistic consistency transformation, support to read and write the arcmatch scores
 	// this allows in general to have user defined arc-match scores
@@ -532,7 +531,7 @@ namespace LocARNA {
 	typedef std::pair<size_type,size_type> idx_pair_t;
 	
 	//! type of index for mapping arc pairs to arc matchs
-	typedef std::tr1::unordered_map<idx_pair_t,ArcMatch::idx_type> am_index_type;
+	typedef std::tr1::unordered_map<idx_pair_t,ArcMatch::idx_type,pair_of_size_t_hash> am_index_type;
 	
 	//! index for mapping arc pairs to arc matchs
 	am_index_type am_index_;

@@ -14,8 +14,6 @@ namespace LocARNA {
 }
 #endif
 
-#include "sequence.hh"
-
 #include "sparse_matrix.hh"
 
 #include "multiple_alignment.hh"
@@ -26,6 +24,7 @@ namespace LocARNA {
 //! @todo support constrained pf folding
 namespace LocARNA {
 
+    class Sequence;
 
     //! \brief Parameters for partition folding
     //!

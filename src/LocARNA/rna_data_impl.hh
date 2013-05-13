@@ -2,6 +2,7 @@
 #define LOCARNA_RNA_DATA_IMPL_HH
 
 #include "rna_data.hh"
+#include "sequence.hh"
 
 namespace LocARNA {
 

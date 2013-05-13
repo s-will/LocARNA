@@ -9,8 +9,10 @@
 #include <limits>
 #include <iterator>
 #include <tr1/unordered_map>
+#include "trace_controller.hh"
 #include "sparsification_mapper.hh"
 #include "tuples.hh"
+#include "scoring.hh"
 
 extern "C"
 {

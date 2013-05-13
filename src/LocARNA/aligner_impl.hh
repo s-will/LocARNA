@@ -3,7 +3,15 @@
 
 #include "aligner.hh"
 
+#include "aligner_restriction.hh"
+#include "scoring.hh"
+#include "alignment.hh"
+#include "arc_matches.hh"
+
 namespace LocARNA {
+
+    class Sequence;
+    template <class T> class Matrix;
     
     struct AlignerImpl {
 

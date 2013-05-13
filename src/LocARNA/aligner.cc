@@ -3,6 +3,7 @@
 
 #include "anchor_constraints.hh"
 #include "trace_controller.hh"
+#include "basepairs.hh"
 
 #include <math.h>
 #include <assert.h>

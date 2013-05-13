@@ -1,7 +1,8 @@
 #ifndef LOCARNA_CONFUSION_MATRIX
 #define LOCARNA_CONFUSION_MATRIX
 
-#include "aux.hh"
+#include <cstddef>
+#include <string>
 
 namespace LocARNA {
     class RnaStructure;

@@ -1,4 +1,6 @@
 #include "sparsification_mapper.hh"
+#include "sequence.hh"
+
 
 namespace LocARNA {
 

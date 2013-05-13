@@ -4,12 +4,13 @@
 #include <iosfwd>
 #include <vector>
 
-#include "aux.hh"
-#include "plusvector.hh"
-
-#include "alignment.hh"
-
 namespace LocARNA {
+    
+    template <class T> class plusvector;
+    class Alignment;
+    class Sequence;
+    class BasePairs;
+    class Scoring;
     
     struct AlignmentImpl {
 	

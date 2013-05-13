@@ -8,24 +8,6 @@
 #include <tr1/unordered_map>
 
 
-// define a hash function for unordered_maps
-namespace std {
-    namespace tr1 {
-	//! @brief hash function for pairs of unsigned ints
-	template<>
-	struct hash<std::pair<size_t,size_t> >
-	{
-	    /** 
-	     * @brief Hash function for pairs of size_t
-	     * 
-	     * @return hash code
-	     */
-	    size_t
-	    operator()(std::pair<size_t,size_t> p) const
-	    { return p.first<<(sizeof(size_t)/2) | p.second; }
-	};
-    }
-}
 
 
 //!
@@ -34,6 +16,23 @@ namespace std {
 
 
 namespace LocARNA {
+    
+    /** 
+     * @brief Function class definining hash function for pairs of size_t
+     */
+    struct pair_of_size_t_hash
+    {
+	/** 
+	 * @brief Hash function for pairs of size_t
+	 * 
+	 * @return hash code
+	 */
+	size_t
+	operator()(std::pair<size_t,size_t> p) const { 
+	    return p.first<<(sizeof(size_t)/2) | p.second;
+	}
+    };
+    
 
     //! general size type
     typedef size_t size_type;

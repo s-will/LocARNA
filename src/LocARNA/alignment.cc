@@ -1,5 +1,6 @@
 #include <math.h>
 
+#include "alignment.hh"
 #include "alignment_impl.hh"
 
 #include "basepairs.hh"
@@ -8,6 +9,7 @@
 #include "anchor_constraints.hh"
 #include "multiple_alignment.hh"
 #include "string1.hh"
+#include "plusvector.hh"
 
 #ifdef HAVE_LIBRNA
 extern "C" {

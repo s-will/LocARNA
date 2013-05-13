@@ -2,11 +2,9 @@
 #define LOCARNA_ALIGNMENT_HH
 
 #include <iosfwd>
+#include <vector>
 #include "aux.hh"
 #include "scoring_fwd.hh"
-
-// forward reference stl vector
-namespace std {template <typename _Tp, typename _Alloc > class vector;}
 
 namespace LocARNA {
     

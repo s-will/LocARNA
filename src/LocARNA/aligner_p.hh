@@ -1,21 +1,22 @@
 #ifndef LOCARNA_ALIGNER_P_HH
 #define LOCARNA_ALIGNER_P_HH
 
-#include "sequence.hh"
-#include "basepairs.hh"
-
-#include "params.hh"
 #include "scoring.hh"
+#include "params.hh"
 
 #include "matrix.hh"
-
-#include "arc_matches.hh"
 
 #include "sparse_matrix.hh"
 
 #include "aligner_restriction.hh"
 
+
 namespace LocARNA {
+
+    class Sequence;
+    class BasePairs;
+    class ArcMatch;
+    class ArcMatches;
 
     //! matrix for storing probabilities
     typedef Matrix<double> ProbMatrix;
@@ -313,27 +314,19 @@ namespace LocARNA {
 
 	//! returns lvalue of matrix D
 	pf_score_t &//SparsePFScoreMatrix::element
-	D(const ArcMatch &am) {
-	    return Dmat(am.arcA().idx(),am.arcB().idx());
-	}
+	D(const ArcMatch &am);
 
 	//! returns lvalue of matrix D
 	pf_score_t &//SparsePFScoreMatrix::element
-	D(const Arc &arcA,const Arc &arcB) {
-	    return Dmat(arcA.idx(),arcB.idx());
-	}
+	D(const Arc &arcA,const Arc &arcB);
 
 	//! returns lvalue of matrix D'
 	pf_score_t &//SparsePFScoreMatrix::element
-	Dprime(const ArcMatch &am) {
-	    return Dmatprime(am.arcA().idx(),am.arcB().idx());
-	}
+	Dprime(const ArcMatch &am);
 
 	//! returns lvalue of matrix D'
 	pf_score_t &//SparsePFScoreMatrix::element
-	Dprime(const Arc &arcA,const Arc &arcB) {
-	    return Dmatprime(arcA.idx(),arcB.idx());
-	}
+	Dprime(const Arc &arcA,const Arc &arcB);
     
 	//! determine leftmost end of an arc that covers the range l..r
 	//! @param s sequence position, limit to base pairs right of s or equal

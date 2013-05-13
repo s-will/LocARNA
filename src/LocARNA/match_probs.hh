@@ -3,15 +3,14 @@
 
 #include <string>
 
-#include "aux.hh"
 #include "matrix.hh"
-#include "alphabet.hh"
-#include "sequence.hh"
-#include "rna_data.hh"
 
 namespace LocARNA {
 
     class StralScore;
+    class RnaData;
+    template <class T> class Alphabet;
+    class Sequence;
 
     //! \brief Provides probabilities for each match.
     //!
@@ -36,7 +35,8 @@ namespace LocARNA {
     //!
     class MatchProbs {
     public:    
-    
+	typedef size_t size_type;
+	
 	//! construct as empty object
 	MatchProbs();
 

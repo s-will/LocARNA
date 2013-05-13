@@ -1,8 +1,10 @@
-#include "anchor_constraints.hh"
 #include <assert.h>
 #include <sstream>
 
 #include <iostream>
+
+#include "anchor_constraints.hh"
+#include "aux.hh"
 
 namespace LocARNA {
 

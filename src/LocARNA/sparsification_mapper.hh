@@ -3,9 +3,10 @@
 
 #include <iostream>
 #include <limits>
+
+#include "aux.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
-#include "aux.hh"
 
 // use for type safe index_t
 // #include "type_wrapper.hh"
