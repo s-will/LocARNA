@@ -5,7 +5,8 @@
 #include "aux.hh"
 #include "scoring_fwd.hh"
 
-//namespace std {template <class T> class vector;}
+// forward reference stl vector
+namespace std {template <typename _Tp, typename _Alloc > class vector;}
 
 namespace LocARNA {
     
@@ -193,33 +194,38 @@ namespace LocARNA {
 	//! edges. Entries are positions of sequence B or -1 for gap
 	const std::vector<int> &get_b() const;
 
-	/** 
-	 * Evaluate alignment by LocARNA score
-	 * 
-	 * @param bpsA    base pairs of RNA A
-	 * @param bpsB    base pairs of RNA B
-	 * @param scoring Scoring object for RNAs A and B
-	 * 
-	 * @return locarna score of the alignment
-	 */
-	score_t
-	evaluate(const BasePairs &bpsA,
-		 const BasePairs &bpsB, 
-		 const Scoring &scoring) const;
+	// first attempt to define methods for alignment evaluation;
+	// however, such methods seem badly placed in class Alignment;
+	// rather such evaluation capabilities should be implemented
+	// in the "Aligner" class(es).
+	//
+	// /** 
+	//  * Evaluate alignment by LocARNA score
+	//  * 
+	//  * @param bpsA    base pairs of RNA A
+	//  * @param bpsB    base pairs of RNA B
+	//  * @param scoring Scoring object for RNAs A and B
+	//  * 
+	//  * @return locarna score of the alignment
+	//  */
+	// score_t
+	// evaluate(const BasePairs &bpsA,
+	// 	 const BasePairs &bpsB, 
+	// 	 const Scoring &scoring) const;
 	
-	/** 
-	 * Evaluate alignment by LocARNA score (finding the optimal consensus structure)
-	 * 
-	 * @param bpsA    base pairs of RNA A
-	 * @param bpsB    base pairs of RNA B
-	 * @param scoring Scoring object for RNAs A and B
-	 * 
-	 * @return locarna score of the alignment
-	 */
-	score_t
-	evaluate_optimize_consensus_structure(const BasePairs &bpsA,
-		 const BasePairs &bpsB, 
-		 const Scoring &scoring) const;
+	// /** 
+	//  * Evaluate alignment by LocARNA score (finding the optimal consensus structure)
+	//  * 
+	//  * @param bpsA    base pairs of RNA A
+	//  * @param bpsB    base pairs of RNA B
+	//  * @param scoring Scoring object for RNAs A and B
+	//  * 
+	//  * @return locarna score of the alignment
+	//  */
+	// score_t
+	// evaluate_optimize_consensus_structure(const BasePairs &bpsA,
+	// 	 const BasePairs &bpsB, 
+	// 	 const Scoring &scoring) const;
 	
     };
 

@@ -82,22 +82,53 @@ namespace LocARNA {
 	pimpl_->strB_[i]='(';
 	pimpl_->strB_[j]=')';
     }
-
-    score_t
-    Alignment::evaluate(const BasePairs &bpsA,
-	     const BasePairs &bpsB,
-	     const Scoring &scoring) const {
-	throw failure("Alignment::evaluate(...) not implemented.");
-	return 0;
-    }
     
-    score_t
-    Alignment::evaluate_optimize_consensus_structure(const BasePairs &bpsA,
-						     const BasePairs &bpsB, 
-						     const Scoring &scoring) const {
-	throw failure("Alignment::evaluate_optimize_consensus_structure(...) not implemented.");
-	return 0;
-    }
+    // void
+    // invert_position_vector(const std::vector<int> &x,std::vector<int> &inv_a) const {
+    // 	throw failure("AlignmentImpl::invert_position_vector(...) not implemented.");
+
+    // }
+
+    // score_t
+    // AlignmentImpl::evaluate(const BasePairs &bpsA,
+    // 			    const BasePairs &bpsB,
+    // 			    const Scoring &scoring) {
+    // 	throw failure("AlignmentImpl::evaluate(...) not implemented.");
+
+    // 	const RnaStructure rnastrA(impl_->strA_);
+    // 	const RnaStructure rnastrB(impl_->strB_);
+	
+    // 	std::vector<int> inv_a;
+    // 	invert_position_vector(a_,inv_a);
+    // 	std::vector<int> inv_b;
+    // 	invert_position_vector(b_,inv_b);
+	
+	
+    // 	for(RnaStructure::const_iterator it=rnastrA.begin(); rnastrA.end()!=it; ++it) {
+	    
+    // 	}
+	
+	
+    // 	return 0;
+    // }
+    
+    // score_t
+    // Alignment::evaluate(const BasePairs &bpsA,
+    // 			const BasePairs &bpsB,
+    // 			const Scoring &scoring) const {
+	
+    // 	return impl_->evaluate(bpsA,bpsB,scoring);
+    // }
+    
+    
+
+    // score_t
+    // Alignment::evaluate_optimize_consensus_structure(const BasePairs &bpsA,
+    // 						     const BasePairs &bpsB, 
+    // 						     const Scoring &scoring) const {
+    // 	throw failure("Alignment::evaluate_optimize_consensus_structure(...) not implemented.");
+    // 	return 0;
+    // }
     
     
     void Alignment::write(std::ostream &out, int width, infty_score_t score,

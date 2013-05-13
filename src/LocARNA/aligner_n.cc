@@ -428,7 +428,7 @@ void AlignerN::fill_D_entries(pos_type al, pos_type bl)
     if (trace_debugging_output)
 	std::cout << "fill_D_entries al: " << al << " bl: " << bl << std::endl;
 
-    UnmodifiedScoringViewN sv = def_scoring_view; //toask: where should we care about non_default scoring views
+    // UnmodifiedScoringViewN sv = def_scoring_view; //toask: where should we care about non_default scoring views
 
     //iterate through arcs begining at al,bl
     for(ArcMatchIdxVec::const_iterator it=arc_matches.common_left_end_list(al,bl).begin();  //tocheck:toask:todo: IMPORTANT! can we use arc_matches to get the common endlist?? arcA,arcB may not be matched!
@@ -999,11 +999,11 @@ AlignerN::trace(ScoringView sv) {
     // free end gap version: trace_M(E_NO_NO,r.get_startA()-1,max_i,r.get_startB()-1,max_j,true,sv);
     seq_pos_t ps_al = r.get_startA() - 1;
     matidx_t last_mat_idx_pos_A = mapperA.number_of_valid_mat_pos(ps_al) -1;//tocheck: check the correctness
-    seq_pos_t last_seq_pos_A = mapperA.get_pos_in_seq_new(ps_al, last_mat_idx_pos_A);
+    //seq_pos_t last_seq_pos_A = mapperA.get_pos_in_seq_new(ps_al, last_mat_idx_pos_A);
 
     seq_pos_t ps_bl = r.get_startB() - 1;
     matidx_t last_mat_idx_pos_B = mapperB.number_of_valid_mat_pos(ps_bl) -1;//tocheck: check the correctness
-    seq_pos_t last_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_mat_idx_pos_B);
+    //seq_pos_t last_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_mat_idx_pos_B);
 
     trace_M(E_NO_NO, ps_al, last_mat_idx_pos_A, ps_bl, last_mat_idx_pos_B, true, sv); //TODO: right side for trace_M differs with align_M
 /*    for ( size_type k = last_seq_pos_A + 1; k <= r.get_endA(); k++)//tocheck: check the correctness

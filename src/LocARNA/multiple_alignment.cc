@@ -746,29 +746,29 @@ namespace LocARNA {
 	}
     }
 
-    score_t 
-    MultipleAlignment::evaluate(const std::vector<const BasePairs*> &basepairs_vec,
-				const Scoring &scoring,
-				const RnaStructure &consensus_structure) const {
-	score_t score;
+    // score_t 
+    // MultipleAlignment::evaluate(const std::vector<const BasePairs*> &basepairs_vec,
+    // 				const Scoring &scoring,
+    // 				const RnaStructure &consensus_structure) const {
+    // 	score_t score;
 	
-	for (size_t i=0; i<row_number(); ++i) {
-	    for (size_t j=i+1; j<row_number(); ++j) {
-		Alignment pairwise_alignment = 
-		    Alignment(basepairs_vec[i]->get_rnadata().get_sequence(),
-			      basepairs_vec[j]->get_rnadata().get_sequence(),
-			      seqentry(i).seq(),
-			      seqentry(j).seq());
-		pairwise_alignment.set_consensus_structure(consensus_structure);
-		score += pairwise_alignment.evaluate(*basepairs_vec[i],
-						     *basepairs_vec[j],
-						     scoring);
-	    }
-	}
+    // 	for (size_t i=0; i<row_number(); ++i) {
+    // 	    for (size_t j=i+1; j<row_number(); ++j) {
+    // 		Alignment pairwise_alignment = 
+    // 		    Alignment(basepairs_vec[i]->get_rnadata().get_sequence(),
+    // 			      basepairs_vec[j]->get_rnadata().get_sequence(),
+    // 			      seqentry(i).seq(),
+    // 			      seqentry(j).seq());
+    // 		pairwise_alignment.set_consensus_structure(consensus_structure);
+    // 		score += pairwise_alignment.evaluate(*basepairs_vec[i],
+    // 						     *basepairs_vec[j],
+    // 						     scoring);
+    // 	    }
+    // 	}
 	
-	throw failure("MultipleAlignment::evaluate not implemented.");
-	return 0;
-    }
+    // 	throw failure("MultipleAlignment::evaluate not implemented.");
+    // 	return 0;
+    // }
 
     
 

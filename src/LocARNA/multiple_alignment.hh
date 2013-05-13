@@ -109,12 +109,12 @@ public:
 	    : name_(name), description_(description), seq_(seq)
 	{}
 	
-	/** 
-	 * Copy Constructor
-	 * 
-	 * @param se sequence entry
-	 */
-	SeqEntry(const SeqEntry &se): name_(se.name_),description_(se.description_),seq_(se.seq_) {}
+	// /** 
+	//  * Copy Constructor
+	//  * 
+	//  * @param se sequence entry
+	//  */
+	// SeqEntry(const SeqEntry &se): name_(se.name_),description_(se.description_),seq_(se.seq_) {}
 	
 	// access
 	
@@ -131,7 +131,8 @@ public:
 	seq() const {return seq_;}
 
 	//! length without gaps
-	size_type length_wogaps() const;
+	size_type
+	length_wogaps() const;
 	
 	//****************************************
 	// projections
@@ -157,7 +158,8 @@ public:
 	 * \brief reverse sequence
 	 * 
 	 */
-	void reverse() {
+	void
+	reverse() {
 	    seq_.reverse();
 	}
 	
@@ -165,7 +167,8 @@ public:
 	 * \brief append character to sequence
 	 * @param c character
 	 */
-	void push_back(char c) {
+	void
+	push_back(char c) {
 	    seq_.push_back(c);
 	}
 
@@ -429,7 +432,8 @@ public:
      *
      * @return consensus sequence as string
      */
-    std::string consensus_sequence() const;
+    std::string
+    consensus_sequence() const;
     
     /** 
      * Access alignment column
@@ -459,7 +463,8 @@ public:
      * @param c column that is appended
      *
      */
-    void operator += (const AliColumn &c);
+    void
+    operator += (const AliColumn &c);
     
     /**
      * \brief Append the same character to each row
@@ -467,12 +472,14 @@ public:
      * @param c character that is appended
      *
      */
-    void operator += (char c);
+    void
+    operator += (char c);
     
     /**
      * \brief reverse the multiple alignment
      */
-    void reverse();
+    void
+    reverse();
 
 
     // ------------------------------------------------------------
@@ -485,7 +492,8 @@ public:
      *
      * Writes one line "<name> <seq>" for each single sequence.
      */
-    void write(std::ostream &out) const;
+    void
+    write(std::ostream &out) const;
     
     /**
      * \brief Write sub-alignment to stream 
@@ -497,7 +505,8 @@ public:
      * @param start start column
      * @param end end column
      */
-    void write(std::ostream &out, size_type start, size_type end) const;
+    void
+    write(std::ostream &out, size_type start, size_type end) const;
     
     /**
      * \brief check character constraints
@@ -509,7 +518,8 @@ public:
      *
      * @return whether all characters are in the alphabet
      */
-    bool checkAlphabet(const Alphabet<char> &alphabet) const;
+    bool 
+    checkAlphabet(const Alphabet<char> &alphabet) const;
     
 private:
     //! @brief Deviation of a pairwise alignment from a pairwise reference alignment
@@ -635,33 +645,35 @@ private:
 
 public:
 
-    /**
-     * @brief Evaluate the multiple alignment by locarna score
-     * @param scoring_params scoring parameters
-     * @param basepairs_vec vector of pointers to BasePairs objects for each sequence
-     * @param consensus_structure consensus structure of alignment
-     *
-     * @note sequence entries in ma and objects in basepairs_vec have
-     * to correspond to each other in the given order; the two objects
-     * must have the same size. The sequences have to match! Length of
-     * consensus structure has to match alignment length.
-     *
-     *
-     * @return score of the multiple alignment for given ensembles,
-     * consensus structure, and scoring
-     */
-    score_t 
-    evaluate(const std::vector<const BasePairs*> &basepairs_vec,
-	     const Scoring &scoring,
-	     const RnaStructure &consensus_structure) const;
+    // attempt to define an evaluation method for multiple alignments;
+    // this would require (the construction of) appropriate Aligner objects
+    //
+    // /**
+    //  * @brief Evaluate the multiple alignment by locarna score
+    //  * @param scoring_params scoring parameters
+    //  * @param basepairs_vec vector of pointers to BasePairs objects for each sequence
+    //  * @param consensus_structure consensus structure of alignment
+    //  *
+    //  * @note sequence entries in ma and objects in basepairs_vec have
+    //  * to correspond to each other in the given order; the two objects
+    //  * must have the same size. The sequences have to match! Length of
+    //  * consensus structure has to match alignment length.
+    //  *
+    //  *
+    //  * @return score of the multiple alignment for given ensembles,
+    //  * consensus structure, and scoring
+    //  */
+    // score_t 
+    // evaluate(const std::vector<const BasePairs*> &basepairs_vec,
+    // 	     const Scoring &scoring,
+    // 	     const RnaStructure &consensus_structure) const;
     
-    
-
     /** 
      * @brief Print contents of object to stream
      * @param out output stream
      */
-    void print_debug(std::ostream &out=std::cout) const;
+    void
+    print_debug(std::ostream &out=std::cout) const;
 };
 
 } // end namespace

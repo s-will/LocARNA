@@ -1,7 +1,6 @@
 #include "aligner.hh"
 #include "anchor_constraints.hh"
 #include "trace_controller.hh"
-// #include "d_matrix.hh"
 
 #include <math.h>
 #include <assert.h>
@@ -16,7 +15,7 @@ using namespace std;
 namespace LocARNA {
 
 /*
-  NEW SEMANTIC OF CONSTRAINTS
+  SEMANTIC OF CONSTRAINTS
   
   Anchor constraints (i,j) enforce that positions i in A and j in B are matched;
   neither i nor j are deleted (for local alignment, this implies that
@@ -142,6 +141,15 @@ Aligner::Aligner(const Sequence &seqA_,
 Aligner::~Aligner() {
     if (mod_scoring!=0) delete mod_scoring;
 }
+
+Alignment const & 
+Aligner::get_alignment() const {return alignment;} 
+
+void
+Aligner::set_alignment(const Alignment &alignment) {
+    this->alignment = alignment;
+} 
+
 
 // standard cases in alignment: base match, base in/del, arc match
 // (for structure local alignment this is extended by exclusion handling)
