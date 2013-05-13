@@ -752,15 +752,17 @@ private:
     int alpha_2; //!< multiplier for structural score
     int alpha_3; //!< multiplier for stacking score
 
-    score_t difference_to_opt_score; //!< in the suboptimal traceback all EPMs which are at most difference_to_opt_score
+   // score_t difference_to_opt_score; //!< in the suboptimal traceback all EPMs which are at most difference_to_opt_score
     								 // worse than the optimal score are considered
     score_t min_subopt_score; //!< minimal score of a traced EPM
-    score_t easier_scoring_par; //!< use only sequential (*alpha_1) and a constant structural score alpha (easier_scoring_par)
+    //score_t easier_scoring_par; //!< use only sequential (*alpha_1) and a constant structural score alpha (easier_scoring_par)
     							//!< for each matched base of a basepair
-    double subopt_range; //!< trace EPMs within that range of best EPM score"
+  //  double subopt_range; //!< trace EPMs within that range of best EPM score"
     score_t am_threshold; //!< minimal arcmatch score in F matrix
-    score_t subopt_score; //!< in the suboptimal traceback all EPMs with at least subopt_score are considered
-    double cutoff_coverage; //!< Skip chaining if best EPM has larger coverage on shortest seq
+    //score_t subopt_score; //!< in the suboptimal traceback all EPMs with at least subopt_score are considered
+   // double cutoff_coverage; //!< Skip chaining if best EPM has larger coverage on shortest seq
+    long int max_number_of_EPMs; //!< maximal number of EPMs for the suboptimal traceback
+    long int cur_number_of_EPMs; //todo: describe
 
     pair_seqpos_t pos_of_max; //!< the position of the maximum in matrix F
 
@@ -768,6 +770,11 @@ private:
 
     const Arc pseudo_arcA; //!< pseudo Arc for sequence A (0,seqA.length())
     const Arc pseudo_arcB; //!< pseudo Arc for sequence B (0,seqB.length())
+
+    //todo: add description
+    long int get_cur_number_of_EPMs(){
+    	return cur_number_of_EPMs;
+    }
 
     /**
      * View on matrix D
@@ -902,7 +909,9 @@ private:
      *
      * @param cur_epm EPM that is added to the list of all EPMs
      */
-    void add_foundEPM(EPM &cur_epm);
+    void add_foundEPM(EPM &cur_epm, bool count_EPMs);
+
+    bool check_PPM();
 
 
     // --------------------------------------------
@@ -963,7 +972,7 @@ private:
      * all suboptimal EPMs based on the given tolerance (a certain difference
      * to the optimal score or a certain percentage of the optimal score)
      */
-    void trace_EPMs_suboptimal();
+    void trace_EPMs_suboptimal(bool count_EPMs, score_t difference_to_opt_score);
 
     /**
      * \brief traces through the F matrix from position (i,j) to
@@ -974,7 +983,7 @@ private:
      * @param max_tol maximal tolerance that is left to trace the EPM
      * @param recurse for debugging
      */
-    void trace_F_suboptimal(pos_type i,pos_type j,score_t max_tol, bool recurse);
+    void trace_F_suboptimal(pos_type i,pos_type j,score_t max_tol, bool recurse, bool count_EPMs);
 
     /**
      * \brief traces through the L, G_A, G_AB and LR matrix and stores
@@ -1093,7 +1102,7 @@ private:
      *                          from L/LR Matrix: dummy value -1
      */
     void preproc_fill_epm(map_am_to_do_t &am_to_do, size_type pos_cur_epm,
-    		epm_cont_t &found_epms, score_t min_allowed_score=-1);
+    		epm_cont_t &found_epms, bool count_EPMs, score_t min_allowed_score=-1);
 
     /**
      * \brief fills the EPMs with the traced parts from the jumped over arc matches
@@ -1113,7 +1122,7 @@ private:
      */
     void fill_epm(const map_am_to_do_t &map_am_to_do, size_type vec_idx,
     		std::vector<score_t> &max_tol_left_up_to_pos, std::vector<const EPM*> &epms_to_insert,
-    		score_t min_score, size_type pos_cur_epm, epm_cont_t &found_epms);
+    		score_t min_score, size_type pos_cur_epm, epm_cont_t &found_epms,bool count_EPMs);
 
     // --------------------------------------------
     // debugging/testing
@@ -1151,6 +1160,7 @@ public:
      * @param am_threshold_ minimal arcmatch score in F matrix
      * @param cutoff_coverage_ use only the best EPM as a chain if it has a larger coverage than
      *                         cutoff_coverage_ on shortest seq
+     * @param number_of_EPMs_ maximal number of EPMs for the suboptimal tracebac
      */
     ExactMatcher(const Sequence &seqA_,
 		 const Sequence &seqB_,
@@ -1160,12 +1170,13 @@ public:
 		 const int &alpha_1,
 		 const int &alpha_2,
 		 const int &alpha_3,
-		 const int &difference_to_opt_score,
+		 //const int &difference_to_opt_score,
 		 const int &min_score,
-		 const int &easier_scoring_par,
-		 const double &subopt_range_,
+		 //const int &easier_scoring_par,
+		 //const double &subopt_range_,
 		 const int &am_threshold_,
-		 const double &cutoff_coverage_
+		 //const double &cutoff_coverage_,
+		 const int &max_number_of_EPMs_
 		 );
 
     ~ExactMatcher();

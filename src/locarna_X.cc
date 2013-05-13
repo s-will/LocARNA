@@ -74,12 +74,13 @@ double prob_unpaired_in_F_threshold;
 int alpha_1; //parameter for sequential score
 int alpha_2; //parameter for structural score
 int alpha_3; //parameter for stacking score
-LocARNA::score_t easier_scoring_par;
-int difference_to_opt_score;
+//LocARNA::score_t easier_scoring_par;
+//int difference_to_opt_score;
 int min_subopt_score;
-double subopt_range;
+//double subopt_range;
 int am_threshold;
-double coverage_cutoff;
+int number_of_EPMs;
+//double coverage_cutoff;
 std::string seq_constraints_A;
 std::string seq_constraints_B;
 
@@ -137,12 +138,13 @@ option_def my_options[] = {
     {"alpha_2",0,0,O_ARG_INT,&alpha_2,"1","alpha_2","Multiplier for structural score"},
     {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Multiplier for stacking score, 0 means no stacking contribution"},
     {"suboptimal",0,&opt_suboptimal,O_NO_ARG,0,O_NODEFAULT,"suboptimal_traceback","Use a suboptimal traceback for the computation of the exact pattern matchings"},
-    {"difference_to_optimal_score",0,0,O_ARG_INT,&difference_to_opt_score,"10","threshold","Threshold for suboptimal traceback"},
+   // {"difference_to_optimal_score",0,0,O_ARG_INT,&difference_to_opt_score,"10","threshold","Threshold for suboptimal traceback"},
     {"min_subopt_score",0,0,O_ARG_INT,&min_subopt_score,"3","min","Minimal suboptimal score"},
     {"am-threshold",0,0,O_ARG_INT,&am_threshold,"3","am","Minimal arcmatch score in F matrix"},
-    {"suboptimal-range",0,0,O_ARG_DOUBLE,&subopt_range,"0.0","range","trace EPMs within that range of best EPM score"},
-    {"coverage-cutoff",0,0,O_ARG_DOUBLE,&coverage_cutoff,"0.5","cov","Skip chaining if best EPM has larger coverage on shortest seq"},
-    {"easier_scoring_par",'e',0,O_ARG_INT,&easier_scoring_par,"0","alpha","use only sequential and a constant structural score alpha (easier_scoring_par) for each matched base of a basepair"},
+  //  {"suboptimal-range",0,0,O_ARG_DOUBLE,&subopt_range,"0.0","range","trace EPMs within that range of best EPM score"},
+  //  {"coverage-cutoff",0,0,O_ARG_DOUBLE,&coverage_cutoff,"0.5","cov","Skip chaining if best EPM has larger coverage on shortest seq"},
+  //  {"easier_scoring_par",'e',0,O_ARG_INT,&easier_scoring_par,"0","alpha","use only sequential and a constant structural score alpha (easier_scoring_par) for each matched base of a basepair"},
+    {"number-of-EPMs",0,0,O_ARG_INT,&number_of_EPMs,"1000","threshold","Maximal number of EPMs for the suboptimal traceback"},
     
     {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
     {"",0,0,O_ARG_STRING,&file2,O_NODEFAULT,"file 2","Basepairs input file 2 (dp dir in eval mode)"},
@@ -368,12 +370,13 @@ main(int argc, char **argv) {
 		    alpha_1,
 		    alpha_2,
 		    alpha_3,
-		    difference_to_opt_score,
+		    //difference_to_opt_score,
 		    min_subopt_score,
-		    easier_scoring_par,
-		    subopt_range,
+		    //easier_scoring_par,
+		    //subopt_range,
 		    am_threshold,
-		    coverage_cutoff
+		   // coverage_cutoff,
+		    number_of_EPMs
 		    );
 
 

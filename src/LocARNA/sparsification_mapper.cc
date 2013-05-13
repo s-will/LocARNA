@@ -44,6 +44,7 @@ void SparsificationMapper::compute_mapping_idx_arcs(){
 		//if (max_info_vec_size > max_size )
 		//    max_info_vec_size = max_size;
 	}
+	if(max_info_vec_size==0) max_info_vec_size++;
 	//cout << "valid positions for indices " << info_valid_seq_pos_vecs << endl;
 }
 
