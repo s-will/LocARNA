@@ -370,4 +370,9 @@ Mar, 2013
 	Merge in new sparsification related code.
 	Added fasta input check in mlocarna.
 	(1.7.6)
-
+	Small bug fixes
+	Fix memory leaks
+	Prepare alignment evaluation functionality
+	Code cleanup/refactorizations
+	(1.7.6.9)
+	
