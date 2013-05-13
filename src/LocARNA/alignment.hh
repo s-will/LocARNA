@@ -187,24 +187,32 @@ namespace LocARNA {
     
 	/* access */
     
-	//! read access seqA
-	//! @returns sequence A
+	/**
+	 * read access seqA
+	 * @returns sequence A
+	 */
 	const Sequence &get_seqA() const;
 
-	//! read access seqB
-	//! @returns sequence B
+	/**
+	 * read access seqB
+	 * @returns sequence B
+	 */
 	const Sequence &get_seqB() const;
 
-	//! read access a
-	//! @returns vector a
-	//! vector a is the vector of first components of the aligment
-	//! edges. Entries are positions of sequence A or -1 for gap
+	/**
+	 * read access a
+	 * @returns vector a
+	 * vector a is the vector of first components of the aligment
+	 * edges. Entries are positions of sequence A or -1 for gap
+	 */
 	const std::vector<int> &get_a() const;
 
-	//! read access b
-	//! @returns vector b
-	//! vector b is the vector of second components of the aligment
-	//! edges. Entries are positions of sequence B or -1 for gap
+	/**
+	 * read access b
+	 * @returns vector b
+	 * vector b is the vector of second components of the aligment
+	 * edges. Entries are positions of sequence B or -1 for gap
+	 */
 	const std::vector<int> &get_b() const;
 
 	// first attempt to define methods for alignment evaluation;

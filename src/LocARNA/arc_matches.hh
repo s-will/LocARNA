@@ -127,14 +127,16 @@ namespace LocARNA {
 	const AnchorConstraints &constraints; //!< for constraints
     
     
-	//! decide according to constraints
-	//! and heuristics whether an arc match is valid.
-	//! @param arcA arc (i,j) in first sequence
-	//! @param arcB arc (k.l) in second sequence
-	//! @returns whether match of arcA and arcB is valid
-	//! An arc match is valid, if and only if:
-	//! 1.) matches i~k and j~l are valid due to trace_controller (max-diff-match heuristic) and constraints (anchor constraints)
-	//! 2.) length difference of arcs <= max_length_diff
+	/**
+	 * decide according to constraints
+	 * and heuristics whether an arc match is valid.
+	 * @param arcA arc (i,j) in first sequence
+	 * @param arcB arc (k.l) in second sequence
+	 * @returns whether match of arcA and arcB is valid
+	 * An arc match is valid, if and only if:
+	 * 1.) matches i~k and j~l are valid due to trace_controller (max-diff-match heuristic) and constraints (anchor constraints)
+	 * 2.) length difference of arcs <= max_length_diff
+	 */
 	bool is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const;
     
 	/* END constraints and heuristics */
@@ -144,8 +146,10 @@ namespace LocARNA {
 	//! vector of all maintained arc matches
 	ArcMatchVec arc_matches_vec;
 
-	//! the number of valid arc matches
-	//! @note this number can differ from the size of arc_matches_vec 
+	/**
+	 * the number of valid arc matches
+	 * @note this number can differ from the size of arc_matches_vec 
+	 */
 	size_type number_of_arcmatches;
 
 	//! vector of scores (of arc matches with the same index)
@@ -295,20 +299,24 @@ namespace LocARNA {
 	// for the mea probabilistic consistency transformation, support to read and write the arcmatch scores
 	// this allows in general to have user defined arc-match scores
     
-	//! \brief Reads scores for arc matches 
-	//!
-	//! Reads from a file
-	//! reads a list i j k l score, where
-	//! score is the score for matching arcs (i,j) and (k,l).
-	//! @param arcmatch_scores_file file containing arc match scores
-	//! @param probability_scale if >=0 read probabilities and multiply them by probability_scale 
-	//!
-	//! @note All registered arc matches are valid (is_valid_arcmatch()).
+	/**
+	 * \brief Reads scores for arc matches 
+	 *
+	 * Reads from a file
+	 * reads a list i j k l score, where
+	 * score is the score for matching arcs (i,j) and (k,l).
+	 * @param arcmatch_scores_file file containing arc match scores
+	 * @param probability_scale if >=0 read probabilities and multiply them by probability_scale 
+	 *
+	 * @note All registered arc matches are valid (is_valid_arcmatch()).
+	 */
 	void read_arcmatch_scores(const std::string &arcmatch_scores_file, int probability_scale);
     
     
-	//! write arc match scores to a file
-	//! (this is useful after the scores are generated from base pair probabilities)
+	/**
+	 * write arc match scores to a file
+	 * (this is useful after the scores are generated from base pair probabilities)
+	 */
 	void write_arcmatch_scores(const std::string &arcmatch_scores_file, const Scoring &scoring) const;
     
     
@@ -330,17 +338,21 @@ namespace LocARNA {
 	    return maintain_explicit_scores;
 	}
     
-	//! @brief Make arcmatch scores explicit
-	//! 
-	//! @param scoring An scoring object
+	/**
+	 * @brief Make arcmatch scores explicit
+	 * 
+	 * @param scoring An scoring object
+	 */
 	void
 	make_scores_explicit(const Scoring &scoring);
 	
 	
-	//! get the score of an arc match
-	//! @param am arc match
-	//! @returns score of arc match
-	//! @pre object represents arc match scores explicitely
+	/**
+	 * get the score of an arc match
+	 * @param am arc match
+	 * @returns score of arc match
+	 * @pre object represents arc match scores explicitely
+	 */
 	score_t
 	get_score(const ArcMatch &am) const {
 	    assert(maintain_explicit_scores);
@@ -398,25 +410,31 @@ namespace LocARNA {
 	void get_max_right_ends(size_type al,size_type bl,size_type *max_ar,size_type *max_br, bool no_lonely_pairs) const; 
 
 	
-	//! get the minimal right ends of any arc match with left ends (al,bl).
-	//! pre: min_ar, min_br are initialized with largest possible values
-	//! returns result in out parameters min_ar, min_br
-	//! @note Does not support noLP like get_max_right_ends() yet 
+	/**
+	 * get the minimal right ends of any arc match with left ends (al,bl).
+	 * pre: min_ar, min_br are initialized with largest possible values
+	 * returns result in out parameters min_ar, min_br
+	 * @note Does not support noLP like get_max_right_ends() yet 
+	 */
 	void get_min_right_ends(size_type al,size_type bl,size_type *min_ar,size_type *min_br) const; 
     
 	// ------------------------------------------------------------
 	// inner arc matches
 
     
-	//! whether there is an inner (valid) arc match for the
-	//! arc with the given index
+	/**
+	 * whether there is an inner (valid) arc match for the
+	 * arc with the given index
+	 */
 	bool
 	exists_inner_arc_match(const ArcMatch &am) const {
 	    return inner_arcmatch_idxs[am.idx()] < num_arc_matches();
 	}
 
-	//! tests, whether there is an inner arc match (then its arc have non-zero probability)
-	//! and the arcs of the match have non-zero joint probability to occur simultaneously with the inner arc!
+	/**
+	 * tests, whether there is an inner arc match (then its arc have non-zero probability)
+	 * and the arcs of the match have non-zero joint probability to occur simultaneously with the inner arc!
+	 */
 	bool
 	is_stackable(const ArcMatch &am) const {
 	    return 
@@ -428,17 +446,21 @@ namespace LocARNA {
 	}
 
         
-	//! index of inner arc match for the
-	//! arc with the given index.
-	//! Call only if there is such an arc match
+	/**
+	 * index of inner arc match for the
+	 * arc with the given index.
+	 * Call only if there is such an arc match
+	 */
 	const ArcMatch &
 	inner_arc_match(const ArcMatch &am) const {
 	    return arcmatch(inner_arcmatch_idxs[am.idx()]);
 	}
     
-	//! sort the lists of arc matches with common right ends in "common_right_end_list"
-	//! by their left ends in lexicographically descending order.
-	//! Additionally, generate data structure for optimized traversal.
+	/**
+	 * sort the lists of arc matches with common right ends in "common_right_end_list"
+	 * by their left ends in lexicographically descending order.
+	 * Additionally, generate data structure for optimized traversal.
+	 */
 	void
 	sort_right_adjacency_lists();
 

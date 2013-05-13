@@ -8,11 +8,13 @@
 
 namespace LocARNA {
 
-    //! \brief Specifies an alphabet 
-    //!
-    //! maintain an (ordered) alphabet and offer transformation
-    //! between elements of alphabet and their indices
-    //!
+    /**
+     * \brief Specifies an alphabet 
+     *
+     * maintain an (ordered) alphabet and offer transformation
+     * between elements of alphabet and their indices
+     *
+     */
     template<class T>
     class Alphabet {
 	typedef std::vector<T> vec_t; 
@@ -28,7 +30,7 @@ namespace LocARNA {
 	typedef T elem_type; //!< type of an alphabet element
 	typedef std::vector<T> elem_vector_type; //!< vector of elements
     
-	 //! iterator over alphabet elements
+	//! iterator over alphabet elements
 	typedef typename elem_vector_type::iterator iterator;
 	
 	//! const iterator over alphabet elements
@@ -102,7 +104,7 @@ namespace LocARNA {
     template<class T>
     std::ostream & operator << (std::ostream &out,Alphabet<T> a);
 
-#include "alphabet.icc"
+#   include "alphabet.icc"
 }
 
 #endif // LOCARNA_ALPHABET_HH

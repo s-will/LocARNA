@@ -23,13 +23,17 @@ namespace LocARNA {
 	//! whether "in loop" probabilities are availabe
 	bool in_loop_probs_available_; 
 	
-	//! array for all arc probabilities the array is used when reading
-	//! in the probabilities and for merging probs during pp-output
+	/**
+	 * array for all arc probabilities the array is used when reading
+	 * in the probabilities and for merging probs during pp-output
+	 */
 	arc_prob_matrix_t arc_probs_; 
 
-	//! array for all probabilities that a pair (i,j) and its
-	//! immediately inner pair (i+1,j-1) are formed simultaneously;
-	//! analogous to arc_probs_
+	/**
+	 * array for all probabilities that a pair (i,j) and its
+	 * immediately inner pair (i+1,j-1) are formed simultaneously;
+	 * analogous to arc_probs_
+	 */
 	arc_prob_matrix_t arc_2_probs_; 
 	
 	//! string description of sequence constraints
@@ -110,48 +114,54 @@ namespace LocARNA {
 	// reading methods
 
 
-	//! \brief read sequence and base pairs from dp.ps file
-	//! 
-	//! @param filename name of input file
-	//! @param readPairProbs read pair probabilities if file format contains pair probabilities
-	//! @param readStackingProbs read stacking probabilities if available and readPairProbs
-	//!
-	//! @note dp.ps is the output format of RNAfold (and related
-	//! tools) of the Vienna RNA package
+	/**
+	 * \brief read sequence and base pairs from dp.ps file
+	 * 
+	 * @param filename name of input file
+	 * @param readPairProbs read pair probabilities if file format contains pair probabilities
+	 * @param readStackingProbs read stacking probabilities if available and readPairProbs
+	 *
+	 * @note dp.ps is the output format of RNAfold (and related
+	 * tools) of the Vienna RNA package
+	 */
 	void read_ps(const std::string &filename, 
 		     bool readPairProbs,
 		     bool readStackingProbs);
 	
-	//! \brief read basepairs and sequence from a pp-format file
-	//! 
-	//! @note pp is a proprietary format of LocARNA
-	//! which starts with the sequence/alignment and then simply
-	//! lists the arcs (i,j) with their probabilities p.
-	//!
-	//! @note SEMANTIC for stacking:
-	//! pp-files contain entries i j p [p2] for listing the probality for base pair (i,j).
-	//! In case of stacking alignment, p2 is the probability to see the base pairs
-	//! (i,j) and (i+1,j+1) simultaneously. If p2 is not given set probability to 0.
-	//!
-	//! @param filename name of input file
-	//! @param readPairProbs read pair probabilities if file format contains pair probabilities
-	//! @param readStackingProbs read stacking probabilities if available and readPairProbs
-	//! @param readInLoopProbs read in loop probabilities if file format contains them
-	//!
-	//! @post object is initialized with information from file
+	/**
+	 * \brief read basepairs and sequence from a pp-format file
+	 * 
+	 * @note pp is a proprietary format of LocARNA
+	 * which starts with the sequence/alignment and then simply
+	 * lists the arcs (i,j) with their probabilities p.
+	 *
+	 * @note SEMANTIC for stacking:
+	 * pp-files contain entries i j p [p2] for listing the probality for base pair (i,j).
+	 * In case of stacking alignment, p2 is the probability to see the base pairs
+	 * (i,j) and (i+1,j+1) simultaneously. If p2 is not given set probability to 0.
+	 *
+	 * @param filename name of input file
+	 * @param readPairProbs read pair probabilities if file format contains pair probabilities
+	 * @param readStackingProbs read stacking probabilities if available and readPairProbs
+	 * @param readInLoopProbs read in loop probabilities if file format contains them
+	 *
+	 * @post object is initialized with information from file
+	 */
 	void read_pp(const std::string &filename, 
 		     bool readPairProbs,
 		     bool readStackingProbs,
 		     bool readInLoopProbs
 		     );
 	
-	//! \brief read sequence and optionally base pairs from a file
-	//! (autodetect file format: pp, dp.ps, aln, fa)
-	//!
-	//! @param filename the input file
-	//!
-	//! @post object is initialized from file
-	//!
+	/**
+	 * \brief read sequence and optionally base pairs from a file
+	 * (autodetect file format: pp, dp.ps, aln, fa)
+	 *
+	 * @param filename the input file
+	 *
+	 * @post object is initialized from file
+	 *
+	 */
 	void
 	init_from_file(const std::string &filename, 
 		       bool readPairProbs,

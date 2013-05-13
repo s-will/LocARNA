@@ -46,25 +46,27 @@ namespace LocARNA {
 	std::vector<size_t> max_col_vector; //!< maximal column in row
     
     public:
-	//! \brief Construct from pair of alignment strings
-	//!
-	//! construct trace range of two sequences given two alignment strings
-	//! of the sequences and the allowed deviation delta
-	//! the sequences can contain gaps themselves (which happens,
-	//! when sequences orignate from a sequence profile).
-	//!
-	//! @param pseqA SeqEntry of sequence A
-	//! @param pseqB SeqEntry of sequence B
-	//! @param aliA alignment SeqEntry for sequence A
-	//! @param aliB alignment SeqEntry for sequence B
-	//! @param delta the allowed deviation
-	//!
-	//! side conditions:
-	//! remove_gaps(seqA) == remove_gaps(aliA)
-	//! && remove_gaps(seqB) == remove_gaps(aliB)
-	//! where remove_gaps is a function that removes all gap symbols
-	//! length(aliA)==length(aliB)
-	//!
+	/**
+	 * \brief Construct from pair of alignment strings
+	 *
+	 * construct trace range of two sequences given two alignment strings
+	 * of the sequences and the allowed deviation delta
+	 * the sequences can contain gaps themselves (which happens,
+	 * when sequences orignate from a sequence profile).
+	 *
+	 * @param pseqA SeqEntry of sequence A
+	 * @param pseqB SeqEntry of sequence B
+	 * @param aliA alignment SeqEntry for sequence A
+	 * @param aliB alignment SeqEntry for sequence B
+	 * @param delta the allowed deviation
+	 *
+	 * side conditions:
+	 * remove_gaps(seqA) == remove_gaps(aliA)
+	 * && remove_gaps(seqB) == remove_gaps(aliB)
+	 * where remove_gaps is a function that removes all gap symbols
+	 * length(aliA)==length(aliB)
+	 *
+	 */
 	TraceRange(const SeqEntry &pseqA,
 		   const SeqEntry &pseqB,
 		   const SeqEntry &aliA,
@@ -92,30 +94,38 @@ namespace LocARNA {
 	TraceRange() {
 	}
     
-	//! \brief Computes cost of a cut in the consensus trace of a trace range set
-	//! @param i cut.first  
-	//! @param j cut.second
-	//! @param trs set of trace ranges
-	//! @return cost of cut (i,j) in consensus of trs
+	/**
+	 * \brief Computes cost of a cut in the consensus trace of a trace range set
+	 * @param i cut.first  
+	 * @param j cut.second
+	 * @param trs set of trace ranges
+	 * @return cost of cut (i,j) in consensus of trs
+	 */
 	size_type
 	consensus_cost(size_type i,
 		       size_type j,
 		       const std::vector<TraceRange> &trs) const;
 	
-	//! \brief Read number of rows
-	//! @return length of seqA, i.e. the maximal row of the trace
+	/**
+	 * \brief Read number of rows
+	 * @return length of seqA, i.e. the maximal row of the trace
+	 */
 	size_t
 	rows() const {return min_col_vector.size()-1;}
 	
-	//! \brief Minimal column of trace in a row
-	//! @param i: row of matrix, 0<=i<=rows()
-	//! @returns minimal valid trace cell in the row i
+	/**
+	 * \brief Minimal column of trace in a row
+	 * @param i: row of matrix, 0<=i<=rows()
+	 * @returns minimal valid trace cell in the row i
+	 */
 	size_t
 	min_col(size_t i) const {return min_col_vector[i];}
 	
-	//! \brief Maximal column of trace in a row
-	//! @param i: row of matrix, 0<=i<=rows()
-	//! @returns maximal valid trace cell in the row i
+	/**
+	 * \brief Maximal column of trace in a row
+	 * @param i: row of matrix, 0<=i<=rows()
+	 * @returns maximal valid trace cell in the row i
+	 */
 	size_t 
 	max_col(size_t i) const {return max_col_vector[i];}
 
@@ -134,10 +144,12 @@ namespace LocARNA {
     class MatchController {
     
     public:
-	//! test for allowed matches due to valid traces
-	//! @param i position in sequence A in 1..lenA
-	//! @param j position in sequence B in 1..lenB
-	//! @returns whether i~j is an allowed match due to valid traces
+	/**
+	 * test for allowed matches due to valid traces
+	 * @param i position in sequence A in 1..lenA
+	 * @param j position in sequence B in 1..lenB
+	 * @returns whether i~j is an allowed match due to valid traces
+	 */
 	virtual
 	bool
 	is_valid_match(size_t i, size_t j) const=0;
@@ -167,16 +179,20 @@ namespace LocARNA {
 	    
 	TraceRange trace_range;
     
-	//! merge in the given trace with delta into current trace range
-	//! @param trace the new trace
+	/**
+	 * merge in the given trace with delta into current trace range
+	 * @param trace the new trace
+	 */
 	void
 	merge_in_trace_range(const TraceRange &tr);
 
 	//! The allowed distance in computing the min and max positions.
 	const size_type delta;
 
-	//! switch between strict and relaxed merging of pairwise trace
-	//! ranges
+	/**
+	 * switch between strict and relaxed merging of pairwise trace
+	 * ranges
+	 */
 	const bool relaxed_merging; 
     
     public:
@@ -204,17 +220,21 @@ namespace LocARNA {
 	virtual
 	~TraceController();
         
-	//! test for matrix entries on valid trace
-	//! @param i position in sequence A in 1..lenA or 0
-	//! @param j position in sequence B in 1..lenB or 0
-	//! @returns whether matrix cell (i.j) is valid 
+	/**
+	 * test for matrix entries on valid trace
+	 * @param i position in sequence A in 1..lenA or 0
+	 * @param j position in sequence B in 1..lenB or 0
+	 * @returns whether matrix cell (i.j) is valid 
+	 */
 	bool
 	is_valid(size_type i, size_type j) const;
 
-	//! test for allowed matches due to valid traces
-	//! @param i position in sequence A in 1..lenA
-	//! @param j position in sequence B in 1..lenB
-	//! @returns whether i~j is an allowed match due to valid traces
+	/**
+	 * test for allowed matches due to valid traces
+	 * @param i position in sequence A in 1..lenA
+	 * @param j position in sequence B in 1..lenB
+	 * @returns whether i~j is an allowed match due to valid traces
+	 */
 	virtual
 	bool
 	is_valid_match(size_type i, size_type j) const;
@@ -225,15 +245,19 @@ namespace LocARNA {
 	 */
 	size_type get_delta() const {return delta;}
 
-	//! print debugging information to stream
-	//! @param out output stream
+	/**
+	 * print debugging information to stream
+	 * @param out output stream
+	 */
 	void
 	print_debug(std::ostream & out) const;
 
     private:
-	//! constrain the min/max j without reference alignment by delta only
-	//! such that
-	//! match i~j is allowed iff | i*lenB/lenA - j | <= delta
+	/**
+	 * constrain the min/max j without reference alignment by delta only
+	 * such that
+	 * match i~j is allowed iff | i*lenB/lenA - j | <= delta
+	 */
 	void
 	constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);
 

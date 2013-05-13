@@ -46,18 +46,22 @@ namespace LocARNA {
     
     public:
 
-	//! \brief Stl-compatible constant iterator over matrix elements.
-	//!
-	//! Behaves like a const iterator of the hash map.
+	/**
+	 * \brief Stl-compatible constant iterator over matrix elements.
+	 *
+	 * Behaves like a const iterator of the hash map.
+	 */
 	typedef typename map_t::const_iterator const_iterator;
 	
 	
-	//! \brief Element of sparse matrix 
-	//! 
-	//! Proxy for sparse matrix entries. This is required for
-	//! non-const access to matrix elements in order to
-	//! provide a very similar syntax for the sparse data
-	//! structure and the corresponding non-sparse matrix.
+	/**
+	 * \brief Element of sparse matrix 
+	 * 
+	 * Proxy for sparse matrix entries. This is required for
+	 * non-const access to matrix elements in order to
+	 * provide a very similar syntax for the sparse data
+	 * structure and the corresponding non-sparse matrix.
+	 */
 	class element {
 	private:
 	    SparseMatrix<T> *m_;

@@ -16,22 +16,23 @@ namespace LocARNA {
     class RnaData;
     class Sequence;
 
-
-    //! \brief Represents a base pair
-    //! 
-    //! stores base pair left end, right end
-    //! and an arc index
-    //! 
-    //! @note index uniqueness is not guaranteed by the class
-    //! itself but can be used to locate the arc in a vector
-    //! by the caller
-    //!
-    //! @note To indicate the relation to the BasePair class, we define
-    //! with prefix BasePairs__.  Using a nested class does not work
-    //! properly (C++ does not support forward references to nested
-    //! classes.) Using a namespace caused problems when sorting the
-    //! adjacency lists.
-    //!
+    /**
+     * \brief Represents a base pair
+     * 
+     * stores base pair left end, right end
+     * and an arc index
+     * 
+     * @note index uniqueness is not guaranteed by the class
+     * itself but can be used to locate the arc in a vector
+     * by the caller
+     *
+     * @note To indicate the relation to the BasePair class, we define
+     * with prefix BasePairs__.  Using a nested class does not work
+     * properly (C++ does not support forward references to nested
+     * classes.) Using a namespace instead of prefix should work as well,
+     * but caused problems at first when including the adjecency entry classes in the namespace!
+     *
+    */
     class BasePairs__Arc {
     private:
 	size_t idx_;
@@ -71,7 +72,6 @@ namespace LocARNA {
 	 */
 	size_t idx() const {return idx_;}
     };
-    
 
     // ============================================================
     /**
@@ -215,8 +215,10 @@ namespace LocARNA {
 	    sortAdjLists();
 	}
   
-	//! registers a basepair (i,j),
-	//! maintains the basepair access data structures
+	/**
+	 * registers a basepair (i,j),
+	 * maintains the basepair access data structures
+	*/
 	void register_arc(int i, int j);
 
 	//! returns the list of arcs with right end i
@@ -231,8 +233,10 @@ namespace LocARNA {
 	//! accesses basepair by (i,j)
 	const Arc &arc(int i,int j) const {return arc_vec_[arcs_(i,j)];}
     
-	//! \param idx an arc index
-	//! \returns arc with index idx
+	/**
+	 * \param idx an arc index
+	 * \returns arc with index idx
+	*/
 	const Arc &arc(size_type idx) const {
 	    assert(idx<arc_vec_.size());
 	    return arc_vec_[idx];
@@ -277,12 +281,16 @@ namespace LocARNA {
 	//! returns probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
 	double get_arc_2_prob(size_type i, size_type j) const;
 
-	//! returns probability of basepairs (i,j) stacked,
-	//! i.e. (i,j) under condition (i+1,j-1)
+	/**
+	 * returns probability of basepairs (i,j) stacked,
+	 * i.e. (i,j) under condition (i+1,j-1)
+	*/
 	double get_arc_stack_prob(size_type i, size_type j) const;
 
-	//! returns probability that a position i is unpaired
-	//! O(sequence.length()) implementation
+	/**
+	 * returns probability that a position i is unpaired
+	 * O(sequence.length()) implementation
+	*/
 	double prob_unpaired(size_type i) const;
 
 

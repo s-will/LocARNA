@@ -57,7 +57,7 @@ namespace LocARNA {
      * rotatable matrix would be required for alignment on the
      * top-level. Such matrices are implemented in matrix.hh but
      * currently not used.
-    */
+     */
     class Aligner {
 	AlignerImpl *pimpl_;
 
@@ -112,13 +112,17 @@ namespace LocARNA {
 	void
 	trace();
     
-	//! set the restriction on the alignment,
-	//! mainly used for the k-best algorithm
+	/**
+	 * set the restriction on the alignment,
+	 * mainly used for the k-best algorithm
+	 */
 	void 
 	set_restriction(const AlignerRestriction &r);
 	
-	//! return the current restriction,
-	//! mainly used for the k-best algorithm
+	/**
+	 * return the current restriction,
+	 * mainly used for the k-best algorithm
+	 */
 	const AlignerRestriction &
 	get_restriction() const;
 	

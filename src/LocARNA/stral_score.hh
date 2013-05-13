@@ -15,7 +15,6 @@ namespace LocARNA {
     class RnaData;
 
     //! \brief Implements the stral-like scoring function
-    //!
     class StralScore {
     
 	typedef std::vector<double> p_vec_t;
@@ -23,13 +22,13 @@ namespace LocARNA {
 	Sequence seqA;
 	Sequence seqB;
     
-	p_vec_t p_upA;   // probability paired upstream seq A
-	p_vec_t p_downA; // probability paired downstream seq A
-	p_vec_t p_unA;   // probability unpaired seq A
+	p_vec_t p_upA;   //!< probability paired upstream seq A
+	p_vec_t p_downA; //!< probability paired downstream seq A
+	p_vec_t p_unA;   //!< probability unpaired seq A
     
-	p_vec_t p_upB;   // probability paired upstream seq B
-	p_vec_t p_downB; // probability paired downstream seq B
-	p_vec_t p_unB;   // probability unpaired seq B
+	p_vec_t p_upB;   //!< probability paired upstream seq B
+	p_vec_t p_downB; //!< probability paired downstream seq B
+	p_vec_t p_unB;   //!< probability unpaired seq B
     
 	const Matrix<double> &sim_mat;
 	const Alphabet<char> &alphabet;
