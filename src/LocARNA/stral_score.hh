@@ -6,7 +6,7 @@
 
 
 #include "aux.hh"
-#include "matrices.hh"
+#include "matrix.hh"
 #include "sequence.hh"
 #include "alphabet.hh"
 #include "rna_data.hh"

@@ -7,7 +7,7 @@
 #include "params.hh"
 #include "scoring.hh"
 
-#include "matrices.hh"
+#include "matrix.hh"
 
 #include "arc_matches.hh"
 

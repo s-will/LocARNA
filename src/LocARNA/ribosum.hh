@@ -6,7 +6,7 @@
 #include <fstream>
 #include <math.h>
 
-#include "matrices.hh"
+#include "matrix.hh"
 #include "alphabet.hh"
 
 namespace LocARNA {

@@ -7,7 +7,7 @@
 #include "aux.hh"
 
 #include "scoring_fwd.hh"
-#include "matrices.hh"
+#include "matrix.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
 #include "ribosum.hh"

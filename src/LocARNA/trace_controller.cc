@@ -8,7 +8,7 @@
 #include "aux.hh"
 #include "trace_controller.hh"
 #include "multiple_alignment.hh"
-#include "matrices.hh"
+#include "matrix.hh"
 
 #include <math.h>
 #include <assert.h>

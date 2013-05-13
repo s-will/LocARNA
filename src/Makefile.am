@@ -31,9 +31,9 @@ pkgconfig_DATA = ../LocARNA-$(API_VERSION).pc
 
 library_includedir=$(includedir)/LocARNA-$(API_VERSION)
 nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
-	LocARNA/stopwatch.hh LocARNA/options.hh LocARNA/matrices.hh	\
-	LocARNA/sparse_matrix.hh LocARNA/sequence.hh			\
-	LocARNA/basepairs.hh LocARNA/alignment.hh			\
+	LocARNA/stopwatch.hh LocARNA/options.hh LocARNA/matrix.hh	\
+	LocARNA/matrices.hh LocARNA/sparse_matrix.hh			\
+	LocARNA/sequence.hh LocARNA/basepairs.hh LocARNA/alignment.hh	\
 	LocARNA/alignment_impl.hh LocARNA/rna_data.hh			\
 	LocARNA/rna_data_impl.hh LocARNA/params.hh LocARNA/scoring.hh	\
 	LocARNA/infty_int.hh LocARNA/match_probs.hh			\

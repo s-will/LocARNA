@@ -4,7 +4,7 @@
 #include <string>
 
 #include "aux.hh"
-#include "matrices.hh"
+#include "matrix.hh"
 #include "alphabet.hh"
 #include "sequence.hh"
 #include "rna_data.hh"
