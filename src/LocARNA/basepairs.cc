@@ -18,6 +18,10 @@ using namespace std;
 
 namespace LocARNA {
 
+
+    BasePairs__Arc::~BasePairs__Arc() {
+    }
+
     /* Details for the data structures in BasePairs
 
        basepairs and their probabilities are stored in
@@ -62,17 +66,13 @@ namespace LocARNA {
       */
 
 
-    /*! resize data structures that allow fast acces to an arc arcs by
-      its left end, its right end, or its left and right end
-    */
-
-    void BasePairs::resize(size_type s) {
-	left_.resize(s);
-	right_.resize(s);
+    void BasePairs::resize(size_type seq_len) {
+	left_.resize(seq_len+1);
+	right_.resize(seq_len+1);
     }
 
     double BasePairs::prob_min() const {
-	return min_prob;
+	return min_prob_;
     }
 
     /*
@@ -127,7 +127,7 @@ namespace LocARNA {
     //! and arc_probs_stack_
 
     void BasePairs::generateBPLists(const RnaData &rnadata) {
-	resize(len_+1);
+	resize(len_);
 	//std::cout<<"getbplists : sequence lengthj "<<len_<<std::endl;
 	// traverse the entries in the prob matrices
     
@@ -147,7 +147,7 @@ namespace LocARNA {
 		}
 		*/
 	    
-		if ( (p >= min_prob) /* || (p2 >= min_prob) */ ) {
+		if ( (p >= min_prob_) /* || (p2 >= min_prob_) */ ) {
 		
 		    // debugging output
 		    // double pe = 2.0/(len_);
@@ -172,38 +172,41 @@ namespace LocARNA {
 	sortAdjLists();
     }
 
-    
     BasePairs::size_type
-    BasePairs::get_length_from_rnadata() const {
-	return rnadata->get_sequence().length();
-    }
+    BasePairs::seqlen() const {return len_;}
+    
 
     double
     BasePairs::get_arc_prob(size_type i, size_type j) const {
-	if (rnadata) return rnadata->get_arc_prob( i, j );
-	else return 0.0;
+	if (rnadata_==NULL) return 0.0;
+	
+	return rnadata_->get_arc_prob( i, j );
     }
     
     double 
     BasePairs::get_arc_2_prob(size_type i, size_type j) const {
-	if (rnadata) return rnadata->get_arc_2_prob( i, j );
-	else return 0.0;
+	if (rnadata_==NULL) return 0.0;
+	return rnadata_->get_arc_2_prob( i, j );
     }
 
     double
     BasePairs::get_arc_stack_prob(size_type i, size_type j) const {
-	if (rnadata) return rnadata->get_arc_stack_prob( i, j );
-	else return 0.0;
+	if (rnadata_==NULL) return 0.0;
+	return rnadata_->get_arc_stack_prob( i, j );
     }
 
     double
     BasePairs::prob_unpaired(size_type i) const {
-	if (rnadata) return rnadata->prob_unpaired( i );
-	else return 1.0;
+	if (rnadata_==NULL) return 0.0;
+	return rnadata_->prob_unpaired( i );
     }
 
-
-
+    BasePairs::size_type
+    BasePairs::get_length_from_rnadata() const {
+	assert(rnadata_!=NULL);
+	return rnadata_->get_length();
+    }
+    
     /** 
      * Output operator for writing arc to output stream
      * 

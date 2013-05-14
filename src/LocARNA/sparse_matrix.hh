@@ -124,7 +124,7 @@ namespace LocARNA {
 	     *
 	     * @note If x equals the default value, and the entry exists it is erased
 	     */
-	    element
+	    element &
 	    operator =(value_t x) {
 		if (x!=m_->def_) {
 		    m_->the_map_[k_] = x;

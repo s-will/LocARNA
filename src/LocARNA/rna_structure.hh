@@ -43,7 +43,7 @@ namespace LocARNA {
 	/** 
 	 * \brief construct empty
 	 */
-	RnaStructure(): length_(0) {}
+	RnaStructure(): length_(0), bps_() {}
 
 	/** 
 	 * \brief construct from dot-bracket string

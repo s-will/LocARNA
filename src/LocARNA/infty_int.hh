@@ -73,6 +73,9 @@ namespace LocARNA {
 	TaintedInftyInt(const TaintedInftyInt &x)
 	    : val(x.val) {
 	}
+	
+	virtual
+	~TaintedInftyInt();
 
 	static
 	basic_type
@@ -279,6 +282,10 @@ namespace LocARNA {
 	
 	InftyInt(const InftyInt &x);
 	
+	virtual
+	~InftyInt();
+	
+
 	InftyInt &
 	operator =(TaintedInftyInt &x) {
 	    val = x.val;

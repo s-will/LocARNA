@@ -120,6 +120,10 @@ namespace LocARNA {
     }
 
 
+    MultipleAlignment::~MultipleAlignment() {
+    }
+
+
     void
     MultipleAlignment::create_name2idx_map() {
 	for (std::vector<SeqEntry>::size_type i=0;

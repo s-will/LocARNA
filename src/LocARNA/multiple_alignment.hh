@@ -321,6 +321,12 @@ public:
     MultipleAlignment(const Alignment &alignment);
     
     /**
+     * @brief virtual destructor
+     */
+    virtual ~MultipleAlignment();
+    
+    
+    /**
      * \brief Number of rows of multiple aligment
      * @return number of rows
     */

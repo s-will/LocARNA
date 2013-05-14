@@ -513,7 +513,8 @@ namespace LocARNA {
 			  size_type max_length_diff,
 			  const MatchController &trace_controller,
 			  const AnchorConstraints &constraints)
-	    :ArcMatches(seqA_,seqB_,arcmatch_scores_file,probability_scale,max_length_diff,trace_controller,constraints)
+	    :ArcMatches(seqA_,seqB_,arcmatch_scores_file,probability_scale,max_length_diff,trace_controller,constraints),
+	     am_index_()
 	{
 	    build_arcmatch_index();
 	}
@@ -544,7 +545,8 @@ namespace LocARNA {
 			  size_type max_length_diff,
 			  const MatchController &trace_controller,
 			  const AnchorConstraints &constraints)
-	    :ArcMatches(rnadataA,rnadataB,min_prob,max_length_diff,trace_controller,constraints)
+	    :ArcMatches(rnadataA,rnadataB,min_prob,max_length_diff,trace_controller,constraints),
+	     am_index_()
 	{
 	    build_arcmatch_index();
 	}

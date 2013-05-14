@@ -32,7 +32,7 @@ namespace LocARNA {
      * classes.) Using a namespace instead of prefix should work as well,
      * but caused problems at first when including the adjecency entry classes in the namespace!
      *
-    */
+     */
     class BasePairs__Arc {
     private:
 	size_t idx_;
@@ -48,29 +48,40 @@ namespace LocARNA {
 	 * @param right  Right position of arc
 	 */
 	BasePairs__Arc(size_t idx, size_t left, size_t right):
-	    idx_(idx), left_(left), right_(right)
+	    idx_(idx),
+	    left_(left),
+	    right_(right)
 	{}
 	
+	/*
+	 * @brief Virtual destructor
+	 */
+	virtual
+	~BasePairs__Arc();
+
 	/** 
 	 * Read access
 	 *  
 	 * @return left arc end
 	 */
-	size_t left() const {return left_;}
+	size_t
+	left() const {return left_;}
 
 	/** 
 	 * Read access
 	 *  
 	 * @return right arc end
 	 */
-	size_t right() const {return right_;}
+	size_t
+	right() const {return right_;}
 	
 	/** 
 	 * Read access
 	 *  
 	 * @return index of arc
 	 */
-	size_t idx() const {return idx_;}
+	size_t
+	idx() const {return idx_;}
     };
 
     // ============================================================
@@ -85,13 +96,16 @@ namespace LocARNA {
      * a probability threshold and provides traversal of base pairs
      * suited for alignment algorithms.
      *
-     * @see RnaData, Aligner, AlignerP
-    */
+     * If the base pairs object is constructed from an RnaData object,
+     * it knows about its corresponding RnaData object.
+     *
+     */
     class BasePairs
     {
     private:
-	const RnaData *rnadata;
-	double min_prob;
+	const RnaData *rnadata_;
+	double min_prob_;
+	double len_;
 
     public:
 	typedef size_t size_type;
@@ -162,19 +176,27 @@ namespace LocARNA {
 	std::vector<RightAdjList> right_;
 
 	arc_vec_t arc_vec_;
-
 	arc_matrix_t arcs_;
     
-	//! set number of arcs and resize data structures accordingly
-	void resize(size_type s);
-    
+	/**
+	 * @brief resize data structures
+	 * @param seq_len length of sequence
+	 *
+	 * Resizes the data structures left_ and right_ that allow
+	 * fast acces to an arc arcs by its left end, its right end,
+	 * or its left and right end
+	 */
+	void
+	resize(size_type seq_len);
+	
 	//! generate the datastructures that allow fast access to arcs
-	void generateBPLists(const RnaData &rnadata);
+	void
+	generateBPLists(const RnaData &rnadata);
     
 	//! sort the adjacency lists as expected by the alignment algorithm
-	void sortAdjLists();
+	void
+	sortAdjLists();
     
-	size_type len_; //!< the sequence length
     public:
 	
 	/** 
@@ -187,13 +209,16 @@ namespace LocARNA {
 	 * their probability, an object of BasePairs represents the
 	 * sparsified set of base pairs (due to min_prob_)
 	 */
-	BasePairs(const RnaData *rnadata_,double min_prob_):
-	    rnadata(rnadata_),
-	    min_prob(min_prob_),  
-	    arcs_(-1),
-	    len_(get_length_from_rnadata())
+	BasePairs(const RnaData *rnadata,double min_prob):
+	    rnadata_(rnadata),
+	    min_prob_(min_prob),
+	    len_(get_length_from_rnadata()),
+	    left_(),
+	    right_(),
+	    arc_vec_(),
+	    arcs_(-1)
 	{
-	    generateBPLists(*rnadata);
+	    generateBPLists(*rnadata_);
 	}
 
 	/** 
@@ -202,105 +227,160 @@ namespace LocARNA {
 	 * @param seq_len length of sequence
 	 * @param bps set of base pairs
 	 */
-	BasePairs(size_type seq_len, const bpair_set_t &bps ):
-	    rnadata(0),
-	    min_prob(1.0),  
-	    arcs_(-1),
-	    len_(seq_len)
+	BasePairs(size_type len, const bpair_set_t &bps ):
+	    rnadata_(0),
+	    min_prob_(1.0),
+	    len_(len),
+	    left_(),
+	    right_(),
+	    arc_vec_(),
+	    arcs_(-1)
 	{
-	    resize(len_+1);
+	    resize(seqlen());
 	    for (bpair_set_t::const_iterator it=bps.begin(); bps.end()!=it; ++it) {
 		register_arc(it->first,it->second);
 	    }
 	    sortAdjLists();
 	}
-  
+	
+	// /**
+	//  * @brief Copy constructor
+	//  */
+	// BasePairs(const BasePairs &bps);
+
+	// /**
+	//  * @brief Assignment operator
+	//  */
+	// BasePairs &
+	// operator =(const BasePairs &bps);
+
 	/**
 	 * registers a basepair (i,j),
 	 * maintains the basepair access data structures
-	*/
-	void register_arc(int i, int j);
+	 */
+	void
+	register_arc(int i, int j);
 
 	//! returns the list of arcs with right end i
-	const LeftAdjList & left_adjlist(int i) const {
+	const LeftAdjList &
+	left_adjlist(int i) const {
 	    //std::cout<<"size of left adjlist of "<<i<<"is "<<left_[i].size()<<std::endl; 
 	    return left_[i];
 	}
 	
 	//! returns the list of arcs with left end i //TODO: comment: right or left?
-	const RightAdjList & right_adjlist(int i) const { return right_[i];}
+	const RightAdjList &
+	right_adjlist(int i) const { return right_[i];}
 
 	//! accesses basepair by (i,j)
-	const Arc &arc(int i,int j) const {return arc_vec_[arcs_(i,j)];}
+	const Arc &
+	arc(int i,int j) const {return arc_vec_[arcs_(i,j)];}
     
 	/**
 	 * \param idx an arc index
 	 * \returns arc with index idx
-	*/
-	const Arc &arc(size_type idx) const {
+	 */
+	const Arc &
+	arc(size_type idx) const {
 	    assert(idx<arc_vec_.size());
 	    return arc_vec_[idx];
 	}
         
 	//! returns whether basepair (i,j) exists
-	bool exists_arc(int i,int j) const {return -1 != arcs_(i,j);}
+	bool 
+	exists_arc(int i,int j) const {return -1 != arcs_(i,j);}
     
 	//! returns number of basepairs in the object
-	size_type num_bps() const {return arc_vec_.size();}
+	size_type
+	num_bps() const {return arc_vec_.size();}
     
 	//! returns length of sequence
-	size_type seqlen() const {return len_;}
+	size_type
+	seqlen() const;
+	
+	double
+	prob_min() const; //!< return minimal probability
     
-	double prob_min() const; //!< return minimal probability
-    
-
 	/** 
 	 * @brief Access to corresponding RnaData object
 	 * 
 	 * @return reference to RnaData object
 	 */
-	const RnaData &get_rnadata() const {
-	    return *rnadata;
+	const RnaData &
+	get_rnadata() const {
+	    return *rnadata_;
 	}
 
 	/* pass through some methods to rnadata
-       
-	   This prepares support of the case, where we don't have rnadata
-	   (can be used for user defined arcmatch scores)
 	*/
+	
+    	/**
+	 * @brief base pair probability
+	 * @param i left base pair end
+	 * @param j right base pair end
+	 *
+	 * @return probability of base pair (i,j) if data available;
+	 * otherwise, 0
+	 *
+	 * @note if there is a corresponding RnaData object, return
+	 * result of corresponding method
+	 */
+	double 
+	get_arc_prob(size_type i, size_type j) const;
     
-	/*
-	//! access sequence
-	const Sequence &get_sequence() const {
-	return rnadata->get_sequence();
-	}*/
-    
-	//! returns probability of basepair (i,j)
-	double get_arc_prob(size_type i, size_type j) const;
-    
-	//! returns probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
-	double get_arc_2_prob(size_type i, size_type j) const;
+    	/**
+	 * @brief joint probability 
+	 * @param i left base pair end
+	 * @param j right base pair end
+	 *
+	 * @return probability of basepairs (i,j) and (i+1,j-1)
+	 * occuring simultaneously if data available; otherwise, 0
+	 *
+	 * @note if there is a corresponding RnaData object, return
+	 * result of corresponding method
+	 */
+	double
+	get_arc_2_prob(size_type i, size_type j) const;
 
 	/**
-	 * returns probability of basepairs (i,j) stacked,
-	 * i.e. (i,j) under condition (i+1,j-1)
-	*/
-	double get_arc_stack_prob(size_type i, size_type j) const;
+	 * @brief stack probability 
+	 * @param i left base pair end
+	 * @param j right base pair end
+	 *
+	 * @return probability of basepairs (i,j) stacked, i.e. (i,j)
+	 * under condition (i+1,j-1) if data available; otherwise, 0
+	 *
+	 * @note if there is a corresponding RnaData object, return
+	 * result of corresponding method
+	 */
+	double 
+	get_arc_stack_prob(size_type i, size_type j) const;
 
 	/**
-	 * returns probability that a position i is unpaired
-	 * O(sequence.length()) implementation
-	*/
-	double prob_unpaired(size_type i) const;
-
+	 * @brief unpaired probability 
+	 * @param i base position
+	 *
+	 * @return probability that a position i is unpaired if data
+	 * available; otherwise, 0
+	 *
+	 * @note if there is a corresponding RnaData object, return
+	 * result of corresponding method
+	 */
+	double
+	prob_unpaired(size_type i) const;
 
     private:
+	
+	// return length from rna data
+	// pre: rna data available
 	size_type
 	get_length_from_rnadata() const;
-	
+
     };
 
-    std::ostream &operator <<(std::ostream &out, const BasePairs::Arc &arc);
+    std::ostream &
+    operator <<(std::ostream &out, const BasePairs::Arc &arc);
+
 
 
 }

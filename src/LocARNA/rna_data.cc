@@ -134,7 +134,9 @@ namespace LocARNA {
     
     double
     RnaData::get_arc_prob(size_type i, size_type j) const {
+	assert(1<=i);
 	assert(i<j);
+	assert(j<=pimpl_->sequence_.length());
 	return pimpl_->arc_probs_(i,j);
     }
     

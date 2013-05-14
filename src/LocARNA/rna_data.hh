@@ -20,19 +20,23 @@ namespace LocARNA {
 
 
 
-//! @todo support pre-computed in loop probs from tables
-//! @todo support constrained pf folding
+/**
+ * @todo support pre-computed in loop probs from tables
+ * @todo support constrained pf folding
+*/
 namespace LocARNA {
 
     class Sequence;
 
-    //! \brief Parameters for partition folding
-    //!
-    //! Describes certain parameters for the partition folding of 
-    //! a sequence or alignment.
-    //!
-    //! @see RnaData
-    //!
+    /**
+     * \brief Parameters for partition folding
+     *
+     * Describes certain parameters for the partition folding of 
+     * a sequence or alignment.
+     *
+     * @see RnaData
+     *
+    */
     class PFoldParams {
 	friend class RnaData;
 	friend class RnaDataImpl;
@@ -148,10 +152,13 @@ namespace LocARNA {
 	RnaData &operator =(const RnaData &rna_data);
 	
 	
-	//! \brief Clean up.
-	//!
-	//! In most cases does nothing. If McCaskill
-	//! matrices are kept, they are freed.
+	/**
+	 * \brief Clean up.
+	 *
+	 * In most cases does nothing. If McCaskill
+	 * matrices are kept, they are freed.
+	*/
+	virtual 
 	~RnaData();
 	
 	/** 
@@ -187,13 +194,17 @@ namespace LocARNA {
 	void
 	compute_ensemble_probs(const PFoldParams &params,bool inLoopProbs, bool use_alifold=true);
 	
-	//! @brief Get the sequence
-	//! @return sequence of RNA
+	/**
+	 * @brief Get the sequence
+	 * @return sequence of RNA
+	*/
 	const Sequence &
 	get_sequence() const;
 	
-	//! @brief Get sequence constraints
-	//! @return string description of sequence constraints of RNA
+	/**
+	 * @brief Get sequence constraints
+	 * @return string description of sequence constraints of RNA
+	*/
 	const std::string &
 	get_seq_constraints() const;
     
@@ -266,56 +277,70 @@ namespace LocARNA {
 	// ------------------------------------------------------------
 	// get methods
     
-	//! \brief Get arc probability
-	//! @param i left sequence position  
-	//! @param j right sequence position
-	//! \return probability of basepair (i,j)
+	/**
+	 * \brief Get arc probability
+	 * @param i left sequence position  
+	 * @param j right sequence position
+	 * \return probability of basepair (i,j)
+	*/
 	double 
 	get_arc_prob(size_type i, size_type j) const;
 
-	//! \brief Get joint probability of stacked arcs
-	//! @param i left sequence position  
-	//! @param j right sequence position
-	//! \return probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
+	/**
+	 * \brief Get joint probability of stacked arcs
+	 * @param i left sequence position  
+	 * @param j right sequence position
+	 * \return probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
+	*/
 	double get_arc_2_prob(size_type i, size_type j) const;
 
-	//! \brief Get conditional propability that a base pair is stacked
-	//! @param i left sequence position  
-	//! @param j right sequence position
-	//! \return probability of basepairs (i,j) stacked, i.e. the
-	//! conditional probability Pr[(i,j)|(i+1,j-1)].
-	//! \pre base pair (i+1,j-1) has probability > 0
+	/**
+	 * \brief Get conditional propability that a base pair is stacked
+	 * @param i left sequence position  
+	 * @param j right sequence position
+	 * \return probability of basepairs (i,j) stacked, i.e. the
+	 * conditional probability Pr[(i,j)|(i+1,j-1)].
+	 * \pre base pair (i+1,j-1) has probability > 0
+	*/
 	double get_arc_stack_prob(size_type i, size_type j) const;
 		
-	//! \brief get length of sequence
-	//! \return sequence length
+	/**
+	 * \brief get length of sequence
+	 * \return sequence length
+	*/
 	size_type get_length() const;	
 
 	// ------------------------------------------------------------
 	// compute probabilities paired upstream, downstream, and unpaired
     
-	//! \brief Probability that a position is paired upstream
-	//! 
-	//! \param i sequence position
-	//! \return probability that a position i is paired with a position j>i (upstream)
-	//! @note O(sequence.length()) implementation
-	//! @see prob_paired_downstream
+	/**
+	 * \brief Probability that a position is paired upstream
+	 * 
+	 * \param i sequence position
+	 * \return probability that a position i is paired with a position j>i (upstream)
+	 * @note O(sequence.length()) implementation
+	 * @see prob_paired_downstream
+	*/
 	double
 	prob_paired_upstream(size_type i) const;
         
-	//! \brief Probability that a position is paired downstream
-	//! 
-	//! \param i sequence position
-	//! \return probability that a position i is paired with a position j<i (downstream)
-	//! @note O(sequence.length()) implementation
-	//! @see prob_paired_upstream
+	/**
+	 * \brief Probability that a position is paired downstream
+	 * 
+	 * \param i sequence position
+	 * \return probability that a position i is paired with a position j<i (downstream)
+	 * @note O(sequence.length()) implementation
+	 * @see prob_paired_upstream
+	*/
 	double
 	prob_paired_downstream(size_type i) const;
     
-	//! \brief Unpaired probability 
-	//! \param i sequence position
-	//! \return probability that a position i is unpaired
-	//! @note O(sequence.length()) implementation
+	/**
+	 * \brief Unpaired probability 
+	 * \param i sequence position
+	 * \return probability that a position i is unpaired
+	 * @note O(sequence.length()) implementation
+	*/
 	double
 	prob_unpaired(size_type i) const;
 
