@@ -6,13 +6,6 @@
 
 namespace LocARNA {
 
-    
-    TaintedInftyInt::~TaintedInftyInt() {
-    }
-    
-    InftyInt::~InftyInt() {
-    }
-
     const TaintedInftyInt::basic_type
     TaintedInftyInt::min_finity = std::numeric_limits<TaintedInftyInt::basic_type>::min()/5;
 

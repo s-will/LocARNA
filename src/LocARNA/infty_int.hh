@@ -74,9 +74,6 @@ namespace LocARNA {
 	    : val(x.val) {
 	}
 	
-	virtual
-	~TaintedInftyInt();
-
 	static
 	basic_type
 	min_finite() {
@@ -282,10 +279,6 @@ namespace LocARNA {
 	
 	InftyInt(const InftyInt &x);
 	
-	virtual
-	~InftyInt();
-	
-
 	InftyInt &
 	operator =(TaintedInftyInt &x) {
 	    val = x.val;

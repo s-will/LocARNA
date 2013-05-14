@@ -735,7 +735,7 @@ main(int argc, char **argv) {
 	
 	// otherwise compute the best alignment
 	score = aligner.align();
-    
+	
     }
     
     // ----------------------------------------
