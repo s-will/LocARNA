@@ -4,6 +4,7 @@
 #include "anchor_constraints.hh"
 #include "trace_controller.hh"
 #include "basepairs.hh"
+#include "sequence.hh"
 
 #include <math.h>
 #include <assert.h>
@@ -134,6 +135,10 @@ namespace LocARNA {
 	  bpsA_(arc_matches_.get_base_pairsA()),
 	  bpsB_(arc_matches_.get_base_pairsB()),
 	  r_(1,1,seqA.length(),seqB.length()),
+	  min_i_(1),
+	  min_j_(1),
+	  max_i_(seqA.length()),
+	  max_j_(seqB.length()),
 	  D_created_(false),
 	  alignment_(seqA,seqB),
 	  def_scoring_view_(this),

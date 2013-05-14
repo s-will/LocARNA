@@ -559,7 +559,7 @@ AlignerN::align_D() {
 	    //compute IA
 //	    stopwatch.start("compIA");
 	    for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-		    arcB != adjlB.end(); arcB++)
+		    arcB != adjlB.end(); ++arcB)
 	    {
 		fill_IA_entries(al, *arcB, max_ar );
 	    }
@@ -568,7 +568,7 @@ AlignerN::align_D() {
 	    //comput IB
 //	    stopwatch.start("compIB");
 	    for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-		    arcA != adjlA.end(); arcA++)
+		    arcA != adjlA.end(); ++arcA)
 	    {
 		fill_IB_entries(*arcA, bl, max_br );
 	    }

@@ -171,7 +171,7 @@ void
 AnchorConstraints::init_tables(const name_tab_t &nameTabA,
 			       const name_tab_t &nameTabB) {
     
-    assert(a.size()>0);
+    assert(!a.empty());
     size_type lenA = a.size()-1; // -1 !!! 
     
     names_a.resize(a.size());

@@ -51,7 +51,7 @@ namespace LocARNA {
 	    }
 	
 	    in.close();
-	} catch (std::ifstream::failure e) {
+	} catch (std::ifstream::failure &e) {
 	    throw failure("Cannot construct multiple alignment: "+(std::string)e.what());
 	}
 
@@ -162,7 +162,7 @@ namespace LocARNA {
 		}
 		seq_map[name] += seqstr;
 	    }
-	} while (getline(in,line) && line.substr(0,6) != "CLUSTAL"); // stop when reading a "CLUSTAL" header line again, this allows reading multiple clustal entries from one file
+	} while (getline(in,line) && line.substr(0,7) != "CLUSTAL"); // stop when reading a "CLUSTAL" header line again, this allows reading multiple clustal entries from one file
     
 	// store the name/sequence pairs in the vector alig
 	for (std::vector<std::string>::const_iterator it=names.begin(); it!=names.end(); ++it) {
@@ -670,7 +670,7 @@ namespace LocARNA {
 	    
 	    // iterate over sequences and count character
 	    for (std::vector<SeqEntry>::const_iterator it=alig_.begin(); alig_.end()!=it; ++it) {
-		char c=it->seq()[i];
+		size_t c=it->seq()[i];
 		if (tab.end()==tab.find(c)) tab[c]=0;
 		tab[c]++;
 	    }

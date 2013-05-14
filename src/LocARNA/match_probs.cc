@@ -94,7 +94,7 @@ namespace  LocARNA {
 	    } else {
 		throw(std::ifstream::failure("Cannot read background probabilities."));
 	    }
-	} catch (std::ifstream::failure e) {
+	} catch (std::ifstream::failure &e) {
 	    std::stringstream err;
 	    
 	    err << "Cannot parse "<<filename<<". " <<e.what()<< std::endl
@@ -127,7 +127,7 @@ namespace  LocARNA {
     
 	std::vector<int> trans_tab(256,5);
 	for(size_type i=0; i<p.basenames.length(); i++) {
-	    char c=p.basenames[i];
+	    size_t c=p.basenames[i];
 	    trans_tab[c]=i;
 	}
     

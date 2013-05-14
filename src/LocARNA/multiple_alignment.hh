@@ -348,7 +348,7 @@ public:
      * @return length of first sequence in alignment
     */
     pos_type 
-    length() const { return alig_.size()==0 ? 0 : alig_[0].seq().length(); }
+    length() const { return alig_.empty() ? 0 : alig_[0].seq().length(); }
     
     /**
      * @brief Begin for read-only traversal of name/sequence pairs

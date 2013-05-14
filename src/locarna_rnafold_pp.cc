@@ -186,4 +186,4 @@ main(int argc, char **argv) {
     std::cerr << "Please reconfigure and recompile to activate this program. \n";
     return -1;
 }
-#endif
+#endif // HAVE_LIBRNA

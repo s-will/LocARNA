@@ -135,13 +135,13 @@ namespace LocARNA {
 	    // compute thetas for c0,c1
 	    viterbi(c0,c1,false);
 	
-	    pf_t Theta=1;
+	    // pf_t Theta=1;
 	    theta[0]=1;
 	    for (size_type i=1;i<=x.size(); ++i) {
 		//theta[i]=1;
 		// estimate factor from difference between sum of viterbi scores at i and i-1
 		theta[i]=exp(beta*(v[0][i]+v[1][i]-v[0][i-1]-v[1][i-1])); // exp(-beta*viterbi_score/x.size());
-		Theta *= theta[i];
+		// Theta *= theta[i];
 	    }
 	
 	

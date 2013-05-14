@@ -3,6 +3,7 @@
 #include "alignment.hh"
 #include "alignment_impl.hh"
 
+#include "sequence.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
 #include "scoring.hh"
@@ -280,7 +281,6 @@ namespace LocARNA {
 	    size_type local_end_B=pimpl_->b_[alisize-1]; //!< pos where local alignment ends for B
 
 	    size_type length=aliSeqA.length();
-	    size_type k=1;
 
 	    if (pos_out) {
 		out << "HIT " << score
@@ -301,6 +301,7 @@ namespace LocARNA {
 	    if (!pos_out || local_out) {
 		out<<std::endl;
 
+		size_type k=1;
 		while (k <= length) {
 
 		    if (write_structure)

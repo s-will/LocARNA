@@ -228,7 +228,7 @@ std::ostream &operator << (std::ostream &out, const PatternPairMap::patListTYPE 
 	//!@brief returns the structure of the given sequence
 	char* getStructure(PatternPairMap& myMap, bool firstSeq, int length);
 	
-	std::string intvec2str(const std::vector<unsigned int>& V, const std::string delim){
+	std::string intvec2str(const std::vector<unsigned int>& V, const std::string &delim){
 	    std::stringstream oss;
 	    copy(V.begin(), V.end(), std::ostream_iterator<unsigned int>(oss, delim.c_str()));
 	    std::string tmpstr;
@@ -989,7 +989,7 @@ private:
      */
     void trace_seq_str_matching_subopt(const Arc &a, const Arc &b,
     		score_t score_contr, matpos_t mat_pos_diag, pair_seqpos_t seq_pos_to_be_matched,
-    		const PairArcIdx am, poss_L_LR &poss, size_type pos_cur_epm,
+    		const PairArcIdx &am, poss_L_LR &poss, size_type pos_cur_epm,
     		epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do);
 
     /**

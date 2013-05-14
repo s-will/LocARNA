@@ -3,6 +3,7 @@
 #include "anchor_constraints.hh"
 #include "rna_data.hh"
 #include "scoring.hh"
+#include "sequence.hh"
 
 #include <fstream>
 #include <sstream>

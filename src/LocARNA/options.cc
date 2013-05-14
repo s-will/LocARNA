@@ -480,13 +480,14 @@ namespace LocARNA {
 	    success=1;
 	    break;
 	case O_ARG_INT:
-	    success=sscanf(optarg.c_str(), "%d", (int *)argument);
+	    // use large width limits for scanf (e.g., %20d limits ints to at most 20 characters) 
+	    success=sscanf(optarg.c_str(), "%20d", (int *)argument);
 	    break;
 	case O_ARG_FLOAT:
-	    success=sscanf(optarg.c_str(), "%f", (float *)argument);
+	    success=sscanf(optarg.c_str(), "%40f", (float *)argument);
 	    break;
 	case O_ARG_DOUBLE:
-	    success=sscanf(optarg.c_str(), "%lf", (double *)argument);
+	    success=sscanf(optarg.c_str(), "%80lf", (double *)argument);
 	    break;
 	case O_ARG_BOOL:
 	    *((bool *)argument) = false;

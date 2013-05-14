@@ -36,7 +36,15 @@ namespace LocARNA {
     }
 
     McC_matrices_base::McC_matrices_base()
-	: length(0),local_copy(false),qb(0),qm(0),bppm(0),iindx(0),q1k(0),qln(0)
+	: length(0),
+	  local_copy(false),
+	  qb(0),
+	  qm(0),
+	  bppm(0),
+	  iindx(0),
+	  q1k(0),
+	  qln(0),
+	  pf_params(0)
     {}
 
     void
@@ -48,6 +56,7 @@ namespace LocARNA {
 	bppm=0;
 	q1k=0;
 	qln=0;
+	pf_params=0;
 	
 	iindx = get_iindx(length);
     }

@@ -89,7 +89,7 @@ namespace LocARNA {
 	    getline(in,line);
 	    getline(in,line);
 	
-	} catch (std::ifstream::failure e) {
+	} catch (std::ifstream::failure &e) {
 	    std::ostringstream err;
 	    err << "Cannot parse ribosum input. " <<e.what()<< std::endl
 		<< "File not in ribosum format.";
@@ -249,7 +249,7 @@ namespace LocARNA {
 		for (size_t j=0; j<ydim; j++)
 		    in >> mat(i,j);
 	
-	} catch(std::ifstream::failure e) {
+	} catch(std::ifstream::failure &e) {
 	    std::ostringstream err;
 	    err << "Cannot parse ribosum frequency input. " <<e.what()<< std::endl
 		<< "File not in extended ribosum format.";

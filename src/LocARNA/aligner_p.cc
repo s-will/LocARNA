@@ -1,5 +1,6 @@
 #include "aligner_p.hh"
 
+#include "sequence.hh"
 #include "arc_matches.hh"
 #include "trace_controller.hh"
 
