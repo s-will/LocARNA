@@ -1294,7 +1294,7 @@ bool debug_trace_F_heuristic = false;
 
     // traces a sequential or structural match for the suboptimal traceback
     void ExactMatcher::trace_seq_str_matching_subopt(const Arc &a, const Arc &b, score_t score_contr,
-    		matpos_t mat_pos_diag, pair_seqpos_t seq_pos_to_be_matched, const PairArcIdx am,
+    		matpos_t mat_pos_diag, pair_seqpos_t seq_pos_to_be_matched, const PairArcIdx &am,
     		poss_L_LR &poss, size_type pos_cur_epm, epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do){
 
     	bool matrixLR =  found_epms.at(pos_cur_epm).get_state()==in_LR;
