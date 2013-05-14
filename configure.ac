@@ -83,22 +83,53 @@ AC_SUBST(LIBS,[""])
 AC_SUBST(LIBDEFS,[""]) # defines that have to be set when using the LocARNA library
 
 
+## ------------------------------
+## Vienna RNA lib configuration
+##
+## check whether pkg-config is available 
+AC_CHECK_PROG([PKG_CONFIG_AVAILABLE],pkg-config,[true],[false])
+##
+## if available, use pkg-config to configure the Vienna RNA library
+## 
+AS_IF([test "$PKG_CONFIG_AVAILABLE" == "true"],[
 # set PKG_CONFIG_PATH
 if test "$with_vrna" != "" ; then
    export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
 fi
-
+##
 AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
-    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.0.7],[],[VRNALIB_OK=false])
-    AC_DEFINE([HAVE_LIBRNA])
-    LDFLAGS="$VRNA_LIBS $LDFLAGS"
-
+    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.1],[],[VRNALIB_OK=false])
     if test "$with_vrna" != "" ; then
         VRNA_CFLAGS="$VRNA_CFLAGS -I$with_vrna/include"
     fi
+])
+],
+## if not available, guess the configuration
+##
+[
+  AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
+  AC_MSG_NOTICE([Guessing the library configuration, since pkg-config unavailable.])
+  if test "$with_vrna" == "" ; then
+    vrna_prefix="/usr/local"
+  else
+    vrna_prefix="$with_vrna"
+  fi
+  VRNA_LIBS="-L$vrna_prefix/lib -lRNA"
+  VRNA_CFLAGS="-I$vrna_prefix/include"
+  AC_MSG_NOTICE([LIBS=$VRNA_LIBS; CFLAGS=$VRNA_CFLAGS])
+  AC_MSG_NOTICE([To avoid guessing, please install pkg-config.])
+  ])
+])
+##
+## finally, set LDFLAGS and CPPFLAGS
+AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
+    AC_DEFINE([HAVE_LIBRNA])
+    LDFLAGS="$VRNA_LIBS $LDFLAGS"
+
     CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 ])
 AM_CONDITIONAL([HAVE_LIBRNA],[test "$ENABLE_LIBRNA" = "yes"])
+
 
 
 ####################
@@ -256,7 +287,7 @@ fi
 if test "$VRNA_OK" = "false" -o "$VRNALIB_OK" = "false" ; then
    AC_MSG_NOTICE()
    AC_MSG_NOTICE([The Vienna RNA package (>=1.8) is required for compiling;])
-   AC_MSG_NOTICE([linking (--enable-librna) requires version >= 2.1.0.])
+   AC_MSG_NOTICE([linking (--enable-librna) requires version >= 2.1.1.])
    AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/~ivo/RNA/.])
    AC_MSG_NOTICE()
     
