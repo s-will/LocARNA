@@ -612,8 +612,8 @@ main(int argc, char **argv) {
 				     );
     }
     
-    BasePairs bpsA = arc_matches->get_base_pairsA();
-    BasePairs bpsB = arc_matches->get_base_pairsB();
+    const BasePairs &bpsA = arc_matches->get_base_pairsA();
+    const BasePairs &bpsB = arc_matches->get_base_pairsB();
     
     // ----------------------------------------
     // report on input in verbose mode

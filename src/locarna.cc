@@ -575,8 +575,8 @@ main(int argc, char **argv) {
 				     );
     }
     
-    BasePairs bpsA = arc_matches->get_base_pairsA();
-    BasePairs bpsB = arc_matches->get_base_pairsB();
+    const BasePairs &bpsA = arc_matches->get_base_pairsA();
+    const BasePairs &bpsB = arc_matches->get_base_pairsB();
     
     // ----------------------------------------
     // report on input in verbose mode
@@ -822,9 +822,11 @@ main(int argc, char **argv) {
 	}
     }
     
-    if (clp.opt_normalized || DO_TRACE) { // if we did a trace (one way or
-				      // the other)
+    bool return_code=0;
 
+    if (clp.opt_normalized || DO_TRACE) { 
+	// if we did a trace (one way or the other)
+	
 	aligner.get_alignment().write(std::cout, 
 				      clp.output_width,
 				      score,
@@ -844,14 +846,7 @@ main(int argc, char **argv) {
 	    }
 	}
 	
-	// ----------------------------------------
-	// already clean up
-	//
-	if (match_probs) delete match_probs;
-	if(arc_matches) delete arc_matches;
-	if (multiple_ref_alignment) delete multiple_ref_alignment;
-	if (ribosum) delete ribosum;
-	
+
 	// ----------------------------------------
 	// optionally write output formats
 	//
@@ -867,9 +862,10 @@ main(int argc, char **argv) {
 						      );
 	    } else {
 		cerr << "Cannot write to "<<clp.clustal_out<<endl<<"! Exit.";
-		return -1;
+		return_code=-1;
 	    }
 	}
+	
 	if (clp.opt_pp_out) {
 
 	    // if compiled without vienna rna lib, deactivate alifold
@@ -888,14 +884,22 @@ main(int argc, char **argv) {
 			     clp.opt_alifold_consensus_dp);
 	    } else {
 		cerr << "Cannot write to "<<clp.pp_out<<endl<<"! Exit.";
-		return -1;
+		return_code=-1;
 	    }
 	}
     }
-    
+
+    // ----------------------------------------
+    //  clean up
+    //
+    if (match_probs) delete match_probs;
+    if (arc_matches) delete arc_matches;
+    if (multiple_ref_alignment) delete multiple_ref_alignment;
+    if (ribosum) delete ribosum;
+        
     stopwatch.stop("total");
 
     // ----------------------------------------
     // DONE
-    return 0;
+    return return_code;
 }
