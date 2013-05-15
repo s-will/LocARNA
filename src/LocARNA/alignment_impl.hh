@@ -43,8 +43,8 @@ namespace LocARNA {
     
 	void
 	write_consensus_dot_plot(std::ostream &out,
-				 const plusvector<int> &aliA,
-				 const plusvector<int> &aliB,
+				 const std::vector<int> &aliA,
+				 const std::vector<int> &aliB,
 				 const BasePairs &bpsA,
 				 const BasePairs &bpsB,
 				 const Scoring &scoring

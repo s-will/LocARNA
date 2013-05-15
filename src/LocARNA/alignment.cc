@@ -540,12 +540,12 @@ namespace LocARNA {
 
     void
     AlignmentImpl::write_consensus_dot_plot(std::ostream &out,
-					const plusvector<int> &aliA,
-					const plusvector<int> &aliB,
-					const BasePairs &bpsA,
-					const BasePairs &bpsB,
-					const Scoring &scoring
-					) const {
+					    const std::vector<int> &aliA,
+					    const std::vector<int> &aliB,
+					    const BasePairs &bpsA,
+					    const BasePairs &bpsB,
+					    const Scoring &scoring
+					    ) const {
 	int lenA=seqA_.length();
 	int lenB=seqB_.length();
 
