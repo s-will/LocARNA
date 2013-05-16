@@ -301,18 +301,19 @@ namespace LocARNA {
 	double
 	prob_min() const; //!< return minimal probability
     
-	/** 
-	 * @brief Access to corresponding RnaData object
-	 * 
-	 * @return reference to RnaData object
-	 */
-	const RnaData &
-	get_rnadata() const {
-	    return *rnadata_;
-	}
+	// /** 
+	//  * @brief Access to corresponding RnaData object
+	//  * 
+	//  * @return reference to RnaData object
+	//  */
+	// const RnaData &
+	// get_rnadata() const {
+	//     assert(rnadata_!=NULL);
+	//     return *rnadata_;
+	// }
 
-	/* pass through some methods to rnadata
-	*/
+	// /* pass through some methods to rnadata
+	// */
 	
     	/**
 	 * @brief base pair probability

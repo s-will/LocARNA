@@ -1378,11 +1378,11 @@ namespace LocARNA {
     RnaData::write_unpaired_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const {
 	
 	// write lines for loops closed by base pairs
-	for(arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
+	for(RnaDataImpl::arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
+	    for(RnaDataImpl::arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
 		if (pimpl_->arc_probs_(i,j)>threshold1) {
 		    bool had_entries=false;
-		    for(arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
+		    for(RnaDataImpl::arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
 			double p=prob_unpaired_in_loop(k,i,j);
 			if (p>threshold2) {
 			    if (!had_entries) {
@@ -1399,7 +1399,7 @@ namespace LocARNA {
 	// write lines for external loop
 	
 	bool had_entries=false;
-	for(arc_prob_matrix_t::size_type k=1; k<=get_length(); ++k) {
+	for(RnaDataImpl::arc_prob_matrix_t::size_type k=1; k<=get_length(); ++k) {
 	    double p=prob_unpaired_external(k);
 	    if (p>threshold2) {
 		if (!had_entries) {
@@ -1416,12 +1416,12 @@ namespace LocARNA {
     std::ostream &
     RnaData::write_basepair_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const {
 	// write lines for loops closed by base pairs
-	for(arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
+	for(RnaDataImpl::arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
+	    for(RnaDataImpl::arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
 		if (pimpl_->arc_probs_(i,j)>threshold1) {
 		    bool had_entries=false;
-		    for(arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
-			for(arc_prob_matrix_t::size_type jp=ip+1; jp<=j-1; ++jp) {
+		    for(RnaDataImpl::arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
+			for(RnaDataImpl::arc_prob_matrix_t::size_type jp=ip+1; jp<=j-1; ++jp) {
 			    double p=prob_basepair_in_loop(ip,jp,i,j);
 			    if (p>threshold2) {
 				if (!had_entries) {out << i << " " << j; had_entries=true;}
@@ -1436,8 +1436,8 @@ namespace LocARNA {
 	
 	// write lines for external loop
 	bool had_entries=false;
-	for(arc_prob_matrix_t::size_type ip=1; ip<=get_length(); ++ip) {
-	    for(arc_prob_matrix_t::size_type jp=ip+1; jp<=get_length(); ++jp) {
+	for(RnaDataImpl::arc_prob_matrix_t::size_type ip=1; ip<=get_length(); ++ip) {
+	    for(RnaDataImpl::arc_prob_matrix_t::size_type jp=ip+1; jp<=get_length(); ++jp) {
 		double p=prob_basepair_external(ip,jp);
 		if (p>threshold2) {
 		    if (!had_entries) {out << 0 << " " << (get_length()+1); had_entries=true;}
@@ -1456,16 +1456,16 @@ namespace LocARNA {
 	size_t i=0;
 	size_t j=get_length()+1;
 
-	arc_prob_matrix_t::size_type last_i=i;
-	arc_prob_matrix_t::size_type last_j=j;
+	RnaDataImpl::arc_prob_matrix_t::size_type last_i=i;
+	RnaDataImpl::arc_prob_matrix_t::size_type last_j=j;
 	
 
 	// write line for external loop
 	
 	out << (diff_encoding?(int)i-(int)last_i:(int)i) << " " << (diff_encoding?(int)last_j-(int)j:(int)j)<< " 1 ;";
 	
-	arc_prob_matrix_t::size_type last_k=i;
-	for(arc_prob_matrix_t::size_type k=1; k<=get_length(); ++k) {
+	RnaDataImpl::arc_prob_matrix_t::size_type last_k=i;
+	for(RnaDataImpl::arc_prob_matrix_t::size_type k=1; k<=get_length(); ++k) {
 	    double p=prob_unpaired_external(k);
 	    if (p>threshold2) {
 		out << " " << (diff_encoding?(k-last_k):k);
@@ -1475,10 +1475,10 @@ namespace LocARNA {
 	}
 	out << ";";
 	
-	arc_prob_matrix_t::size_type last_ip=i;
-	arc_prob_matrix_t::size_type last_jp=j;
-	for(arc_prob_matrix_t::size_type ip=1; ip<=get_length(); ++ip) {
-	    for(arc_prob_matrix_t::size_type jp=get_length(); jp>ip; --jp) {
+	RnaDataImpl::arc_prob_matrix_t::size_type last_ip=i;
+	RnaDataImpl::arc_prob_matrix_t::size_type last_jp=j;
+	for(RnaDataImpl::arc_prob_matrix_t::size_type ip=1; ip<=get_length(); ++ip) {
+	    for(RnaDataImpl::arc_prob_matrix_t::size_type jp=get_length(); jp>ip; --jp) {
 		if (pimpl_->arc_probs_(ip,jp)>threshold1) {
 		    double p=prob_basepair_external(ip,jp);
 		    if (p>threshold3) {
@@ -1494,8 +1494,8 @@ namespace LocARNA {
 
 	
 	// write lines for internal loops
-	for(arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
+	for(RnaDataImpl::arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
+	    for(RnaDataImpl::arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
 		
 		if (pimpl_->arc_probs_(i,j)>threshold1) {
 		    
@@ -1511,8 +1511,8 @@ namespace LocARNA {
 		    out << " ;";
 		    
 		    // write unpaired in loop
-		    arc_prob_matrix_t::size_type last_k=i;
-		    for(arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
+		    RnaDataImpl::arc_prob_matrix_t::size_type last_k=i;
+		    for(RnaDataImpl::arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
 			double p=prob_unpaired_in_loop(k,i,j);
 			if (p>threshold2) {
 			    out << " " << (diff_encoding?(k-last_k):k);
@@ -1523,11 +1523,11 @@ namespace LocARNA {
 		    
 		    out << " ;";
 		    
-		    arc_prob_matrix_t::size_type last_ip=i;
-		    arc_prob_matrix_t::size_type last_jp=j;
+		    RnaDataImpl::arc_prob_matrix_t::size_type last_ip=i;
+		    RnaDataImpl::arc_prob_matrix_t::size_type last_jp=j;
 		    
-		    for(arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
-			for(arc_prob_matrix_t::size_type jp=j-1; jp>ip ; --jp) {
+		    for(RnaDataImpl::arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
+			for(RnaDataImpl::arc_prob_matrix_t::size_type jp=j-1; jp>ip ; --jp) {
 			    double p=prob_basepair_in_loop(ip,jp,i,j);
 			    if (p>threshold3) {
 				
@@ -1551,8 +1551,8 @@ namespace LocARNA {
 
     std::ostream &
     RnaData::write_basepair_probs(std::ostream &out,double threshold) const {
-	for(arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
+	for(RnaDataImpl::arc_prob_matrix_t::size_type i=1; i<=get_length(); ++i) {
+	    for(RnaDataImpl::arc_prob_matrix_t::size_type j=i+1; j<=get_length(); ++j) {
 		
 		if (pimpl_->arc_probs_(i,j)>threshold) {
 		    out << i << " " << j;

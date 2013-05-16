@@ -14,8 +14,6 @@ namespace LocARNA {
 }
 #endif
 
-#include "sparse_matrix.hh"
-
 #include "multiple_alignment.hh"
 
 
@@ -95,9 +93,6 @@ namespace LocARNA {
     class RnaData {
     private:
 	RnaDataImpl *pimpl_;  //!<- pointer to corresponding RnaDataImpl object
-    public:
-	//! type for matrix of arc probabilities
-	typedef SparseMatrix<double> arc_prob_matrix_t;
     public:
 	/** 
 	 * @brief Construct from file (either pp or dp_ps or clustalw or fasta)

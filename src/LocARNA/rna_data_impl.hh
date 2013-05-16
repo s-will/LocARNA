@@ -3,12 +3,14 @@
 
 #include "rna_data.hh"
 #include "sequence.hh"
+#include "sparse_matrix.hh"
+
 
 namespace LocARNA {
 
     struct RnaDataImpl {
-	
-	typedef RnaData::arc_prob_matrix_t arc_prob_matrix_t;
+	//! type for matrix of arc probabilities
+	typedef SparseMatrix<double> arc_prob_matrix_t;
 
 	RnaData *self_; //!<- pointer to corresponding RnaData object
     
