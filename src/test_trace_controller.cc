@@ -59,11 +59,11 @@ int main(int argc, char**argv) {
     
     Sequence seqA;
     //seqA.append_row("fruA","CCUCGAGGGGAACCCGAAAGGGACCCGAGAGG");
-    seqA.append_row("seqA","A-CTTG");
+    seqA.append(Sequence::SeqEntry("seqA","A-CTTG"));
 
     Sequence seqB;
     //seqB.append_row("fdhA","CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG");
-    seqB.append_row("seqB","ACCT-G");
+    seqB.append(Sequence::SeqEntry("seqB","ACCT-G"));
     
     if (verbose) {
  	std::cout<<"seqA:"<<std::endl;

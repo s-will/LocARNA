@@ -11,7 +11,7 @@ double minprob=1e-6;
 double theta2=1e-2;
     
 
-BasePairs
+RnaData *
 fold_sequence(const Sequence &seq, bool use_alifold) {
 
     RnaData *rnadata = new RnaData(seq);
@@ -26,15 +26,11 @@ fold_sequence(const Sequence &seq, bool use_alifold) {
 	throw -1;
     }
     
-    BasePairs bps(rnadata,minprob);
-
-    return bps;
+    return rnadata;
 }
 
 void
-test_in_loop_probs(const Sequence &seq, const BasePairs &bps) {     
-
-    const RnaData &rnadata = bps.get_rnadata();
+test_in_loop_probs(const Sequence &seq, const BasePairs &bps, const RnaData &rnadata) {     
 
     // ------------------------------------------------------------
     // Accumulate probabilities of disjoint events
@@ -147,8 +143,7 @@ test_in_loop_probs(const Sequence &seq, const BasePairs &bps) {
 
 }
 
-std::ostream &write_ext_pp(std::ostream &out,const Sequence &seq, const BasePairs &bps, double theta1, double theta2, double theta3) {
-    const RnaData &rnadata = bps.get_rnadata();
+std::ostream &write_ext_pp(std::ostream &out,const Sequence &seq, const BasePairs &bps, const RnaData &rnadata, double theta1, double theta2, double theta3) {
     
     out.precision(4);
     out << std::fixed;
@@ -159,8 +154,7 @@ std::ostream &write_ext_pp(std::ostream &out,const Sequence &seq, const BasePair
     return out;
 }
 
-std::ostream &write_ext_pp_variation(std::ostream &out,const Sequence &seq, const BasePairs &bps, double theta1, double theta2, double theta3) {
-    const RnaData &rnadata = bps.get_rnadata();
+std::ostream &write_ext_pp_variation(std::ostream &out,const Sequence &seq, const BasePairs &bps, const RnaData &rnadata, double theta1, double theta2, double theta3) {
     
     out.precision(4);
     out << std::fixed;
@@ -190,7 +184,7 @@ main(int argc,char **argv) {
     Sequence seq;
     Sequence mseq;
 
-    seq.append_row("test",testseqstr);
+    seq.append(Sequence::SeqEntry("test",testseqstr));
     
     std::string seq_data[]={
 	"AF008220",           "GGAGGAUUAG-CUCAGCUGGGAGAGCAUCUG--CC----U-UACAAG--CAGAGGGUCGGCGGUUCGAGCCCGUCAUCCUCCA",
@@ -201,7 +195,7 @@ main(int argc,char **argv) {
     };
     
     for (size_t i=4; i<5; i++) {
-	mseq.append_row(seq_data[2*i],seq_data[2*i+1]);
+	mseq.append(Sequence::SeqEntry(seq_data[2*i],seq_data[2*i+1]));
     }
     
     // seq.write(std::cout);   
@@ -211,10 +205,15 @@ main(int argc,char **argv) {
     // mseq.write(std::cout);
     
     try {
-	BasePairs bps = fold_sequence(seq,false);
-	BasePairs bpsA = fold_sequence(seq,true);
-	BasePairs mbps = fold_sequence(mseq,true);
-    
+	RnaData *rnadata   = fold_sequence(seq,false);
+	BasePairs bps = BasePairs(rnadata,minprob);
+
+	RnaData *rnadataA  = fold_sequence(seq,true);
+	BasePairs bpsA = BasePairs(rnadataA,minprob);
+
+	RnaData *mrnadata  = fold_sequence(mseq,true);
+	BasePairs mbps = BasePairs(mrnadata,minprob);
+
 	/*
 	  seq.write(std::cout);
 	  test_in_loop_probs(seq,bpsA);
@@ -228,7 +227,7 @@ main(int argc,char **argv) {
 	  std::cout << "------------------------------------------------------------"<<std::endl;
 	*/
 	
-	write_ext_pp(std::cout,mseq,mbps,0.0005,0.0001,0.0001);
+	write_ext_pp(std::cout,mseq,mbps,*mrnadata,0.0005,0.0001,0.0001);
 	
     } catch(int retVal) {
 	return retVal;
