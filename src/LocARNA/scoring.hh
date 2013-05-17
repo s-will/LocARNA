@@ -1,6 +1,10 @@
 #ifndef LOCARNA_SCORING_HH
 #define LOCARNA_SCORING_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <math.h>
 #include <vector>
 

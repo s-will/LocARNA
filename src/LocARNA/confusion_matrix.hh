@@ -1,6 +1,10 @@
 #ifndef LOCARNA_CONFUSION_MATRIX
 #define LOCARNA_CONFUSION_MATRIX
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <cstddef>
 #include <string>
 

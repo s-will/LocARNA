@@ -1,6 +1,10 @@
 #ifndef LOCARNA_TUPLES_HH
 #define LOCARNA_TUPLES_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 namespace LocARNA {
 
     /**

@@ -1,6 +1,10 @@
 #ifndef LOCARNA_ARC_MATCHES_HH
 #define LOCARNA_ARC_MATCHES_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <algorithm>
 #include <vector>
 #include <tr1/unordered_map>

@@ -1,6 +1,10 @@
 #ifndef LOCARNA_RNA_STRUCTURE_HH
 #define LOCARNA_RNA_STRUCTURE_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <assert.h>
 #include <set>
 #include <string>

@@ -1,6 +1,10 @@
 #ifndef LOCARNA_MATCH_PROBS
 #define LOCARNA_MATCH_PROBS
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <string>
 
 #include "matrix.hh"

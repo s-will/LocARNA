@@ -1,6 +1,10 @@
 #ifndef LOCARNA_MATRICES_HH
 #define LOCARNA_MATRICES_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 /* @file Define various generic matrix classes (with templated element
    type): simple matrix, matrix with range restriction, matrix with
    offset, rotatable matrix.

@@ -1,6 +1,10 @@
 #ifndef LOCARNA_ALIGNER_IMPL_HH
 #define LOCARNA_ALIGNER_IMPL_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "aligner.hh"
 
 #include "aligner_restriction.hh"

@@ -1,6 +1,10 @@
 #ifndef LOCARNA_ALIGNER_P_HH
 #define LOCARNA_ALIGNER_P_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "scoring.hh"
 #include "params.hh"
 

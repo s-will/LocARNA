@@ -1,6 +1,10 @@
 #ifndef LOCARNA_INFTY_INT_HH
 #define LOCARNA_INFTY_INT_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <algorithm>
 #include <iosfwd>
 #include <assert.h>

@@ -1,6 +1,10 @@
 #ifndef LOCARNA_ALIGNMENT_IMPL_HH
 #define LOCARNA_ALIGNMENT_IMPL_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <iosfwd>
 #include <vector>
 

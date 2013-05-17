@@ -11,6 +11,8 @@ AC_SUBST([API_VERSION], [1.1])
 
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_CONFIG_HEADERS([src/config.h:config.h.in])
+
 LT_INIT                     # for libtool
 AC_PROG_LIBTOOL             # deprecated; left for backward compatibility
 # AC_SUBST(LIBTOOL_DEPS)
@@ -30,6 +32,8 @@ AC_PATH_PROGS([PERL],[perl perl5])
 AC_PATH_PROG([HELP2MAN],[help2man],false)
 AC_PATH_PROG([POD2MAN],[pod2man],false)
 
+# for Vienna RNA
+AC_CHECK_FUNCS([strdup]) #defines HAVE_STRDUP if strdup is available
 
 # Vienna RNA package library path support, if not installed in standard directory/path
 VRNA_OK=true
@@ -123,7 +127,7 @@ AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
 ##
 ## finally, set LDFLAGS and CPPFLAGS
 AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
-    AC_DEFINE([HAVE_LIBRNA])
+    AC_DEFINE([HAVE_LIBRNA],1,[Signal linking to Vienna RNA library])
     LDFLAGS="$VRNA_LIBS $LDFLAGS"
 
     CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
@@ -195,10 +199,10 @@ AC_ARG_ENABLE([debug],
 )
 AC_MSG_RESULT([$debug_it])
 if test x"$debug_it" = x"yes"; then
-    AC_DEFINE([DEBUG])
+    AC_DEFINE([DEBUG],1,[Turn on debugging])
     CPPFLAGS="$CPPFLAGS -g -Wall"
 else
-    AC_DEFINE([NDEBUG])
+    AC_DEFINE([NDEBUG],1,[Turn off debugging])
 fi
 
 ## CPPFLAGS="$CPPFLAGS -Wno-deprecated"
@@ -238,7 +242,7 @@ AC_ARG_ENABLE([large-pf],
 AC_MSG_RESULT([$use_large_pf])
 if test x"$use_large_pf" = x"yes"; then
     LIBDEFS="$LIBDEFS -DVERY_LARGE_PF"
-    AC_DEFINE([VERY_LARGE_PF])
+    AC_DEFINE([VERY_LARGE_PF],1,[Use long double type for partition functions])
 fi
 
 

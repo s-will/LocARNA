@@ -1,6 +1,10 @@
 #ifndef LOCARNA_ALIGNER_HH
 #define LOCARNA_ALIGNER_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "aux.hh"
 #include "scoring_fwd.hh"
 #include "rna_structure.hh"

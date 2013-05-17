@@ -1,6 +1,10 @@
 #ifndef LOCARNA_PLUSVECTOR_HH
 #define LOCARNA_PLUSVECTOR_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <vector>
 
 namespace LocARNA {

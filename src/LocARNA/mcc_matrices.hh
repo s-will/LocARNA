@@ -1,6 +1,10 @@
 #ifndef LOCARNA_MCC_MATRICES_HH
 #define LOCARNA_MCC_MATRICES_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 extern "C" {
 #include <ViennaRNA/fold_vars.h>
 #include <ViennaRNA/params.h>

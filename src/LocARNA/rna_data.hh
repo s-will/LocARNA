@@ -1,6 +1,10 @@
 #ifndef LOCARNA_RNA_DATA_HH
 #define LOCARNA_RNA_DATA_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <iosfwd>
 
 #include "aux.hh"

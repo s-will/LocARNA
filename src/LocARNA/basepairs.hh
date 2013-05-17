@@ -1,6 +1,10 @@
 #ifndef LOCARNA_BASEPAIRS_HH
 #define LOCARNA_BASEPAIRS_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 
 #include<iosfwd>
 

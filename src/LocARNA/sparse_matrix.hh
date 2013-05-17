@@ -1,6 +1,10 @@
 #ifndef SPARSE_MATRIX_HH
 #define SPARSE_MATRIX_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <iostream>
 
 #include <tr1/unordered_map>

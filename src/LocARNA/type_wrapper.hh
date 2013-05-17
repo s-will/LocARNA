@@ -1,6 +1,10 @@
 #ifndef LOCARNA_TYPE_WRAPPER_HH
 #define LOCARNA_TYPE_WRAPPER_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 namespace LocARNA {
     /**
      * @brief generic type_wrapper class

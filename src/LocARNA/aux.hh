@@ -1,6 +1,10 @@
 #ifndef LOCARNA_AUX_HH
 #define LOCARNA_AUX_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <iosfwd>
 #include <exception>
 #include <string>

@@ -1,6 +1,10 @@
 #ifndef LOCARNA_RNA_DATA_IMPL_HH
 #define LOCARNA_RNA_DATA_IMPL_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "rna_data.hh"
 #include "sequence.hh"
 #include "sparse_matrix.hh"

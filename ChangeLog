@@ -375,4 +375,5 @@ Mar, 2013
 	Prepare alignment evaluation functionality
 	Code cleanup/refactorizations
 	(1.7.6.9)
-	
+	introduce configuration header config.h
+	fix man page dependency problem

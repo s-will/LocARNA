@@ -1,6 +1,10 @@
 #ifndef LOCARNA_STRAL_SCORE_HH
 #define LOCARNA_STRAL_SCORE_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 
 #include <math.h>
 

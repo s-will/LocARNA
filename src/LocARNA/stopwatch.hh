@@ -1,6 +1,10 @@
 #ifndef LOCARNA_STOPWATCH_HH
 #define LOCARNA_STOPWATCH_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <tr1/unordered_map>
 #include <iosfwd>
 #include <string>

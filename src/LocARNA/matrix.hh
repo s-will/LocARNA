@@ -1,6 +1,10 @@
 #ifndef LOCARNA_MATRIX_HH
 #define LOCARNA_MATRIX_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 /* @file Define simple, generic matrix class (with templated element
    type)
  */

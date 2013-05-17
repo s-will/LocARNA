@@ -1,6 +1,10 @@
 #ifndef EXACT_MATCHER_HH
 #define EXACT_MATCHER_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 
 #include <iostream>
 #include <sstream>

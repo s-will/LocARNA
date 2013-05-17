@@ -1,5 +1,10 @@
 #ifndef LOCARNA_PARAMS_HH
 #define LOCARNA_PARAMS_HH
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 /*
   Parameter for Aligner
 */

@@ -1,6 +1,10 @@
 #ifndef LOCARNA_ANCHOR_CONSTRAINTS_HH
 #define LOCARNA_ANCHOR_CONSTRAINTS_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <map>

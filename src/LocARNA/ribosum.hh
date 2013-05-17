@@ -1,6 +1,10 @@
 #ifndef LOCARNA_RIBOSUM_HH
 #define LOCARNA_RIBOSUM_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <cstdlib>
 #include <string>
 #include <fstream>

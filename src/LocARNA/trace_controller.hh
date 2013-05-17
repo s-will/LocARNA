@@ -1,6 +1,10 @@
 #ifndef LOCARNA_TRACE_CONTROLLER_HH
 #define LOCARNA_TRACE_CONTROLLER_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <vector>
 #include <assert.h>
 

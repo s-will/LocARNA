@@ -1,6 +1,10 @@
 #ifndef LOCARNA_ALIGNER_N_HH
 #define LOCARNA_ALIGNER_N_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "sequence.hh"
 #include "basepairs.hh"
 #include "sparsification_mapper.hh"

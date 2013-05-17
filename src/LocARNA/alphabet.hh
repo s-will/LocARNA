@@ -1,6 +1,10 @@
 #ifndef LOCARNA_ALPHABET_HH
 #define LOCARNA_ALPHABET_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <vector>
 #include <map>
 #include <iosfwd>
