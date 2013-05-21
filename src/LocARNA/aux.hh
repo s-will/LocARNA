@@ -109,6 +109,51 @@ namespace LocARNA {
      */
 #    define FLT_OR_DBL double
         
+
+    /** 
+     * Test for sufficient fragment length
+     * 
+     * @param i left end of fragment
+     * @param j right end of fragment
+     * @param minlen minimum length of fragment
+     *
+     * @return whether fragment has at least length minlen
+     */
+    bool
+    frag_len_geq(size_t i, size_t j, size_t minlen) {
+	return i+minlen <= j+1;	
+    }
+    
+    /** 
+     * Number of bases in a fragment
+     * 
+     * @param i left end of fragment
+     * @param j right end of fragment
+     *
+     * @return number of bases in range i..j
+     */
+    size_t
+    frag_len(size_t i, size_t j) {
+	return j+1-i;	
+    }
+
+    /** 
+     * @brief Test string prefix
+     * 
+     * @param s string
+     * @param p prefix
+     * @param start optional start position
+     * 
+     * @return whether s has prefix p (after dropping the first start
+     * characters from s)
+     */
+    bool
+    has_prefix(const std::string &s, const std::string &p, size_t start=0) {
+	if (s.length()<p.length()-start) {
+	    return false;
+	}
+	return s.substr(start,p.length())==p;
+    }
     
 }
 

@@ -126,10 +126,10 @@ struct command_line_parameters {
     // File arguments
     
     //! first input file 
-    std::string file1;
+    std::string fileA;
     
     //! second input file
-    std::string file2;
+    std::string fileB;
 
     std::string clustal_out; //!< name of clustal output file
 
@@ -292,14 +292,13 @@ option_def my_options[] = {
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
-    {"",0,0,O_ARG_STRING,&clp.file1,O_NODEFAULT,"file 1","Basepairs input file 1"},
-    {"",0,0,O_ARG_STRING,&clp.file2,O_NODEFAULT,"file 2","Basepairs input file 2"},
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"file 1","Basepairs input file 1"},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"file 2","Basepairs input file 2"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
 
 // ------------------------------------------------------------
-
 
 
 // ------------------------------------------------------------
@@ -442,41 +441,30 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
-    
 
-    RnaData rnadataA(clp.file1,true,clp.opt_stacking,false);
-    RnaData rnadataB(clp.file2,true,clp.opt_stacking,false);
-
-    // optionally fold
     PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
-#if HAVE_LIBRNA
-    if (!rnadataA.pair_probs_available()) {
-	if (clp.opt_verbose) {
-	    std::cout << "Compute ensemble probabilities for first input sequence."
-		      << std::endl;
-	}
-	rnadataA.compute_ensemble_probs(pfparams,false,true);
+    
+    SparseRnaData *sparsernadataA=0;
+    try {
+	rnadataA = new SparseRnaData(clp.fileA,clp.min_prob,pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<clp.fileA <<std::endl
+		  << "       "<<failure.what() <<std::endl;
+	return -1;
     }
-    if (!rnadataB.pair_probs_available()) {
-	if (clp.opt_verbose) {
-	    std::cout << "Compute ensemble probabilities for second input sequence."
-		      << std::endl;
-	}
-	rnadataB.compute_ensemble_probs(pfparams,false,true);
+    
+    SparseRnaData *sparsernadataB=0;
+    try {
+	rnadataB = SparseRnaData(clp.fileB,clp.min_prob,pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
+		  << "       "<<failure.what() <<std::endl;
+	if (rnadataA) delete rnadataA;
+	return -1;
     }
-#else
-    if (!rnadataA.pair_probs_available() || !rnadataB.pair_probs_available()) {
-	std::cerr
-	    << "WARNING: Input contains no pair probabilities for one or both sequences,"<<std::endl
-	    << "         but their computation is disabled (recompile/reconfigure to enable)."<<std::endl
-	    << "         Continue without pair probabilities."
-	    << std::endl;
-    }
-#endif
-
-
-    Sequence seqA=rnadataA.get_sequence();
-    Sequence seqB=rnadataB.get_sequence();
+    
+    const Sequence &seqA=rnadataA->sequence();
+    const Sequence &seqB=rnadataB->sequence();
     
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
@@ -521,16 +509,16 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Handle constraints (optionally)
     
-    std::string seqCA = clp.seq_constraints_A;
-    std::string seqCB = clp.seq_constraints_B;
+    std::string &seqCA = clp.seq_constraints_A;
+    std::string &seqCB = clp.seq_constraints_B;
 
     if (!clp.opt_ignore_constraints) {
-	if ( seqCA=="" ) seqCA = rnadataA.get_seq_constraints();
-	if ( seqCB=="" ) seqCB = rnadataB.get_seq_constraints();
+	if ( seqCA=="" ) seqCA = rnadataA->seq_anchors();
+	if ( seqCB=="" ) seqCB = rnadataB->seq_anchors();
     }
 
-    AnchorConstraints seq_constraints(seqA.length(),seqCA,
-				      seqB.length(),seqCB);
+    AnchorConstraints seq_constraints(lenA,seqCA,
+				      lenB,seqCB);
     
     if (clp.opt_verbose) {
 	if (! seq_constraints.empty()) {
@@ -896,6 +884,9 @@ main(int argc, char **argv) {
     if (arc_matches) delete arc_matches;
     if (multiple_ref_alignment) delete multiple_ref_alignment;
     if (ribosum) delete ribosum;
+
+    if (rnadataA) delete rnadataA;
+    if (rnadataB) delete rnadataB;
         
     stopwatch.stop("total");
 

@@ -1,381 +1,198 @@
-#ifndef LOCARNA_RNA_DATA_IMPL_HH
-#define LOCARNA_RNA_DATA_IMPL_HH
+#ifndef LOCARNA_SPARSE_RNA_DATA_IMPL_HH
+#define LOCARNA_SPARSE_RNA_DATA_IMPL_HH
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
-#include "rna_data.hh"
-#include "sequence.hh"
+#include <iosfwd>
+#include "sparse_rna_data.hh"
 #include "sparse_matrix.hh"
-
+#include "sequence.hh"
 
 namespace LocARNA {
 
-    struct RnaDataImpl {
+    class Sequence;
+    class RnaEnsemble;
+
+    /**
+     * @brief Implementation of RnaData
+     */
+    class RnaDataImpl {
+	
 	//! type for matrix of arc probabilities
 	typedef SparseMatrix<double> arc_prob_matrix_t;
 
-	RnaData *self_; //!<- pointer to corresponding RnaData object
-    
-	Sequence sequence_; //!< the sequence
+	RnaData *self_; //!<- pointer to corresponding non-impl object
+
+	//! the sequence
+	const Sequence sequence_; 
+
+	//! cutoff probabilitiy for base pair
+	double p_bpilcut_;
 	
-	//! whether pair probabilities are availabe
-	bool pair_probs_available_; 
+	/**
+	 * sparse array for all arc probabilities above threshold; the
+	 * array is used when reading in the probabilities and for
+	 * merging probs during pp-output
+	 */
+	arc_prob_matrix_t arc_probs_; 
+	
+	/**
+	 * sparse array for all probabilities that a pair (i,j) and
+	 * its immediately inner pair (i+1,j-1) are formed
+	 * simultaneously above trheshold; analogous to arc_probs_
+	 */
+	arc_prob_matrix_t arc_2_probs_; 
 	
 	//! whether stacking probabilities are available
 	bool stacking_probs_available_; 
 	
-	//! whether "in loop" probabilities are availabe
-	bool in_loop_probs_available_; 
+	//! string description of sequence anchors (as used in pp files)
+	std::string sequence_anchors_;
 	
-	/**
-	 * array for all arc probabilities the array is used when reading
-	 * in the probabilities and for merging probs during pp-output
+	/** 
+	 * @brief Construct from RnaEnsemble with cutoff probability
+	 * 
+	 * @param rnadata data about RNA ensemble
+	 * @param p_bpcut cutoff probability
 	 */
-	arc_prob_matrix_t arc_probs_; 
-
-	/**
-	 * array for all probabilities that a pair (i,j) and its
-	 * immediately inner pair (i+1,j-1) are formed simultaneously;
-	 * analogous to arc_probs_
-	 */
-	arc_prob_matrix_t arc_2_probs_; 
-	
-	//! string description of sequence constraints
-	std::string seq_constraints_; 
-	
-# ifdef HAVE_LIBRNA
-	// std::vector<FLT_OR_DBL> qm1; // store qm1 for debugging
-	std::vector<FLT_OR_DBL> qm2_;
-	std::vector<FLT_OR_DBL> scale_;
-	std::vector<FLT_OR_DBL> expMLbase_;
-	
-	McC_matrices_base *McCmat_; //!< DP matrix data structures of VRNA's McCaskill algorithm
-#else
-	void *McCmat_;
-#endif
-	
-	//! whether alifold was used to compute the McCaskill matrices
-	bool used_alifold_;
-
-	double min_free_energy_; //!< minimum free energy (if computed anyway)
-	std::string min_free_energy_structure_; //!< minimum free energy structure (if computed)
-
-
 	RnaDataImpl(RnaData *self,
-		    const std::string &file,
-		    bool readPairProbs,
-		    bool readStackingProbs,
-		    bool readInLoopProbs);
-	
-	RnaDataImpl(RnaData *self,const Sequence &sequence);
-	
-	~RnaDataImpl();
-
-	////////////////////////////////////////////////////////////
+		    const RnaEnsemble &rna_data,
+		    double p_bpcut);
 	
 	/** 
-	 * @brief Pair type of an admissible basepair.
+	 * @brief Construct from data stream
 	 * 
-	 * @param i left end of base pair
-	 * @param j right end of base pair
-	 * 
-	 * @return pair type unless the base pair is not admissible,
-	 * i.e. it is not complementary or has probability 0.0. Then
-	 * return 0.
+	 * @param in input stream
+	 * @note autodetect whether input stream is in ps or pp format
 	 */
-	int ptype_of_admissible_basepair(size_type i,size_type j) const;
-    
+	RnaDataImpl(RnaData *self, 
+		    std::istream &in,
+		    double p_bpcut,
+		    const PFoldParams pfoldparams);
 	
-	/** 
-	 * Test for sufficient fragment length
-	 * 
-	 * @param i left end of fragment
-	 * @param j right end of fragment
-	 * @param minlen minimum length of fragment
-	 *
-	 * @return whether fragment has at least length minlen
-	 */
-	bool
-	frag_len_geq(size_t i, size_t j, size_t minlen) const {
-	    return i+minlen <= j+1;	
-	}
-
-	/** 
-	 * Number of bases in a fragment
-	 * 
-	 * @param i left end of fragment
-	 * @param j right end of fragment
-	 *
-	 * @return number of bases in range i..j
-	 */
-	size_t
-	frag_len(size_t i, size_t j) const {
-	    return j+1-i;	
-	}
-	
-
-	// ------------------------------------------------------------
-	// reading methods
-
-
-	/**
-	 * \brief read sequence and base pairs from dp.ps file
-	 * 
-	 * @param filename name of input file
-	 * @param readPairProbs read pair probabilities if file format contains pair probabilities
-	 * @param readStackingProbs read stacking probabilities if available and readPairProbs
-	 *
-	 * @note dp.ps is the output format of RNAfold (and related
-	 * tools) of the Vienna RNA package
-	 */
-	void read_ps(const std::string &filename, 
-		     bool readPairProbs,
-		     bool readStackingProbs);
+	// ----------------------------------------
+	// METHODS
 	
 	/**
-	 * \brief read basepairs and sequence from a pp-format file
-	 * 
-	 * @note pp is a proprietary format of LocARNA
-	 * which starts with the sequence/alignment and then simply
-	 * lists the arcs (i,j) with their probabilities p.
+	 * @brief read sequence section of pp-format
 	 *
-	 * @note SEMANTIC for stacking:
-	 * pp-files contain entries i j p [p2] for listing the probality for base pair (i,j).
-	 * In case of stacking alignment, p2 is the probability to see the base pairs
-	 * (i,j) and (i+1,j+1) simultaneously. If p2 is not given set probability to 0.
+	 * @param in input stream
+	 * @return stream
 	 *
-	 * @param filename name of input file
-	 * @param readPairProbs read pair probabilities if file format contains pair probabilities
-	 * @param readStackingProbs read stacking probabilities if available and readPairProbs
-	 * @param readInLoopProbs read in loop probabilities if file format contains them
+	 * this section comprises header, sequence/multiple alignment
+	 * and sequence anchor annotation
 	 *
-	 * @post object is initialized with information from file
+	 * Reads only base pairs with probabilities greater than
+	 * p_outbpcut; base pairs in loops, p_outbpilcut; unpaired
+	 * bases in loops, p_outuilcut
 	 */
-	void read_pp(const std::string &filename, 
-		     bool readPairProbs,
-		     bool readStackingProbs,
-		     bool readInLoopProbs
-		     );
-	
-	/**
-	 * \brief read sequence and optionally base pairs from a file
-	 * (autodetect file format: pp, dp.ps, aln, fa)
-	 *
-	 * @param filename the input file
-	 *
-	 * @post object is initialized from file
-	 *
-	 */
-	void
-	init_from_file(const std::string &filename, 
-		       bool readPairProbs,
-		       bool readStackingProbs,
-		       bool readInLoopProbs);
-	
-	// ------------------------------------------------------------
-	// init from computed pair probabilities
-	
-	
-	/** 
-	 * \brief clear the arc probabilities and stacking probabilities
-	 */
-	void
-	clear_arc_probs();
+	std::istream &
+	read_pp_sequence_section(std::istream &in)
+	    const;
 
 	/**
-	 * Set arc probs from computed base pair probability matrix
-	 * 
-	 * @pre Base pair probability matrix is computed (and still
-	 * accessible). Usually after call of compute_McCaskill_matrices().
+	 * @brief read section of base pair probabilities of pp-format
 	 *
-	 * @param threshold probability threshold, select only base
-	 * pairs with larger or equal probability. Use default
-	 * threshold as in RNAfold -p.
+	 * @param out input stream
+	 * @return stream
 	 *
+	 * Reads only base pairs with probabilities greater than
+	 * p_outbpcut; base pairs in loops, p_outbpilcut; unpaired
+	 * bases in loops, p_outuilcut
 	 */
-	void
-	set_arc_probs_from_McCaskill_bppm(double threshold, bool stacking);
+	std::istream &
+	read_pp_base_pair_section(std::istream &in)
+	    const;
 	
-	// ------------------------------------------------------------
-	// set methods
+    };
+
+
+    /**
+     * @brief Implementation of ExtRnaData
+     */
+    class ExtRnaDataImpl {
+
+	// ----------------------------------------
+	// TYPES
 	
-	/** 
-	 * Set probability of basepair
-	 * 
-	 * @param i left sequence position  
-	 * @param j right sequence position
-	 * @param p probability
-	 * 
-	 * @post probability of base pair (i,j) set to p 
-	 */
-	void set_arc_prob(int i, int j, double p) {
-	    assert(i<j); 
-	    arc_probs_.set(i,j,p);
-	}
-
-	/** 
-	 * Set joint probability of stacked arcs
-	 * 
-	 * @param i left sequence position
-	 * @param j right sequence position
-	 * @param p probability
-	 * 
-	 * @post the probability that basepairs (i,j) and (i+1,j-1) occur
-	 * simultaneously is set to p
-	 */
-	void set_arc_2_prob(int i, int j, double p) {
-	    assert(i<j);
-	    arc_2_probs_.set(i,j,p);
-	}
-
-#ifdef HAVE_LIBRNA	
-	/** 
-	 * \brief Unpaired probabilty of base in a specified loop (alifold) 
-	 *
-	 * alifold-specific version of prob_unpaired_in_loop()
-	 *
-	 * @param k unpaired sequence position
-	 * @param i left end of loop enclosing base pair
-	 * @param j right end of loop enclosing base pair
-	 * 
-	 * @return probability that k is unpaired in the loop closed by i and j
-	 *
-	 * @see prob_unpaired_in_loop()
-	 *
-	 * @note pre: loop probs available, alifold used
-	 */
-	double
-	prob_unpaired_in_loop_ali(size_type k,
-				  size_type i,
-				  size_type j) const;
+	//! vector of arc probabilities
+	typedef std::vector<double> arc_prob_vector_t;
 	
-	/** 
-	 * \brief Unpaired probabilty of base in a specified loop (no alifold) 
-	 *
-	 * single sequence folding-specific version of prob_unpaired_in_loop()
-	 *
-	 * @param k unpaired sequence position
-	 * @param i left end of loop enclosing base pair
-	 * @param j right end of loop enclosing base pair
-	 * 
-	 * @return probability that k is unpaired in the loop closed by i and j
-	 *
-	 * @see prob_unpaired_in_loop()
-	 *
-	 * @note pre: in loop probs are available, alifold not used
-	 */
-	double
-	prob_unpaired_in_loop_noali(size_type k,size_type i,size_type j) const;
+	//! matrix of arc probabilities
+	typedef RnaDataImpl::arc_prob_matrix_t arc_prob_matrix_t;
 	
-	/** 
-	 * \brief Probabilty of base pair in a specified loop (alifold)
-	 *
-	 *`alifold-specific code
-	 * 
-	 * @param ip left end of inner base pair
-	 * @param jp right end of inner base pair
-	 * @param i left end of loop enclosing base pair
-	 * @param j right end of loop enclosing base pair
-	 * 
-	 * @return probability that (ip,jp) is inner base pair in the loop closed by i and j
-	 *
-	 * @see prob_basepair_in_loop()
-	 *
-	 * @note pre: loop probs available, alifold used
-	 */
-	double
-	prob_basepair_in_loop_ali(size_type ip,
-				  size_type jp,
-				  size_type i,
-				  size_type j) const;
+	//! matrix of arc probability vectors
+	typedef SparseMatrix<arc_prob_vector_t> arc_prob_vector_matrix_t;
 
-	/** 
-	 * \brief Probabilty of base pair in a specified loop
-	 *
-	 *`single sequence folding-specific code
-	 * 
-	 * @param ip left end of inner base pair
-	 * @param jp right end of inner base pair
-	 * @param i left end of loop enclosing base pair
-	 * @param j right end of loop enclosing base pair
-	 * 
-	 * @return probability that (ip,jp) is inner base pair in the loop closed by i and j
-	 *
-	 * @see prob_basepair_in_loop()
-	 *
-	 * @note pre: loop probs available, alifold not used
-	 */
-	double
-	prob_basepair_in_loop_noali(size_type ip,
-				    size_type jp,
-				    size_type i,
-				    size_type j) const;
-
-	/** 
-	 * \brief Computes the Qm2 matrix
-	 *
-	 * The method creates and fills the Qm2 matrix needed for
-	 * prob_unpaired_in_loop().
-	 * 
-	 * @pre McCaskill matrices are computed and accessible.
-	 */
-	void
-	compute_Qm2();
-
-	/** 
-	 * \brief Computes the Qm2 matrix (alifold)
-	 *
-	 * The method creates and fills the Qm2 matrix needed for
-	 * prob_unpaired_in_loop() if alifold is used.
-	 * 
-	 * @pre McCaskill alifold matrices are computed and accessible.
-	 */
-	void
-	compute_Qm2_ali();
-
-	/** 
-	 * \brief Computes the McCaskill matrices and keeps them accessible
-	 * 
-	 * Allocates and fills the McCaskill matrices.
-	 *
-	 * @pre sequence_ has exactly one row
-	 *
-	 * @param params parameters for partition folding
-	 * @param inLoopProbs whether to compute and keep information for in loop probablities
-	 * 
-	 * @note Access to these matrices is required by
-	 * prob_unpaired_in_loop() (with inLoopProbs==true). The
-	 * McCaskill algorithm is also performed when the RnaData
-	 * object is constructed from a sequence.
-	 *
-	 * @note requires linking to librna
-	 */
-	void
-	compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs);
+	//! matrix of arc probability matrices
+	typedef SparseMatrix<arc_prob_matrix_t> arc_prob_matrix_matrix_t;
 	
 	
+	// ----------------------------------------
+	// ATTRIBUTES
+
+	ExtRnaData *self_; //!<- pointer to corresponding non-impl object
+	
+	//! cutoff probabilitiy for base pair in loop
+	double p_bpilcut_;
+	
+	//! cutoff probabilitiy for unpaired base in loop
+	double p_uilcut_;
+	
+	//! in loop probabilities of base pairs
+	arc_prob_matrix_matrix_t arc_in_loop_probs_;
+
+	//! in loop probabilities of unpaired bases
+	arc_prob_vector_matrix_t unpaired_in_loop_probs_;
+
+	bool in_loop_probs_available_;
+
+	
+	// ----------------------------------------
+	// CONSTRUCTORS
 	
 	/** 
-	 * \brief Computes the McCaskill matrices and keeps them accessible (alifold)
+	 * @brief Construct from RnaEnsemble with cutoff probability
 	 * 
-	 * Allocates and fills the McCaskill alifold matrices. Use
-	 * free_McCaskill_ali_matrices() for freeing the space again.
-	 *
-	 * @param params parameters for partition folding
-	 * @param inLoopProbs whether to compute and keep information for in loop probablities
-	 * 
-	 * @note requires linking to librna
+	 * @param rnadata data about RNA ensemble
+	 * @param p_bpcut cutoff probability
 	 */
-	void
-	compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs);
-
-
-
-#endif // HAVE_LIBRNA	
-
+	ExtRnaDataImpl(RnaData *self,
+		       const RnaEnsemble &rna_data,
+		       double p_bpcut,
+		       double p_bpilcut,
+		       double p_uilcut);
 	
+	/** 
+	 * @brief Construct from data stream
+	 * 
+	 * @param in input stream
+	 * @note autodetect whether input stream is in ps or pp format
+	 */
+	ExtRnaDataImpl(ExtRnaData *self, 
+		       std::istream &in);
+	
+	
+	// ----------------------------------------
+	// METHODS
+	
+	/**
+	 * @brief read in loop probability section of pp-format
+	 *
+	 * @param in input stream
+	 * @return stream
+	 *
+	 * Reads only base pairs with probabilities greater than
+	 * p_bpcut_; base pairs in loops, p_bpilcut_; unpaired
+	 * bases in loops, p_uilcut_
+	 */
+	std::istream &
+	read_pp_in_loop_section(std::istream &in)
+	    const;
+
+
 	/** 
 	 * Generate sequence name from filename 
 	 * 
@@ -391,10 +208,207 @@ namespace LocARNA {
 	 */
 	std::string
 	seqname_from_filename(const std::string &s) const;
-
 	
     };
 
-} // end namespace LocARNA
+} //end namespace LocARNA
 
-#endif // LOCARNA_RNA_DATA_IMPL_HH
+
+// old ideas from RnaEnsemble:
+
+// /** 
+//  * @brief Write rna data in pp format to stream
+//  * 
+//  * @param out output stream
+//  * @param width output width of alignment
+//  * @param thresh1 threshold for pair probabilities
+//  *        (0 means no filter, 1 writes no base pairs)
+//  * @param thresh2 threshold for in loop probabilities of unpaired bases
+//  *        (1 means no output)
+//  * @param thresh3 threshold for in loop probabilities of base pairs
+//  *        (1 means no output)
+//  *
+//  * Write joint probability of base pairs (i,j) and
+//  * (i+1,j-1) if it is greater than threshold 1.
+//  * Note the default parameter of the thresholds for in loop
+//  * probabilities suppress the respective output. Information
+//  * about in loop probabilities is only printed if in loop
+//  * probabilities are available.
+//  *
+//  * The in loop information consists of the positions and base
+//  * pairs that pass the respective threshold. These positions
+//  * are appended to the entry of the closing base pair. No in
+//  * loop probabilities are written to the pp file.
+//  * 
+//  * @todo finish implementation and use
+//  */
+// std::ostream &
+// write_pp(std::ostream &out,
+// 	 int width,
+// 	 double thresh1=1e-6,
+// 	 double thresh2=1,
+// 	 double thresh3=1) const;
+
+// 	// ------------------------------------------------------------
+// 	// Methods for reading and writing probabilities
+// 	//
+	
+// 	/** 
+// 	 * @brief Read base pair probabilities
+// 	 * 
+// 	 * @param in Input stream
+// 	 * @param threshold Probability threshold
+// 	 *
+// 	 * Read all probabilities greater than the given threshold.
+// 	 * Read lines i j p, where p is probability of base pair (i,j).
+// 	 * 
+// 	 * @return input stream
+// 	 *
+// 	 * @note throws LocARNA::failure on parsing errors
+// 	 *
+// 	 * @note stop reading on line __END__
+// 	 *
+// 	 * @todo implement; use in reading pp files
+// 	 *
+// 	 */
+// 	std::istream &
+// 	read_base_pair_probs(std::istream &in,double thresholds);
+	
+// 	/** 
+// 	 * @brief Read unpaired in loop probabilities
+// 	 * 
+// 	 * @param in Input stream
+// 	 * @param threshold Probability threshold
+// 	 *
+// 	 * Read all probabilities greater than the given threshold 2
+// 	 * for loops that are more probable than threshold 1.  Read
+// 	 * lines k i j p, where p is probability of k unpaired in loop
+// 	 * (i,j).
+// 	 *
+// 	 * Include unpaired in external loop probabilities; encode
+// 	 * with pseudo basepair (i,j)=(0,n+1).
+// 	 *
+// 	 * @return input stream
+// 	 *
+// 	 * @note throws LocARNA::failure on parsing errors
+// 	 *
+// 	 * @note stop reading on line __END__
+// 	 *
+// 	 * @todo implement
+// 	 *
+// 	 */
+// 	std::istream &
+// 	read_unpaired_in_loop_probs(std::istream &in,double threshold1,double threshold2);
+	
+// 	/** 
+// 	 * @brief Read base pair in loop probabilities
+// 	 * 
+// 	 * @param in Input stream
+// 	 * @param threshold Probability threshold
+// 	 *
+// 	 * Read all probabilities greater than the given threshold 2
+// 	 * for loops that are more probable than threshold 1.
+// 	 * Read lines ip jp i j p, where p is probability of base
+// 	 * pair (ip,jp) in loop (i,j).
+// 	 *
+// 	 * Include base pair in external loop probabilities; encode
+// 	 * with pseudo basepair (i,j)=(0,n+1).
+// 	 *
+// 	 * @return input stream
+// 	 *
+// 	 * @note throws LocARNA::failure on parsing errors
+// 	 *
+// 	 * @note stop reading on line __END__
+// 	 *
+// 	 * @todo implement
+// 	 *
+// 	 */
+// 	std::istream &
+// 	read_base_pair_in_loop_probs(std::istream &in,double threshold1,double threshold2);
+
+
+// 	/** 
+// 	 * @brief Write base pair probabilities
+// 	 * 
+// 	 * @param out Output stream
+// 	 * @param threshold Probability threshold
+// 	 *
+// 	 * Write all probabilities greater than the given threshold.
+// 	 * Write lines i j p, where p is probability of base pair (i,j).
+// 	 * 
+// 	 * @return output stream
+// 	 *
+// 	 * @todo implement; use in writing pp files
+// 	 *
+// 	 */
+// 	std::ostream &
+// 	write_basepair_probs(std::ostream &out,double threshold) const;
+	
+// 	/** 
+// 	 * @brief Write unpaired in loop probabilities
+// 	 * 
+// 	 * @param out Output stream
+// 	 * @param threshold Probability threshold
+// 	 *
+// 	 * Write all probabilities greater than the given threshold 2
+// 	 * for loops that are more probable than threshold 1.
+// 	 * Write lines i j k_1 p_1 ... k_n p_n, where p_x is probability of k_x unpaired
+// 	 * in loop (i,j).
+// 	 *
+// 	 * Include unpaired in external loop probabilities; encode
+// 	 * with pseudo basepair (i,j)=(0,n+1).
+// 	 *
+// 	 * @return output stream
+// 	 *
+// 	 * @todo implement
+// 	 *
+// 	 */
+// 	std::ostream &
+// 	write_unpaired_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const;
+	
+// 	/** 
+// 	 * @brief Write base pair in loop probabilities
+// 	 * 
+// 	 * @param out Output stream
+// 	 * @param threshold Probability threshold
+// 	 *
+// 	 * Write all probabilities greater than the given threshold 2
+// 	 * for loops that are more probable than threshold 1.
+// 	 * Write lines ip jp i j p, where p is probability of base
+// 	 * pair (ip,jp) in loop (i,j).
+// 	 *
+// 	 * Include base pair in external loop probabilities; encode
+// 	 * with pseudo basepair (i,j)=(0,n+1).
+// 	 *
+// 	 * @return output stream
+// 	 *
+// 	 * @todo implement
+// 	 *
+// 	 */
+// 	std::ostream &
+// 	write_basepair_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const;
+
+	
+// /** 
+// 	 * @brief Write base pair and in loop probabilities
+// 	 * 
+// 	 * @param out Output stream
+// 	 * @param threshold1 Probability threshold 1 (base pairs)
+// 	 * @param threshold2 Probability threshold 2 (unpaired in loop)
+// 	 * @param threshold3 Probability threshold 3 (base pair in loop)
+// 	 * @param write_probs whether to write probabilities of in loop 
+// 	 *           positions and base pairs above threshold 
+// 	 *
+// 	 * Include base pair in external loop probabilities; encode
+// 	 * with pseudo basepair (i,j)=(0,n+1).
+// 	 *
+// 	 * @return output stream
+// 	 *
+// 	 * @todo implement
+// 	 *
+// 	 */
+// 	std::ostream &
+// 	write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3, bool write_probs, bool diff_encoding) const;
+
+
+#endif // LOCARNA_SPARSE_RNA_DATA_IMPL_HH
