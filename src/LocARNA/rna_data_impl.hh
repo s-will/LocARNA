@@ -1,12 +1,12 @@
-#ifndef LOCARNA_SPARSE_RNA_DATA_IMPL_HH
-#define LOCARNA_SPARSE_RNA_DATA_IMPL_HH
+#ifndef LOCARNA_RNA_DATA_IMPL_HH
+#define LOCARNA_RNA_DATA_IMPL_HH
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
 #include <iosfwd>
-#include "sparse_rna_data.hh"
+#include "rna_data.hh"
 #include "sparse_matrix.hh"
 #include "sequence.hh"
 
@@ -18,18 +18,18 @@ namespace LocARNA {
     /**
      * @brief Implementation of RnaData
      */
-    class RnaDataImpl {
-	
+    struct RnaDataImpl {
+    
 	//! type for matrix of arc probabilities
 	typedef SparseMatrix<double> arc_prob_matrix_t;
 
 	RnaData *self_; //!<- pointer to corresponding non-impl object
 
 	//! the sequence
-	const Sequence sequence_; 
+	Sequence sequence_; 
 
 	//! cutoff probabilitiy for base pair
-	double p_bpilcut_;
+	double p_bpcut_;
 	
 	/**
 	 * sparse array for all arc probabilities above threshold; the
@@ -62,19 +62,28 @@ namespace LocARNA {
 		    double p_bpcut);
 	
 	/** 
-	 * @brief Construct from data stream
+	 * @brief Construct from input file
 	 * 
 	 * @param in input stream
 	 * @note autodetect whether input stream is in ps or pp format
 	 */
 	RnaDataImpl(RnaData *self, 
-		    std::istream &in,
+		    const std::string &in,
 		    double p_bpcut,
-		    const PFoldParams pfoldparams);
+		    const PFoldParams &pfoldparams);
+
+    	/** 
+	 * @brief Almost empty constructor
+	 * 
+	 * @param self self pointer 
+	 * @param p_bpcut cutoff probability
+	 */
+	RnaDataImpl(RnaData *self,
+		    double p_bpcut);
 	
 	// ----------------------------------------
 	// METHODS
-	
+
 	/**
 	 * @brief read sequence section of pp-format
 	 *
@@ -112,7 +121,7 @@ namespace LocARNA {
     /**
      * @brief Implementation of ExtRnaData
      */
-    class ExtRnaDataImpl {
+    struct ExtRnaDataImpl {
 
 	// ----------------------------------------
 	// TYPES
@@ -166,14 +175,31 @@ namespace LocARNA {
 		       double p_uilcut);
 	
 	/** 
-	 * @brief Construct from data stream
+	 * @brief Construct from input file
 	 * 
-	 * @param in input stream
-	 * @note autodetect whether input stream is in ps or pp format
+	 * @param filename input file name
+	 * @param pfoldparams partition folding parameters
+	 *
+	 * @note autodetects file format, see corresponding RnaDataImpl constructor
 	 */
 	ExtRnaDataImpl(ExtRnaData *self, 
-		       std::istream &in);
-	
+		       const std::string &filename,
+		       double p_bpilcut,
+		       double p_uilcut,
+		       const PFoldParams &pfoldparams);
+
+	/** 
+	 * @brief Construct from rna ensemble
+	 * 
+	 * @param filename input file name
+	 * @param pfoldparams partition folding parameters
+	 *
+	 * @note autodetects file format, see corresponding RnaDataImpl constructor
+	 */
+	ExtRnaDataImpl(ExtRnaData *self,
+		       const RnaEnsemble &rna_ensemble,
+		       double p_bpilcut,
+		       double p_uilcut);
 	
 	// ----------------------------------------
 	// METHODS
@@ -411,4 +437,4 @@ namespace LocARNA {
 // 	write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3, bool write_probs, bool diff_encoding) const;
 
 
-#endif // LOCARNA_SPARSE_RNA_DATA_IMPL_HH
+#endif // LOCARNA_RNA_DATA_IMPL_HH

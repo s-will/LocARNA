@@ -367,8 +367,8 @@ namespace  LocARNA {
 			 bool flag_local)
     {
 	
-	size_type lenA=rnaA.get_sequence().length();
-	size_type lenB=rnaB.get_sequence().length();
+	size_type lenA=rnaA.length();
+	size_type lenB=rnaB.length();
 
 	Matrix<double> zM;
 	Matrix<double> zA;

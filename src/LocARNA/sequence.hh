@@ -15,7 +15,7 @@ namespace LocARNA {
     public:
 	Sequence(): MultipleAlignment() {}
 	
-	Sequence(LocARNA::MultipleAlignment &ma):MultipleAlignment(ma) {}
+	Sequence(const LocARNA::MultipleAlignment &ma):MultipleAlignment(ma) {}
 	
 	const AliColumn
 	operator [](size_type col_index) const {return column(col_index);}

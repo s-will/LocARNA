@@ -62,7 +62,7 @@ public:
 private:
 
 	const BasePairs &bps; //! BasePairs
-	const RnaData &rnadata; //! RnaData
+	const ExtRnaData &rnadata; //! RnaData
 	const double prob_unpaired_in_loop_threshold; //!threshold for a unpaired position under a loop
 	const double prob_basepair_in_loop_threshold; //!threshold for a basepair under a loop
 	size_type max_info_vec_size;
@@ -107,7 +107,7 @@ public:
 	 * 		  by the common left end (true) or by the arc index (false)
 	 */
 	SparsificationMapper(const BasePairs &bps_,
-			const RnaData &rnadata_,
+			const ExtRnaData &rnadata_,
 			double prob_unpaired_in_loop_threshold_,
 			double prob_basepair_in_loop_threshold_,
 			bool index_left_ends):
@@ -310,11 +310,11 @@ private:
 	 */
 	bool is_valid_arc(const Arc &inner_arc,const Arc &arc)const{
 		assert(inner_arc.left()>arc.left() && inner_arc.right()<arc.right());
-		return rnadata.prob_basepair_in_loop(inner_arc.left(),inner_arc.right(),arc.left(),arc.right())>=prob_basepair_in_loop_threshold;
+		return rnadata.arc_in_loop_prob(inner_arc.left(),inner_arc.right(),arc.left(),arc.right())>=prob_basepair_in_loop_threshold;
 	}
 
 	bool is_valid_arc_external(const Arc &inner_arc)const{
-			return rnadata.prob_basepair_external(inner_arc.left(),inner_arc.right())>=prob_basepair_in_loop_threshold;
+			return rnadata.arc_external_prob(inner_arc.left(),inner_arc.right())>=prob_basepair_in_loop_threshold;
 	}
 
 public:
@@ -328,10 +328,10 @@ public:
 	 */
 	bool is_valid_pos(const Arc &arc,seq_pos_t pos) const{
 	    assert(arc.left()<pos && pos<arc.right());
-	    return rnadata.prob_unpaired_in_loop(pos,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
+	    return rnadata.unpaired_in_loop_prob(pos,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
 	}
 	bool is_valid_pos_external(seq_pos_t pos) const{
-	    return rnadata.prob_unpaired_external(pos)>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
+	    return rnadata.unpaired_external_prob(pos)>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
 	}
 
 };

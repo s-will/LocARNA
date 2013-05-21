@@ -52,7 +52,7 @@ void SparsificationMapper::compute_mapping_idx_arcs(){
 void SparsificationMapper::compute_mapping_idx_left_ends(){
 
 	info_for_pos struct_pos;
-	size_type seq_length = rnadata.get_sequence().length();
+	size_type seq_length = rnadata.length();
 //	std::cout << "compute_mapping_idx_left_ends: seq_length=" << seq_length << std::endl;
 	info_valid_seq_pos_vecs.resize(seq_length+1);
 	valid_mat_pos_vecs_before_eq.resize(seq_length+1);

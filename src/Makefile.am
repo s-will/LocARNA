@@ -15,15 +15,15 @@ lib_LTLIBRARIES=libLocARNA-@API_VERSION@.la
 
 libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/sequence.cc LocARNA/stopwatch.cc LocARNA/options.cc	\
-	LocARNA/basepairs.cc LocARNA/alignment.cc LocARNA/rna_ensemble.cc	\
-	LocARNA/sparse_rna_data.cc LocARNA/scoring.cc			\
-	LocARNA/infty_int.cc LocARNA/match_probs.cc			\
-	LocARNA/ribosum.cc LocARNA/anchor_constraints.cc		\
-	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
-	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
-	LocARNA/trace_controller.cc LocARNA/multiple_alignment.cc	\
-	LocARNA/rna_structure.cc LocARNA/confusion_matrix.cc		\
-	LocARNA/global_stopwatch.cc
+	LocARNA/basepairs.cc LocARNA/alignment.cc			\
+	LocARNA/rna_ensemble.cc LocARNA/rna_data.cc			\
+	LocARNA/scoring.cc LocARNA/infty_int.cc				\
+	LocARNA/match_probs.cc LocARNA/ribosum.cc			\
+	LocARNA/anchor_constraints.cc LocARNA/arc_matches.cc		\
+	LocARNA/aligner.cc LocARNA/stral_score.cc			\
+	LocARNA/aligner_p.cc LocARNA/trace_controller.cc		\
+	LocARNA/multiple_alignment.cc LocARNA/rna_structure.cc		\
+	LocARNA/confusion_matrix.cc LocARNA/global_stopwatch.cc
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -36,12 +36,12 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/matrix.hh LocARNA/matrices.hh				\
 	LocARNA/sparse_matrix.hh LocARNA/sequence.hh			\
 	LocARNA/basepairs.hh LocARNA/alignment.hh			\
-	LocARNA/alignment_impl.hh LocARNA/rna_ensemble.hh			\
-	LocARNA/rna_ensemble_impl.hh LocARNA/sparse_rna_data.hh		\
-	LocARNA/sparse_rna_data_impl.hh LocARNA/params.hh		\
-	LocARNA/scoring.hh LocARNA/scoring_fwd.hh			\
-	LocARNA/infty_int.hh LocARNA/match_probs.hh			\
-	LocARNA/alphabet.hh LocARNA/alphabet.icc LocARNA/ribosum.hh	\
+	LocARNA/alignment_impl.hh LocARNA/rna_ensemble.hh		\
+	LocARNA/rna_ensemble_impl.hh LocARNA/rna_data.hh		\
+	LocARNA/rna_data_impl.hh LocARNA/params.hh LocARNA/scoring.hh	\
+	LocARNA/scoring_fwd.hh LocARNA/infty_int.hh			\
+	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
+	LocARNA/alphabet.icc LocARNA/ribosum.hh				\
 	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
 	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
 	LocARNA/aligner_impl.hh LocARNA/aligner_p.hh			\

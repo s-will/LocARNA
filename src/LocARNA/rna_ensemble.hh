@@ -39,24 +39,24 @@ namespace LocARNA {
      *
     */
     class PFoldParams {
-	friend class RnaEnsemble;
-	friend class RnaEnsembleImpl;
-	
-	bool noLP;
-	bool stacking;
+	bool noLP_;
+	bool stacking_;
     public:
 	/** 
 	 * Construct with all parameters
 	 * 
-	 * @param noLP_
-	 * @param stacking_ 
+	 * @param noLP
+	 * @param stacking 
 	 */
-	PFoldParams(bool noLP_,
-		    bool stacking_
+	PFoldParams(bool noLP,
+		    bool stacking
 		    )
-	    : noLP(noLP_),
-	      stacking(stacking_) 
+	    : noLP_(noLP),
+	      stacking_(stacking) 
 	{}
+	
+	bool noLP() const {return noLP_;}
+	bool stacking() const {return stacking_;}
     };
 
     class RnaEnsembleImpl; // forward to implementation class
@@ -77,12 +77,16 @@ namespace LocARNA {
 	 * @brief Construct from sequence
 	 * 
 	 * @param sequence the RNA sequence as Sequence object
+	 * @param params pfolding parameters
+	 * @param inLoopProbs whether in loop probabilities should be made available
+	 * @param use_alifold whether alifold should be used
 	 *
-	 * @note after construction, the object describes an RNA without
-	 * structure. pair_probs_available() will return false until
-	 * pair probs are made available, e.g., calling compute_ensemble_probs().
+	 * @pre unless use_alifold, sequence row number has to be 1
 	 */
-	RnaEnsemble(const Sequence &sequence);
+	RnaEnsemble(const Sequence &sequence,
+		    const PFoldParams &params,
+		    bool inLoopProbs, 
+		    bool use_alifold=true);
 	
 	/** 
 	 * @brief copy constructor
@@ -122,24 +126,6 @@ namespace LocARNA {
 	bool
 	in_loop_probs_available() const;
     
-	/** 
-	 * \brief (re)compute the pair probabilities
-	 * 
-	 * @param params pfolding parameters
-	 * @param inLoopProbs whether in loop probabilities should be made available
-	 * @param use_alifold whether alifold should be used
-	 *
-	 * @todo Support construction from general Sequence objects
-	 * (i.e. multiple rows). 
-	 * This could be done by calling alipf_fold() (in place of
-	 * pf_fold()) in general. See also pre-condition
-	 * compute_McCaskill_matrices()
-	 *
-	 @pre unless use_alifold, sequence row number has to be 1
-	 */
-	void
-	compute_ensemble_probs(const PFoldParams &params,bool inLoopProbs, bool use_alifold=true);
-	
 	/**
 	 * @brief Get the sequence
 	 * @return sequence of RNA
@@ -152,14 +138,6 @@ namespace LocARNA {
 	 * \return sequence length
 	 */
 	size_type length() const;	
-
-
-    	/** 
-	 * \brief Allow object to forget in loop probabilities
-	 * @todo implement; currently does nothing
-	 */
-	void
-	forget_in_loop_probs() {/* do nothing */};
 
 	/** 
 	 * \brief get minimum free energy

@@ -14,6 +14,7 @@ namespace LocARNA {
     class RnaEnsemble;
     class RnaDataImpl;
     class ExtRnaDataImpl;
+    class PFoldParams;
 
     /**
      * @brief represent sparsified data of RNA ensemble
@@ -33,13 +34,14 @@ namespace LocARNA {
      */
     class RnaData {
     private:
+	friend class RnaDataImpl;
 	RnaDataImpl *pimpl_;  //!<- pointer to corresponding implementation object
     
     public:
 
 	struct wrong_format_failure: public failure {
 	    wrong_format_failure():failure("Wrong format") {}
-	}
+	};
 	
 	typedef size_t size_type; //!< usual size type
 	
@@ -53,7 +55,7 @@ namespace LocARNA {
 	 * and does not keep a reference
 	 */
 	RnaData(const RnaEnsemble &rna_ensemble,
-		      double p_bpcut);
+		double p_bpcut);
 
 	/** 
 	 * @brief Construct from file
@@ -65,10 +67,19 @@ namespace LocARNA {
 	 * @note autodetect format of input; 
 	 * for fa or aln input formats, predict base pair probabilities 
 	 */
-	RnaData(std::string &filename,
-		      double p_bpcut,
-		      const PFoldParams pfoldparams);
+	RnaData(const std::string &filename,
+		double p_bpcut,
+		const PFoldParams &pfoldparams);
 
+    protected:
+    	/** 
+	 * @brief Almost empty constructor
+	 * 
+	 * @param self self pointer 
+	 * @param p_bpcut cutoff probability
+	 */
+	RnaData(double p_bpcut);
+	
     private:
 	/**
 	 * @brief copy constructor
@@ -94,14 +105,14 @@ namespace LocARNA {
 	/**
 	 * @brief Get the sequence
 	 * @return sequence
-	*/
+	 */
 	const Sequence &
 	sequence() const;
 
 	/**
 	 * @brief Get the sequence length
 	 * @return length of RNA sequence
-	*/
+	 */
 	size_type
 	length() const;
 
@@ -110,7 +121,7 @@ namespace LocARNA {
 	 *
 	 * @return a string of sequence anchors (as used in pp files
 	 * and accepted by AnchorConstraints class)
-	*/
+	 */
 	const std::string &
 	sequence_anchors() const;
 	
@@ -128,7 +139,7 @@ namespace LocARNA {
 	 *
 	 * @return probability p_ij of basepair (i,j) if
 	 * p_ij>p_bpcut; otherwise, 0
-	*/
+	 */
 	double 
 	arc_prob(pos_type i, pos_type j) const;
 
@@ -167,7 +178,7 @@ namespace LocARNA {
 	 * \return probability that a position i is paired with a position j>i (upstream)
 	 * @note O(sequence.length()) implementation
 	 * @see prob_paired_downstream
-	*/
+	 */
 	double
 	prob_paired_upstream(pos_type i) const;
         
@@ -178,7 +189,7 @@ namespace LocARNA {
 	 * \return probability that a position i is paired with a position j<i (downstream)
 	 * @note O(sequence.length()) implementation
 	 * @see prob_paired_upstream
-	*/
+	 */
 	double
 	prob_paired_downstream(pos_type i) const;
     
@@ -187,7 +198,7 @@ namespace LocARNA {
 	 * \param i sequence position
 	 * \return probability that a position i is unpaired
 	 * @note O(sequence.length()) implementation
-	*/
+	 */
 	double
 	prob_unpaired(pos_type i) const;
 	
@@ -212,7 +223,6 @@ namespace LocARNA {
 	 * @brief read and initialize from file, autodetect format
 	 * 
 	 * @param filename name of input file
-	 * @param p_bpcut base pair probability cutoff
 	 * @param pfoldparams Partition folding parameters
 	 * @param inloopprobs whether in loop probabilities should be computed
 
@@ -220,10 +230,9 @@ namespace LocARNA {
 	 * RnaData and ExtRnaData
 	 */
 	void
-	RnaData::read_autodetect(const std::string &filename,
-				       double p_bpcut,
-				       const PFoldParams pfoldparams,
-				       bool inloopprobs);
+	read_autodetect(const std::string &filename,
+			const PFoldParams pfoldparams,
+			bool inloopprobs);
 	
 	/** 
 	 * Read data in pp format
@@ -269,9 +278,7 @@ namespace LocARNA {
 	/** 
 	 * Read data in Vienna's dot plot ps format
 	 * 
-	 * @param in input stream
-	 * @param p_incut cutoff probability
-	 * @return stream
+	 * @param filename input file name
 	 *
 	 * Reads only base pairs with probabilities greater than
 	 * p_incut
@@ -287,8 +294,8 @@ namespace LocARNA {
 	 * the dot plot ps format was designed for viewing not for
 	 * data input 
 	 */
-	std::istream &
-	read_ps(std::istream &in, double p_incut=0);
+	void
+	read_ps(const std::string &in);
 
     }; // end class RnaData
 
@@ -309,6 +316,7 @@ namespace LocARNA {
      */
     class ExtRnaData: public RnaData {
     private:
+	friend class ExtRnaDataImpl;
 	ExtRnaDataImpl *pimpl_;  //!<- pointer to corresponding implementation object
     public:
 	/** 
@@ -322,18 +330,26 @@ namespace LocARNA {
 	 * @note requires that rnaensemble has in loop probabilities
 	 */
 	ExtRnaData(const RnaEnsemble &rna_ensemble,
-			 double p_bpcut,
-			 double p_bpilcut,
-			 double p_uilcut);
+		   double p_bpcut,
+		   double p_bpilcut,
+		   double p_uilcut);
 	
 	/** 
-	 * @brief Construct from data stream
+	 * @brief Construct from input file
 	 * 
-	 * @param in input stream
-	 *
-	 * @note input stream has to be in extended pp format; otherwise throw exception
+	 * @param filename input file name
+	 * @param p_bpcut cutoff probability for base pairs
+	 * @param p_bpilcut cutoff probability for base pairs in loops
+	 * @param p_uilcut cutoff probability for unpaired bases in loops
+	 *	 
+	 * @note autodetect format of input; 
+	 * for fa or aln input formats, predict base pair probabilities 
 	 */
-	ExtRnaData(std::istream &in);
+	ExtRnaData(const std::string &filename,
+		   double p_bpcut,
+		   double p_bpilcut,
+		   double p_uilcut,
+		   const PFoldParams &pfoldparams);
 
 	/**
 	 * @brief copy constructor
@@ -360,15 +376,29 @@ namespace LocARNA {
 	
 	/**
 	 * @brief Get base pair in loop probability
-	 * @param i left sequence position  
-	 * @param j right sequence position
+	 * @param i left sequence position of inner base pair
+	 * @param j right sequence position of inner base pair
+	 * @param p left sequence position of closing base pair
+	 * @param q right sequence position of closing base pair
 	 *
 	 * @return joint probability of basepair (i,j) in loop of (p,q) if
 	 * above threshold; otherwise, 0
-	*/
+	 */
 	double 
 	arc_in_loop_prob(pos_type i, pos_type j,pos_type p, pos_type q) const;
 	
+	/**
+	 * @brief Get base pair in loop probability
+	 * @param i left sequence position  
+	 * @param j right sequence position
+	 *
+	 * @return probability of basepair (i,j) in external loop if
+	 * above threshold; otherwise, 0
+	 */
+	double 
+	arc_external_prob(pos_type i, pos_type j) const;
+	
+
 	/**
 	 * @brief Get unpaired base in loop cutoff probability
 	 * @return cutoff probability p_bpcut
@@ -378,14 +408,26 @@ namespace LocARNA {
 	
 	/**
 	 * @brief Get base pair in loop probability
-	 * @param i left sequence position  
-	 * @param j right sequence position
+	 * @param k sequence position (unpaired base)  
+	 * @param p left sequence position of closing base pair  
+	 * @param q right sequence position of closing base pair
 	 *
 	 * @return joint probability of unpaired base k in loop of (p,q) if
 	 * above threshold; otherwise, 0
-	*/
+	 */
 	double 
 	unpaired_in_loop_prob(pos_type k,pos_type p, pos_type q) const;
+
+	/**
+	 * @brief Get base pair in loop probability
+	 * @param k sequence position (unpaired base)
+	 *
+	 * @return probability of base k unpaired in external loop if
+	 * above threshold; otherwise, 0
+	 */
+	double 
+	unpaired_external_prob(pos_type k) const;
+
 	
 	// IO
 	/** 
@@ -405,7 +447,7 @@ namespace LocARNA {
 		    double p_outbpcut,
 		    double p_outbpilcut,
 		    double p_outuilcut)
-	    const;
+	const;
 	
     protected:
 
@@ -419,7 +461,7 @@ namespace LocARNA {
 	 */
 	virtual
 	bool
-	inloopprobs_ok() const {return pimpl_->in_loop_probs_available_;}
+	inloopprobs_ok() const;
 	
 	/** 
 	 * Read data in extended pp format
@@ -434,9 +476,9 @@ namespace LocARNA {
 	 */
 	std::istream &
 	read_extpp(std::istream &in,
-		double p_inbpcut,
-		double p_inbpilcut,
-		double p_inuilcut)
+		   double p_inbpcut,
+		   double p_inbpilcut,
+		   double p_inuilcut)
 	    const;
 	
     }; // end class ExtRnaData
@@ -446,69 +488,69 @@ namespace LocARNA {
 
 // from RnaEnsemble(Impl):
 
-	// /**
-	//  * \brief read sequence and base pairs from dp.ps file
-	//  * 
-	//  * @param filename name of input file
-	//  * @param readPairProbs read pair probabilities if file format contains pair probabilities
-	//  * @param readStackingProbs read stacking probabilities if available and readPairProbs
-	//  *
-	//  * @note dp.ps is the output format of RNAfold (and related
-	//  * tools) of the Vienna RNA package
-	//  */
-	// void read_ps(const std::string &filename, 
-	// 	     bool readPairProbs,
-	// 	     bool readStackingProbs);
+// /**
+//  * \brief read sequence and base pairs from dp.ps file
+//  * 
+//  * @param filename name of input file
+//  * @param readPairProbs read pair probabilities if file format contains pair probabilities
+//  * @param readStackingProbs read stacking probabilities if available and readPairProbs
+//  *
+//  * @note dp.ps is the output format of RNAfold (and related
+//  * tools) of the Vienna RNA package
+//  */
+// void read_ps(const std::string &filename, 
+// 	     bool readPairProbs,
+// 	     bool readStackingProbs);
 	
-	// /**
-	//  * \brief read basepairs and sequence from a pp-format file
-	//  * 
-	//  * @note pp is a proprietary format of LocARNA
-	//  * which starts with the sequence/alignment and then simply
-	//  * lists the arcs (i,j) with their probabilities p.
-	//  *
-	//  * @note SEMANTIC for stacking:
-	//  * pp-files contain entries i j p [p2] for listing the probality for base pair (i,j).
-	//  * In case of stacking alignment, p2 is the probability to see the base pairs
-	//  * (i,j) and (i+1,j+1) simultaneously. If p2 is not given set probability to 0.
-	//  *
-	//  * @param filename name of input file
-	//  * @param readPairProbs read pair probabilities if file format contains pair probabilities
-	//  * @param readStackingProbs read stacking probabilities if available and readPairProbs
-	//  * @param readInLoopProbs read in loop probabilities if file format contains them
-	//  *
-	//  * @post object is initialized with information from file
-	//  */
-	// void read_pp(const std::string &filename, 
-	// 	     bool readPairProbs,
-	// 	     bool readStackingProbs,
-	// 	     bool readInLoopProbs
-	// 	     );
+// /**
+//  * \brief read basepairs and sequence from a pp-format file
+//  * 
+//  * @note pp is a proprietary format of LocARNA
+//  * which starts with the sequence/alignment and then simply
+//  * lists the arcs (i,j) with their probabilities p.
+//  *
+//  * @note SEMANTIC for stacking:
+//  * pp-files contain entries i j p [p2] for listing the probality for base pair (i,j).
+//  * In case of stacking alignment, p2 is the probability to see the base pairs
+//  * (i,j) and (i+1,j+1) simultaneously. If p2 is not given set probability to 0.
+//  *
+//  * @param filename name of input file
+//  * @param readPairProbs read pair probabilities if file format contains pair probabilities
+//  * @param readStackingProbs read stacking probabilities if available and readPairProbs
+//  * @param readInLoopProbs read in loop probabilities if file format contains them
+//  *
+//  * @post object is initialized with information from file
+//  */
+// void read_pp(const std::string &filename, 
+// 	     bool readPairProbs,
+// 	     bool readStackingProbs,
+// 	     bool readInLoopProbs
+// 	     );
 
-	// /**
-	//  * Set arc probs from computed base pair probability matrix
-	//  * 
-	//  * @pre Base pair probability matrix is computed (and still
-	//  * accessible). Usually after call of compute_McCaskill_matrices().
-	//  *
-	//  * @param threshold probability threshold, select only base
-	//  * pairs with larger or equal probability. Use default
-	//  * threshold as in RNAfold -p.
-	//  *
-	//  */
-	// void
-	// set_arc_probs_from_McCaskill_bppm(double threshold, bool stacking);
+// /**
+//  * Set arc probs from computed base pair probability matrix
+//  * 
+//  * @pre Base pair probability matrix is computed (and still
+//  * accessible). Usually after call of compute_McCaskill_matrices().
+//  *
+//  * @param threshold probability threshold, select only base
+//  * pairs with larger or equal probability. Use default
+//  * threshold as in RNAfold -p.
+//  *
+//  */
+// void
+// set_arc_probs_from_McCaskill_bppm(double threshold, bool stacking);
 
-	// // ------------------------------------------------------------
-	// // set methods
+// // ------------------------------------------------------------
+// // set methods
 	
 
 
-	// /** 
-	//  * \brief clear the arc probabilities and stacking probabilities
-	//  */
-	// void
-	// clear_arc_probs();
+// /** 
+//  * \brief clear the arc probabilities and stacking probabilities
+//  */
+// void
+// clear_arc_probs();
 
 #endif // LOCARNA_SPARSE_RNA_DATA_HH
 

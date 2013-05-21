@@ -15,8 +15,8 @@ namespace LocARNA {
 			   double gap_opening_,
 			   double gap_extension_
 			   )
-	: seqA(rnaA.get_sequence()),
-	  seqB(rnaB.get_sequence()),
+	: seqA(rnaA.sequence()),
+	  seqB(rnaB.sequence()),
 	  sim_mat(sim_mat_),
 	  alphabet(alphabet_),
 	  pf_struct_weight(pf_struct_weight_),
@@ -61,7 +61,7 @@ namespace LocARNA {
 				    p_vec_t &p_down,
 				    p_vec_t &p_un) 
     {
-	size_type len=rna.get_sequence().length();
+	size_type len=rna.length();
     
 	p_up.resize(len+1);
 	p_down.resize(len+1);

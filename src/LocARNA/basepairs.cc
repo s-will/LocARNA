@@ -126,7 +126,7 @@ namespace LocARNA {
     //! generate the lists arc_vec_, left_, right_ from the matrices arc_probs_
     //! and arc_probs_stack_
 
-    void BasePairs::generateBPLists(const RnaData &rnadata) {
+    void BasePairs::generateBPLists(const RnaData &rna_data) {
 	resize(len_);
 	//std::cout<<"getbplists : sequence lengthj "<<len_<<std::endl;
 	// traverse the entries in the prob matrices
@@ -135,15 +135,15 @@ namespace LocARNA {
 	for (int i=len_-3; i>=1 ; i--) {
 	    for (int j=i+3; j<=(int)len_; j++) {
 	    
-		double p = rnadata.get_arc_prob(i,j);
+		double p = rna_data.arc_prob(i,j);
 	    
 		/*
 		double p2=0;
 		double p_cond=0;
 
-		if ( rnadata.get_arc_prob(i+1,j-1) > 0 && rnadata.get_arc_2_prob(i,j)>0 ) {
-		    p2 = rnadata.get_arc_2_prob(i,j);
-		    p_cond = p2/rnadata.get_arc_prob(i+1,j-1);
+		if ( rna_data.get_arc_prob(i+1,j-1) > 0 && rna_data.get_arc_2_prob(i,j)>0 ) {
+		    p2 = rna_data.get_arc_2_prob(i,j);
+		    p_cond = p2/rna_data.get_arc_prob(i+1,j-1);
 		}
 		*/
 	    
@@ -155,11 +155,11 @@ namespace LocARNA {
 		    // if (p_cond!=0) { 
 		    // 		    std::cout << i << " " << j << " "  
 		    // 			      << p << " " 
-		    // 			      << rnadata.get_arc_prob(i+1,j-1) << " "
+		    // 			      << rna_data.get_arc_prob(i+1,j-1) << " "
 		    // 			      << p_cond << " "
 		    // 			      << pe << " "
 		    // 			      << round(200 * (1-log(p)/log(pe)))	<< " "
-		    // 			      << round(200 * (1-log(rnadata.get_arc_prob(i+1,j-1))/log(pe)))	<< " "
+		    // 			      << round(200 * (1-log(rna_data.get_arc_prob(i+1,j-1))/log(pe)))	<< " "
 		    // 			      << round(200 * (1-log(p_cond)/log(pe)))	<< " "
 		    // 			      << std::endl;
 		    // 		}
@@ -176,35 +176,10 @@ namespace LocARNA {
     BasePairs::seqlen() const {return len_;}
     
 
-    double
-    BasePairs::get_arc_prob(size_type i, size_type j) const {
-	if (rnadata_==NULL) return 0.0;
-	
-	return rnadata_->get_arc_prob( i, j );
-    }
-    
-    double 
-    BasePairs::get_arc_2_prob(size_type i, size_type j) const {
-	if (rnadata_==NULL) return 0.0;
-	return rnadata_->get_arc_2_prob( i, j );
-    }
-
-    double
-    BasePairs::get_arc_stack_prob(size_type i, size_type j) const {
-	if (rnadata_==NULL) return 0.0;
-	return rnadata_->get_arc_stack_prob( i, j );
-    }
-
-    double
-    BasePairs::prob_unpaired(size_type i) const {
-	if (rnadata_==NULL) return 0.0;
-	return rnadata_->prob_unpaired( i );
-    }
-
     BasePairs::size_type
-    BasePairs::get_length_from_rnadata() const {
-	assert(rnadata_!=NULL);
-	return rnadata_->get_length();
+    BasePairs::get_length_from_rna_data() const {
+	assert(rna_data_!=NULL);
+	return rna_data_->length();
     }
     
     /** 

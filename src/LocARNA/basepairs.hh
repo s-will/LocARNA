@@ -107,7 +107,7 @@ namespace LocARNA {
     class BasePairs
     {
     private:
-	const RnaData *rnadata_;
+	const RnaData *rna_data_;
 	double min_prob_;
 	double len_;
 
@@ -195,7 +195,7 @@ namespace LocARNA {
 	
 	//! generate the datastructures that allow fast access to arcs
 	void
-	generateBPLists(const RnaData &rnadata);
+	generateBPLists(const RnaData &rna_data);
     
 	//! sort the adjacency lists as expected by the alignment algorithm
 	void
@@ -206,23 +206,23 @@ namespace LocARNA {
 	/** 
 	 * Construct from rna data
 	 * 
-	 * @param rnadata_ rna data
+	 * @param rna_data_ rna data
 	 * @param min_prob_ minimal probability for filtering base pairs
 	 *
 	 * @note while rna data maintains base pairs regardless of
 	 * their probability, an object of BasePairs represents the
 	 * sparsified set of base pairs (due to min_prob_)
 	 */
-	BasePairs(const RnaData *rnadata,double min_prob):
-	    rnadata_(rnadata),
+	BasePairs(const RnaData *rna_data,double min_prob):
+	    rna_data_(rna_data),
 	    min_prob_(min_prob),
-	    len_(get_length_from_rnadata()),
+	    len_(get_length_from_rna_data()),
 	    left_(),
 	    right_(),
 	    arc_vec_(),
 	    arcs_(-1)
 	{
-	    generateBPLists(*rnadata_);
+	    generateBPLists(*rna_data_);
 	}
 
 	/** 
@@ -232,7 +232,7 @@ namespace LocARNA {
 	 * @param bps set of base pairs
 	 */
 	BasePairs(size_type len, const bpair_set_t &bps ):
-	    rnadata_(0),
+	    rna_data_(0),
 	    min_prob_(1.0),
 	    len_(len),
 	    left_(),
@@ -311,12 +311,12 @@ namespace LocARNA {
 	//  * @return reference to RnaData object
 	//  */
 	// const RnaData &
-	// get_rnadata() const {
-	//     assert(rnadata_!=NULL);
-	//     return *rnadata_;
+	// get_rna_data() const {
+	//     assert(rna_data_!=NULL);
+	//     return *rna_data_;
 	// }
 
-	// /* pass through some methods to rnadata
+	// /* pass through some methods to rna_data
 	// */
 	
     	/**
@@ -379,7 +379,7 @@ namespace LocARNA {
 	// return length from rna data
 	// pre: rna data available
 	size_type
-	get_length_from_rnadata() const;
+	get_length_from_rna_data() const;
 
     };
 

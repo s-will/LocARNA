@@ -16,7 +16,7 @@ namespace LocARNA {
 
 	RnaEnsemble *self_; //!<- pointer to corresponding RnaEnsemble object
     
-	Sequence &sequence_; //!< reference to the sequence
+	const Sequence &sequence_; //!< reference to the sequence
 	
 	//! whether pair probabilities are availabe
 	bool pair_probs_available_; 
@@ -51,7 +51,11 @@ namespace LocARNA {
 		    bool readStackingProbs,
 		    bool readInLoopProbs);
 	
-	RnaEnsembleImpl(RnaEnsemble *self,const Sequence &sequence);
+	RnaEnsembleImpl(RnaEnsemble *self,
+			const Sequence &sequence,
+			const PFoldParams &params,
+			bool inLoopProbs, 
+			bool use_alifold);
 	
 	~RnaEnsembleImpl();
 
@@ -70,6 +74,19 @@ namespace LocARNA {
 	int ptype_of_admissible_basepair(size_type i,size_type j) const;	
 
 #ifdef HAVE_LIBRNA	
+	/** 
+	 * \brief (re)compute the pair probabilities
+	 * 
+	 * @param params pfolding parameters
+	 * @param inLoopProbs whether in loop probabilities should be made available
+	 * @param use_alifold whether alifold should be used
+	 *
+	 * @pre unless use_alifold, sequence row number has to be 1
+	 */
+	void
+	compute_ensemble_probs(const PFoldParams &params,bool inLoopProbs, bool use_alifold);
+	
+
 	/** 
 	 * \brief Unpaired probabilty of base in a specified loop (alifold) 
 	 *
