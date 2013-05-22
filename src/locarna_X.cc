@@ -4,7 +4,6 @@
  * fast structure local exact matching
  *
  * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
- *               2005-2009
  *
  **********************************************************************/
 
@@ -188,7 +187,7 @@ main(int argc, char **argv) {
     if (opt_help) {
 	cout << VERSION_STRING<<endl;
 
-	cout << "Copyright Sebastian Will, 2005-2009"<<endl<<endl;
+	cout << "(C) Sebastian Will"<<endl<<endl;
 
 	cout << "A tool for pairwise Local (and global) Alignment of RNA: Exact Local Matchings."<<endl<<endl;
 

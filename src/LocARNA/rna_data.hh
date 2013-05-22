@@ -267,7 +267,7 @@ namespace LocARNA {
 	 */
 	void
 	read_autodetect(const std::string &filename,
-			const PFoldParams pfoldparams,
+			const PFoldParams &pfoldparams,
 			bool inloopprobs);
 	
 	/** 

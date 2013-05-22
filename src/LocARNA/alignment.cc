@@ -508,9 +508,7 @@ namespace LocARNA {
 					    double p_expB,
 					    bool stacking
 					    ) const {
-	int lenA=seqA_.length();
-	int lenB=seqB_.length();
-
+	
 	double p_minA = rna_dataA.arc_cutoff_prob();
 	double p_minB = rna_dataB.arc_cutoff_prob();
 	

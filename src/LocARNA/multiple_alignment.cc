@@ -19,7 +19,9 @@ using namespace std;
 
 namespace LocARNA {
 
-    MultipleAlignment::MultipleAlignment() {
+    MultipleAlignment::MultipleAlignment() 
+	: alig_(),
+	  name2idx_() {
     }
     
     MultipleAlignment::MultipleAlignment(std::istream &in, format_t format) {
@@ -32,11 +34,12 @@ namespace LocARNA {
 	} else {
 	    read_aln_clustalw(in);
 	}	
-
+	
 	create_name2idx_map();
     }
-
+    
     MultipleAlignment::MultipleAlignment(const std::string &filename, format_t format) {
+	
 	try {
 	    ifstream in(filename.c_str());
     
@@ -54,7 +57,7 @@ namespace LocARNA {
 	} catch (std::ifstream::failure &e) {
 	    throw failure("Cannot construct multiple alignment: "+(std::string)e.what());
 	}
-
+		
 	create_name2idx_map();
     }
 
@@ -135,7 +138,7 @@ namespace LocARNA {
 
     void
     MultipleAlignment::read_aln_clustalw(std::istream &in) {
-        
+
 	std::string name;
 	std::string seqstr;
     
@@ -143,6 +146,8 @@ namespace LocARNA {
 	std::vector<std::string> names;
     
 	std::string line;
+
+	alig_.clear();
 
 	getline(in,line);
     
@@ -155,7 +160,10 @@ namespace LocARNA {
 	    if (line.length()>0 && line[0]!=' ') {
 		std::istringstream in(line);
 		in >> name >> seqstr;
-	    
+		if ( in.fail() || name.empty() || seqstr.empty()) {
+		    throw failure("Wrong format");
+		}
+		
 		if (seq_map.find(name)==seq_map.end()) {
 		    seq_map[name] = "";
 		    names.push_back(name);
@@ -173,24 +181,31 @@ namespace LocARNA {
 
     void
     MultipleAlignment::read_aln_fasta(std::istream &in) {
-        
 	std::string name;
 	std::string description;
 	
 	std::string line;
     
-	getline(in,line);
-
-	while(in) {
+	alig_.clear();
 	
+	getline(in,line);
+	
+	while(in) {
+	    
 	    if (line.length()>0 && line[0]=='>') {
 		std::istringstream sin(line);
 		sin.get(); // this eats '>'
 		sin >> name; // gets the first non-whitespace substring after '>' of the line
+		
+		if (sin.fail() || name.empty()) {
+		    throw failure("wrong format");
+		}
+		
+		// todo: this does not eat off blanks at begining of description yet
 		std::stringbuf sb;
 		sin.get(sb);
 		description=sb.str();
-		
+
 		std::string seqstr="";
     		getline(in,line);
 		while((in) && (line.size()==0 || line[0]!='>')) {
@@ -204,6 +219,8 @@ namespace LocARNA {
 		}
 		
 		alig_.push_back( SeqEntry(name,description,seqstr) );
+	    } else {
+		throw failure("Wrong format");
 	    }
 	}
     }
@@ -273,18 +290,20 @@ namespace LocARNA {
 	    return pos_pair_t(curr_pos, curr_pos);
 	}
     }
+    
 
     bool
     MultipleAlignment::is_proper() const {
-	// Iterate through all sequences (with gaps) and check for equal lengths
-	bool proper = true;
-	std::vector<SeqEntry>::const_iterator it = alig_.begin();
-	size_t length = it->seq().length();
-	++it;
-	while (proper && (it != alig_.end())) {
-	    proper = proper && (length == it->seq().length());
+	if (empty()) return true; // empty alignment is proper
+	
+	// if not empty check that all alignment strings have the same length	
+	size_t length = alig_.front().seq().length();
+	
+	for (std::vector<SeqEntry>::const_iterator it = alig_.begin();
+	     alig_.end() != it; ++it) {
+	    if (it->seq().length() != length) return false;
 	}
-	return proper;
+	return true;
     }
 
     bool
@@ -652,8 +671,7 @@ namespace LocARNA {
     }
     
     void
-    MultipleAlignment::print_debug(ostream &out) const {
-    
+    MultipleAlignment::write_debug(ostream &out) const {
 	for (size_type i=0; i<alig_.size(); ++i) {
 	    out << alig_[i].name() << " \t" << alig_[i].seq().to_string()<<std::endl;
 	} 

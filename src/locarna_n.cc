@@ -1,13 +1,9 @@
 /**
- * \file locarna.cc
+ * \file locarna_n.cc
  *
- * \brief Defines main function of locarna
- *
- * LocARNA: global and LOCal Alignment of RNA
+ * \brief Defines main function of locarna_n / SPARSE
  *
  * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
- *               2005-2011
- * 
  */
 
 
@@ -33,6 +29,7 @@
 #include "LocARNA/multiple_alignment.hh"
 #include "LocARNA/sparsification_mapper.hh"
 #include "LocARNA/global_stopwatch.hh"
+#include "LocARNA/pfold_params.hh"
 
 using namespace std;
 using namespace LocARNA;
@@ -780,23 +777,23 @@ main(int argc, char **argv) {
     	  std::cerr
     			<< "ERROR: Normalized alignment not supported."
     			<<std::endl;
-      return -1;
+	  return -1;
 
 
-	// do some option consistency checks and output errors
-	if (clp.struct_local) {
-	    std::cerr 
-		<< "ERROR: Normalized structure local alignment not supported."
-		<<std::endl
-		<< "LocARNA ignores struct_local option."<<std::endl;
-	    return -1;
-	}
-	if (!clp.sequ_local) { // important: in the Aligner class, we rely on this
-	    std::cerr 
-		<< "ERROR: Normalized alignment requires option --sequ_local."<<std::endl;
-	    return -1;
-	}
-//	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
+// 	// do some option consistency checks and output errors
+// 	if (clp.struct_local) {
+// 	    std::cerr 
+// 		<< "ERROR: Normalized structure local alignment not supported."
+// 		<<std::endl
+// 		<< "LocARNA ignores struct_local option."<<std::endl;
+// 	    return -1;
+// 	}
+// 	if (!clp.sequ_local) { // important: in the Aligner class, we rely on this
+// 	    std::cerr 
+// 		<< "ERROR: Normalized alignment requires option --sequ_local."<<std::endl;
+// 	    return -1;
+// 	}
+// //	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
 	
     } else {
 	

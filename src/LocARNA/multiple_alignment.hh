@@ -255,7 +255,8 @@ private:
      * - Lines can be empty or of the form <name> <seq>.
      * - Names may occur multiple times. in this case seq strings <seq> are appended.
      * - The order of first occurrences of names in the stream is preserved.
-    */
+     * @note overwrites/clears existing data     
+     */
     void
     read_aln_clustalw(std::istream &in);
 
@@ -272,6 +273,7 @@ private:
      *
      * @note Sequences can be multiline, white space in sequences is ignored.
      * @note The order of sequences in the stream is preserved.
+     * @note overwrites/clears existing data
     */
     void
     read_aln_fasta(std::istream &in);
@@ -327,7 +329,8 @@ public:
     /**
      * @brief virtual destructor
      */
-    virtual ~MultipleAlignment();
+    virtual
+    ~MultipleAlignment();
     
     
     /**
@@ -335,8 +338,15 @@ public:
      * @return number of rows
     */
     size_type
-    row_number() const { return alig_.size(); }
+    row_number() const { 
+	return alig_.size();
+    }
     
+    bool
+    empty() const {
+	return alig_.empty();
+    }
+
     /**
      * @brief Test whether alignment is proper
      * @return whether all sequences have the same length
@@ -731,7 +741,7 @@ public:
      * @param out output stream
      */
     void
-    print_debug(std::ostream &out=std::cout) const;
+    write_debug(std::ostream &out=std::cout) const;
 };
 
 } // end namespace

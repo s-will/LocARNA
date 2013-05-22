@@ -5,10 +5,6 @@
 #  include <config.h>
 #endif
 
-/**
-   @file Define several parameter classes for folding and Aligner
-*/
-
 #include <vector>
 #include <string>
 
@@ -16,37 +12,6 @@ namespace LocARNA {
 
     class AnchorConstraints;
     class TraceController;
-
-    /**
-     * \brief Parameters for partition folding
-     *
-     * Describes certain parameters for the partition folding of 
-     * a sequence or alignment.
-     *
-     * @see RnaEnsemble
-     *
-    */
-    class PFoldParams {
-	bool noLP_;
-	bool stacking_;
-    public:
-	/** 
-	 * Construct with all parameters
-	 * 
-	 * @param noLP
-	 * @param stacking 
-	 */
-	PFoldParams(bool noLP,
-		    bool stacking
-		    )
-	    : noLP_(noLP),
-	      stacking_(stacking) 
-	{}
-	
-	bool noLP() const {return noLP_;}
-	bool stacking() const {return stacking_;}
-    };
-
 
     /**
        \brief Description of free end gaps.

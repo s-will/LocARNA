@@ -231,7 +231,11 @@ main(int argc,char **argv) {
 	*/
 	
 	// write_ext_pp(std::cout,mseq,mbps,*mrna_ensemble,0.0005,0.0001,0.0001);
-	
+
+	delete rna_ensemble;
+	delete rna_ensembleA;
+	delete mrna_ensemble;
+
     } catch(int retVal) {
 	return retVal;
     }

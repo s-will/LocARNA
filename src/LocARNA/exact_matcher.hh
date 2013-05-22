@@ -697,8 +697,10 @@ class ExactMatcher {
 
 	typedef std::vector<EPM> epm_cont_t; //!< the container used for temporarily storing the EPMs
 	typedef std::pair<score_t,epm_cont_t > el_map_am_to_do_t; //!< type for storing for a given tolerance the list of epms
-	typedef std::map<PairArcIdx,el_map_am_to_do_t > map_am_to_do_t; //!< a map that stores for pairs of arc indices the tolerance
-																	// that is used for backtracing and the found EPMs
+	
+        //! a map that stores for pairs of arc indices the tolerance
+        //! that is used for backtracing and the found EPMs
+        typedef std::map<PairArcIdx,el_map_am_to_do_t > map_am_to_do_t; 
 private:
 
     //! a quintuple for storing the state, max tolerance left, current matrix position, potential pair of arc indices

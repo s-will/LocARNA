@@ -31,8 +31,8 @@
 #include "LocARNA/anchor_constraints.hh"
 #include "LocARNA/trace_controller.hh"
 #include "LocARNA/multiple_alignment.hh"
-
 #include "LocARNA/ribosum85_60.icc"
+#include "LocARNA/pfold_params.hh"
 
 using namespace std;
 

@@ -32,6 +32,8 @@
 #include "LocARNA/trace_controller.hh"
 #include "LocARNA/ribosum85_60.icc"
 #include "LocARNA/global_stopwatch.hh"
+#include "LocARNA/pfold_params.hh"
+
 
 using namespace std;
 using namespace LocARNA;

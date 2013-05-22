@@ -1,6 +1,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include "pfold_params.hh"
 #include "rna_data_impl.hh"
 #include "rna_ensemble.hh"
 
@@ -47,7 +48,11 @@ namespace LocARNA {
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
 	 sequence_anchors_()
-    {
+    {	
+	// HACK: read_autodetect needs an initialized pimpl_ 
+	// how could we do this more cleanly?
+	self_->pimpl_=this;
+	
 	self_->read_autodetect(filename,pfoldparams,false);
     }
 
@@ -140,48 +145,94 @@ namespace LocARNA {
     
     void
     RnaData::read_autodetect(const std::string &filename,
-			     const PFoldParams pfoldparams,
+			     const PFoldParams &pfoldparams,
 			     bool inloopprobs
 			     ) {
+	std::cerr << "RnaData::read_autodetect(): read from file "<<filename<<std::endl;
 	
-	bool failed=false; //flag for signalling a failed attempt to
+	bool failed=true;  //flag for signalling a failed attempt to
 			   //read a certain file format
 	
 	bool recompute=false; // do we need to recompute probabilities
 
-	try {
-	    read_ps(filename);
-	} catch (wrong_format_failure &f) {
-	    failed=true;
-	}
-	
 	if (failed) {
+	    failed=false;
 	    try {
-		read_pp(filename, pfoldparams.stacking());
+		read_ps(filename);
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
 	    } catch (wrong_format_failure &f) {
 		failed=true;
 	    }
 	}
-
-	try {
-	    pimpl_->sequence_ = MultipleAlignment(filename, MultipleAlignment::FASTA);
-	} catch (failure &f) {
-	    failed=true;
-	}
+	
 	if (failed) {
+	    recompute = true;
 	    failed=false;
 	    try {
-		pimpl_->sequence_ = MultipleAlignment(filename, MultipleAlignment::CLUSTAL);
+		MultipleAlignment ma(filename, MultipleAlignment::FASTA);
+		pimpl_->sequence_ = ma;
+		// even if reading does not fail, we still want to
+		// make sure that the result is reasonable. Otherwise,
+		// we assume that the file is in a different format.
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
 	    } catch (failure &f) {
 		failed=true;
 	    }
 	}
 	
+	if (failed) {
+	    recompute = true;
+	    failed=false;
+	    try {
+
+		std::cerr<<"sequence_"<<std::endl;
+		pimpl_->sequence_.write_debug(std::cerr);
+
+		MultipleAlignment ma(filename, MultipleAlignment::CLUSTAL);
+
+		std::cerr<<"ma"<<std::endl;
+		ma.write_debug(std::cerr);
+		
+
+		pimpl_->sequence_ = ma;
+	    	// even if reading does not fail, we still want to
+		// make sure that the result is reasonable. Otherwise,
+		// we assume that the file is in a different format.
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+	    } catch (failure &f) {
+		failed=true;
+	    }
+	}
+
 	// if MultipleAlignment would support AUTO, we could replace the above by
 	// if (failed) {
 	//     pimpl_->sequence_ = MultipleAlignment(filename,MultipleAlignment::AUTO);
 	//     recompute = true;
 	// }
+
+	
+	if (failed) {
+	    recompute=false;
+	    failed=false;
+	    try {
+		read_pp(filename, pfoldparams.stacking());
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+	    } catch (wrong_format_failure &f) {
+		failed=true;
+	    }
+	}
+	
+	if (failed) {
+	    throw failure("Cannot read input data from file.");
+	}
 	
 	// now, we have the sequence but not necessarily all required probabilities!
 	if (!inloopprobs_ok()) {
@@ -189,13 +240,17 @@ namespace LocARNA {
 	}
 	
 	if (recompute) {
+	    std::cerr << "compute ensemble"<<std::endl;
+	    
 	    // recompute all probabilities
 	    RnaEnsemble rna_ensemble(pimpl_->sequence_,pfoldparams,!inloopprobs_ok(),true); // use given parameters, use alifold
 	    
+	    std::cerr << "init from ensemble"<<std::endl;
 	    // initialize from (temporary) RnaEnsemble object; note that the method is virtual
 	    init_from_rna_ensemble(rna_ensemble);
 	}
 	
+	std::cerr << "return from constructing RnaData"<<std::endl;
 	return;
     }
 

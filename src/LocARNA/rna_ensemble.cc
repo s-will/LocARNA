@@ -4,14 +4,11 @@
 #include <limits>
 
 #include "aux.hh"
-
 #include "rna_ensemble_impl.hh"
-
 #include "alphabet.hh"
-
 #include "multiple_alignment.hh"
-
 #include "global_stopwatch.hh"
+#include "pfold_params.hh"
 
 
 #ifdef HAVE_LIBRNA
@@ -130,7 +127,7 @@ namespace LocARNA {
 	
 	stopwatch.start("bpp");
 	
-	assert(use_alifold || pimpl_->sequence_.row_number()==1);
+	assert(use_alifold || sequence_.row_number()==1);
 
 	used_alifold_=use_alifold;
 
@@ -1035,7 +1032,7 @@ namespace LocARNA {
 	assert(1<=i);
 	assert(i<j);
 	assert(j<=n);
-	assert(pimpl_->frag_len_geq(i,j,TURN+2));
+	assert(frag_len_geq(i,j,TURN+2));
 	
 	// immediately return 0.0 when i and j cannot pair
 	if (arc_prob(i,j)==0.0 || pimpl_->McCmat_->qb(i,j)==0.0) {

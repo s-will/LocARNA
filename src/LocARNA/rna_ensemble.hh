@@ -19,7 +19,6 @@ namespace LocARNA {
 #endif
 
 #include "multiple_alignment.hh"
-#include "params.hh" // import PFoldParams
 
 
 /**
@@ -30,6 +29,8 @@ namespace LocARNA {
     class Sequence;
 
     class RnaEnsembleImpl; // forward to implementation class
+
+    class PFoldParams;
 
     /*
     * @brief Represents the raw structure ensemble data for an RNA

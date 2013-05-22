@@ -38,7 +38,8 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/basepairs.hh LocARNA/alignment.hh			\
 	LocARNA/alignment_impl.hh LocARNA/rna_ensemble.hh		\
 	LocARNA/rna_ensemble_impl.hh LocARNA/rna_data.hh		\
-	LocARNA/rna_data_impl.hh LocARNA/params.hh LocARNA/scoring.hh	\
+	LocARNA/rna_data_impl.hh LocARNA/params.hh			\
+	LocARNA/pfold_params.hh LocARNA/scoring.hh			\
 	LocARNA/scoring_fwd.hh LocARNA/infty_int.hh			\
 	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
 	LocARNA/alphabet.icc LocARNA/ribosum.hh				\
@@ -91,9 +92,12 @@ LDADD=libLocARNA-$(API_VERSION).la
 
 BUILT_SOURCES=LocARNA/ribosum85_60.icc
 
-check_PROGRAMS = test_trace_controller test_rna_ensemble
-test_trace_controller_SOURCES = test_trace_controller.cc
-test_rna_ensemble_SOURCES = test_rna_ensemble.cc
+check_PROGRAMS = Tests/test_multiple_alignment Tests/test_rna_data
+                 # test_trace_controller test_rna_ensemble
+# test_trace_controller_SOURCES = test_trace_controller.cc
+# test_rna_ensemble_SOURCES = test_rna_ensemble.cc
+test_rna_data_SOURCES = test_rna_data.cc
+test_multiple_alignment_SOURCES = Tests/test_multiple_alignment.cc
 TESTS = $(check_PROGRAMS)
 
 dist_locarna_bin_SOURCES = locarna.cc

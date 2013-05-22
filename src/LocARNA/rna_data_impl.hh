@@ -13,6 +13,7 @@ namespace LocARNA {
 
     class Sequence;
     class RnaEnsemble;
+    class PFoldParams;
 
     /**
      * @brief Implementation of RnaData
