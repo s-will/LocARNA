@@ -7,6 +7,7 @@
 
 #include <iosfwd>
 #include "aux.hh"
+#include "sparse_matrix.hh"
 
 namespace LocARNA {
 
@@ -36,8 +37,10 @@ namespace LocARNA {
     private:
 	friend class RnaDataImpl;
 	RnaDataImpl *pimpl_;  //!<- pointer to corresponding implementation object
-    
+
     public:
+	
+	typedef SparseMatrix<double> arc_prob_matrix_t;
 
 	struct wrong_format_failure: public failure {
 	    wrong_format_failure():failure("Wrong format") {}
@@ -144,6 +147,27 @@ namespace LocARNA {
 	arc_prob(pos_type i, pos_type j) const;
 
     protected:
+	//! type of constant iterator over arcs with probability above cutoff
+	typedef arc_prob_matrix_t::const_iterator arc_probs_const_iterator;
+	
+	/**
+	 * @brief begin of arcs with probability above cutoff
+	 * Supports iteration over arcs
+	 * @returns constant iterator
+	 */
+	arc_probs_const_iterator
+	arc_probs_begin() const;
+
+	/**
+	 * @brief begin of arcs with probability above cutoff
+	 * Supports iteration over arcs
+	 * @returns constant iterator
+	 */
+	arc_probs_const_iterator
+	arc_probs_end() const;
+    public:
+	
+
 	/**
 	 * @brief Get arc probability
 	 * @param i left sequence position  
@@ -220,6 +244,18 @@ namespace LocARNA {
     protected:
 	
 	/** 
+	 * @brief initialize from rna ensemble 
+	 * 
+	 * @param rna_ensemble rna ensemble
+	 * 
+	 * @note can be overloaded to initialize with additional
+	 * information (in loop probabilities)
+	 */
+	virtual
+	void
+	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble);
+
+	/** 
 	 * @brief read and initialize from file, autodetect format
 	 * 
 	 * @param filename name of input file
@@ -260,21 +296,8 @@ namespace LocARNA {
 	virtual
 	bool
 	inloopprobs_ok() const {return true;}
+		
 	
-	/** 
-	 * @brief initialize from rna ensemble 
-	 * 
-	 * @param rna_ensemble rna ensemble
-	 * @param pfoldparams partition folding parameters
-	 * 
-	 * @note can be overloaded to initialize with additional
-	 * information (in loop probabilities)
-	 */
-	virtual
-	void
-	init_from_rna_data(const RnaEnsemble &rna_ensemble,
-			   const PFoldParams pfoldparams);
-
 	/** 
 	 * Read data in Vienna's dot plot ps format
 	 * 
@@ -450,6 +473,20 @@ namespace LocARNA {
 	const;
 	
     protected:
+
+	/** 
+	 * @brief initialize from rna ensemble 
+	 * 
+	 * @param rna_ensemble rna ensemble
+	 * 
+	 * @note overloaded to initialize with additional information
+	 * (in loop probabilities)
+	 *
+	 * @pre bp cutoff prob is initialized 
+	 */
+	virtual
+	void
+	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble);
 
 	/**
 	 * @brief check in loop probabilities

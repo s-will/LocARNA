@@ -13,11 +13,10 @@
 namespace LocARNA {
     
     class AlignmentImpl;    
-    class BasePairs;
+    class RnaData;
     class Sequence;
     class RnaStructure;
     class string1;
-    class Scoring;
     class AnchorConstraints;
 
     /** 
@@ -155,21 +154,25 @@ namespace LocARNA {
 	 * @param out output stream
 	 * @param bpsA base pairs for sequence A
 	 * @param bpsB base pairs for sequence B
-	 * @param scoring scoring object
 	 * @param seq_constraints sequence constraints
 	 * @param width output width
 	 * @param use_alifold whether to use alifold for consensus dot plot computation
+	 * @param expA background probability A
+	 * @param expB background probability B
+	 * @param stacking whether to write probabilities for stacking terms
 	 *
 	 * @todo consensus computation and writing of pp file should be separated
 	 */
 	void
 	write_pp(std::ostream &out,
-		 const BasePairs &bpsA,
-		 const BasePairs &bpsB,
-		 const Scoring &scoring, 
+		 const RnaData &bpsA,
+		 const RnaData &bpsB,
 		 const AnchorConstraints &seq_constraints, 
 		 int width,
-		 bool use_alifold=false
+		 bool use_alifold,
+		 double expA,
+		 double expB,
+		 bool scoring
 		 ) const;
 	
 	//! get first position of A that is locally aligned to something
@@ -219,39 +222,6 @@ namespace LocARNA {
 	 */
 	const std::vector<int> &get_b() const;
 
-	// first attempt to define methods for alignment evaluation;
-	// however, such methods seem badly placed in class Alignment;
-	// rather such evaluation capabilities should be implemented
-	// in the "Aligner" class(es).
-	//
-	// /** 
-	//  * Evaluate alignment by LocARNA score
-	//  * 
-	//  * @param bpsA    base pairs of RNA A
-	//  * @param bpsB    base pairs of RNA B
-	//  * @param scoring Scoring object for RNAs A and B
-	//  * 
-	//  * @return locarna score of the alignment
-	//  */
-	// score_t
-	// evaluate(const BasePairs &bpsA,
-	// 	 const BasePairs &bpsB, 
-	// 	 const Scoring &scoring) const;
-	
-	// /** 
-	//  * Evaluate alignment by LocARNA score (finding the optimal consensus structure)
-	//  * 
-	//  * @param bpsA    base pairs of RNA A
-	//  * @param bpsB    base pairs of RNA B
-	//  * @param scoring Scoring object for RNAs A and B
-	//  * 
-	//  * @return locarna score of the alignment
-	//  */
-	// score_t
-	// evaluate_optimize_consensus_structure(const BasePairs &bpsA,
-	// 	 const BasePairs &bpsB, 
-	// 	 const Scoring &scoring) const;
-	
     };
 
 }

@@ -13,7 +13,7 @@ namespace LocARNA {
     template <class T> class plusvector;
     class Alignment;
     class Sequence;
-    class BasePairs;
+    class RnaData;
     class Scoring;
     
     struct AlignmentImpl {
@@ -49,9 +49,11 @@ namespace LocARNA {
 	write_consensus_dot_plot(std::ostream &out,
 				 const std::vector<int> &aliA,
 				 const std::vector<int> &aliB,
-				 const BasePairs &bpsA,
-				 const BasePairs &bpsB,
-				 const Scoring &scoring
+				 const RnaData &bpsA,
+				 const RnaData &bpsB,
+				 double expA,
+				 double expB,
+				 bool stacking
 				 ) const;
     
 #ifdef HAVE_LIBRNA

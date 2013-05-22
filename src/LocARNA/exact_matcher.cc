@@ -18,6 +18,8 @@ bool debug_trace_F_heuristic = false;
 	// Constructor
     ExactMatcher::ExactMatcher(const Sequence &seqA_,
 			       const Sequence &seqB_,
+			       const RnaData &rna_dataA_,
+			       const RnaData &rna_dataB_,
 			       const ArcMatches &arc_matches_,
 			       const SparseTraceController &sparse_trace_controller_,
 			       PatternPairMap &foundEPMs_,
@@ -33,6 +35,8 @@ bool debug_trace_F_heuristic = false;
 			       )
 	: seqA(seqA_),
 	  seqB(seqB_),
+	  rna_dataA(rna_dataA_),
+	  rna_dataB(rna_dataB_),
 	  arc_matches(arc_matches_),
 	  bpsA(arc_matches_.get_base_pairsA()),
 	  bpsB(arc_matches_.get_base_pairsB()),
@@ -529,8 +533,8 @@ bool debug_trace_F_heuristic = false;
     	}
 
     	else{
-    		double probArcA = bpsA.get_arc_prob(a.left(),a.right());
-    		double probArcB = bpsB.get_arc_prob(b.left(),b.right());
+    		double probArcA = rna_dataA.arc_prob(a.left(),a.right());
+    		double probArcB = rna_dataB.arc_prob(b.left(),b.right());
 
     		result= D(a,b) + FiniteInt(((2*alpha_1)+(probArcA+probArcB)*alpha_2)*100);
     	}
@@ -551,13 +555,13 @@ bool debug_trace_F_heuristic = false;
     	//stacking arcA
     	if(a.left()+1==inner_a.left() &&
     			a.right()==inner_a.right()+1){
-    		prob_stacking_arcA = bpsA.get_arc_2_prob(a.left(),a.right());
+    		prob_stacking_arcA = rna_dataA.joint_arc_prob(a.left(),a.right());
     	}
 
     	//stacking arcB
     	if(b.left()+1==inner_b.left() &&
     			b.right()==inner_b.right()+1){
-    		prob_stacking_arcB = bpsB.get_arc_2_prob(b.left(),b.right());
+    		prob_stacking_arcB = rna_dataB.joint_arc_prob(b.left(),b.right());
     	}
 
     	return (prob_stacking_arcA+prob_stacking_arcB)*100*alpha_3;

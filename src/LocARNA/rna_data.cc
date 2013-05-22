@@ -4,6 +4,8 @@
 #include "rna_data_impl.hh"
 #include "rna_ensemble.hh"
 
+
+
 namespace LocARNA {
 
     RnaData::RnaData(const RnaEnsemble &rna_ensemble,
@@ -47,6 +49,19 @@ namespace LocARNA {
 	 sequence_anchors_()
     {
 	self_->read_autodetect(filename,pfoldparams,false);
+    }
+
+    RnaDataImpl::RnaDataImpl(RnaData *self,
+			     const RnaEnsemble &rna_ensemble,
+			     double p_bpcut)
+	:self_(self),
+	 sequence_(),
+	 p_bpcut_(p_bpcut),
+	 arc_probs_(0.0),
+	 arc_2_probs_(0.0),
+	 sequence_anchors_()
+    {
+	self_->init_from_rna_ensemble(rna_ensemble);
     }
 
     // do almost nothing
@@ -109,6 +124,19 @@ namespace LocARNA {
 	self_->read_autodetect(filename,pfoldparams,true);
     }
 
+    ExtRnaDataImpl::ExtRnaDataImpl(ExtRnaData *self,
+				   const RnaEnsemble &rna_ensemble,
+				   double p_bpilcut,
+				   double p_uilcut)
+	:self_(self),
+	 p_bpilcut_(p_bpilcut),
+	 p_uilcut_(p_uilcut),
+	 arc_in_loop_probs_(arc_prob_matrix_t(0.0)),
+	 unpaired_in_loop_probs_(arc_prob_vector_t())
+    {
+	self_->init_from_rna_ensemble(rna_ensemble);
+    }
+
     
     void
     RnaData::read_autodetect(const std::string &filename,
@@ -163,29 +191,126 @@ namespace LocARNA {
 	if (recompute) {
 	    // recompute all probabilities
 	    RnaEnsemble rna_ensemble(pimpl_->sequence_,pfoldparams,!inloopprobs_ok(),true); // use given parameters, use alifold
-	    // initialize from (temporary) rnadata object
-	    init_from_rna_data(rna_ensemble,pfoldparams);
+	    
+	    // initialize from (temporary) RnaEnsemble object; note that the method is virtual
+	    init_from_rna_ensemble(rna_ensemble);
 	}
 	
 	return;
     }
 
     void
-    RnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
-				    const PFoldParams &pfoldparams) {
-	throw failure("not implemented");
+    RnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble) {
+	pimpl_->init_from_rna_ensemble(rna_ensemble);
+    }
+
+    void
+    ExtRnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble) {
+	RnaData::init_from_rna_ensemble(rna_ensemble);
+	pimpl_->init_from_ext_rna_ensemble(rna_ensemble);
     }
     
     void
-    ExtRnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
-				       const PFoldParams &pfoldparams) {
-	throw failure("not implemented");
+    RnaDataImpl::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble) {
+	assert(rna_ensemble.has_base_pair_probs());
+	
+	// ----------------------------------------
+	// init sequence	
+	sequence_ = rna_ensemble.sequence();
+	size_t len = sequence_.length();
+
+	// ----------------------------------------
+	// init base pair probabilities
+	arc_probs_.clear();
+	for( size_t i=1; i <= len; i++ ) {
+	    for( size_t j=i+1; j <= len; j++ ) {
+		
+		double p = rna_ensemble.arc_prob(i,j);
+		if (p > p_bpcut_) { // apply filter
+		    arc_probs_.set(i,j,p);
+		}
+	    }
+	}
+	
+	// ----------------------------------------
+	// init stacking probabilities
+	arc_2_probs_.clear();
+	stacking_probs_available_=rna_ensemble.has_stacking_probs();	
+	if (stacking_probs_available_) {
+	    for( size_t i=1; i <= len; i++ ) {
+		for( size_t j=i+1; j <= len; j++ ) {
+		    double p2 = rna_ensemble.arc_2_prob(i,j);
+		    if (p2 > p_bpcut_) { // apply filter to joint probability !
+			arc_2_probs_.set(i, j, p2);
+		    }
+		}
+	    }
+	}
+
+	// all set
+	return;
+    }
+
+    void
+    ExtRnaDataImpl::init_from_ext_rna_ensemble(const RnaEnsemble &rna_ensemble) {
+	// initialize in loop probabilities
+	// (usually, this is called after RnaDataImpl::init_from_rna_ensemble)
+	assert(rna_ensemble.has_in_loop_probs());
+
+	size_t len = self_->length();
+	
+	// ----------------------------------------
+	// init base pair probabilities
+	arc_in_loop_probs_.clear();
+	
+	// in loop
+	for(arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
+	    self_->arc_probs_end()!=it; ++it) {
+	    pos_type i = it->first.first;
+	    pos_type j = it->first.second;
+	    arc_prob_matrix_t m_ij(0.0);
+	    
+	    for( size_t ip=i+1; ip < j; ip++ ) {
+		for( size_t jp=ip+1; jp <= j; jp++ ) {
+		    double p = rna_ensemble.arc_in_loop_prob(ip,jp,i,j);
+		    
+		    if ( p > p_bpilcut_ ) {
+			m_ij(ip,jp)=p;
+		    }
+		}
+	    }
+	    arc_in_loop_probs_.set(i,j,m_ij);
+	}
+
+	// external
+	arc_prob_matrix_t m_ext(0.0);
+	for( size_t ip=1; ip < len; ip++ ) {
+	    for( size_t jp=ip+1; jp <= len; jp++ ) {
+		double p = rna_ensemble.arc_external_prob(ip,jp);
+		
+		if ( p > p_bpilcut_ ) {
+		    m_ext(ip,jp) = p;
+		}
+	    }
+	}
+	arc_in_loop_probs_.set(0,self_->length()+1,m_ext);
+	
+	
+	// ----------------------------------------
+	// init unpaired probabilities
+	
+	
+	// set flag
+	in_loop_probs_available_=true;
+
+	// all set
+	return;
     }
 
     bool
-    ExtRnaData::inloopprobs_ok() const {return pimpl_->in_loop_probs_available_;}
-
-
+    ExtRnaData::inloopprobs_ok() const {
+	return pimpl_->in_loop_probs_available_;
+    }
 
     const Sequence &
     RnaData::sequence() const {
@@ -212,6 +337,17 @@ namespace LocARNA {
 	return pimpl_->arc_probs_(i,j);
     }
     
+    RnaData::arc_probs_const_iterator
+    RnaData::arc_probs_begin() const {
+	return pimpl_->arc_probs_.begin();
+    }
+
+    RnaData::arc_probs_const_iterator
+    RnaData::arc_probs_end() const {
+	return pimpl_->arc_probs_.end();
+    }
+
+
     double
     RnaData::joint_arc_prob(pos_type i, pos_type j) const {
 	return pimpl_->arc_2_probs_(i,j);
@@ -257,6 +393,40 @@ namespace LocARNA {
 	    - prob_paired_downstream(i);
     }
     
+    double
+    ExtRnaData::arc_in_loop_cutoff_prob() const {
+	return pimpl_->p_bpilcut_;
+    }
+	
+    double 
+    ExtRnaData::arc_in_loop_prob(pos_type i, pos_type j,pos_type p, pos_type q) const {
+	ExtRnaDataImpl::arc_prob_matrix_t m_pq = pimpl_->arc_in_loop_probs_(p,q);
+	return m_pq(i,j);
+    }
+    
+    double 
+    ExtRnaData::arc_external_prob(pos_type i, pos_type j) const {
+	ExtRnaDataImpl::arc_prob_matrix_t m_ext = pimpl_->arc_in_loop_probs_(0,length()+1);
+	return m_ext(i,j);
+    }
+    
+    double
+    ExtRnaData::unpaired_in_loop_cutoff_prob() const {
+	return pimpl_->p_uilcut_;
+    }
+    
+    double 
+    ExtRnaData::unpaired_in_loop_prob(pos_type k,pos_type p, pos_type q) const {
+	ExtRnaDataImpl::arc_prob_vector_t v_pq = pimpl_->unpaired_in_loop_probs_(p,q);
+	return v_pq[k];
+    }
+    
+    double 
+    ExtRnaData::unpaired_external_prob(pos_type k) const {
+	ExtRnaDataImpl::arc_prob_vector_t v_ext = pimpl_->unpaired_in_loop_probs_(0,length()+1);
+	return v_ext[k];
+    }
+
     void RnaData::read_ps(const std::string &filename) {
 	
 	std::ifstream in(filename.c_str());
@@ -433,38 +603,6 @@ namespace LocARNA {
 	}
     } // end read_pp
 
-
-    void
-    RnaDataImpl::set_arc_probs_from_McCaskill_bppm(double threshold, bool stacking) {
-	clear_arc_probs();
-	
-	for( size_t i=1; i <= sequence_.length(); i++ ) {
-	    for( size_t j=i+1; j <= sequence_.length(); j++ ) {
-		
-		double p= McCmat_->get_bppm(i,j);
-		
-		if (p >= threshold) { // apply filter
-		    set_arc_prob(i,j,p);
-		}
-	    }
-	}
-	if(stacking){
-	    plist* pl= stackProb(threshold);
-	    plist* p= pl;
-	    while(pl->i!=0){
-		set_arc_2_prob(pl->i, pl->j, pl->p);
-		pl++;
-	    }
-	    free(p);
-	    // 	  pl= stackProb(threshold);
-	    // 	  free(pl);
-	    pl= NULL;
-	    p= NULL;
-	}
-	
-	pair_probs_available_=true;
-	stacking_probs_available_=stacking;
-    }
 
 
     // -- writing stuff (old code from RnaEnsemble)

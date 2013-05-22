@@ -103,7 +103,7 @@ namespace LocARNA {
 	 * @note pre: loop probs available, alifold used
 	 */
 	double
-	prob_unpaired_in_loop_ali(size_type k,
+	unpaired_in_loop_prob_ali(size_type k,
 				  size_type i,
 				  size_type j) const;
 	
@@ -123,7 +123,7 @@ namespace LocARNA {
 	 * @note pre: in loop probs are available, alifold not used
 	 */
 	double
-	prob_unpaired_in_loop_noali(size_type k,size_type i,size_type j) const;
+	unpaired_in_loop_prob_noali(size_type k,size_type i,size_type j) const;
 	
 	/** 
 	 * \brief Probabilty of base pair in a specified loop (alifold)
@@ -142,10 +142,10 @@ namespace LocARNA {
 	 * @note pre: loop probs available, alifold used
 	 */
 	double
-	prob_basepair_in_loop_ali(size_type ip,
-				  size_type jp,
-				  size_type i,
-				  size_type j) const;
+	arc_in_loop_prob_ali(size_type ip,
+			     size_type jp,
+			     size_type i,
+			     size_type j) const;
 
 	/** 
 	 * \brief Probabilty of base pair in a specified loop
@@ -164,10 +164,10 @@ namespace LocARNA {
 	 * @note pre: loop probs available, alifold not used
 	 */
 	double
-	prob_basepair_in_loop_noali(size_type ip,
-				    size_type jp,
-				    size_type i,
-				    size_type j) const;
+	arc_in_loop_prob_noali(size_type ip,
+			       size_type jp,
+			       size_type i,
+			       size_type j) const;
 
 	/** 
 	 * \brief Computes the Qm2 matrix

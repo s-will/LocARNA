@@ -127,10 +127,10 @@ struct command_line_parameters {
     // File arguments
     
     //! first input file 
-    std::string file1;
+    std::string fileA;
     
     //! second input file
-    std::string file2;
+    std::string fileB;
 
     std::string clustal_out; //!< name of clustal output file
 
@@ -181,8 +181,8 @@ struct command_line_parameters {
 //    int kbest_k; //!< kbest_k
 //    int subopt_threshold; //!< subopt_threshold
 
-    std::string seq_constraints_A; //!< seq_constraints_A
-    std::string seq_constraints_B; //!< seq_constraints_B
+    std::string seq_anchors_A; //!< sequence anchors A
+    std::string seq_anchors_B; //!< sequence anchors B
 
     bool opt_ignore_constraints; //!< whether to ignore_constraints
 
@@ -291,15 +291,15 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
 //    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
-//    {"anchorA",0,0,O_ARG_STRING,&clp.seq_constraints_A,"","string","Anchor constraints sequence A"},
-//    {"anchorB",0,0,O_ARG_STRING,&clp.seq_constraints_B,"","string","Anchor constraints sequence B"},
+//    {"anchorA",0,0,O_ARG_STRING,&clp.seq_anchors__A,"","string","Anchor constraints sequence A"},
+//    {"anchorB",0,0,O_ARG_STRING,&clp.seq_anchors__B,"","string","Anchor constraints sequence B"},
 //    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
-    {"",0,0,O_ARG_STRING,&clp.file1,O_NODEFAULT,"file 1","Basepairs input file 1"},
-    {"",0,0,O_ARG_STRING,&clp.file2,O_NODEFAULT,"file 2","Basepairs input file 2"},
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"file 1","Basepairs input file 1"},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"file 2","Basepairs input file 2"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -456,65 +456,44 @@ main(int argc, char **argv) {
 	  ribosum->print_basematch_scores_corrected();
 	*/
     }
-    
-    // ----------------------------------------
-    // Scoring Parameter
-    //
-    ScoringParams scoring_params(clp.match_score,
-				 clp.mismatch_score,
-				 // In true mea alignment gaps are only 
-				 // scored for computing base match probs.
-				 // Consequently, we set the indel and indel opening cost to 0
-				 // for the case of mea alignment!
-				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
-				 ?0
-				 :clp.indel_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
-				 ?0
-				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 ribosum.get(),
-				 clp.struct_weight,
-				 clp.tau_factor,
-				 clp.exclusion_score,
-				 clp.opt_exp_prob?clp.exp_prob:-1,
-				 clp.temperature,
-				 clp.opt_stacking,
-				 clp.opt_mea_alignment,
-				 clp.mea_alpha,
-				 clp.mea_beta,
-				 clp.mea_gamma,
-				 clp.probability_scale
-				 );
-
-    
+        
     
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
 
-    PFoldParams params(clp.no_lonely_pairs,clp.opt_stacking);
-
-    RnaData rnadataA(clp.file1,true,clp.opt_stacking,true);
-    if (!rnadataA.pair_probs_available() || !rnadataA.in_loop_probs_available()) {
-	if (clp.opt_verbose) {
-	    std::cout << "Compute ensemble probabilities for first input sequence."
-		      << std::endl;
-	}
-	rnadataA.compute_ensemble_probs(params,true);
-    }
-
-    RnaData rnadataB(clp.file2,true,clp.opt_stacking,true);
-    if (!rnadataB.pair_probs_available() || !rnadataB.in_loop_probs_available()) {
-	if (clp.opt_verbose) {
-	    std::cout << "Compute ensemble probabilities for second input sequence."
-		      << std::endl;
-	}
-	rnadataB.compute_ensemble_probs(params,true);
-    }
-
-    Sequence seqA=rnadataA.get_sequence();
-    Sequence seqB=rnadataB.get_sequence();
+    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
     
+    ExtRnaData *rna_dataA=0;
+    try {
+	rna_dataA = new ExtRnaData(clp.fileA,
+				   clp.min_prob,
+				   clp.prob_basepair_in_loop_threshold,
+				   clp.prob_unpaired_in_loop_threshold,
+				   pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<clp.fileA <<std::endl
+		  << "       "<< f.what() <<std::endl;
+	return -1;
+    }
+    
+    ExtRnaData *rna_dataB=0;
+    try {
+	rna_dataB = new ExtRnaData(clp.fileB,
+				   clp.min_prob,
+				   clp.prob_basepair_in_loop_threshold,
+				   clp.prob_unpaired_in_loop_threshold,
+				   pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
+		  << "       "<< f.what() <<std::endl;
+	if (rna_dataA) delete rna_dataA;
+	return -1;
+    }
+    
+    const Sequence &seqA=rna_dataA->sequence();
+    const Sequence &seqB=rna_dataB->sequence();
+
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
@@ -558,12 +537,12 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Handle constraints (optionally)
     
-    std::string seqCA = clp.seq_constraints_A;
-    std::string seqCB = clp.seq_constraints_B;
+    std::string seqCA = clp.seq_anchors_A;
+    std::string seqCB = clp.seq_anchors_B;
 
     if (!clp.opt_ignore_constraints) {
-	if ( seqCA=="" ) seqCA = rnadataA.get_seq_constraints();
-	if ( seqCB=="" ) seqCB = rnadataB.get_seq_constraints();
+	if ( seqCA=="" ) seqCA = rna_dataA->sequence_anchors();
+	if ( seqCB=="" ) seqCB = rna_dataB->sequence_anchors();
     }
 
     AnchorConstraints seq_constraints(seqA.length(),seqCA,
@@ -603,8 +582,8 @@ main(int argc, char **argv) {
 				     );
     } else {
 	// initialize from RnaData
-	arc_matches = new ArcMatches(rnadataA,
-				     rnadataB,
+	arc_matches = new ArcMatches(*rna_dataA,
+				     *rna_dataB,
 				     clp.min_prob,
 				     (clp.max_diff_am!=-1)?(size_type)clp.max_diff_am:std::max(lenA,lenB),
 				     trace_controller,
@@ -632,8 +611,8 @@ main(int argc, char **argv) {
     }
 
     // construct sparsification mapper for seqs A,B
-    SparsificationMapper mapperA(bpsA, rnadataA, clp.prob_unpaired_in_loop_threshold, clp.prob_basepair_in_loop_threshold, true);
-    SparsificationMapper mapperB(bpsB, rnadataB, clp.prob_unpaired_in_loop_threshold, clp.prob_basepair_in_loop_threshold, true);
+    SparsificationMapper mapperA(bpsA, *rna_dataA, clp.prob_unpaired_in_loop_threshold, clp.prob_basepair_in_loop_threshold, true);
+    SparsificationMapper mapperB(bpsB, *rna_dataB, clp.prob_unpaired_in_loop_threshold, clp.prob_basepair_in_loop_threshold, true);
 
     // ------------------------------------------------------------
     // Sequence match probabilities (for MEA-Alignment)
@@ -676,7 +655,8 @@ main(int argc, char **argv) {
 		    std::cout << "Compute match probabilities using PF sequence alignment."<<std::endl; 
 		}
 
-		match_probs->pf_probs(rnadataA,rnadataB,
+		match_probs->pf_probs(*rna_dataA,
+				      *rna_dataB,
 				      ribosum->get_basematch_scores(),
 				      ribosum->alphabet(),
 				      clp.indel_opening_score/100.0,
@@ -700,8 +680,50 @@ main(int argc, char **argv) {
 
     // ----------------------------------------
     // construct scoring
-   
-    Scoring scoring(seqA,seqB,arc_matches,match_probs,&scoring_params);    
+
+    // Scoring Parameter
+    //        
+    double my_exp_probA = clp.opt_exp_prob?clp.exp_prob:prob_exp_f(lenA);
+    double my_exp_probB = clp.opt_exp_prob?clp.exp_prob:prob_exp_f(lenB);
+    //
+    ScoringParams scoring_params(clp.match_score,
+				 clp.mismatch_score,
+				 // In true mea alignment gaps are only 
+				 // scored for computing base match probs.
+				 // Consequently, we set the indel and indel opening cost to 0
+				 // for the case of mea alignment!
+				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+				 ?0
+				 :clp.indel_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
+				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+				 ?0
+				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
+				 ribosum.get(),
+				 clp.struct_weight,
+				 clp.tau_factor,
+				 clp.exclusion_score,
+				 my_exp_probA,
+				 my_exp_probB,
+				 clp.temperature,
+				 clp.opt_stacking,
+				 clp.opt_mea_alignment,
+				 clp.mea_alpha,
+				 clp.mea_beta,
+				 clp.mea_gamma,
+				 clp.probability_scale
+				 );
+
+
+
+    Scoring scoring(seqA,
+		    seqB,
+		    *rna_dataA,
+		    *rna_dataB,
+		    *arc_matches,
+		    match_probs,
+		    scoring_params,
+		    false // no Boltzmann weights
+		    );    
 
     if (clp.opt_write_arcmatch_scores) {
 	if (clp.opt_verbose) {
@@ -858,11 +880,16 @@ main(int argc, char **argv) {
 	    ofstream out(clp.pp_out.c_str());
 	    if (out.good()) {
 		aligner.get_alignment().
-		    write_pp(out,bpsA,bpsB,
-			     scoring,
+		    write_pp(out,
+			     *rna_dataA,
+			     *rna_dataB,
 			     seq_constraints,
 			     clp.output_width,
-			     clp.opt_alifold_consensus_dp);
+			     clp.opt_alifold_consensus_dp,
+			     my_exp_probA,
+			     my_exp_probB,
+			     false //clp.stacking
+			     );
 	    } else {
 		cerr << "Cannot write to "<<clp.pp_out<<endl<<"! Exit.";
 		return -1;

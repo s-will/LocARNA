@@ -7,7 +7,6 @@
 
 #include <iosfwd>
 #include "rna_data.hh"
-#include "sparse_matrix.hh"
 #include "sequence.hh"
 
 namespace LocARNA {
@@ -21,8 +20,8 @@ namespace LocARNA {
     struct RnaDataImpl {
     
 	//! type for matrix of arc probabilities
-	typedef SparseMatrix<double> arc_prob_matrix_t;
-
+	typedef RnaData::arc_prob_matrix_t arc_prob_matrix_t;
+	
 	RnaData *self_; //!<- pointer to corresponding non-impl object
 
 	//! the sequence
@@ -58,7 +57,7 @@ namespace LocARNA {
 	 * @param p_bpcut cutoff probability
 	 */
 	RnaDataImpl(RnaData *self,
-		    const RnaEnsemble &rna_data,
+		    const RnaEnsemble &rna_ensemble,
 		    double p_bpcut);
 	
 	/** 
@@ -68,7 +67,7 @@ namespace LocARNA {
 	 * @note autodetect whether input stream is in ps or pp format
 	 */
 	RnaDataImpl(RnaData *self, 
-		    const std::string &in,
+		    const std::string &filename,
 		    double p_bpcut,
 		    const PFoldParams &pfoldparams);
 
@@ -83,6 +82,18 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// METHODS
+
+	/** 
+	 * @brief initialize from rna ensemble 
+	 * 
+	 * @param rna_ensemble rna ensemble
+	 * 
+	 * @note can be overloaded to initialize with additional
+	 * information (in loop probabilities)
+	 */
+	virtual
+	void
+	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble);
 
 	/**
 	 * @brief read sequence section of pp-format
@@ -115,7 +126,7 @@ namespace LocARNA {
 	read_pp_base_pair_section(std::istream &in)
 	    const;
 	
-    };
+    }; // end class RnaDataImpl
 
 
     /**
@@ -156,8 +167,9 @@ namespace LocARNA {
 	//! in loop probabilities of unpaired bases
 	arc_prob_vector_matrix_t unpaired_in_loop_probs_;
 
+	//! used in initialization, to check whether in loop probs
+	//! still have to be computed
 	bool in_loop_probs_available_;
-
 	
 	// ----------------------------------------
 	// CONSTRUCTORS
@@ -204,6 +216,19 @@ namespace LocARNA {
 	// ----------------------------------------
 	// METHODS
 	
+
+	/** 
+	 * @brief initialize from rna ensemble 
+	 * 
+	 * @param rna_ensemble rna ensemble
+	 * 
+	 * @note overloaded to initialize with additional
+	 * information (in loop probabilities)
+	 * @note rna_ensemble must have in loop probabilities 
+	 */
+	void
+	init_from_ext_rna_ensemble(const RnaEnsemble &rna_ensemble);	
+
 	/**
 	 * @brief read in loop probability section of pp-format
 	 *

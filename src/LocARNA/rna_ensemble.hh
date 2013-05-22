@@ -19,7 +19,7 @@ namespace LocARNA {
 #endif
 
 #include "multiple_alignment.hh"
-
+#include "params.hh" // import PFoldParams
 
 
 /**
@@ -28,36 +28,6 @@ namespace LocARNA {
 namespace LocARNA {
 
     class Sequence;
-
-    /**
-     * \brief Parameters for partition folding
-     *
-     * Describes certain parameters for the partition folding of 
-     * a sequence or alignment.
-     *
-     * @see RnaEnsemble
-     *
-    */
-    class PFoldParams {
-	bool noLP_;
-	bool stacking_;
-    public:
-	/** 
-	 * Construct with all parameters
-	 * 
-	 * @param noLP
-	 * @param stacking 
-	 */
-	PFoldParams(bool noLP,
-		    bool stacking
-		    )
-	    : noLP_(noLP),
-	      stacking_(stacking) 
-	{}
-	
-	bool noLP() const {return noLP_;}
-	bool stacking() const {return stacking_;}
-    };
 
     class RnaEnsembleImpl; // forward to implementation class
 
@@ -117,15 +87,25 @@ namespace LocARNA {
 	 * @return whether probabilities are available
 	 */
 	bool
-	pair_probs_available() const;	
+	has_base_pair_probs() const;	
+
+	/** 
+	 * @brief Availability of stacking probabilities
+	 * 
+	 * @return whether probabilities are available
+	 */
+	bool
+	has_stacking_probs() const;	
+
+
 	/** 
 	 * @brief Availability of "in loop" probabilities
 	 * 
 	 * @return whether probabilities are available
 	 */
 	bool
-	in_loop_probs_available() const;
-    
+	has_in_loop_probs() const;
+	
 	/**
 	 * @brief Get the sequence
 	 * @return sequence of RNA
@@ -149,7 +129,7 @@ namespace LocARNA {
 	 * @return mfe (if available)
 	 */
 	double
-	get_min_free_energy() const;
+	min_free_energy() const;
 	
 	/** 
 	 * \brief get minimum free energy structure
@@ -161,9 +141,8 @@ namespace LocARNA {
 	 * @return mfes structure (if available)
 	 */
 	std::string
-	get_min_free_energy_structure() const;
+	min_free_energy_structure() const;
 	   
-    public:
 	// ------------------------------------------------------------
 	// methods for base pair probabilities
 	
@@ -182,7 +161,8 @@ namespace LocARNA {
 	 * @param j right sequence position
 	 * \return probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
 	*/
-	double arc_2_prob(size_type i, size_type j) const;
+	double
+	arc_2_prob(size_type i, size_type j) const;
 
 	/**
 	 * \brief Get conditional propability that a base pair is stacked
@@ -207,7 +187,7 @@ namespace LocARNA {
 	 * @see prob_paired_downstream
 	*/
 	double
-	prob_paired_upstream(size_type i) const;
+	paired_upstream_prob(size_type i) const;
         
 	/**
 	 * \brief Probability that a position is paired downstream
@@ -218,7 +198,7 @@ namespace LocARNA {
 	 * @see prob_paired_upstream
 	*/
 	double
-	prob_paired_downstream(size_type i) const;
+	paired_downstream_prob(size_type i) const;
     
 	/**
 	 * \brief Unpaired probability 
@@ -227,12 +207,10 @@ namespace LocARNA {
 	 * @note O(sequence.length()) implementation
 	*/
 	double
-	prob_unpaired(size_type i) const;
+	unpaired_prob(size_type i) const;
 
 #   ifdef HAVE_LIBRNA
 	// the following methods need linking to librna
-
-    public:
 
 	/** 
 	 * \brief Unpaired probabilty of base in a specified loop 
@@ -258,7 +236,7 @@ namespace LocARNA {
 	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
-	prob_unpaired_in_loop(size_type k,
+	unpaired_in_loop_prob(size_type k,
 			      size_type i,
 			      size_type j) const;
     
@@ -280,10 +258,8 @@ namespace LocARNA {
 	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
-	prob_unpaired_external(size_type k) const;
+	unpaired_external_prob(size_type k) const;
 	
-	
-    public:
 	/** 
 	 * \brief Probabilty of base pair in a specified loop 
 	 * 
@@ -309,10 +285,10 @@ namespace LocARNA {
 	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
-	prob_basepair_in_loop(size_type ip,
-			      size_type jp,
-			      size_type i,
-			      size_type j) const;
+	arc_in_loop_prob(size_type ip,
+			 size_type jp,
+			 size_type i,
+			 size_type j) const;
 
 
 	/** 
@@ -334,8 +310,8 @@ namespace LocARNA {
 	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
 	double
-	prob_basepair_external(size_type i,
-			       size_type j) const;
+	arc_external_prob(size_type i,
+			  size_type j) const;
 		
 #   endif // HAVE_LIBRNA
 	

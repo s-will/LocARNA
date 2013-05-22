@@ -146,6 +146,13 @@ namespace LocARNA {
 	 * @param deflt default value of entries
 	 */
 	SparseMatrix(value_t def) : the_map_(),def_(def) {}
+
+	/** 
+	 * @brief Construct empty, default is default of value type
+	 */
+	SparseMatrix() : the_map_(),def_() {
+	    throw(failure("Call to SparseMatrix(): Why does this happen??"));
+	}
     
 	/** 
 	 * \brief Access to matrix element

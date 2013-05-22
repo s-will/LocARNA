@@ -1,4 +1,4 @@
-/**
+ /**
  * \file locarna_p.cc
  *
  * \brief Defines main function of locarna_p
@@ -88,8 +88,8 @@ bool opt_write_basematch_probs; //!< opt_write_basematch_probs
 std::string arcmatch_probs_file; //!< arcmatch_probs_file
 std::string basematch_probs_file; //!< basematch_probs_file
 
-std::string bpsfile1; //!< bpsfile1
-std::string bpsfile2; //!< bpsfile2
+std::string fileA; //!< fileA
+std::string fileB; //!< fileB
 
 std::string clustal_out; //!< clustal_out
 bool opt_clustal_out; //!< opt_clustal_out
@@ -182,8 +182,8 @@ option_def my_options[] = {
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
-    {"",0,0,O_ARG_STRING,&bpsfile1,O_NODEFAULT,"bps-file 1","Basepairs input file 1"},
-    {"",0,0,O_ARG_STRING,&bpsfile2,O_NODEFAULT,"bps-file 2","Basepairs input file 2"},
+    {"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"bps-file 1","Basepairs input file 1"},
+    {"",0,0,O_ARG_STRING,&fileB,O_NODEFAULT,"bps-file 2","Basepairs input file 2"},
 
 
     {"",0,0,0,0,O_NODEFAULT,"",""}
@@ -251,39 +251,30 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    RnaData rnadataA(bpsfile1,true,opt_stacking,false);
-    RnaData rnadataB(bpsfile2,true,opt_stacking,false);
-
-    // optionally fold
     PFoldParams pfparams(opt_no_lonely_pairs,opt_stacking);
-#if HAVE_LIBRNA
-    if (!rnadataA.pair_probs_available()) {
-	if (opt_verbose) {
-	    std::cout << "Compute ensemble probabilities for first input sequence."
-		      << std::endl;
-	}
-	rnadataA.compute_ensemble_probs(pfparams,false,true);
+    
+    RnaData *rna_dataA=0;
+    try {
+	rna_dataA = new RnaData(fileA,min_prob,pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<fileA <<std::endl
+		  << "       "<<f.what() <<std::endl;
+	return -1;
     }
-    if (!rnadataB.pair_probs_available()) {
-	if (opt_verbose) {
-	    std::cout << "Compute ensemble probabilities for second input sequence."
-		      << std::endl;
-	}
-	rnadataB.compute_ensemble_probs(pfparams,false,true);
+    
+    RnaData *rna_dataB=0;
+    try {
+	rna_dataB = new RnaData(fileB,min_prob,pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<fileB <<std::endl
+		  << "       "<<f.what() <<std::endl;
+	if (rna_dataA) delete rna_dataA;
+	return -1;
     }
-#else
-    if (!rnadataA.pair_probs_available() || !rnadataB.pair_probs_available()) {
-	std::cerr
-	    << "WARNING: Input contains no pair probabilities for one or both sequences,"<<std::endl
-	    << "         but their computation is disabled (recompile/reconfigure to enable)."<<std::endl
-	    << "         Continue without pair probabilities."
-	    << std::endl;
-    }
-#endif
-
-    Sequence seqA=rnadataA.get_sequence();
-    Sequence seqB=rnadataB.get_sequence();
-
+    
+    const Sequence &seqA=rna_dataA->sequence();
+    const Sequence &seqB=rna_dataB->sequence();
+    
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
@@ -335,8 +326,8 @@ main(int argc, char **argv) {
     ArcMatches *arc_matches;
     
     // initialize from RnaData
-    arc_matches = new ArcMatches(rnadataA,
-				 rnadataB,
+    arc_matches = new ArcMatches(*rna_dataA,
+				 *rna_dataB,
 				 min_prob,
 				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
 				 trace_controller,
@@ -376,15 +367,12 @@ main(int argc, char **argv) {
 	}
     }
 
-    //  MatchProbs *match_probs=0L;
-
     // ----------------------------------------
     // construct scoring
-    if (opt_verbose) {
-	std::cout << "Construct scoring."<<std::endl;
-    }
+   
+    double my_exp_probA = opt_exp_prob?exp_prob:prob_exp_f(lenA);
+    double my_exp_probB = opt_exp_prob?exp_prob:prob_exp_f(lenB);
 
-	
     ScoringParams scoring_params(match_score,
 				 mismatch_score,
 				 indel_score,
@@ -393,7 +381,8 @@ main(int argc, char **argv) {
 				 struct_weight,
 				 tau_factor,
 				 0, // exclusion score
-				 opt_exp_prob?exp_prob:-1,
+				 my_exp_probA,
+				 my_exp_probB,
 				 l_temperature,
 				 false,//opt_stacking,
 				 false,//opt_mea_alignment,
@@ -403,7 +392,13 @@ main(int argc, char **argv) {
 				 0 //probability_scale
 				 );
 	
-    Scoring scoring(seqA,seqB,arc_matches,0L,&scoring_params,true);
+    Scoring scoring(seqA,seqB,
+		    *rna_dataA,
+		    *rna_dataB,
+		    *arc_matches,
+		    0L,
+		    scoring_params,
+		    true);
     
     // ------------------------------------------------------------
     // Computation of the alignment score

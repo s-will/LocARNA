@@ -714,6 +714,9 @@ private:
     const Sequence &seqA; //!< sequence A
     const Sequence &seqB; //!< sequence B
 
+    const RnaData &rna_dataA; //!< rna data A, used only for scoring arc matches (stacked & unstacked)
+    const RnaData &rna_dataB; //!< rna data B, @see rna_dataA
+
     const ArcMatches &arc_matches; //!< the potential arc matches between A and B
 
     const BasePairs &bpsA; //!< base pairs of A
@@ -1138,6 +1141,8 @@ public:
      */
     ExactMatcher(const Sequence &seqA_,
 		 const Sequence &seqB_,
+		 const RnaData &rna_dataA_,
+		 const RnaData &rna_dataB_,
 		 const ArcMatches &arc_matches_,
 		 const SparseTraceController &sparse_trace_controller_,
 		 PatternPairMap &foundEPMs_,

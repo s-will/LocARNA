@@ -31,6 +31,7 @@ namespace LocARNA {
     class ArcMatches;
     class ArcMatch;
     class MatchProbs;
+    class RnaData;
     
     //! matrix of scores supporting infinity
     typedef std::vector<infty_score_t> ScoreVector;
@@ -102,7 +103,9 @@ namespace LocARNA {
 	//! cost of one exclusion.
 	score_t exclusion;
     
-	double exp_prob;
+	double exp_probA;
+
+	double exp_probB;
   
 	double temperature;
     
@@ -159,7 +162,8 @@ namespace LocARNA {
 	 * @param struct_weight_ 
 	 * @param tau_factor_ 
 	 * @param exclusion_ 
-	 * @param exp_prob_ 
+	 * @param exp_probA_ 
+	 * @param exp_probB_ 
 	 * @param temp_ 
 	 * @param stacking_ 
 	 * @param mea_scoring_ 
@@ -176,7 +180,8 @@ namespace LocARNA {
 		      score_t struct_weight_,
 		      score_t tau_factor_,
 		      score_t exclusion_,
-		      double exp_prob_,
+		      double exp_probA_,
+		      double exp_probB_,
 		      double temp_,
 		      bool stacking_,
 		      bool mea_scoring_,
@@ -193,7 +198,8 @@ namespace LocARNA {
 	      struct_weight(struct_weight_),
 	      tau_factor(tau_factor_),
 	      exclusion(exclusion_),
-	      exp_prob(exp_prob_),
+	      exp_probA(exp_probA_),
+	      exp_probB(exp_probB_),
 	      temperature(temp_),
 	      stacking(stacking_),
 	      mea_scoring(mea_scoring_),
@@ -241,8 +247,8 @@ namespace LocARNA {
     
 	const MatchProbs *match_probs; //! base match probabilities
 
-	const BasePairs *bpsA; //!< base pairs for RNA A
-	const BasePairs *bpsB; //!< base pairs for RNA B
+	const RnaData &rna_dataA; //!< rna data for RNA A
+	const RnaData &rna_dataB; //!< rna data for RNA B
 	const Sequence &seqA; //! sequence A
 	const Sequence &seqB; //! sequence B
      
@@ -259,8 +265,10 @@ namespace LocARNA {
 	 *
 	 * @param seqA first sequence
 	 * @param seqB second sequence
+	 * @param rna_dataA probability data of first sequence
+	 * @param rna_dataB probability data of second sequence
 	 * @param arc_matches the (significant) arc matches between the sequences
-	 * @param match_probs base match probabilities (can be empty for non-mea scores)
+	 * @param match_probs pointer to base match probabilities (can be 0L for non-mea scores)
 	 * @param params a collection of parameters for scoring
 	 * @param exp_scores only if true, the results of the exp_*
 	 * scoring functions are defined, otherwise precomputations
@@ -268,9 +276,11 @@ namespace LocARNA {
 	 */
 	Scoring(const Sequence &seqA,
 		const Sequence &seqB,
-		const ArcMatches *arc_matches,
+		const RnaData &rna_dataA,
+		const RnaData &rna_dataB,
+		const ArcMatches &arc_matches,
 		const MatchProbs *match_probs,
-		const ScoringParams *params,
+		const ScoringParams &params,
 		bool exp_scores=false
 		);
 
@@ -376,28 +386,31 @@ namespace LocARNA {
 	/** 
 	 *  \brief Helper for precompute_weights (does job for one rna)
 	 * 
-	 * @param bps 
-	 * @param len 
-	 * @param weights 
-	 * @param stack_weights 
+	 * @param rna_data rna probability data
+	 * @param bps base pairs
+	 * @param exp_prob background probability
+	 * @param weights[out]        base pair score weights
+	 * @param stack_weights[out]  base pair stacking score weights
 	 */
 	void
-	precompute_weights(const BasePairs &bps,
-			   size_type len,
+	precompute_weights(const RnaData &rna_data,
+			   const BasePairs &bps,
+			   double exp_prob,
 			   std::vector<score_t> &weights,
 			   std::vector<score_t> &stack_weights);
     
 	/**
-	 * returns weight that corresponds to probability p
-	 * in non-mea score
+	 * @brief convert probability to weight for scoring
+	 * 
+	 * @param p probability
+	 * @param exp_prob background probability
+	 *
+	 * @return In standard case, normlized log of probability; in case
+	 * of mea, score_res*probability.
 	 */
 	score_t
-	probToWeight(double p, size_type len) const;
+	probToWeight(double p, double prob_exp) const;
     
-	double
-	prob_exp_f(int seqlen) const {return 1.0/(2.0*seqlen);}//!<expected probability of a base pair (null-model)
-    
-
 	/**
 	 * returns probability of matching the concrete bases in an arcmatch,
 	 * probability is based on ribosum data

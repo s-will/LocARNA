@@ -315,64 +315,7 @@ namespace LocARNA {
 	//     assert(rna_data_!=NULL);
 	//     return *rna_data_;
 	// }
-
-	// /* pass through some methods to rna_data
-	// */
 	
-    	/**
-	 * @brief base pair probability
-	 * @param i left base pair end
-	 * @param j right base pair end
-	 *
-	 * @return probability of base pair (i,j) if data available;
-	 * otherwise, 0
-	 *
-	 * @note if there is a corresponding RnaData object, return
-	 * result of corresponding method
-	 */
-	double 
-	get_arc_prob(size_type i, size_type j) const;
-    
-    	/**
-	 * @brief joint probability 
-	 * @param i left base pair end
-	 * @param j right base pair end
-	 *
-	 * @return probability of basepairs (i,j) and (i+1,j-1)
-	 * occuring simultaneously if data available; otherwise, 0
-	 *
-	 * @note if there is a corresponding RnaData object, return
-	 * result of corresponding method
-	 */
-	double
-	get_arc_2_prob(size_type i, size_type j) const;
-
-	/**
-	 * @brief stack probability 
-	 * @param i left base pair end
-	 * @param j right base pair end
-	 *
-	 * @return probability of basepairs (i,j) stacked, i.e. (i,j)
-	 * under condition (i+1,j-1) if data available; otherwise, 0
-	 *
-	 * @note if there is a corresponding RnaData object, return
-	 * result of corresponding method
-	 */
-	double 
-	get_arc_stack_prob(size_type i, size_type j) const;
-
-	/**
-	 * @brief unpaired probability 
-	 * @param i base position
-	 *
-	 * @return probability that a position i is unpaired if data
-	 * available; otherwise, 0
-	 *
-	 * @note if there is a corresponding RnaData object, return
-	 * result of corresponding method
-	 */
-	double
-	prob_unpaired(size_type i) const;
 
     private:
 	

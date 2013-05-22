@@ -72,8 +72,15 @@ namespace LocARNA {
 	//! @return message
 	virtual const char* what() const throw();
     };
- 
 
+    /**
+     * @brief expected probability of a base pair (null-model)
+     * @note magic formula for expected probability (aka background); actually questionable
+     */
+    inline
+    double
+    prob_exp_f(int seqlen) {return 1.0/(2.0*seqlen);}
+    
 
     // ------------------------------------------------------------
     // transformation of strings
@@ -119,6 +126,7 @@ namespace LocARNA {
      *
      * @return whether fragment has at least length minlen
      */
+    inline
     bool
     frag_len_geq(size_t i, size_t j, size_t minlen) {
 	return i+minlen <= j+1;	
@@ -132,6 +140,7 @@ namespace LocARNA {
      *
      * @return number of bases in range i..j
      */
+    inline
     size_t
     frag_len(size_t i, size_t j) {
 	return j+1-i;	
@@ -148,12 +157,7 @@ namespace LocARNA {
      * characters from s)
      */
     bool
-    has_prefix(const std::string &s, const std::string &p, size_t start=0) {
-	if (s.length()<p.length()-start) {
-	    return false;
-	}
-	return s.substr(start,p.length())==p;
-    }
+    has_prefix(const std::string &s, const std::string &p, size_t start=0);
     
 }
 

@@ -436,17 +436,20 @@ namespace LocARNA {
 	}
 
 	/**
-	 * tests, whether there is an inner arc match (then its arc have non-zero probability)
-	 * and the arcs of the match have non-zero joint probability to occur simultaneously with the inner arc!
+	 * tests, whether there is an inner arc match (then its arcs have non-zero probability)
 	 */
 	bool
 	is_stackable(const ArcMatch &am) const {
 	    return 
-		exists_inner_arc_match(am)
-		&&
-		bpsA->get_arc_2_prob(am.arcA().left(),am.arcA().right())>0 
-		&& 
-		bpsB->get_arc_2_prob(am.arcB().left(),am.arcB().right())>0;
+		exists_inner_arc_match(am);
+	    
+	    // previously there was an additional condition: 
+	    // * and the arcs of the match have non-zero joint probability to occur simultaneously with the inner arc!
+	    // WHY?
+	    // 	&&
+	    // 	bpsA->get_arc_2_prob(am.arcA().left(),am.arcA().right())>0 
+	    // 	&& 
+	    // 	bpsB->get_arc_2_prob(am.arcB().left(),am.arcB().right())>0;
 	}
 
         

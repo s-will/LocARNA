@@ -39,5 +39,14 @@ namespace LocARNA {
 	    if (seq[i]=='T') seq[i]='U';
 	}
     }
+
+    bool
+    has_prefix(const std::string &s, const std::string &p, size_t start) {
+	if (s.length()<p.length()-start) {
+	    return false;
+	}
+	return s.substr(start,p.length())==p;
+    }
+
 }
 

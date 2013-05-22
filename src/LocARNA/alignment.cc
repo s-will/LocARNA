@@ -6,7 +6,6 @@
 #include "sequence.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
-#include "scoring.hh"
 #include "anchor_constraints.hh"
 #include "multiple_alignment.hh"
 #include "string1.hh"
@@ -104,48 +103,6 @@ namespace LocARNA {
 
     // }
 
-    // score_t
-    // AlignmentImpl::evaluate(const BasePairs &bpsA,
-    // 			    const BasePairs &bpsB,
-    // 			    const Scoring &scoring) {
-    // 	throw failure("AlignmentImpl::evaluate(...) not implemented.");
-
-    // 	const RnaStructure rnastrA(impl_->strA_);
-    // 	const RnaStructure rnastrB(impl_->strB_);
-	
-    // 	std::vector<int> inv_a;
-    // 	invert_position_vector(a_,inv_a);
-    // 	std::vector<int> inv_b;
-    // 	invert_position_vector(b_,inv_b);
-	
-	
-    // 	for(RnaStructure::const_iterator it=rnastrA.begin(); rnastrA.end()!=it; ++it) {
-	    
-    // 	}
-	
-	
-    // 	return 0;
-    // }
-    
-    // score_t
-    // Alignment::evaluate(const BasePairs &bpsA,
-    // 			const BasePairs &bpsB,
-    // 			const Scoring &scoring) const {
-	
-    // 	return impl_->evaluate(bpsA,bpsB,scoring);
-    // }
-    
-    
-
-    // score_t
-    // Alignment::evaluate_optimize_consensus_structure(const BasePairs &bpsA,
-    // 						     const BasePairs &bpsB, 
-    // 						     const Scoring &scoring) const {
-    // 	throw failure("Alignment::evaluate_optimize_consensus_structure(...) not implemented.");
-    // 	return 0;
-    // }
-    
-    
     void Alignment::write(std::ostream &out, int width, infty_score_t score,
 			  bool local_out, bool pos_out, bool write_structure) const {
 	write_clustal(out, width, score, local_out, pos_out,false,write_structure);
@@ -330,12 +287,15 @@ namespace LocARNA {
     */
 
     void Alignment::write_pp(std::ostream &out,
-			     const BasePairs &bpsA,
-			     const BasePairs &bpsB,
-			     const Scoring &scoring,
+			     const RnaData &rna_dataA,
+			     const RnaData &rna_dataB,
 			     const AnchorConstraints &seqConstraints,
 			     int width,
-			     bool use_alifold) const {
+			     bool use_alifold,
+			     double expA,
+			     double expB,
+			     bool stacking
+			     ) const {
 
 
 	size_type alisize = pimpl_->a_.size();
@@ -425,8 +385,8 @@ namespace LocARNA {
 
 #    ifdef HAVE_LIBRNA
 	if (use_alifold) {
-	    double p_minA = bpsA.prob_min();
-	    double p_minB = bpsB.prob_min();
+	    double p_minA = rna_dataA.arc_cutoff_prob();
+	    double p_minB = rna_dataB.arc_cutoff_prob();
 	    double p_minMean =
 		exp(
 		    (log(p_minA)*pimpl_->seqA_.row_number()
@@ -440,7 +400,7 @@ namespace LocARNA {
 #    endif
 
 	assert(use_alifold==false /*HAVE_LIBRNA undefined*/);
-	pimpl_->write_consensus_dot_plot(out,aliA,aliB,bpsA,bpsB,scoring);
+	pimpl_->write_consensus_dot_plot(out,aliA,aliB,rna_dataA,rna_dataB,expA,expB,stacking);
 
     }
 
@@ -542,18 +502,18 @@ namespace LocARNA {
     AlignmentImpl::write_consensus_dot_plot(std::ostream &out,
 					    const std::vector<int> &aliA,
 					    const std::vector<int> &aliB,
-					    const BasePairs &bpsA,
-					    const BasePairs &bpsB,
-					    const Scoring &scoring
+					    const RnaData &rna_dataA,
+					    const RnaData &rna_dataB,
+					    double p_expA,
+					    double p_expB,
+					    bool stacking
 					    ) const {
 	int lenA=seqA_.length();
 	int lenB=seqB_.length();
 
-	double p_minA = bpsA.prob_min();
-	double p_minB = bpsB.prob_min();
-	double p_expA = scoring.prob_exp(lenA);
-	double p_expB = scoring.prob_exp(lenB);
-
+	double p_minA = rna_dataA.arc_cutoff_prob();
+	double p_minB = rna_dataB.arc_cutoff_prob();
+	
 	double p_minMean =
 	    exp(
 		(log(p_minA)*seqA_.row_number()
@@ -572,26 +532,26 @@ namespace LocARNA {
 		double pA =
 		    (aliA[i]<0 || aliA[j]<0)
 		    ? 0
-		    : bpsA.get_arc_prob(aliA[i], aliA[j]);
+		    : rna_dataA.arc_prob(aliA[i], aliA[j]);
 
 		double pB =
 		    (aliB[i]<0 || aliB[j]<0)
 		    ? 0
-		    : bpsB.get_arc_prob(aliB[i], aliB[j]);
+		    : rna_dataB.arc_prob(aliB[i], aliB[j]);
 
 		double p = average_probs(pA,pB,p_minMean,p_expA,p_expB);
 
-		if (scoring.stacking()) {
+		if (stacking) {
 
 		    double st_pA =
 			(aliA[i]<0 || aliA[j]<0)
 			? 0
-			: bpsA.get_arc_2_prob(aliA[i], aliA[j]);
+			: rna_dataA.joint_arc_prob(aliA[i], aliA[j]);
 
 		    double st_pB =
 			(aliB[i]<0 || aliB[j]<0)
 			? 0
-			: bpsB.get_arc_2_prob(aliB[i], aliB[j]);
+			: rna_dataB.joint_arc_prob(aliB[i], aliB[j]);
 
 		    double st_p = average_probs(st_pA,st_pB,p_minMean,p_expA,p_expB);
 
