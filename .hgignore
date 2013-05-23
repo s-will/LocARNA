@@ -5,6 +5,10 @@ syntax: glob
 TAGS
 aclocal.m4
 configure
+depcomp
+missing
+src/config.h
+src/stamp-h*
 Makefile.in
 Makefile
 .deps/
@@ -19,18 +23,20 @@ Utils/aln2fa.pl
 Utils/pp2dot
 Utils/locarna-mea
 Utils/reliability-profile.pl
+Utils/alnsel.pl
 configure
 config.log
 config.status
 config.sub
 config.guess
+config.h.in
 libtool
 ltmain.sh
 autom4te.cache/
 
 LocARNA.pc
-LocARNA-1.0.pc
-src/libLocARNA-1.0.la
+LocARNA-*.pc
+src/libLocARNA-*.la
 man/locarna.1
 man/locarna_p.1
 man/locarnate.1
@@ -48,13 +54,14 @@ src/deviation
 src/locarna.bin
 src/locarna_X
 src/locarna_p
+src/locarna_n
 src/ribosum2cc
 src/locarna_rnafold_pp
 src/LocARNA/ribosum85_60.icc
 src/edge_controller_test
 src/trace_controller_test
 src/.libs
-src/LocARNA/.dirstamp
+.dirstamp
 
 src/libLocARNA.la
 src/locarna_deviation
