@@ -5,17 +5,10 @@
 #  include <config.h>
 #endif
 
-#include <iostream>
+#include <iosfwd>
 
 #include <tr1/unordered_map>
-#include "aux.hh"
-
-/* in order to save some space we use a hash for storing the entries of the sparse
-   matrices that allow fast acces to the basepairs (i,j) in a structure.
-*/
-
-
-
+//#include "aux.hh"
 
 namespace LocARNA {
 
@@ -25,14 +18,14 @@ namespace LocARNA {
      *
      * Sparse matrix of entries val_t implements the matrix by a hash
      * map. The class is designed to be largely exchangable with the
-     * non-sparse Matrix class. A proxy class is used to provide the
-     * same syntax for the interface.
+     * non-sparse Matrix class. (A proxy class is used to provide the
+     * same syntax for the interface.)
      *
      * @see Matrix
      */
 
     
-    template <class T>
+    template <typename T>
     class SparseMatrix {
     public:
 	
@@ -88,7 +81,7 @@ namespace LocARNA {
 	     * If entry does not exist, return the default value
 	     */
 	    operator value_t() {
-		const_iterator it = m_->the_map_.find(k_);
+		typename map_t::const_iterator it = m_->the_map_.find(k_);
 		if ( it == m_->the_map_.end() ) 
 		    return m_->def_;
 		else 
@@ -107,7 +100,7 @@ namespace LocARNA {
 	     * @note If entry does not exist, x is added to the default value
 	     */
 	    element
-	    operator +=(value_t x) {
+	    operator +=(const value_t &x) {
 		const_iterator it = m_->the_map_.find(k_);
 		if ( it == m_->the_map_.end() ) 
 		    m_->the_map_[k_] = m_->def_ + x;
@@ -126,14 +119,22 @@ namespace LocARNA {
 	     * 
 	     * @return *this after assigning x
 	     *
-	     * @note If x equals the default value, and the entry exists it is erased
+	     * @note If x equals the default value and the entry exists, it is erased
 	     */
 	    element &
-	    operator =(value_t x) {
-		if (x!=m_->def_) {
-		    m_->the_map_[k_] = x;
-		} else {
+	    operator =(const value_t &x) {
+		if (x==m_->def_) {
 		    m_->the_map_.erase(k_);
+		} else {
+		    // the following replaces m_->the_map_[k_] = x;
+		    // but never calls the default constructor for value_t
+
+		    typename map_t::iterator it = m_->the_map_.find(k_);
+		    if ( it != m_->the_map_.end() ) { 
+			it->second = x;
+		    } else { 
+			m_->the_map_.insert(typename map_t::value_type(k_,x));
+		    }
 		}
 		return *this;
 	    }
@@ -145,14 +146,14 @@ namespace LocARNA {
 	 * 
 	 * @param deflt default value of entries
 	 */
-	SparseMatrix(value_t def) : the_map_(),def_(def) {}
+	SparseMatrix(const value_t &def) : the_map_(),def_(def) {}
 
-	/** 
-	 * @brief Construct empty, default is default of value type
-	 */
-	SparseMatrix() : the_map_(),def_() {
-	    throw(failure("Call to SparseMatrix(): Why does this happen??"));
-	}
+	// /** 
+	//  * @brief Construct empty, default is default of value type
+	//  */
+	// SparseMatrix() : the_map_(),def_() {
+	//     throw(failure("Call to SparseMatrix(): Why does this happen??"));
+	// }
     
 	/** 
 	 * \brief Access to matrix element
@@ -189,12 +190,55 @@ namespace LocARNA {
 	 * @param j index second dimension
 	 * @param val value to be written to entry (i,j)
 	 *
+	 * @note Unlike the assignment operator (via element), there is no
+	 * test whether the default value is assigned.
+	 * Use reset(i,j) if you want to reset matrix entries to the default. 
+	 *
 	 * @post writes entry. If entry didn't exist already it is created.
 	 */
-	void set(size_type i, size_type j, const value_t &val) {
-	    the_map_[std::pair<int,int>(i,j)]=val;
+	void
+	set(size_type i, size_type j, const value_t &val) {
+	    typename map_t::iterator it = the_map_.find(key_t(i,j));
+	    if ( it != the_map_.end() ) { 
+		it->second = val;
+	    } else { 
+		the_map_.insert(typename map_t::value_type(key_t(i,j),val));
+	    }
 	}
     
+	/** 
+	 * @brief Set matrix entry to default value
+	 * 
+	 * @param i index first dimension
+	 * @param j index second dimension
+	 */
+	void
+	reset(size_type i, size_type j) {
+	    typename map_t::iterator it = the_map_.find(key_t(i,j));
+	    if ( it != the_map_.end() ) { 
+		the_map_.erase(key_t(i,j));
+	    } 
+	}
+
+	/**
+	 * @brief Size of sparse matrix
+	 * @return number of non-empty entries
+	 */
+	size_type
+	size() const {
+	    return the_map_.size();
+	}
+
+	/**
+	 * @brief Check for emptiness
+	 * @return true, if sparse matrix contains 
+	 * only implicite default entries.
+	 */
+	bool
+	empty() const {
+	    return the_map_.empty();
+	}
+	
 	/** 
 	 * @brief Clear the matrix
 	 */
@@ -202,7 +246,6 @@ namespace LocARNA {
 	clear() {
 	    the_map_.clear();
 	}
-
 
 	/** 
 	 * \brief Begin const iterator over matrix entries

@@ -260,15 +260,26 @@ namespace LocARNA {
 	 * 
 	 * @param filename name of input file
 	 * @param pfoldparams Partition folding parameters
-	 * @param inloopprobs whether in loop probabilities should be computed
-
+	 *
 	 * @note: this method is designed such that it can be used for
 	 * RnaData and ExtRnaData
 	 */
 	void
 	read_autodetect(const std::string &filename,
-			const PFoldParams &pfoldparams,
-			bool inloopprobs);
+			const PFoldParams &pfoldparams);
+		
+	/**
+	 * @brief check in loop probabilities
+	 *
+	 * @return true iff loop probabilities are available or not
+	 * required 
+	 * @note use to indicate the need for recomputation
+	 * in read_autodetect(); always true in RnaData
+	 */
+	virtual
+	bool
+	inloopprobs_ok() const {return true;}
+		
 	
 	/** 
 	 * Read data in pp format
@@ -284,20 +295,7 @@ namespace LocARNA {
 	virtual
 	void
 	read_pp(const std::string &in, double p_incut=0);
-	
-	/**
-	 * @brief check in loop probabilities
-	 *
-	 * @return true iff loop probabilities are available or not
-	 * required 
-	 * @note use to indicate the need for recomputation
-	 * in read_autodetect(); always true in RnaData
-	 */
-	virtual
-	bool
-	inloopprobs_ok() const {return true;}
-		
-	
+
 	/** 
 	 * Read data in Vienna's dot plot ps format
 	 * 
@@ -374,22 +372,26 @@ namespace LocARNA {
 		   double p_uilcut,
 		   const PFoldParams &pfoldparams);
 
+    private:
 	/**
 	 * @brief copy constructor
 	 */
 	ExtRnaData(const ExtRnaData &);
-	
+    public:
+
 	/** 
 	 * @brief destructor 
 	 */
 	~ExtRnaData();
 	
+    private:
 	/**
 	 * @brief assignment operator
 	 */
 	ExtRnaData &
 	operator =(const ExtRnaData &);
-	
+    public:
+
 	/**
 	 * @brief Get base pair in loop cutoff probability
 	 * @return cutoff probability p_bpcut

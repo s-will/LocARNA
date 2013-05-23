@@ -1,4 +1,4 @@
-#include "aux.hh"
+#include <LocARNA/aux.hh>
 #include <iostream>
 
 

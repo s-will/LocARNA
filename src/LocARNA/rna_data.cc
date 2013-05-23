@@ -54,7 +54,7 @@ namespace LocARNA {
 	// how could we do this more cleanly?
 	self_->pimpl_=this;
 	
-	self_->read_autodetect(filename,pfoldparams,false);
+	self_->read_autodetect(filename,pfoldparams);
     }
 
     RnaDataImpl::RnaDataImpl(RnaData *self,
@@ -68,6 +68,9 @@ namespace LocARNA {
 	 sequence_anchors_(),
 	 stacking_probs_available_(false)
     {
+	// HACK: we need an initialized pimpl_ 
+	self_->pimpl_=this;
+
 	self_->init_from_rna_ensemble(rna_ensemble);
     }
 
@@ -125,10 +128,14 @@ namespace LocARNA {
 	 p_bpilcut_(p_bpilcut),
 	 p_uilcut_(p_uilcut),
 	 arc_in_loop_probs_(arc_prob_matrix_t(0.0)),
-	 unpaired_in_loop_probs_(arc_prob_vector_t()),
+	 unpaired_in_loop_probs_(arc_prob_vector_t(0.0)),
 	 in_loop_probs_available_(false)
     {
-	self_->read_autodetect(filename,pfoldparams,true);
+	// HACK: read_autodetect needs an initialized pimpl_ 
+	// how could we do this more cleanly?
+	self_->pimpl_=this;
+	
+	self_->read_autodetect(filename,pfoldparams);
     }
 
     ExtRnaDataImpl::ExtRnaDataImpl(ExtRnaData *self,
@@ -139,17 +146,26 @@ namespace LocARNA {
 	 p_bpilcut_(p_bpilcut),
 	 p_uilcut_(p_uilcut),
 	 arc_in_loop_probs_(arc_prob_matrix_t(0.0)),
-	 unpaired_in_loop_probs_(arc_prob_vector_t()),
+	 unpaired_in_loop_probs_(arc_prob_vector_t(0.0)),
 	 in_loop_probs_available_(false)
     {
+	// HACK: we need an initialized pimpl_ 
+	self_->pimpl_=this;
+
 	self_->init_from_rna_ensemble(rna_ensemble);
     }
 
-    
+    /*
+     * Implementation note: we use an annoyingly complex mechanism
+     * involving virtual methods and calls to interface-object methods
+     * from the implementation object's constructor to make this
+     * method usable in RnaData and ExtRnaData while avoiding code
+     * duplication. In hindsight, this seems rather pathetic. Could it
+     * be replaced by a simpler mechanism?
+     */
     void
     RnaData::read_autodetect(const std::string &filename,
-			     const PFoldParams &pfoldparams,
-			     bool inloopprobs
+			     const PFoldParams &pfoldparams
 			     ) {
 	bool failed=true;  //flag for signalling a failed attempt to
 			   //read a certain file format
@@ -272,7 +288,7 @@ namespace LocARNA {
 		
 		double p = rna_ensemble.arc_prob(i,j);
 		if (p > p_bpcut_) { // apply filter
-		    arc_probs_.set(i,j,p);
+		    arc_probs_(i,j)=p;
 		}
 	    }
 	}
@@ -286,7 +302,7 @@ namespace LocARNA {
 		for( size_t j=i+1; j <= len; j++ ) {
 		    double p2 = rna_ensemble.arc_2_prob(i,j);
 		    if (p2 > p_bpcut_) { // apply filter to joint probability !
-			arc_2_probs_.set(i, j, p2);
+			arc_2_probs_(i,j)=p2;
 		    }
 		}
 	    }
@@ -316,7 +332,7 @@ namespace LocARNA {
 	    arc_prob_matrix_t m_ij(0.0);
 	    
 	    for( size_t ip=i+1; ip < j; ip++ ) {
-		for( size_t jp=ip+1; jp <= j; jp++ ) {
+		for( size_t jp=ip+TURN+1; jp < j; jp++ ) {
 		    double p = rna_ensemble.arc_in_loop_prob(ip,jp,i,j);
 		    
 		    if ( p > p_bpilcut_ ) {
@@ -324,13 +340,18 @@ namespace LocARNA {
 		    }
 		}
 	    }
-	    arc_in_loop_probs_.set(i,j,m_ij);
+	    
+	    // set only if not empty; use set instead of assignment,
+	    // to avoid the comparison of complex SparseMatrix objects
+	    if (!m_ij.empty()) {
+		arc_in_loop_probs_.set(i,j,m_ij);
+	    }
 	}
 
 	// external
 	arc_prob_matrix_t m_ext(0.0);
 	for( size_t ip=1; ip < len; ip++ ) {
-	    for( size_t jp=ip+1; jp <= len; jp++ ) {
+	    for( size_t jp=ip+TURN+1; jp <= len; jp++ ) {
 		double p = rna_ensemble.arc_external_prob(ip,jp);
 		
 		if ( p > p_bpilcut_ ) {
@@ -338,11 +359,53 @@ namespace LocARNA {
 		}
 	    }
 	}
-	arc_in_loop_probs_.set(0,self_->length()+1,m_ext);
-	
+
+	// set only if not empty; use set instead of assignment,
+	// to avoid the comparison of complex SparseMatrix objects
+	if (!m_ext.empty()) {
+	    arc_in_loop_probs_.set(0,self_->length()+1,m_ext);
+	}
 	
 	// ----------------------------------------
 	// init unpaired probabilities
+	
+
+	// in loop
+	for(arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
+	    self_->arc_probs_end()!=it; ++it) {
+	    pos_type i = it->first.first;
+	    pos_type j = it->first.second;
+	    arc_prob_vector_t v_ij(0.0);
+	    
+	    for( size_t k=i+1; k < j; k++ ) {
+		double p = rna_ensemble.unpaired_in_loop_prob(k,i,j);
+		if ( p > p_uilcut_ ) {
+		    v_ij[k] = p;
+		}
+	    }
+	    
+	    // set only if not empty; use set instead of assignment,
+	    // to avoid the comparison of complex SparseMatrix objects
+	    if (!v_ij.empty()) {
+		unpaired_in_loop_probs_.set(i,j,v_ij);
+	    }
+	}
+
+	// external
+	arc_prob_vector_t v_ext(0.0);
+	for( size_t k=1; k <= len; k++ ) {
+	    double p = rna_ensemble.unpaired_external_prob(k);
+	    
+	    if ( p > p_uilcut_ ) {
+		v_ext[k] = p;
+	    }
+	}
+
+	// set only if not empty; use set instead of assignment,
+	// to avoid the comparison of complex SparseMatrix objects
+	if (!v_ext.empty()) {
+	    unpaired_in_loop_probs_.set(0,self_->length()+1,v_ext);
+	}
 	
 	
 	// set flag
@@ -536,10 +599,10 @@ namespace LocARNA {
 			std::cerr << "WARNING: Input dotplot "<<filename<<" contains invalid line " << line << " (indices out of range)" << std::endl;
 		    } else {
 			if (type=="ubox") {
-			    pimpl_->arc_probs_.set(i,j,p);
+			    pimpl_->arc_probs_(i,j)=p;
 			}
 			else if (pimpl_->stacking_probs_available_ && type=="lbox") { // read a stacking probability
-			    pimpl_->arc_2_probs_.set(i,j,p); // we store the joint probability of (i,j) and (i+1,j-1)
+			    pimpl_->arc_2_probs_(i,j)=p; // we store the joint probability of (i,j) and (i+1,j-1)
 			}
 		    }
 		}
@@ -637,12 +700,12 @@ namespace LocARNA {
 		throw failure(err.str());
 	    }
       
-	    pimpl_->arc_probs_.set(i,j,p);
+	    pimpl_->arc_probs_(i,j)=p;
       
 	    double p2;
 	    
 	    if (in >> p2) {
-		pimpl_->arc_2_probs_.set(i,j,p2); // p2 is joint prob of (i,j) and (i+1,j-1)
+		pimpl_->arc_2_probs_(i,j)=p2; // p2 is joint prob of (i,j) and (i+1,j-1)
 		pimpl_->stacking_probs_available_ = true;
 	    }
 	}

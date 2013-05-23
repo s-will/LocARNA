@@ -800,9 +800,9 @@ namespace LocARNA {
 
     double
     RnaEnsembleImpl::arc_in_loop_prob_ali(size_type ip,
-						size_type jp,
-						size_type i,
-						size_type j) const {
+					  size_type jp,
+					  size_type i,
+					  size_type j) const {
 	assert(in_loop_probs_available_);
 	
 	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(this->McCmat_);

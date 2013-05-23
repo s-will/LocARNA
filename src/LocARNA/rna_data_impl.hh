@@ -8,12 +8,14 @@
 #include <iosfwd>
 #include "rna_data.hh"
 #include "sequence.hh"
+#include "sparse_vector.hh"
 
 namespace LocARNA {
 
     class Sequence;
     class RnaEnsemble;
     class PFoldParams;
+    //    template<class T> class SparseVector<T>;
 
     /**
      * @brief Implementation of RnaData
@@ -139,7 +141,7 @@ namespace LocARNA {
 	// TYPES
 	
 	//! vector of arc probabilities
-	typedef std::vector<double> arc_prob_vector_t;
+	typedef SparseVector<double> arc_prob_vector_t;
 	
 	//! matrix of arc probabilities
 	typedef RnaDataImpl::arc_prob_matrix_t arc_prob_matrix_t;
@@ -241,10 +243,8 @@ namespace LocARNA {
 	 * bases in loops, p_uilcut_
 	 */
 	std::istream &
-	read_pp_in_loop_section(std::istream &in)
-	    const;
-
-
+	read_pp_in_loop_section(std::istream &in) const;
+	
 	/** 
 	 * Generate sequence name from filename 
 	 * 
