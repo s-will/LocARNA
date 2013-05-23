@@ -47,7 +47,8 @@ namespace LocARNA {
 	 p_bpcut_(p_bpcut),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
-	 sequence_anchors_()
+	 sequence_anchors_(),
+	 stacking_probs_available_(false)
     {	
 	// HACK: read_autodetect needs an initialized pimpl_ 
 	// how could we do this more cleanly?
@@ -64,7 +65,8 @@ namespace LocARNA {
 	 p_bpcut_(p_bpcut),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
-	 sequence_anchors_()
+	 sequence_anchors_(),
+	 stacking_probs_available_(false)
     {
 	self_->init_from_rna_ensemble(rna_ensemble);
     }
@@ -77,10 +79,10 @@ namespace LocARNA {
 	 p_bpcut_(p_bpcut),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
-	 sequence_anchors_()
+	 sequence_anchors_(),
+	 stacking_probs_available_(false)
     {
     }
-    	    
     
     ExtRnaData::ExtRnaData(const RnaEnsemble &rna_ensemble,
 			   double p_bpcut,
@@ -137,7 +139,8 @@ namespace LocARNA {
 	 p_bpilcut_(p_bpilcut),
 	 p_uilcut_(p_uilcut),
 	 arc_in_loop_probs_(arc_prob_matrix_t(0.0)),
-	 unpaired_in_loop_probs_(arc_prob_vector_t())
+	 unpaired_in_loop_probs_(arc_prob_vector_t()),
+	 in_loop_probs_available_(false)
     {
 	self_->init_from_rna_ensemble(rna_ensemble);
     }
@@ -148,8 +151,6 @@ namespace LocARNA {
 			     const PFoldParams &pfoldparams,
 			     bool inloopprobs
 			     ) {
-	std::cerr << "RnaData::read_autodetect(): read from file "<<filename<<std::endl;
-	
 	bool failed=true;  //flag for signalling a failed attempt to
 			   //read a certain file format
 	
@@ -188,15 +189,7 @@ namespace LocARNA {
 	    recompute = true;
 	    failed=false;
 	    try {
-
-		std::cerr<<"sequence_"<<std::endl;
-		pimpl_->sequence_.write_debug(std::cerr);
-
 		MultipleAlignment ma(filename, MultipleAlignment::CLUSTAL);
-
-		std::cerr<<"ma"<<std::endl;
-		ma.write_debug(std::cerr);
-		
 
 		pimpl_->sequence_ = ma;
 	    	// even if reading does not fail, we still want to
@@ -240,17 +233,14 @@ namespace LocARNA {
 	}
 	
 	if (recompute) {
-	    std::cerr << "compute ensemble"<<std::endl;
 	    
 	    // recompute all probabilities
 	    RnaEnsemble rna_ensemble(pimpl_->sequence_,pfoldparams,!inloopprobs_ok(),true); // use given parameters, use alifold
 	    
-	    std::cerr << "init from ensemble"<<std::endl;
 	    // initialize from (temporary) RnaEnsemble object; note that the method is virtual
 	    init_from_rna_ensemble(rna_ensemble);
 	}
 	
-	std::cerr << "return from constructing RnaData"<<std::endl;
 	return;
     }
 

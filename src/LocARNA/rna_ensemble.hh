@@ -21,9 +21,7 @@ namespace LocARNA {
 #include "multiple_alignment.hh"
 
 
-/**
- * @todo support constrained pf folding
-*/
+
 namespace LocARNA {
 
     class Sequence;
@@ -38,6 +36,19 @@ namespace LocARNA {
     * Can partition fold RNAs, stores dynamic programming matrices of
     * the McCaskill algorithm.  Computes special "in loop"
     * probabilities.
+    *
+    * @todo support constrained pf folding
+    *
+    * @todo split up RnaEnsemble into two classes; one with and one
+    * without in-loop probabilities (like RnaData and ExtRnaData)
+    *
+    * @todo consider to introduce local_copy flag in constructor to allow
+    * using the object without local copy, which could improve
+    * performance in the common use of the class; however, this is very
+    * dangerous and violates common assumptions, since without local copy
+    * of ViennaRNA-data structures the construction of an object
+    * invalidates previous instances. We could make this an "protected"
+    * option for exclusive internal use, e.g. by RnaData.
     */
     class RnaEnsemble {
     private:
@@ -47,6 +58,9 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct from sequence
 	 * 
+	 * Computes ensemble partition functions and probabilities using McCaskill's algorithm.
+	 * Optionally computes additional matrices required for in-loop probabilities.
+	 *
 	 * @param sequence the RNA sequence as Sequence object
 	 * @param params pfolding parameters
 	 * @param inLoopProbs whether in loop probabilities should be made available

@@ -134,15 +134,13 @@ namespace LocARNA {
 	// run McCaskill and get access to results
 	// in McCaskill_matrices
 	if (!use_alifold) {
-	    compute_McCaskill_matrices(params,inLoopProbs);
+	    compute_McCaskill_matrices(params,inLoopProbs,true);
 	} else {
 	    make_pair_matrix();
-	    compute_McCaskill_alifold_matrices(params,inLoopProbs);
+	    compute_McCaskill_alifold_matrices(params,inLoopProbs,true);
 	}
 	
-	throw failure("ACHTUNG DAS KLINGT GEFAEHRLICH");
-	// since we either have local copies of all McCaskill pf arrays
-	// or don't need them anymore,
+	// since we have local copies of all McCaskill pf arrays
 	// we can free the ones of the Vienna lib
 	if (!used_alifold_) {
 	    free_pf_arrays();
@@ -157,7 +155,7 @@ namespace LocARNA {
     }
     
     void
-    RnaEnsembleImpl::compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs) {
+    RnaEnsembleImpl::compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy) {
 	assert(sequence_.row_number()==1);
 
 	// use MultipleAlignment to get pointer to c-string of the
@@ -201,7 +199,7 @@ namespace LocARNA {
 	// the data structures if we want to keep them.
 	//
 	McCmat_ = 
-	    new McC_matrices_t(c_sequence,inLoopProbs); // makes local copy (if needed)
+	    new McC_matrices_t(c_sequence,local_copy); // optionally makes local copy
 	
 	// precompute further tables (expMLbase, scale, qm2) for computations
 	// of probabilities unpaired / basepair in loop or external
@@ -249,7 +247,7 @@ namespace LocARNA {
 
 
     void
-    RnaEnsembleImpl::compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs) {
+    RnaEnsembleImpl::compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy) {
 	
 	size_t length = sequence_.length();
 	size_t n_seq = sequence_.row_number();

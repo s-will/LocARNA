@@ -45,11 +45,11 @@ namespace LocARNA {
 	 */
 	arc_prob_matrix_t arc_2_probs_; 
 	
-	//! whether stacking probabilities are available
-	bool stacking_probs_available_; 
-	
 	//! string description of sequence anchors (as used in pp files)
 	std::string sequence_anchors_;
+
+	//! whether stacking probabilities are available
+	bool stacking_probs_available_; 
 	
 	/** 
 	 * @brief Construct from RnaEnsemble with cutoff probability

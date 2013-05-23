@@ -199,33 +199,29 @@ namespace LocARNA {
 	 * @pre sequence_ has exactly one row
 	 *
 	 * @param params parameters for partition folding
-	 * @param inLoopProbs whether to compute and keep information for in loop probablities
+	 * @param inLoopProbs whether to compute information for in loop probablities
+	 * @param local_copy whether to make a local copy of ViennaRNA's data structures
 	 * 
-	 * @note Access to these matrices is required by
-	 * prob_unpaired_in_loop() (with inLoopProbs==true). The
-	 * McCaskill algorithm is also performed when the RnaEnsemble
-	 * object is constructed from a sequence.
-	 *
 	 * @note requires linking to librna
 	 */
 	void
-	compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs);
+	compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy=true);
 	
 	
 	
 	/** 
 	 * \brief Computes the McCaskill matrices and keeps them accessible (alifold)
 	 * 
-	 * Allocates and fills the McCaskill alifold matrices. Use
-	 * free_McCaskill_ali_matrices() for freeing the space again.
+	 * Allocates and fills the McCaskill alifold matrices.
 	 *
 	 * @param params parameters for partition folding
 	 * @param inLoopProbs whether to compute and keep information for in loop probablities
+	 * @param local_copy whether to make a local copy of ViennaRNA's data structures
 	 * 
 	 * @note requires linking to librna
 	 */
 	void
-	compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs);
+	compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy=true);
 
 
 
