@@ -173,6 +173,7 @@ namespace LocARNA {
 	short **S3_;	   //!< 'S3' array
 	unsigned short  **a2s_;  //!< 'a2s' array
 	char **Ss_;	   //!< 'Ss' array
+	
     protected:
 	short *pscore_; //!< alifold covariance/conservation scores
     public:

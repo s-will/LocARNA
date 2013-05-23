@@ -98,7 +98,9 @@ namespace LocARNA {
     // ----------------------------------------
 
 
-    McC_matrices_t::McC_matrices_t(char *sequence, bool local_copy) {	
+    McC_matrices_t::McC_matrices_t(char *sequence, bool local_copy)
+	:McC_matrices_base()
+    {	
 	if (local_copy) {
 	    McC_matrices_t McCmat_tmp(sequence,false);
 	    deep_copy(McCmat_tmp);
@@ -124,8 +126,9 @@ namespace LocARNA {
     }
 
     char 
-    McC_matrices_t::rev_ptype(size_t i, size_t j) const { return rtype[ptype_[iidx(i,j)]]; }
-
+    McC_matrices_t::rev_ptype(size_t i, size_t j) const {
+	return rtype[(size_t)ptype(i,j)];
+    }
 
     void
     McC_matrices_t::deep_copy(const McC_matrices_t &McCmat) {

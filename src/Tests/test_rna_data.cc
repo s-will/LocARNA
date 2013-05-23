@@ -10,9 +10,10 @@ using namespace LocARNA;
 int
 main(int argc, char **argv) {
 
-    PFoldParams pfparams(false,false);
+    PFoldParams pfparams(true,true);
     try {
 	RnaData rna_data("Tests/archaea.aln",0.1,pfparams);
+	rna_data.write_size_info(std::cout) << std::endl;
     } catch(failure &f) {
 	std::cerr << "Failure: " << f.what() << std::endl;
 	return 1;
@@ -20,6 +21,7 @@ main(int argc, char **argv) {
 
     try {
 	ExtRnaData rna_data("Tests/archaea.aln",0.01,0.001,0.001,pfparams);
+	rna_data.write_size_info(std::cout) << std::endl;
     } catch(failure &f) {
 	std::cerr << "Failure: " << f.what() << std::endl;
 	return 2;

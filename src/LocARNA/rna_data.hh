@@ -240,6 +240,16 @@ namespace LocARNA {
 	 */
 	std::ostream &
 	write_pp(std::ostream &out, double p_bpcut=0) const;
+
+	/**
+	 * @brief Write object size information
+	 *
+	 * @param out output stream
+	 *
+	 * Writes numbers of stored probabilities to stream
+	 */
+	std::ostream &
+	write_size_info(std::ostream &out) const;
 	
     protected:
 	
@@ -454,6 +464,17 @@ namespace LocARNA {
 	unpaired_external_prob(pos_type k) const;
 
 	
+	/**
+	 * @brief Write object size information
+	 *
+	 * @param out output stream
+	 *
+	 * Writes numbers of stored probabilities to stream
+	 */
+	std::ostream &
+	write_size_info(std::ostream &out) const;
+	
+	
 	// IO
 	/** 
 	 * Write data in extended pp format
@@ -468,11 +489,10 @@ namespace LocARNA {
 	 * bases in loops, p_outuilcut
 	 */
 	std::ostream &
-	write_extpp(std::ostream &out,
-		    double p_outbpcut,
-		    double p_outbpilcut,
-		    double p_outuilcut)
-	const;
+	write_pp(std::ostream &out,
+		 double p_outbpcut,
+		 double p_outbpilcut,
+		 double p_outuilcut) const;
 	
     protected:
 

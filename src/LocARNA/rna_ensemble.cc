@@ -43,19 +43,19 @@ namespace LocARNA {
 			     const PFoldParams &params,
 			     bool inLoopProbs, 
 			     bool use_alifold)
-	: pimpl_(new RnaEnsembleImpl(this,
+	: pimpl_(new RnaEnsembleImpl(//this,
 				     sequence,
 				     params,
 				     inLoopProbs,
 				     use_alifold)) {
     }
     
-    RnaEnsembleImpl::RnaEnsembleImpl(RnaEnsemble *self,
+    RnaEnsembleImpl::RnaEnsembleImpl(//RnaEnsemble *self,
 				     const Sequence &sequence,
 				     const PFoldParams &params,
 				     bool inLoopProbs, 
 				     bool use_alifold=true)
-	: self_(self),
+	: //self_(self),
 	  sequence_(sequence),
 	  pair_probs_available_(false),
 	  stacking_probs_available_(false),
@@ -149,6 +149,7 @@ namespace LocARNA {
 	}
 
 	pair_probs_available_=true;
+	stacking_probs_available_=true;
 	in_loop_probs_available_=inLoopProbs;
 
 	stopwatch.stop("bpp");
@@ -201,43 +202,49 @@ namespace LocARNA {
 	McCmat_ = 
 	    new McC_matrices_t(c_sequence,local_copy); // optionally makes local copy
 	
-	// precompute further tables (expMLbase, scale, qm2) for computations
-	// of probabilities unpaired / basepair in loop or external
-	// as they are required for Exparna P functionality
+	// precompute further tables expMLbase and scale for computations
+	// of probabilities 
+	
+	scale_.resize(length+1);
+	
+	// ----------------------------------------
+	// from scale_pf_params
 	//
+	// double scaling_factor=McCmat_->pf_params_->pf_scale;
+	// std::cerr << "scaling_factor "<<scaling_factor<<" pf_scale " << pf_scale << std::endl;
 	
+	kT = McCmat_->pf_params_->kT;   /* kT in cal/mol  */
+	
+	/* scaling factors (to avoid overflows) */
+	if (pf_scale == -1) { /* mean energy for random sequences: 184.3*length cal */
+	    pf_scale = 
+		exp(-(-185+(McCmat_->pf_params_->temperature-37.)*7.27)/kT);
+	    if (pf_scale<1) pf_scale=1;
+	}
+	
+	scale_[0] = 1.;
+	scale_[1] = 1./pf_scale;
+
+
+	expMLbase_.resize(length+1);
+
+	expMLbase_[0] = 1;
+	expMLbase_[1] = 
+	    McCmat_->pf_params_->expMLbase * scale_[1];
+	
+	for (size_t i=2; i<=sequence_.length(); i++) {
+	    
+	    // due to the folowing: scale_[i] = pow(scale_[1],(double)i)
+	    scale_[i] = 
+		scale_[i/2]*scale_[i-(i/2)];
+	    
+	    expMLbase_[i] = 
+		pow(McCmat_->pf_params_->expMLbase, (double)i) * scale_[i];
+	}
+	
+	    
 	if (inLoopProbs) {
-	    expMLbase_.resize(length+1);
-	    scale_.resize(length+1);
-	    
-	    // ----------------------------------------
-	    // from scale_pf_params
-	    //
-	    kT = McCmat_->pf_params_->kT;   /* kT in cal/mol  */
-	    
-	    /* scaling factors (to avoid overflows) */
-	    if (pf_scale == -1) { /* mean energy for random sequences: 184.3*length cal */
-		pf_scale = 
-		    exp(-(-185+(McCmat_->pf_params_->temperature-37.)*7.27)/kT);
-		if (pf_scale<1) pf_scale=1;
-	    }
-	    
-	    scale_[0] = 1.;
-	    scale_[1] = 1./pf_scale;
-	    expMLbase_[0] = 1;
-	    expMLbase_[1] = 
-		McCmat_->pf_params_->expMLbase * scale_[1];
-	    
-	    for (size_t i=2; i<=sequence_.length(); i++) {
-		
-		// due to the folowing: scale_[i] = pow(scale_[1],(double)i)
-		scale_[i] = 
-		    scale_[i/2]*scale_[i-(i/2)];
- 
-		expMLbase_[i] = 
-		    pow(McCmat_->pf_params_->expMLbase, (double)i) * scale_[i];
-	    }
-	
+	    // precompute qm2 for computation of in-loop probabilities
 	    
 	    // ----------------------------------------
 	    // compute the Qm2 matrix
@@ -296,44 +303,48 @@ namespace LocARNA {
 	// the data structures if we want to keep them.
 	//
 	McCmat_ =
-	    new McC_ali_matrices_t(n_seq,length,inLoopProbs); // makes local copy (if needed)
+	    new McC_ali_matrices_t(n_seq,length,local_copy); // optionally makes local copy
 	
-	// precompute further tables (expMLbase, scale, qm2) for computations
-	// of probabilities unpaired / basepair in loop or external
-	// as they are required for Exparna P functionality
+	
+	// precompute further tables expMLbase and scale for computations
+	// of probabilities 
+	
+	scale_.resize(length+1);
+	
+	// ----------------------------------------
+	// from scale_pf_params
 	//
+	double scaling_factor=McCmat_->pf_params_->pf_scale;
+	// std::cerr << "scaling_factor "<<scaling_factor<<" pf_scale " << pf_scale << std::endl;
+	
+	kT = McCmat_->pf_params_->kT / n_seq;   /* kT in cal/mol  */
+	
+	/* scaling factors (to avoid overflows) */
+	if (scaling_factor == -1) { /* mean energy for random sequences: 184.3*length cal */
+	    scaling_factor = 
+		exp(-(-185+(McCmat_->pf_params_->temperature-37.)*7.27)/kT);
+	    if (scaling_factor<1) scaling_factor=1;
+	    McCmat_->pf_params_->pf_scale=scaling_factor;
+	}
+	scale_[0] = 1.;
+	scale_[1] = 1./scaling_factor;
+
+
+	expMLbase_.resize(length+1);
+	
+	expMLbase_[0] = 1;
+	expMLbase_[1] = 
+	    McCmat_->pf_params_->expMLbase/scaling_factor;
+	for (size_t i=2; i<=sequence_.length(); i++) {
+	    scale_[i] = 
+		scale_[i/2]*scale_[i-(i/2)];
+	    expMLbase_[i] = 
+		pow(McCmat_->pf_params_->expMLbase, (double)i) * scale_[i];
+	}
 	
 	if (inLoopProbs) {
-	    expMLbase_.resize(length+1);
-	    scale_.resize(length+1);
-	    
-	    // ----------------------------------------
-	    // from scale_pf_params
-	    //
-	    double scaling_factor=McCmat_->pf_params_->pf_scale;
-	    kT = McCmat_->pf_params_->kT / n_seq;   /* kT in cal/mol  */
-	    
-	    
-	    /* scaling factors (to avoid overflows) */
-	    if (scaling_factor == -1) { /* mean energy for random sequences: 184.3*length cal */
-		scaling_factor = 
-		    exp(-(-185+(McCmat_->pf_params_->temperature-37.)*7.27)/kT);
-		if (scaling_factor<1) scaling_factor=1;
-		McCmat_->pf_params_->pf_scale=scaling_factor;
-	    }
-	    scale_[0] = 1.;
-	    scale_[1] = 1./scaling_factor;
+	    // precompute qm2 for computation of in-loop probabilities
 
-	    expMLbase_[0] = 1;
-	    expMLbase_[1] = 
-		McCmat_->pf_params_->expMLbase/scaling_factor;
-	    for (size_t i=2; i<=sequence_.length(); i++) {
-		scale_[i] = 
-		    scale_[i/2]*scale_[i-(i/2)];
-		expMLbase_[i] = 
-		    pow(McCmat_->pf_params_->expMLbase, (double)i) * scale_[i];
-	    }
-	    
 	    // ----------------------------------------
 	    // compute the Qm2 matrix
 	    compute_Qm2_ali();
@@ -484,7 +495,7 @@ namespace LocARNA {
 	if ((type==0)
 	    || (((type==3)||(type==4))&&no_closingGU)
 	    || (MCm->qb(i,j)==0.0)
-	    || (self_->arc_prob(i,j)==0.0))
+	    || (MCm->bppm(i,j)==0.0))
 	    {
 		return 0;
 	    }
@@ -499,17 +510,95 @@ namespace LocARNA {
     
     double
     RnaEnsemble::arc_2_prob(size_type i, size_type j) const {
-	McC_matrices_t *MCm = static_cast<McC_matrices_t *>(pimpl_->McCmat_);
+	
+	if (pimpl_->used_alifold_) {
+	    return pimpl_->arc_2_prob_ali(i,j);
+	} else {
+	    return pimpl_->arc_2_prob_noali(i,j);
+	}
+    }
 
+    double
+    RnaEnsembleImpl::arc_2_prob_noali(size_type i, size_type j) const {
+	
+	assert(!used_alifold_);
+	
+	assert(1<=i);
+	assert(frag_len_geq(i,j,TURN+4));
+	assert(j<=sequence_.length());
+	
+	McC_matrices_t *MCm = static_cast<McC_matrices_t *>( McCmat_ );
+    
 	if ( MCm->qb(i+1,j-1) == 0.0 ) {
 	    return 0.0;
 	}
 	
-	FLT_OR_DBL p = arc_prob(i,j);
+	FLT_OR_DBL p = McCmat_->bppm(i,j);
 	p *= MCm->qb(i+1,j-1)/MCm->qb(i,j);
 	p *= exp_E_IntLoop(0,0,MCm->ptype(i,j),
 			   MCm->rev_ptype(i+1,j-1),
-			   0,0,0,0, MCm->pf_params_)*pimpl_->scale_[2];
+			   0,0,0,0, MCm->pf_params_)*scale_[2];
+	
+	return p;
+    }
+
+    double
+    RnaEnsembleImpl::arc_2_prob_ali(size_type i, size_type j) const {
+	
+	assert(used_alifold_);
+	
+	assert(1<=i);
+	assert(frag_len_geq(i,j,TURN+4));
+	assert(j<=sequence_.length());
+	
+	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>  ( McCmat_ );
+
+	if ( MCm->qb(i+1,j-1) == 0.0 ) {
+	    return 0.0;
+	}
+
+	size_t n_seq = sequence_.row_number();
+	
+	// ------------------------------------------------------------
+	// get base pair types
+	//
+	std::vector<int> type(n_seq);
+	std::vector<int> type2(n_seq);
+	
+	for (size_t s=0; s<n_seq; ++s) {
+	    type[s] = pair[MCm->S_[s][i]][MCm->S_[s][j]];
+	    if (type[s]==0) type[s]=7;
+
+	    type2[s] = pair[MCm->S_[s][i+1]][MCm->S_[s][j-1]];
+	    if (type2[s]==0) type2[s]=7;
+	}
+
+	FLT_OR_DBL p =  McCmat_->bppm(i,j);
+
+	p *= MCm->qb(i+1,j-1)/MCm->qb(i,j);
+	
+	for (size_t s=0; s<n_seq; s++) {
+	    
+	    size_t u1 = MCm->a2s_[s][i+1-1] - MCm->a2s_[s][i];
+	    size_t u2 = MCm->a2s_[s][j-1] - MCm->a2s_[s][j-1];
+	    
+	    assert(u1==0);
+	    assert(u2==0);
+	    
+	    p *= exp_E_IntLoop(u1,u2,
+			       type[s], rtype[type2[s]],
+			       MCm->S3_[s][i],
+			       MCm->S5_[s][j],
+			       MCm->S5_[s][i+1],
+			       MCm->S3_[s][j-1],
+			       MCm->pf_params_);
+	}
+	p *= scale_[2];
+	
+	// multiply with pscore contribution for closing base pair (i,j),
+	// like in the calculation of Qb(i,j)
+	double kTn   = MCm->pf_params_->kT/10.;   /* kT in cal/mol  */
+	p *= exp(MCm->pscore(i,j)/kTn);
 	
 	return p;
     }
@@ -526,7 +615,7 @@ namespace LocARNA {
         size_t n_seq = sequence_.row_number();
 	
 	// immediately return 0.0 if i and j do not pair
-	if (self_->arc_prob(i,j)==0.0 || MCm->qb(i,j)==0.0) {return 0.0;}
+	if (MCm->bppm(i,j)==0.0 || MCm->qb(i,j)==0.0) {return 0.0;}
 	
 	// get base pair types for i,j of all sequences
 	std::vector<int> type(n_seq);
@@ -812,10 +901,10 @@ namespace LocARNA {
 	// note: the following tests cover the case that the distances of i,j and ip,jp are too small
 
 	// immediately return 0.0 if i and j do not pair
-	if (self_->arc_prob(i,j)==0.0 || MCm->qb(i,j)==0.0) {return 0.0;}
+	if (MCm->bppm(i,j)==0.0 || MCm->qb(i,j)==0.0) {return 0.0;}
 	
 	// immediately return 0.0 when ip and jp cannot pair
-	if (self_->arc_prob(ip,jp)==0.0 || MCm->qb(ip,jp)==0.0) {return 0.0;}
+	if (MCm->bppm(ip,jp)==0.0 || MCm->qb(ip,jp)==0.0) {return 0.0;}
 	
 	assert(frag_len_geq(i,j,TURN+4));
 	assert(frag_len_geq(ip,jp,TURN+2));

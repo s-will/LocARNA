@@ -284,7 +284,7 @@ namespace LocARNA {
 	// init base pair probabilities
 	arc_probs_.clear();
 	for( size_t i=1; i <= len; i++ ) {
-	    for( size_t j=i+1; j <= len; j++ ) {
+	    for( size_t j=i+TURN+1; j <= len; j++ ) {
 		
 		double p = rna_ensemble.arc_prob(i,j);
 		if (p > p_bpcut_) { // apply filter
@@ -299,7 +299,7 @@ namespace LocARNA {
 	stacking_probs_available_=rna_ensemble.has_stacking_probs();	
 	if (stacking_probs_available_) {
 	    for( size_t i=1; i <= len; i++ ) {
-		for( size_t j=i+1; j <= len; j++ ) {
+		for( size_t j=i+TURN+3; j <= len; j++ ) {
 		    double p2 = rna_ensemble.arc_2_prob(i,j);
 		    if (p2 > p_bpcut_) { // apply filter to joint probability !
 			arc_2_probs_(i,j)=p2;
@@ -368,8 +368,8 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// init unpaired probabilities
+	unpaired_in_loop_probs_.clear();
 	
-
 	// in loop
 	for(arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
 	    self_->arc_probs_end()!=it; ++it) {
@@ -711,6 +711,36 @@ namespace LocARNA {
 	}
     } // end read_pp
 
+    std::ostream &
+    RnaData::write_size_info(std::ostream &out) const {
+	out << "arcs: "<<pimpl_->arc_probs_.size();
+	if (pimpl_->stacking_probs_available_) {
+	    out << "  stackings: "<<pimpl_->arc_2_probs_.size();
+	}
+	return out;
+    }
+
+    std::ostream &
+    ExtRnaData::write_size_info(std::ostream &out) const {
+	// count arcs in loop
+	size_t num_arcs_in_loop=0;
+	// count unpaired bases in loop
+	size_t num_unpaired_in_loop=0;
+
+	size_t len = length();
+	for( size_t i=1; i <= len; i++ ) {
+	    for( size_t j=i+1; j <= len; j++ ) {
+		num_arcs_in_loop += 
+		    arc_prob_matrix_t(pimpl_->arc_in_loop_probs_(i,j)).size();
+		num_unpaired_in_loop += 
+		    ExtRnaDataImpl::arc_prob_vector_t(pimpl_->unpaired_in_loop_probs_(i,j)).size();	
+	    }
+	}
+	
+	return
+	    RnaData::write_size_info(out)
+	    <<"  arcs in loops: " << num_arcs_in_loop << "  unpaireds in loops: " << num_unpaired_in_loop;
+    }
 
 
     // -- writing stuff (old code from RnaEnsemble)

@@ -45,13 +45,13 @@ namespace LocARNA {
 	std::string min_free_energy_structure_; //!< minimum free energy structure (if computed)
 
 
-	RnaEnsembleImpl(RnaEnsemble *self,
+	RnaEnsembleImpl(//RnaEnsemble *self,
 		    const std::string &file,
 		    bool readPairProbs,
 		    bool readStackingProbs,
 		    bool readInLoopProbs);
 	
-	RnaEnsembleImpl(RnaEnsemble *self,
+	RnaEnsembleImpl(//RnaEnsemble *self,
 			const Sequence &sequence,
 			const PFoldParams &params,
 			bool inLoopProbs, 
@@ -87,6 +87,24 @@ namespace LocARNA {
 	compute_ensemble_probs(const PFoldParams &params,bool inLoopProbs, bool use_alifold);
 	
 
+	/**
+	 * \brief Get joint probability of stacked arcs
+	 * @param i left sequence position  
+	 * @param j right sequence position
+	 * \return probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
+	*/
+	double
+	arc_2_prob_noali(size_type i, size_type j) const;
+
+	/**
+	 * \brief Get joint probability of stacked arcs (alifold version)
+	 * @param i left sequence position 
+	 * @param j right sequence position
+	 * \return probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
+	 */
+	double
+	arc_2_prob_ali(size_type i, size_type j) const;
+	
 	/** 
 	 * \brief Unpaired probabilty of base in a specified loop (alifold) 
 	 *
