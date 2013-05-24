@@ -71,7 +71,8 @@ namespace LocARNA {
 	// HACK: we need an initialized pimpl_ 
 	self_->pimpl_=this;
 
-	self_->init_from_rna_ensemble(rna_ensemble);
+	bool stacking=true;
+	self_->init_from_rna_ensemble(rna_ensemble,stacking);
     }
 
     // do almost nothing
@@ -152,7 +153,8 @@ namespace LocARNA {
 	// HACK: we need an initialized pimpl_ 
 	self_->pimpl_=this;
 
-	self_->init_from_rna_ensemble(rna_ensemble);
+	bool stacking=true;
+	self_->init_from_rna_ensemble(rna_ensemble,stacking);
     }
 
     /*
@@ -254,25 +256,28 @@ namespace LocARNA {
 	    RnaEnsemble rna_ensemble(pimpl_->sequence_,pfoldparams,!inloopprobs_ok(),true); // use given parameters, use alifold
 	    
 	    // initialize from (temporary) RnaEnsemble object; note that the method is virtual
-	    init_from_rna_ensemble(rna_ensemble);
+	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
 	}
 	
 	return;
     }
 
     void
-    RnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble) {
-	pimpl_->init_from_rna_ensemble(rna_ensemble);
+    RnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
+				    bool stacking) {
+	pimpl_->init_from_rna_ensemble(rna_ensemble,stacking);
     }
 
     void
-    ExtRnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble) {
-	RnaData::init_from_rna_ensemble(rna_ensemble);
+    ExtRnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
+				       bool stacking) {
+	RnaData::init_from_rna_ensemble(rna_ensemble,stacking);
 	pimpl_->init_from_ext_rna_ensemble(rna_ensemble);
     }
     
     void
-    RnaDataImpl::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble) {
+    RnaDataImpl::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
+					bool stacking) {
 	assert(rna_ensemble.has_base_pair_probs());
 	
 	// ----------------------------------------
@@ -296,7 +301,7 @@ namespace LocARNA {
 	// ----------------------------------------
 	// init stacking probabilities
 	arc_2_probs_.clear();
-	stacking_probs_available_=rna_ensemble.has_stacking_probs();	
+	stacking_probs_available_ = stacking;	
 	if (stacking_probs_available_) {
 	    for( size_t i=1; i <= len; i++ ) {
 		for( size_t j=i+TURN+3; j <= len; j++ ) {

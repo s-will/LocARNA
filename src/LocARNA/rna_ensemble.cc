@@ -252,7 +252,9 @@ namespace LocARNA {
 	}
     }
 
-
+    //! @todo resolve code duplication in
+    //! compute_McCaskill_alifold_matrices and
+    //! compute_McCaskill_matrices (computing scale_, expMLbase_ ...)
     void
     RnaEnsembleImpl::compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy) {
 	

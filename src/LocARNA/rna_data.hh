@@ -263,7 +263,8 @@ namespace LocARNA {
 	 */
 	virtual
 	void
-	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble);
+	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
+			       bool stacking);
 
 	/** 
 	 * @brief read and initialize from file, autodetect format
@@ -508,7 +509,8 @@ namespace LocARNA {
 	 */
 	virtual
 	void
-	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble);
+	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
+			       bool stacking);
 
 	/**
 	 * @brief check in loop probabilities

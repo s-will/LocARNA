@@ -94,9 +94,9 @@ namespace LocARNA {
 	 * @note can be overloaded to initialize with additional
 	 * information (in loop probabilities)
 	 */
-	virtual
 	void
-	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble);
+	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
+			       bool stacking);
 
 	/**
 	 * @brief read sequence section of pp-format
