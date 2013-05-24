@@ -54,7 +54,18 @@ namespace LocARNA {
 	// how could we do this more cleanly?
 	self_->pimpl_=this;
 	
-	self_->read_autodetect(filename,pfoldparams);
+	bool complete=
+	    self_->read_autodetect(filename,pfoldparams.stacking());
+    	
+	if (!complete) {
+	    // recompute all probabilities
+	    RnaEnsemble 
+		rna_ensemble(sequence_,
+			     pfoldparams,false,true); // use given parameters, no inloop, use alifold
+	    
+	    // initialize from RnaEnsemble; note: method is virtual
+	    self_->init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	}
     }
 
     RnaDataImpl::RnaDataImpl(RnaData *self,
@@ -119,7 +130,6 @@ namespace LocARNA {
 	delete pimpl_;
     }
 
-
     ExtRnaDataImpl::ExtRnaDataImpl(ExtRnaData *self,
 				   const std::string &filename,
 				   double p_bpilcut,
@@ -136,7 +146,18 @@ namespace LocARNA {
 	// how could we do this more cleanly?
 	self_->pimpl_=this;
 	
-	self_->read_autodetect(filename,pfoldparams);
+	bool complete=
+	    self_->read_autodetect(filename,pfoldparams.stacking());
+    	
+	if (!complete) {
+	    // recompute all probabilities
+	    RnaEnsemble 
+		rna_ensemble(self_->sequence(),
+			     pfoldparams,true,true); // use given parameters, inloop, use alifold
+	    
+	    // initialize
+	    self_->init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	}
     }
 
     ExtRnaDataImpl::ExtRnaDataImpl(ExtRnaData *self,
@@ -165,10 +186,9 @@ namespace LocARNA {
      * duplication. In hindsight, this seems rather pathetic. Could it
      * be replaced by a simpler mechanism?
      */
-    void
+    bool
     RnaData::read_autodetect(const std::string &filename,
-			     const PFoldParams &pfoldparams
-			     ) {
+			     bool stacking) {
 	bool failed=true;  //flag for signalling a failed attempt to
 			   //read a certain file format
 	
@@ -177,7 +197,7 @@ namespace LocARNA {
 	if (failed) {
 	    failed=false;
 	    try {
-		read_ps(filename);
+		read_ps(filename,stacking);
 		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
 		    failed=true;
 		}
@@ -232,7 +252,7 @@ namespace LocARNA {
 	    recompute=false;
 	    failed=false;
 	    try {
-		read_pp(filename, pfoldparams.stacking());
+		read_pp(filename, stacking);
 		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
 		    failed=true;
 		}
@@ -249,17 +269,8 @@ namespace LocARNA {
 	if (!inloopprobs_ok()) {
 	    recompute=true;
 	}
-	
-	if (recompute) {
-	    
-	    // recompute all probabilities
-	    RnaEnsemble rna_ensemble(pimpl_->sequence_,pfoldparams,!inloopprobs_ok(),true); // use given parameters, use alifold
-	    
-	    // initialize from (temporary) RnaEnsemble object; note that the method is virtual
-	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
-	}
-	
-	return;
+		
+	return !recompute;
     }
 
     void
@@ -540,7 +551,7 @@ namespace LocARNA {
 	return v_ext[k];
     }
 
-    void RnaData::read_ps(const std::string &filename) {
+    void RnaData::read_ps(const std::string &filename, bool stacking) {
 	
 	std::ifstream in(filename.c_str());
 	std::string line;
@@ -555,7 +566,7 @@ namespace LocARNA {
 	pimpl_->stacking_probs_available_=false;
 	
 	while (getline(in,line) && has_prefix(line,"/sequence")) {
-	    if (has_prefix(line,"% Probabilities for stacked pairs")) {
+	    if (stacking && has_prefix(line,"% Probabilities for stacked pairs")) {
 		pimpl_->stacking_probs_available_=true;
 	    } else if (has_prefix(line,"%delete next line to get rid of title")) {
 		getline(in,line);
@@ -606,7 +617,7 @@ namespace LocARNA {
 			if (type=="ubox") {
 			    pimpl_->arc_probs_(i,j)=p;
 			}
-			else if (pimpl_->stacking_probs_available_ && type=="lbox") { // read a stacking probability
+			else if (stacking && pimpl_->stacking_probs_available_ && type=="lbox") { // read a stacking probability
 			    pimpl_->arc_2_probs_(i,j)=p; // we store the joint probability of (i,j) and (i+1,j-1)
 			}
 		    }
@@ -617,7 +628,7 @@ namespace LocARNA {
 
 
     void RnaData::read_pp(const std::string &filename,
-			  double p_incut
+			  bool stacking
 			  ) {
 	
 	std::ifstream in(filename.c_str());

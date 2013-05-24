@@ -271,13 +271,14 @@ namespace LocARNA {
 	 * 
 	 * @param filename name of input file
 	 * @param pfoldparams Partition folding parameters
+	 * @return whether probabilities are read completely
 	 *
 	 * @note: this method is designed such that it can be used for
 	 * RnaData and ExtRnaData
 	 */
-	void
+	bool
 	read_autodetect(const std::string &filename,
-			const PFoldParams &pfoldparams);
+			bool stacking);
 		
 	/**
 	 * @brief check in loop probabilities
@@ -296,16 +297,16 @@ namespace LocARNA {
 	 * Read data in pp format
 	 * 
 	 * @param in input stream
-	 * @param p_incut cutoff probability
+	 * @param stacking whether to read stacking probabilities
 	 *
 	 * Reads only base pairs with probabilities greater than
-	 * p_incut
+	 * p_bpcut_
 	 *
 	 * @note can be overloaded to read extended pp format
 	 */
 	virtual
 	void
-	read_pp(const std::string &in, double p_incut=0);
+	read_pp(const std::string &in, bool stacking);
 
 	/** 
 	 * Read data in Vienna's dot plot ps format
@@ -327,7 +328,7 @@ namespace LocARNA {
 	 * data input 
 	 */
 	void
-	read_ps(const std::string &in);
+	read_ps(const std::string &in,bool stacking);
 
     }; // end class RnaData
 
