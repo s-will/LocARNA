@@ -10,6 +10,7 @@ using namespace LocARNA;
 int
 main(int argc, char **argv) {
 
+#ifdef HAVE_LIBRNA
     PFoldParams pfparams(true,true);
     try {
 	RnaData rna_data("Tests/archaea.aln",0.1,pfparams);
@@ -26,7 +27,7 @@ main(int argc, char **argv) {
 	std::cerr << "Failure: " << f.what() << std::endl;
 	return 2;
     }
-
+#endif
 
     return 0;
 }

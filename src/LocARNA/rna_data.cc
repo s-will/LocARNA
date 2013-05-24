@@ -7,7 +7,9 @@
 #include "rna_ensemble.hh"
 
 #ifdef HAVE_LIBRNA
-#include <ViennaRNA/energy_const.h> // import TURN
+extern "C" {
+#  include <ViennaRNA/energy_const.h> // import TURN
+}
 #endif
 
 namespace LocARNA {

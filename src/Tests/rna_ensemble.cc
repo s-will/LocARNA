@@ -7,6 +7,13 @@
 using namespace LocARNA;
 
 double theta2=1e-2;
+
+
+#ifdef HAVE_LIBRNA
+extern "C" {
+#  include <ViennaRNA/energy_const.h> // import TURN
+}
+#endif
     
 #ifdef HAVE_LIBRNA
 RnaEnsemble *
