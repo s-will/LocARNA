@@ -92,7 +92,7 @@ main(int argc, char **argv) {
 	MultipleAlignment ma4("Tests/archaea.fa",MultipleAlignment::CLUSTAL);
 	if (!ma4.is_proper()) throw(failure("Wrong format"));
 	if (ma4.empty()) throw(failure("Wrong format"));
-	ma4.write_debug(std::cerr);
+	//ma4.write_debug(std::cerr);
     } catch(failure &f) {
 	ok=true;
     }

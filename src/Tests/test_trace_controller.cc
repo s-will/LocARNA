@@ -2,16 +2,16 @@
 #include <string>
 #include <sstream>
 
-#include "LocARNA/sequence.hh"
-#include "LocARNA/multiple_alignment.hh"
-#include "LocARNA/trace_controller.hh"
+#include <LocARNA/sequence.hh>
+#include <LocARNA/multiple_alignment.hh>
+#include <LocARNA/trace_controller.hh>
 
 using namespace LocARNA;
 
 bool verbose=false;
 
 int main(int argc, char**argv) {
-    int retVal = 77;
+    int retVal = 0;
 
     for (size_t i=1; i<(size_t)argc; i++)  {
 	if (std::string(argv[i])=="-v" || std::string(argv[i])=="--verbose") verbose=true;
@@ -54,7 +54,7 @@ int main(int argc, char**argv) {
     
     if (verbose) {
 	std::cout <<"ma:"<<std::endl;
-	ma.print_debug(std::cout);
+	ma.write_debug(std::cout);
     }
     
     Sequence seqA;
@@ -76,8 +76,6 @@ int main(int argc, char**argv) {
     
     //if (verbose) tc.print_debug(std::cout);
     
-    retVal=0;
-
     return retVal;
 
 }

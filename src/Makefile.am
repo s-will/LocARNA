@@ -92,12 +92,12 @@ LDADD=libLocARNA-$(API_VERSION).la
 
 BUILT_SOURCES=LocARNA/ribosum85_60.icc
 
-check_PROGRAMS = Tests/test_multiple_alignment Tests/test_rna_data
-                 # test_trace_controller test_rna_ensemble
-# test_trace_controller_SOURCES = test_trace_controller.cc
-# test_rna_ensemble_SOURCES = test_rna_ensemble.cc
+check_PROGRAMS = Tests/test_multiple_alignment Tests/test_rna_data	\
+                 Tests/test_trace_controller Tests/test_rna_ensemble
+test_rna_ensemble_SOURCES = test_rna_ensemble.cc
 test_rna_data_SOURCES = test_rna_data.cc
-test_multiple_alignment_SOURCES = Tests/test_multiple_alignment.cc
+test_multiple_alignment_SOURCES = test_multiple_alignment.cc
+test_trace_controller_SOURCES = test_trace_controller.cc
 TESTS = $(check_PROGRAMS)
 
 dist_locarna_bin_SOURCES = locarna.cc

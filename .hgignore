@@ -60,12 +60,17 @@ src/locarna_rnafold_pp
 src/LocARNA/ribosum85_60.icc
 src/edge_controller_test
 src/trace_controller_test
-src/.libs
-.dirstamp
-
 src/libLocARNA.la
 src/locarna_deviation
 src/locarnap_fit
+src/.libs
+
+src/Tests/test_rna_data
+src/Tests/test_rna_ensemble
+src/Tests/test_multiple_alignment
+src/Tests/test_trace_controller
+
+.dirstamp
 
 Data/*.out
 
