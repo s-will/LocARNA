@@ -42,8 +42,19 @@ namespace LocARNA {
 	
 	typedef SparseMatrix<double> arc_prob_matrix_t;
 
+	/**
+	 * @brief thrown, when reading data that is not in the supposed format
+	 */
 	struct wrong_format_failure: public failure {
 	    wrong_format_failure():failure("Wrong format") {}
+	};
+
+	/**
+	 * @brief thrown, when the format is recognized but syntax is incorrect
+	 */
+	struct syntax_error_failure: public failure {
+	    syntax_error_failure():failure("Syntax error") {}
+	    syntax_error_failure(const std::string msg):failure("Syntax error: "+msg) {}
 	};
 	
 	typedef size_t size_type; //!< usual size type

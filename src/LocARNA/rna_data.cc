@@ -575,22 +575,33 @@ namespace LocARNA {
 	if (line!="%!PS-Adobe-3.0 EPSF-3.0") {
 	    throw wrong_format_failure();
 	}
-
-	std::string seqname = "seq";
+	
+	std::string seqname = "seq"; // default sequence name
 	
 	pimpl_->stacking_probs_available_=false;
 	
-	while (getline(in,line) && has_prefix(line,"/sequence")) {
+	while (getline(in,line) && !has_prefix(line,"/sequence")) {
 	    if (stacking && has_prefix(line,"% Probabilities for stacked pairs")) {
 		pimpl_->stacking_probs_available_=true;
 	    } else if (has_prefix(line,"%delete next line to get rid of title")) {
 		getline(in,line);
 		std::istringstream in2(line);
 		std::string s;
-		while(in2 >> s && s.length()>=2 && s[0]!='(') {
-		    seqname = s.substr(1,s.length()-2);
+		while(in2 >> s) {
+		    if (s.length()>=2 && s[0]=='(' && s[s.length()-1]==')') {
+			seqname = s.substr(1,s.length()-2);
+			break;
+		    }
+		}
+		if (seqname.empty()) {
+		    throw syntax_error_failure("improper title specification");
 		}
 	    }
+	}
+	
+
+	if (!has_prefix(line,"/sequence")) {
+	    throw syntax_error_failure("no sequence tag");
 	}
 	
 	std::string seqstr="";
