@@ -7,6 +7,12 @@
  *
  **********************************************************************/
 
+// need to include config.h already here
+// because of following #ifdef HAVE_LIBRNA
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 // compile only when libRNA is available for linking
 #ifdef HAVE_LIBRNA
 
@@ -41,6 +47,7 @@
 
 #include "LocARNA/exact_matcher.hh"
 #include "LocARNA/sparsification_mapper.hh"
+#include "LocARNA/pfold_params.hh"
 
 
 using namespace std;
@@ -89,10 +96,10 @@ bool chaining;
 
 // ------------------------------------------------------------
 // File arguments
-std::string file1;
-std::string file2;
-string psFile1;
-string psFile2;
+std::string fileA;
+std::string fileB;
+string psFileA;
+string psFileB;
 string locarna_output;
 string clustal_output;
 string epm_list_output;
@@ -143,10 +150,10 @@ option_def my_options[] = {
     {"coverage-cutoff",0,0,O_ARG_DOUBLE,&coverage_cutoff,"0.5","cov","Skip chaining if best EPM has larger coverage on shortest seq"},
     {"easier_scoring_par",'e',0,O_ARG_INT,&easier_scoring_par,"0","alpha","use only sequential and a constant structural score alpha (easier_scoring_par) for each matched base of a basepair"},
     
-    {"",0,0,O_ARG_STRING,&file1,O_NODEFAULT,"file 1","Basepairs input file 1 (alignment in eval mode)"},
-    {"",0,0,O_ARG_STRING,&file2,O_NODEFAULT,"file 2","Basepairs input file 2 (dp dir in eval mode)"},
-    {"PS_file1",'a',0,O_ARG_STRING,&psFile1,"","psFile1","Postscript output file for sequence A"},
-    {"PS_file2",'b',0,O_ARG_STRING,&psFile2,"","psFile2","Postscript output file for sequence B"},
+    {"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"file A","input file A"},
+    {"",0,0,O_ARG_STRING,&fileB,O_NODEFAULT,"file B","input file B"},
+    {"PS_fileA",'a',0,O_ARG_STRING,&psFileA,"","psFileA","Postscript output file for sequence A"},
+    {"PS_fileB",'b',0,O_ARG_STRING,&psFileB,"","psFileB","Postscript output file for sequence B"},
     {"output-ps", 0,&opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"","Output best EPM chain as colored postscript"},
 //    {"output-locarna", 'o',&opt_locarna_output,O_NO_ARG,0,O_NODEFAULT,"","Output fasta file with anchor constraints for locarna"},
     {"output-locarna",'o',0,O_ARG_STRING,&locarna_output,"locarna_constraints_input.txt","constraintsFile","Fasta file with anchor constraints for locarna"},
@@ -242,26 +249,41 @@ main(int argc, char **argv) {
     getrusage( RUSAGE_SELF, &ruse );
     double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
-    PFoldParams params(no_lonely_pairs,opt_stacking);
+    PFoldParams pfparams(no_lonely_pairs,opt_stacking);
 
-    RnaData rnadataA(file1,true,opt_stacking,true);
-    if (!rnadataA.pair_probs_available() || !rnadataA.in_loop_probs_available()) {
-	//rnadataA.compute_ensemble_probs(params,true);
-    	rnadataA.compute_ensemble_probs(params,true,false);
+    ExtRnaData *rna_dataA=0;
+    try {
+	rna_dataA = new ExtRnaData(fileA,
+				   min_prob,
+				   prob_basepair_in_loop_threshold,
+				   prob_unpaired_in_loop_threshold,
+				   pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<fileA <<std::endl
+		  << "       "<< f.what() <<std::endl;
+	return -1;
     }
-
-    RnaData rnadataB(file2,true,opt_stacking,true);
-    if (!rnadataB.pair_probs_available() || !rnadataB.in_loop_probs_available()) {
-	//rnadataB.compute_ensemble_probs(params,true);
-    	rnadataB.compute_ensemble_probs(params,true,false);
-    }
-
-    Sequence seqA=rnadataA.get_sequence();
-    Sequence seqB=rnadataB.get_sequence();
     
-    MultipleAlignment maA(seqA);
-    MultipleAlignment maB(seqB);
-
+    ExtRnaData *rna_dataB=0;
+    try {
+	rna_dataB = new ExtRnaData(fileB,
+				   min_prob,
+				   prob_basepair_in_loop_threshold,
+				   prob_unpaired_in_loop_threshold,
+				   pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<fileB <<std::endl
+		  << "       "<< f.what() <<std::endl;
+	if (rna_dataA) delete rna_dataA;
+	return -1;
+    }
+    
+    const Sequence &seqA=rna_dataA->sequence();
+    const Sequence &seqB=rna_dataB->sequence();
+    
+    const MultipleAlignment &maA = seqA;
+    const MultipleAlignment &maB = seqB;
+    
     gettimeofday( &tp, NULL );
     double end_fold = static_cast<double>( tp.tv_sec ) + static_cast<double>( tp.tv_usec )/1E6;
     getrusage( RUSAGE_SELF, &ruse );
@@ -282,8 +304,8 @@ main(int argc, char **argv) {
     std::string seqCB = seq_constraints_B;
 
     if (!opt_ignore_constraints) {
-	if ( seqCA=="" ) seqCA = rnadataA.get_seq_constraints();
-	if ( seqCB=="" ) seqCB = rnadataB.get_seq_constraints();
+	if ( seqCA=="" ) seqCA = rna_dataA->sequence_anchors();
+	if ( seqCB=="" ) seqCB = rna_dataB->sequence_anchors();
     }
 
     AnchorConstraints seq_constraints(seqA.length(),seqCA,
@@ -301,8 +323,8 @@ main(int argc, char **argv) {
     ArcMatches *arc_matches;
     
     // initialize from RnaData
-    arc_matches = new ArcMatches(rnadataA,
-				 rnadataB,
+    arc_matches = new ArcMatches(*rna_dataA,
+				 *rna_dataB,
 				 min_prob,
 				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(seqA.length(),seqB.length()),
 				 trace_controller,
@@ -335,14 +357,14 @@ main(int argc, char **argv) {
     
     //time_t start_mapping = time (NULL);
     SparsificationMapper sparse_mapperA(bpsA,
-    		rnadataA,
+    		*rna_dataA,
     		prob_unpaired_in_loop_threshold,
     		prob_basepair_in_loop_threshold,
     		false
     		);
 
     SparsificationMapper sparse_mapperB(bpsB,
-    		rnadataB,
+    		*rna_dataB,
     		prob_unpaired_in_loop_threshold,
     		prob_basepair_in_loop_threshold,
     		false
@@ -361,6 +383,8 @@ main(int argc, char **argv) {
 
     ExactMatcher em(seqA,
 		    seqB,
+		    *rna_dataA,
+		    *rna_dataB,
 		    *arc_matches,
 		    sparse_trace_controller,
 		    myEPMs,
@@ -468,10 +492,10 @@ main(int argc, char **argv) {
     	if(opt_postscript_output){
     		//	 time_t start_ps = time (NULL);
     		if (opt_verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
-    		if (psFile1.size()==0){psFile1 = seqA.seqentry(0).name()+"_EPMs.ps";}
-    		if (psFile2.size()==0){psFile2 = seqB.seqentry(0).name()+"_EPMs.ps";}
+    		if (psFileA.size()==0){psFileA = seqA.seqentry(0).name()+"_EPMs.ps";}
+    		if (psFileB.size()==0){psFileB = seqB.seqentry(0).name()+"_EPMs.ps";}
 
-    		myChaining.MapToPS(maA.consensus_sequence(), maB.consensus_sequence(), myLCSEPM, psFile1,psFile2);
+    		myChaining.MapToPS(maA.consensus_sequence(), maB.consensus_sequence(), myLCSEPM, psFileA,psFileB);
     		//		 time_t stop_ps = time (NULL);
     		// cout << "time for map to ps : " << stop_ps - start_ps << "sec " << endl;
     	}
