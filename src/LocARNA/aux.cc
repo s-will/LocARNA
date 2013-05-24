@@ -1,4 +1,5 @@
 #include "aux.hh"
+#include <sstream>
 #include <iomanip>
 #include <algorithm>
 
@@ -48,5 +49,26 @@ namespace LocARNA {
 	return s.substr(start,p.length())==p;
     }
 
+
+    /**
+      @brief throw rnalib unavailable failure
+      
+      Use this to report missing functionality because the binaries
+      are not linked to the rna library
+      
+      @note the convention to handle rna lib dependencies is to call
+      this from public methods that cannot be executed without the rna
+      library if HAVE_LIBRNA is undefined. The library interface must
+      not change whether the lib is available or not.
+     */
+    void
+    error_rnalib_unavailable() {
+	std::ostringstream err;
+	err << "The requested functionality is not available," << std::endl
+	    << "       since LocARNA was compiled without libRNA support." << std::endl
+	    << "       Activation requires recompilation with configure option --enable-librna." <<std::endl; 
+	throw(failure(err.str()));
+    }
+    
 }
 

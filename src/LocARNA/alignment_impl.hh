@@ -56,11 +56,9 @@ namespace LocARNA {
 				 bool stacking
 				 ) const;
     
-#ifdef HAVE_LIBRNA
 	void
 	write_alifold_consensus_dot_plot(std::ostream &out,
 					 double cutoff) const;
-#endif
 
 	/**
 	   Write raw alignment information for debugging

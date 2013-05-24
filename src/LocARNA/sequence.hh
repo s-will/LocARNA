@@ -13,7 +13,7 @@ namespace LocARNA {
     class Sequence:
 	public MultipleAlignment {
     public:
-	Sequence(): MultipleAlignment() {}
+ 	Sequence(): MultipleAlignment() {}
 	
 	Sequence(const LocARNA::MultipleAlignment &ma):MultipleAlignment(ma) {}
 	

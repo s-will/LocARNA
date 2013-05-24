@@ -9,10 +9,16 @@
 #include "sequence.hh"
 #include "sparse_matrix.hh"
 
+#ifdef HAVE_LIBRNA	
+#  include "mcc_matrices.hh"
+#endif
 
 namespace LocARNA {
 
     struct RnaEnsembleImpl {
+
+	// we don't use the entire rna ensemble implementation if lib rna is not available
+#ifdef HAVE_LIBRNA	
 
 	RnaEnsemble *self_; //!<- pointer to corresponding RnaEnsemble object
     
@@ -27,16 +33,12 @@ namespace LocARNA {
 	//! whether "in loop" probabilities are availabe
 	bool in_loop_probs_available_; 
 		
-# ifdef HAVE_LIBRNA
 	// std::vector<FLT_OR_DBL> qm1; // store qm1 for debugging
 	std::vector<FLT_OR_DBL> qm2_;
 	std::vector<FLT_OR_DBL> scale_;
 	std::vector<FLT_OR_DBL> expMLbase_;
 	
 	McC_matrices_base *McCmat_; //!< DP matrix data structures of VRNA's McCaskill algorithm
-#else
-	void *McCmat_;
-#endif
 	
 	//! whether alifold was used to compute the McCaskill matrices
 	bool used_alifold_;
@@ -73,7 +75,6 @@ namespace LocARNA {
 	 */
 	int ptype_of_admissible_basepair(size_type i,size_type j) const;	
 
-#ifdef HAVE_LIBRNA	
 	/** 
 	 * \brief (re)compute the pair probabilities
 	 * 

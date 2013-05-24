@@ -8,18 +8,7 @@
 #include <iosfwd>
 
 #include "aux.hh"
-
-# ifdef HAVE_LIBRNA
-extern "C" {
-#include <ViennaRNA/fold_vars.h>
-}
-namespace LocARNA {
-    class McC_matrices_base;
-}
-#endif
-
 #include "multiple_alignment.hh"
-
 
 
 namespace LocARNA {
@@ -224,7 +213,6 @@ namespace LocARNA {
 	double
 	unpaired_prob(size_type i) const;
 
-#   ifdef HAVE_LIBRNA
 	// the following methods need linking to librna
 
 	/** 
@@ -328,8 +316,6 @@ namespace LocARNA {
 	arc_external_prob(size_type i,
 			  size_type j) const;
 		
-#   endif // HAVE_LIBRNA
-	
 		
     };
 

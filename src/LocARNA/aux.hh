@@ -158,7 +158,10 @@ namespace LocARNA {
      */
     bool
     has_prefix(const std::string &s, const std::string &p, size_t start=0);
-    
+
+    void
+    error_rnalib_unavailable(); 
+
 }
 
 

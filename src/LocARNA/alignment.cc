@@ -383,7 +383,6 @@ namespace LocARNA {
 
 	out <<"#"<<std::endl;
 
-#    ifdef HAVE_LIBRNA
 	if (use_alifold) {
 	    double p_minA = rna_dataA.arc_cutoff_prob();
 	    double p_minB = rna_dataB.arc_cutoff_prob();
@@ -397,7 +396,6 @@ namespace LocARNA {
 	    pimpl_->write_alifold_consensus_dot_plot(out,p_minMean);
 	    return;
 	}
-#    endif
 
 	assert(use_alifold==false /*HAVE_LIBRNA undefined*/);
 	pimpl_->write_consensus_dot_plot(out,aliA,aliB,rna_dataA,rna_dataB,expA,expB,stacking);
@@ -430,9 +428,9 @@ namespace LocARNA {
     Alignment::get_b() const {return pimpl_->b_;} 
 
 
-#ifdef HAVE_LIBRNA
     void
     AlignmentImpl::write_alifold_consensus_dot_plot(std::ostream &out, double cutoff) const {
+#     ifdef HAVE_LIBRNA
 	char **sequences;
 
 	plist *pl;
@@ -495,8 +493,10 @@ namespace LocARNA {
 
 	free(pl);
 	free_alifold_arrays();
+#     else // HAVE_LIBRNA
+	error_rnalib_unavailable(); 
+#     endif // HAVE_LIBRNA
     }
-#endif
 
     void
     AlignmentImpl::write_consensus_dot_plot(std::ostream &out,

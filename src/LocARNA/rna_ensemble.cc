@@ -27,13 +27,23 @@ extern "C" {
     FLT_OR_DBL *alipf_export_bppm(void);
 }
 
+
+
+
 #include "mcc_matrices.hh"
 
 #endif // HAVE_LIBRNA
 
-
 namespace LocARNA {
 
+    // some macros to handle rna lib dependency more conveniently
+#   ifdef HAVE_LIBRNA
+#     define IF_HAVE_LIBRNA(X) X
+#     define IFELSE_HAVE_LIBRNA(X,Y) X
+#   else    
+#     define IF_HAVE_LIBRNA(X) error_rnalib_unavailable()
+#     define IFELSE_HAVE_LIBRNA(X,Y) error_rnalib_unavailable();Y
+#   endif
 
     // ------------------------------------------------------------
     // implementation of class RnaEnsemble
@@ -43,13 +53,89 @@ namespace LocARNA {
 			     const PFoldParams &params,
 			     bool inLoopProbs, 
 			     bool use_alifold)
+#ifdef HAVE_LIBRNA
 	: pimpl_(new RnaEnsembleImpl(//this,
 				     sequence,
 				     params,
 				     inLoopProbs,
 				     use_alifold)) {
+	
+    }
+#else
+    :pimpl_(0L) {
+	error_rnalib_unavailable();
+    }
+#endif // HAVE_LIBRNA
+
+
+    RnaEnsemble::~RnaEnsemble() {
+	if (pimpl_) delete pimpl_;
+    }
+
+
+    bool
+    RnaEnsemble::has_base_pair_probs() const {
+	IFELSE_HAVE_LIBRNA(return pimpl_->pair_probs_available_,
+			   return false);
+    }
+
+    bool
+    RnaEnsemble::has_stacking_probs() const {
+	IFELSE_HAVE_LIBRNA(return pimpl_->stacking_probs_available_,
+			   return bool());
+    }
+
+    bool
+    RnaEnsemble::has_in_loop_probs() const {
+	IFELSE_HAVE_LIBRNA(return pimpl_->in_loop_probs_available_,
+			   return bool());
+    }
+
+    const Sequence &
+    RnaEnsemble::sequence() const {
+	IFELSE_HAVE_LIBRNA(return pimpl_->sequence_,
+			   static Sequence s;return s);
+    }
+
+    double
+    RnaEnsemble::min_free_energy() const {
+	IFELSE_HAVE_LIBRNA(return pimpl_->min_free_energy_,
+			   return double());
+    }
+
+    std::string
+    RnaEnsemble::min_free_energy_structure() const {
+	IFELSE_HAVE_LIBRNA(return pimpl_->min_free_energy_structure_,
+			   return std::string());
     }
     
+    //! \brief get length of sequence
+    //! \return sequence length
+    size_type
+    RnaEnsemble::length() const {
+	IFELSE_HAVE_LIBRNA(return pimpl_->sequence_.length(),
+			   return size_type());
+    }
+
+    double 
+    RnaEnsemble::arc_prob(size_type i, size_type j) const {
+	IFELSE_HAVE_LIBRNA(return pimpl_->McCmat_->bppm(i,j),
+			   return double());
+    }
+    
+    double
+    RnaEnsemble::arc_2_prob(size_type i, size_type j) const {
+	IFELSE_HAVE_LIBRNA(
+			   if (pimpl_->used_alifold_) {
+			       return pimpl_->arc_2_prob_ali(i,j);
+			   } else {
+			       return pimpl_->arc_2_prob_noali(i,j);
+			   },
+			   return double();
+			   );
+    }
+
+#ifdef HAVE_LIBRNA    
     RnaEnsembleImpl::RnaEnsembleImpl(//RnaEnsemble *self,
 				     const Sequence &sequence,
 				     const PFoldParams &params,
@@ -67,60 +153,12 @@ namespace LocARNA {
     {
 	compute_ensemble_probs(params,inLoopProbs,use_alifold);
     }
-    
-    RnaEnsemble::~RnaEnsemble() {
-	delete pimpl_;
-    }
 
     RnaEnsembleImpl::~RnaEnsembleImpl() {
-#     ifdef HAVE_LIBRNA
 	if (McCmat_) {
 	    delete McCmat_;
 	}
-#     endif
     }
-
-    bool
-    RnaEnsemble::has_base_pair_probs() const {
-	return pimpl_->pair_probs_available_;
-    }
-
-    bool
-    RnaEnsemble::has_stacking_probs() const {
-	return pimpl_->stacking_probs_available_;
-    }
-
-    bool
-    RnaEnsemble::has_in_loop_probs() const {
-	return pimpl_->in_loop_probs_available_;
-    }
-
-
-    const Sequence &
-    RnaEnsemble::sequence() const {
-	return pimpl_->sequence_;
-    }
-
-    double
-    RnaEnsemble::min_free_energy() const {
-	return pimpl_->min_free_energy_;
-    }
-
-    std::string
-    RnaEnsemble::min_free_energy_structure() const {
-	return pimpl_->min_free_energy_structure_;
-    }
-    
-    //! \brief get length of sequence
-    //! \return sequence length
-    size_type
-    RnaEnsemble::length() const {
-	return pimpl_->sequence_.length();
-    }
-    
-    
-
-#ifdef HAVE_LIBRNA
 
     void
     RnaEnsembleImpl::compute_ensemble_probs(const PFoldParams &params,bool inLoopProbs, bool use_alifold) {
@@ -503,21 +541,6 @@ namespace LocARNA {
 	    }
 	
 	return type;
-    }
-
-    double 
-    RnaEnsemble::arc_prob(size_type i, size_type j) const {
-	return pimpl_->McCmat_->bppm(i,j);
-    }
-    
-    double
-    RnaEnsemble::arc_2_prob(size_type i, size_type j) const {
-	
-	if (pimpl_->used_alifold_) {
-	    return pimpl_->arc_2_prob_ali(i,j);
-	} else {
-	    return pimpl_->arc_2_prob_noali(i,j);
-	}
     }
 
     double

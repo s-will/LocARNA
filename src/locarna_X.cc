@@ -534,13 +534,10 @@ main(int argc, char **argv) {
 }
 
 #else // HAVE_LIBRNA
-#include <iostream>
+#include <LocARNA/aux.hh>
 int
 main() {
-    std::cerr
-	<< "Functionality of locarna_X is not available,"
-	<< "since LocARNA was compiled without libRNA support." << std::endl
-	<< "Requires recompilation with configure option --enable-librna." <<std::endl; 
+    write_errormsg_rnalib_unvailable();
     return -1;
 }
 
