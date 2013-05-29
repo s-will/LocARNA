@@ -301,10 +301,10 @@ main(int argc, char **argv) {
     // ----------------------------------------
     // construct set of relevant arc matches
     //
-    ArcMatches *arc_matches;
+    ArcMatchesIndexed *arc_matches;
     
     // initialize from RnaData
-    arc_matches = new ArcMatches(rnadataA,
+    arc_matches = new ArcMatchesIndexed(rnadataA,
 				 rnadataB,
 				 min_prob,
 				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(seqA.length(),seqB.length()),
@@ -388,6 +388,11 @@ main(int argc, char **argv) {
     cout << endl << "time_wall preprocessing = " << setprecision(3) << end_preproc - start_preproc << " sec" << endl;
     cout << "time_cpu preprocessing = " << setprecision(3) << endR_preproc - startR_preproc << " sec" << endl << endl;
 
+    //test
+    em.test_arcmatch_score();
+    cout << "end test arcmatch score " << endl;
+    //return 0;
+
     time_t start_computeMatrices = time (NULL);
     //compute matrices for finding best and enumerating all matchings
     em.compute_arcmatch_score();
@@ -416,10 +421,10 @@ main(int argc, char **argv) {
 	else cout << endl << "start heuristic traceback..." << endl;
 
 	//trace_controller not yet implemented for suboptimal traceback!
-	if(opt_suboptimal && max_diff !=-1){
-		cerr << "suboptimal traceback is not implemented yet with max_diff option " << endl;
-		return 0;
-	}
+	///if(opt_suboptimal && max_diff !=-1){
+	//	cerr << "suboptimal traceback is not implemented yet with max_diff option " << endl;
+	//	return 0;
+	//}
 
 	em.trace_EPMs(opt_suboptimal);
 

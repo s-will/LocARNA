@@ -340,6 +340,10 @@ public:
 	matpos_t first_valid_mat_pos_before_with_tc(index_t indexA, index_t indexB,pair_seqpos_t cur_pos_seq,
 			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
 
+		bool debug_valid_mat_pos = false;
+
+		if(debug_valid_mat_pos) cout << "first valid mat pos before with tc " << endl;
+
 		seqpos_t i = cur_pos_seq.first;
 		seqpos_t j = cur_pos_seq.second;
 		matidx_t min_col,idx_after_max_col;
@@ -357,6 +361,8 @@ public:
 
 			min_col = min_col_idx(indexA,indexB,cur_row,left_endB);
 			idx_after_max_col = idx_after_max_col_idx(indexA,indexB,cur_row,left_endB);
+
+			if(debug_valid_mat_pos) cout << "interval " << min_col << "," << idx_after_max_col << endl;
 
 			// valid interval found
 			if(min_col<idx_after_max_col && min_col<=col_before){
@@ -384,6 +390,88 @@ public:
 
 	}
 
+	// computes from a given matrix position mat_pos the next valid position on the diagonal and
+	// additionally the first valid position in the column mat_pos.second to the top
+	// returns pair<diag_pos,top_pos>
+	pair<matpos_t,matpos_t> first_valid_mat_pos_before_with_tc_from_mat_pos(index_t indexA, index_t indexB,matpos_t mat_pos,
+			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
+		// find valid matrix position based on the SparsificationMapper
+
+		bool debug_valid_mat_pos = false;
+
+		if(debug_valid_mat_pos) cout << "first valid mat pos before with tc from mat pos " << endl;
+		if(debug_valid_mat_pos) cout << "for mat pos " << mat_pos.first << "," << mat_pos.second << endl;
+
+
+		matidx_t max_idx = std::numeric_limits<index_t>::max();
+		matpos_t max_mat_pos = matpos_t(max_idx,max_idx);
+
+		matpos_t diag_pos = max_mat_pos;
+		matpos_t top_pos = max_mat_pos;
+
+		// take matrix postion next on the diagonal (based on the SparsificationMapper!)
+		matidx_t cur_row = mat_pos.first-1; //sparse_mapperA.first_valid_mat_pos_before(indexA,i,left_endA);
+		matidx_t col_before = mat_pos.second-1; //sparse_mapperB.first_valid_mat_pos_before(indexB,j,left_endB);
+
+		matidx_t min_col,idx_after_max_col;
+
+		//bool diag_pos_found = false;
+		//bool top_pos_found = false;
+
+		// find a valid position that is valid also based on the TraceController
+		// go through the rows and find an interval that includes the column col_before or lies
+		// before the column col_before
+		for(;;--cur_row){
+
+			min_col = min_col_idx(indexA,indexB,cur_row,left_endB);
+			idx_after_max_col = idx_after_max_col_idx(indexA,indexB,cur_row,left_endB);
+
+			if(debug_valid_mat_pos) cout << "interval " << min_col << "," << idx_after_max_col << endl;
+
+			//if(min_col<idx_after_max_col && min_col<=col_before){
+			if(min_col<idx_after_max_col){ 	// valid interval found
+				if(diag_pos==max_mat_pos && min_col<=col_before){	// valid diag pos found
+					diag_pos = matpos_t(cur_row,std::min(idx_after_max_col-1,col_before));
+				}
+				if(top_pos==max_mat_pos && mat_pos.second>=min_col && mat_pos.second<idx_after_max_col){
+					top_pos = matpos_t(cur_row,mat_pos.second);
+				}
+			}
+			if(cur_row==0 || (diag_pos!=max_mat_pos && top_pos!=max_mat_pos)){
+				break;
+			}
+		}
+
+		assert(diag_pos!=max_mat_pos); //make sure we found a diagonal position
+		//assert(idx_after_max_col>0);
+
+		//matidx_t max_col = idx_after_max_col-1;
+
+		// the column of the new position is the col_before or lies before it
+		//matpos_t result = matpos_t(cur_row,std::min(max_col,col_before));
+
+		//assert(is_valid_idx_pos(indexA,indexB,result));
+		assert(is_valid_idx_pos(indexA,indexB,diag_pos));
+		if(top_pos!=max_mat_pos) assert(is_valid_idx_pos(indexA,indexB,top_pos));
+		return pair<matpos_t,matpos_t>(diag_pos,top_pos);
+	}
+
+	matpos_t first_left_valid_mat_pos_with_tc(index_t indexA, index_t indexB,matpos_t mat_pos,
+			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
+
+		matpos_t left_pos = matpos_t(std::numeric_limits<index_t>::max(),std::numeric_limits<index_t>::max());
+		matidx_t cur_row = mat_pos.first;
+		matidx_t cur_col = mat_pos.second-1;
+		for(;;--cur_col){
+			if(is_valid_idx_pos(indexA,indexB,matpos_t(cur_row,cur_col))){
+				left_pos = matpos_t(cur_row,cur_col);
+				break;
+			}
+			if(cur_col==0) break;
+		}
+		return left_pos;
+	}
+
 	/**
 	 * \brief maps the matrix position cur_pos to the corresponding pair
 	 * of positions in sequence A and B
@@ -394,6 +482,10 @@ public:
 	 */
 	pair_seqpos_t get_pos_in_seq_new(index_t idxA, index_t idxB,//const Arc &a, const Arc &b,
 			const matpos_t &cur_pos) const{
+		//cout << "get pos in seq new " << cur_pos.first << "," << cur_pos.second;
+		//cout << "valid mat pos idxA " << sparse_mapperA.number_of_valid_mat_pos(idxA);
+		//cout << "valid mat pos idxB " << sparse_mapperB.number_of_valid_mat_pos(idxB) << endl;
+
 		return pair_seqpos_t(sparse_mapperA.get_pos_in_seq_new(idxA,cur_pos.first),
 				sparse_mapperB.get_pos_in_seq_new(idxB,cur_pos.second));
 	}
@@ -580,16 +672,18 @@ public:
 	//! adds an element to the pattern vector
 	void add(seqpos_t pos1_,seqpos_t pos2_,char c){pat_vec.push_back(el_pat_vec(pos1_,pos2_,c));}
 
+	void overwrite(seqpos_t pos1_,seqpos_t pos2_,char c,pat_vec_t::size_type pos){
+		if(pat_vec.size()<=pos){pat_vec.push_back(el_pat_vec(pos1_,pos2_,c));}
+		pat_vec.at(pos)=el_pat_vec(pos1_,pos2_,c);
+	}
+
 	//! appends an arc match to the EPM
 	void add_am(const Arc &a, const Arc &b){
 		add(a.right(),b.right(),')');
 		add(a.left(),b.left(),'(');
 	}
 
-	//! adds the arc match to the epm and stores the pair of arc indices in the am_to_do datastructure
-	void add_and_store_am(const Arc &a, const Arc &b){
-		//add arc match to the epm
-		add_am(a,b);
+	void store_am(const Arc &a, const Arc &b){
 		const PairArcIdx &pair_arc_idx = PairArcIdx(a.idx(),b.idx());
 		//store the pair of arc indices in the am_to_do datastructure
 		am_to_do.push_back(pair_arc_idx);
@@ -621,9 +715,7 @@ public:
 
 	//! prints the EPM
 	void print_epm(std::ostream &out, bool verbose) const{
-		if(verbose){
-			out << "_________________________________________________" << std::endl;
-		}
+		out << "_________________________________________________" << std::endl;
 		out << "epm with score " << this->score << std::endl;
 		out << " ";
 		for(pat_vec_t::const_iterator it=pat_vec.begin();it!=pat_vec.end();++it){
@@ -635,14 +727,15 @@ public:
 			out << it->third;
 		}
 		out << std::endl;
+		out << "am_to_do " << am_to_do << std::endl;
+		out << "tolerance left " << this->max_tol_left << std::endl;
 		if(verbose){
 			out << "score " << score << std::endl;
 			out << "pos " << this->cur_pos.first << "," << this->cur_pos.second << std::endl;
 			out << "state " << this->state << std::endl;
-			out << "tolerance left " << this->max_tol_left << std::endl;
-			out << "am_to_do " << am_to_do << std::endl;
-			out << "______________________________________________________" << std::endl;
+
 		}
+		out << "______________________________________________________" << std::endl;
 	}
 };
 
@@ -730,7 +823,7 @@ private:
     const Sequence &seqA; //!< sequence A
     const Sequence &seqB; //!< sequence B
 
-    const ArcMatches &arc_matches; //!< the potential arc matches between A and B
+    const ArcMatchesIndexed &arc_matches; //!< the potential arc matches between A and B
 
     const BasePairs &bpsA; //!< base pairs of A
     const BasePairs &bpsB; //!< base pairs of B
@@ -770,6 +863,8 @@ private:
 
     const Arc pseudo_arcA; //!< pseudo Arc for sequence A (0,seqA.length())
     const Arc pseudo_arcB; //!< pseudo Arc for sequence B (0,seqB.length())
+
+    const matpos_t invalid_mat_pos;
 
     //todo: add description
     long int get_cur_number_of_EPMs(){
@@ -864,8 +959,8 @@ private:
      * @return the best result for a sequential and structural matching, respectively
      */
     infty_score_t seq_str_matching(const Arc &a, const Arc &b, matpos_t mat_pos_diag,
-    		pair_seqpos_t seq_pos_to_be_matched, score_t add_score,bool matrixLR,
-    		bool suboptimal);
+    		pair_seqpos_t seq_pos_to_be_matched, score_t add_score,
+    		bool matrixLR,bool suboptimal);
 
     //! computes matrix F
     void compute_F();
@@ -905,9 +1000,11 @@ private:
     		const Arc &inner_a,const Arc &inner_b);
 
     /**
-     * \brief  add current epm to list of all EPMs (PatternPairMap)
+     * \brief add current epm to list of all EPMs (PatternPairMap)
      *
      * @param cur_epm EPM that is added to the list of all EPMs
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      */
     void add_foundEPM(EPM &cur_epm, bool count_EPMs);
 
@@ -969,10 +1066,14 @@ private:
     /**
      * traces all EPMs with the suboptimal traceback
      * traces through F matrix and L, G_A, G_AB and LR matrices and enumerate
-     * all suboptimal EPMs based on the given tolerance (a certain difference
-     * to the optimal score or a certain percentage of the optimal score)
+     * all suboptimal EPMs with the difference difference_to_opt_score
+     * to the optimal score
+     *
+     * @param difference_to_opt_score score difference to the optimal score
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      */
-    void trace_EPMs_suboptimal(bool count_EPMs, score_t difference_to_opt_score);
+    void trace_EPMs_suboptimal(score_t difference_to_opt_score, bool count_EPMs);
 
     /**
      * \brief traces through the F matrix from position (i,j) to
@@ -982,6 +1083,8 @@ private:
      * @param j position in sequence B
      * @param max_tol maximal tolerance that is left to trace the EPM
      * @param recurse for debugging
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      */
     void trace_F_suboptimal(pos_type i,pos_type j,score_t max_tol, bool recurse, bool count_EPMs);
 
@@ -994,9 +1097,11 @@ private:
      * @param max_tol maximal tolerance that is left to trace the EPM
      * @param found_epms the datastructure to store the list of EPMs
      * @param recurse for debugging
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      */
     void trace_LGLR_suboptimal(const Arc &a, const Arc &b, score_t max_tol,
-    		epm_cont_t &found_epms, bool recurse);
+    		epm_cont_t &found_epms, bool recurse, bool count_EPMs);
 
 
     /**
@@ -1015,11 +1120,13 @@ private:
      * @param found_epms the list of all traced EPMs
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      */
     void trace_seq_str_matching_subopt(const Arc &a, const Arc &b,
     		score_t score_contr, matpos_t mat_pos_diag, pair_seqpos_t seq_pos_to_be_matched,
-    		const PairArcIdx am, poss_L_LR &poss, size_type pos_cur_epm,
-    		epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do);
+    		const PairArcIdx &am, poss_L_LR &poss, size_type pos_cur_epm,
+    		epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do, bool count_EPMs);
 
     /**
      * \brief checks whether the new possibility is valid
@@ -1032,12 +1139,14 @@ private:
      * @param found_epms the list of all traced EPMs
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      *
      * @return whether pot_new_poss is valid
      */
     bool check_poss(const Arc &a, const Arc &b, const poss_L_LR &pot_new_poss,
     		poss_L_LR &poss, size_type pos_cur_epm, epm_cont_t &found_epms,
-    		map_am_to_do_t &am_to_do_for_cur_am);
+    		map_am_to_do_t &am_to_do_for_cur_am, bool count_EPMs);
 
 
     /**
@@ -1053,10 +1162,12 @@ private:
      * @param found_epms the list of all traced EPMs
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      */
     void store_new_poss(const Arc &a, const Arc &b, bool last_poss,
     		const poss_L_LR &new_poss, poss_L_LR &poss, size_type pos_cur_epm,
-    		epm_cont_t &found_epms, map_am_to_do_t &am_to_do_for_cur_am);
+    		epm_cont_t &found_epms, map_am_to_do_t &am_to_do_for_cur_am, bool count_EPMs);
 
     /**
      * \brief traces through the gap matrices G_A and G_AB in the suboptimal
@@ -1070,10 +1181,12 @@ private:
      * @param found_epms the list of all traced EPMs
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      */
     void trace_G_suboptimal(const Arc &a, const Arc &b, const poss_L_LR &pot_new_poss,
     		poss_L_LR &poss, size_type pos_cur_epm, epm_cont_t &found_epms,
-    		map_am_to_do_t &map_am_to_do);
+    		map_am_to_do_t &map_am_to_do, bool count_EPMs);
 
     /**
      * \brief checks whether the gap in matrices G_A and G_AB of the potential new
@@ -1090,13 +1203,15 @@ private:
 
     /**
      * \brief computes the map for the missing arc matches and preprocesses the
-     *        filling of the EPMs
+     *        filling of the EPMs and stores filling the first possibility
      *
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
 
      * @param pos_cur_epm the position of the current EPM in found_epms (the list of EPMs)
      * @param found_epms the list of all traced EPMs
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      * @param min_allowed_score from F Matrix: minimal score of suboptimal EPMs (only used
      *                          for assigning the correct score after the filling of the EPM!)
      *                          from L/LR Matrix: dummy value -1
@@ -1118,11 +1233,16 @@ private:
      *                  from L/LR Matrix: dummy value -1
      * @param pos_cur_epm the position of the current EPM in found_epms (the list of EPMs)
      * @param found_epms the list of all traced EPMs
+     * @param count_EPMs whether the EPMs are just counted or also
+     * stored in the PatternPairMap
      *
      */
     void fill_epm(const map_am_to_do_t &map_am_to_do, size_type vec_idx,
     		std::vector<score_t> &max_tol_left_up_to_pos, std::vector<const EPM*> &epms_to_insert,
     		score_t min_score, size_type pos_cur_epm, epm_cont_t &found_epms,bool count_EPMs);
+
+   // void set_score_and_add_foundEPM(score_t min_allowed_score, size_type pos_cur_epm, epm_cont_t &found_epms,
+   //     		bool count_EPMs);
 
     // --------------------------------------------
     // debugging/testing
@@ -1164,7 +1284,7 @@ public:
      */
     ExactMatcher(const Sequence &seqA_,
 		 const Sequence &seqB_,
-		 const ArcMatches &arc_matches_,
+		 const ArcMatchesIndexed &arc_matches_,
 		 const SparseTraceController &sparse_trace_controller_,
 		 PatternPairMap &foundEPMs_,
 		 const int &alpha_1,
@@ -1185,8 +1305,11 @@ public:
     //! matrices L, G_A and LR
     void compute_arcmatch_score();
 
+    // debugging
+    void test_arcmatch_score();
+
     /**
-     * \brief computes the traceback and finds all EPMs
+     * \brief computes the traceback and traces all EPMs
      *
      * @param suboptimal whether to compute the suboptimal or
      *        heuristic traceback
