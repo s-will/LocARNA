@@ -137,8 +137,6 @@ struct command_line_parameters {
     
     bool opt_pp_out; //!< whether to write pp output to file
     
-    bool opt_alifold_consensus_dp; //!< whether to compute consensus dp by alifold
-
     bool opt_help; //!< whether to print help
     bool opt_version; //!< whether to print version
     bool opt_verbose; //!< whether to print verbose output
@@ -238,10 +236,6 @@ option_def my_options[] = {
     {"clustal",0,&clp.opt_clustal_out,O_ARG_STRING,&clp.clustal_out,O_NODEFAULT,"file","Clustal output"},
     {"pp",0,&clp.opt_pp_out,O_ARG_STRING,&clp.pp_out,O_NODEFAULT,"file","PP output"},
     
-#ifdef HAVE_LIBRNA
-    {"alifold-consensus-dp",0,&clp.opt_alifold_consensus_dp,O_NO_ARG,0,O_NODEFAULT,"","Compute consensus dot plot by alifold"},
-#endif
-
 //    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
 //    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
@@ -928,12 +922,6 @@ main(int argc, char **argv) {
 	    }
 	}
 	if (clp.opt_pp_out) {
-
-	    // if compiled without vienna rna lib, deactivate alifold
-	    // consensus dot plot option
-#         ifndef HAVE_LIBRNA
-	    clp.opt_alifold_consensus_dp=false;
-#         endif
 
 	    ofstream out(clp.pp_out.c_str());
 	    if (out.good()) {
