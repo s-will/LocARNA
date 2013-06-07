@@ -33,6 +33,7 @@
 #include "LocARNA/ribosum85_60.icc"
 #include "LocARNA/global_stopwatch.hh"
 #include "LocARNA/pfold_params.hh"
+#include "LocARNA/rna_ensemble.hh"
 
 
 using namespace std;
@@ -940,20 +941,20 @@ main(int argc, char **argv) {
 
 	    ofstream out(clp.pp_out.c_str());
 	    if (out.good()) {
-
-		RnaData consensus(*rna_dataA,
-				  *rna_dataB,
-				  alignment,
-				  my_exp_probA,
-				  my_exp_probB);
 		
-		consensus.write_pp(out);
-		// seq_constraints,
-		// clp.output_width,
-		// clp.opt_alifold_consensus_dp,
-		// my_exp_probA,
-		// my_exp_probB,
-		// clp.opt_stacking		    
+		if (clp.opt_alifold_consensus_dp) {
+		    RnaEnsemble ens(MultipleAlignment(alignment),pfparams,false,true); // alifold the alignment
+		    RnaData consensus(ens,clp.min_prob); // construct rna data from ensemble
+		    consensus.write_pp(out,clp.output_width); // write alifold dot plot
+		} else {
+		    RnaData consensus(*rna_dataA,
+				      *rna_dataB,
+				      alignment,
+				      my_exp_probA,
+				      my_exp_probB);
+		    
+		    consensus.write_pp(out,clp.output_width);
+		}
 	    } else {
 		cerr << "Cannot write to "<<clp.pp_out<<endl<<"! Exit.";
 		return_code=-1;
