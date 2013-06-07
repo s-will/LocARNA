@@ -8,6 +8,7 @@
 #include <iosfwd>
 #include <exception>
 #include <string>
+#include <vector>
 #include <assert.h>
 #include <tr1/unordered_map>
 
@@ -44,7 +45,7 @@ namespace LocARNA {
     //! type of a sequence position
     typedef size_type pos_type;
     
-    //! interpret these symbol as gaps when reading alignments
+    //! interpret these symbol as gaps (e.g. used by MultipleAlignment)
     const std::string gap_symbols = "-~.";
     
     //! @brief Test for gap symbol
@@ -59,19 +60,31 @@ namespace LocARNA {
 	std::string msg_;
     public:
 	/** 
-	 * Construct with message
+	 * @brief Construct with message
 	 * 
 	 * @param msg the message
 	 */
-	explicit failure (const std::string& msg): std::exception(), msg_(msg) {};
+	explicit
+	failure (const std::string& msg): std::exception(), msg_(msg) {};
+	
+	/** 
+	 * @brief Construct empty
+	 */
+	explicit 
+	failure (): std::exception(), msg_() {};
 	
 	//! Destruct
-	virtual ~failure() throw();
+	virtual
+	~failure() throw();
 	
-	//! \brief Provide message string
-	//! @return message
-	virtual const char* what() const throw();
+	/** @brief Provide message string
+	 * @return message
+	 */
+	virtual
+	const char* what() const throw();
     };
+    
+
 
     /**
      * @brief expected probability of a base pair (null-model)
@@ -104,6 +117,19 @@ namespace LocARNA {
     void 
     normalize_rna_sequence(std::string &seq);
 
+
+    /**
+     * @brief Tokenize string at separator symbol
+     * 
+     * Split at seperator symbol and write to output vector of
+     * strings. Output vector is overwritten.
+     *
+     * @param s string
+     * @param sep separator
+     * @param v[out] vector of strings
+     */
+    void
+    split_at_separator(const std::string &s, char sep, std::vector<std::string> &v);
 
     /**
      * @brief select FLT_OR_DBL

@@ -1,6 +1,10 @@
 #include <iostream>
+#include <fstream>
+#include <stdio.h>
+
 #include <LocARNA/pfold_params.hh>
 #include <LocARNA/rna_data.hh>
+
 
 using namespace LocARNA;
 
@@ -14,19 +18,34 @@ main(int argc, char **argv) {
     PFoldParams pfparams(true,true);
     try {
 	RnaData rna_data("Tests/archaea.aln",0.1,pfparams);
-	//rna_data.write_size_info(std::cout) << std::endl;
+	rna_data.write_size_info(std::cout) << std::endl;
+
+	std::ofstream out("Tests/archaea.pp");
+	if (!out.good()) {
+	    throw failure("Cannot write to file.");
+	}
+	rna_data.write_pp(out);
+	rna_data.write_pp(std::cout);
+ 
     } catch(failure &f) {
 	std::cerr << "Failure: " << f.what() << std::endl;
 	return 1;
     }
-
+    
     try {
-	ExtRnaData rna_data("Tests/archaea.aln",0.01,0.001,0.001,pfparams);
-	//rna_data.write_size_info(std::cout) << std::endl;
+	RnaData rna_data("Tests/archaea.pp",0.1,pfparams);
+	
+	rna_data.write_size_info(std::cout) << std::endl;
+	
     } catch(failure &f) {
 	std::cerr << "Failure: " << f.what() << std::endl;
-	return 2;
+	
+	std::remove("Tests/archaea.pp");
+	return 1;
     }
+    
+    std::remove("Tests/archaea.pp");
+    
 #endif
 
     return 0;

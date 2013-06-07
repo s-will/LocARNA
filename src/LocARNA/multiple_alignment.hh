@@ -260,7 +260,6 @@ private:
     void
     read_aln_clustalw(std::istream &in);
 
-
     /**
      * \brief Read alignment from input stream, expect fasta format.
      * 
@@ -312,18 +311,26 @@ public:
     MultipleAlignment(std::istream &in, format_t format=CLUSTAL);
     
     /**
-     * \brief Construct as pairwise alignment from names and strings
+     * \brief Construct as pairwise alignment from names and alignment strings
      * @param nameA name of sequence A
      * @param nameB name of sequence B
-     * @param alistrings alignment strings of sequence A and B concatenated by '&'
-     * recognized gap symbols in the alignment string gap_symbols
-    */
-    MultipleAlignment(const std::string &nameA, const std::string &nameB, const std::string &alistrings);
+     * @param alistringA alignment strings of sequence A
+     * @param alistringB alignment strings of sequence B
+     * 
+     * @note handling of gap-symbols: use same gap symbols as in given alistrings
+     */
+    MultipleAlignment(const std::string &nameA,
+		      const std::string &nameB,
+		      const std::string &alistringA,
+		      const std::string &alistringB);
     
     /**
      * \brief Construct from Alignment object
      * @param alignment object of type Alignment
-    */
+     *
+     * @note In case of locality, distinguish properly between regular
+     * gaps '-' and locality gaps '~'.
+     */
     MultipleAlignment(const Alignment &alignment);
     
     /**
@@ -555,11 +562,29 @@ public:
      * \brief Write alignment to stream
      *
      * @param out output stream
+     * @return output stream
      *
      * Writes one line "<name> <seq>" for each single sequence.
      */
-    void
+    std::ostream &
     write(std::ostream &out) const;
+    
+
+    /**
+     * @brief Write formatted line of name and sequence
+     *
+     * The line is formatted such that it fits the output of the write
+     * methods.
+     *
+     * @param out output stream
+     * @param name name string
+     * @param sequence sequence string
+     * @return output stream
+     */
+    std::ostream &
+    write_name_sequence_line(std::ostream &out,
+			     const std::string &name,
+			     const std::string &sequence) const;
     
     /**
      * \brief Write sub-alignment to stream 
@@ -570,8 +595,9 @@ public:
      * @param out output stream
      * @param start start column
      * @param end end column
+     * @return output stream
      */
-    void
+    std::ostream &
     write(std::ostream &out, size_type start, size_type end) const;
     
     /**
@@ -588,6 +614,7 @@ public:
     checkAlphabet(const Alphabet<char> &alphabet) const;
     
 private:
+        
     /**
      * @brief Deviation of a pairwise alignment from a pairwise reference alignment
      * @param a1 first alignment string of alignment a
@@ -654,9 +681,6 @@ private:
     std::vector<int>
     match_vector2(const string1 &s,
 		  const string1 &t);
-    
-
-
 
     /** 
      * Count matches in pairwise alignment
@@ -743,6 +767,15 @@ public:
     void
     write_debug(std::ostream &out=std::cout) const;
 };
+    
+    /**
+     * @brief Write multiple alignment to stream
+     * @param out output stream
+     * @param ma multiple alignment
+     * @return output stream
+     */
+    std::ostream &
+    operator << (std::ostream &out, const MultipleAlignment &ma);
 
 } // end namespace
 

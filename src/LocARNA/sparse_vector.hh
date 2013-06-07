@@ -146,13 +146,6 @@ namespace LocARNA {
 	 */
 	SparseVector(const value_t &def) : the_map_(),def_(def) {}
 
-	// /** 
-	//  * @brief Construct empty, default is default of value type
-	//  */
-	// SparseVector() : the_map_(),def_() {
-	//     throw(failure("Call to SparseVector(): Why does this happen??"));
-	// }
-    
 	/** 
 	 * \brief Access to vector element
 	 * 
@@ -185,7 +178,6 @@ namespace LocARNA {
 	 * @brief Write access to vector entry
 	 * 
 	 * @param i index first dimension
-	 * @param j index second dimension
 	 * @param val value to be written to entry (i,j)
 	 *
 	 * @note Unlike the assignment operator (via element), there is no

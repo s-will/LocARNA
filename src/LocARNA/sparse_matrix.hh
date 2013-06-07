@@ -8,11 +8,9 @@
 #include <iosfwd>
 
 #include <tr1/unordered_map>
-//#include "aux.hh"
 
 namespace LocARNA {
 
-    
     /**
      * \brief Represents a sparse 2D matrix
      *
@@ -37,7 +35,7 @@ namespace LocARNA {
 
     protected:
 		
-	typedef std::tr1::unordered_map<key_t,value_t,pair_of_size_t_hash > map_t; //!< map type  
+	typedef std::tr1::unordered_map<key_t,value_t,pair_of_size_t_hash > map_t; //!<map type 
 	map_t the_map_; //!< internal representation of sparse matrix
 	value_t def_; //!< default value of matrix entries
     
@@ -148,13 +146,6 @@ namespace LocARNA {
 	 */
 	SparseMatrix(const value_t &def) : the_map_(),def_(def) {}
 
-	// /** 
-	//  * @brief Construct empty, default is default of value type
-	//  */
-	// SparseMatrix() : the_map_(),def_() {
-	//     throw(failure("Call to SparseMatrix(): Why does this happen??"));
-	// }
-    
 	/** 
 	 * \brief Access to matrix element
 	 * 
@@ -204,6 +195,26 @@ namespace LocARNA {
 	    } else { 
 		the_map_.insert(typename map_t::value_type(key_t(i,j),val));
 	    }
+	}
+
+	/** 
+	 * \brief Write access to matrix element of const matrix
+	 * 
+	 * @param i index first dimension
+	 * @param j index second dimension
+	 *
+	 * @note Creates the entry (i,j) if it is not represented yet.
+	 *
+	 * @return reference to matrix entry (i,j)
+	 */
+	value_t & 
+	ref(size_type i, size_type j) {
+	    typename map_t::iterator it = the_map_.find(key_t(i,j));
+	    if ( it == the_map_.end() ) { 
+		the_map_.insert(typename map_t::value_type(key_t(i,j),def_));
+		it = the_map_.find(key_t(i,j));
+	    }
+	    return it->second;
 	}
     
 	/** 

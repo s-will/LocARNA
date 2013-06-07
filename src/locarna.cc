@@ -467,7 +467,25 @@ main(int argc, char **argv) {
 	    return -1;
 	}
 	
-	multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),seqB.seqentry(0).name(),clp.max_diff_pw_alignment);
+	std::vector<std::string> alistr;
+	split_at_separator(clp.max_diff_pw_alignment,'&',alistr);
+	
+	if (alistr.size()!=2) {
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; require exactly one '&' separating the alignment strings."
+		      << std::endl; 
+	    return -1;
+	}
+    
+	if (alistr[0].length() != alistr[1].length()) {
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; alignment strings have unequal lengths."
+		      << std::endl; 
+	    return -1;
+	}
+	
+	multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),
+						       seqB.seqentry(0).name(),
+						       alistr[0],
+						       alistr[1]);
     }
 
     // if (multiple_ref_alignment) {
@@ -773,8 +791,7 @@ main(int argc, char **argv) {
 	    std::cout << "WARNING: reporting score components is still experimental." << std::endl;
 	    std::cout << "         This does not work properly for some less standard scoring types, e.g. free end gaps." << std::endl;
 
-	    const std::vector<int> &a = alignment.get_a();
-	    const std::vector<int> &b = alignment.get_b();
+	    const Alignment::edge_vector_t edges = alignment.global_alignment_edges();
 	    
 	    score_t seq_sim=0;
 	    score_t gap_cost=0; // count linear component of gap cost
@@ -789,26 +806,26 @@ main(int argc, char **argv) {
 	    bool openA=false; // is a gap open in A
 	    bool openB=false; // is a gap open in B
 	    
-	    for (size_t k=0; k< a.size(); k++) {
-		if (a[k]>0 && b[k]>0) {
-		    seq_sim += scoring.basematch(a[k],b[k]);
+	    for (size_t k=0; k< edges.size(); k++) {
+		if (edges[k].first>0 && edges[k].second>0) {
+		    seq_sim += scoring.basematch(edges[k].first,edges[k].second);
 		}
-		if (a[k]<0) {
+		if (edges[k].first<0) {
 		    if (!openA) {
 			gap_numA++;
 			openA=true;
 		    }
-		    gap_cost += scoring.gapA(b[k]);
+		    gap_cost += scoring.gapA(edges[k].second);
 		} else {
 		    openA=false;
 		}
 
-		if (b[k]<0) {
+		if (edges[k].second<0) {
 		    if (!openB) {
 			gap_numB++;
 			openB=true;
 		    }
-		    gap_cost += scoring.gapB(a[k]);
+		    gap_cost += scoring.gapB(edges[k].first);
 		} else {
 		    openB=false;
 		}

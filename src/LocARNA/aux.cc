@@ -12,7 +12,7 @@ namespace LocARNA {
 	//exception::what();
 	return msg_.c_str();
     }
-    
+
     bool
     is_gap_symbol(char c) {
 	return gap_symbols.find(c)!=std::string::npos;
@@ -50,6 +50,22 @@ namespace LocARNA {
     }
 
 
+    void
+    split_at_separator(const std::string &s, char sep, std::vector<std::string> &v) {
+	std::string str=s;
+	v.clear();
+	size_t pos;
+	while ((pos=str.find(sep))!=std::string::npos) {
+	    if (pos>0) {
+		v.push_back(str.substr(0,pos-1));
+	    } else {
+		v.push_back("");
+	    }
+	    str = str.substr(pos+1); // note: if pos+1 == length of str, substr yields empty
+	}
+	v.push_back(str);
+    }
+    
     /**
       @brief throw rnalib unavailable failure
       

@@ -305,7 +305,25 @@ main(int argc, char **argv) {
 	    return -1;
 	}
 	
-	multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),seqB.seqentry(0).name(),max_diff_pw_alignment);
+	std::vector<std::string> alistr;
+	split_at_separator(max_diff_pw_alignment,'&',alistr);
+	
+	if (alistr.size()!=2) {
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; require exactly one '&' separating the alignment strings."
+		      << std::endl; 
+	    return -1;
+	}
+    
+	if (alistr[0].length() != alistr[1].length()) {
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; alignment strings have unequal lengths."
+		      << std::endl; 
+	    return -1;
+	}
+	
+	multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),
+						       seqB.seqentry(0).name(),
+						       alistr[0],
+						       alistr[1]);
     }
 
     // if (multiple_ref_alignment) {

@@ -22,50 +22,84 @@ namespace LocARNA {
     
 	const Sequence &seqA_;
 	const Sequence &seqB_;
-    
-	std::vector<int> a_; //!< a_[i] is the position in seq A of
-	//!the i-th alignment edge
-	std::vector<int> b_; //!< b_[i] is the position in seq B of
-	//!the i-th alignment edge
-    
+	
+	/**
+	 * \brief first components of alignment edges
+	 *
+	 * a_[i] is the position of the i-th alignment edge in seq A.
+	 * Entries are positions of sequence A or -1 for gap.
+	 *
+	 * Edges are sorted in ascending order.
+	 *
+	 * @note the contained positions define the aligned
+	 * subsequence! Not necessarily all sequence positions are
+	 * contained.
+	 */
+	std::vector<int> a_; 
+
+	/**
+	 * \brief second components of alignment edges
+	 *
+	 * b_[i] is the position of the i-th alignment edge in seq B.
+	 * Entries are positions of sequence B or -1 for gap.
+	 *
+	 * Edges are sorted in ascending order.
+	 *
+	 * @note the contained positions define the aligned
+	 * subsequence! Not necessarily all sequence positions are
+	 * contained.
+	 */
+    	std::vector<int> b_; 
+	
 	std::vector<char> strA_;
 	std::vector<char> strB_;
-
+	
 	AlignmentImpl(Alignment *self, const Sequence &seqA, const Sequence &seqB)
-	    : self_(self),seqA_(seqA),seqB_(seqB) {}
-
-	//! compute the average of two probabilities.
-	//!
-	//! This will be very critical for multiple alignment in at least
-	//! two respects. We don't want that high probabilities get
-	//! extinguished during progressive alignment
-	//! Second, we don't want that probabilities >=p_min accumulate
-	//!
+	    : self_(self),seqA_(seqA),seqB_(seqB),a_(),b_(),strA_(),strB_() {}
+	
+	/**
+	 * @brief Average of two probabilities.
+	 *
+	 * This is very critical for multiple alignment in at least
+	 * two respects. We don't want that high probabilities get
+	 * extinguished during progressive alignment.  Second, we
+	 * don't want that probabilities >=p_min accumulate
+	 */
 	double
 	average_probs(double pA, double pB, double p_min,
 		      double p_expA, double p_expB) const;
     
 	void
 	write_consensus_dot_plot(std::ostream &out,
-				 const std::vector<int> &aliA,
-				 const std::vector<int> &aliB,
+				 const Alignment::edge_vector_t &edges,
 				 const RnaData &bpsA,
 				 const RnaData &bpsB,
 				 double expA,
 				 double expB,
 				 bool stacking
 				 ) const;
-    
+	
 	void
 	write_alifold_consensus_dot_plot(std::ostream &out,
 					 double cutoff) const;
-
+	
 	/**
-	   Write raw alignment information for debugging
-	*/
+	 * @brief Write raw alignment information for debugging
+	 */
 	void 
 	write_debug(std::ostream &out) const;
 
+	/**
+	 * @brief Consensus constraint string
+	 * @param seqConstraints anchor constraints
+	 * @param edges alignment edges
+	 * @return consensus constraint string
+	 */
+	static
+	std::string
+	consensus_constraint_string(const AnchorConstraints &seqConstraints, 
+				    const Alignment::edge_vector_t &edges);
+	
     };
 
 } // end namespace LocARNA

@@ -38,7 +38,8 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/sequence.hh LocARNA/basepairs.hh LocARNA/alignment.hh	\
 	LocARNA/alignment_impl.hh LocARNA/rna_ensemble.hh		\
 	LocARNA/rna_ensemble_impl.hh LocARNA/rna_data.hh		\
-	LocARNA/rna_data_impl.hh LocARNA/params.hh			\
+	LocARNA/ext_rna_data.hh LocARNA/rna_data_impl.hh		\
+	LocARNA/ext_rna_data_impl.hh LocARNA/params.hh			\
 	LocARNA/pfold_params.hh LocARNA/scoring.hh			\
 	LocARNA/scoring_fwd.hh LocARNA/infty_int.hh			\
 	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
@@ -90,7 +91,7 @@ transform = s/\.bin$$//
 # all binaries should be linked to libLocARNA
 LDADD=libLocARNA-$(API_VERSION).la
 
-TESTS = Tests/multiple_alignment Tests/rna_data		\
+TESTS = Tests/multiple_alignment Tests/rna_data Tests/ext_rna_data	\
         Tests/trace_controller Tests/rna_ensemble
 check_PROGRAMS = $(TESTS)
 AM_DEFAULT_SOURCE_EXT = .cc

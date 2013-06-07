@@ -48,8 +48,8 @@ AnchorConstraints::AnchorConstraints(size_type lenA,
     std::vector<std::string> seqVecA;
     std::vector<std::string> seqVecB;
     
-    transform_input(seqVecA,seqCA);
-    transform_input(seqVecB,seqCB);
+    split_at_separator(seqCA,'#',seqVecA);
+    split_at_separator(seqCB,'#',seqVecB);
     
     /*
     for(size_type i=0; i<seqVecA.size(); ++i) {
@@ -84,16 +84,6 @@ AnchorConstraints::AnchorConstraints(size_type lenA,
     init_tables(nameTabA,nameTabB);
 }
 
-
-void 
-AnchorConstraints::transform_input(std::vector<std::string> &seqVec,
-				     const std::string &seqStr) {
-    std::string line;
-    std::istringstream ss(seqStr);
-    while (getline(ss,line,'#')) {
-	seqVec.push_back(line);
-    }
-}
 
 
 bool

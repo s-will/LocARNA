@@ -10,7 +10,7 @@
 
 #include "aux.hh"
 #include "basepairs.hh"
-#include "rna_data.hh"
+#include "ext_rna_data.hh"
 
 // use for type safe index_t
 // #include "type_wrapper.hh"

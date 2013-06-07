@@ -14,7 +14,7 @@ int
 main(int argc, char **argv) {
     
     // create simple alignment
-    MultipleAlignment ma("seqA","seqB","A--CGT-U&CC-CG-CU");
+    MultipleAlignment ma("seqA","seqB","A--CGT-U","CC-CG-CU");
     
     //! test whether ma is proper
     if (!ma.is_proper()) {

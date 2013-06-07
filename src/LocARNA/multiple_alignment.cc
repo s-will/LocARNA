@@ -61,29 +61,22 @@ namespace LocARNA {
 	create_name2idx_map();
     }
 
-    MultipleAlignment::MultipleAlignment(const std::string &nameA, const std::string &nameB, const std::string &alistrings) {
-    	size_t separator_pos=alistrings.find("&");
-    
-    	if (separator_pos==std::string::npos) {
-    	    throw failure("No separator in string of alignment strings."); 
-    	}
-    
-    	const std::string aliA = alistrings.substr(0,separator_pos);
-    	const std::string aliB = alistrings.substr(separator_pos+1);
-    
-    	if (aliA.length() != aliB.length()) {
+    MultipleAlignment::MultipleAlignment(const std::string &nameA,
+					 const std::string &nameB, 
+					 const std::string &aliA,
+					 const std::string &aliB) {
+	if (aliA.length() != aliB.length()) {
     	    throw failure("Alignment strings of unequal length."); 
     	}
-    
+	
     	alig_.push_back(SeqEntry(nameA,aliA));
     	alig_.push_back(SeqEntry(nameB,aliB));
-
+	
     	create_name2idx_map();
     }
 
     MultipleAlignment::MultipleAlignment(const Alignment &alignment) {
-	const std::vector<int> &a=alignment.get_a();
-	const std::vector<int> &b=alignment.get_b();
+	const Alignment::edge_vector_t &edges = alignment.global_alignment_edges();
 
 	const Sequence &seqA=alignment.get_seqA();
 	const Sequence &seqB=alignment.get_seqB();
@@ -91,25 +84,28 @@ namespace LocARNA {
 	std::vector<std::string> aliA(seqA.row_number(),"");
 	std::vector<std::string> aliB(seqB.row_number(),"");
     
-	std::vector<int>::size_type alisize = a.size();
+	std::vector<int>::size_type alisize = edges.size();
     
 	for (size_type i=0; i<alisize; i++) {
-	    if ( a[i]<0 ) {
+	    if ( edges[i].first<0 ) {
+		// distinguish regular and locality gaps
+		char gap_symbol=(edges[i].first==-1)?'-':'~';
 		for (size_type k=0; k<seqA.row_number(); k++) {
-		    aliA[k] += '-';
+		    aliA[k] += gap_symbol;
 		}
 	    } else {
 		for (size_type k=0; k<seqA.row_number(); k++) {
-		    aliA[k] += seqA.column(a[i])[k];
+		    aliA[k] += seqA.column(edges[i].first)[k];
 		}
 	    }
-	    if ( b[i]<0 ) {
+	    if ( edges[i].second<0 ) {
+		char gap_symbol=(edges[i].second==-1)?'-':'~';
 		for (size_type k=0; k<seqB.row_number(); k++) {
-		    aliB[k] += '-';
+		    aliB[k] += gap_symbol;
 		}
 	    } else {
 		for (size_type k=0; k<seqB.row_number(); k++) {
-		    aliB[k] += seqB.column(b[i])[k];
+		    aliB[k] += seqB.column(edges[i].second)[k];
 		}
 	    }
 	}
@@ -708,29 +704,39 @@ namespace LocARNA {
 	return cs;
     }
 
-    void 
+    std::ostream &
+    MultipleAlignment::write_name_sequence_line(std::ostream &out,
+						 const std::string &name,
+						 const std::string &sequence) const{
+	int ow=out.width(26);
+	out << std::left << name<<" ";
+	out.width(ow);
+	
+	out << sequence;
+	out << std::endl;
+
+	return out;
+    }
+
+    std::ostream &
     MultipleAlignment::write(std::ostream &out,
 			     size_type start, 
 			     size_type end) const
     {
 	for (size_type i=0; i<row_number(); i++) {
-	    int ow=out.width(26);
-	    out << std::left << alig_[i].name()<<" ";
-	    out.width(ow);
-	
-	    for (size_type j=start; j<=end; j++) {
-		out << alig_[i].seq()[j];
-	    }
-	    out << std::endl;
+	    write_name_sequence_line(out,alig_[i].name(),alig_[i].seq().substr(start,end-start+1).to_string());
 	}
+	return out;
     }
 
-    void MultipleAlignment::write(std::ostream &out) const {
-	write(out,1,length());
+    std::ostream &
+    MultipleAlignment::write(std::ostream &out) const {
+	return
+	    write(out,1,length());
     }
     
-    
-    void MultipleAlignment::reverse() {
+    void 
+    MultipleAlignment::reverse() {
 	for (std::vector<SeqEntry>::iterator it=alig_.begin(); alig_.end()!=it; ++it) {
 	    it->reverse();
 	}
@@ -792,6 +798,13 @@ namespace LocARNA {
     // 	return 0;
     // }
 
+    
+
+    std::ostream &
+    operator << (std::ostream &out, const MultipleAlignment &ma) {
+	ma.write(out);
+	return out;
+    }
     
 
 } // end namespace 

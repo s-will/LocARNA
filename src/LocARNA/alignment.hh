@@ -29,6 +29,14 @@ namespace LocARNA {
 	AlignmentImpl *pimpl_;
 	
     public:
+
+	//! type of an alignment edge
+	typedef std::pair<int,int> edge_t;
+	
+	//! type of vector of alignment edges
+	typedef std::vector<edge_t> edge_vector_t;
+	
+	
 	/**
 	 * Construct empty alignment from sequences
 	 * @param seqA First sequence
@@ -53,12 +61,12 @@ namespace LocARNA {
 	 * as many non-gap characters as their corresponding sequence
 	 * Only the position of gap characters is relevant; the actual
 	 * non-gap characters can be arbitrary (e.g. consensus
-	 * symbols).  The gap character is defined by
-	 * global function LocARNA::is_gap_symbol().
-	 * @todo implement
+	 * symbols).
+	 * 
+	 * @note Distinguishs regular and locality gaps.
 	 */
 	Alignment(const Sequence &seqA, const Sequence &seqB,
-		  const string1 &alistrA, const string1 &alistrB);
+		  const std::string &alistrA, const std::string &alistrB);
 	
 	/** 
 	 * @brief copy constructor
@@ -66,7 +74,7 @@ namespace LocARNA {
 	 * Copies implementation object (not only pointer) 
 	 */
 	Alignment(const Alignment &alignment);
-
+	
 	/** 
 	 * @brief assignment operator
 	 * @param rna_data object to be assigned
@@ -90,7 +98,6 @@ namespace LocARNA {
 	void
 	set_structures(const RnaStructure &structureA,const RnaStructure &structureB);
 	
-	
 	/**
 	   Delete the alignment edges and reset structure
 	*/
@@ -98,10 +105,21 @@ namespace LocARNA {
 	clear();
 
 	/**
-	   \brief Append an alignment edge
-	*/
+	 * \brief Append an alignment edge
+	 * @param i first position of edge (or -1 for gap)
+	 * @param j second position of edge (or -1 for gap)
+	 * Edges have to be appended in ascending order
+	 */
 	void
 	append(int i, int j);
+
+	/**
+	 * \brief Append an alignment edge
+	 * @param e edge
+	 * Edges have to be appended in ascending order
+	*/
+	void
+	append(edge_t e);
 
 	/**
 	   \brief Add a basepair to the structure of A
@@ -115,15 +133,30 @@ namespace LocARNA {
 	void
 	add_basepairB(int i, int j);
 
+	
 	/**
-	   \brief Write the alignment to output stream
-	   
-	   Write to stream out with line-width (without name) width If
-	   opt_local_out, then output only sequence-locally aligned
-	   part
-       
-	   Writes in kind of clustal format without heading line
-	*/
+	 * @brief All alignment edges
+	 *
+	 * @returns vector of alignment edges
+	 *
+	 * The returned vector contains all positions of the sequence,
+	 * we distinguish gaps (-1) and locality gaps (-2); the latter
+	 * are paired with positions that are not aligned at all
+	 * (i.e. they are not part of the local alignment). Edges are
+	 * sorted (ascendingly).
+	 */
+	const edge_vector_t
+	global_alignment_edges() const;
+	
+	/**
+	 * \brief Write the alignment to output stream
+	 *  
+	 * Write to stream out with line-width (without name)
+	 * width. If opt_local_out, then output only sequence-locally
+	 * aligned part
+	 *
+	 * Writes clustal-like format (without header)
+	 */
 	void
 	write(std::ostream &out, 
 	      int width, 
@@ -134,16 +167,22 @@ namespace LocARNA {
 	      ) const;
 
 	/**
-	   Write in clustal format
-	   @todo: broken for empty alignments ~
-	*/
+	 * @brief Write in clustal format
+	 *
+	 * @todo broken for empty alignments ~
+	 *
+	 * @todo Replace! Replacing the method by conversion to
+	 * MultipleAlignment object and write method of
+	 * MultipleAlignment class seems difficult, because of extra
+	 * functionality: writing only local, writing annotated
+	 * structures and "hits", which is all burried in this method.
+	 */
 	void
 	write_clustal(std::ostream &out, int width, infty_score_t score,
 		      bool opt_local_out=false,bool opt_pos_out=false,
 		      bool clustal_format=true,
 		      bool write_structure=false) const;
 	
-    	
 	/** 
 	 * @brief Write pp format to stream
 	 *
@@ -152,8 +191,8 @@ namespace LocARNA {
 	 * writes them to the output
 	 * 
 	 * @param out output stream
-	 * @param bpsA base pairs for sequence A
-	 * @param bpsB base pairs for sequence B
+	 * @param rna_dataA rna data A
+	 * @param rna_dataB rna data B
 	 * @param seq_constraints sequence constraints
 	 * @param width output width
 	 * @param use_alifold whether to use alifold for consensus dot plot computation
@@ -161,19 +200,25 @@ namespace LocARNA {
 	 * @param expB background probability B
 	 * @param stacking whether to write probabilities for stacking terms
 	 *
-	 * @todo consensus computation and writing of pp file should be separated
+	 * @todo replace using new RnaData object; consensus
+	 * computation and writing of pp file should be separated
 	 */
 	void
 	write_pp(std::ostream &out,
-		 const RnaData &bpsA,
-		 const RnaData &bpsB,
+		 const RnaData &rna_dataA,
+		 const RnaData &rna_dataB,
 		 const AnchorConstraints &seq_constraints, 
 		 int width,
 		 bool use_alifold,
 		 double expA,
 		 double expB,
-		 bool scoring
+		 bool stacking
 		 ) const;
+	
+	
+	/* start/end of (locally) aligned subsequences 
+	   (this is used when finding k-best alignments in Aligner)
+	 */
 	
 	//! get first position of A that is locally aligned to something
 	size_type
@@ -191,36 +236,20 @@ namespace LocARNA {
 	size_type
 	get_local_endB() const;
 
-    
+
 	/* access */
     
 	/**
-	 * read access seqA
-	 * @returns sequence A
+	 * @brief read access seqA
+	 * @return sequence A
 	 */
 	const Sequence &get_seqA() const;
 
 	/**
-	 * read access seqB
-	 * @returns sequence B
+	 * @brief read access seqB
+	 * @return sequence B
 	 */
 	const Sequence &get_seqB() const;
-
-	/**
-	 * read access a
-	 * @returns vector a
-	 * vector a is the vector of first components of the aligment
-	 * edges. Entries are positions of sequence A or -1 for gap
-	 */
-	const std::vector<int> &get_a() const;
-
-	/**
-	 * read access b
-	 * @returns vector b
-	 * vector b is the vector of second components of the aligment
-	 * edges. Entries are positions of sequence B or -1 for gap
-	 */
-	const std::vector<int> &get_b() const;
 
     };
 

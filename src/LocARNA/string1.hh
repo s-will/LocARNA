@@ -12,12 +12,12 @@
 namespace LocARNA {
     /** 
      * @brief A simple 1-based string
-	
+     *
      * Features:
      * - based on  c++ std::string class, but offers very limited interface
      * - conversion from and to std::string
      * - access via operator []
-     * - length method
+     * - support of various "string" methods
      */
     class string1 {
 	std::string s_;
@@ -44,7 +44,7 @@ namespace LocARNA {
 	 */
 	std::string 
 	to_string() const {
-	    return s_.substr(1,length());
+	    return s_.substr(1);
 	}
     
 	/** 
@@ -112,7 +112,20 @@ namespace LocARNA {
 	push_back(char c) {
 	    s_.push_back(c);
 	}
-    
+	
+	/** 
+	 * @brief Substring
+	 * 
+	 * @param pos start position of substring
+	 * @param len length of substring
+	 * 
+	 * @return substring at pos of length len 
+	 */
+	string1 
+	substr(size_t pos, size_t len) const {
+	    return s_.substr(pos,len);
+	}
+	
     };
 
 } // end namespace LocARNA

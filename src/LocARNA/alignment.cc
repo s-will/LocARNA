@@ -31,17 +31,66 @@ namespace LocARNA {
 
     Alignment::Alignment(const Sequence &seqA, 
 			 const Sequence &seqB, 
-			 const string1 &alistrA,
-			 const string1 &alistrB)
+			 const std::string &alistrA,
+			 const std::string &alistrB)
 	: pimpl_(new AlignmentImpl(this,seqA,seqB)) {
-	throw failure("Alignment::Alignment(...) constructor from alignment strings not implemented.");
 	
-	assert(alistrA.length()==alistrB.length());
+	assert(alistrA.length()!=alistrB.length());
+	
+	size_t alilen = alistrA.length();
+	
+#     ifndef NDEBUG
+	// assert that there is no gap only column in input
+	bool no_gaponly=true;
+	for(size_t k=0; k<alilen && no_gaponly; ++k) {
+	    if (is_gap_symbol(alistrA[k]) && is_gap_symbol(alistrB[k])) {
+		no_gaponly=false;
+	    }
+	}
+	assert(no_gaponly);
 
-	//size_t posA;
-	//size_t posB;
-	for(size_t i=0; i<alistrA.length(); ++i) {
-	    //...
+	// assert correct number of gaps
+	size_t gapsA=0;
+	size_t gapsB=0;
+	for(size_t k=0; k<alilen; ++k) {
+	    if (is_gap_symbol(alistrA[k])) {
+		gapsA++;
+	    }
+	    if (is_gap_symbol(alistrB[k])) {
+		gapsB++;
+	    }
+	}
+	assert(alistrA.length() == seqA.length() + gapsA);
+	assert(alistrB.length() == seqB.length() + gapsB);
+#     endif
+
+	
+	size_t posA=0;
+	size_t posB=0;
+	
+	for(size_t k=0; k<alilen; ++k) {
+	    if (is_gap_symbol(alistrA[k])) {
+		// in case of locality gaps, no alignment edge is appended;
+		// skip directly to the next position in the alignment strings
+		if (alistrA[k]=='~') continue;
+		
+		// add gap entry
+		pimpl_->a_.push_back(-1);
+	    }
+	    else {
+		posA++;
+		pimpl_->a_.push_back(posA);
+	    }
+
+	    if (is_gap_symbol(alistrB[k])) {
+		// in case of locality gaps, no alignment edge is appended;
+		// skip directly to the next position in the alignment strings
+		if (alistrB[k]=='~') continue;
+		pimpl_->b_.push_back(-1);
+	    } else {
+		posB++;
+		pimpl_->b_.push_back(posB);
+	    }
 	}
     }
 
@@ -59,14 +108,15 @@ namespace LocARNA {
 	return *this;
     }
     
-    void
-    Alignment::set_consensus_structure(const RnaStructure &structure) {
-	throw("Alignment::set_consensus_structure(...) not implemented");
-    }
     
     void
     Alignment::set_structures(const RnaStructure &structureA,const RnaStructure &structureB) {
 	throw("Alignment::set_structures(...) not implemented");
+    }
+
+    void
+    Alignment::set_consensus_structure(const RnaStructure &structure) {
+	set_structures(structure,structure);
     }
 
     void Alignment::clear() {
@@ -280,86 +330,68 @@ namespace LocARNA {
 	    }
 	} // end if (alisize>0)
     }
+    
+    const Alignment::edge_vector_t 
+    Alignment::global_alignment_edges() const {
+	edge_vector_t edges;
+	
+	const std::vector<int> &a=pimpl_->a_;
+	const std::vector<int> &b=pimpl_->b_;
 
-
-    /*
-      write pp output, which can be reread for progressive alignment!
-    */
-
-    void Alignment::write_pp(std::ostream &out,
-			     const RnaData &rna_dataA,
-			     const RnaData &rna_dataB,
-			     const AnchorConstraints &seqConstraints,
-			     int width,
-			     bool use_alifold,
-			     double expA,
-			     double expB,
-			     bool stacking
-			     ) const {
-
-
-	size_type alisize = pimpl_->a_.size();
+	size_t alisize=a.size();
 
 	int lastA=1; // bases consumed in sequence A
 	int lastB=1; // ---------- "" ------------ B
-
-	plusvector<int> aliA;
-	plusvector<int> aliB;
-
+	
 	for (size_type i=0; i<alisize; i++) {
-	    // out << "("<<a_[i]<<","<<b_[i]<<") "; out.flush();
-	    for (int j=lastA; j<pimpl_->a_[i]; j++) {
-		aliA += j; lastA++;
-		aliB += -2;
+	    for (int j=lastA; j<a[i]; j++) {
+		edges.push_back(edge_t(j,-2));
+		lastA++;
 	    }
-	    for (int j=lastB; j<pimpl_->b_[i]; j++) {
-		aliA += -2;
-		aliB += j; lastB++;
+	    for (int j=lastB; j<b[i]; j++) {
+		edges.push_back(edge_t(-2,j));
+		lastB++;
 	    }
-	    if ( pimpl_->a_[i] < 0 ) {
-		aliA += -1;
-	    } else {
-		aliA += pimpl_->a_[i]; lastA++;
+	    int x=-1;
+	    int y=-1;
+	    if ( a[i] >= 0 ) {
+		x = a[i];
+		lastA++;
 	    }
-	    if ( pimpl_->b_[i] < 0 ) {
-		aliB += -1;
-	    } else {
-		aliB += pimpl_->b_[i]; lastB++;
+	    if ( b[i] >= 0 ) {
+		y = b[i];
+		lastB++;
 	    }
+	    edges.push_back(edge_t(x,y));
 	}
-
+	
 	for (size_type j=lastA; j<=pimpl_->seqA_.length(); j++) {
-	    aliA += j; lastA++;
-	    aliB += -2;
+	    edges.push_back(edge_t(j,-2));
+	    lastA++;
 	}
 	for (size_type j=lastB; j<=pimpl_->seqB_.length(); j++) {
-	    aliA += -2;
-	    aliB += j; lastB++;
+	    edges.push_back(edge_t(-2,j));
+	    lastB++;
 	}
-	/*
-	  for (int i=0; i<aliA.size(); i++) {
-	  std::cerr <<i<<":"<< aliA[i]<<";"<<aliB[i]<<" ";
-	  }
-	  std::cerr <<std::endl;
-	*/
-
-	write(out, width, (infty_score_t)0);
-
-	// ------------------------------------------------------------
-	// write consensus constraint string
-	//
+	return edges;
+    }
+    
+    
+    std::string
+    AlignmentImpl::consensus_constraint_string(const AnchorConstraints &seqConstraints, 
+					       const Alignment::edge_vector_t &edges) {
+	std::string cons_constraint="";
 	if (!seqConstraints.empty()) {
-	    out << "#C ";
-
+	    
 	    std::vector<std::string> seqCStrings(seqConstraints.name_size());
 
 	    std::string noname="";
 	    for (size_type j=0; j<seqConstraints.name_size(); ++j) noname+=".";
-
-	    for (size_type i=0; i<aliA.size(); i++) {
-		const std::string &nameA = (aliA[i]>0)?seqConstraints.get_name_a(aliA[i]):"";
-		const std::string &nameB = (aliB[i]>0)?seqConstraints.get_name_b(aliB[i]):"";
-
+	    
+	    for (size_type i=0; i<edges.size(); i++) {
+		const std::string &nameA = (edges[i].first>0) ?seqConstraints.get_name_a(edges[i].first) :"";
+		const std::string &nameB = (edges[i].second>0)?seqConstraints.get_name_b(edges[i].second):"";
+		
 		std::string name=noname;
 
 		if (nameA!="") name =  nameA;
@@ -371,13 +403,41 @@ namespace LocARNA {
 	    }
 
 	    for (size_type j=0; j<seqConstraints.name_size(); ++j) {
-		if (j!=0) out<<"#";
-		out <<seqCStrings[j];
+		if (j!=0) cons_constraint += "#";
+		cons_constraint += seqCStrings[j];
 	    }
 	}
+	return cons_constraint;
+    }
 
-	out << "\n\n";
+    /*
+      write pp output, which can be reread for progressive alignment!
+    */
+    void Alignment::write_pp(std::ostream &out,
+			     const RnaData &rna_dataA,
+			     const RnaData &rna_dataB,
+			     const AnchorConstraints &seqConstraints,
+			     int width,
+			     bool use_alifold,
+			     double expA,
+			     double expB,
+			     bool stacking
+			     ) const {
 
+	std::cerr << "WARNING: Alignment::write_pp() is *deprecated*."<<std::endl;
+	
+	write(out, width, (infty_score_t)0);
+
+	const edge_vector_t &edges = global_alignment_edges();
+	
+	// ------------------------------------------------------------
+	// write consensus constraint string
+	//
+	
+	out << "#C "
+	    << AlignmentImpl::consensus_constraint_string(seqConstraints,edges)
+	    << "\n\n";
+	
 	// ------------------------------------------------------------
 	// write probability dot plot
 
@@ -398,7 +458,7 @@ namespace LocARNA {
 	}
 
 	assert(use_alifold==false /*HAVE_LIBRNA undefined*/);
-	pimpl_->write_consensus_dot_plot(out,aliA,aliB,rna_dataA,rna_dataB,expA,expB,stacking);
+	pimpl_->write_consensus_dot_plot(out,edges,rna_dataA,rna_dataB,expA,expB,stacking);
 
     }
 
@@ -421,11 +481,11 @@ namespace LocARNA {
     const Sequence &
     Alignment::get_seqB() const {return pimpl_->seqB_;} 
 
-    const std::vector<int> &
-    Alignment::get_a() const {return pimpl_->a_;} 
+    // const std::vector<int> &
+    // Alignment::get_a() const {return pimpl_->a_;} 
 
-    const std::vector<int> &
-    Alignment::get_b() const {return pimpl_->b_;} 
+    // const std::vector<int> &
+    // Alignment::get_b() const {return pimpl_->b_;} 
 
 
     void
@@ -500,8 +560,7 @@ namespace LocARNA {
 
     void
     AlignmentImpl::write_consensus_dot_plot(std::ostream &out,
-					    const std::vector<int> &aliA,
-					    const std::vector<int> &aliB,
+					    const Alignment::edge_vector_t &edges,
 					    const RnaData &rna_dataA,
 					    const RnaData &rna_dataB,
 					    double p_expA,
@@ -523,33 +582,33 @@ namespace LocARNA {
 	//std::cout << "p_expA: " << p_expA << std::endl;
 	//std::cout << "p_expB: " << p_expB << std::endl;
 
-	for (size_type i=0; i<aliA.size(); i++) {
-	    for (size_type j=i+3; j<aliB.size(); j++) { // min loop size=3
+	for (size_type i=0; i<edges.size(); i++) {
+	    for (size_type j=i+3; j<edges.size(); j++) { // min loop size=3
 		// here we compute consensus pair probabilities
-
+		
 		double pA =
-		    (aliA[i]<0 || aliA[j]<0)
+		    (edges[i].first<0 || edges[j].first<0)
 		    ? 0
-		    : rna_dataA.arc_prob(aliA[i], aliA[j]);
+		    : rna_dataA.arc_prob(edges[i].first, edges[j].first);
 
 		double pB =
-		    (aliB[i]<0 || aliB[j]<0)
+		    (edges[i].second<0 || edges[j].second<0)
 		    ? 0
-		    : rna_dataB.arc_prob(aliB[i], aliB[j]);
+		    : rna_dataB.arc_prob(edges[i].second, edges[j].second);
 
 		double p = average_probs(pA,pB,p_minMean,p_expA,p_expB);
 
 		if (stacking) {
 
 		    double st_pA =
-			(aliA[i]<0 || aliA[j]<0)
+			(edges[i].first<0 || edges[j].first<0)
 			? 0
-			: rna_dataA.joint_arc_prob(aliA[i], aliA[j]);
+			: rna_dataA.joint_arc_prob(edges[i].first, edges[j].first);
 
 		    double st_pB =
-			(aliB[i]<0 || aliB[j]<0)
+			(edges[i].second<0 || edges[j].second<0)
 			? 0
-			: rna_dataB.joint_arc_prob(aliB[i], aliB[j]);
+			: rna_dataB.joint_arc_prob(edges[i].second, edges[j].second);
 
 		    double st_p = average_probs(st_pA,st_pB,p_minMean,p_expA,p_expB);
 
