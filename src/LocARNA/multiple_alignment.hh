@@ -327,11 +327,12 @@ public:
     /**
      * \brief Construct from Alignment object
      * @param alignment object of type Alignment
+     * @param only_local if true, construct only local alignment
      *
      * @note In case of locality, distinguish properly between regular
      * gaps '-' and locality gaps '~'.
      */
-    MultipleAlignment(const Alignment &alignment);
+    MultipleAlignment(const Alignment &alignment, bool only_local=false);
     
     /**
      * @brief virtual destructor
@@ -529,6 +530,18 @@ public:
      */
     void
     append(const SeqEntry &seqentry);
+
+    /** 
+     * \brief Prepend sequence entry
+     * 
+     * @param seqentry new sequence entry
+     *
+     * @pre *this is empty or entry must have same size as *this
+     *
+     * @note prepend is a lot more costly then append; it has cost linearly in the number of rows
+     */
+    void
+    prepend(const SeqEntry &seqentry);
     
     /**
      * \brief Append a column
@@ -564,12 +577,23 @@ public:
      * @param out output stream
      * @return output stream
      *
-     * Writes one line "<name> <seq>" for each single sequence.
+     * Writes one line "<name> <seq>" for each sequence.
      */
     std::ostream &
     write(std::ostream &out) const;
-    
 
+    /**
+     * \brief Write alignment to stream
+     *
+     * @param out output stream
+     * @param width output stream
+     * @return output stream
+     *
+     * Writes lines "<name> <seq>" per sequence, wraps lines at width
+     */
+    std::ostream &
+    write(std::ostream &out, size_t width) const;
+    
     /**
      * @brief Write formatted line of name and sequence
      *

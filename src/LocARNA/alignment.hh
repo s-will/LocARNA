@@ -137,84 +137,28 @@ namespace LocARNA {
 	/**
 	 * @brief All alignment edges
 	 *
-	 * @returns vector of alignment edges
+	 * @param only_local if true, return only local edges
 	 *
-	 * The returned vector contains all positions of the sequence,
-	 * we distinguish gaps (-1) and locality gaps (-2); the latter
-	 * are paired with positions that are not aligned at all
-	 * (i.e. they are not part of the local alignment). Edges are
-	 * sorted (ascendingly).
+	 * @return vector of alignment edges
+	 *
+	 * If !only_local, the returned vector contains all positions
+	 * of the sequence, we distinguish gaps (-1) and locality gaps
+	 * (-2); the latter are paired with positions that are not
+	 * aligned at all (i.e. they are not part of the local
+	 * alignment). 
+	 *
+	 * If only_local, the vector does not contain non-local edges,
+	 * i.e. edges with locality gaps.
+	 *
+	 * Edges are sorted (ascendingly).
 	 */
 	const edge_vector_t
-	global_alignment_edges() const;
-	
-	/**
-	 * \brief Write the alignment to output stream
-	 *  
-	 * Write to stream out with line-width (without name)
-	 * width. If opt_local_out, then output only sequence-locally
-	 * aligned part
-	 *
-	 * Writes clustal-like format (without header)
-	 */
-	void
-	write(std::ostream &out, 
-	      int width, 
-	      infty_score_t score,
-	      bool opt_local_out=false,
-	      bool opt_pos_out=false,
-	      bool write_structure=false
-	      ) const;
+	alignment_edges(bool only_local) const;
 
-	/**
-	 * @brief Write in clustal format
-	 *
-	 * @todo broken for empty alignments ~
-	 *
-	 * @todo Replace! Replacing the method by conversion to
-	 * MultipleAlignment object and write method of
-	 * MultipleAlignment class seems difficult, because of extra
-	 * functionality: writing only local, writing annotated
-	 * structures and "hits", which is all burried in this method.
-	 */
-	void
-	write_clustal(std::ostream &out, int width, infty_score_t score,
-		      bool opt_local_out=false,bool opt_pos_out=false,
-		      bool clustal_format=true,
-		      bool write_structure=false) const;
-	
-	/** 
-	 * @brief Write pp format to stream
-	 *
-	 * In addition to writing the alignment, this method computes
-	 * consensus anchor constraints and the consensus dot plot and
-	 * writes them to the output
-	 * 
-	 * @param out output stream
-	 * @param rna_dataA rna data A
-	 * @param rna_dataB rna data B
-	 * @param seq_constraints sequence constraints
-	 * @param width output width
-	 * @param use_alifold whether to use alifold for consensus dot plot computation
-	 * @param expA background probability A
-	 * @param expB background probability B
-	 * @param stacking whether to write probabilities for stacking terms
-	 *
-	 * @todo replace using new RnaData object; consensus
-	 * computation and writing of pp file should be separated
-	 */
-	void
-	write_pp(std::ostream &out,
-		 const RnaData &rna_dataA,
-		 const RnaData &rna_dataB,
-		 const AnchorConstraints &seq_constraints, 
-		 int width,
-		 bool use_alifold,
-		 double expA,
-		 double expB,
-		 bool stacking
-		 ) const;
-	
+	const edge_vector_t
+	global_alignment_edges() const {
+	    return alignment_edges(false);
+	}
 	
 	/* start/end of (locally) aligned subsequences 
 	   (this is used when finding k-best alignments in Aligner)
@@ -222,19 +166,38 @@ namespace LocARNA {
 	
 	//! get first position of A that is locally aligned to something
 	size_type
-	get_local_startA() const;
+	local_startA() const;
     
 	//! get last position of A that is locally aligned to something
 	size_type
-	get_local_endA() const;
+	local_endA() const;
 
 	//! get first position of B that is locally aligned to something
 	size_type
-	get_local_startB() const;
+	local_startB() const;
 	
 	//! get last position of B that is locally aligned to something
 	size_type
-	get_local_endB() const;
+	local_endB() const;
+
+
+	/**
+	 * @brief Structure A
+	 * @param only_local if true, construct string only for aligned subsequence
+	 * @return dot bracket string for structure A with gaps
+	 * @todo TBI
+	 */
+	std::string
+	dot_bracket_structureA(bool only_local) const;
+
+	/**
+	 * @brief Structure B
+	 * @param only_local if true, construct string only for aligned subsequence
+	 * @return dot bracket string for structure B with gaps
+	 * @todo TBI
+	 */
+	std::string
+	dot_bracket_structureB(bool only_local) const;
 
 
 	/* access */
@@ -243,14 +206,14 @@ namespace LocARNA {
 	 * @brief read access seqA
 	 * @return sequence A
 	 */
-	const Sequence &get_seqA() const;
+	const Sequence &seqA() const;
 
 	/**
 	 * @brief read access seqB
 	 * @return sequence B
 	 */
-	const Sequence &get_seqB() const;
-
+	const Sequence &seqB() const;
+	
     };
 
 }

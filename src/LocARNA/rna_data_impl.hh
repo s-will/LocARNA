@@ -86,13 +86,15 @@ namespace LocARNA {
 	 * @param rna_dataA data of RNA A 
 	 * @param rna_dataB data of RNA B
 	 * @param alignment pairwise alignment of A and B
-	 * @param p_exp background probability
+	 * @param p_expA background probability A
+	 * @param p_expB background probability B
 	 */
 	RnaDataImpl(RnaData *self,
 		    const RnaData &rna_dataA,
 		    const RnaData &rna_dataB,
 		    const Alignment &alignment,
-		    double p_exp);
+		    double p_expA,
+		    double p_expB);
     	/** 
 	 * @brief Almost empty constructor
 	 * 
@@ -166,7 +168,52 @@ namespace LocARNA {
 				   double p_outbpcut,
 				   bool stacking) const;
 
+
+	/** 
+	 * @brief Initialize as consensus of two aligned RNAs
+	 * 
+	 * @param edges alignment edges
+	 * @param rna_dataA rna data A
+	 * @param rna_dataB rna data B
+	 * @param p_expA background probability A
+	 * @param p_expB background probability B
+	 * @param stacking if true, stacking consensus is computed
+	 */
+	void
+	init_as_consensus_dot_plot(const Alignment::edge_vector_t &edges,
+				   const RnaData &rna_dataA,
+				   const RnaData &rna_dataB,
+				   double p_expA,
+				   double p_expB,
+				   bool stacking
+				   );
 	
+	/** 
+	 * @brief Consensus probability
+	 * 
+	 * @param pA probability A
+	 * @param pB probability B
+	 * @param sizeA number of rows in sequence A
+	 * @param sizeB number of rows in sequence B
+	 * @param p_expA background probability A
+	 * @param p_expB background probability B
+	 * 
+	 * @pre p_bpcut_ is initialized
+	 *
+	 * Essentially computes a weighted geometric mean; some care
+	 * is taken, to avoid total extinction and to restrict the
+	 * accumulation of (small) probabilities.
+	 * 
+	 * @return consensus probability
+	 */
+	double
+	consensus_probability(double pA,
+			      double pB, 
+			      size_t sizeA,
+			      size_t sizeB,
+			      double p_expA,
+			      double p_expB) const;
+	    
     }; // end class RnaDataImpl
     
 

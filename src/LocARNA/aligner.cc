@@ -19,7 +19,7 @@ using namespace std;
 namespace LocARNA {
 
     /*
-      SEMANTIC OF CONSTRAINTS
+      SEMANTIC OF ANCHOR CONSTRAINTS
   
       Anchor constraints (i,j) enforce that positions i in A and j in B are matched;
       neither i nor j are deleted (for local alignment, this implies that
@@ -1404,10 +1404,26 @@ namespace LocARNA {
 	    Alignment alignment = a.get_alignment();
 	
 	    // std::cout << "SCORE: " << task_score << std::endl;
-	
-	    pimpl_->alignment_.write(cout, output_width, task_score, 
-			    opt_local_output, opt_pos_output, opt_write_structure);
-	
+	    
+	    {
+		// after major code changes, the following output was
+		// stripped off the formerly present features like to
+		// write structure and ?. TODO: check and
+		// reimplement. SW - 2013 Jun 7
+		if (opt_pos_output) {
+		    std::cout << "HIT "<<task_score
+			      <<alignment.local_startA()<<" "
+			      <<alignment.local_startB()<<" "
+			      <<alignment.local_endA()<<" "
+			      <<alignment.local_endB()<<" "
+			      <<std::endl;
+		} else {
+		    MultipleAlignment ma(alignment,true);
+		    std::cout << "Score: "<<task_score<<std::endl;
+		    ma.write(std::cout,120);
+		}
+	    }
+	    
 	    if (!opt_pos_output) std::cout << std::endl
 					   << std::endl;
 	
@@ -1423,12 +1439,12 @@ namespace LocARNA {
 	
 	    if (lenA>lenB) {
 		// split A
-		int splitA = (pimpl_->alignment_.get_local_startA() + pimpl_->alignment_.get_local_endA())/2;
+		int splitA = (alignment.local_startA() + alignment.local_endA())/2;
 		if (opt_verbose) std::cout <<"Split A at "<<splitA<<std::endl;
 		r1.set_endA(splitA);
 		r2.set_startA(splitA);
 	    } else {
-		int splitB = (pimpl_->alignment_.get_local_startB() + pimpl_->alignment_.get_local_endB())/2;
+		int splitB = (alignment.local_startB() + alignment.local_endB())/2;
 		if (opt_verbose) std::cout <<"Split B at "<<splitB<<std::endl;
 		r1.set_endB(splitB);
 		r2.set_startB(splitB);
@@ -1510,13 +1526,12 @@ namespace LocARNA {
 	
 		if (opt_verbose) std::cout << "Score: "<<score<<" Length: "<<length<<" Normalized Score: "<<new_lambda<<std::endl;
 
-		if (opt_verbose) pimpl_->alignment_.write(std::cout,
-							  120,
-							  (infty_score_t)new_lambda,
-							  true,
-							  false,
-							  true
-							  );
+		if (opt_verbose) {
+		    MultipleAlignment ma(pimpl_->alignment_,true);
+		    std::cout << "Score: "<<(infty_score_t)new_lambda<<std::endl;
+		    ma.write(std::cout,120);
+		}
+		
 		if (opt_verbose) std::cout<<endl;
 	    }
 	return (infty_score_t)new_lambda;

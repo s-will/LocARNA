@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <ctype.h> // import isspace
 
+#include <math.h> // import log
+
 #include <string>
 #include <fstream>
 #include <sstream>
+
 #include "aux.hh"
 #include "pfold_params.hh"
 #include "alignment.hh"
@@ -11,6 +14,7 @@
 
 #include "rna_data_impl.hh"
 #include "ext_rna_data_impl.hh"
+
 
 #ifdef HAVE_LIBRNA
 extern "C" {
@@ -62,19 +66,24 @@ namespace LocARNA {
     RnaData::RnaData(const RnaData &rna_dataA,
 		     const RnaData &rna_dataB,
 		     const Alignment &alignment,
-		     double p_exp)
+		     double p_expA,
+		     double p_expB)
 	: pimpl_(new RnaDataImpl(this,
 				 rna_dataA,
 				 rna_dataB,
 				 alignment,
-				 p_exp)) {
+				 p_expA,
+				 p_expB)) {
     }
     
-
     RnaData::~RnaData() {
 	delete pimpl_;
     }
 
+    bool
+    RnaData::has_stacking() const {
+	return pimpl_->has_stacking_;
+    }
 
     RnaDataImpl::RnaDataImpl(RnaData *self,
 			     const std::string &filename,
@@ -130,16 +139,22 @@ namespace LocARNA {
 			     const RnaData &rna_dataA,
 			     const RnaData &rna_dataB,
 			     const Alignment &alignment,
-			     double p_exp) 
+			     double p_expA,
+			     double p_expB) 
 	:self_(self),
-	 sequence_(),
+	 sequence_(alignment),
 	 p_bpcut_(),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
 	 sequence_anchors_(),
 	 has_stacking_(false)
     {
-	throw(failure("RnaData consensus constructor not implemented yet."));
+	init_as_consensus_dot_plot(alignment.global_alignment_edges(),
+				   rna_dataA,
+				   rna_dataB,
+				   p_expA,
+				   p_expB,
+				   rna_dataA.has_stacking() && rna_dataB.has_stacking());
     }
 
 
@@ -1376,5 +1391,98 @@ namespace LocARNA {
 	    RnaData::write_size_info(out)
 	    <<"  arcs in loops: " << num_arcs_in_loop << "  unpaireds in loops: " << num_unpaired_in_loop;
     }
+
+
+    void
+    RnaDataImpl::init_as_consensus_dot_plot(const Alignment::edge_vector_t &edges,
+					    const RnaData &rna_dataA,
+					    const RnaData &rna_dataB,
+					    double p_expA,
+					    double p_expB,
+					    bool stacking
+					    ) {
+	
+	const Sequence &seqA=rna_dataA.sequence();
+	const Sequence &seqB=rna_dataB.sequence();
+	size_t rowsA = seqA.row_number();
+	size_t rowsB = seqB.row_number();
+
+	double p_minA = rna_dataA.arc_cutoff_prob();
+	double p_minB = rna_dataB.arc_cutoff_prob();
+	
+	double p_minMean =
+	    exp(
+		(log(p_minA)*rowsA + log(p_minB)*rowsB)
+		/ (rowsA+rowsB)
+		);
+	
+	p_bpcut_ = p_minMean;
+	
+	for (size_type i=0; i<edges.size(); i++) {
+	    for (size_type j=i+3; j<edges.size(); j++) { // min loop size=3
+		// here we compute consensus pair probabilities
+		
+		double pA =
+		    (edges[i].first<0 || edges[j].first<0)
+		    ? 0
+		    : rna_dataA.arc_prob(edges[i].first, edges[j].first);
+
+		double pB =
+		    (edges[i].second<0 || edges[j].second<0)
+		    ? 0
+		    : rna_dataB.arc_prob(edges[i].second, edges[j].second);
+
+		double p = consensus_probability(pA,pB,rowsA,rowsB,p_expA,p_expB);
+
+		if (stacking) {
+		    double st_pA =
+			(edges[i].first<0 || edges[j].first<0)
+			? 0
+			: rna_dataA.joint_arc_prob(edges[i].first, edges[j].first);
+		    
+		    double st_pB =
+			(edges[i].second<0 || edges[j].second<0)
+			? 0
+			: rna_dataB.joint_arc_prob(edges[i].second, edges[j].second);
+
+		    double st_p = consensus_probability(st_pA,st_pB,rowsA,rowsB,p_expA,p_expB);
+
+		    if (p > p_minMean || st_p > p_minMean) {
+			arc_probs_(i+1,j+1) = p;
+			arc_2_probs_(i+1,j+1) = st_p;
+		    }
+
+		} else {
+		    if (p > p_minMean) {
+			arc_probs_(i+1,j+1) = p;
+		    }
+		}
+	    }
+	}
+    }
+
+    double
+    RnaDataImpl::consensus_probability(double pA, double pB,
+				       size_t sizeA,size_t sizeB,
+				       double p_expA, double p_expB) const {
+	pA = std::max(std::min(p_expA,p_bpcut_*0.75), pA);
+	pB = std::max(std::min(p_expB,p_bpcut_*0.75), pB);
+
+	// weighted geometric mean
+	double p = exp(
+		       (log(pA)*sizeA + log(pB)*sizeB) /
+		       //---------------------------------------------------
+		       (sizeA + sizeB)
+		       );
+	
+	return p;
+
+	/*
+	  would something like
+	  if (pA<p_min*1.05) { pA = std::min(p_expA,p_min*0.75); }
+	  work better???
+	*/
+    }
+
 
 } // end namespace LocARNA

@@ -75,11 +75,11 @@ namespace LocARNA {
     	create_name2idx_map();
     }
 
-    MultipleAlignment::MultipleAlignment(const Alignment &alignment) {
-	const Alignment::edge_vector_t &edges = alignment.global_alignment_edges();
-
-	const Sequence &seqA=alignment.get_seqA();
-	const Sequence &seqB=alignment.get_seqB();
+    MultipleAlignment::MultipleAlignment(const Alignment &alignment, bool only_local) {
+	const Alignment::edge_vector_t &edges = alignment.alignment_edges(only_local);
+	
+	const Sequence &seqA=alignment.seqA();
+	const Sequence &seqB=alignment.seqB();
     
 	std::vector<std::string> aliA(seqA.row_number(),"");
 	std::vector<std::string> aliB(seqB.row_number(),"");
@@ -734,6 +734,21 @@ namespace LocARNA {
 	return
 	    write(out,1,length());
     }
+
+    std::ostream &
+    MultipleAlignment::write(std::ostream &out,size_t width) const {
+	
+	size_t start=1;
+	do {
+	    out << start << ":"<<std::endl;
+	    size_t end = std::min(length(),start+width-1);
+	    write(out,start,end);
+	    start=end+1;
+	} while (start <= length() && out << std::endl);
+	
+	return out;
+    }
+
     
     void 
     MultipleAlignment::reverse() {
@@ -758,6 +773,13 @@ namespace LocARNA {
     void MultipleAlignment::append(const SeqEntry &seqentry) {
 	name2idx_[seqentry.name()]=alig_.size(); // keep map name->index up to date 	
 	alig_.push_back(seqentry);
+    }
+
+    void MultipleAlignment::prepend(const SeqEntry &seqentry) {
+	alig_.insert(alig_.begin(),seqentry);
+	
+	name2idx_.clear();
+	create_name2idx_map();
     }
     
     void

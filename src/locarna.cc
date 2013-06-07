@@ -848,18 +848,50 @@ main(int argc, char **argv) {
     if (clp.opt_normalized || DO_TRACE) { 
 	// if we did a trace (one way or the other)
 	
-	aligner.get_alignment().write(std::cout, 
-				      clp.output_width,
-				      score,
-				      clp.opt_local_output,
-				      clp.opt_pos_output,
-				      clp.opt_write_structure
-				      );
+	const Alignment &alignment = aligner.get_alignment();
+	
+	if (clp.opt_pos_output) {
+	    std::cout << "HIT "<<score
+		      <<alignment.local_startA()<<" "
+		      <<alignment.local_startB()<<" "
+		      <<alignment.local_endA()<<" "
+		      <<alignment.local_endB()<<" "
+		      <<std::endl;
+	} 
+	if (!clp.opt_pos_output && !clp.opt_local_output) {
+	    MultipleAlignment ma(alignment,clp.opt_local_output);
+	    
+	    if (clp.opt_write_structure) {
+		// annotate multiple alignment with structures
+		ma.prepend(MultipleAlignment::SeqEntry("",
+						       alignment.dot_bracket_structureA(clp.opt_local_output)));
+		ma.append(MultipleAlignment::SeqEntry("",
+						      alignment.dot_bracket_structureB(clp.opt_local_output)));
+	    }
+	    
+	    if (clp.opt_local_output) {
+		std::cout  << std::endl 
+			   << "\t+" << alignment.local_startA() << std::endl
+			   << "\t+" << alignment.local_startB() << std::endl
+			   << std::endl;
+	    }
+	    
+	    ma.write(std::cout,clp.output_width);
+
+	    if (clp.opt_local_output) {
+		std::cout  << std::endl 
+			   << "\t+" << alignment.local_endA() << std::endl
+			   << "\t+" << alignment.local_endB() << std::endl
+			   << std::endl;
+	    }
+
+	}
+
 	std::cout<<endl;
 	
 	// test MultipleAlignment
 	if (clp.opt_verbose) {
-	    MultipleAlignment resultMA(aligner.get_alignment());
+	    MultipleAlignment resultMA(alignment);
 	    //std::cout << "MultipleAlignment"<<std::endl; 
 	    //resultMA.print_debug(cout);
 	    if (multiple_ref_alignment) {
@@ -874,13 +906,24 @@ main(int argc, char **argv) {
 	if (clp.opt_clustal_out) {
 	    ofstream out(clp.clustal_out.c_str());
 	    if (out.good()) {
-		aligner.get_alignment().write_clustal(out, clp.output_width,
-						      score,
-						      clp.opt_local_output,
-						      clp.opt_pos_output,
-						      true,
-						      clp.opt_write_structure
-						      );
+
+		MultipleAlignment ma(alignment);
+		
+		out << "CLUSTAL W --- "<<PACKAGE_STRING;
+		
+		// for legacy, clustal files of pairwise alignments contain the score 
+		if (seqA.row_number()==1 && seqB.row_number()==1)
+		    out  <<" --- Score: " << score;
+		out <<std::endl<<std::endl;
+
+		if (clp.opt_write_structure) {
+		    // annotate multiple alignment with structures
+		    ma.prepend(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureA(false)));
+		    ma.append(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureB(false)));
+		}
+
+		ma.write(out,clp.output_width);
+		
 	    } else {
 		cerr << "Cannot write to "<<clp.clustal_out<<endl<<"! Exit.";
 		return_code=-1;
@@ -897,17 +940,20 @@ main(int argc, char **argv) {
 
 	    ofstream out(clp.pp_out.c_str());
 	    if (out.good()) {
-		aligner.get_alignment().
-		    write_pp(out,
-			     *rna_dataA,
-			     *rna_dataB,
-			     seq_constraints,
-			     clp.output_width,
-			     clp.opt_alifold_consensus_dp,
-			     my_exp_probA,
-			     my_exp_probB,
-			     clp.opt_stacking
-			     );
+
+		RnaData consensus(*rna_dataA,
+				  *rna_dataB,
+				  alignment,
+				  my_exp_probA,
+				  my_exp_probB);
+		
+		consensus.write_pp(out);
+		// seq_constraints,
+		// clp.output_width,
+		// clp.opt_alifold_consensus_dp,
+		// my_exp_probA,
+		// my_exp_probB,
+		// clp.opt_stacking		    
 	    } else {
 		cerr << "Cannot write to "<<clp.pp_out<<endl<<"! Exit.";
 		return_code=-1;

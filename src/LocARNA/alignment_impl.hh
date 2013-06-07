@@ -51,9 +51,11 @@ namespace LocARNA {
 	 */
     	std::vector<int> b_; 
 	
-	std::vector<char> strA_;
-	std::vector<char> strB_;
-	
+	// std::vector<char> strA_;
+	// std::vector<char> strB_;
+	std::string strA_;
+	std::string strB_;
+
 	AlignmentImpl(Alignment *self, const Sequence &seqA, const Sequence &seqB)
 	    : self_(self),seqA_(seqA),seqB_(seqB),a_(),b_(),strA_(),strB_() {}
 	
@@ -100,6 +102,21 @@ namespace LocARNA {
 	consensus_constraint_string(const AnchorConstraints &seqConstraints, 
 				    const Alignment::edge_vector_t &edges);
 	
+
+	/** 
+	 * @brief dot bracket structure
+	 * 
+	 * @param str structure string
+	 * @param x edge array
+	 * @param only_local if true, restrict to local positions
+	 * 
+	 * @return structure string 
+	 */
+	static
+	std::string
+	dot_bracket_structure(const std::string &str,
+			      const std::vector<int> x,
+			      bool only_local);
     };
 
 } // end namespace LocARNA

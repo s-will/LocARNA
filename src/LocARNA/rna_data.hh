@@ -96,7 +96,8 @@ namespace LocARNA {
 	 * @param rna_dataA RNA ensemble data A
 	 * @param rna_dataB RNA ensemble data B
 	 * @param alignment Alignment of A and B
-	 * @param p_exp background probability
+	 * @param p_expA background probability for A
+	 * @param p_expA background probability for B
 	 *
 	 * The object uses mean cutoff probability of the given
 	 * objects; The background probability is used in computing
@@ -105,13 +106,12 @@ namespace LocARNA {
 	 * probabilities are computed as well. If the object contain
 	 * sequence anchors, we construct the new object with a
 	 * consensus anchor string.
-	 *
-	 * @todo implement and use for consensus computation
 	 */
 	RnaData(const RnaData &rna_dataA,
 		const RnaData &rna_dataB,
 		const Alignment &alignment,
-		double p_exp);
+		double p_expA,
+		double p_expB);
 	
     protected:
     	/** 
@@ -297,6 +297,9 @@ namespace LocARNA {
 	 */
 	std::ostream &
 	write_size_info(std::ostream &out) const;
+
+	bool
+	has_stacking() const;
 	
     protected:
 	
