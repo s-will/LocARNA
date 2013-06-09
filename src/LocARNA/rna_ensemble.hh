@@ -8,12 +8,11 @@
 #include <iosfwd>
 
 #include "aux.hh"
-#include "multiple_alignment.hh"
 
 
 namespace LocARNA {
 
-    class Sequence;
+    class MultipleAlignment;
 
     class RnaEnsembleImpl; // forward to implementation class
 
@@ -57,7 +56,7 @@ namespace LocARNA {
 	 *
 	 * @pre unless use_alifold, sequence row number has to be 1
 	 */
-	RnaEnsemble(const Sequence &sequence,
+	RnaEnsemble(const MultipleAlignment &ma,
 		    const PFoldParams &params,
 		    bool inLoopProbs, 
 		    bool use_alifold=true);
@@ -114,8 +113,8 @@ namespace LocARNA {
 	 * @brief Get the sequence
 	 * @return sequence of RNA
 	*/
-	const Sequence &
-	sequence() const;
+	const MultipleAlignment &
+	multiple_alignment() const;
 	
 	/**
 	 * \brief get length of sequence
@@ -234,7 +233,7 @@ namespace LocARNA {
 	 * dynamic programming matrices of the McCaskill algorithm
 	 *
 	 * @pre McCaskill matrices are computed and generated.
-	 * @see compute_McCaskill_matrices(), RnaEnsemble(const Sequence &sequence_, bool keepMcC)
+	 * @see compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &sequence_, bool keepMcC)
 	 *
 	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
@@ -256,7 +255,7 @@ namespace LocARNA {
 	 * dynamic programming matrices of the McCaskill algorithm
 	 *
 	 * @pre McCaskill matrices are computed and generated.
-	 * @see compute_McCaskill_matrices(), RnaEnsemble(const Sequence &sequence_, bool keepMcC)
+	 * @see compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &sequence_, bool keepMcC)
 	 *
 	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
@@ -283,7 +282,7 @@ namespace LocARNA {
 	 * dynamic programming matrices of the McCaskill algorithm
 	 *
 	 * @pre McCaskill matrices are computed and generated.
-	 * @see compute_McCaskill_matrices(), RnaEnsemble(const Sequence &sequence_, bool keepMcC)
+	 * @see compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &sequence_, bool keepMcC)
 	 *
 	 * @note if in loop probs are unavailable, return probability 1.0
 	 */
@@ -308,7 +307,7 @@ namespace LocARNA {
 	 * dynamic programming matrices of the McCaskill algorithm
 	 *
 	 * @pre McCaskill matrices are computed and generated.
-	 * @see compute_McCaskill_matrices(), RnaEnsemble(const Sequence &sequence_, bool keepMcC)
+	 * @see compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &sequence_, bool keepMcC)
 	 *
 	 * @note if in loop probs are unavailable, return probability 1.0
 	 */

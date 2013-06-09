@@ -6,6 +6,7 @@
 #include "sequence.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
+#include "rna_structure.hh"
 #include "anchor_constraints.hh"
 #include "multiple_alignment.hh"
 #include "string1.hh"
@@ -35,7 +36,7 @@ namespace LocARNA {
 			 const std::string &alistrB)
 	: pimpl_(new AlignmentImpl(this,seqA,seqB)) {
 	
-	assert(alistrA.length()!=alistrB.length());
+	assert(alistrA.length()==alistrB.length());
 	
 	size_t alilen = alistrA.length();
 	
@@ -111,7 +112,10 @@ namespace LocARNA {
     
     void
     Alignment::set_structures(const RnaStructure &structureA,const RnaStructure &structureB) {
-	throw("Alignment::set_structures(...) not implemented");
+	pimpl_->strA_ = structureA.to_string();
+	pimpl_->strB_ = structureB.to_string();
+	assert(pimpl_->strA_.length() == pimpl_->seqA_.length());
+	assert(pimpl_->strB_.length() == pimpl_->seqB_.length());
     }
 
     void
@@ -271,29 +275,32 @@ namespace LocARNA {
 
     std::string
     Alignment::dot_bracket_structureA(bool only_local) const {
-	return pimpl_->dot_bracket_structure(pimpl_->strA_,pimpl_->a_,only_local);
+	edge_vector_t edges = alignment_edges(only_local);
+	return pimpl_->dot_bracket_structure(pimpl_->strA_,edges,1);
     }
 
     std::string
     Alignment::dot_bracket_structureB(bool only_local) const {
-	return pimpl_->dot_bracket_structure(pimpl_->strB_,pimpl_->b_,only_local);
+	edge_vector_t edges = alignment_edges(only_local);
+	return pimpl_->dot_bracket_structure(pimpl_->strB_,edges,2);
     }
 
     std::string
     AlignmentImpl::dot_bracket_structure(const std::string &str,
-					 const std::vector<int> x,
-					 bool only_local) {
-	if (!only_local) {
-	    return str.substr(1);
-	} else {
-	    std::string s;
-	    for (size_t i=1; i<=x.size(); i++) {
-		if (x[i]>0) {
-		    s.push_back(str[x[i]]);
-		}
+					 const Alignment::edge_vector_t &x,
+					 size_t ab) {
+	std::string s;
+	for (size_t i=0; i<x.size(); i++) {
+	    int xi=(ab==1)?x[i].first:x[i].second;
+	    if (xi>0) {
+		s.push_back(str[xi]);
+	    } else if (xi==-1) {
+		s.push_back('-');
+	    } else if (xi==-2) {
+		s.push_back('~');
 	    }
-	    return s;
 	}
+	return s;
     }
-
+    
 }

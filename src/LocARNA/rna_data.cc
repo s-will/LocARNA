@@ -22,20 +22,6 @@ extern "C" {
 }
 #endif
 
-/*
-rethink new pp format! Add comments, keywords etc; the current format
-idea is not very nice to separate into sections; better have section
-start and section end lines like
-#SECTION XYZ
-   ...
-#END
-(its ok to break compatibility as long as conversion is simple)
-
-An example is now in src/Tests
-*/
-
-
-
 
 namespace LocARNA {
 
@@ -54,7 +40,6 @@ namespace LocARNA {
 				 p_bpcut,
 				 pfoldparams)) {
     }
-
     
     // do almost nothing
     RnaData::RnaData(double p_bpcut)
@@ -382,7 +367,7 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// init sequence	
-	sequence_ = rna_ensemble.sequence();
+	sequence_ = rna_ensemble.multiple_alignment();
 	size_t len = sequence_.length();
 
 	// ----------------------------------------
@@ -529,6 +514,11 @@ namespace LocARNA {
 
     const Sequence &
     RnaData::sequence() const {
+	return pimpl_->sequence_.as_sequence();
+    }
+
+    const MultipleAlignment &
+    RnaData::multiple_alignment() const {
 	return pimpl_->sequence_;
     }
 
@@ -711,7 +701,7 @@ namespace LocARNA {
 	//! Ts translated to Us
 	normalize_rna_sequence(seqstr);
         
-	pimpl_->sequence_.append(Sequence::SeqEntry(seqname,seqstr));
+	pimpl_->sequence_.append(MultipleAlignment::SeqEntry(seqname,seqstr));
 	
 	while (getline(in,line)) {
 	    if (line.length()>4) {
@@ -795,7 +785,7 @@ namespace LocARNA {
 
 	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
 	    // std::cout << "SEQ: " << it->first << " " << it->second << std::endl;
-	    pimpl_->sequence_.append(Sequence::SeqEntry(it->first,it->second));
+	    pimpl_->sequence_.append(MultipleAlignment::SeqEntry(it->first,it->second));
 	}
     
 	// ----------------------------------------
@@ -954,7 +944,7 @@ namespace LocARNA {
 	
 	// generate sequence object, insert sequences in correct order
 	for (std::vector<std::string>::const_iterator it=seq_names.begin(); it!=seq_names.end(); ++it) {
-	    sequence_.append(Sequence::SeqEntry(*it,seq_map[*it]));
+	    sequence_.append(MultipleAlignment::SeqEntry(*it,seq_map[*it]));
 	}
 	
 	// check anchor constraints
@@ -1402,8 +1392,8 @@ namespace LocARNA {
 					    bool stacking
 					    ) {
 	
-	const Sequence &seqA=rna_dataA.sequence();
-	const Sequence &seqB=rna_dataB.sequence();
+	const MultipleAlignment &seqA=rna_dataA.sequence();
+	const MultipleAlignment &seqB=rna_dataB.sequence();
 	size_t rowsA = seqA.row_number();
 	size_t rowsB = seqB.row_number();
 

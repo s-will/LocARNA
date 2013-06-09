@@ -1,5 +1,6 @@
 #include <iostream>
 #include <LocARNA/multiple_alignment.hh>
+#include <LocARNA/alignment.hh>
 #include <LocARNA/sequence.hh>
 
 using namespace LocARNA;
@@ -14,7 +15,9 @@ int
 main(int argc, char **argv) {
     
     // create simple alignment
-    MultipleAlignment ma("seqA","seqB","A--CGT-U","CC-CG-CU");
+    MultipleAlignment ma("seqA","seqB",
+			 "A-CGT-U",
+			 "CCCG-CU");
     
     //! test whether ma is proper
     if (!ma.is_proper()) {
@@ -47,7 +50,7 @@ main(int argc, char **argv) {
 	return 5;
     }
     
-    Sequence seq = *ma2;
+    Sequence seq = (*ma2).as_sequence();
     delete ma2;
     
     std::string name_str = "hdrA";
@@ -109,7 +112,7 @@ main(int argc, char **argv) {
 	return 12;
     }
 
-    seq=*ma5;
+    seq=(*ma5).as_sequence();
     delete ma5;
     
     //! test whether seq is proper
@@ -121,6 +124,8 @@ main(int argc, char **argv) {
     if (!seq.row_number() == 7) {
     	return 107;
     }
-
+    
+    seq.write(std::cout);
+    
     return 0;
 }

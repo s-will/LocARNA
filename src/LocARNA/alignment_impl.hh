@@ -115,8 +115,8 @@ namespace LocARNA {
 	static
 	std::string
 	dot_bracket_structure(const std::string &str,
-			      const std::vector<int> x,
-			      bool only_local);
+			      const Alignment::edge_vector_t &x,
+			      size_t ab);
     };
 
 } // end namespace LocARNA

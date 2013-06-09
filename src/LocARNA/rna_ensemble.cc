@@ -49,7 +49,7 @@ namespace LocARNA {
     // implementation of class RnaEnsemble
     //
 
-    RnaEnsemble::RnaEnsemble(const Sequence &sequence,
+    RnaEnsemble::RnaEnsemble(const MultipleAlignment &sequence,
 			     const PFoldParams &params,
 			     bool inLoopProbs, 
 			     bool use_alifold)
@@ -59,7 +59,6 @@ namespace LocARNA {
 				     params,
 				     inLoopProbs,
 				     use_alifold)) {
-	
     }
 #else
     :pimpl_(0L) {
@@ -78,7 +77,7 @@ namespace LocARNA {
 	IFELSE_HAVE_LIBRNA(return pimpl_->pair_probs_available_,
 			   return false);
     }
-
+    
     bool
     RnaEnsemble::has_stacking_probs() const {
 	IFELSE_HAVE_LIBRNA(return pimpl_->stacking_probs_available_,
@@ -91,10 +90,10 @@ namespace LocARNA {
 			   return bool());
     }
 
-    const Sequence &
-    RnaEnsemble::sequence() const {
+    const MultipleAlignment &
+    RnaEnsemble::multiple_alignment() const {
 	IFELSE_HAVE_LIBRNA(return pimpl_->sequence_,
-			   static Sequence s;return s);
+			   static MultipleAlignment s;return s);
     }
 
     double
@@ -137,19 +136,19 @@ namespace LocARNA {
 
 #ifdef HAVE_LIBRNA    
     RnaEnsembleImpl::RnaEnsembleImpl(//RnaEnsemble *self,
-				     const Sequence &sequence,
+				     const MultipleAlignment &sequence,
 				     const PFoldParams &params,
 				     bool inLoopProbs, 
 				     bool use_alifold=true)
 	: //self_(self),
-	  sequence_(sequence),
-	  pair_probs_available_(false),
-	  stacking_probs_available_(false),
-	  in_loop_probs_available_(false),
-	  McCmat_(0L), // 0 pointer
-	  used_alifold_(false),
-	  min_free_energy_(std::numeric_limits<double>::infinity()),
-	  min_free_energy_structure_("") 
+	sequence_(sequence),
+	pair_probs_available_(false),
+	stacking_probs_available_(false),
+	in_loop_probs_available_(false),
+	McCmat_(0L), // 0 pointer
+	used_alifold_(false),
+	min_free_energy_(std::numeric_limits<double>::infinity()),
+	min_free_energy_structure_("")
     {
 	compute_ensemble_probs(params,inLoopProbs,use_alifold);
     }

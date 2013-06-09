@@ -6,7 +6,7 @@
 #endif
 
 #include "rna_ensemble.hh"
-#include "sequence.hh"
+#include "multiple_alignment.hh"
 #include "sparse_matrix.hh"
 
 #ifdef HAVE_LIBRNA	
@@ -19,10 +19,10 @@ namespace LocARNA {
 
 	// we don't use the entire rna ensemble implementation if lib rna is not available
 #ifdef HAVE_LIBRNA	
-
-	RnaEnsemble *self_; //!<- pointer to corresponding RnaEnsemble object
+	
+	//RnaEnsemble *self_; //!<- pointer to corresponding RnaEnsemble object
     
-	const Sequence &sequence_; //!< reference to the sequence
+	const MultipleAlignment &sequence_; //!< reference to the sequence
 	
 	//! whether pair probabilities are availabe
 	bool pair_probs_available_; 
@@ -54,7 +54,7 @@ namespace LocARNA {
 		    bool readInLoopProbs);
 	
 	RnaEnsembleImpl(//RnaEnsemble *self,
-			const Sequence &sequence,
+			const MultipleAlignment &sequence,
 			const PFoldParams &params,
 			bool inLoopProbs, 
 			bool use_alifold);

@@ -26,6 +26,7 @@ namespace LocARNA {
     class BasePairs;
     class Scoring;
     class RnaStructure;
+    class Sequence;
 
 /**
  * @brief Represents a multiple alignment
@@ -309,6 +310,14 @@ public:
      * @throw failure on read errors
     */
     MultipleAlignment(std::istream &in, format_t format=CLUSTAL);
+
+    /**
+     * \brief Construct as degenerate alignment of one sequence
+     * @param nameA name of sequence
+     * @param sequence sequence strings
+     */
+    MultipleAlignment(const std::string &name,
+		      const std::string &sequence);
     
     /**
      * \brief Construct as pairwise alignment from names and alignment strings
@@ -340,6 +349,13 @@ public:
     virtual
     ~MultipleAlignment();
     
+    /**
+     * @brief "cast" multiple alignment to sequence
+     *
+     * @note this works like an upcast; this is ok, as long as
+     * sequence does not specify attributes
+     */
+    const Sequence & as_sequence() const;  
     
     /**
      * \brief Number of rows of multiple aligment
@@ -617,8 +633,8 @@ public:
      * out; write lines "<name> <seq>"
      *
      * @param out output stream
-     * @param start start column
-     * @param end end column
+     * @param start start column (1-based)
+     * @param end end column (1-based)
      * @return output stream
      */
     std::ostream &

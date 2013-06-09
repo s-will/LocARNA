@@ -11,7 +11,7 @@
 
 namespace LocARNA {
 
-    class Sequence;
+    class MultipleAlignment;
     class RnaEnsemble;
     class PFoldParams;
     //    template<class T> class SparseVector<T>;
@@ -27,7 +27,7 @@ namespace LocARNA {
 	RnaData *self_; //!<- pointer to corresponding non-impl object
 
 	//! the sequence
-	Sequence sequence_; 
+	MultipleAlignment sequence_; 
 
 	//! cutoff probabilitiy for base pair
 	double p_bpcut_;

@@ -11,6 +11,7 @@
 
 namespace LocARNA {
 
+    class MultipleAlignment;
     class Sequence;
     class Alignment;
     class RnaEnsemble;
@@ -145,11 +146,18 @@ namespace LocARNA {
     public:
 
 	/**
-	 * @brief Get the sequence
+	 * @brief Get the multiple alignment as sequence
 	 * @return sequence
 	 */
 	const Sequence &
 	sequence() const;
+
+	/**
+	 * @brief Get the multiple alignment as sequence
+	 * @return sequence
+	 */
+	const MultipleAlignment &
+	multiple_alignment() const;
 
 	/**
 	 * @brief Get the sequence length

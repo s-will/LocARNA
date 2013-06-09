@@ -36,7 +36,7 @@
 #include "LocARNA/rna_ensemble.hh"
 
 
-using namespace std;
+//using namespace std;
 using namespace LocARNA;
 
 //! Version string (from configure.ac via autoconf system)
@@ -54,7 +54,7 @@ VERSION_STRING = (std::string)PACKAGE_STRING;
 #include "LocARNA/options.hh"
 
 //! \brief Switch on/off trace back
-//! @note never made it into command line
+//! @note never made it into command line (since no one asked me kindly)
 const bool DO_TRACE=true;
 
 //! \brief Structure for command line parameters of locarna
@@ -327,19 +327,19 @@ main(int argc, char **argv) {
     bool process_success=process_options(argc,argv,my_options);
 
     if (clp.opt_help) {
-	cout << "locarna - a tool for pairwise (global and local) alignment of RNA."<<endl<<endl;
+	std::cout << "locarna - a tool for pairwise (global and local) alignment of RNA."<<std::endl<<std::endl;
 	
-	cout << VERSION_STRING<<endl<<endl;
+	std::cout << VERSION_STRING<<std::endl<<std::endl;
 
 	print_help(argv[0],my_options);
 
-	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
+	std::cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<std::endl<<std::endl;
 	return 0;
     }
 
     if (clp.opt_version || clp.opt_verbose) {
-	cout << "locarna ("<< VERSION_STRING<<")"<<endl;
-	if (clp.opt_version) return 0; else cout <<endl;
+	std::cout << "locarna ("<< VERSION_STRING<<")"<<std::endl;
+	if (clp.opt_version) return 0; else std::cout <<std::endl;
     }
 
     if (!process_success) {
@@ -360,7 +360,7 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // parameter consistency
     if (clp.opt_read_arcmatch_scores && clp.opt_read_arcmatch_probs) {
-	std::cerr << "You cannot specify arc match score and probabilities file simultaneously."<<std::endl;
+	std::cerr << "One cannot specify arc match score and probabilities file simultaneously."<<std::endl;
 	return -1;
     }
     
@@ -488,12 +488,6 @@ main(int argc, char **argv) {
 						       alistr[0],
 						       alistr[1]);
     }
-
-    // if (multiple_ref_alignment) {
-    // 	std::cout<<"Reference aligment:"<<std::endl;
-    // 	multiple_ref_alignment->print_debug(std::cout);
-    // 	std::cout << std::flush;
-    // }
     
     TraceController trace_controller(seqA,seqB,multiple_ref_alignment,clp.max_diff,clp.opt_max_diff_relax);
     
@@ -562,16 +556,16 @@ main(int argc, char **argv) {
     // report on input in verbose mode
     if (clp.opt_verbose) {
 	std::cout << "Sequence A: "<<std::endl;
-	seqA.write(cout);
+	seqA.write(std::cout);
 	std::cout<<" (Length:"<< seqA.length()<<", Basepairs:"<<bpsA.num_bps() << ")" <<std::endl;
 
 	std::cout << "Sequence B: "<<std::endl;
-	seqB.write(cout);
+	seqB.write(std::cout);
 	std::cout<<" (Length:"<< seqB.length()<<", Basepairs:"<<bpsB.num_bps() << ")" <<std::endl;
 
-	cout <<std::endl 
+	std::cout <<std::endl 
 	     <<"Base Pair Matches: "<<arc_matches->num_arc_matches() << "." <<std::endl;
-	// cout << "Base Identity: "<<(seq_identity(seqA,seqB)*100)<<endl; 
+	// std::cout << "Base Identity: "<<(seq_identity(seqA,seqB)*100)<<std::endl; 
     }
 
 
@@ -835,12 +829,12 @@ main(int argc, char **argv) {
 	    
 	    score_t total_gap_cost = gap_cost + (gap_numA+gap_numB)*scoring.indel_opening();
 	    
-	    std::cout << "#SCORE total        " << setw(8) << score<<std::endl;
-	    std::cout << "#SCORE seq_sim      " << setw(8) << seq_sim<<std::endl;
+	    std::cout << "#SCORE total        " << std::setw(8) << score<<std::endl;
+	    std::cout << "#SCORE seq_sim      " << std::setw(8) << seq_sim<<std::endl;
 	    std::cout << "#SCORE gap_penalty  "
 		//<<gap_cost<<"+"<<(gap_numA+gap_numB)<<"*("<<scoring.indel_opening()<<") = "
-		      << setw(8) << total_gap_cost<<std::endl;
-	    std::cout << "#SCORE str_contrib  " << setw(8) << score-seq_sim-total_gap_cost<<std::endl;
+		      << std::setw(8) << total_gap_cost<<std::endl;
+	    std::cout << "#SCORE str_contrib  " << std::setw(8) << score-seq_sim-total_gap_cost<<std::endl;
 	}
     }
     
@@ -852,14 +846,14 @@ main(int argc, char **argv) {
 	const Alignment &alignment = aligner.get_alignment();
 	
 	if (clp.opt_pos_output) {
-	    std::cout << "HIT "<<score
+	    std::cout << "HIT "<<score<<" "
 		      <<alignment.local_startA()<<" "
 		      <<alignment.local_startB()<<" "
 		      <<alignment.local_endA()<<" "
 		      <<alignment.local_endB()<<" "
 		      <<std::endl;
 	} 
-	if (!clp.opt_pos_output && !clp.opt_local_output) {
+	if (!clp.opt_pos_output || clp.opt_local_output) {
 	    MultipleAlignment ma(alignment,clp.opt_local_output);
 	    
 	    if (clp.opt_write_structure) {
@@ -877,6 +871,7 @@ main(int argc, char **argv) {
 			   << std::endl;
 	    }
 	    
+	    std::cout << std::endl;
 	    ma.write(std::cout,clp.output_width);
 
 	    if (clp.opt_local_output) {
@@ -888,13 +883,13 @@ main(int argc, char **argv) {
 
 	}
 
-	std::cout<<endl;
+	std::cout<<std::endl;
 	
 	// test MultipleAlignment
 	if (clp.opt_verbose) {
 	    MultipleAlignment resultMA(alignment);
 	    //std::cout << "MultipleAlignment"<<std::endl; 
-	    //resultMA.print_debug(cout);
+	    //resultMA.print_debug(std::cout);
 	    if (multiple_ref_alignment) {
 		std::cout << "Deviation to reference: "<< multiple_ref_alignment->deviation(resultMA)<<std::endl;
 	    }
@@ -905,7 +900,7 @@ main(int argc, char **argv) {
 	// optionally write output formats
 	//
 	if (clp.opt_clustal_out) {
-	    ofstream out(clp.clustal_out.c_str());
+	    std::ofstream out(clp.clustal_out.c_str());
 	    if (out.good()) {
 
 		MultipleAlignment ma(alignment);
@@ -926,7 +921,7 @@ main(int argc, char **argv) {
 		ma.write(out,clp.output_width);
 		
 	    } else {
-		cerr << "Cannot write to "<<clp.clustal_out<<endl<<"! Exit.";
+		std::cerr << "Cannot write to "<<clp.clustal_out<<std::endl<<"! Exit.";
 		return_code=-1;
 	    }
 	}
@@ -939,24 +934,25 @@ main(int argc, char **argv) {
 	    clp.opt_alifold_consensus_dp=false;
 #         endif
 
-	    ofstream out(clp.pp_out.c_str());
+	    std::ofstream out(clp.pp_out.c_str());
 	    if (out.good()) {
 		
 		if (clp.opt_alifold_consensus_dp) {
-		    RnaEnsemble ens(MultipleAlignment(alignment),pfparams,false,true); // alifold the alignment
+		    MultipleAlignment ma(alignment);
+		    RnaEnsemble ens(ma,pfparams,false,true); // alifold the alignment
 		    RnaData consensus(ens,clp.min_prob); // construct rna data from ensemble
 		    consensus.write_pp(out,clp.output_width); // write alifold dot plot
 		} else {
+		    // compute averaged consensus base pair probabilities
 		    RnaData consensus(*rna_dataA,
 				      *rna_dataB,
 				      alignment,
 				      my_exp_probA,
 				      my_exp_probB);
-		    
-		    consensus.write_pp(out,clp.output_width);
+		    consensus.write_pp(out,clp.output_width); // write averaged dot plot
 		}
 	    } else {
-		cerr << "Cannot write to "<<clp.pp_out<<endl<<"! Exit.";
+		std::cerr << "Cannot write to "<<clp.pp_out<<std::endl<<"! Exit.";
 		return_code=-1;
 	    }
 	}

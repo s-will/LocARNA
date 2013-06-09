@@ -377,3 +377,5 @@ Mar, 2013
 	(1.7.6.9)
 	introduce configuration header config.h
 	fix man page dependency problem
+
+	Major code clean up

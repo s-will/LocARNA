@@ -111,12 +111,12 @@ namespace LocARNA {
 
 	/** \brief convert to dot-bracket string
 	 */
-	string1
+	std::string
 	to_string() const {
-	    string1 s(std::string('.',length_));
+	    std::string s(std::string('.',length_));
 	    for(const_iterator it=begin(); end()!=it; ++it) {
-		s[it->first]='(';
-		s[it->second]=')';
+		s[it->first - 1]='(';
+		s[it->second - 1]=')';
 	    }
 	    return s;
 	}

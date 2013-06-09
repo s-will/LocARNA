@@ -24,7 +24,10 @@ namespace LocARNA {
 	  name2idx_() {
     }
     
-    MultipleAlignment::MultipleAlignment(std::istream &in, format_t format) {
+    MultipleAlignment::MultipleAlignment(std::istream &in, format_t format)
+    	: alig_(),
+	  name2idx_() {
+	
 	if (!in.good()) {
 	    throw(failure("Cannot read input stream."));
 	}
@@ -38,7 +41,9 @@ namespace LocARNA {
 	create_name2idx_map();
     }
     
-    MultipleAlignment::MultipleAlignment(const std::string &filename, format_t format) {
+    MultipleAlignment::MultipleAlignment(const std::string &filename, format_t format)
+	: alig_(),
+	  name2idx_() {
 	
 	try {
 	    ifstream in(filename.c_str());
@@ -61,10 +66,23 @@ namespace LocARNA {
 	create_name2idx_map();
     }
 
+    MultipleAlignment::MultipleAlignment(const std::string &name, 
+					 const std::string &sequence)
+	: alig_(),
+	  name2idx_() {
+	
+	alig_.push_back(SeqEntry(name,sequence));
+    	
+    	create_name2idx_map();
+    }
+
     MultipleAlignment::MultipleAlignment(const std::string &nameA,
 					 const std::string &nameB, 
 					 const std::string &aliA,
-					 const std::string &aliB) {
+					 const std::string &aliB)
+	: alig_(),
+	  name2idx_() {
+	
 	if (aliA.length() != aliB.length()) {
     	    throw failure("Alignment strings of unequal length."); 
     	}
@@ -75,7 +93,10 @@ namespace LocARNA {
     	create_name2idx_map();
     }
 
-    MultipleAlignment::MultipleAlignment(const Alignment &alignment, bool only_local) {
+    MultipleAlignment::MultipleAlignment(const Alignment &alignment, bool only_local)
+	:alig_(),
+	 name2idx_() {
+	
 	const Alignment::edge_vector_t &edges = alignment.alignment_edges(only_local);
 	
 	const Sequence &seqA=alignment.seqA();
@@ -116,12 +137,17 @@ namespace LocARNA {
 	for (size_type k=0; k<seqB.row_number();k++) {
 	    alig_.push_back(SeqEntry(seqB.seqentry(k).name(),aliB[k]));
 	}
+
+    	create_name2idx_map();
     }
 
 
     MultipleAlignment::~MultipleAlignment() {
     }
 
+    const Sequence & MultipleAlignment::as_sequence() const {
+	return static_cast<const Sequence &>(*this);
+    }
 
     void
     MultipleAlignment::create_name2idx_map() {
@@ -706,14 +732,12 @@ namespace LocARNA {
 
     std::ostream &
     MultipleAlignment::write_name_sequence_line(std::ostream &out,
-						 const std::string &name,
-						 const std::string &sequence) const{
-	int ow=out.width(26);
-	out << std::left << name<<" ";
+						const std::string &name,
+						const std::string &sequence) const{
+	std::streamsize ow=out.width(26);
+	out << std::left << name << " ";
 	out.width(ow);
-	
-	out << sequence;
-	out << std::endl;
+	out << sequence << std::endl;
 
 	return out;
     }
@@ -723,8 +747,15 @@ namespace LocARNA {
 			     size_type start, 
 			     size_type end) const
     {
-	for (size_type i=0; i<row_number(); i++) {
-	    write_name_sequence_line(out,alig_[i].name(),alig_[i].seq().substr(start,end-start+1).to_string());
+	assert(1<=start);
+	assert(end+1>=start);
+	    	
+	for (size_type i=0; i<alig_.size(); i++) {
+	    const std::string seq = alig_[i].seq().to_string();
+	    assert(end <= seq.length()); 
+	    
+	    write_name_sequence_line(out,alig_[i].name(),
+				     seq.substr(start-1,end+1-start));
 	}
 	return out;
     }
@@ -740,7 +771,6 @@ namespace LocARNA {
 	
 	size_t start=1;
 	do {
-	    out << start << ":"<<std::endl;
 	    size_t end = std::min(length(),start+width-1);
 	    write(out,start,end);
 	    start=end+1;
@@ -795,32 +825,6 @@ namespace LocARNA {
 	    alig_[i].push_back(c);
 	}
     }
-
-    // score_t 
-    // MultipleAlignment::evaluate(const std::vector<const BasePairs*> &basepairs_vec,
-    // 				const Scoring &scoring,
-    // 				const RnaStructure &consensus_structure) const {
-    // 	score_t score;
-	
-    // 	for (size_t i=0; i<row_number(); ++i) {
-    // 	    for (size_t j=i+1; j<row_number(); ++j) {
-    // 		Alignment pairwise_alignment = 
-    // 		    Alignment(basepairs_vec[i]->get_rnadata().get_sequence(),
-    // 			      basepairs_vec[j]->get_rnadata().get_sequence(),
-    // 			      seqentry(i).seq(),
-    // 			      seqentry(j).seq());
-    // 		pairwise_alignment.set_consensus_structure(consensus_structure);
-    // 		score += pairwise_alignment.evaluate(*basepairs_vec[i],
-    // 						     *basepairs_vec[j],
-    // 						     scoring);
-    // 	    }
-    // 	}
-	
-    // 	throw failure("MultipleAlignment::evaluate not implemented.");
-    // 	return 0;
-    // }
-
-    
 
     std::ostream &
     operator << (std::ostream &out, const MultipleAlignment &ma) {
