@@ -145,6 +145,7 @@ struct command_line_parameters {
 
     bool opt_write_structure; //!< whether to write structure
 
+    bool opt_stopwatch; //!< whether to print verbose output
 
     bool opt_stacking; //!< whether to stacking
 
@@ -240,6 +241,8 @@ option_def my_options[] = {
 //    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
 
+    {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
@@ -310,9 +313,7 @@ option_def my_options[] = {
  */
 int
 main(int argc, char **argv) {
-    //stopwatch.set_print_on_exit(true);
-
-    stopwatch.start("total_n");
+    stopwatch.start("total");
 
     typedef std::vector<int>::size_type size_type;
 
@@ -343,6 +344,10 @@ main(int argc, char **argv) {
 	print_usage(argv[0],my_options);
 	printf("\n");
 	return -1;
+    }
+
+    if (clp.opt_stopwatch) {
+	stopwatch.set_print_on_exit(true);
     }
     
     if (clp.opt_verbose) {
@@ -940,7 +945,7 @@ main(int argc, char **argv) {
 	}
     }
     
-    stopwatch.stop("total_n");
+    stopwatch.stop("total");
     
     // ----------------------------------------
     // DONE

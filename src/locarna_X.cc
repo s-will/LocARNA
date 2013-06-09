@@ -48,6 +48,7 @@
 #include "LocARNA/exact_matcher.hh"
 #include "LocARNA/sparsification_mapper.hh"
 #include "LocARNA/pfold_params.hh"
+#include "LocARNA/global_stopwatch.hh"
 
 
 using namespace std;
@@ -121,6 +122,8 @@ bool opt_stacking;
 bool opt_postscript_output;
 bool opt_suboptimal;
 
+bool opt_stopwatch;
+
 option_def my_options[] = {
     {"min-prob",'P',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
@@ -150,6 +153,8 @@ option_def my_options[] = {
     {"coverage-cutoff",0,0,O_ARG_DOUBLE,&coverage_cutoff,"0.5","cov","Skip chaining if best EPM has larger coverage on shortest seq"},
     {"easier_scoring_par",'e',0,O_ARG_INT,&easier_scoring_par,"0","alpha","use only sequential and a constant structural score alpha (easier_scoring_par) for each matched base of a basepair"},
     
+    {"stopwatch",0,&opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
+
     {"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"file A","input file A"},
     {"",0,0,O_ARG_STRING,&fileB,O_NODEFAULT,"file B","input file B"},
     {"PS_fileA",'a',0,O_ARG_STRING,&psFileA,"","psFileA","Postscript output file for sequence A"},
@@ -172,7 +177,7 @@ option_def my_options[] = {
 
 int
 main(int argc, char **argv) {
-    //stopwatch.set_print_on_exit(true);
+    stopwatch.start("total");
 
 	struct timeval tp;
 	struct rusage ruse;
@@ -218,6 +223,10 @@ main(int argc, char **argv) {
       return -1;
     }
     
+    if (opt_stopwatch) {
+	stopwatch.set_print_on_exit(true);
+    }
+
     if (opt_verbose) {
       print_options(my_options);
     }
@@ -530,6 +539,9 @@ main(int argc, char **argv) {
     // DONE
     delete arc_matches;
     cout << "... locarna_X finished!" << endl << endl;
+
+    stopwatch.stop("total");
+
     return 0;
 }
 

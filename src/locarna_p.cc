@@ -33,6 +33,7 @@
 #include "LocARNA/multiple_alignment.hh"
 #include "LocARNA/ribosum85_60.icc"
 #include "LocARNA/pfold_params.hh"
+#include "LocARNA/global_stopwatch.hh"
 
 using namespace std;
 
@@ -82,6 +83,9 @@ bool opt_exp_prob; //!< opt_exp_prob
 int output_width=70; //!< output_width=70
 bool opt_write_arcmatch_probs; //!< opt_write_arcmatch_probs
 bool opt_write_basematch_probs; //!< opt_write_basematch_probs
+
+bool opt_stopwatch; //!< whether to print verbose output
+
 // ------------------------------------------------------------
 // File arguments
 
@@ -155,6 +159,8 @@ option_def my_options[] = {
     
     {"pf-scale",0,0,O_ARG_DOUBLE,&l_pf_scale,"1.0","scale","Scaling of the partition function. Use in order to avoid overflow."},
     
+    {"stopwatch",0,&opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
+
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
@@ -207,7 +213,7 @@ option_def my_options[] = {
  */
 int
 main(int argc, char **argv) {
-    //stopwatch.set_print_on_exit(true);
+    stopwatch.start("total");
 
     typedef std::vector<int>::size_type size_type;
 
@@ -241,6 +247,10 @@ main(int argc, char **argv) {
 	print_usage(argv[0],my_options);
 	printf("\n");
 	return -1;
+    }
+
+    if (opt_stopwatch) {
+	stopwatch.set_print_on_exit(true);
     }
 
     if (opt_verbose)
@@ -554,6 +564,8 @@ main(int argc, char **argv) {
     // clean up
     if(arc_matches) delete arc_matches;
     if (ribosum) delete ribosum;
+
+    stopwatch.stop("total");
     
     // DONE
     return 0;
