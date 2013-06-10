@@ -11,6 +11,13 @@
  * computing pair probabilities of the input sequences.
  *
  * Reads sequence in fasta from cin and writes pp-files to cout
+ *
+ * command line argument --TEST provides a way to test for linking to
+ * the ViennaLib. (This should be eventually replaced by a less
+ * idiosyncratic mechanism.)
+ *
+ * @todo use RnaEnsemble to avoid code duplication (caution: at the
+ * time of writing, RnaEnsemble does not support constraints yet.)
  */
 /************************************************************/
 
@@ -57,7 +64,7 @@ usage() {
 	<< "Options:" <<std::endl
 	<< std::endl
 	<< "  -C           use structural constraints" << std::endl
-	<< "  -noLP        forbid lonely base pairs" << std::endl
+	<< "  --noLP       forbid lonely base pairs" << std::endl
 	<< "  -p cutoff    set cutoff probability (default "<<cutoff<<")" << std::endl
 	<< std::endl	
 	<< "Reads the input sequence in simplified fasta format from stdin (no linebreaks!)."<<std::endl 
@@ -147,7 +154,7 @@ main(int argc, char **argv) {
     assign_plist_from_pr(&pl, probs, seq.length(), cutoff);
     
     // write pp file
-
+    
     std::cout << "SCORE: 0" << std::endl<< std::endl;
     
     std::cout << name << "    " << sequence << std::endl;

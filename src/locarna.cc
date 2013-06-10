@@ -945,7 +945,7 @@ main(int argc, char **argv) {
 		    MultipleAlignment ma(alignment);
 		    RnaEnsemble ens(ma,pfparams,false,true); // alifold the alignment
 		    RnaData consensus(ens,clp.min_prob); // construct rna data from ensemble
-		    consensus.write_pp(out,clp.output_width); // write alifold dot plot
+		    consensus.write_pp(out); // write alifold dot plot
 		} else {
 		    // compute averaged consensus base pair probabilities
 		    RnaData consensus(*rna_dataA,
@@ -953,7 +953,7 @@ main(int argc, char **argv) {
 				      alignment,
 				      my_exp_probA,
 				      my_exp_probB);
-		    consensus.write_pp(out,clp.output_width); // write averaged dot plot
+		    consensus.write_pp(out); // write averaged dot plot
 		}
 	    } else {
 		std::cerr << "Cannot write to "<<clp.pp_out<<std::endl<<"! Exit.";

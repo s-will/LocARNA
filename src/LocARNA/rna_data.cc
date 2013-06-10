@@ -736,10 +736,26 @@ namespace LocARNA {
     } // end read_ps
 
 
+    bool
+    RnaData::get_nonempty_line(std::istream &in,
+			       std::string &line) {
+	const std::string whitespace = " \t";
+	while(getline(in,line)) {
+	    if (line.length()>0 &&
+		!isspace(line[0])) {
+		
+		// remove trailing white space
+		const size_t strEnd = line.find_last_not_of(whitespace);
+		line = line.substr(0, strEnd+1);
+		return true;
+	    }
+	}
+	line="";
+	return false;
+    }
+
     void RnaData::read_old_pp(const std::string &filename) {
 	
-	std::cerr << "RnaData::read_old_pp ; ATTENTION: buggy" << std::endl;
-
 	std::ifstream in(filename.c_str());
 	
 	std::string name;
@@ -755,24 +771,22 @@ namespace LocARNA {
 	std::string sequence_anchor_string="";
 
 	bool contains_stacking=false;
-
-	while (getline(in,line) && line!="#" ) { // iterate through lines; stop at the first line that equals "#"
-	    if (line.length()>0 && !isspace(line[0])) { // ignore empty lines and lines that start with whitespace
-		std::istringstream in(line);
-		in >> name >> seqstr;
+	
+	while (get_nonempty_line(in,line) && line!="#") { // iterate through lines; stop at the first line that equals "#"
+	    std::istringstream in(line);
+	    in >> name >> seqstr;
 	    
-		if ( in.fail() ) {
-		    throw wrong_format_failure();
-		}
-
-
-		if (name != "SCORE:") { // ignore the (usually first) line that begins with SCORE:
-		    if (name == "#C") {
-			sequence_anchor_string += seqstr;
-		    } else {
-			normalize_rna_sequence(seqstr);
-			seq_map[name] += seqstr;
-		    }
+	    if ( in.fail() ) {
+		throw wrong_format_failure();
+	    }
+	    
+	    
+	    if (name != "SCORE:") { // ignore the (usually first) line that begins with SCORE:
+		if (name == "#C") {
+		    sequence_anchor_string += seqstr;
+		} else {
+		    normalize_rna_sequence(seqstr);
+		    seq_map[name] += seqstr;
 		}
 	    }
 	}
@@ -781,13 +795,16 @@ namespace LocARNA {
 	    throw wrong_format_failure();
 	}
 	
-	split_at_separator(sequence_anchor_string,'#',pimpl_->sequence_anchors_);
-
+	if (sequence_anchor_string!="") {
+	    split_at_separator(sequence_anchor_string,'#',pimpl_->sequence_anchors_);
+	}    
+	
 	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
 	    // std::cout << "SEQ: " << it->first << " " << it->second << std::endl;
 	    pimpl_->sequence_.append(MultipleAlignment::SeqEntry(it->first,it->second));
 	}
-    
+	
+	
 	// ----------------------------------------
 	// read base pairs
     
@@ -796,9 +813,9 @@ namespace LocARNA {
 
 	// std::cout << "LEN: " << len<<std::endl;
 	
-	while( getline(in,line) ) {
+	while( get_nonempty_line(in,line) ) {
 	    std::istringstream in(line);
-      
+	    
 	    in>>i>>j>>p;
       
 	    if ( in.fail() ) {
@@ -826,18 +843,6 @@ namespace LocARNA {
     } // end read_old_pp
     
     
-    bool
-    RnaData::get_nonempty_line(std::istream &in,
-			       std::string &line) {
-	while(getline(in,line)) {
-	    if (line.length()>0 &&
-		!isspace(line[0])) {
-		return true;
-	    }
-	}
-	line="";
-	return false;
-    }
 
     void RnaData::read_pp(const std::string &filename) {
 	std::ifstream in(filename.c_str());
@@ -848,8 +853,6 @@ namespace LocARNA {
     std::istream &
     RnaData::read_pp(std::istream &in) {
 	
-	std::cerr << "RnaData::read_pp" << std::endl;
-
 	std::string name;
 	std::string seqstr;
     
@@ -1240,7 +1243,7 @@ namespace LocARNA {
 	out << std::endl
 	    << "#SECTION BASEPAIRS" << std::endl
 	    << std::endl
-	    << "#BPCUT "<<format_prob(p_bpcut_) << std::endl;
+	    << "#BPCUT "<<format_prob(std::max(p_bpcut_,p_outbpcut)) << std::endl;
 	
 	if (has_stacking_) {
 	    out << "#STACKS"<<std::endl;
@@ -1285,8 +1288,8 @@ namespace LocARNA {
 	out << std::endl
 	    << "#SECTION INLOOP" << std::endl
 	    << std::endl
-	    << "#BPILCUT " << format_prob(p_bpilcut_) << std::endl
-	    << "#UILCUT  " << format_prob(p_uilcut_) << std::endl
+	    << "#BPILCUT " << format_prob(std::max(p_bpilcut_,p_outbpilcut)) << std::endl
+	    << "#UILCUT  " << format_prob(std::max(p_uilcut_,p_outuilcut)) << std::endl
 	    << std::endl;
 	
 	// write in-loop probabilities for all arcs with probability greater than p_outbpcut
