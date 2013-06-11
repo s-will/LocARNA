@@ -67,13 +67,18 @@ main(int argc, char **argv) {
 
 
     // create simple alignment from pairwise Alignment
+    
+    std::string alistrA="CCUCG--AGGGGAACCCGA-------------AAGGGACC-CGA-GAGG";
+    std::string alistrB="CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGG-AGCAGGUGGCG";
+    
     Sequence seqA("seqA","CCUCGAGGGGAACCCGAAAGGGACCCGAGAGG");
     Sequence seqB("seqB","CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG");
-    Alignment alignment(seqA,
-			seqB,
-			"CCUCG--AGGGGAACCCGA-------------AAGGGACC-CGA-GAGG",
-			"CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGG-AGCAGGUGGCG");
-        
+    
+    Alignment alignment(seqA,seqB,
+			Alignment::edges_t(Alignment::alistr_to_edge_ends(alistrA),
+					   Alignment::alistr_to_edge_ends(alistrB)));
+    
+    
     // compute the averaged consensus
     RnaEnsemble ensA(seqA,pfparams,false,true);
     RnaData rna_dataA(ensA,0.05);

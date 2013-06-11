@@ -790,7 +790,7 @@ main(int argc, char **argv) {
 	    std::cout << "WARNING: reporting score components is still experimental." << std::endl;
 	    std::cout << "         This does not work properly for some less standard scoring types, e.g. free end gaps." << std::endl;
 
-	    const Alignment::edge_vector_t edges = alignment.global_alignment_edges();
+	    const Alignment::edges_t edges = alignment.alignment_edges(false);
 	    
 	    score_t seq_sim=0;
 	    score_t gap_cost=0; // count linear component of gap cost
@@ -806,25 +806,25 @@ main(int argc, char **argv) {
 	    bool openB=false; // is a gap open in B
 	    
 	    for (size_t k=0; k< edges.size(); k++) {
-		if (edges[k].first>0 && edges[k].second>0) {
-		    seq_sim += scoring.basematch(edges[k].first,edges[k].second);
+		if (edges.first[k].is_pos() && edges.second[k].is_pos()) {
+		    seq_sim += scoring.basematch(edges.first[k],edges.second[k]);
 		}
-		if (edges[k].first<0) {
+		if (edges.first[k].is_gap()) {
 		    if (!openA) {
 			gap_numA++;
 			openA=true;
 		    }
-		    gap_cost += scoring.gapA(edges[k].second);
+		    gap_cost += scoring.gapA(edges.second[k]);
 		} else {
 		    openA=false;
 		}
 
-		if (edges[k].second<0) {
+		if (edges.second[k].is_gap()) {
 		    if (!openB) {
 			gap_numB++;
 			openB=true;
 		    }
-		    gap_cost += scoring.gapB(edges[k].first);
+		    gap_cost += scoring.gapB(edges.first[k]);
 		} else {
 		    openB=false;
 		}

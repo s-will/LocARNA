@@ -35,7 +35,7 @@ namespace LocARNA {
 	 * subsequence! Not necessarily all sequence positions are
 	 * contained.
 	 */
-	std::vector<int> a_; 
+	Alignment::edge_ends_t a_; 
 
 	/**
 	 * \brief second components of alignment edges
@@ -49,7 +49,7 @@ namespace LocARNA {
 	 * subsequence! Not necessarily all sequence positions are
 	 * contained.
 	 */
-    	std::vector<int> b_; 
+    	Alignment::edge_ends_t b_; 
 	
 	// std::vector<char> strA_;
 	// std::vector<char> strB_;
@@ -73,7 +73,7 @@ namespace LocARNA {
     
 	void
 	write_consensus_dot_plot(std::ostream &out,
-				 const Alignment::edge_vector_t &edges,
+				 const Alignment::edges_t &edges,
 				 const RnaData &bpsA,
 				 const RnaData &bpsB,
 				 double expA,
@@ -100,23 +100,21 @@ namespace LocARNA {
 	static
 	std::string
 	consensus_constraint_string(const AnchorConstraints &seqConstraints, 
-				    const Alignment::edge_vector_t &edges);
+				    const Alignment::edges_t &edges);
 	
 
 	/** 
 	 * @brief dot bracket structure
 	 * 
 	 * @param str structure string
-	 * @param x edge array
-	 * @param only_local if true, restrict to local positions
+	 * @param x edge ends array
 	 * 
 	 * @return structure string 
 	 */
 	static
 	std::string
 	dot_bracket_structure(const std::string &str,
-			      const Alignment::edge_vector_t &x,
-			      size_t ab);
+			      const Alignment::edge_ends_t &x);
     };
 
 } // end namespace LocARNA

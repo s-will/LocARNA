@@ -31,66 +31,29 @@ namespace LocARNA {
     
 
     Alignment::Alignment(const Sequence &seqA, 
-			 const Sequence &seqB, 
-			 const std::string &alistrA,
-			 const std::string &alistrB)
+    			 const Sequence &seqB, 
+			 const edges_t &edges)
 	: pimpl_(new AlignmentImpl(this,seqA,seqB)) {
 	
-	assert(alistrA.length()==alistrB.length());
-	
-	size_t alilen = alistrA.length();
-	
-#     ifndef NDEBUG
-	// assert that there is no gap only column in input
-	bool no_gaponly=true;
-	for(size_t k=0; k<alilen && no_gaponly; ++k) {
-	    if (is_gap_symbol(alistrA[k]) && is_gap_symbol(alistrB[k])) {
-		no_gaponly=false;
+	// append all non-locality edges
+	for (size_t k=0; k<edges.size(); k++) {
+	    const edge_end_t &x = edges.first[k];
+	    const edge_end_t &y = edges.second[k];
+	    
+	    if (x.is_gap() && y.is_gap()) {
+		throw failure("Invalid alignment edges");
 	    }
-	}
-	assert(no_gaponly);
-
-	// assert correct number of gaps
-	size_t gapsA=0;
-	size_t gapsB=0;
-	for(size_t k=0; k<alilen; ++k) {
-	    if (is_gap_symbol(alistrA[k])) {
-		gapsA++;
+	    if (x.is_pos() && (x<1 || x>seqA.length())) {
+		throw failure("Alignment edge out of range (first sequence).");
 	    }
-	    if (is_gap_symbol(alistrB[k])) {
-		gapsB++;
+	    if (y.is_pos() && (y<1 || y>seqB.length())) {
+		throw failure("Alignment edge out of range (second sequence).");
 	    }
-	}
-	assert(alistrA.length() == seqA.length() + gapsA);
-	assert(alistrB.length() == seqB.length() + gapsB);
-#     endif
-
-	
-	size_t posA=0;
-	size_t posB=0;
-	
-	for(size_t k=0; k<alilen; ++k) {
-	    if (is_gap_symbol(alistrA[k])) {
-		// in case of locality gaps, no alignment edge is appended;
-		// skip directly to the next position in the alignment strings
-		if (alistrA[k]=='~') continue;
-		
-		// add gap entry
-		pimpl_->a_.push_back(-1);
-	    }
-	    else {
-		posA++;
-		pimpl_->a_.push_back(posA);
-	    }
-
-	    if (is_gap_symbol(alistrB[k])) {
-		// in case of locality gaps, no alignment edge is appended;
-		// skip directly to the next position in the alignment strings
-		if (alistrB[k]=='~') continue;
-		pimpl_->b_.push_back(-1);
-	    } else {
-		posB++;
-		pimpl_->b_.push_back(posB);
+	    
+	    if (!((x.is_gap() && x.gap()==Gap::locality)
+		  ||
+		  (y.is_gap() && y.gap()==Gap::locality))) {
+		append(x,y);
 	    }
 	}
     }
@@ -134,7 +97,7 @@ namespace LocARNA {
     }
 
     void 
-    Alignment::append(int i, int j) {
+    Alignment::append(edge_end_t i, edge_end_t j) {
 	pimpl_->a_.push_back(i);
 	pimpl_->b_.push_back(j);
     }
@@ -152,12 +115,13 @@ namespace LocARNA {
     }
     
     
-    const Alignment::edge_vector_t 
+    const Alignment::edges_t 
     Alignment::alignment_edges(bool only_local) const {
-	edge_vector_t edges;
+	edge_ends_t endsA;
+	edge_ends_t endsB;
 	
-	const std::vector<int> &a=pimpl_->a_;
-	const std::vector<int> &b=pimpl_->b_;
+	const edge_ends_t &a=pimpl_->a_;
+	const edge_ends_t &b=pimpl_->b_;
 
 	size_t alisize=a.size();
 
@@ -165,44 +129,53 @@ namespace LocARNA {
 	int lastB=1; // ---------- "" ------------ B
 	
 	for (size_type i=0; i<alisize; i++) {
-	    for (int j=lastA; j<a[i]; j++) {
-		if (!only_local) edges.push_back(edge_t(j,-2));
+	    if (a[i].is_pos()) {
+		for (size_t j=lastA; j<a[i]; j++) {
+		    if (!only_local) {
+			endsA.push_back(j);
+			endsB.push_back(Gap::locality);
+		    }
+		    lastA++;
+		}
+	    }
+	    if (b[i].is_pos()) {
+		for (size_t j=lastB; j<b[i]; j++) {
+		    if (!only_local) {
+			endsA.push_back(Gap::locality);
+			endsB.push_back(j);
+		    }
+		    lastB++;
+		}
+	    }
+	    if ( a[i].is_pos() ) {
 		lastA++;
 	    }
-	    for (int j=lastB; j<b[i]; j++) {
-		if (!only_local) edges.push_back(edge_t(-2,j));
+	    if ( b[i].is_pos() ) {
 		lastB++;
 	    }
-	    int x=-1;
-	    int y=-1;
-	    if ( a[i] >= 0 ) {
-		x = a[i];
-		lastA++;
-	    }
-	    if ( b[i] >= 0 ) {
-		y = b[i];
-		lastB++;
-	    }
-	    edges.push_back(edge_t(x,y));
+	    endsA.push_back(a[i]);
+	    endsB.push_back(b[i]);
 	}
 	
 	if (!only_local) { 
 	    for (size_type j=lastA; j<=pimpl_->seqA_.length(); j++) {
-		edges.push_back(edge_t(j,-2));
+		endsA.push_back(j);
+		endsB.push_back(Gap::locality);
 		lastA++;
 	    }
 	    for (size_type j=lastB; j<=pimpl_->seqB_.length(); j++) {
-		edges.push_back(edge_t(-2,j));
+		endsA.push_back(Gap::locality);
+		endsB.push_back(j);
 		lastB++;
 	    }
 	}
-	return edges;
+	return edges_t(endsA,endsB);
     }
     
     
     std::string
     AlignmentImpl::consensus_constraint_string(const AnchorConstraints &seqConstraints, 
-					       const Alignment::edge_vector_t &edges) {
+					       const Alignment::edges_t &edges) {
 	std::string cons_constraint="";
 	if (!seqConstraints.empty()) {
 	    
@@ -211,9 +184,10 @@ namespace LocARNA {
 	    std::string noname="";
 	    for (size_type j=0; j<seqConstraints.name_size(); ++j) noname+=".";
 	    
-	    for (size_type i=0; i<edges.size(); i++) {
-		const std::string &nameA = (edges[i].first>0) ?seqConstraints.get_name_a(edges[i].first) :"";
-		const std::string &nameB = (edges[i].second>0)?seqConstraints.get_name_b(edges[i].second):"";
+	    assert(edges.first.size()==edges.second.size());
+	    for (size_type i=0; i<edges.first.size(); i++) {
+		const std::string &nameA = (edges.first[i].is_pos()) ?seqConstraints.get_name_a(edges.first[i]) :"";
+		const std::string &nameB = (edges.second[i].is_pos())?seqConstraints.get_name_b(edges.second[i]):"";
 		
 		std::string name=noname;
 
@@ -275,32 +249,47 @@ namespace LocARNA {
 
     std::string
     Alignment::dot_bracket_structureA(bool only_local) const {
-	edge_vector_t edges = alignment_edges(only_local);
-	return pimpl_->dot_bracket_structure(pimpl_->strA_,edges,1);
+	edges_t edges = alignment_edges(only_local);
+	return pimpl_->dot_bracket_structure(pimpl_->strA_,edges.first);
     }
 
     std::string
     Alignment::dot_bracket_structureB(bool only_local) const {
-	edge_vector_t edges = alignment_edges(only_local);
-	return pimpl_->dot_bracket_structure(pimpl_->strB_,edges,2);
+	edges_t edges = alignment_edges(only_local);
+	return pimpl_->dot_bracket_structure(pimpl_->strA_,edges.second);
     }
 
     std::string
     AlignmentImpl::dot_bracket_structure(const std::string &str,
-					 const Alignment::edge_vector_t &x,
-					 size_t ab) {
+					 const Alignment::edge_ends_t &x) {
 	std::string s;
 	for (size_t i=0; i<x.size(); i++) {
-	    int xi=(ab==1)?x[i].first:x[i].second;
-	    if (xi>0) {
-		s.push_back(str[xi]);
-	    } else if (xi==-1) {
-		s.push_back('-');
-	    } else if (xi==-2) {
-		s.push_back('~');
+	    if (x[i].is_pos()) {
+		s.push_back(str[x[i]]);
+	    } else if (x[i].is_gap()) {
+		s.push_back(gap_symbol(x[i].gap()));
 	    }
 	}
 	return s;
     }
-    
+
+    Alignment::edge_ends_t 
+    Alignment::alistr_to_edge_ends(const std::string alistr)
+    {
+	edge_ends_t xs;
+	size_t i=1;
+	
+	for (size_t k=0; k<alistr.size(); k++) {
+	    edge_end_t x;
+	    if (is_gap_symbol(alistr[k])) {
+		x = gap_code(alistr[k]);
+	    } else {
+		x = i;
+		i++;
+	    }
+	    xs.push_back(x);
+	}
+	return xs;
+    }
+
 }

@@ -97,7 +97,7 @@ namespace LocARNA {
 	:alig_(),
 	 name2idx_() {
 	
-	const Alignment::edge_vector_t &edges = alignment.alignment_edges(only_local);
+	const Alignment::edges_t &edges = alignment.alignment_edges(only_local);
 	
 	const Sequence &seqA=alignment.seqA();
 	const Sequence &seqB=alignment.seqB();
@@ -108,25 +108,23 @@ namespace LocARNA {
 	std::vector<int>::size_type alisize = edges.size();
     
 	for (size_type i=0; i<alisize; i++) {
-	    if ( edges[i].first<0 ) {
+	    if ( edges.first[i].is_gap() ) {
 		// distinguish regular and locality gaps
-		char gap_symbol=(edges[i].first==-1)?'-':'~';
 		for (size_type k=0; k<seqA.row_number(); k++) {
-		    aliA[k] += gap_symbol;
+		    aliA[k] += gap_symbol(edges.first[i].gap());
 		}
 	    } else {
 		for (size_type k=0; k<seqA.row_number(); k++) {
-		    aliA[k] += seqA.column(edges[i].first)[k];
+		    aliA[k] += seqA.column(edges.first[i])[k];
 		}
 	    }
-	    if ( edges[i].second<0 ) {
-		char gap_symbol=(edges[i].second==-1)?'-':'~';
+	    if ( edges.second[i].is_gap() ) {
 		for (size_type k=0; k<seqB.row_number(); k++) {
-		    aliB[k] += gap_symbol;
+		    aliB[k] += gap_symbol(edges.second[i].gap());
 		}
 	    } else {
 		for (size_type k=0; k<seqB.row_number(); k++) {
-		    aliB[k] += seqB.column(edges[i].second)[k];
+		    aliB[k] += seqB.column(edges.second[i])[k];
 		}
 	    }
 	}

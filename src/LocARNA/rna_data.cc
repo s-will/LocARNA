@@ -134,7 +134,7 @@ namespace LocARNA {
 	 sequence_anchors_(),
 	 has_stacking_(false)
     {
-	init_as_consensus_dot_plot(alignment.global_alignment_edges(),
+	init_as_consensus_dot_plot(alignment.alignment_edges(false),
 				   rna_dataA,
 				   rna_dataB,
 				   p_expA,
@@ -1387,7 +1387,7 @@ namespace LocARNA {
 
 
     void
-    RnaDataImpl::init_as_consensus_dot_plot(const Alignment::edge_vector_t &edges,
+    RnaDataImpl::init_as_consensus_dot_plot(const Alignment::edges_t &edges,
 					    const RnaData &rna_dataA,
 					    const RnaData &rna_dataB,
 					    double p_expA,
@@ -1416,27 +1416,27 @@ namespace LocARNA {
 		// here we compute consensus pair probabilities
 		
 		double pA =
-		    (edges[i].first<0 || edges[j].first<0)
+		    (edges.first[i].is_gap() || edges.first[j].is_gap())
 		    ? 0
-		    : rna_dataA.arc_prob(edges[i].first, edges[j].first);
+		    : rna_dataA.arc_prob(edges.first[i], edges.first[j]);
 
 		double pB =
-		    (edges[i].second<0 || edges[j].second<0)
+		    (edges.second[i].is_gap() || edges.second[j].is_gap())
 		    ? 0
-		    : rna_dataB.arc_prob(edges[i].second, edges[j].second);
+		    : rna_dataB.arc_prob(edges.second[i], edges.second[j]);
 
 		double p = consensus_probability(pA,pB,rowsA,rowsB,p_expA,p_expB);
 
 		if (stacking) {
 		    double st_pA =
-			(edges[i].first<0 || edges[j].first<0)
+			(edges.first[i].is_gap() || edges.first[j].is_gap())
 			? 0
-			: rna_dataA.joint_arc_prob(edges[i].first, edges[j].first);
+			: rna_dataA.joint_arc_prob(edges.first[i], edges.first[j]);
 		    
 		    double st_pB =
-			(edges[i].second<0 || edges[j].second<0)
+			(edges.second[i].is_gap() || edges.second[j].is_gap())
 			? 0
-			: rna_dataB.joint_arc_prob(edges[i].second, edges[j].second);
+			: rna_dataB.joint_arc_prob(edges.second[i], edges.second[j]);
 
 		    double st_p = consensus_probability(st_pA,st_pB,rowsA,rowsB,p_expA,p_expB);
 

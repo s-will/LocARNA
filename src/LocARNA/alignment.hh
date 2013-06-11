@@ -30,11 +30,68 @@ namespace LocARNA {
 	
     public:
 
+	
+	//! @briefend of an alignment edge
+	//!
+	//! asserts correct type of an edge end
+	class EdgeEnd {
+	    int end_; //<! position or Gap
+	public:
+	    
+	    //!@brief construct as invalid end
+	    EdgeEnd(): end_(0) {}
+	    
+	    //!@brief construct as position
+	    EdgeEnd(pos_type end): end_(int(end)) {}
+
+	    //!@brief construct as gap
+	    EdgeEnd(Gap end): end_(-int(end.idx())-1) {}
+	    
+	    //! @brief gap test
+	    //! @return whether end is gap
+	    bool is_gap() const {return end_<0;}
+	    
+	    //! @brief is position test
+	    //! @return whether end is position
+	    bool is_pos() const {return end_>0;}
+
+	    //! edge end as gap
+	    //! @return gap enum
+	    Gap gap() const {assert(end_<0); return Gap(size_t(-(end_+1)));}
+
+	    //! edge end as position
+	    //! @return position
+	    operator pos_type() const {assert(end_>0); return pos_type(end_);}
+	};
+	
 	//! type of an alignment edge
-	typedef std::pair<int,int> edge_t;
+	typedef EdgeEnd edge_end_t;
 	
 	//! type of vector of alignment edges
-	typedef std::vector<edge_t> edge_vector_t;
+	typedef std::vector<edge_end_t> edge_ends_t;
+	
+	//! type of vector of alignment edges
+	class edges_t : public std::pair<edge_ends_t,edge_ends_t> {
+	    typedef std::pair<edge_ends_t,edge_ends_t> parent_t;
+	public:
+	    //! @brief Construct asserting equal length
+	    edges_t(const edge_ends_t &x, const edge_ends_t &y) 
+		:parent_t(x,y)
+	    {
+		assert(x.size()==y.size());
+	    };
+	    
+	    //! @brief Size
+	    size_t
+	    size() const {return first.size();}
+	};
+
+	/**
+	 * @brief convert alignemnt string to edge end vector
+	 */
+	static 
+	edge_ends_t 
+	alistr_to_edge_ends(const std::string alistr);
 	
 	
 	/**
@@ -51,26 +108,15 @@ namespace LocARNA {
 	 *
 	 * @param seqA First sequence
 	 * @param seqB Second sequence
-	 * @param alistrA First alignment string
-	 * @param alistrB Second alignment string
-	 *
-	 * Construct with empty structure
-	 *
-	 * @note alistrA and alistrB are required to have the same
-	 * length, do not have gap symbols at the same positions, have
-	 * as many non-gap characters as their corresponding sequence
-	 * Only the position of gap characters is relevant; the actual
-	 * non-gap characters can be arbitrary (e.g. consensus
-	 * symbols).
-	 * 
-	 * @note Distinguishs regular and locality gaps.
+	 * @param edges alignment edges
 	 */
 	Alignment(const Sequence &seqA, const Sequence &seqB,
-		  const std::string &alistrA, const std::string &alistrB);
-	
+		  const edges_t &edges);
+
 	/** 
 	 * @brief copy constructor
 	 * @param rna_data object to be copied
+	 *
 	 * Copies implementation object (not only pointer) 
 	 */
 	Alignment(const Alignment &alignment);
@@ -78,7 +124,7 @@ namespace LocARNA {
 	/** 
 	 * @brief assignment operator
 	 * @param rna_data object to be assigned
-	 * Assigns implementation object (not only pointer) 
+	 * Assigns implementation object (not only pointer)
 	 */
 	Alignment &operator =(const Alignment &alignment);
 
@@ -111,16 +157,8 @@ namespace LocARNA {
 	 * Edges have to be appended in ascending order
 	 */
 	void
-	append(int i, int j);
-
-	/**
-	 * \brief Append an alignment edge
-	 * @param e edge
-	 * Edges have to be appended in ascending order
-	*/
-	void
-	append(edge_t e);
-
+	append(edge_end_t i, edge_end_t j);
+	
 	/**
 	   \brief Add a basepair to the structure of A
 	*/
@@ -139,26 +177,21 @@ namespace LocARNA {
 	 *
 	 * @param only_local if true, return only local edges
 	 *
-	 * @return vector of alignment edges
+	 * @return pair of vectors of alignment edges
 	 *
 	 * If !only_local, the returned vector contains all positions
-	 * of the sequence, we distinguish gaps (-1) and locality gaps
-	 * (-2); the latter are paired with positions that are not
-	 * aligned at all (i.e. they are not part of the local
-	 * alignment). 
+	 * of the sequence. We distinguish different gaps, in
+	 * particular locality gaps, which are paired with positions
+	 * that are not aligned at all (i.e. they are not part of the
+	 * local alignment).
 	 *
 	 * If only_local, the vector does not contain non-local edges,
 	 * i.e. edges with locality gaps.
 	 *
 	 * Edges are sorted (ascendingly).
 	 */
-	const edge_vector_t
+	const edges_t
 	alignment_edges(bool only_local) const;
-
-	const edge_vector_t
-	global_alignment_edges() const {
-	    return alignment_edges(false);
-	}
 	
 	/* start/end of (locally) aligned subsequences 
 	   (this is used when finding k-best alignments in Aligner)

@@ -180,7 +180,7 @@ namespace LocARNA {
 	 * @param stacking if true, stacking consensus is computed
 	 */
 	void
-	init_as_consensus_dot_plot(const Alignment::edge_vector_t &edges,
+	init_as_consensus_dot_plot(const Alignment::edges_t &edges,
 				   const RnaData &rna_dataA,
 				   const RnaData &rna_dataB,
 				   double p_expA,

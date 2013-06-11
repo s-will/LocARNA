@@ -44,9 +44,33 @@ namespace LocARNA {
     
     //! type of a sequence position
     typedef size_type pos_type;
+
+
+    // ------------------------------------------------------------
+    // define gap codes and symbols
     
-    //! interpret these symbol as gaps (e.g. used by MultipleAlignment)
-    const std::string gap_symbols = "-~.";
+    //! gaps in alignment edges
+    class Gap
+    {
+    public:
+	enum type {regular,loop,locality,other};
+    private:
+	type val_;
+    public:
+
+	Gap(type v) : val_(v) {}
+	
+	// init from 0-based index
+	explicit
+	Gap(size_t v) : val_(type(v)) {}
+	
+	// @brief 0-based index
+	size_t idx() const { return (size_t)val_; }
+	
+	friend bool operator == (const Gap & lhs, const Gap & rhs) { return lhs.val_ == rhs.val_; }
+	friend bool operator != (const Gap & lhs, const Gap & rhs) { return lhs.val_ != rhs.val_; }
+    };
+    
     
     //! @brief Test for gap symbol
     //! @param c character to be tested
@@ -54,6 +78,14 @@ namespace LocARNA {
     //! according to global constant gap_symbols
     bool is_gap_symbol(char c);
     
+    //! @brief symbols of gaps
+    char
+    gap_symbol(Gap gap);
+    
+    //! code of a gap symbol
+    Gap gap_code(char symbol);
+    // ------------------------------------------------------------
+
     //! Simple exception class that supports a text message
     class failure : public std::exception {
 	//! message that is reported by what

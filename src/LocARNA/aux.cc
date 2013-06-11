@@ -13,10 +13,28 @@ namespace LocARNA {
 	return msg_.c_str();
     }
 
+    // ------------------------------------------------------------
+    // gaps
+
+    // gap symbols
+    const std::string the_gap_symbols = "-_~.";
+    
     bool
     is_gap_symbol(char c) {
-	return gap_symbols.find(c)!=std::string::npos;
+	return the_gap_symbols.find(c)!=std::string::npos;
     }
+    
+    char
+    gap_symbol(Gap gap) {
+	return the_gap_symbols[gap.idx()];
+    }
+
+    Gap gap_code(char symbol) {
+	assert(is_gap_symbol(symbol));
+	return Gap(the_gap_symbols.find(symbol)); 
+    }
+
+    // ------------------------------------------------------------
 
     /**
      * \brief Converts char to upper case
