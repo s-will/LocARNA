@@ -87,7 +87,11 @@ struct command_line_parameters {
     //! allow exclusions for maximizing alignment of connected substructures
     bool struct_local;
 
-    bool sequ_local; //!< maximize alignment of subsequences
+    bool struct_local_given; //!< is sequ-local mode specified explicitely
+
+    bool sequ_local; //!< sequence local alignment; maximize alignment of subsequence
+
+    bool sequ_local_given; //!< is sequ-local mode specified explicitely
 
     //! specification of free end gaps, order left end sequence 1,
     //! right 1, left 2, right 2 e.g. "+---" allows free end gaps at
@@ -231,8 +235,8 @@ option_def my_options[] = {
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
 
-    {"struct-local",0,0,O_ARG_BOOL,&clp.struct_local,"false","bool","Structure local"},
-    {"sequ-local",0,0,O_ARG_BOOL,&clp.sequ_local,"false","bool","Sequence local"},
+    {"struct-local",0,&clp.struct_local_given,O_ARG_BOOL,&clp.struct_local,"false","bool","Structure local"},
+    {"sequ-local",0,&clp.sequ_local_given,O_ARG_BOOL,&clp.sequ_local,"false","bool","Sequence local"},
     {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,"----","spec","Whether and which end gaps are free. order: L1,R1,L2,R2"},
     {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L","Normalized local alignment with parameter L"},
     
@@ -388,8 +392,34 @@ main(int argc, char **argv) {
 		  << "explicitely (option --exp-prob)." << std::endl;
 	clp.opt_stacking=false;
     }
+    
+    // ------------------------------------------------------------
+    // if normalized alignment shall be computed, automatically turn on 
+    // sequ_local unless sequ_local mode was explicitely specified
+    //
+    // important: in the Aligner class, we rely on sequ_local==true in normalized alignment mode
+    if (clp.opt_normalized) {
+	if(!clp.sequ_local_given) {
+	    clp.sequ_local = true;
+	} else {
+	    if (!clp.sequ_local) {
+		std::cerr 
+		    << "ERROR: Cannot run normalized alignment with sequence local alignment turned off."<<std::endl;
+		return -1;
+	    }
+	}
 
-
+	if (clp.struct_local_given && clp.struct_local) {
+	    std::cerr 
+		<< "ERROR: Normalized structure local alignment not supported."
+		<<std::endl;
+	    return -1;
+	} else {
+	    clp.struct_local=false;
+	}
+	
+    }
+    
     // ----------------------------------------  
     // Ribosum matrix
     //
@@ -734,21 +764,7 @@ main(int argc, char **argv) {
 
     // if option --normalized <L> is given, then do normalized local alignemnt
     if (clp.opt_normalized) {
-	
-	// do some option consistency checks and output errors
-	if (clp.struct_local) {
-	    std::cerr 
-		<< "ERROR: Normalized structure local alignment not supported."
-		<<std::endl
-		<< "LocARNA ignores struct_local option."<<std::endl;
-	    return -1;
-	}
-	if (!clp.sequ_local) { // important: in the Aligner class, we rely on this
-	    std::cerr 
-		<< "ERROR: Normalized alignment requires option --sequ-local."<<std::endl;
-	    return -1;
-	}
-	
+		
 	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
 	
     } else {
