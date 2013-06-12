@@ -59,31 +59,6 @@ namespace LocARNA {
 	AlignmentImpl(Alignment *self, const Sequence &seqA, const Sequence &seqB)
 	    : self_(self),seqA_(seqA),seqB_(seqB),a_(),b_(),strA_(),strB_() {}
 	
-	/**
-	 * @brief Average of two probabilities.
-	 *
-	 * This is very critical for multiple alignment in at least
-	 * two respects. We don't want that high probabilities get
-	 * extinguished during progressive alignment.  Second, we
-	 * don't want that probabilities >=p_min accumulate
-	 */
-	double
-	average_probs(double pA, double pB, double p_min,
-		      double p_expA, double p_expB) const;
-    
-	void
-	write_consensus_dot_plot(std::ostream &out,
-				 const Alignment::edges_t &edges,
-				 const RnaData &bpsA,
-				 const RnaData &bpsB,
-				 double expA,
-				 double expB,
-				 bool stacking
-				 ) const;
-	
-	void
-	write_alifold_consensus_dot_plot(std::ostream &out,
-					 double cutoff) const;
 	
 	/**
 	 * @brief Write raw alignment information for debugging
@@ -91,17 +66,6 @@ namespace LocARNA {
 	void 
 	write_debug(std::ostream &out) const;
 
-	/**
-	 * @brief Consensus constraint string
-	 * @param seqConstraints anchor constraints
-	 * @param edges alignment edges
-	 * @return consensus constraint string
-	 */
-	static
-	std::string
-	consensus_constraint_string(const AnchorConstraints &seqConstraints, 
-				    const Alignment::edges_t &edges);
-	
 
 	/** 
 	 * @brief dot bracket structure

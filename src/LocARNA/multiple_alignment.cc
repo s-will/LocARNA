@@ -96,12 +96,24 @@ namespace LocARNA {
     MultipleAlignment::MultipleAlignment(const Alignment &alignment, bool only_local)
 	:alig_(),
 	 name2idx_() {
-	
-	const Alignment::edges_t &edges = alignment.alignment_edges(only_local);
-	
-	const Sequence &seqA=alignment.seqA();
-	const Sequence &seqB=alignment.seqB();
+	init(alignment.alignment_edges(only_local),
+	     alignment.seqA(),
+	     alignment.seqB());
+    }
     
+    MultipleAlignment::MultipleAlignment(const AlignmentEdges &edges,
+					 const Sequence &seqA,
+					 const Sequence &seqB)
+	:alig_(),
+	 name2idx_() {
+	init(edges,seqA,seqB);
+    }
+    
+    void
+    MultipleAlignment::init(const AlignmentEdges &edges,
+			    const Sequence &seqA,
+			    const Sequence &seqB) {
+	
 	std::vector<std::string> aliA(seqA.row_number(),"");
 	std::vector<std::string> aliB(seqB.row_number(),"");
     
@@ -109,7 +121,6 @@ namespace LocARNA {
     
 	for (size_type i=0; i<alisize; i++) {
 	    if ( edges.first[i].is_gap() ) {
-		// distinguish regular and locality gaps
 		for (size_type k=0; k<seqA.row_number(); k++) {
 		    aliA[k] += gap_symbol(edges.first[i].gap());
 		}
@@ -736,7 +747,7 @@ namespace LocARNA {
 	out << std::left << name << " ";
 	out.width(ow);
 	out << sequence << std::endl;
-
+	
 	return out;
     }
 

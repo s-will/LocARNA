@@ -75,7 +75,7 @@ namespace LocARNA {
 	size_t pos;
 	while ((pos=str.find(sep))!=std::string::npos) {
 	    if (pos>0) {
-		v.push_back(str.substr(0,pos-1));
+		v.push_back(str.substr(0,pos));
 	    } else {
 		v.push_back("");
 	    }
@@ -83,7 +83,26 @@ namespace LocARNA {
 	}
 	v.push_back(str);
     }
+
+    std::vector<std::string>
+    split_at_separator(const std::string &s, char sep) {
+	std::vector<std::string> v;
+	split_at_separator(s,sep,v);
+	return v;
+    }
+
     
+    std::string
+    concat_with_separator(const std::vector<std::string> &v, char sep) {
+	if (v.size()==0) return "";
+	std::string s=v[0];
+	for (std::vector<std::string>::const_iterator it=v.begin()+1; v.end()!=it; ++it) {
+	    s += sep + *it;
+	}
+	return s;
+    }
+    
+
     /**
       @brief throw rnalib unavailable failure
       

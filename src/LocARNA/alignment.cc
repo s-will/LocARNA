@@ -171,41 +171,6 @@ namespace LocARNA {
 	}
 	return edges_t(endsA,endsB);
     }
-    
-    
-    std::string
-    AlignmentImpl::consensus_constraint_string(const AnchorConstraints &seqConstraints, 
-					       const Alignment::edges_t &edges) {
-	std::string cons_constraint="";
-	if (!seqConstraints.empty()) {
-	    
-	    std::vector<std::string> seqCStrings(seqConstraints.name_size());
-
-	    std::string noname="";
-	    for (size_type j=0; j<seqConstraints.name_size(); ++j) noname+=".";
-	    
-	    assert(edges.first.size()==edges.second.size());
-	    for (size_type i=0; i<edges.first.size(); i++) {
-		const std::string &nameA = (edges.first[i].is_pos()) ?seqConstraints.get_name_a(edges.first[i]) :"";
-		const std::string &nameB = (edges.second[i].is_pos())?seqConstraints.get_name_b(edges.second[i]):"";
-		
-		std::string name=noname;
-
-		if (nameA!="") name =  nameA;
-		else if (nameB!="") name = nameB;
-
-		for (size_type j=0; j<seqConstraints.name_size(); ++j) {
-		    seqCStrings[j] += name[j];
-		}
-	    }
-
-	    for (size_type j=0; j<seqConstraints.name_size(); ++j) {
-		if (j!=0) cons_constraint += "#";
-		cons_constraint += seqCStrings[j];
-	    }
-	}
-	return cons_constraint;
-    }
 
 
     size_type

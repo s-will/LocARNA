@@ -8,6 +8,7 @@
 #include <iosfwd>
 #include "rna_data.hh"
 #include "sequence.hh"
+#include "sequence_anchors.hh"
 
 namespace LocARNA {
 
@@ -48,9 +49,11 @@ namespace LocARNA {
 	 */
 	arc_prob_matrix_t arc_2_probs_; 
 	
-	//! sequence anchors as vector of anchor strings (see class
-	//! AnchorConstraints)
-	std::vector<std::string> sequence_anchors_;
+	//! anchors_t from RnaData
+	typedef RnaData::anchors_t anchors_t;
+
+	//! sequence anchors 
+	anchors_t sequence_anchors_;
 	
 	//! whether stacking probabilities are available
 	bool has_stacking_; 
@@ -92,7 +95,7 @@ namespace LocARNA {
 	RnaDataImpl(RnaData *self,
 		    const RnaData &rna_dataA,
 		    const RnaData &rna_dataB,
-		    const Alignment &alignment,
+		    const Alignment::edges_t &alignment,
 		    double p_expA,
 		    double p_expB);
     	/** 
@@ -213,7 +216,8 @@ namespace LocARNA {
 			      size_t sizeB,
 			      double p_expA,
 			      double p_expB) const;
-	    
+
+	
     }; // end class RnaDataImpl
     
 

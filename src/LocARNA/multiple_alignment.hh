@@ -22,6 +22,7 @@
 namespace LocARNA {
 
     class Alignment;
+    class AlignmentEdges;
     template<class T> class Alphabet;
     class BasePairs;
     class Scoring;
@@ -337,12 +338,34 @@ public:
      * \brief Construct from Alignment object
      * @param alignment object of type Alignment
      * @param only_local if true, construct only local alignment
-     *
-     * @note In case of locality, distinguish properly between regular
-     * gaps '-' and locality gaps '~'.
      */
     MultipleAlignment(const Alignment &alignment, bool only_local=false);
     
+    /**
+     * \brief Construct from alignment edges and sequences
+     * @param alignment object of type Alignment
+     * @param seqA sequence A
+     * @param seqB sequence B
+     *
+     */
+    MultipleAlignment(const AlignmentEdges &edges,
+		      const Sequence &seqA,
+		      const Sequence &seqB);
+
+protected:
+    /**
+     * \brief Initialize from alignment edges and sequences
+     * @param alignment object of type Alignment
+     * @param seqA sequence A
+     * @param seqB sequence B
+     *
+     */
+    void
+    init(const AlignmentEdges &edges,
+	 const Sequence &seqA,
+	 const Sequence &seqB);
+public:
+
     /**
      * @brief virtual destructor
      */

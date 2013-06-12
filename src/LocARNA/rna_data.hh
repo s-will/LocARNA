@@ -17,6 +17,7 @@ namespace LocARNA {
     class RnaEnsemble;
     class RnaDataImpl;
     class PFoldParams;
+    class SequenceAnchors;
 
     /**
      * @brief represent sparsified data of RNA ensemble
@@ -41,6 +42,9 @@ namespace LocARNA {
 
     public:
 	
+	//! type of sequence anchors
+	typedef SequenceAnchors anchors_t;
+
 	typedef SparseMatrix<double> arc_prob_matrix_t;
 
 	/**
@@ -167,23 +171,12 @@ namespace LocARNA {
 	length() const;
 
 	/**
-	 * @brief Get sequence anchors
-	 *
-	 * @return concatenated sequence anchors strings (separated by
-	 * '#')
-	 */
-	std::string
-	sequence_anchors() const;
-
-    protected:
-	/**
 	 * @brief Get sequence anchors as vector of strings
 	 *
 	 * @return vector of sequence anchors strings
 	 */
-	const std::vector<std::string> &
-	sequence_anchor_vector() const;
-    public:
+	const anchors_t &
+	sequence_anchors() const;
 
 	/**
 	 * @brief Get base pair cutoff probability

@@ -56,7 +56,7 @@ namespace LocARNA {
 	: pimpl_(new RnaDataImpl(this,
 				 rna_dataA,
 				 rna_dataB,
-				 alignment,
+				 alignment.alignment_edges(false),
 				 p_expA,
 				 p_expB)) {
     }
@@ -123,18 +123,18 @@ namespace LocARNA {
     RnaDataImpl::RnaDataImpl(RnaData *self,
 			     const RnaData &rna_dataA,
 			     const RnaData &rna_dataB,
-			     const Alignment &alignment,
+			     const Alignment::edges_t &edges,
 			     double p_expA,
 			     double p_expB) 
 	:self_(self),
-	 sequence_(alignment),
+	 sequence_(edges,rna_dataA.sequence(),rna_dataB.sequence()),
 	 p_bpcut_(),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
-	 sequence_anchors_(),
+	 sequence_anchors_(edges,rna_dataA.sequence_anchors(),rna_dataB.sequence_anchors()),
 	 has_stacking_(false)
     {
-	init_as_consensus_dot_plot(alignment.alignment_edges(false),
+	init_as_consensus_dot_plot(edges,
 				   rna_dataA,
 				   rna_dataB,
 				   p_expA,
@@ -527,23 +527,9 @@ namespace LocARNA {
 	return pimpl_->sequence_.length();
     }
     
-    const std::vector<std::string> &
-    RnaData::sequence_anchor_vector() const {
-	return pimpl_->sequence_anchors_;
-    }
-
-    std::string
+    const RnaData::anchors_t &
     RnaData::sequence_anchors() const {
-	std::string anchors="";
-	if (pimpl_->sequence_anchors_.size()>0) {
-	    anchors = pimpl_->sequence_anchors_[0];
-	    for(size_t i=1; i<pimpl_->sequence_anchors_.size(); i++ ) {
-		anchors += "#";
-		anchors += pimpl_->sequence_anchors_[i];
-	    }
-	}
-	
-	return anchors;
+	return pimpl_->sequence_anchors_;
     }
     
     double
@@ -796,8 +782,8 @@ namespace LocARNA {
 	}
 	
 	if (sequence_anchor_string!="") {
-	    split_at_separator(sequence_anchor_string,'#',pimpl_->sequence_anchors_);
-	}    
+	    pimpl_->sequence_anchors_ = SequenceAnchors(split_at_separator(sequence_anchor_string,'#'));
+	}
 	
 	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
 	    // std::cout << "SEQ: " << it->first << " " << it->second << std::endl;
@@ -885,6 +871,8 @@ namespace LocARNA {
 	std::map<std::string,std::string> seq_map;
 	std::vector<std::string> seq_names; // order of sequence names
 	
+	std::vector<std::string> anchors;
+	
 	std::string line;
 	while (self_->get_nonempty_line(in,line)) {
 	    
@@ -905,15 +893,15 @@ namespace LocARNA {
 			throw RnaData::syntax_error_failure("Invalid index in anchor specification.");
 		    }
 		    
-		    if ((unsigned int)idx > sequence_anchors_.size() + 1) {
+		    if ((unsigned int)idx > anchors.size() + 1) {
 			throw RnaData::syntax_error_failure("Non-contiguous anchor specification.");
 		    }
 		    		    
-		    if ((unsigned int)idx > sequence_anchors_.size()) {
-			sequence_anchors_.resize(idx);
+		    if ((unsigned int)idx > anchors.size()) {
+			anchors.resize(idx);
 		    }
 		    
-		    sequence_anchors_[idx-1] += astr;
+		    anchors[idx-1] += astr;
 		} else {
 		    // ignore keyword 
 		}
@@ -930,18 +918,15 @@ namespace LocARNA {
 		    throw RnaData::wrong_format_failure();
 		}
 	    
-		if (name == "#C") {
-		    //sequence_anchors_ += seqstr;
-		    throw(failure("No anchor handling implemented yet for new pp format"));
-		} else {
-		    // register name if it is encountered the first time
-		    if (seq_map.find(name)==seq_map.end()) {
-			seq_names.push_back(name);
-		    }
-		    
-		    normalize_rna_sequence(seqstr);
-		    seq_map[name] += seqstr;
+		
+		// register name if it is encountered the first time
+		if (seq_map.find(name)==seq_map.end()) {
+		    seq_names.push_back(name);
 		}
+		
+		normalize_rna_sequence(seqstr);
+		seq_map[name] += seqstr;
+		
 	    }
 	}
 	
@@ -951,17 +936,19 @@ namespace LocARNA {
 	}
 	
 	// check anchor constraints
-	if (sequence_anchors_.size()>0) {
-	    size_t len = sequence_anchors_[0].size();
-	    for (size_t i=1; i<sequence_anchors_.size(); i++) {
-		if ( sequence_anchors_[i].size() != len ) {
+	if (anchors.size()>0) {
+	    size_t len = anchors[0].size();
+	    for (size_t i=1; i<anchors.size(); i++) {
+		if ( anchors[i].size() != len ) {
 		    throw RnaData::syntax_error_failure("Anchor strings of unequal length.");
 		}
 	    }
+	    
+	    // initialize sequence_anchors_ with anchors
+	    sequence_anchors_ = SequenceAnchors(anchors);
 	}
-
+	
 	return in;
-
     }
 
     void ExtRnaData::read_pp(const std::string &filename) {
@@ -1184,12 +1171,13 @@ namespace LocARNA {
     RnaDataImpl::write_pp_sequence(std::ostream &out) const {
 	out << sequence_;
 	// write section separator
-	if (sequence_anchors_.size() != 0) {
+
+	if (!sequence_anchors_.empty()) {
 	    out << std::endl;
-	    for(size_t i=0; i<sequence_anchors_.size(); i++) {
+	    for(size_t i=0; i<sequence_anchors_.name_length(); i++) {
 		std::ostringstream name;
-		name << "#A"<<i;
-		sequence_.write_name_sequence_line(out,name.str(),sequence_anchors_[i]);
+		name << "#A"<<(i+1);
+		sequence_.write_name_sequence_line(out,name.str(),sequence_anchors_.anchor_string(i));
 	    }
 	}
 	
@@ -1453,7 +1441,7 @@ namespace LocARNA {
 	    }
 	}
     }
-
+    
     double
     RnaDataImpl::consensus_probability(double pA, double pB,
 				       size_t sizeA,size_t sizeB,
@@ -1476,6 +1464,6 @@ namespace LocARNA {
 	  work better???
 	*/
     }
-
+    
 
 } // end namespace LocARNA

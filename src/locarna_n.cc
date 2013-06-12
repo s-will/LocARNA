@@ -24,6 +24,7 @@
 #include "LocARNA/match_probs.hh"
 #include "LocARNA/ribosum.hh"
 #include "LocARNA/anchor_constraints.hh"
+#include "LocARNA/sequence_anchors.hh"
 #include "LocARNA/trace_controller.hh"
 #include "LocARNA/ribosum85_60.icc"
 #include "LocARNA/multiple_alignment.hh"
@@ -555,8 +556,8 @@ main(int argc, char **argv) {
     std::string seqCB = clp.seq_anchors_B;
 
     if (!clp.opt_ignore_constraints) {
-	if ( seqCA=="" ) seqCA = rna_dataA->sequence_anchors();
-	if ( seqCB=="" ) seqCB = rna_dataB->sequence_anchors();
+	if ( seqCA=="" ) seqCA = rna_dataA->sequence_anchors().single_string();
+	if ( seqCB=="" ) seqCB = rna_dataB->sequence_anchors().single_string();
     }
 
     AnchorConstraints seq_constraints(seqA.length(),seqCA,

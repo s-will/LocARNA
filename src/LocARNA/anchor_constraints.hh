@@ -16,8 +16,9 @@
 //#include "aux.hh"
 
 namespace LocARNA {
+    
 
-    //! @brief Represents anchor constraints
+    //! @brief Represents anchor constraints between two sequences
     //! 
     //! Maintains the constraints on (non-structural) alignment edges
     //! that have to be satisfied during the alignment
@@ -78,7 +79,10 @@ namespace LocARNA {
 	 * In order to specify an arbitrary number of sequences, the
 	 * strings can consist of several lines, then a symbol
 	 * consists of all characters of the column. '.' and ' ' are
-	 * neutral character
+	 * neutral character, in the sense that columns consisting
+	 * only of neutral characters do not specify names that have
+	 * to match. However, neutral characters are not identified in
+	 * names that contain at least one non-neutral character!
 	 *
 	 * Example:
 	 * seqCA={"..123...."}

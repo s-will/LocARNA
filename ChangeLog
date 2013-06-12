@@ -378,4 +378,13 @@ Mar, 2013
 	introduce configuration header config.h
 	fix man page dependency problem
 
-	Major code clean up
+May/Jun, 2013
+	Make sure that make check and make distcheck work
+	Split RnaData into RnaData and RnaEnsemble
+	Introduce new version of pp format (2.0)
+	Read/write of inloop probabilities
+	Cleaner separation of reading/writing of alignments/probability data v.s. computation;
+	  in particulare remove I/O from Alignment class
+	Cleaner handling of gaps, alignment edges, and gap symbols in I/O
+	New option --stopwatch (in locarna*) to turn on detailed internal timing
+	Change class Sequence to be a mere interface to MultipleAlignment that allows operator [] for column access

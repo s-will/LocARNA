@@ -19,11 +19,12 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/rna_ensemble.cc LocARNA/rna_data.cc			\
 	LocARNA/scoring.cc LocARNA/infty_int.cc				\
 	LocARNA/match_probs.cc LocARNA/ribosum.cc			\
-	LocARNA/anchor_constraints.cc LocARNA/arc_matches.cc		\
-	LocARNA/aligner.cc LocARNA/stral_score.cc			\
-	LocARNA/aligner_p.cc LocARNA/trace_controller.cc		\
-	LocARNA/multiple_alignment.cc LocARNA/rna_structure.cc		\
-	LocARNA/confusion_matrix.cc LocARNA/global_stopwatch.cc
+	LocARNA/sequence_anchors.cc LocARNA/anchor_constraints.cc	\
+	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
+	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
+	LocARNA/trace_controller.cc LocARNA/multiple_alignment.cc	\
+	LocARNA/rna_structure.cc LocARNA/confusion_matrix.cc		\
+	LocARNA/global_stopwatch.cc
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -44,15 +45,15 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/scoring_fwd.hh LocARNA/infty_int.hh			\
 	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
 	LocARNA/alphabet.icc LocARNA/ribosum.hh				\
-	LocARNA/ribosum85_60.icc LocARNA/anchor_constraints.hh		\
-	LocARNA/arc_matches.hh LocARNA/aligner_restriction.hh		\
-	LocARNA/aligner.hh LocARNA/aligner_impl.hh			\
-	LocARNA/aligner_p.hh LocARNA/stral_score.hh			\
-	LocARNA/trace_controller.hh LocARNA/multiple_alignment.hh	\
-	LocARNA/rna_structure.hh LocARNA/confusion_matrix.hh		\
-	LocARNA/discrete_distribution.hh LocARNA/string1.hh		\
-	LocARNA/type_wrapper.hh LocARNA/global_stopwatch.hh		\
-	LocARNA/tuples.hh
+	LocARNA/ribosum85_60.icc LocARNA/sequence_anchors.hh		\
+	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
+	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
+	LocARNA/aligner_impl.hh LocARNA/aligner_p.hh			\
+	LocARNA/stral_score.hh LocARNA/trace_controller.hh		\
+	LocARNA/multiple_alignment.hh LocARNA/rna_structure.hh		\
+	LocARNA/confusion_matrix.hh LocARNA/discrete_distribution.hh	\
+	LocARNA/string1.hh LocARNA/type_wrapper.hh			\
+	LocARNA/global_stopwatch.hh LocARNA/tuples.hh
 
 ## binary programs
 ##

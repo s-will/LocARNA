@@ -18,6 +18,64 @@ namespace LocARNA {
     class RnaStructure;
     class string1;
     class AnchorConstraints;
+    
+    // unnest definitions of alignment edges
+
+    //! @brief end of an alignment edge
+    //!
+    //! asserts correct type of an edge end
+    class EdgeEnd {
+	int end_; //<! position or Gap
+    public:
+	
+	//!@brief construct as invalid end
+	EdgeEnd(): end_(0) {}
+	    
+	//!@brief construct as position
+	EdgeEnd(pos_type end): end_(int(end)) {}
+	
+	//!@brief construct as gap
+	EdgeEnd(Gap end): end_(-int(end.idx())-1) {}
+	    
+	//! @brief gap test
+	//! @return whether end is gap
+	bool is_gap() const {return end_<0;}
+	    
+	//! @brief is position test
+	//! @return whether end is position
+	bool is_pos() const {return end_>0;}
+
+	//! edge end as gap
+	//! @return gap enum
+	Gap gap() const {assert(end_<0); return Gap(size_t(-(end_+1)));}
+
+	//! edge end as position
+	//! @return position
+	operator pos_type() const {assert(end_>0); return pos_type(end_);}
+    };
+    
+    //! @brief vector of alignment edge ends
+    typedef std::vector<EdgeEnd> Alignment__edge_ends_t;
+	
+    //! @brief pair of vector of alignment edges
+    class AlignmentEdges : public std::pair<Alignment__edge_ends_t,Alignment__edge_ends_t> {
+	typedef Alignment__edge_ends_t edge_ends_t;
+	typedef std::pair<edge_ends_t,edge_ends_t> parent_t;
+    public:
+	
+	//! @brief Construct asserting equal length
+	AlignmentEdges(const edge_ends_t &x,
+		       const edge_ends_t &y) 
+	    :parent_t(x,y)
+	{
+	    assert(x.size()==y.size());
+	};
+	
+	//! @brief Size
+	size_t
+	size() const {return first.size();}
+    };
+
 
     /** 
      * \brief Represents a structure-annotated sequence alignment
@@ -30,61 +88,10 @@ namespace LocARNA {
 	
     public:
 
-	
-	//! @briefend of an alignment edge
-	//!
-	//! asserts correct type of an edge end
-	class EdgeEnd {
-	    int end_; //<! position or Gap
-	public:
-	    
-	    //!@brief construct as invalid end
-	    EdgeEnd(): end_(0) {}
-	    
-	    //!@brief construct as position
-	    EdgeEnd(pos_type end): end_(int(end)) {}
-
-	    //!@brief construct as gap
-	    EdgeEnd(Gap end): end_(-int(end.idx())-1) {}
-	    
-	    //! @brief gap test
-	    //! @return whether end is gap
-	    bool is_gap() const {return end_<0;}
-	    
-	    //! @brief is position test
-	    //! @return whether end is position
-	    bool is_pos() const {return end_>0;}
-
-	    //! edge end as gap
-	    //! @return gap enum
-	    Gap gap() const {assert(end_<0); return Gap(size_t(-(end_+1)));}
-
-	    //! edge end as position
-	    //! @return position
-	    operator pos_type() const {assert(end_>0); return pos_type(end_);}
-	};
-	
-	//! type of an alignment edge
 	typedef EdgeEnd edge_end_t;
+	typedef Alignment__edge_ends_t edge_ends_t;
+	typedef AlignmentEdges edges_t;
 	
-	//! type of vector of alignment edges
-	typedef std::vector<edge_end_t> edge_ends_t;
-	
-	//! type of vector of alignment edges
-	class edges_t : public std::pair<edge_ends_t,edge_ends_t> {
-	    typedef std::pair<edge_ends_t,edge_ends_t> parent_t;
-	public:
-	    //! @brief Construct asserting equal length
-	    edges_t(const edge_ends_t &x, const edge_ends_t &y) 
-		:parent_t(x,y)
-	    {
-		assert(x.size()==y.size());
-	    };
-	    
-	    //! @brief Size
-	    size_t
-	    size() const {return first.size();}
-	};
 
 	/**
 	 * @brief convert alignemnt string to edge end vector
@@ -248,6 +255,7 @@ namespace LocARNA {
 	const Sequence &seqB() const;
 	
     };
+    
 
 }
 #endif

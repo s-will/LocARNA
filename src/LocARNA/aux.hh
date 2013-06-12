@@ -164,6 +164,32 @@ namespace LocARNA {
     split_at_separator(const std::string &s, char sep, std::vector<std::string> &v);
 
     /**
+     * @brief Tokenize string at separator symbol
+     * 
+     * Split at seperator symbol and write to output vector of
+     * strings. Output vector is overwritten.
+     *
+     * @param s string
+     * @param sep separator
+     * @return vector of strings
+     */
+    std::vector<std::string>
+    split_at_separator(const std::string &s, char sep);
+    
+    /**
+     * @brief Tokenize string at separator symbol
+     * 
+     * Split at seperator symbol and write to output vector of
+     * strings.
+     *
+     * @param s string
+     * @param sep separator
+     * @param v[out] vector of strings
+     */
+    std::string
+    concat_with_separator(const std::vector<std::string> &v, char sep);
+    
+    /**
      * @brief select FLT_OR_DBL
      *
      * @note By defining as double, we rely on Vienna package compiled
