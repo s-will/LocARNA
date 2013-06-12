@@ -115,9 +115,9 @@ bool opt_verbose; //!< opt_verbose
 bool opt_local_output; //!< opt_local_output
 bool opt_pos_output; //!< opt_pos_output
 
-bool opt_stacking=false; // not supported
-bool opt_no_lonely_pairs=false; // not supported
-
+bool opt_stacking=false; //!< stacking, not supported
+bool opt_no_lonely_pairs=false; //!< no lonely pairs, not supported
+#
 
 std::string ribosum_file; //!< ribosum_file
 bool use_ribosum; //!< use_ribosum

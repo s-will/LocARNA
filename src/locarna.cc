@@ -205,7 +205,7 @@ struct command_line_parameters {
     bool opt_normalized; //!< whether to do normalized alignment
     int normalized_L; //!< normalized_L
 
-    bool opt_score_components;
+    bool opt_score_components; //!< whether to report score components
 };
 
 

@@ -15,13 +15,16 @@ namespace LocARNA {
     class Sequence;
     class RnaData;
     class Scoring;
-    
+
+    /**
+     * @brief Implementation of Alignment
+     */
     struct AlignmentImpl {
 	
-	Alignment *self_;
+	Alignment *self_; //!< self pointer
     
-	const Sequence &seqA_;
-	const Sequence &seqB_;
+	const Sequence &seqA_; //!< sequence A
+	const Sequence &seqB_; //!< sequence B
 	
 	/**
 	 * \brief first components of alignment edges
@@ -51,21 +54,34 @@ namespace LocARNA {
 	 */
     	Alignment::edge_ends_t b_; 
 	
-	// std::vector<char> strA_;
-	// std::vector<char> strB_;
-	std::string strA_;
-	std::string strB_;
+	std::string strA_; //!< structure of A as dot-bracket string
+	std::string strB_; //!< structure of B as dot-bracket string
 
+	/** 
+	 * @brief Constructor as empty alignment of two sequences
+	 * 
+	 * @param self self pointer
+	 * @param seqA sequence A
+	 * @param seqB sequence B
+	 */
 	AlignmentImpl(Alignment *self, const Sequence &seqA, const Sequence &seqB)
 	    : self_(self),seqA_(seqA),seqB_(seqB),a_(),b_(),strA_(),strB_() {}
 	
 	
 	/**
 	 * @brief Write raw alignment information for debugging
+	 *
+	 * @param out output stream
 	 */
 	void 
 	write_debug(std::ostream &out) const;
 
+	/** 
+	 * @brief Write raw alignment information (one sequence) for debugging
+	 * 
+	 * @param out output stream
+	 * @param ends description of alignment edge ends
+	 */
 	static
 	void 
 	write_debug(std::ostream &out, const Alignment::edge_ends_t &ends);

@@ -41,7 +41,7 @@ namespace LocARNA {
      */
     class MatchProbs {
     public:    
-	typedef size_t size_type;
+	typedef size_t size_type; //!< size
 	
 	//! construct as empty object
 	MatchProbs();

@@ -34,10 +34,24 @@ namespace LocARNA {
 
     public:
 	
+	/** 
+	 * @brief Constructor
+	 * 
+	 * @param print_on_exit whether to automatically print times on exit  
+	 */
 	StopWatch(bool print_on_exit=false);
+	
+
+	/** 
+	 * @brief Destructor 
+	 */
 	~StopWatch();
 	
-	
+	/** 
+	 * Control automatic printing of times at exit
+	 * 
+	 * @param print_on_exit whether to print on exit
+	 */
 	void
 	set_print_on_exit(bool print_on_exit);
 	

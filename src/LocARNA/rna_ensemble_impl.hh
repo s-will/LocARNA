@@ -15,6 +15,9 @@
 
 namespace LocARNA {
 
+    /**
+     * @brief Implementation of RnaEnsemble
+     */
     struct RnaEnsembleImpl {
 
 	// we don't use the entire rna ensemble implementation if lib rna is not available
@@ -34,9 +37,9 @@ namespace LocARNA {
 	bool in_loop_probs_available_; 
 		
 	// std::vector<FLT_OR_DBL> qm1; // store qm1 for debugging
-	std::vector<FLT_OR_DBL> qm2_;
-	std::vector<FLT_OR_DBL> scale_;
-	std::vector<FLT_OR_DBL> expMLbase_;
+	std::vector<FLT_OR_DBL> qm2_;     //!< matrix qm2_ (stored VRNA-style in a vector)
+	std::vector<FLT_OR_DBL> scale_;   //!< table for precomputed scaling of pf values
+	std::vector<FLT_OR_DBL> expMLbase_; //!< table for precomputed multi loop terms
 	
 	McC_matrices_base *McCmat_; //!< DP matrix data structures of VRNA's McCaskill algorithm
 	
@@ -46,16 +49,31 @@ namespace LocARNA {
 	double min_free_energy_; //!< minimum free energy (if computed anyway)
 	std::string min_free_energy_structure_; //!< minimum free energy structure (if computed)
 
-
-	RnaEnsembleImpl(//RnaEnsemble *self,
-		    const std::string &file,
-		    bool readPairProbs,
-		    bool readStackingProbs,
-		    bool readInLoopProbs);
 	
-	RnaEnsembleImpl(//RnaEnsemble *self,
-			const MultipleAlignment &sequence,
-			const PFoldParams &params,
+	/** 
+	 * @brief Construct from file
+	 * 
+	 * @param file file name
+	 * @param readPairProbs whether to read pair probabilities
+	 * @param readStackingProbs whether to read stacking probabilities
+	 * @param readInLoopProbs whether to read in loop probabilities
+	 */
+	RnaEnsembleImpl(const std::string &file,
+			bool readPairProbs,
+			bool readStackingProbs,
+			bool readInLoopProbs);
+	
+	/** 
+	 * @brief Construct from sequence or multiple alignment
+	 * 
+	 * @param sequence  sequence or multiple alignment
+	 * @param pfparams partition folding parameters
+	 * @param inLoopProbs whether to compute in loop probabilities
+	 * @param use_alifold whether to use alifold (required unless
+	 * sequence is a single sequence)
+	 */
+	RnaEnsembleImpl(const MultipleAlignment &sequence,
+			const PFoldParams &pfparams,
 			bool inLoopProbs, 
 			bool use_alifold);
 	

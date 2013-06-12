@@ -21,8 +21,6 @@ namespace LocARNA {
      * @todo this code is basically a stripped down version of the SparseMatrix code;
      * likely one could reduce redundancy
      */
-
-    
     template <typename T>
     class SparseVector {
     public:
@@ -65,8 +63,8 @@ namespace LocARNA {
 	    /** 
 	     * @brief Construct as proxy for specified element in given sparse vector
 	     * 
-	     * @param m_ pointer to sparse vector
-	     * @param k_ key/index of entry in given sparse vector
+	     * @param m pointer to sparse vector
+	     * @param k key/index of entry in given sparse vector
 	     *
 	     */
 	    element(SparseVector<T> *m,key_t k): m_(m),k_(k) {}
@@ -142,7 +140,7 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct with default value
 	 * 
-	 * @param deflt default value of entries
+	 * @param def default value of entries
 	 */
 	SparseVector(const value_t &def) : the_map_(),def_(def) {}
 
@@ -150,9 +148,8 @@ namespace LocARNA {
 	 * \brief Access to vector element
 	 * 
 	 * @param i index first dimension
-	 * @param j index second dimension
 	 *
-	 * @return proxy to vector entry (i,j)
+	 * @return proxy to vector entry i
 	 */
 	element operator[] (size_type i) {
 	    return element(this,key_t(i));
@@ -162,9 +159,8 @@ namespace LocARNA {
 	 * \brief Read-only access to vector element of const vector
 	 * 
 	 * @param i index first dimension
-	 * @param j index second dimension
 	 *
-	 * @return vector entry (i,j)
+	 * @return vector entry i
 	 */
 	const value_t & operator[] (size_type i) const {
 	    const_iterator it = the_map_.find(key_t(i));
@@ -178,11 +174,11 @@ namespace LocARNA {
 	 * @brief Write access to vector entry
 	 * 
 	 * @param i index first dimension
-	 * @param val value to be written to entry (i,j)
+	 * @param val value to be written to entry i
 	 *
 	 * @note Unlike the assignment operator (via element), there is no
 	 * test whether the default value is assigned.
-	 * Use reset(i,j) if you want to reset vector entries to the default. 
+	 * Use reset(i) if you want to reset vector entries to the default. 
 	 *
 	 * @post writes entry. If entry didn't exist already it is created.
 	 */
@@ -200,7 +196,6 @@ namespace LocARNA {
 	 * @brief Set vector entry to default value
 	 * 
 	 * @param i index first dimension
-	 * @param j index second dimension
 	 */
 	void
 	reset(size_type i) {

@@ -11,11 +11,12 @@
 namespace LocARNA {
     class RnaStructure;
 
-    /** Compare RNA secondary structure by their confusion matrix
-	
-	Computes confusion matrix and Matthews' correlation coefficient
-	@todo add other measures based on the confusion matrix; implement slide rule
-    */
+    /**
+     * @brief Compare RNA secondary structure by their confusion matrix
+     *
+     * Computes confusion matrix and Matthews' correlation coefficient
+     * @todo add other measures based on the confusion matrix; implement slide rule
+     */
     class ConfusionMatrix {
 	
 	size_t tp_;
@@ -34,16 +35,16 @@ namespace LocARNA {
 	/** 
 	 * Construct with reference and predicted structure (given as dot-bracket strings) 
 	 * 
-	 * @param ref_struct  reference structure
-	 * @param pred_struct predicted structure
+	 * @param ref  reference structure
+	 * @param pred predicted structure
 	 */
-	ConfusionMatrix(const std::string &ref_struct,const std::string &pred_struct);
+	ConfusionMatrix(const std::string &ref,const std::string &pred);
 
 	/** 
 	 * Construct with reference and predicted structure (given as base pair sets) 
 	 * 
-	 * @param ref_struct  reference structure
-	 * @param pred_struct predicted structure
+	 * @param ref  reference structure
+	 * @param pred predicted structure
 	 */	
 	ConfusionMatrix(const RnaStructure &ref, const RnaStructure &pred);
 

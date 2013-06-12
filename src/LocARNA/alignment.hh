@@ -83,18 +83,25 @@ namespace LocARNA {
      *	Supports construction of the alignment during traceback.
      */
     class Alignment {
-
-	AlignmentImpl *pimpl_;
+	
+	AlignmentImpl *pimpl_; //!< implementation pointer
 	
     public:
-
+	
+	//! edge end
 	typedef EdgeEnd edge_end_t;
+	
+	//! edge ends
 	typedef Alignment__edge_ends_t edge_ends_t;
+	
+	//! description of alignment edges
 	typedef AlignmentEdges edges_t;
 	
 
 	/**
 	 * @brief convert alignemnt string to edge end vector
+	 * @param alistr alignment string
+	 * @return vector of edge ends corresponding to alistr
 	 */
 	static 
 	edge_ends_t 
@@ -108,6 +115,9 @@ namespace LocARNA {
 	 */
 	Alignment(const Sequence &seqA,const Sequence &seqB);
 
+	/** 
+	 * Destructor
+	 */
 	~Alignment();
 
 	/**
@@ -122,7 +132,7 @@ namespace LocARNA {
 
 	/** 
 	 * @brief copy constructor
-	 * @param rna_data object to be copied
+	 * @param alignment object to be copied
 	 *
 	 * Copies implementation object (not only pointer) 
 	 */
@@ -130,7 +140,7 @@ namespace LocARNA {
 	
 	/** 
 	 * @brief assignment operator
-	 * @param rna_data object to be assigned
+	 * @param alignment object to be assigned
 	 * Assigns implementation object (not only pointer)
 	 */
 	Alignment &operator =(const Alignment &alignment);

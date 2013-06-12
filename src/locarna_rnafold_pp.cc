@@ -44,9 +44,9 @@ extern "C" {
 #include <ViennaRNA/utils.h>
 }
 
-const   double sfact         = 1.07; // from RNAfold code
+const   double sfact         = 1.07; //!< weird factor from RNAfold code
 
-double cutoff = 0.0005;
+double cutoff = 0.0005; //!< default probability cutoff
 
 // using namespace LocARNA;
 

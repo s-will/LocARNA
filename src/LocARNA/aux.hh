@@ -49,31 +49,49 @@ namespace LocARNA {
     // ------------------------------------------------------------
     // define gap codes and symbols
     
-    //! "enum class" of gaps in alignment edges
+    //! @brief "enum class" of gaps in alignment edges
     class Gap
     {
     private:
-	size_t val_;
+	size_t idx_; //! < index of enumeration value
     public:
-	static size_t size; // enum size
+	static size_t size; //!< enum size
+	
+	 //! regular gap
 	static const Gap regular;
+	//! gap from inserting/deleting a loop (in locarna_n)
 	static const Gap loop;
+	 //! gap outside of the locally aligned region (sequence and structure local alignment)
 	static const Gap locality;
+	//! other gaps
 	static const Gap other;
 	
-	// init from 0-based index
+	//! @brief init from 0-based index
+	//! @param idx index
 	explicit
-	Gap(size_t v) : val_(v) {}
+	Gap(size_t idx) : idx_(idx) {}
 	
-	// @brief 0-based index
+	//! @brief 0-based index
 	size_t
-	idx() const { return (size_t)val_; }
+	idx() const { return (size_t)idx_; }
 	
+	/** 
+	 * @brief equality
+	 * @param x operand 
+	 * 
+	 * @return whether object equals operand 
+	 */
 	bool
-	operator == (const Gap & x) const { return this->val_ == x.val_; }
+	operator == (const Gap & x) const { return this->idx_ == x.idx_; }
 	
+	/** 
+	 * @brief inequality
+	 * @param x operand 
+	 * 
+	 * @return whether object not equals operand 
+	 */
 	bool
-	operator != (const Gap & x) const { return this->val_ != x.val_; }
+	operator != (const Gap & x) const { return this->idx_ != x.idx_; }
     };
     
     

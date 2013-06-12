@@ -93,6 +93,9 @@ namespace LocARNA {
 	    
     protected:
 	
+	/** 
+	 * @brief free all local copies of data structures
+	 */
 	void free_all_local();
 
 	//! \brief deep copy all data structures 
@@ -151,6 +154,9 @@ namespace LocARNA {
 
     protected:
 
+	/** 
+	 * Free all data structures of the Vienna package
+	 */
 	void free_all();
 
 	//! \brief deep copy all data structures 
@@ -180,8 +186,9 @@ namespace LocARNA {
 	/** 
 	 * @brief construct by call to VRNA lib functions and optionally make local copy
 	 * 
-	 * @param length_ length of sequence 
-	 * @param local_copy_  if TRUE, copy the data structures; otherwise, only store pointers
+	 * @param n_seq number of sequenes in alignment
+	 * @param length length of sequences in alignment 
+	 * @param local_copy  if TRUE, copy the data structures; otherwise, only store pointers
 	 */
 	McC_ali_matrices_t(size_t n_seq, size_t length, bool local_copy);
 	
@@ -205,9 +212,15 @@ namespace LocARNA {
 
     protected:
 
+	/** 
+	 * @brief Free McCaskill/VRNA data structures
+	 */
 	void free_all();
 
-	//! \brief deep copy all data structures 
+	/**
+	 * @brief deep copy all data structures
+	 * @param McCmat object to copy
+	 */
 	void
 	deep_copy(const McC_ali_matrices_t &McCmat);
     };

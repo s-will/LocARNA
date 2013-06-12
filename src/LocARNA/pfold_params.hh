@@ -33,7 +33,18 @@ namespace LocARNA {
 	      stacking_(stacking) 
 	{}
 	
+	/** 
+	 * @brief Check no LP flag
+	 * 
+	 * @return value of flag 
+	 */
 	bool noLP() const {return noLP_;}
+	
+	/** 
+	 * @brief Check stacking flag
+	 * 
+	 * @return value of flag 
+	 */
 	bool stacking() const {return stacking_;}
     };
 

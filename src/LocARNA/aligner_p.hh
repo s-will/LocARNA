@@ -51,10 +51,10 @@ namespace LocARNA {
     */
     class AlignerP {
     public:
-	typedef size_t size_type; //!< size type
+	typedef size_t size_type; //!< size
 	typedef std::pair<size_type,size_type> size_pair; //!< pair of size_type
     
-	typedef BasePairs__Arc Arc;
+	typedef BasePairs__Arc Arc; //!< arc
     protected:
 	const Scoring *scoring; //!< the scores
     

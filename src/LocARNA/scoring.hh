@@ -238,19 +238,19 @@ namespace LocARNA {
      */
     class Scoring {
     public:
-	typedef BasePairs__Arc Arc;
+	typedef BasePairs__Arc Arc; //!< arc
 	
     private:
 	const ScoringParams *params; //!< a collection of parameters for scoring
     
 	const ArcMatches *arc_matches; //!< arc matches
     
-	const MatchProbs *match_probs; //! base match probabilities
+	const MatchProbs *match_probs; //!< base match probabilities
 
 	const RnaData &rna_dataA; //!< rna data for RNA A
 	const RnaData &rna_dataB; //!< rna data for RNA B
-	const Sequence &seqA; //! sequence A
-	const Sequence &seqB; //! sequence B
+	const Sequence &seqA; //!< sequence A
+	const Sequence &seqB; //!< sequence B
      
 	/**
 	 * parameter for modified scoring in normalized local

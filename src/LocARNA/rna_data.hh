@@ -42,9 +42,10 @@ namespace LocARNA {
 
     public:
 	
-	//! type of sequence anchors
+	//! sequence anchors
 	typedef SequenceAnchors anchors_t;
 
+	//! arc probability matrix
 	typedef SparseMatrix<double> arc_prob_matrix_t;
 
 	/**
@@ -58,7 +59,15 @@ namespace LocARNA {
 	 * @brief thrown, when the format is recognized but syntax is incorrect
 	 */
 	struct syntax_error_failure: public failure {
+	    
+	    //! @brief empty constructor
 	    syntax_error_failure():failure("Syntax error") {}
+	    
+	    /** 
+	     * @brief Construct with message string
+	     * 
+	     * @param msg message string
+	     */
 	    syntax_error_failure(const std::string msg):failure("Syntax error: "+msg) {}
 	};
 	
@@ -94,7 +103,7 @@ namespace LocARNA {
 	RnaData(const std::string &filename,
 		double p_bpcut,
 		const PFoldParams &pfoldparams);
-
+	
 	/** 
 	 * @brief Construct as consensus of two aligned RNAs
 	 * 
@@ -102,7 +111,7 @@ namespace LocARNA {
 	 * @param rna_dataB RNA ensemble data B
 	 * @param alignment Alignment of A and B
 	 * @param p_expA background probability for A
-	 * @param p_expA background probability for B
+	 * @param p_expB background probability for B
 	 *
 	 * The object uses mean cutoff probability of the given
 	 * objects; The background probability is used in computing
@@ -122,7 +131,6 @@ namespace LocARNA {
     	/** 
 	 * @brief Almost empty constructor
 	 * 
-	 * @param self self pointer 
 	 * @param p_bpcut cutoff probability
 	 */
 	RnaData(double p_bpcut);
@@ -299,6 +307,11 @@ namespace LocARNA {
 	std::ostream &
 	write_size_info(std::ostream &out) const;
 
+	/** 
+	 * @brief Availability of stacking terms 
+	 * 
+	 * @return whether stacking terms are available
+	 */
 	bool
 	has_stacking() const;
 	
@@ -308,6 +321,7 @@ namespace LocARNA {
 	 * @brief initialize from rna ensemble 
 	 * 
 	 * @param rna_ensemble rna ensemble
+	 * @param stacking whether to initialize stacking terms
 	 * 
 	 * @note can be overloaded to initialize with additional
 	 * information (in loop probabilities)
@@ -321,12 +335,12 @@ namespace LocARNA {
 	 * @brief read and initialize from file, autodetect format
 	 * 
 	 * @param filename name of input file
-	 * @param pfoldparams Partition folding parameters
-	 * @return whether probabilities are read completely
+	 * @param stacking whether to read stacking terms
+	 *
+	 * @return whether probabilities were read completely
 	 *
 	 * @note: this method is designed such that it can be used for
 	 * RnaData and ExtRnaData
-	 *
 	 */
 	bool
 	read_autodetect(const std::string &filename,
@@ -348,7 +362,7 @@ namespace LocARNA {
 	/** 
 	 * Read data in pp format 2.0
 	 * 
-	 * @param in input file name
+	 * @param filename name of input file
 	 *
 	 * Reads only base pairs with probabilities greater than
 	 * p_bpcut_; reads stacking probabilities only if
@@ -365,12 +379,12 @@ namespace LocARNA {
 	 * probability of base pairs (i,j) and (i+1,j+1).
 	 *
 	 * @note handling of stacking: after the call, has_stacking_
-	 * is true only if the file specified the #STACK keyword and
+	 * is true only if the file specified the STACK keyword and
 	 * has_stacking_ was true before.
 	 */
 	virtual
 	void
-	read_pp(const std::string &in);
+	read_pp(const std::string &filename);
 	
 	/**
 	 * Read data in pp format 2.0
@@ -386,7 +400,7 @@ namespace LocARNA {
 	/** 
 	 * Read data in the old pp format
 	 * 
-	 * @param in input stream
+	 * @param filename name of input file 
 	 *
 	 * Reads only base pairs with probabilities greater than
 	 * p_bpcut_; reads stacking probabilities only if
@@ -405,12 +419,12 @@ namespace LocARNA {
 	 * probability and has_stacking_ was true before.
 	 */
 	void
-	read_old_pp(const std::string &in);
+	read_old_pp(const std::string &filename);
 
 	/** 
 	 * Read data in Vienna's dot plot ps format
 	 * 
-	 * @param filename input file name
+	 * @param filename name of input file
 	 *
 	 * Reads only base pairs with probabilities greater than
 	 * p_bpcut_; reads stacking probabilities only if
@@ -428,13 +442,13 @@ namespace LocARNA {
 	 * data input 
 	 */
 	void
-	read_ps(const std::string &in);
+	read_ps(const std::string &filename);
 
 	/** 
 	 * @brief Get next non-empty/non-comment line
 	 * 
 	 * @param in input stream 
-	 * @param line[out] line
+	 * @param[out] line line
 	 *
 	 * Get the next line of stream in that is neither emtpy nor
 	 * starts with white space (the latter is considered a comment

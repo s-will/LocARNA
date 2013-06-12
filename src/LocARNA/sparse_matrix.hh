@@ -65,8 +65,8 @@ namespace LocARNA {
 	    /** 
 	     * @brief Construct as proxy for specified element in given sparse matrix
 	     * 
-	     * @param m_ pointer to sparse matrix
-	     * @param k_ key/index of entry in given sparse matrix
+	     * @param m pointer to sparse matrix
+	     * @param k key/index of entry in given sparse matrix
 	     *
 	     */
 	    element(SparseMatrix<T> *m,key_t k): m_(m),k_(k) {}
@@ -142,7 +142,7 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct with default value
 	 * 
-	 * @param deflt default value of entries
+	 * @param def default value of entries
 	 */
 	SparseMatrix(const value_t &def) : the_map_(),def_(def) {}
 

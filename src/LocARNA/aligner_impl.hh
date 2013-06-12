@@ -16,7 +16,10 @@ namespace LocARNA {
 
     class Sequence;
     template <class T> class Matrix;
-    
+
+    /**
+     * @brief Implementation of Aligner
+     */
     struct AlignerImpl {
 
 	/**
@@ -25,6 +28,7 @@ namespace LocARNA {
 	 */
 	typedef ScoreMatrix M_matrix_t;
 
+	//! an arc
 	typedef BasePairs__Arc Arc;
 	
 	
@@ -123,10 +127,10 @@ namespace LocARNA {
 	    /** 
 	     * Construct for Aligner object
 	     * 
-	     * @param aligner The aligner object
+	     * @param aligner_impl the aligner implementation object
 	     */
 	    UnmodifiedScoringView(const AlignerImpl *aligner_impl): aligner_impl_(aligner_impl) {};
-	
+	    
 	    /** 
 	     * Get scoring object
 	     * 
@@ -188,7 +192,7 @@ namespace LocARNA {
 	    /** 
 	     * Construct for Aligner object
 	     * 
-	     * @param aligner The aligner implementation object
+	     * @param aligner_impl The aligner implementation object
 	     *
 	     * @note scoring object in aligner has to be modified by lambda already
 	     */
@@ -244,15 +248,32 @@ namespace LocARNA {
     
 	// ============================================================
 	
+	/** 
+	 * @brief copy constructor
+	 * 
+	 * @param a Aligner implementation
+	 */
 	AlignerImpl(const AlignerImpl &a);
 	
+	/** 
+	 * @brief Construct from parameters
+	 * 
+	 * @param seqA sequence A
+	 * @param seqB sequence B
+	 * @param arc_matches arc matches
+	 * @param ap parameter for aligner
+	 * @param s scoring object
+	 */
 	AlignerImpl(const Sequence &seqA, 
 		    const Sequence &seqB,
 		    const ArcMatches &arc_matches,
 		    const AlignerParams *ap,
 		    const Scoring *s
 		    );
-	
+
+	/** 
+	 * Destructor
+	 */
 	~AlignerImpl();
 	
 	// ============================================================

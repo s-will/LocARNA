@@ -112,9 +112,9 @@ namespace LocARNA {
 	double len_;
 
     public:
-	typedef size_t size_type;
+	typedef size_t size_type; //!< size
 
-	typedef BasePairs__Arc Arc;
+	typedef BasePairs__Arc Arc; //!< arc
 	
 	/**
 	 * @brief Entry in a left adjacency list
@@ -206,8 +206,8 @@ namespace LocARNA {
 	/** 
 	 * Construct from rna data
 	 * 
-	 * @param rna_data_ rna data
-	 * @param min_prob_ minimal probability for filtering base pairs
+	 * @param rna_data rna data
+	 * @param min_prob minimal probability for filtering base pairs
 	 *
 	 * @note while rna data maintains base pairs regardless of
 	 * their probability, an object of BasePairs represents the
@@ -228,7 +228,7 @@ namespace LocARNA {
 	/** 
 	 * \brief Construct from a set of base pairs
 	 * 
-	 * @param seq_len length of sequence
+	 * @param len length of sequence
 	 * @param bps set of base pairs
 	 */
 	BasePairs(size_type len, const bpair_set_t &bps ):

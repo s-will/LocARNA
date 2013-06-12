@@ -104,12 +104,28 @@ namespace LocARNA {
 	clear() {bps_.clear();}
 
 	//support contant iteration over base pair set
+	
+	//! constant iterator over base pairs
 	typedef bps_t::const_iterator const_iterator;
+	
+	/** 
+	 * @brief begin of base pair set 
+	 * 
+	 * @return constant iterator at begin  
+	 */
 	const_iterator begin() const {return bps_.begin();}
+	
+	/** 
+	 * @brief end of base pair set 
+	 * 
+	 * @return constant iterator at end  
+	 */
 	const_iterator end() const {return bps_.end();}
-    
+	
 
-	/** \brief convert to dot-bracket string
+	/** 
+	 * \brief convert to dot-bracket string
+	 * @return dot-bracket string 
 	 */
 	std::string
 	to_string() const {

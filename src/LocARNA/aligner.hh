@@ -70,19 +70,27 @@ namespace LocARNA {
 
 	/** 
 	 * @brief copy constructor
-	 * @param rna_data object to be copied
+	 * @param aligner object to be copied
 	 * Copies implementation object (not only pointer) 
 	 */
 	Aligner(const Aligner &aligner);
 	
 	/** 
 	 * @brief assignment operator
-	 * @param rna_data object to be assigned
+	 * @param aligner object to be assigned
 	 * Assigns implementation object (not only pointer) 
 	 */
 	Aligner &operator =(const Aligner &aligner);
 		
-	//! construct with sequences and corresponding arc matches
+	/** 
+	 * @brief Construct from parameters
+	 * 
+	 * @param seqA sequence A
+	 * @param seqB sequence B
+	 * @param arc_matches arc matches
+	 * @param ap parameter for aligner
+	 * @param s scoring object
+	 */
 	Aligner(const Sequence &seqA,
 		const Sequence &seqB,
 		const ArcMatches &arc_matches,
@@ -131,7 +139,7 @@ namespace LocARNA {
 	get_restriction() const;
 	
   
-	/*
+	/**
 	 * @brief Enumerate suboptimal local alignments
 	 * 
 	 * special operation mode for computing the k best alignments.

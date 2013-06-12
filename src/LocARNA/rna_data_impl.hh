@@ -62,7 +62,7 @@ namespace LocARNA {
 	 * @brief Construct from RnaEnsemble with cutoff probability
 	 * 
 	 * @param self pointer to corresponding RnaData object
-	 * @param rnadata data about RNA ensemble
+	 * @param rna_ensemble data about RNA ensemble
 	 * @param p_bpcut cutoff probability
 	 */
 	RnaDataImpl(RnaData *self,
@@ -73,14 +73,15 @@ namespace LocARNA {
 	 * @brief Construct from input file
 	 * 
 	 * @param self pointer to corresponding RnaData object
-	 * @param in input stream
+	 * @param filename file name
+	 * @param p_bpcut cutoff probability base pair
+	 * @param pfoldparams partition folding parameters
 	 * @note autodetect whether input stream is in ps or pp format
 	 */
 	RnaDataImpl(RnaData *self, 
 		    const std::string &filename,
 		    double p_bpcut,
 		    const PFoldParams &pfoldparams);
-
 
 	/** 
 	 * @brief Construct as consensus of two aligned RNAs
@@ -98,6 +99,7 @@ namespace LocARNA {
 		    const Alignment::edges_t &alignment,
 		    double p_expA,
 		    double p_expB);
+
     	/** 
 	 * @brief Almost empty constructor
 	 * 
@@ -114,6 +116,7 @@ namespace LocARNA {
 	 * @brief initialize from rna ensemble 
 	 * 
 	 * @param rna_ensemble rna ensemble
+	 * @param stacking whether to initialize stacking terms
 	 * 
 	 * @note can be overloaded to initialize with additional
 	 * information (in loop probabilities)
@@ -137,7 +140,7 @@ namespace LocARNA {
 	/**
 	 * @brief read section of base pair probabilities of pp-format
 	 *
-	 * @param out input stream
+	 * @param in input stream
 	 *
 	 * Reads only base pairs with probabilities greater than
 	 * p_bpcut_; reads stacking only if has_stacking_

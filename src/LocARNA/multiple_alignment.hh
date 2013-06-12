@@ -117,13 +117,6 @@ public:
 	    : name_(name), description_(description), seq_(seq)
 	{}
 	
-	// /** 
-	//  * Copy Constructor
-	//  * 
-	//  * @param se sequence entry
-	//  */
-	// SeqEntry(const SeqEntry &se): name_(se.name_),description_(se.description_),seq_(se.seq_) {}
-	
 	// access
 	
 	//! (read-only) access to name
@@ -195,11 +188,28 @@ public:
 	const MultipleAlignment &ma_;
 	size_type col_index_;
     public:
+	/** 
+	 * @brief Construct from multiple alignment column
+	 * 
+	 * @param ma multiple alignment
+	 * @param col_index column index
+	 */
 	AliColumn(const MultipleAlignment &ma,size_type col_index): ma_(ma),col_index_(col_index) {}
 	
+	/** 
+	 * @brief element access
+	 * 
+	 * @param row_index index of alignment row
+	 * 
+	 * @return character at row in the represented column
+	 */
 	const char &
 	operator [](size_type row_index) const {return ma_.seqentry(row_index).seq()[col_index_];}
 
+	/** 
+	 * @brief Size / Number of rows 
+	 * @return number of rows of the multiple alignment
+	 */
 	size_type 
 	size() const {return ma_.row_number();}
 
@@ -314,7 +324,7 @@ public:
 
     /**
      * \brief Construct as degenerate alignment of one sequence
-     * @param nameA name of sequence
+     * @param name name of sequence
      * @param sequence sequence strings
      */
     MultipleAlignment(const std::string &name,
@@ -343,10 +353,9 @@ public:
     
     /**
      * \brief Construct from alignment edges and sequences
-     * @param alignment object of type Alignment
+     * @param edges alignment edges
      * @param seqA sequence A
      * @param seqB sequence B
-     *
      */
     MultipleAlignment(const AlignmentEdges &edges,
 		      const Sequence &seqA,
@@ -355,10 +364,9 @@ public:
 protected:
     /**
      * \brief Initialize from alignment edges and sequences
-     * @param alignment object of type Alignment
+     * @param edges alignment edges
      * @param seqA sequence A
      * @param seqB sequence B
-     *
      */
     void
     init(const AlignmentEdges &edges,
@@ -389,6 +397,14 @@ public:
 	return alig_.size();
     }
     
+    /** 
+     * @brief Emptiness check
+     * 
+     * @return whether the object contains no sequences 
+     *
+     * @note an alignment containing one or more empty sequences is
+     * not empty in this sense.
+     */
     bool
     empty() const {
 	return alig_.empty();
@@ -551,7 +567,7 @@ public:
     /** 
      * Access alignment column
      * 
-     * @param i column index 
+     * @param col_index column index 
      * 
      * @return reference to alignment column with index i (1-based)
      */
@@ -669,7 +685,6 @@ public:
      * the given alphabet only and, if warn, print warnings otherwise.
      *
      * @param alphabet alphabet of admissible characters
-     * @param warn if true, print warnings
      *
      * @return whether all characters are in the alphabet
      */
@@ -800,29 +815,6 @@ private:
 
 public:
 
-    // attempt to define an evaluation method for multiple alignments;
-    // this would require (the construction of) appropriate Aligner objects
-    //
-    // /**
-    //  * @brief Evaluate the multiple alignment by locarna score
-    //  * @param scoring_params scoring parameters
-    //  * @param basepairs_vec vector of pointers to BasePairs objects for each sequence
-    //  * @param consensus_structure consensus structure of alignment
-    //  *
-    //  * @note sequence entries in ma and objects in basepairs_vec have
-    //  * to correspond to each other in the given order; the two objects
-    //  * must have the same size. The sequences have to match! Length of
-    //  * consensus structure has to match alignment length.
-    //  *
-    //  *
-    //  * @return score of the multiple alignment for given ensembles,
-    //  * consensus structure, and scoring
-    //  */
-    // score_t 
-    // evaluate(const std::vector<const BasePairs*> &basepairs_vec,
-    // 	     const Scoring &scoring,
-    // 	     const RnaStructure &consensus_structure) const;
-    
     /** 
      * @brief Print contents of object to stream
      * @param out output stream
