@@ -66,6 +66,9 @@ namespace LocARNA {
 	void 
 	write_debug(std::ostream &out) const;
 
+	static
+	void 
+	write_debug(std::ostream &out, const Alignment::edge_ends_t &ends);
 
 	/** 
 	 * @brief dot bracket structure

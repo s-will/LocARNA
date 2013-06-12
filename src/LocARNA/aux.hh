@@ -49,26 +49,31 @@ namespace LocARNA {
     // ------------------------------------------------------------
     // define gap codes and symbols
     
-    //! gaps in alignment edges
+    //! "enum class" of gaps in alignment edges
     class Gap
     {
-    public:
-	enum type {regular,loop,locality,other};
     private:
-	type val_;
+	size_t val_;
     public:
-
-	Gap(type v) : val_(v) {}
+	static size_t size; // enum size
+	static const Gap regular;
+	static const Gap loop;
+	static const Gap locality;
+	static const Gap other;
 	
 	// init from 0-based index
 	explicit
-	Gap(size_t v) : val_(type(v)) {}
+	Gap(size_t v) : val_(v) {}
 	
 	// @brief 0-based index
-	size_t idx() const { return (size_t)val_; }
+	size_t
+	idx() const { return (size_t)val_; }
 	
-	friend bool operator == (const Gap & lhs, const Gap & rhs) { return lhs.val_ == rhs.val_; }
-	friend bool operator != (const Gap & lhs, const Gap & rhs) { return lhs.val_ != rhs.val_; }
+	bool
+	operator == (const Gap & x) const { return this->val_ == x.val_; }
+	
+	bool
+	operator != (const Gap & x) const { return this->val_ != x.val_; }
     };
     
     

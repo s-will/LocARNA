@@ -117,6 +117,7 @@ namespace LocARNA {
     
     const Alignment::edges_t 
     Alignment::alignment_edges(bool only_local) const {
+
 	edge_ends_t endsA;
 	edge_ends_t endsB;
 	
@@ -169,6 +170,7 @@ namespace LocARNA {
 		lastB++;
 	    }
 	}
+
 	return edges_t(endsA,endsB);
     }
 
@@ -198,17 +200,22 @@ namespace LocARNA {
     // Alignment::get_b() const {return pimpl_->b_;} 
 
 
-    void AlignmentImpl::write_debug(std::ostream &out) const {
-
-	for (size_type i=0; i<a_.size(); i++) {
-	    out << a_[i] << " ";
+    void
+    AlignmentImpl::write_debug(std::ostream &out, const Alignment::edge_ends_t &ends) {
+	for (size_type i=0; i<ends.size(); i++) {
+	    if (ends[i].is_pos()) {
+		out << ends[i] << " ";
+	    } else {
+		out << "g" << ends[i].gap().idx() << " ";
+	    }
 	}
 	out<<std::endl;
-	for (size_type i=0; i<b_.size(); i++) {
-	    out << b_[i] << " ";
-	}
-	out<<std::endl;
-
+    }
+    
+    void
+    AlignmentImpl::write_debug(std::ostream &out) const {
+	write_debug(out,a_);
+	write_debug(out,b_);
     }
 
 

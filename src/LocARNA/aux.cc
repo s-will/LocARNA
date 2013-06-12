@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <algorithm>
 
+#include <iostream>
 
 namespace LocARNA {
     failure::~failure() throw() {};
@@ -18,6 +19,12 @@ namespace LocARNA {
 
     // gap symbols
     const std::string the_gap_symbols = "-_~.";
+
+    size_t Gap::size=0;
+    const Gap Gap::regular  = Gap(Gap::size++);
+    const Gap Gap::loop     = Gap(Gap::size++);
+    const Gap Gap::locality = Gap(Gap::size++);
+    const Gap Gap::other    = Gap(Gap::size++);
     
     bool
     is_gap_symbol(char c) {
