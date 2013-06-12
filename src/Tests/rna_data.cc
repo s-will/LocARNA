@@ -87,10 +87,21 @@ main(int argc, char **argv) {
     
     RnaData consensus(rna_dataA,rna_dataB,alignment,0.01,0.01);
 
-    std::cout<<"Consensus: "<<std::endl;
-    
-    consensus.write_pp(std::cout);
+    {
+	std::string filename="Tests/test.pp";
+	// write and read again for the consensus object
+	std::ofstream out(filename.c_str());
+	//std::cout<<"Consensus: "<<std::endl;
+	
+	consensus.write_pp(out);
+	out.close();
+	
+	RnaData consensus2(filename,0.1,pfparams);
+	std::remove(filename.c_str());
 
+	// missing: compare consensus and consensus2
+    }
+    
     // get the alifold consensus for the alignment
     MultipleAlignment ma(alignment);
 
@@ -102,11 +113,22 @@ main(int argc, char **argv) {
     
     RnaEnsemble ens_ma(ma,pfparams,false,true);
 
-    std::cout<<"ens_ma.sequence(): "<<std::endl;
-    ens_ma.multiple_alignment().write(std::cout);
-    std::cout<<"Alifold-consensus: "<<std::endl;
     RnaData ali_consensus(ens_ma,0.1);
-    ali_consensus.write_pp(std::cout);
+
+    {
+	std::string filename="Tests/test.pp";
+	// write and read again for the ali_consensus object
+	std::ofstream out(filename.c_str());
+	//std::cout<<"Consensus: "<<std::endl;
+	
+	ali_consensus.write_pp(out);
+	out.close();
+	
+	RnaData ali_consensus2(filename,0.1,pfparams);
+	std::remove(filename.c_str());
+
+	// missing: compare ali_consensus and ali_consensus2
+    }
     
 #endif
 

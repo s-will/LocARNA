@@ -24,8 +24,7 @@ fold_sequence(const Sequence &seq, bool use_alifold) {
     RnaEnsemble *rna_ensemble = new RnaEnsemble(seq,pfoldparams,inloopprobs,use_alifold);
     
     if (!rna_ensemble->has_in_loop_probs()) {
-	std::cerr << "No in loop probabilities could be computed!"<<std::endl;
-	throw -1;
+	throw failure("No in loop probabilities could be computed!");
     }
     
     return rna_ensemble;
@@ -154,8 +153,7 @@ test_in_loop_probs(const Sequence &seq, const RnaEnsemble &rna_ensemble) {
 
 int
 main(int argc,char **argv) {
-    int retVal=0;
-
+    
 #ifdef HAVE_LIBRNA
     
     //std::string testseqstr="UUACGACUUCGGCCGGAGCGCGGACGUAGCGACGUAGGCGCGAUGCGACGCGACGUGGGAGCGAUCGGCGCGUACGGCGGCAUCGCGGAUCGAUGCGGCAUCG";
@@ -188,30 +186,22 @@ main(int argc,char **argv) {
     
     // mseq.write(std::cout);
     
-    try {
-	RnaEnsemble *rna_ensemble   = fold_sequence(seq,false);
-	RnaEnsemble *mrna_ensemble  = fold_sequence(mseq,true);
-	
-	if (! test_in_loop_probs(seq, *rna_ensemble)) {
-	    retVal=2;
-	}
-
-	if (! test_in_loop_probs(mseq, *mrna_ensemble)) {
-	    retVal=3;
-	}
-	
-	delete rna_ensemble;
-	delete mrna_ensemble;
-
-    } catch(failure &f) {
-	std::cerr << f.what() << std::endl;
-	retVal=1;
+    RnaEnsemble *rna_ensemble   = fold_sequence(seq,false);
+    RnaEnsemble *mrna_ensemble  = fold_sequence(mseq,true);
+    
+    if (! test_in_loop_probs(seq, *rna_ensemble)) {
+	throw(failure("test in loop probs failed for rna_ensemble"));
     }
-
+    
+    if (! test_in_loop_probs(mseq, *mrna_ensemble)) {
+	throw(failure("test in loop probs failed for mrna_ensemble"));
+    }
+    
+    delete rna_ensemble;
+    delete mrna_ensemble;
+    
+    
 #endif
     
-    if (!retVal==0) {
-	std::cerr << "failure code "<<retVal<<std::endl;
-    }
-    return retVal;
+    return 0;
 }

@@ -1,9 +1,13 @@
+#include <assert.h>
 #include <iostream>
+#include <sstream>
 #include <LocARNA/multiple_alignment.hh>
 #include <LocARNA/alignment.hh>
 #include <LocARNA/sequence.hh>
 
 using namespace LocARNA;
+
+#undef NDEBUG
 
 /** @file some unit tests for MultipleAlignment and Sequence
     
@@ -20,35 +24,23 @@ main(int argc, char **argv) {
 			 "CCCG-CU");
     
     //! test whether ma is proper
-    if (!ma.is_proper()) {
-	return 1;
-    }
+    assert(ma.is_proper());
     
     // create simple alignment from file
     MultipleAlignment *ma2=0L;
-    try {
-	ma2 = new MultipleAlignment("Tests/archaea.aln");
-	if (!ma2->is_proper()) throw(failure("Wrong format"));
-	if (ma2->empty()) throw(failure("Wrong format"));
-
-	//! test whether ma2 is proper
-	if (!ma2->is_proper()) {
-	    return 2;
-	}
-
-	//! test whether ma2 has correct size
-	if (!ma2->row_number() == 6) {
-	    return 3;
-	}
-	
-	//! test whether ma2 contains "fdhA" and "fruA" 
-	if (!ma2->contains("fdhA") || !ma2->contains("fruA")) {
-	    return 4;
-	}
-
-    } catch (failure &f) {
-	return 5;
-    }
+    
+    ma2 = new MultipleAlignment("Tests/archaea.aln");
+    if (!ma2->is_proper()) throw(failure("Wrong format"));
+    if (ma2->empty()) throw(failure("Wrong format"));
+    
+    //! test whether ma2 is proper
+    assert(ma2->is_proper());
+    
+    //! test whether ma2 has correct size
+    assert(ma2->row_number() == 6);
+    
+    //! test whether ma2 contains "fdhA" and "fruA" 
+    assert (ma2->contains("fdhA") && ma2->contains("fruA"));
     
     Sequence seq = (*ma2).as_sequence();
     delete ma2;
@@ -58,27 +50,20 @@ main(int argc, char **argv) {
     seq.append(Sequence::SeqEntry(name_str,seq_str));
     
     //! test whether seq is proper
-    if (!seq.is_proper()) {
-    	return 6;
-    }
+    assert(seq.is_proper());
 
     //! test whether seq has correct size
-    if (!seq.row_number() == 7) {
-    	return 7;
-    }
+    assert(7 == seq.row_number());
     
     //! test whether seq contains "fdhA" and "hdrA" 
-    if (!seq.contains("fdhA") || !seq.contains(name_str)) {
-    	    return 8;
-    }
+    assert(seq.contains("fdhA") && seq.contains(name_str));
     
     size_t index = seq.index(name_str);
-    if (seq.seqentry(index).seq().to_string() != seq_str) {
-	return 9;
-    }
+    assert(seq.seqentry(index).seq().to_string() == seq_str);
     
     bool ok=false;
     MultipleAlignment *ma3=0L;
+
     try {
     	ma3 = new MultipleAlignment("Tests/archaea-wrong.fa",MultipleAlignment::FASTA);
 	if (!ma3->is_proper()) throw(failure("Wrong format"));
@@ -86,9 +71,7 @@ main(int argc, char **argv) {
     } catch(failure &f) {
 	ok=true;
     }
-    if (!ok) {
-    	return 10;
-    }
+    assert(ok);
 
     ok=false;
     try {
@@ -99,33 +82,35 @@ main(int argc, char **argv) {
     } catch(failure &f) {
 	ok=true;
     }
-    if (!ok) {
-	return 11;
-    }
+    assert(ok);
 
     MultipleAlignment *ma5;
-    try {
-	ma5 = new MultipleAlignment("Tests/archaea.fa",MultipleAlignment::FASTA);
-	if (!ma5->is_proper()) throw(failure("Wrong format"));
-	if (ma5->empty()) throw(failure("Wrong format"));
-    } catch(failure &f) {
-	return 12;
-    }
-
+    
+    ma5 = new MultipleAlignment("Tests/archaea.fa",MultipleAlignment::FASTA);
+    if (!ma5->is_proper()) throw(failure("Wrong format"));
+    if (ma5->empty()) throw(failure("Wrong format"));
+    
     seq=(*ma5).as_sequence();
     delete ma5;
     
     //! test whether seq is proper
-    if (!seq.is_proper()) {
-    	return 106;
-    }
+    assert(seq.is_proper());
 
     //! test whether seq has correct size
-    if (!seq.row_number() == 7) {
-    	return 107;
+    assert(seq.row_number() == 3);
+    
+    {
+	// write and read again test
+	
+	std::ostringstream out; 
+	seq.write(out);
+
+	std::istringstream in(out.str()); 
+	MultipleAlignment seq2(in,MultipleAlignment::CLUSTAL);
+	
+	assert(seq.row_number() == seq2.row_number());
+	assert(seq.length() == seq2.length());
     }
-    
-    seq.write(std::cout);
-    
+
     return 0;
 }
