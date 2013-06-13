@@ -190,10 +190,14 @@ main(int argc,char **argv) {
     RnaEnsemble *mrna_ensemble  = fold_sequence(mseq,true);
     
     if (! test_in_loop_probs(seq, *rna_ensemble)) {
+	delete rna_ensemble;
+	delete mrna_ensemble;
 	throw(failure("test in loop probs failed for rna_ensemble"));
     }
     
     if (! test_in_loop_probs(mseq, *mrna_ensemble)) {
+	delete rna_ensemble;
+	delete mrna_ensemble;
 	throw(failure("test in loop probs failed for mrna_ensemble"));
     }
     
