@@ -388,3 +388,5 @@ May/Jun, 2013
 	Cleaner handling of gaps, alignment edges, and gap symbols in I/O
 	New option --stopwatch (in locarna*) to turn on detailed internal timing
 	Change class Sequence to be a mere interface to MultipleAlignment that allows operator [] for column access
+	Make constraints optional part of multiple alignments; make write/readable with the alignment in clustal and pp format
+	Remove options anchorA, anchorB from locarna and locarna_X

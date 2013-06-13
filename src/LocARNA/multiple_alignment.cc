@@ -9,6 +9,7 @@
 #include "basepairs.hh"
 #include "alignment.hh"
 #include "multiple_alignment.hh"
+#include "sequence_anchors.hh"
 
 #include <limits>
 
@@ -21,11 +22,13 @@ namespace LocARNA {
 
     MultipleAlignment::MultipleAlignment() 
 	: alig_(),
+	  sequence_anchors_(),
 	  name2idx_() {
     }
     
     MultipleAlignment::MultipleAlignment(std::istream &in, format_t format)
     	: alig_(),
+	  sequence_anchors_(),
 	  name2idx_() {
 	
 	if (!in.good()) {
@@ -34,15 +37,18 @@ namespace LocARNA {
 
 	if (format==FASTA) {
 	    read_aln_fasta(in);
-	} else {
+	} else if (format==CLUSTAL) {
 	    read_aln_clustalw(in);
-	}	
+	} else {
+	    throw failure("Unknown format.");
+	}
 	
 	create_name2idx_map();
     }
     
     MultipleAlignment::MultipleAlignment(const std::string &filename, format_t format)
 	: alig_(),
+	  sequence_anchors_(),
 	  name2idx_() {
 	
 	try {
@@ -54,9 +60,12 @@ namespace LocARNA {
 	
 	    if (format==FASTA) {
 		read_aln_fasta(in);
-	    } else {
+	    } else if (format == CLUSTAL) {
 		read_aln_clustalw(in);
+	    } else {
+		throw failure("Unknown format.");
 	    }
+
 	
 	    in.close();
 	} catch (std::ifstream::failure &e) {
@@ -69,6 +78,7 @@ namespace LocARNA {
     MultipleAlignment::MultipleAlignment(const std::string &name, 
 					 const std::string &sequence)
 	: alig_(),
+	  sequence_anchors_(),
 	  name2idx_() {
 	
 	alig_.push_back(SeqEntry(name,sequence));
@@ -81,6 +91,7 @@ namespace LocARNA {
 					 const std::string &aliA,
 					 const std::string &aliB)
 	: alig_(),
+	  sequence_anchors_(),
 	  name2idx_() {
 	
 	if (aliA.length() != aliB.length()) {
@@ -95,6 +106,9 @@ namespace LocARNA {
 
     MultipleAlignment::MultipleAlignment(const Alignment &alignment, bool only_local)
 	:alig_(),
+	 sequence_anchors_(alignment.alignment_edges(only_local),
+			   alignment.seqA().sequence_anchors(),
+			   alignment.seqB().sequence_anchors()),
 	 name2idx_() {
 	init(alignment.alignment_edges(only_local),
 	     alignment.seqA(),
@@ -105,6 +119,9 @@ namespace LocARNA {
 					 const Sequence &seqA,
 					 const Sequence &seqB)
 	:alig_(),
+	 sequence_anchors_(edges,
+			   seqA.sequence_anchors(),
+			   seqB.sequence_anchors()),
 	 name2idx_() {
 	init(edges,seqA,seqB);
     }
@@ -178,21 +195,49 @@ namespace LocARNA {
     
 	std::string line;
 
-	alig_.clear();
+	std::vector<std::string> anchors;
 
-	getline(in,line);
-    
+	alig_.clear();
+	
+	get_nonempty_line(in,line);
+	
 	// accept and ignore a header line starting with CLUSTAL
-	if (line.substr(0,7) == "CLUSTAL")  {
-	    getline(in,line);
+	if (has_prefix(line,"CLUSTAL"))  {
+	    get_nonempty_line(in,line);
 	}
-    
-	do {	
-	    if (line.length()>0 && line[0]!=' ') {
-		std::istringstream in(line);
+	
+	do {
+	    if (line[0]=='#') {
+		if (has_prefix(line,"#END")) { // recognize END for use in pp files
+		    // section end
+		    break;
+		}
+		else if (has_prefix(line,"#A")) {
+		    // anchor constraint
+		    std::istringstream in(line.substr(2));
+		    int idx;
+		    std::string astr;
+		    in >> idx >> astr;
+		    
+		    if (idx < 1) {
+			throw syntax_error_failure("Invalid index in anchor specification.");
+		    }
+		    
+		    if ((unsigned int)idx > anchors.size() + 1) {
+			throw syntax_error_failure("Non-contiguous anchor specification.");
+		    }
+		    		    
+		    if ((unsigned int)idx > anchors.size()) {
+			anchors.resize(idx);
+		    }
+		    
+		    anchors[idx-1] += astr;
+		}
+	    } else {
+	    	std::istringstream in(line);
 		in >> name >> seqstr;
 		if ( in.fail() || name.empty() || seqstr.empty()) {
-		    throw failure("Wrong format");
+		    throw syntax_error_failure("Unexpected line while reading clustal format");
 		}
 		
 		if (seq_map.find(name)==seq_map.end()) {
@@ -201,14 +246,29 @@ namespace LocARNA {
 		}
 		seq_map[name] += seqstr;
 	    }
-	} while (getline(in,line) && line.substr(0,7) != "CLUSTAL"); // stop when reading a "CLUSTAL" header line again, this allows reading multiple clustal entries from one file
+	    // stop when reading a "CLUSTAL" header line again, this
+	    // allows reading multiple clustal entries from one file
+	} while (get_nonempty_line(in,line) 
+		 && !has_prefix(line,"CLUSTAL"));
     
 	// store the name/sequence pairs in the vector alig
 	for (std::vector<std::string>::const_iterator it=names.begin(); it!=names.end(); ++it) {
 	    alig_.push_back( SeqEntry(*it,seq_map[*it]) );
 	}
-    }
 
+	// check anchor constraints
+	if (anchors.size()>0) {
+	    size_t len = anchors[0].size();
+	    for (size_t i=1; i<anchors.size(); i++) {
+		if ( anchors[i].size() != len ) {
+		    throw syntax_error_failure("Anchor strings of unequal length.");
+		}
+	    }
+	    
+	    // initialize sequence_anchors_ with anchors
+	    sequence_anchors_ = SequenceAnchors(anchors);
+	}
+    }
 
     void
     MultipleAlignment::read_aln_fasta(std::istream &in) {
@@ -229,7 +289,7 @@ namespace LocARNA {
 		sin >> name; // gets the first non-whitespace substring after '>' of the line
 		
 		if (sin.fail() || name.empty()) {
-		    throw failure("wrong format");
+		    throw syntax_error_failure("Cannot read sequence header after '>'");
 		}
 		
 		// todo: this does not eat off blanks at begining of description yet
@@ -251,7 +311,7 @@ namespace LocARNA {
 		
 		alig_.push_back( SeqEntry(name,description,seqstr) );
 	    } else {
-		throw failure("Wrong format");
+		throw syntax_error_failure("Unexpected line while reading fasta");
 	    }
 	}
     }
@@ -322,6 +382,15 @@ namespace LocARNA {
 	}
     }
     
+    const SequenceAnchors &
+    MultipleAlignment::sequence_anchors() const {
+	return sequence_anchors_;
+    }
+    
+    void
+    MultipleAlignment::set_sequence_anchors(const SequenceAnchors &sequence_anchors) {
+	sequence_anchors_=sequence_anchors;
+    }
 
     bool
     MultipleAlignment::is_proper() const {
@@ -766,6 +835,18 @@ namespace LocARNA {
 	    write_name_sequence_line(out,alig_[i].name(),
 				     seq.substr(start-1,end+1-start));
 	}
+
+	// write sequence anchors
+	if (!sequence_anchors_.empty()) {
+	    for(size_t i=0; i<sequence_anchors_.name_length(); i++) {
+		std::ostringstream name;
+		name << "#A"<<(i+1);
+		write_name_sequence_line(out,
+					 name.str(),
+					 sequence_anchors_.anchor_string(i).substr(start-1,end-start+1));
+	    }
+	}
+
 	return out;
     }
 
@@ -777,7 +858,6 @@ namespace LocARNA {
 
     std::ostream &
     MultipleAlignment::write(std::ostream &out,size_t width) const {
-	
 	size_t start=1;
 	do {
 	    size_t end = std::min(length(),start+width-1);
@@ -787,7 +867,6 @@ namespace LocARNA {
 	
 	return out;
     }
-
     
     void 
     MultipleAlignment::reverse() {

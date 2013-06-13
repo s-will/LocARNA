@@ -13,6 +13,7 @@
 #include "aux.hh"
 #include "string1.hh"
 #include "scoring_fwd.hh"
+#include "sequence_anchors.hh"
 
 #include <assert.h>
 
@@ -28,7 +29,7 @@ namespace LocARNA {
     class Scoring;
     class RnaStructure;
     class Sequence;
-
+    
 /**
  * @brief Represents a multiple alignment
  *
@@ -244,8 +245,13 @@ public:
     };
     
 private:
+    //! vector of alignment rows
     std::vector<SeqEntry> alig_;
     
+    //! sequence anchors 
+    SequenceAnchors sequence_anchors_;
+    
+    //! map from string to index
     typedef std::map<std::string,size_type> str2idx_map_t;
 
     /**
@@ -285,7 +291,9 @@ private:
      * @note Sequences can be multiline, white space in sequences is ignored.
      * @note The order of sequences in the stream is preserved.
      * @note overwrites/clears existing data
-    */
+     *
+     * @todo should this read anchor constraints? how?
+     */
     void
     read_aln_fasta(std::istream &in);
     
@@ -410,6 +418,22 @@ public:
 	return alig_.empty();
     }
 
+    /**
+     * @brief Get sequence anchors
+     *
+     * @return sequence anchors
+     */
+    const SequenceAnchors &
+    sequence_anchors() const;
+
+    /**
+     * @brief Set sequence anchors
+     *
+     * @param sequence_anchors sequence anchors
+     */
+    void
+    set_sequence_anchors(const SequenceAnchors &sequence_anchors);
+    
     /**
      * @brief Test whether alignment is proper
      * @return whether all sequences have the same length

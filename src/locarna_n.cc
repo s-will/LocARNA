@@ -286,8 +286,6 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
 //    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
-//    {"anchorA",0,0,O_ARG_STRING,&clp.seq_anchors__A,"","string","Anchor constraints sequence A"},
-//    {"anchorB",0,0,O_ARG_STRING,&clp.seq_anchors__B,"","string","Anchor constraints sequence B"},
 //    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
 
@@ -552,16 +550,10 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Handle constraints (optionally)
     
-    std::string seqCA = clp.seq_anchors_A;
-    std::string seqCB = clp.seq_anchors_B;
-
-    if (!clp.opt_ignore_constraints) {
-	if ( seqCA=="" ) seqCA = rna_dataA->sequence_anchors().single_string();
-	if ( seqCB=="" ) seqCB = rna_dataB->sequence_anchors().single_string();
-    }
-
-    AnchorConstraints seq_constraints(seqA.length(),seqCA,
-				      seqB.length(),seqCB);
+    AnchorConstraints seq_constraints(lenA,
+				      seqA.sequence_anchors().single_string(),
+				      lenB,
+				      seqB.sequence_anchors().single_string());
     
     if (clp.opt_verbose) {
 	if (! seq_constraints.empty()) {

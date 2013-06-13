@@ -79,7 +79,6 @@ namespace LocARNA {
 	 p_bpcut_(p_bpcut),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
-	 sequence_anchors_(),
 	 has_stacking_(false)
     {	
 	// HACK: read_autodetect needs an initialized pimpl_ 
@@ -108,7 +107,6 @@ namespace LocARNA {
 	 p_bpcut_(p_bpcut),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
-	 sequence_anchors_(),
 	 has_stacking_(false)
     {
 	// HACK: we need an initialized pimpl_ 
@@ -131,7 +129,6 @@ namespace LocARNA {
 	 p_bpcut_(),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
-	 sequence_anchors_(edges,rna_dataA.sequence_anchors(),rna_dataB.sequence_anchors()),
 	 has_stacking_(false)
     {
 	init_as_consensus_dot_plot(edges,
@@ -151,7 +148,6 @@ namespace LocARNA {
 	 p_bpcut_(p_bpcut),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
-	 sequence_anchors_(),
 	 has_stacking_(false)
     {
     }
@@ -253,6 +249,7 @@ namespace LocARNA {
 
 	pimpl_->has_stacking_=stacking;
 
+	// try dot plot ps format
 	if (failed) {
 	    failed=false;
 	    try {
@@ -264,7 +261,27 @@ namespace LocARNA {
 		failed=true;
 	    }
 	}
+
+
+	// try pp 2.0
+	if (failed) {
+	    recompute=false;
+	    failed=false;
+	    try {
+		// std::cerr << "Try reading pp "<<filename<<" ..."<<std::endl;
+		read_pp(filename);
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+	    } catch (wrong_format_failure &f) {
+		failed=true;
+	    }
+	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
+	    // else std::cerr << "  ... success."<<std::endl;
+	}
 	
+	
+	// try fasta format
 	if (failed) {
 	    recompute = true;
 	    failed=false;
@@ -282,10 +299,29 @@ namespace LocARNA {
 	    }
 	}
 	
+	// try old pp
+	if (failed) {
+	    recompute=false;
+	    failed=false;
+	    try {
+		// std::cerr << "Try reading old pp "<<filename<<" ..."<<std::endl;
+		read_old_pp(filename);
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+	    } catch (wrong_format_failure &f) {
+		failed=true;
+	    }
+	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
+	    // else std::cerr << "  ... success."<<std::endl;
+	}
+
+	// try clustal format
 	if (failed) {
 	    recompute=true;
 	    failed=false;
 	    try {
+		// std::cerr << "Try reading clustal "<<filename<<" ..."<<std::endl;
 		MultipleAlignment ma(filename, MultipleAlignment::CLUSTAL);
 
 		pimpl_->sequence_ = ma;
@@ -298,43 +334,19 @@ namespace LocARNA {
 	    } catch (failure &f) {
 		failed=true;
 	    }
-	}
-
-	if (failed) {
-	    recompute=false;
-	    failed=false;
-	    try {
-		read_pp(filename);
-		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
-		    failed=true;
-		}
-	    } catch (wrong_format_failure &f) {
-		failed=true;
-	    }
-	}
-
-	if (failed) {
-	    recompute=false;
-	    failed=false;
-	    try {
-		read_old_pp(filename);
-		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
-		    failed=true;
-		}
-	    } catch (wrong_format_failure &f) {
-		failed=true;
-	    }
+	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
+	    // else std::cerr << "  ... success."<<std::endl;
 	}
 	
 	if (failed) {
-	    throw failure("Cannot read input data from file.");
+	    throw failure("RnaData: Cannot read input data from file.");
 	}
 	
 	// now, we have the sequence but not necessarily all required probabilities!
 	if (!inloopprobs_ok()) {
 	    recompute=true;
 	}
-		
+	
 	return !recompute;
     }
 
@@ -527,11 +539,6 @@ namespace LocARNA {
 	return pimpl_->sequence_.length();
     }
     
-    const RnaData::anchors_t &
-    RnaData::sequence_anchors() const {
-	return pimpl_->sequence_anchors_;
-    }
-    
     double
     RnaData::arc_cutoff_prob() const {
 	return pimpl_->p_bpcut_;
@@ -721,25 +728,6 @@ namespace LocARNA {
 	}
     } // end read_ps
 
-
-    bool
-    RnaData::get_nonempty_line(std::istream &in,
-			       std::string &line) {
-	const std::string whitespace = " \t";
-	while(getline(in,line)) {
-	    if (line.length()>0 &&
-		!isspace(line[0])) {
-		
-		// remove trailing white space
-		const size_t strEnd = line.find_last_not_of(whitespace);
-		line = line.substr(0, strEnd+1);
-		return true;
-	    }
-	}
-	line="";
-	return false;
-    }
-
     void RnaData::read_old_pp(const std::string &filename) {
 	
 	std::ifstream in(filename.c_str());
@@ -755,7 +743,7 @@ namespace LocARNA {
     
 	std::string line;
 	std::string sequence_anchor_string="";
-
+	
 	bool contains_stacking=false;
 	
 	while (get_nonempty_line(in,line) && line!="#") { // iterate through lines; stop at the first line that equals "#"
@@ -782,7 +770,7 @@ namespace LocARNA {
 	}
 	
 	if (sequence_anchor_string!="") {
-	    pimpl_->sequence_anchors_ = SequenceAnchors(split_at_separator(sequence_anchor_string,'#'));
+	    pimpl_->sequence_.set_sequence_anchors( SequenceAnchors(split_at_separator(sequence_anchor_string,'#')) );
 	}
 	
 	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
@@ -805,11 +793,11 @@ namespace LocARNA {
 	    in>>i>>j>>p;
       
 	    if ( in.fail() ) {
-		throw RnaData::syntax_error_failure("Invalid line \"" +line+ "\" does not specify base pair probability.");
+		throw syntax_error_failure("Invalid line \"" +line+ "\" does not specify base pair probability.");
 	    }
 	    
 	    if (i>=j) {
-		throw RnaData::syntax_error_failure("Error in PP input line \""+line+"\" (i>=j).\n");
+		throw syntax_error_failure("Error in PP input line \""+line+"\" (i>=j).\n");
 	    }
       
 	    pimpl_->arc_probs_(i,j)=p;
@@ -866,87 +854,7 @@ namespace LocARNA {
     std::istream &
     RnaDataImpl::read_pp_sequence(std::istream &in) {
 	
-	// ----------------------------------------
-	// read sequence/alignment
-	std::map<std::string,std::string> seq_map;
-	std::vector<std::string> seq_names; // order of sequence names
-	
-	std::vector<std::string> anchors;
-	
-	std::string line;
-	while (self_->get_nonempty_line(in,line)) {
-	    
-	    if (line[0]=='#') {
-		// keyword line
-	    
-		if (has_prefix(line,"#END")) {
-		    // section end
-		    break;
-		} else if (has_prefix(line,"#A")) {
-		    // anchor constraint
-		    std::istringstream in(line.substr(2));
-		    int idx;
-		    std::string astr;
-		    in >> idx >> astr;
-		    
-		    if (idx < 1) {
-			throw RnaData::syntax_error_failure("Invalid index in anchor specification.");
-		    }
-		    
-		    if ((unsigned int)idx > anchors.size() + 1) {
-			throw RnaData::syntax_error_failure("Non-contiguous anchor specification.");
-		    }
-		    		    
-		    if ((unsigned int)idx > anchors.size()) {
-			anchors.resize(idx);
-		    }
-		    
-		    anchors[idx-1] += astr;
-		} else {
-		    // ignore keyword 
-		}
-	    } else {
-		// not a keyword line => the line has to specifiy base
-		// pair probabilities
-		
-		std::istringstream in(line);
-		std::string name;
-		std::string seqstr;
-		in >> name >> seqstr;
-	 
-		if ( in.fail() ) {
-		    throw RnaData::wrong_format_failure();
-		}
-	    
-		
-		// register name if it is encountered the first time
-		if (seq_map.find(name)==seq_map.end()) {
-		    seq_names.push_back(name);
-		}
-		
-		normalize_rna_sequence(seqstr);
-		seq_map[name] += seqstr;
-		
-	    }
-	}
-	
-	// generate sequence object, insert sequences in correct order
-	for (std::vector<std::string>::const_iterator it=seq_names.begin(); it!=seq_names.end(); ++it) {
-	    sequence_.append(MultipleAlignment::SeqEntry(*it,seq_map[*it]));
-	}
-	
-	// check anchor constraints
-	if (anchors.size()>0) {
-	    size_t len = anchors[0].size();
-	    for (size_t i=1; i<anchors.size(); i++) {
-		if ( anchors[i].size() != len ) {
-		    throw RnaData::syntax_error_failure("Anchor strings of unequal length.");
-		}
-	    }
-	    
-	    // initialize sequence_anchors_ with anchors
-	    sequence_anchors_ = SequenceAnchors(anchors);
-	}
+	sequence_ = MultipleAlignment(in,MultipleAlignment::CLUSTAL);
 	
 	return in;
     }
@@ -975,7 +883,7 @@ namespace LocARNA {
 
 	// std::cout << "LEN: " << len<<std::endl;
 	std::string line;
-	while( self_->get_nonempty_line(in,line) ) {
+	while( get_nonempty_line(in,line) ) {
 	    if (line[0]=='#') {
 		// keyword line
 		
@@ -988,7 +896,7 @@ namespace LocARNA {
 		    double p;
 		    in >> dummy >> p;
 		    if ( in.fail() ) {
-			throw RnaData::syntax_error_failure("Cannot parse line \""+line+"\" in base pairs section.");
+			throw syntax_error_failure("Cannot parse line \""+line+"\" in base pairs section.");
 		    }
 		    p_bpcut_ = std::max(p,p_bpcut_);
 		}  else if (has_prefix(line,"#STACK")) {
@@ -1001,11 +909,11 @@ namespace LocARNA {
 		in>>i>>j>>p;
       
 		if ( in.fail() ) {
-		    throw RnaData::syntax_error_failure("Cannot parse line \""+line+"\" in base pairs section.");
+		    throw syntax_error_failure("Cannot parse line \""+line+"\" in base pairs section.");
 		}
 		
 		if (!(1<=i && i<j && j<=sequence_.length())) {
-		    throw RnaData::syntax_error_failure("Invalid indices in PP input line \""+line+"\".");
+		    throw syntax_error_failure("Invalid indices in PP input line \""+line+"\".");
 		}
 		
 		if (p>p_bpcut_) {
@@ -1023,7 +931,7 @@ namespace LocARNA {
 	}
 
 	if (!contains_stacking && arc_2_probs_.size()>0) {
-	    throw RnaData::syntax_error_failure("Stacking probabilties found but stack keyword is missing.");
+	    throw syntax_error_failure("Stacking probabilties found but stack keyword is missing.");
 	}
 	
 	return in;
@@ -1053,7 +961,7 @@ namespace LocARNA {
     ExtRnaDataImpl::read_pp_in_loop_probabilities(std::istream &in) {
 
     	std::string line;
-	while( self_->get_nonempty_line(in,line) ) {
+	while( get_nonempty_line(in,line) ) {
 	    if (line[0]=='#') {
 		// keyword line
 		
@@ -1066,7 +974,7 @@ namespace LocARNA {
 		    double p;
 		    in >> dummy >> p;
 		    if ( in.fail() ) {
-			throw RnaData::syntax_error_failure("Cannot parse line \""+line+"\" in in-loop section.");
+			throw syntax_error_failure("Cannot parse line \""+line+"\" in in-loop section.");
 		    }
 		    p_bpilcut_ = std::max(p,p_bpilcut_);
 		} else if (has_prefix(line,"#UILCUT")) {
@@ -1075,7 +983,7 @@ namespace LocARNA {
 		    double p;
 		    in >> dummy >> p;
 		    if ( in.fail() ) {
-			throw RnaData::syntax_error_failure("Cannot parse line \""+line+"\" in in-loop section.");
+			throw syntax_error_failure("Cannot parse line \""+line+"\" in in-loop section.");
 		    }
 		    p_uilcut_ = std::max(p,p_uilcut_);
 		}
@@ -1088,10 +996,10 @@ namespace LocARNA {
 		    in>>i>>j>>sep;
 		    
 		    if (sep!=":") {
-			throw RnaData::syntax_error_failure("Invalid line \""+line+"\" in in-loop section.");
+			throw syntax_error_failure("Invalid line \""+line+"\" in in-loop section.");
 		    }
 		    if (!(1<=i && i<j && j<=self_->length())) {
-			throw RnaData::syntax_error_failure("Index error in PP input line \""+line+"\" (i>=j).");
+			throw syntax_error_failure("Index error in PP input line \""+line+"\" (i>=j).");
 		    }
 		}
 		
@@ -1102,7 +1010,7 @@ namespace LocARNA {
 		
 		if (blocks.size() != 2) {
 		    std::cerr << "Faulty block: "<<block_string<<std::endl;
-		    throw RnaData::syntax_error_failure("Invalid in loop probabilitity specification at line \""+line+"\"");
+		    throw syntax_error_failure("Invalid in loop probabilitity specification at line \""+line+"\"");
 		}
 		
 		{
@@ -1112,7 +1020,7 @@ namespace LocARNA {
 		    double p;
 		    while(in1 >> ip >> jp >> p) {
 			if (!(i<ip && ip<jp && jp<j)) {
-			    throw RnaData::syntax_error_failure("Index error in in-loop specification.");
+			    throw syntax_error_failure("Index error in in-loop specification.");
 			}
 			arc_in_loop_probs_.ref(i,j).set(ip,jp,p);
 		    }
@@ -1124,7 +1032,7 @@ namespace LocARNA {
 		    double p;
 		    while(in2 >> kp >> p) {
 			if (!(i<kp && kp<j)) {
-			    throw RnaData::syntax_error_failure("Index error in in-loop specification.");
+			    throw syntax_error_failure("Index error in in-loop specification.");
 			}
 			unpaired_in_loop_probs_.ref(i,j)[kp] = p;
 		    }
@@ -1170,16 +1078,6 @@ namespace LocARNA {
     std::ostream &
     RnaDataImpl::write_pp_sequence(std::ostream &out) const {
 	out << sequence_;
-	// write section separator
-
-	if (!sequence_anchors_.empty()) {
-	    out << std::endl;
-	    for(size_t i=0; i<sequence_anchors_.name_length(); i++) {
-		std::ostringstream name;
-		name << "#A"<<(i+1);
-		sequence_.write_name_sequence_line(out,name.str(),sequence_anchors_.anchor_string(i));
-	    }
-	}
 	
 	out << std::endl
 	    << "#END" << std::endl;

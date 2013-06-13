@@ -17,15 +17,13 @@ namespace LocARNA {
     class RnaEnsemble;
     class RnaDataImpl;
     class PFoldParams;
-    class SequenceAnchors;
 
     /**
      * @brief represent sparsified data of RNA ensemble
      * 
      * knows sequence, cutoff probability and base pair probabilities
      * greater than the cutoff probability; potentially knows stacking
-     * probabilities; furthermore, it knows a potential sequence
-     * anchor annotation (usually used for anchor constraints)
+     * probabilities
      *
      * @note This class knows the cutoff probability *of its data*. This
      * cutoff can be different from the cutoff in classes like
@@ -42,34 +40,8 @@ namespace LocARNA {
 
     public:
 	
-	//! sequence anchors
-	typedef SequenceAnchors anchors_t;
-
 	//! arc probability matrix
 	typedef SparseMatrix<double> arc_prob_matrix_t;
-
-	/**
-	 * @brief thrown, when reading data that is not in the supposed format
-	 */
-	struct wrong_format_failure: public failure {
-	    wrong_format_failure():failure("Wrong format") {}
-	};
-
-	/**
-	 * @brief thrown, when the format is recognized but syntax is incorrect
-	 */
-	struct syntax_error_failure: public failure {
-	    
-	    //! @brief empty constructor
-	    syntax_error_failure():failure("Syntax error") {}
-	    
-	    /** 
-	     * @brief Construct with message string
-	     * 
-	     * @param msg message string
-	     */
-	    syntax_error_failure(const std::string msg):failure("Syntax error: "+msg) {}
-	};
 	
 	typedef size_t size_type; //!< usual size type
 	
@@ -119,7 +91,8 @@ namespace LocARNA {
 	 * have stacking probabilities, stacking consensus
 	 * probabilities are computed as well. If the object contain
 	 * sequence anchors, we construct the new object with a
-	 * consensus anchor string.
+	 * consensus anchor string. (The latter is done as part of the
+	 * consensus sequence computation.)
 	 */
 	RnaData(const RnaData &rna_dataA,
 		const RnaData &rna_dataB,
@@ -177,14 +150,6 @@ namespace LocARNA {
 	 */
 	size_type
 	length() const;
-
-	/**
-	 * @brief Get sequence anchors as vector of strings
-	 *
-	 * @return vector of sequence anchors strings
-	 */
-	const anchors_t &
-	sequence_anchors() const;
 
 	/**
 	 * @brief Get base pair cutoff probability
@@ -444,25 +409,7 @@ namespace LocARNA {
 	void
 	read_ps(const std::string &filename);
 
-	/** 
-	 * @brief Get next non-empty/non-comment line
-	 * 
-	 * @param in input stream 
-	 * @param[out] line line
-	 *
-	 * Get the next line of stream in that is neither emtpy nor
-	 * starts with white space (the latter is considered a comment
-	 * in pp files).
-	 * 
-	 * @note on failure, sets line to empty 
-	 *
-	 * @return success
-	 */
-	static
-	bool
-	get_nonempty_line(std::istream &in,
-			  std::string &line);
-
+	
     }; // end class RnaData
   
 }

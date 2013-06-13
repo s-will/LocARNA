@@ -8,7 +8,6 @@
 #include <iosfwd>
 #include "rna_data.hh"
 #include "sequence.hh"
-#include "sequence_anchors.hh"
 
 namespace LocARNA {
 
@@ -48,12 +47,6 @@ namespace LocARNA {
 	 * @note arc_2_probs_ has entry (i,j) implies arc_probs_ has entry (i,j)
 	 */
 	arc_prob_matrix_t arc_2_probs_; 
-	
-	//! anchors_t from RnaData
-	typedef RnaData::anchors_t anchors_t;
-
-	//! sequence anchors 
-	anchors_t sequence_anchors_;
 	
 	//! whether stacking probabilities are available
 	bool has_stacking_; 
@@ -132,7 +125,7 @@ namespace LocARNA {
 	 * @return stream
 	 *
 	 * this section comprises sequence/multiple alignment
-	 * and sequence anchor annotation
+	 * (possibly including sequence anchor annotation)
 	 */
 	std::istream &
 	read_pp_sequence(std::istream &in);

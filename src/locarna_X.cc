@@ -130,8 +130,6 @@ option_def my_options[] = {
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
 
-    {"anchorA",0,0,O_ARG_STRING,&seq_constraints_A,"","string","Anchor constraints sequence A."},
-    {"anchorB",0,0,O_ARG_STRING,&seq_constraints_B,"","string","Anchor constraints sequence B."},
     {"ignore-constraints",0,&opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
     
@@ -310,16 +308,10 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Handle constraints (optionally)
 
-    std::string seqCA = seq_constraints_A;
-    std::string seqCB = seq_constraints_B;
-
-    if (!opt_ignore_constraints) {
-	if ( seqCA=="" ) seqCA = rna_dataA->sequence_anchors().single_string();
-	if ( seqCB=="" ) seqCB = rna_dataB->sequence_anchors().single_string();
-    }
-
-    AnchorConstraints seq_constraints(seqA.length(),seqCA,
-				      seqB.length(),seqCB);
+    AnchorConstraints seq_constraints(seqA.length(),
+				      seqA.sequence_anchors().single_string(),
+				      seqB.length(),
+				      seqB.sequence_anchors().single_string());
     
     if (opt_verbose) {
 	if (! seq_constraints.empty()) {

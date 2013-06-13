@@ -139,8 +139,30 @@ namespace LocARNA {
 	const char* what() const throw();
     };
     
-
-
+    /**
+     * @brief thrown, when reading data that is not in the supposed format
+     */
+    struct wrong_format_failure: public failure {
+	wrong_format_failure():failure("Wrong format") {}
+    };
+    
+    /**
+     * @brief thrown, when the format is recognized but syntax is incorrect
+     */
+    struct syntax_error_failure: public failure {
+	
+	//! @brief empty constructor
+	syntax_error_failure():failure("Syntax error") {}
+	
+	/** 
+	 * @brief Construct with message string
+	 * 
+	 * @param msg message string
+	 */
+	syntax_error_failure(const std::string msg):failure("Syntax error: "+msg) {}
+    };
+    
+    
     /**
      * @brief expected probability of a base pair (null-model)
      * @note magic formula for expected probability (aka background); actually questionable
@@ -265,7 +287,36 @@ namespace LocARNA {
      */
     bool
     has_prefix(const std::string &s, const std::string &p, size_t start=0);
+    
+    /** 
+     * @brief Get next non-empty/non-comment line
+     * 
+     * @param in input stream 
+     * @param[out] line line
+     *
+     * Get the next line of stream in that is neither emtpy nor
+     * starts with white space (the latter is considered a comment
+     * in pp and (our variant of) clustalw files).
+     * 
+     * @note on failure, sets line to empty 
+     *
+     * @return success
+     */
+    bool
+    get_nonempty_line(std::istream &in,
+		      std::string &line);
 
+    /**
+       @brief throw rnalib unavailable failure
+       
+       Use this to report missing functionality because the binaries
+       are not linked to the rna library
+       
+       @note the convention to handle rna lib dependencies is to call
+       this from public methods that cannot be executed without the rna
+       library if HAVE_LIBRNA is undefined. The library interface must
+       not change whether the lib is available or not.
+    */
     void
     error_rnalib_unavailable(); 
 
