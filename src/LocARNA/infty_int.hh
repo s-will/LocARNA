@@ -26,18 +26,18 @@ namespace LocARNA {
        The infinity integer classes TaintedInftyInt, InftyInt and
        FiniteInt support efficient addition and
        minimization/maximization of potentially infinite integer
-       values. For this purpose, the range of the basic type (long
+       values. For this purpose, the range of the base type (long
        int) is restricted. With this encoding, two normal infinite
        values (InftyInt) of the same sign can be added without
        resulting in overflow. This yields a non-normal
        TaintedInftyInt, which still allows to add finite integers
        (FiniteInt) without overflow (at least as long as the added
        finite integers do not exceed the remaining range of
-       [-m..m-1]), where m=2^(s-1) and s is the width of the basic
+       [-m..m-1]), where m=2^(s-1) and s is the width of the base
        type, e.g. 64.
 
-       The range of the basic type is split into subranges, where s is
-       the number of bits in the basic type: 
+       The range of the base type is split into subranges, where s is
+       the number of bits in the base type: 
        
        * negative infinity        [ -m..-m/5 [
        * normal negative infinity [ -3m/5..-m/5 [
@@ -55,23 +55,23 @@ namespace LocARNA {
     */
     class TaintedInftyInt {
     public:
-	//! the basic type
-	typedef long int basic_type;
+	//! the base type
+	typedef long int base_type;
 
     protected:
-	basic_type val; //!< value
+	base_type val; //!< value
 	
 	//! minimum finite value
-	static const basic_type min_finity;
+	static const base_type min_finity;
 
 	//! maximum finite value
-	static const basic_type max_finity;
+	static const base_type max_finity;
 	
 	//! minimum normal infinite value
-	static const basic_type min_normal_neg_infty;
+	static const base_type min_normal_neg_infty;
 	
 	//! maximum normal infinite value
-	static const basic_type max_normal_pos_infty;
+	static const base_type max_normal_pos_infty;
     public:
 	
 	/** 
@@ -81,11 +81,11 @@ namespace LocARNA {
 	}
 
 	/** 
-	 * @brief Construct from basic type
-	 * @param x basic type value
+	 * @brief Construct from base type
+	 * @param x base type value
 	 */
 	explicit
-	TaintedInftyInt(const basic_type &x)
+	TaintedInftyInt(const base_type &x)
 	    : val(x) {
 	}
 	
@@ -95,7 +95,7 @@ namespace LocARNA {
 	 * @return minimum finite value
 	 */
 	static
-	basic_type
+	base_type
 	min_finite() {
 	    return min_finity;
 	}
@@ -106,7 +106,7 @@ namespace LocARNA {
 	 * @return maximum finite value
 	 */
 	static
-	basic_type
+	base_type
 	max_finite() {
 	    return max_finity;
 	}
@@ -152,12 +152,12 @@ namespace LocARNA {
 	}
 	
 	/** 
-	 * @brief Convert finite value to basic type
+	 * @brief Convert finite value to base type
 	 * 
 	 * @return value
 	 * @pre is finite
 	 */
-	basic_type 
+	base_type 
 	finite_value() const {
 	    assert(is_finite());
 	    return val;
@@ -369,12 +369,12 @@ namespace LocARNA {
 	}
 
 	/** 
-	 * @brief Construct from basic type
+	 * @brief Construct from base type
 	 *
-	 * @param x value of basic type 
+	 * @param x value of base type 
 	 */
 	explicit
-	InftyInt(const basic_type &x):TaintedInftyInt(x) {
+	InftyInt(const base_type &x):TaintedInftyInt(x) {
 	    assert(is_normal());
 	}
 	
@@ -462,22 +462,48 @@ namespace LocARNA {
     class FiniteInt : public InftyInt {
     public:
 
+	/** 
+	 * @brief Construct empty
+	 */
 	FiniteInt(): InftyInt() {
 	}
 	
-	FiniteInt(basic_type x): InftyInt(x) {
+	/** 
+	 * @brief Construct from base type value
+	 * @param x value
+	 */
+	FiniteInt(base_type x): InftyInt(x) {
 	    assert(is_finite());
 	}
 	
-	const basic_type &
+	/** 
+	 * @brief Access finite value 
+	 * 
+	 * @return value
+	 */
+	const base_type &
 	finite_value() const {
 	    return val;
 	}
 	
+	/** 
+	 * @brief Add
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * @return x plus y
+	 */
 	friend
 	FiniteInt
 	operator +(const FiniteInt &x, const FiniteInt &y);
-	
+
+	/** 
+	 * @brief Subtract
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * @return x minus y
+	 */
 	friend
 	FiniteInt
 	operator -(const FiniteInt &x, const FiniteInt &y);
