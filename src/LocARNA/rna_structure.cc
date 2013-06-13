@@ -1,6 +1,8 @@
 #include <stack>
 #include <string>
+#include <iostream>
 
+#include "aux.hh"
 #include "rna_structure.hh"
 
 namespace LocARNA {
@@ -24,9 +26,21 @@ namespace LocARNA {
     RnaStructure::RnaStructure(const std::string &structure)
 	: length_(structure.size())
     {
-	parse(structure,bps_);
+	if (!parse(structure,bps_)) {
+	    throw failure("Cannot parse RNA structure string.");
+	}
     }
 
+    std::string
+    RnaStructure::to_string() const {
+	std::string s(length_,'.');
+	for(const_iterator it=begin(); end()!=it; ++it) {
+	    s[it->first - 1]='(';
+	    s[it->second - 1]=')';
+	}
+	return s;
+    }
+    
 
 } // end namespace LocARNA
 

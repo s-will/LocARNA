@@ -23,12 +23,16 @@ namespace LocARNA {
     MultipleAlignment::MultipleAlignment() 
 	: alig_(),
 	  sequence_anchors_(),
+	  structure_(),
+	  has_structure_(false),
 	  name2idx_() {
     }
     
     MultipleAlignment::MultipleAlignment(std::istream &in, format_t format)
     	: alig_(),
 	  sequence_anchors_(),
+	  structure_(),
+	  has_structure_(false),
 	  name2idx_() {
 	
 	if (!in.good()) {
@@ -49,6 +53,8 @@ namespace LocARNA {
     MultipleAlignment::MultipleAlignment(const std::string &filename, format_t format)
 	: alig_(),
 	  sequence_anchors_(),
+	  structure_(),
+	  has_structure_(false),
 	  name2idx_() {
 	
 	try {
@@ -79,6 +85,8 @@ namespace LocARNA {
 					 const std::string &sequence)
 	: alig_(),
 	  sequence_anchors_(),
+	  structure_(),
+	  has_structure_(false),
 	  name2idx_() {
 	
 	alig_.push_back(SeqEntry(name,sequence));
@@ -92,6 +100,8 @@ namespace LocARNA {
 					 const std::string &aliB)
 	: alig_(),
 	  sequence_anchors_(),
+	  structure_(),
+	  has_structure_(false),
 	  name2idx_() {
 	
 	if (aliA.length() != aliB.length()) {
@@ -109,6 +119,8 @@ namespace LocARNA {
 	 sequence_anchors_(alignment.alignment_edges(only_local),
 			   alignment.seqA().sequence_anchors(),
 			   alignment.seqB().sequence_anchors()),
+	 structure_(),
+	 has_structure_(false),
 	 name2idx_() {
 	init(alignment.alignment_edges(only_local),
 	     alignment.seqA(),
@@ -122,6 +134,8 @@ namespace LocARNA {
 	 sequence_anchors_(edges,
 			   seqA.sequence_anchors(),
 			   seqB.sequence_anchors()),
+	 structure_(),
+	 has_structure_(false),
 	 name2idx_() {
 	init(edges,seqA,seqB);
     }
@@ -167,7 +181,7 @@ namespace LocARNA {
     	create_name2idx_map();
     }
 
-
+    
     MultipleAlignment::~MultipleAlignment() {
     }
 
@@ -196,6 +210,8 @@ namespace LocARNA {
 	std::string line;
 
 	std::vector<std::string> anchors;
+
+	std::string structure_string="";
 
 	alig_.clear();
 	
@@ -232,6 +248,21 @@ namespace LocARNA {
 		    }
 		    
 		    anchors[idx-1] += astr;
+		} else if (has_prefix(line,"#S")) {
+		    std::istringstream in(line);
+		    std::string tag;
+		    std::string str;
+		    in >> tag >> str;
+		    
+		    if ( in.fail() ) {
+			throw syntax_error_failure("Invalid tag with structure prefix #S.");
+		    }
+		    
+		    if (tag=="#S") {
+			structure_string += str;
+		    } else {
+			throw syntax_error_failure("Unknown tag with structure prefix #S.");
+		    }
 		}
 	    } else {
 	    	std::istringstream in(line);
@@ -259,6 +290,9 @@ namespace LocARNA {
 	// check anchor constraints
 	if (anchors.size()>0) {
 	    size_t len = anchors[0].size();
+	    if (len != length()) {
+		throw syntax_error_failure("Anchor string(s) of wrong length.");
+	    }
 	    for (size_t i=1; i<anchors.size(); i++) {
 		if ( anchors[i].size() != len ) {
 		    throw syntax_error_failure("Anchor strings of unequal length.");
@@ -268,8 +302,22 @@ namespace LocARNA {
 	    // initialize sequence_anchors_ with anchors
 	    sequence_anchors_ = SequenceAnchors(anchors);
 	}
+	
+	// check and set structure string
+	if (!structure_string.empty()) {
+	    if (structure_string.length() != length()) {
+		throw syntax_error_failure("Structure annotation of wrong length.");
+	    }
+	    try {
+		RnaStructure rna_structure(structure_string);
+		set_structure( rna_structure );
+	    } catch(failure &f) {
+		throw syntax_error_failure((std::string)"Wrong structure annotation."+f.what());
+	    }
+	}
+	
     }
-
+    
     void
     MultipleAlignment::read_aln_fasta(std::istream &in) {
 	std::string name;
@@ -392,6 +440,29 @@ namespace LocARNA {
 	sequence_anchors_=sequence_anchors;
     }
 
+    const RnaStructure &
+    MultipleAlignment::structure() const {
+	return structure_;
+    }
+
+    bool
+    MultipleAlignment::has_structure() const {
+	return has_structure_;
+    }
+    
+    void
+    MultipleAlignment::set_structure(const RnaStructure &structure) {
+	assert(structure.length() == length());
+	has_structure_=true;
+	structure_=structure;
+    }
+
+    void
+    MultipleAlignment::remove_structure() {
+        has_structure_=false;
+	structure_.clear();
+    }
+    
     bool
     MultipleAlignment::is_proper() const {
 	if (empty()) return true; // empty alignment is proper
@@ -828,6 +899,11 @@ namespace LocARNA {
 	assert(1<=start);
 	assert(end+1>=start);
 	    	
+	std::string structure_string="";
+	if (has_structure()) {
+	    structure_string = structure_.to_string();
+	}
+	
 	for (size_type i=0; i<alig_.size(); i++) {
 	    const std::string seq = alig_[i].seq().to_string();
 	    assert(end <= seq.length()); 
@@ -841,10 +917,19 @@ namespace LocARNA {
 	    for(size_t i=0; i<sequence_anchors_.name_length(); i++) {
 		std::ostringstream name;
 		name << "#A"<<(i+1);
+
+		std::string anchor_string = sequence_anchors_.anchor_string(i);
+		
 		write_name_sequence_line(out,
 					 name.str(),
-					 sequence_anchors_.anchor_string(i).substr(start-1,end-start+1));
+					 anchor_string.substr(start-1,end-start+1));
 	    }
+	}
+	
+	if (has_structure()) {
+	    write_name_sequence_line(out,
+				     "#S",
+				     structure_string.substr(start-1,end-start+1));
 	}
 
 	return out;

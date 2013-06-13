@@ -457,8 +457,8 @@ main(int argc, char **argv) {
     try {
 	rna_dataA = new RnaData(clp.fileA,clp.min_prob,pfparams);
     } catch (failure &f) {
-	std::cerr << "ERROR: failed to read from file "<<clp.fileA <<std::endl
-		  << "       "<< f.what() <<std::endl;
+	std::cerr << "ERROR:\tfailed to read from file "<<clp.fileA <<std::endl
+		  << "\t"<< f.what() <<std::endl;
 	return -1;
     }
     

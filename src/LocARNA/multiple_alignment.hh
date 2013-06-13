@@ -14,6 +14,7 @@
 #include "string1.hh"
 #include "scoring_fwd.hh"
 #include "sequence_anchors.hh"
+#include "rna_structure.hh"
 
 #include <assert.h>
 
@@ -28,6 +29,7 @@ namespace LocARNA {
     class BasePairs;
     class Scoring;
     class RnaStructure;
+    class SequenceAnchors;
     class Sequence;
     
 /**
@@ -43,19 +45,21 @@ namespace LocARNA {
  *
  * Sequences positions and column indices are 1..len.
  *
+ * MultipleAlignment can have anchor and structure annotation and can
+ * read and write them.
  */
 class MultipleAlignment {
-        
 public:
     typedef size_t size_type; //!< size type
     
     /**
      * @brief A row in a multiple alignment
      * 
-     * pair of a name string and a sequence string
-     * support projections
+     * pair of a name string and a sequence string; support
+     * projections 
+     *
      * @see MultipleAlignment
-    */
+     */
     class SeqEntry {
     public:
 	typedef MultipleAlignment::size_type size_type; //!< size type
@@ -120,19 +124,19 @@ public:
 	
 	// access
 	
-	//! (read-only) access to name
+	//! @brief (read-only) access to name
 	const std::string &
 	name() const {return name_;}
 	
-	//! (read-only) access to description
+	//! @brief (read-only) access to description
 	const std::string &
 	description() const {return description_;}
 
-	//! (read-only) access to seq
+	//! @brief (read-only) access to seq
 	const string1 &
 	seq() const {return seq_;}
 
-	//! length without gaps
+	//! @brief length without gaps
 	size_type
 	length_wogaps() const;
 	
@@ -140,7 +144,7 @@ public:
 	// projections
 	
 	/**
-	 * map sequence position -> alignment column.
+	 * @brief map sequence position -> alignment column.
 	 * @note time O(len)
 	 * @param pos position in sequence (without gaps)
 	 * as marginal cases: pos 0 maps to 0 and
@@ -161,7 +165,7 @@ public:
 	col_to_pos(pos_type col) const;
 
 	/** 
-	 * \brief reverse sequence
+	 * @brief reverse sequence
 	 * 
 	 */
 	void
@@ -170,7 +174,7 @@ public:
 	}
 	
 	/** 
-	 * \brief append character to sequence
+	 * @brief append character to sequence
 	 * @param c character
 	 */
 	void
@@ -181,7 +185,7 @@ public:
     };
 
     /**
-     * \brief read only proxy class representing a column of the alignment 
+     * @brief read only proxy class representing a column of the alignment 
      *
      * Allow read only access to the symbols in the column by their row index
      */
@@ -215,7 +219,7 @@ public:
 	size() const {return ma_.row_number();}
 
 	/** 
-	 * Test equality
+	 * @brief Test equality
 	 * 
 	 * @param ac second alignment column
 	 * 
@@ -231,7 +235,7 @@ public:
 	}
 
 	/** 
-	 * Test inequality
+	 * @brief Test inequality
 	 * 
 	 * @param ac second alignment column
 	 * 
@@ -251,21 +255,27 @@ private:
     //! sequence anchors 
     SequenceAnchors sequence_anchors_;
     
+    //! secondary structure annotation
+    //! used for structure constraints and structure annotation
+    RnaStructure structure_;
+    
+    bool has_structure_;
+    
     //! map from string to index
     typedef std::map<std::string,size_type> str2idx_map_t;
 
     /**
      * association between names and indices, use to 
      * locate sequences by name in log time
-    */
+     */
     str2idx_map_t name2idx_;
     
-    //! create the map for translating names to indices
+    //! @brief create the map for translating names to indices
     void
     create_name2idx_map();
 
     /**
-     * \brief Read alignment from input stream, expect clustalw-like format.
+     * @brief Read alignment from input stream, expect clustalw-like format.
      *
      * @param in input stream
      * @note
@@ -279,7 +289,7 @@ private:
     read_aln_clustalw(std::istream &in);
 
     /**
-     * \brief Read alignment from input stream, expect fasta format.
+     * @brief Read alignment from input stream, expect fasta format.
      * 
      * @param in input stream
      *
@@ -292,14 +302,16 @@ private:
      * @note The order of sequences in the stream is preserved.
      * @note overwrites/clears existing data
      *
-     * @todo should this read anchor constraints? how?
+     * @todo read_aln_fasta() currently does not read anchor
+     * constraints and structure. Should it? If yes, likely using
+     * special fa headers >#A, >#S.
      */
     void
     read_aln_fasta(std::istream &in);
     
 public:
     
-    //! \brief const iterator of sequence entries
+    //! @brief const iterator of sequence entries
     typedef std::vector<SeqEntry>::const_iterator const_iterator;
 
     /**
@@ -308,7 +320,7 @@ public:
     */
     enum format_t {CLUSTAL,FASTA};
 
-    //! \brief Construct empty
+    //! @brief Construct empty
     MultipleAlignment();
     
     /**
@@ -331,7 +343,7 @@ public:
     MultipleAlignment(std::istream &in, format_t format=CLUSTAL);
 
     /**
-     * \brief Construct as degenerate alignment of one sequence
+     * @brief Construct as degenerate alignment of one sequence
      * @param name name of sequence
      * @param sequence sequence strings
      */
@@ -339,7 +351,7 @@ public:
 		      const std::string &sequence);
     
     /**
-     * \brief Construct as pairwise alignment from names and alignment strings
+     * @brief Construct as pairwise alignment from names and alignment strings
      * @param nameA name of sequence A
      * @param nameB name of sequence B
      * @param alistringA alignment strings of sequence A
@@ -353,17 +365,26 @@ public:
 		      const std::string &alistringB);
     
     /**
-     * \brief Construct from Alignment object
+     * @brief Construct from Alignment object
      * @param alignment object of type Alignment
      * @param only_local if true, construct only local alignment
+     *
+     * Automatically computes a consensus anchor string if anchors are
+     * available. Does not compute some kind of consensus structure,
+     * even if structure annotation of sequences A and B in Alignment
+     * is available.
      */
     MultipleAlignment(const Alignment &alignment, bool only_local=false);
     
     /**
-     * \brief Construct from alignment edges and sequences
+     * @brief Construct from alignment edges and sequences
      * @param edges alignment edges
      * @param seqA sequence A
      * @param seqB sequence B
+     *
+     * Automatically computes a consensus anchor string if anchors are
+     * available.  Does not compute some kind of consensus structure, even if
+     * structure annotation of sequences A and B is available.
      */
     MultipleAlignment(const AlignmentEdges &edges,
 		      const Sequence &seqA,
@@ -371,7 +392,7 @@ public:
 
 protected:
     /**
-     * \brief Initialize from alignment edges and sequences
+     * @brief Initialize from alignment edges and sequences
      * @param edges alignment edges
      * @param seqA sequence A
      * @param seqB sequence B
@@ -397,7 +418,7 @@ public:
     const Sequence & as_sequence() const;  
     
     /**
-     * \brief Number of rows of multiple aligment
+     * @brief Number of rows of multiple aligment
      * @return number of rows
     */
     size_type
@@ -433,7 +454,34 @@ public:
      */
     void
     set_sequence_anchors(const SequenceAnchors &sequence_anchors);
-    
+
+    /**
+     * @brief Get structure
+     * @return structure
+     */
+    const RnaStructure &
+    structure() const;
+
+    /**
+     * @brief Structure availability
+     * @return whether a structure exists
+     */
+    bool
+    has_structure() const;
+
+    /**
+     * @brief Set structure
+     * @param structure rna structure
+     */
+    void
+    set_structure(const RnaStructure &structure);
+
+    /**
+     * @brief Remove structure annotation
+     */
+    void
+    remove_structure();
+
     /**
      * @brief Test whether alignment is proper
      * @return whether all sequences have the same length
@@ -481,6 +529,7 @@ public:
     
     /**
      * @brief Access index by name
+     *
      * @pre name exists
      * @param name name of a sequence
      * @return index of name/sequence pair with given name
@@ -505,7 +554,7 @@ public:
     }
     
     /**
-     * \brief Access name/sequence pair by name
+     * @brief Access name/sequence pair by name
      *
      * @param name name of name/sequence pair
      * @return sequence (including gaps) with given name
@@ -518,6 +567,7 @@ public:
 
     /**
      * @brief Deviation of a multiple alignment from a reference alignment
+     *
      * @param ma multiple alignment
      * @return deviation of ma from reference alignment *this
      * deviation is defined for realignment in limited deviation from a
@@ -563,7 +613,7 @@ public:
     cmfinder_realignment_score(const MultipleAlignment &ma) const; 
 
     /** 
-     * Average deviation score
+     * @brief Average deviation score
      * 
      * @param ma multiple alignment
      * 
@@ -579,9 +629,10 @@ public:
 
     
     /** 
-     * Consensus sequence of multiple alignment
+     * @brief Consensus sequence of multiple alignment
      * 
-     * Consensus sequence by simple majority in each column. Assume that only ascii < 127 characters occur
+     * Consensus sequence by simple majority in each column. Assume
+     * that only ascii < 127 characters occur
      *
      * @return consensus sequence as string
      */
@@ -589,7 +640,7 @@ public:
     consensus_sequence() const;
     
     /** 
-     * Access alignment column
+     * @brief Access alignment column
      * 
      * @param col_index column index 
      * 
@@ -601,7 +652,7 @@ public:
     }
 
     /** 
-     * \brief Append sequence entry
+     * @brief Append sequence entry
      * 
      * @param seqentry new sequence entry
      *
@@ -611,37 +662,36 @@ public:
     append(const SeqEntry &seqentry);
 
     /** 
-     * \brief Prepend sequence entry
+     * @brief Prepend sequence entry
      * 
      * @param seqentry new sequence entry
      *
      * @pre *this is empty or entry must have same size as *this
      *
-     * @note prepend is a lot more costly then append; it has cost linearly in the number of rows
+     * @note prepend is a lot more costly then append; it has cost
+     * linearly in the number of rows
      */
     void
     prepend(const SeqEntry &seqentry);
     
     /**
-     * \brief Append a column
+     * @brief Append a column
      *
      * @param c column that is appended
-     *
      */
     void
     operator += (const AliColumn &c);
     
     /**
-     * \brief Append the same character to each row
+     * @brief Append the same character to each row
      *
      * @param c character that is appended
-     *
      */
     void
     operator += (char c);
     
     /**
-     * \brief reverse the multiple alignment
+     * @brief reverse the multiple alignment
      */
     void
     reverse();
@@ -651,7 +701,7 @@ public:
     // output
     
     /**
-     * \brief Write alignment to stream
+     * @brief Write alignment to stream
      *
      * @param out output stream
      * @return output stream
@@ -662,7 +712,7 @@ public:
     write(std::ostream &out) const;
 
     /**
-     * \brief Write alignment to stream
+     * @brief Write alignment to stream
      *
      * @param out output stream
      * @param width output stream
@@ -690,7 +740,7 @@ public:
 			     const std::string &sequence) const;
     
     /**
-     * \brief Write sub-alignment to stream 
+     * @brief Write sub-alignment to stream 
      *
      * Write from position start to position end to output stream
      * out; write lines "<name> <seq>"
@@ -704,9 +754,10 @@ public:
     write(std::ostream &out, size_type start, size_type end) const;
     
     /**
-     * \brief check character constraints
-     * check whether the alignment contains characters from
-     * the given alphabet only and, if warn, print warnings otherwise.
+     * @brief check character constraints
+     *
+     * Check whether the alignment contains characters from the given
+     * alphabet only and, if warn, print warnings otherwise.
      *
      * @param alphabet alphabet of admissible characters
      *
@@ -723,8 +774,9 @@ private:
      * @param a2 second alignment string of alignment a
      * @param ref1 first alignment string of reference alignment ref
      * @param ref2 second alignment string of reference alignment ref
+     *
      * @return deviation of alignment a from reference alignment ref
-    */
+     */
     static
     size_type
     deviation2(const string1 &a1,
@@ -762,8 +814,9 @@ private:
      * @param s string 1
      * @param t string 2
      * 
-     * @return vector v of length length(s+1), such that for each position i in s (1<=i<=|s|),
-     * v[i] is the matching position in t or -1 if there is no match.
+     * @return vector v of length length(s+1), such that for each
+     * position i in s (1<=i<=|s|), v[i] is the matching position in t
+     * or -1 if there is no match.
      */
     static
     std::vector<int>
@@ -776,8 +829,9 @@ private:
      * @param s string 1
      * @param t string 2
      * 
-     * @return vector v of length length(s+1), such that for each position i in s (1<=i<=|s|),
-     * v[i] is the matching position in t or the position after that i is deleted.
+     * @return vector v of length length(s+1), such that for each
+     * position i in s (1<=i<=|s|), v[i] is the matching position in t
+     * or the position after that i is deleted.
      */
     static
     std::vector<int>
@@ -785,7 +839,7 @@ private:
 		  const string1 &t);
 
     /** 
-     * Count matches in pairwise alignment
+     * @brief Count matches in pairwise alignment
      * 
      * @param a1 alignment string 1
      * @param a2 alignment string 2
@@ -798,14 +852,16 @@ private:
 		  const SeqEntry &a2);
     
     /** 
-     * Count matches in pairwise alignment that do not occur in a second alignment
+     * @brief Count matches in pairwise alignment that do not occur in
+     * a second alignment
      * 
      * @param a1 alignment string 1
      * @param a2 alignment string1 
      * @param ref1 reference alignment string 1
      * @param ref2 reference alignment string 1
      * 
-     * @return number of matches exclusively in alignment a (and not in reference)
+     * @return number of matches exclusively in alignment a (and not
+     * in reference)
      */
     static
     size_t
@@ -816,18 +872,21 @@ private:
 			    );
 
     /** 
-     * Average deviation score for pairwise alignment
+     * @brief Average deviation score for pairwise alignment
      * 
      * @param a1 alignment string 1
      * @param a2 alignment string1 
      * @param ref1 reference alignment string 1
      * @param ref2 reference alignment string 1
      * 
-     * @return avg deviation score for alignment (a1,a2) from reference alignment (ref1,ref2)
+     * @return avg deviation score for alignment (a1,a2) from
+     * reference alignment (ref1,ref2)
      *
-     * @note This score averages over the differences of positions j_a and j_ref for all positions i
-     * and computes a sum-of-pairs score. In case i is matched to a gap between j^left and j^right,
-     * we define j as the average value (for j in {j_a, j_ref}).
+     * @note This score averages over the differences of positions j_a
+     * and j_ref for all positions i and computes a sum-of-pairs
+     * score. In case i is matched to a gap between j^left and
+     * j^right, we define j as the average value (for j in {j_a,
+     * j_ref}).
      */
     static
     double

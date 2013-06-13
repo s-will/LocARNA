@@ -11,15 +11,12 @@
 #include "string1.hh"
 
 namespace LocARNA {
-/** \brief An RNA secondary structure
-
-    Represents a structure (for a sequence of given length) as set of
-    base pairs. Supports parsing of dot-bracket strings and traversal
-    of base pairs.  Currently the class is most useful for parsing
-    dot-bracket strings.
-
-*/
-
+    /** \brief An RNA secondary structure
+     *
+     * Represents a structure (for a sequence of given length) as set
+     * of base pairs. Supports parsing of dot-bracket strings and
+     * traversal of base pairs.
+     */
     class RnaStructure {
     public:
 	//! base pair type
@@ -122,21 +119,12 @@ namespace LocARNA {
 	 */
 	const_iterator end() const {return bps_.end();}
 	
-
 	/** 
 	 * \brief convert to dot-bracket string
 	 * @return dot-bracket string 
 	 */
 	std::string
-	to_string() const {
-	    std::string s(std::string('.',length_));
-	    for(const_iterator it=begin(); end()!=it; ++it) {
-		s[it->first - 1]='(';
-		s[it->second - 1]=')';
-	    }
-	    return s;
-	}
-	
+	to_string() const;
 
     }; // end class RnaStructure
 

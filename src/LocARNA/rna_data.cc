@@ -11,7 +11,7 @@
 #include "pfold_params.hh"
 #include "alignment.hh"
 #include "rna_ensemble.hh"
-
+#include "sequence_anchors.hh"
 #include "rna_data_impl.hh"
 #include "ext_rna_data_impl.hh"
 
@@ -331,7 +331,10 @@ namespace LocARNA {
 		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
 		    failed=true;
 		}
-	    } catch (failure &f) {
+	    } catch (syntax_error_failure &f) {
+		throw failure((std::string)"RnaData: Cannot read input data from clustal file.\n\t"+f.what());
+	    }
+	    catch (failure &f) {
 		failed=true;
 	    }
 	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
