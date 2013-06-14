@@ -3,13 +3,12 @@
 #include <fstream>
 
 #include "alphabet.hh"
-#include "rna_structure.hh"
 #include "sequence.hh"
 #include "rna_data.hh"
 #include "basepairs.hh"
 #include "alignment.hh"
 #include "multiple_alignment.hh"
-#include "sequence_anchors.hh"
+#include "sequence_annotations.hh"
 
 #include <limits>
 
@@ -24,7 +23,6 @@ namespace LocARNA {
 	: alig_(),
 	  sequence_anchors_(),
 	  structure_(),
-	  has_structure_(false),
 	  name2idx_() {
     }
     
@@ -32,7 +30,6 @@ namespace LocARNA {
     	: alig_(),
 	  sequence_anchors_(),
 	  structure_(),
-	  has_structure_(false),
 	  name2idx_() {
 	
 	if (!in.good()) {
@@ -54,7 +51,6 @@ namespace LocARNA {
 	: alig_(),
 	  sequence_anchors_(),
 	  structure_(),
-	  has_structure_(false),
 	  name2idx_() {
 	
 	try {
@@ -86,7 +82,6 @@ namespace LocARNA {
 	: alig_(),
 	  sequence_anchors_(),
 	  structure_(),
-	  has_structure_(false),
 	  name2idx_() {
 	
 	alig_.push_back(SeqEntry(name,sequence));
@@ -101,7 +96,6 @@ namespace LocARNA {
 	: alig_(),
 	  sequence_anchors_(),
 	  structure_(),
-	  has_structure_(false),
 	  name2idx_() {
 	
 	if (aliA.length() != aliB.length()) {
@@ -120,7 +114,6 @@ namespace LocARNA {
 			   alignment.seqA().sequence_anchors(),
 			   alignment.seqB().sequence_anchors()),
 	 structure_(),
-	 has_structure_(false),
 	 name2idx_() {
 	init(alignment.alignment_edges(only_local),
 	     alignment.seqA(),
@@ -135,7 +128,6 @@ namespace LocARNA {
 			   seqA.sequence_anchors(),
 			   seqB.sequence_anchors()),
 	 structure_(),
-	 has_structure_(false),
 	 name2idx_() {
 	init(edges,seqA,seqB);
     }
@@ -300,7 +292,7 @@ namespace LocARNA {
 	    }
 	    
 	    // initialize sequence_anchors_ with anchors
-	    sequence_anchors_ = SequenceAnchors(anchors);
+	    sequence_anchors_ = SequenceAnnotations(anchors);
 	}
 	
 	// check and set structure string
@@ -309,7 +301,7 @@ namespace LocARNA {
 		throw syntax_error_failure("Structure annotation of wrong length.");
 	    }
 	    try {
-		RnaStructure rna_structure(structure_string);
+		SequenceAnnotations rna_structure(structure_string);
 		set_structure( rna_structure );
 	    } catch(failure &f) {
 		throw syntax_error_failure((std::string)"Wrong structure annotation."+f.what());
@@ -430,37 +422,25 @@ namespace LocARNA {
 	}
     }
     
-    const SequenceAnchors &
+    const SequenceAnnotations &
     MultipleAlignment::sequence_anchors() const {
 	return sequence_anchors_;
     }
     
     void
-    MultipleAlignment::set_sequence_anchors(const SequenceAnchors &sequence_anchors) {
+    MultipleAlignment::set_sequence_anchors(const SequenceAnnotations &sequence_anchors) {
 	sequence_anchors_=sequence_anchors;
     }
 
-    const RnaStructure &
+    const SequenceAnnotations &
     MultipleAlignment::structure() const {
 	return structure_;
     }
 
-    bool
-    MultipleAlignment::has_structure() const {
-	return has_structure_;
-    }
-    
     void
-    MultipleAlignment::set_structure(const RnaStructure &structure) {
+    MultipleAlignment::set_structure(const SequenceAnnotations &structure) {
 	assert(structure.length() == length());
-	has_structure_=true;
 	structure_=structure;
-    }
-
-    void
-    MultipleAlignment::remove_structure() {
-        has_structure_=false;
-	structure_.clear();
     }
     
     bool
@@ -899,10 +879,7 @@ namespace LocARNA {
 	assert(1<=start);
 	assert(end+1>=start);
 	    	
-	std::string structure_string="";
-	if (has_structure()) {
-	    structure_string = structure_.to_string();
-	}
+	std::string structure_string = structure_.single_string();
 	
 	for (size_type i=0; i<alig_.size(); i++) {
 	    const std::string seq = alig_[i].seq().to_string();
@@ -918,7 +895,7 @@ namespace LocARNA {
 		std::ostringstream name;
 		name << "#A"<<(i+1);
 
-		std::string anchor_string = sequence_anchors_.anchor_string(i);
+		std::string anchor_string = sequence_anchors_.annotation_string(i);
 		
 		write_name_sequence_line(out,
 					 name.str(),
@@ -926,7 +903,7 @@ namespace LocARNA {
 	    }
 	}
 	
-	if (has_structure()) {
+	if (!structure().empty()) {
 	    write_name_sequence_line(out,
 				     "#S",
 				     structure_string.substr(start-1,end-start+1));

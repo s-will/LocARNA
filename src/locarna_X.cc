@@ -43,7 +43,7 @@
 #include "LocARNA/match_probs.hh"
 
 #include "LocARNA/anchor_constraints.hh"
-#include "LocARNA/sequence_anchors.hh"
+#include "LocARNA/sequence_annotations.hh"
 #include "LocARNA/trace_controller.hh"
 
 #include "LocARNA/exact_matcher.hh"

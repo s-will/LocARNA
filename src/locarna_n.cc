@@ -24,7 +24,7 @@
 #include "LocARNA/match_probs.hh"
 #include "LocARNA/ribosum.hh"
 #include "LocARNA/anchor_constraints.hh"
-#include "LocARNA/sequence_anchors.hh"
+#include "LocARNA/sequence_annotations.hh"
 #include "LocARNA/trace_controller.hh"
 #include "LocARNA/ribosum85_60.icc"
 #include "LocARNA/multiple_alignment.hh"

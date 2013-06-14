@@ -13,8 +13,7 @@
 #include "aux.hh"
 #include "string1.hh"
 #include "scoring_fwd.hh"
-#include "sequence_anchors.hh"
-#include "rna_structure.hh"
+#include "sequence_annotations.hh"
 
 #include <assert.h>
 
@@ -28,8 +27,6 @@ namespace LocARNA {
     template<class T> class Alphabet;
     class BasePairs;
     class Scoring;
-    class RnaStructure;
-    class SequenceAnchors;
     class Sequence;
     
 /**
@@ -253,13 +250,11 @@ private:
     std::vector<SeqEntry> alig_;
     
     //! sequence anchors 
-    SequenceAnchors sequence_anchors_;
+    SequenceAnnotations sequence_anchors_;
     
     //! secondary structure annotation
     //! used for structure constraints and structure annotation
-    RnaStructure structure_;
-    
-    bool has_structure_;
+    SequenceAnnotations structure_;
     
     //! map from string to index
     typedef std::map<std::string,size_type> str2idx_map_t;
@@ -444,7 +439,7 @@ public:
      *
      * @return sequence anchors
      */
-    const SequenceAnchors &
+    const SequenceAnnotations &
     sequence_anchors() const;
 
     /**
@@ -453,35 +448,22 @@ public:
      * @param sequence_anchors sequence anchors
      */
     void
-    set_sequence_anchors(const SequenceAnchors &sequence_anchors);
+    set_sequence_anchors(const SequenceAnnotations &sequence_anchors);
 
     /**
      * @brief Get structure
      * @return structure
      */
-    const RnaStructure &
+    const SequenceAnnotations &
     structure() const;
-
-    /**
-     * @brief Structure availability
-     * @return whether a structure exists
-     */
-    bool
-    has_structure() const;
 
     /**
      * @brief Set structure
      * @param structure rna structure
      */
     void
-    set_structure(const RnaStructure &structure);
-
-    /**
-     * @brief Remove structure annotation
-     */
-    void
-    remove_structure();
-
+    set_structure(const SequenceAnnotations &structure);
+    
     /**
      * @brief Test whether alignment is proper
      * @return whether all sequences have the same length

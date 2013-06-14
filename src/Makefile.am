@@ -19,7 +19,7 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/rna_ensemble.cc LocARNA/rna_data.cc			\
 	LocARNA/scoring.cc LocARNA/infty_int.cc				\
 	LocARNA/match_probs.cc LocARNA/ribosum.cc			\
-	LocARNA/sequence_anchors.cc LocARNA/anchor_constraints.cc	\
+	LocARNA/sequence_annotations.cc LocARNA/anchor_constraints.cc	\
 	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
 	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
 	LocARNA/trace_controller.cc LocARNA/multiple_alignment.cc	\
@@ -45,7 +45,7 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/scoring_fwd.hh LocARNA/infty_int.hh			\
 	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
 	LocARNA/alphabet.icc LocARNA/ribosum.hh				\
-	LocARNA/ribosum85_60.icc LocARNA/sequence_anchors.hh		\
+	LocARNA/ribosum85_60.icc LocARNA/sequence_annotations.hh	\
 	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
 	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
 	LocARNA/aligner_impl.hh LocARNA/aligner_p.hh			\

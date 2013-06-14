@@ -11,7 +11,7 @@
 #include "pfold_params.hh"
 #include "alignment.hh"
 #include "rna_ensemble.hh"
-#include "sequence_anchors.hh"
+#include "sequence_annotations.hh"
 #include "rna_data_impl.hh"
 #include "ext_rna_data_impl.hh"
 
@@ -773,7 +773,7 @@ namespace LocARNA {
 	}
 	
 	if (sequence_anchor_string!="") {
-	    pimpl_->sequence_.set_sequence_anchors( SequenceAnchors(split_at_separator(sequence_anchor_string,'#')) );
+	    pimpl_->sequence_.set_sequence_anchors( SequenceAnnotations(split_at_separator(sequence_anchor_string,'#')) );
 	}
 	
 	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
