@@ -29,7 +29,7 @@
 #include "LocARNA/match_probs.hh"
 #include "LocARNA/ribosum.hh"
 #include "LocARNA/anchor_constraints.hh"
-#include "LocARNA/sequence_annotations.hh"
+//#include "LocARNA/sequence_annotation.hh"
 #include "LocARNA/trace_controller.hh"
 #include "LocARNA/ribosum85_60.icc"
 #include "LocARNA/global_stopwatch.hh"
@@ -498,7 +498,7 @@ main(int argc, char **argv) {
     if (clp.max_diff_alignment_file!="") {
 	multiple_ref_alignment = new MultipleAlignment(clp.max_diff_alignment_file);
     } else if (clp.max_diff_pw_alignment!="") {
-	if ( seqA.row_number()!=1 || seqB.row_number()!=1 ) {
+	if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
 	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
 	    return -1;
 	}
@@ -531,9 +531,9 @@ main(int argc, char **argv) {
     // Handle constraints (optionally)
     
     AnchorConstraints seq_constraints(lenA,
-				      seqA.sequence_anchors().single_string(),
+				      seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string(),
 				      lenB,
-				      seqB.sequence_anchors().single_string());
+				      seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string());
     
     if (clp.opt_verbose) {
 	if (! seq_constraints.empty()) {
@@ -923,7 +923,7 @@ main(int argc, char **argv) {
 		out << "CLUSTAL W --- "<<PACKAGE_STRING;
 		
 		// for legacy, clustal files of pairwise alignments contain the score 
-		if (seqA.row_number()==1 && seqB.row_number()==1)
+		if (seqA.num_of_rows()==1 && seqB.num_of_rows()==1)
 		    out  <<" --- Score: " << score;
 		out <<std::endl<<std::endl;
 

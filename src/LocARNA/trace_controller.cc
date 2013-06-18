@@ -383,13 +383,13 @@ namespace LocARNA {
 	    std::vector<TraceRange> trs;
 
 	    //  iterate over all pairs of rows in the multiple alignment of seqA and seqB
-	    for (size_type i=0; i<maSeqA.row_number(); ++i) {
+	    for (size_type i=0; i<maSeqA.num_of_rows(); ++i) {
 		const SeqEntry &seqentryA = maSeqA.seqentry(i);
 		// get alignment string in reference corresponding to seqentryA
 		const std::string &nameA = seqentryA.name();
 		const SeqEntry &ref_seqentryA = ma->seqentry(nameA);
 	
-		for (size_type j=0; j<maSeqB.row_number(); ++j) {
+		for (size_type j=0; j<maSeqB.num_of_rows(); ++j) {
 		    const SeqEntry &seqentryB = maSeqB.seqentry(j);
 		    // get alignment string in reference corresponding to seqentryB
 		    const std::string &nameB = seqentryB.name();

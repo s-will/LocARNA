@@ -11,7 +11,7 @@
 #include "pfold_params.hh"
 #include "alignment.hh"
 #include "rna_ensemble.hh"
-#include "sequence_annotations.hh"
+#include "sequence_annotation.hh"
 #include "rna_data_impl.hh"
 #include "ext_rna_data_impl.hh"
 
@@ -286,7 +286,7 @@ namespace LocARNA {
 	    recompute = true;
 	    failed=false;
 	    try {
-		MultipleAlignment ma(filename, MultipleAlignment::FASTA);
+		MultipleAlignment ma(filename, MultipleAlignment::FormatType::FASTA);
 		pimpl_->sequence_ = ma;
 		// even if reading does not fail, we still want to
 		// make sure that the result is reasonable. Otherwise,
@@ -322,7 +322,7 @@ namespace LocARNA {
 	    failed=false;
 	    try {
 		// std::cerr << "Try reading clustal "<<filename<<" ..."<<std::endl;
-		MultipleAlignment ma(filename, MultipleAlignment::CLUSTAL);
+		MultipleAlignment ma(filename, MultipleAlignment::FormatType::CLUSTAL);
 
 		pimpl_->sequence_ = ma;
 	    	// even if reading does not fail, we still want to
@@ -773,7 +773,8 @@ namespace LocARNA {
 	}
 	
 	if (sequence_anchor_string!="") {
-	    pimpl_->sequence_.set_sequence_anchors( SequenceAnnotations(split_at_separator(sequence_anchor_string,'#')) );
+	    pimpl_->sequence_.set_annotation( MultipleAlignment::AnnoType::anchors, 
+					      SequenceAnnotation( sequence_anchor_string ));
 	}
 	
 	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
@@ -857,7 +858,7 @@ namespace LocARNA {
     std::istream &
     RnaDataImpl::read_pp_sequence(std::istream &in) {
 	
-	sequence_ = MultipleAlignment(in,MultipleAlignment::CLUSTAL);
+	sequence_ = MultipleAlignment(in,MultipleAlignment::FormatType::CLUSTAL);
 	
 	return in;
     }
@@ -1286,8 +1287,8 @@ namespace LocARNA {
 	
 	const MultipleAlignment &seqA=rna_dataA.sequence();
 	const MultipleAlignment &seqB=rna_dataB.sequence();
-	size_t rowsA = seqA.row_number();
-	size_t rowsB = seqB.row_number();
+	size_t rowsA = seqA.num_of_rows();
+	size_t rowsB = seqB.num_of_rows();
 
 	double p_minA = rna_dataA.arc_cutoff_prob();
 	double p_minB = rna_dataB.arc_cutoff_prob();

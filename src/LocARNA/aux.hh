@@ -319,7 +319,7 @@ namespace LocARNA {
     */
     void
     error_rnalib_unavailable(); 
-
+    
 }
 
 

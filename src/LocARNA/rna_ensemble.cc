@@ -164,7 +164,7 @@ namespace LocARNA {
 	
 	stopwatch.start("bpp");
 	
-	assert(use_alifold || sequence_.row_number()==1);
+	assert(use_alifold || sequence_.num_of_rows()==1);
 
 	used_alifold_=use_alifold;
 
@@ -194,7 +194,7 @@ namespace LocARNA {
     
     void
     RnaEnsembleImpl::compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy) {
-	assert(sequence_.row_number()==1);
+	assert(sequence_.num_of_rows()==1);
 
 	// use MultipleAlignment to get pointer to c-string of the
 	// first (and only) sequence in object sequence.
@@ -296,7 +296,7 @@ namespace LocARNA {
     RnaEnsembleImpl::compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy) {
 	
 	size_t length = sequence_.length();
-	size_t n_seq = sequence_.row_number();
+	size_t n_seq = sequence_.num_of_rows();
 	
 	// ----------------------------------------
 	// write sequences to array of C-strings
@@ -465,7 +465,7 @@ namespace LocARNA {
 	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(this->McCmat_);
 
 	size_type len   = sequence_.length();
-	size_type n_seq = sequence_.row_number();
+	size_type n_seq = sequence_.num_of_rows();
 	
 	std::vector<FLT_OR_DBL> qqm(len+2,0);
 	std::vector<FLT_OR_DBL> qqm1(len+2,0);
@@ -581,7 +581,7 @@ namespace LocARNA {
 	    return 0.0;
 	}
 
-	size_t n_seq = sequence_.row_number();
+	size_t n_seq = sequence_.num_of_rows();
 	
 	// ------------------------------------------------------------
 	// get base pair types
@@ -636,7 +636,7 @@ namespace LocARNA {
 	
 	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t*>(this->McCmat_);
 	
-        size_t n_seq = sequence_.row_number();
+        size_t n_seq = sequence_.num_of_rows();
 	
 	// immediately return 0.0 if i and j do not pair
 	if (MCm->bppm(i,j)==0.0 || MCm->qb(i,j)==0.0) {return 0.0;}
@@ -920,7 +920,7 @@ namespace LocARNA {
 	
 	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(this->McCmat_);
 	
-	size_t n_seq = sequence_.row_number();
+	size_t n_seq = sequence_.num_of_rows();
 	
 	// note: the following tests cover the case that the distances of i,j and ip,jp are too small
 
@@ -1161,7 +1161,7 @@ namespace LocARNA {
 	} else {
 	    McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(pimpl_->McCmat_);
 	    
-	    size_t n_seq=pimpl_->sequence_.row_number();
+	    size_t n_seq=pimpl_->sequence_.num_of_rows();
 	    
 	    extloop=1.0;
 	    

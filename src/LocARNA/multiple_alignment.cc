@@ -8,7 +8,7 @@
 #include "basepairs.hh"
 #include "alignment.hh"
 #include "multiple_alignment.hh"
-#include "sequence_annotations.hh"
+#include "sequence_annotation.hh"
 
 #include <limits>
 
@@ -18,27 +18,35 @@
 using namespace std;
 
 namespace LocARNA {
-
+    
+    // allowed tags are part of the extended aln and pp file format definitions
+    std::vector<std::string>
+    initial_annotation_tags() {
+	std::vector<std::string> as;
+	as.push_back("S"); // = AnnoType::structure
+	as.push_back("A"); // = AnnoType::anchors
+	return as;
+    }
+    const std::vector<std::string> MultipleAlignment::annotation_tags = initial_annotation_tags();
+    
     MultipleAlignment::MultipleAlignment() 
 	: alig_(),
-	  sequence_anchors_(),
-	  structure_(),
+	  annotations_(),
 	  name2idx_() {
     }
     
-    MultipleAlignment::MultipleAlignment(std::istream &in, format_t format)
+    MultipleAlignment::MultipleAlignment(std::istream &in, FormatType::type format)
     	: alig_(),
-	  sequence_anchors_(),
-	  structure_(),
+	  annotations_(),
 	  name2idx_() {
 	
 	if (!in.good()) {
 	    throw(failure("Cannot read input stream."));
 	}
 
-	if (format==FASTA) {
+	if (format==FormatType::FASTA) {
 	    read_aln_fasta(in);
-	} else if (format==CLUSTAL) {
+	} else if (format==FormatType::CLUSTAL) {
 	    read_aln_clustalw(in);
 	} else {
 	    throw failure("Unknown format.");
@@ -47,10 +55,9 @@ namespace LocARNA {
 	create_name2idx_map();
     }
     
-    MultipleAlignment::MultipleAlignment(const std::string &filename, format_t format)
+    MultipleAlignment::MultipleAlignment(const std::string &filename, FormatType::type format)
 	: alig_(),
-	  sequence_anchors_(),
-	  structure_(),
+	  annotations_(),
 	  name2idx_() {
 	
 	try {
@@ -60,9 +67,9 @@ namespace LocARNA {
 		throw(std::ifstream::failure("Cannot open file "+filename+" for reading."));
 	    }
 	
-	    if (format==FASTA) {
+	    if (format==FormatType::FASTA) {
 		read_aln_fasta(in);
-	    } else if (format == CLUSTAL) {
+	    } else if (format == FormatType::CLUSTAL) {
 		read_aln_clustalw(in);
 	    } else {
 		throw failure("Unknown format.");
@@ -80,8 +87,7 @@ namespace LocARNA {
     MultipleAlignment::MultipleAlignment(const std::string &name, 
 					 const std::string &sequence)
 	: alig_(),
-	  sequence_anchors_(),
-	  structure_(),
+	  annotations_(),
 	  name2idx_() {
 	
 	alig_.push_back(SeqEntry(name,sequence));
@@ -94,8 +100,7 @@ namespace LocARNA {
 					 const std::string &aliA,
 					 const std::string &aliB)
 	: alig_(),
-	  sequence_anchors_(),
-	  structure_(),
+	  annotations_(),
 	  name2idx_() {
 	
 	if (aliA.length() != aliB.length()) {
@@ -110,11 +115,16 @@ namespace LocARNA {
 
     MultipleAlignment::MultipleAlignment(const Alignment &alignment, bool only_local)
 	:alig_(),
-	 sequence_anchors_(alignment.alignment_edges(only_local),
-			   alignment.seqA().sequence_anchors(),
-			   alignment.seqB().sequence_anchors()),
-	 structure_(),
+	 annotations_(),
 	 name2idx_() {
+	
+	set_annotation(AnnoType::anchors,
+		       SequenceAnnotation
+		       (alignment.alignment_edges(only_local),
+			alignment.seqA().annotation(AnnoType::anchors),
+			alignment.seqB().annotation(AnnoType::anchors)));
+			
+	
 	init(alignment.alignment_edges(only_local),
 	     alignment.seqA(),
 	     alignment.seqB());
@@ -124,11 +134,14 @@ namespace LocARNA {
 					 const Sequence &seqA,
 					 const Sequence &seqB)
 	:alig_(),
-	 sequence_anchors_(edges,
-			   seqA.sequence_anchors(),
-			   seqB.sequence_anchors()),
-	 structure_(),
+	 annotations_(),
 	 name2idx_() {
+	set_annotation(AnnoType::anchors,
+		       SequenceAnnotation
+		       (edges,
+			seqA.annotation(AnnoType::anchors),
+			seqB.annotation(AnnoType::anchors)));
+	
 	init(edges,seqA,seqB);
     }
     
@@ -137,36 +150,36 @@ namespace LocARNA {
 			    const Sequence &seqA,
 			    const Sequence &seqB) {
 	
-	std::vector<std::string> aliA(seqA.row_number(),"");
-	std::vector<std::string> aliB(seqB.row_number(),"");
+	std::vector<std::string> aliA(seqA.num_of_rows(),"");
+	std::vector<std::string> aliB(seqB.num_of_rows(),"");
     
 	std::vector<int>::size_type alisize = edges.size();
     
 	for (size_type i=0; i<alisize; i++) {
 	    if ( edges.first[i].is_gap() ) {
-		for (size_type k=0; k<seqA.row_number(); k++) {
+		for (size_type k=0; k<seqA.num_of_rows(); k++) {
 		    aliA[k] += gap_symbol(edges.first[i].gap());
 		}
 	    } else {
-		for (size_type k=0; k<seqA.row_number(); k++) {
+		for (size_type k=0; k<seqA.num_of_rows(); k++) {
 		    aliA[k] += seqA.column(edges.first[i])[k];
 		}
 	    }
 	    if ( edges.second[i].is_gap() ) {
-		for (size_type k=0; k<seqB.row_number(); k++) {
+		for (size_type k=0; k<seqB.num_of_rows(); k++) {
 		    aliB[k] += gap_symbol(edges.second[i].gap());
 		}
 	    } else {
-		for (size_type k=0; k<seqB.row_number(); k++) {
+		for (size_type k=0; k<seqB.num_of_rows(); k++) {
 		    aliB[k] += seqB.column(edges.second[i])[k];
 		}
 	    }
 	}
     
-	for (size_type k=0; k<seqA.row_number();k++) {
+	for (size_type k=0; k<seqA.num_of_rows();k++) {
 	    alig_.push_back(SeqEntry(seqA.seqentry(k).name(),aliA[k]));
 	}
-	for (size_type k=0; k<seqB.row_number();k++) {
+	for (size_type k=0; k<seqB.num_of_rows();k++) {
 	    alig_.push_back(SeqEntry(seqB.seqentry(k).name(),aliB[k]));
 	}
 
@@ -214,13 +227,16 @@ namespace LocARNA {
 	    get_nonempty_line(in,line);
 	}
 	
+	const std::string anchors_tag   = "#"+annotation_tags[AnnoType::anchors];
+	const std::string structure_tag = "#"+annotation_tags[AnnoType::structure];
+	
 	do {
 	    if (line[0]=='#') {
 		if (has_prefix(line,"#END")) { // recognize END for use in pp files
 		    // section end
 		    break;
 		}
-		else if (has_prefix(line,"#A")) {
+		else if (has_prefix(line,anchors_tag)) {
 		    // anchor constraint
 		    std::istringstream in(line.substr(2));
 		    int idx;
@@ -240,20 +256,20 @@ namespace LocARNA {
 		    }
 		    
 		    anchors[idx-1] += astr;
-		} else if (has_prefix(line,"#S")) {
+		} else if (has_prefix(line,structure_tag)) {
 		    std::istringstream in(line);
 		    std::string tag;
 		    std::string str;
 		    in >> tag >> str;
 		    
 		    if ( in.fail() ) {
-			throw syntax_error_failure("Invalid tag with structure prefix #S.");
+			throw syntax_error_failure("Invalid tag with structure prefix "+structure_tag+".");
 		    }
 		    
-		    if (tag=="#S") {
+		    if (tag==structure_tag) {
 			structure_string += str;
 		    } else {
-			throw syntax_error_failure("Unknown tag with structure prefix #S.");
+			throw syntax_error_failure("Unknown tag with structure prefix "+structure_tag+".");
 		    }
 		}
 	    } else {
@@ -292,7 +308,7 @@ namespace LocARNA {
 	    }
 	    
 	    // initialize sequence_anchors_ with anchors
-	    sequence_anchors_ = SequenceAnnotations(anchors);
+	    set_annotation( AnnoType::anchors, SequenceAnnotation(anchors) );
 	}
 	
 	// check and set structure string
@@ -301,8 +317,7 @@ namespace LocARNA {
 		throw syntax_error_failure("Structure annotation of wrong length.");
 	    }
 	    try {
-		SequenceAnnotations rna_structure(structure_string);
-		set_structure( rna_structure );
+		set_annotation( AnnoType::structure, SequenceAnnotation(structure_string) );
 	    } catch(failure &f) {
 		throw syntax_error_failure((std::string)"Wrong structure annotation."+f.what());
 	    }
@@ -420,27 +435,6 @@ namespace LocARNA {
 	} else {
 	    return pos_pair_t(curr_pos, curr_pos);
 	}
-    }
-    
-    const SequenceAnnotations &
-    MultipleAlignment::sequence_anchors() const {
-	return sequence_anchors_;
-    }
-    
-    void
-    MultipleAlignment::set_sequence_anchors(const SequenceAnnotations &sequence_anchors) {
-	sequence_anchors_=sequence_anchors;
-    }
-
-    const SequenceAnnotations &
-    MultipleAlignment::structure() const {
-	return structure_;
-    }
-
-    void
-    MultipleAlignment::set_structure(const SequenceAnnotations &structure) {
-	assert(structure.length() == length());
-	structure_=structure;
     }
     
     bool
@@ -576,7 +570,7 @@ namespace LocARNA {
 	    }
 	}
 	
-	size_t K=ma.row_number();
+	size_t K=ma.num_of_rows();
 	
 	return sps*2.0/K/(K-1);
     }
@@ -610,7 +604,7 @@ namespace LocARNA {
 	    }
 	}
 	
-	size_t K=ma.row_number();
+	size_t K=ma.num_of_rows();
 	
 	return score*2.0/K/(K-1);
     }
@@ -879,7 +873,7 @@ namespace LocARNA {
 	assert(1<=start);
 	assert(end+1>=start);
 	    	
-	std::string structure_string = structure_.single_string();
+	std::string structure_string = annotation(AnnoType::structure).single_string();
 	
 	for (size_type i=0; i<alig_.size(); i++) {
 	    const std::string seq = alig_[i].seq().to_string();
@@ -890,12 +884,14 @@ namespace LocARNA {
 	}
 
 	// write sequence anchors
-	if (!sequence_anchors_.empty()) {
-	    for(size_t i=0; i<sequence_anchors_.name_length(); i++) {
+	if (has_annotation(AnnoType::anchors)) {
+	    	
+	    for(size_t i=0; i<annotation(AnnoType::anchors).name_length(); i++) {
+		const std::string anchors_tag   = "#"+annotation_tags[AnnoType::anchors];
 		std::ostringstream name;
-		name << "#A"<<(i+1);
-
-		std::string anchor_string = sequence_anchors_.annotation_string(i);
+		name << anchors_tag << (i+1);
+		
+		std::string anchor_string = annotation(AnnoType::anchors).annotation_string(i);
 		
 		write_name_sequence_line(out,
 					 name.str(),
@@ -903,12 +899,13 @@ namespace LocARNA {
 	    }
 	}
 	
-	if (!structure().empty()) {
+	if (has_annotation(AnnoType::structure)) {
+	    const std::string structure_tag   = "#"+annotation_tags[AnnoType::structure];
 	    write_name_sequence_line(out,
-				     "#S",
+				     structure_tag,
 				     structure_string.substr(start-1,end-start+1));
 	}
-
+	
 	return out;
     }
 

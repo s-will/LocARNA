@@ -13,7 +13,7 @@
 #include "aux.hh"
 #include "string1.hh"
 #include "scoring_fwd.hh"
-#include "sequence_annotations.hh"
+#include "sequence_annotation.hh"
 
 #include <assert.h>
 
@@ -46,8 +46,44 @@ namespace LocARNA {
  * read and write them.
  */
 class MultipleAlignment {
+
 public:
     typedef size_t size_type; //!< size type
+
+    /**
+     * @brief file format type for multiple alignments
+     */
+    struct FormatType {
+	//! inner type
+	enum type {
+	    CLUSTAL, //!< (extended) clustal file format
+	    FASTA  //!< fasta file format
+	};
+    };
+	
+
+    //! @brief type of sequence annotation.
+    //! enumerates legal annotation types
+    struct AnnoType {
+	//! inner type
+	enum type {
+	    structure, //!< structure annotation (often, constraint)
+	    anchors    //!< anchor annotation (for anchor constraints)
+	};
+    };
+    
+private:
+    //! prefix strings for annotations (shall be prefix unique)
+    //! (no one outside of MultipleAlignment should have to know about this!)
+    static const std::vector<std::string> annotation_tags;
+public:
+    //! @brief number of annotation types
+    //! @return number of annotation types
+    static
+    size_t
+    num_of_annotypes() {
+	return annotation_tags.size();
+    }
     
     /**
      * @brief A row in a multiple alignment
@@ -213,7 +249,7 @@ public:
 	 * @return number of rows of the multiple alignment
 	 */
 	size_type 
-	size() const {return ma_.row_number();}
+	size() const {return ma_.num_of_rows();}
 
 	/** 
 	 * @brief Test equality
@@ -246,25 +282,31 @@ public:
     };
     
 private:
-    //! vector of alignment rows
-    std::vector<SeqEntry> alig_;
-    
-    //! sequence anchors 
-    SequenceAnnotations sequence_anchors_;
-    
-    //! secondary structure annotation
-    //! used for structure constraints and structure annotation
-    SequenceAnnotations structure_;
     
     //! map from string to index
     typedef std::map<std::string,size_type> str2idx_map_t;
-
+    
+    //! map annotation type to sequence annotation
+    typedef std::map<size_t,SequenceAnnotation> annotation_map_t;
+    
+    //************************************************************
+    // attributes of MultipleAlignment
+    
+    //! vector of alignment rows
+    std::vector<SeqEntry> alig_;
+    
+    //! alignment/sequence annotation
+    annotation_map_t annotations_;
+    
     /**
      * association between names and indices, use to 
      * locate sequences by name in log time
      */
     str2idx_map_t name2idx_;
     
+    // end attributes
+    //************************************************************
+
     //! @brief create the map for translating names to indices
     void
     create_name2idx_map();
@@ -309,12 +351,6 @@ public:
     //! @brief const iterator of sequence entries
     typedef std::vector<SeqEntry>::const_iterator const_iterator;
 
-    /**
-     * file format type for multiple alignments
-     * @todo Use in output, introduce AUTO for automatic detection of input format
-    */
-    enum format_t {CLUSTAL,FASTA};
-
     //! @brief Construct empty
     MultipleAlignment();
     
@@ -326,7 +362,7 @@ public:
      * @throw failure on read problems
      * @see MultipleAlignment(std::istream &in)
     */
-    MultipleAlignment(const std::string &file, format_t format=CLUSTAL);
+    MultipleAlignment(const std::string &file, FormatType::type format=FormatType::CLUSTAL);
 
     /**
      * @brief Construct from stream
@@ -335,7 +371,7 @@ public:
      * @param format file format (CLUSTAL or FASTA) 
      * @throw failure on read errors
     */
-    MultipleAlignment(std::istream &in, format_t format=CLUSTAL);
+    MultipleAlignment(std::istream &in, FormatType::type format=FormatType::CLUSTAL);
 
     /**
      * @brief Construct as degenerate alignment of one sequence
@@ -417,7 +453,7 @@ public:
      * @return number of rows
     */
     size_type
-    row_number() const { 
+    num_of_rows() const { 
 	return alig_.size();
     }
     
@@ -435,35 +471,48 @@ public:
     }
 
     /**
-     * @brief Get sequence anchors
-     *
-     * @return sequence anchors
+     * @brief Read access of annotation by prefix
+     * @param type of annotation
+     * @return sequence annotation
+     * @note returns ref to empty annotation if annotation is not available
      */
-    const SequenceAnnotations &
-    sequence_anchors() const;
-
-    /**
-     * @brief Set sequence anchors
-     *
-     * @param sequence_anchors sequence anchors
-     */
-    void
-    set_sequence_anchors(const SequenceAnnotations &sequence_anchors);
-
-    /**
-     * @brief Get structure
-     * @return structure
-     */
-    const SequenceAnnotations &
-    structure() const;
-
-    /**
-     * @brief Set structure
-     * @param structure rna structure
-     */
-    void
-    set_structure(const SequenceAnnotations &structure);
+    const SequenceAnnotation &
+    annotation(const AnnoType::type &annotype) const {
+	static SequenceAnnotation empty;
+	assert(0<=annotype && annotype<num_of_annotypes());
+	
+	annotation_map_t::const_iterator it = annotations_.find(annotype);
+	
+	if ( it != annotations_.end() ) {
+	    return it->second;
+	} else {
+	    return empty;
+	}
+    }
     
+    /**
+     * @brief Write access to annotation
+     * @param prefix annotation prefix
+     * @param annotation sequence annotation
+     */
+    void
+    set_annotation(const AnnoType::type &annotype,
+		    const SequenceAnnotation &annotation) {
+	assert(0<=annotype && annotype<num_of_annotypes());
+	annotations_[(size_t)annotype] = annotation;
+    }
+    
+    /**
+     * Annotation availability
+     * @param prefix annotation prefix
+     * @return wheter annotions with prefix are available
+     */
+    bool
+    has_annotation(const AnnoType::type &annotype) const {
+	assert(0<=annotype && annotype<num_of_annotypes());
+	return annotations_.find(annotype)!=annotations_.end();
+    }
+
     /**
      * @brief Test whether alignment is proper
      * @return whether all sequences have the same length

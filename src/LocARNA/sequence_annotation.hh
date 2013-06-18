@@ -1,5 +1,5 @@
-#ifndef LOCARNA_SEQUENCE_ANNOTATIONS_HH
-#define LOCARNA_SEQUENCE_ANNOTATIONS_HH
+#ifndef LOCARNA_SEQUENCE_ANNOTATION_HH
+#define LOCARNA_SEQUENCE_ANNOTATION_HH
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -16,19 +16,19 @@ namespace LocARNA {
     class AlignmentEdges;
     
     /**
-     *@brief Annotations of a sequence
+     *@brief Annotation of a sequence
      *
      * Defines names for positions from 1..size; allows construct as
      * consensus of two aligned annotation sequences.
      */
-    class SequenceAnnotations {
+    class SequenceAnnotation {
 
 	//! an anchcor name
 	typedef std::string name_t;
 	
 	//! a vector of annotation strings
-	//! @see annotations_
-	typedef std::vector<std::string> annotations_t;
+	//! @see annotation_
+	typedef std::vector<std::string> annotation_t;
 	
 	/**
 	 * @brief vector of annotation name strings
@@ -37,21 +37,21 @@ namespace LocARNA {
 	 * position i is the string astrings_[0][i]+...+astrings_[k-1][i],
 	 * where k=astrings_.size()
 	 */
-	annotations_t annotations_;
+	annotation_t annotation_;
 	
     public:
 	
 	/**
 	 * @brief Construct empty
 	 */
-	SequenceAnnotations():annotations_() {}
+	SequenceAnnotation():annotation_() {}
 	
 	/**
 	 * @brief Construct single string
 	 *
-	 * @param annotations_string string of '#'-separated sub-strings
+	 * @param annotation_string string of '#'-separated sub-strings
 	 */
-	SequenceAnnotations(const std::string &annotations_string);
+	SequenceAnnotation(const std::string &annotation_string);
 
 	/**
 	 * @brief Construct from vector of strings
@@ -62,27 +62,27 @@ namespace LocARNA {
 	 * position i is the string annotation_strings[0][i]+...+annotation_strings[k-1][i],
 	 * where k=annotation_strings.size()
 	 */
-	SequenceAnnotations(const std::vector<std::string> &annotation_strings);
+	SequenceAnnotation(const std::vector<std::string> &annotation_strings);
 	
 	/**
-	 * @brief Construct as consensus annotations
+	 * @brief Construct as consensus annotation
 	 * @param edges alignment edges between A and B
-	 * @param annotationsA annotations A
-	 * @param annotationsB annotations B
-	 * @return consensus annotations of A and B
+	 * @param annotationA annotation A
+	 * @param annotationB annotation B
+	 * @return consensus annotation of A and B
 	 *
-	 * The consensus of two annotations is defined only for compatible
-	 * annotations and alignment edges, i.e. the alignment must align
+	 * The consensus of two annotation is defined only for compatible
+	 * annotation and alignment edges, i.e. the alignment must align
 	 * all equal names and must not align different names.
 	 * 
 	 * The consensus contains all names that appear in either A or B or both at the 
 	 * position of the corresponding alignment edge.
 	 *
-	 * @pre names in annotationsA and annotationsB must have the same lengths
+	 * @pre names in annotationA and annotationB must have the same lengths
 	 */
-	SequenceAnnotations(const AlignmentEdges &edges, 
-			const SequenceAnnotations &annotationsA,
-			const SequenceAnnotations &annotationsB);
+	SequenceAnnotation(const AlignmentEdges &edges, 
+			const SequenceAnnotation &annotationA,
+			const SequenceAnnotation &annotationB);
 	
 	/**
 	 * @brief Size of the represented range
@@ -92,7 +92,7 @@ namespace LocARNA {
 	 */
 	size_t
 	length() const {
-	    return annotations_.size()>0?annotations_[0].size():0;
+	    return annotation_.size()>0?annotation_[0].size():0;
 	}
 	
 	/**
@@ -110,7 +110,7 @@ namespace LocARNA {
 	 */
 	size_t 
 	name_length() const {
-	    return annotations_.size();
+	    return annotation_.size();
 	}
 	
 	/** 
@@ -123,8 +123,8 @@ namespace LocARNA {
 	const std::string &
 	annotation_string(size_t i) const {
 	    assert(0<=i);
-	    assert(i<annotations_.size());
-	    return annotations_[i];
+	    assert(i<annotation_.size());
+	    return annotation_[i];
 	}
 
 	/** 
@@ -136,7 +136,7 @@ namespace LocARNA {
 	 */
 	std::string
 	single_string(char sep='#') const {
-	    return concat_with_separator(annotations_,sep);
+	    return concat_with_separator(annotation_,sep);
 	}
 	
 	/**
@@ -175,26 +175,26 @@ namespace LocARNA {
 	    assert(i<=length());
 	    
 	    name_t name="";
-	    for (size_t k=0; k<annotations_.size(); k++) {
-		char c = annotations_[k][i-1];
+	    for (size_t k=0; k<annotation_.size(); k++) {
+		char c = annotation_[k][i-1];
 		name += c;
 	    }
 	    return name;
 	}
 
 	/** 
-	 * @brief Push back name to the annotation strings in annotations_ 
+	 * @brief Push back name to the annotation strings in annotation_ 
 	 * 
 	 * @param name Name
 	 */
 	void
 	push_back_name(const name_t &name) {
-	    assert(name.size()==annotations_.size());
-	    for (size_t k=0; k<annotations_.size(); k++) {
-		annotations_[k] += name[k];
+	    assert(name.size()==annotation_.size());
+	    for (size_t k=0; k<annotation_.size(); k++) {
+		annotation_[k] += name[k];
 	    }
 	}
     };
 }
 
-#endif // LOCARNA_SEQUENCE_ANNOTATIONS_HH
+#endif // LOCARNA_SEQUENCE_ANNOTATION_HH

@@ -43,7 +43,7 @@
 #include "LocARNA/match_probs.hh"
 
 #include "LocARNA/anchor_constraints.hh"
-#include "LocARNA/sequence_annotations.hh"
+#include "LocARNA/sequence_annotation.hh"
 #include "LocARNA/trace_controller.hh"
 
 #include "LocARNA/exact_matcher.hh"
@@ -307,11 +307,17 @@ main(int argc, char **argv) {
 
     // ------------------------------------------------------------
     // Handle constraints (optionally)
+    size_t lenA = seqA.length();
+    size_t lenB = seqB.length();
 
-    AnchorConstraints seq_constraints(seqA.length(),
-				      seqA.sequence_anchors().single_string(),
-				      seqB.length(),
-				      seqB.sequence_anchors().single_string());
+    AnchorConstraints seq_constraints(lenA,
+				      seqA.has_annotation(MultipleAlignment::AnnoType::anchors)
+				      ?seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string()
+				      :"",
+				      lenB,
+				      seqB.has_annotation(MultipleAlignment::AnnoType::anchors)
+				      ?seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string()
+				      :"");
     
     if (opt_verbose) {
 	if (! seq_constraints.empty()) {

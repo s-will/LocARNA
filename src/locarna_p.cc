@@ -288,8 +288,8 @@ main(int argc, char **argv) {
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
-    AnchorConstraints seq_constraints(seqA.length(),"",seqB.length(),"");
-
+    AnchorConstraints seq_constraints(lenA,"",lenB,"");
+    
     // --------------------
     // handle max_diff restriction
     
@@ -310,7 +310,7 @@ main(int argc, char **argv) {
     if (max_diff_alignment_file!="") {
 	multiple_ref_alignment = new MultipleAlignment(max_diff_alignment_file);
     } else if (max_diff_pw_alignment!="") {
-	if ( seqA.row_number()!=1 || seqB.row_number()!=1 ) {
+	if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
 	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
 	    return -1;
 	}

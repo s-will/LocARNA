@@ -134,7 +134,7 @@ namespace  LocARNA {
 	size_t lenA=seqA.length();
 	size_t lenB=seqB.length();
     
-	if (seqA.row_number()!=1 || seqB.row_number()!=1) {
+	if (seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1) {
 	    std::cerr
 		<< "WARNING: the base match probabilities are currently computed only on the first sequence" << std::endl
 		<< "of a multiple alignment. I.e., this does not work correctly for multiple alignment yet." << std::endl;
