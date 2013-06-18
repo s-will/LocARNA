@@ -228,7 +228,7 @@ namespace LocARNA {
     std::string
     Alignment::dot_bracket_structureB(bool only_local) const {
 	edges_t edges = alignment_edges(only_local);
-	return pimpl_->dot_bracket_structure(pimpl_->strA_,edges.second);
+	return pimpl_->dot_bracket_structure(pimpl_->strB_,edges.second);
     }
 
     std::string

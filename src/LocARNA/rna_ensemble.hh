@@ -25,7 +25,11 @@ namespace LocARNA {
      * the McCaskill algorithm.  Computes special "in loop"
      * probabilities.
      *
-     * @todo support constrained pf folding
+     * Interprets structure annotation of the multiple alignment as
+     * structure constraint string; if existant, the string has to be
+     * valid!
+     *
+     * @todo support constraints for in loop probabilities
      *
      * @todo split up RnaEnsemble into two classes; one with and one
      * without in-loop probabilities (like RnaData and ExtRnaData)

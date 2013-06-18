@@ -123,7 +123,6 @@ namespace LocARNA {
 	 * @param out output stream
 	 * 
 	 * @return output stream
-	 * @todo implement
 	 */
 	std::ostream &
 	print_info(std::ostream &out) const;

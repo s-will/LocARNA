@@ -494,10 +494,12 @@ public:
      * @brief Write access to annotation
      * @param prefix annotation prefix
      * @param annotation sequence annotation
+     * @todo check that annotation is valid for multiple alignment;
+     * throw failure if annotation is not valid
      */
     void
     set_annotation(const AnnoType::type &annotype,
-		    const SequenceAnnotation &annotation) {
+		   const SequenceAnnotation &annotation) {
 	assert(0<=annotype && annotype<num_of_annotypes());
 	annotations_[(size_t)annotype] = annotation;
     }

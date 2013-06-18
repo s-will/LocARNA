@@ -235,7 +235,6 @@ namespace LocARNA {
 	 * @brief Structure A
 	 * @param only_local if true, construct string only for aligned subsequence
 	 * @return dot bracket string for structure A with gaps
-	 * @todo TBI
 	 */
 	std::string
 	dot_bracket_structureA(bool only_local) const;
@@ -244,7 +243,6 @@ namespace LocARNA {
 	 * @brief Structure B
 	 * @param only_local if true, construct string only for aligned subsequence
 	 * @return dot bracket string for structure B with gaps
-	 * @todo TBI
 	 */
 	std::string
 	dot_bracket_structureB(bool only_local) const;

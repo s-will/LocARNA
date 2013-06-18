@@ -196,6 +196,11 @@ namespace LocARNA {
     RnaEnsembleImpl::compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy) {
 	assert(sequence_.num_of_rows()==1);
 
+	// global settings for Vienna RNA lib
+	fold_constrained=false; // this is potentially changed below
+	if (params.noLP()) {noLonelyPairs=1;}
+	
+
 	// use MultipleAlignment to get pointer to c-string of the
 	// first (and only) sequence in object sequence.
 	//
@@ -203,16 +208,22 @@ namespace LocARNA {
 	
 	char c_sequence[length+1];
 	std::string seqstring = 
-	    MultipleAlignment(sequence_).seqentry(0).seq().to_string();
+	    sequence_.seqentry(0).seq().to_string();
 	
 	strcpy(c_sequence,seqstring.c_str());
 	
+	const std::string &structure_anno = sequence_.annotation(MultipleAlignment::AnnoType::structure).single_string();
+	assert(!sequence_.has_annotation(MultipleAlignment::AnnoType::structure) || structure_anno.length()==length);
+	
 	char c_structure[length+1];
 	
-	// ----------------------------------------
-	// set folding parameters
-	if (params.noLP()) {noLonelyPairs=1;}
-	
+	// copy structure annotation to c_structure to use as
+	// constraint for fold
+	if (structure_anno.length()==length) {
+	    strncpy(c_structure,structure_anno.c_str(),length);
+	    c_structure[length]=0;
+	    fold_constrained=true;
+	}
 	
 	// ----------------------------------------
 	// call fold for setting the pf_scale
@@ -224,6 +235,13 @@ namespace LocARNA {
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
 	pf_scale = exp(-min_free_energy_/kT/length);
+
+	// copy structure annotation to c_structure to use as
+	// constraint for pf_fold
+	if (structure_anno.length()==length) {
+	    strncpy(c_structure,structure_anno.c_str(),length);
+	    c_structure[length]=0;
+	}
 
 	// ----------------------------------------
 	// call pf_fold
@@ -295,9 +313,13 @@ namespace LocARNA {
     void
     RnaEnsembleImpl::compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy) {
 	
+	// global settings for Vienna RNA lib
+	fold_constrained=false; // this is potentially changed below
+	if (params.noLP()) {noLonelyPairs=1;}
+
 	size_t length = sequence_.length();
 	size_t n_seq = sequence_.num_of_rows();
-	
+
 	// ----------------------------------------
 	// write sequences to array of C-strings
 	MultipleAlignment ma(sequence_);
@@ -311,12 +333,19 @@ namespace LocARNA {
 
 	const char **c_sequences=const_cast<const char **>(sequences);
 
-	// reserve space for structure
-	char *c_structure = new char[length+1];
+	const std::string &structure_anno = sequence_.annotation(MultipleAlignment::AnnoType::structure).single_string();
+	assert(!sequence_.has_annotation(MultipleAlignment::AnnoType::structure) || structure_anno.length()==length);
 	
-	// ----------------------------------------
-	// set folding parameters
-	if (params.noLP()) {noLonelyPairs=1;}
+	// reserve space for structure
+	char c_structure[length+1];
+	
+	// copy structure annotation to c_structure to use as
+	// constraint for alifold
+	if (structure_anno.length()==length) {
+	    strncpy(c_structure,structure_anno.c_str(),length);
+	    c_structure[length]=0;
+	    fold_constrained=true;
+	}
 	
 	// ----------------------------------------
 	// call fold for setting the pf_scale
@@ -330,8 +359,15 @@ namespace LocARNA {
 	pf_scale = exp(-min_free_energy_/kT/length);
 	
 	
+	// copy structure annotation to c_structure to use as
+	// constraint for alipf_fold
+	if (structure_anno.length()==length) {
+	    strncpy(c_structure,structure_anno.c_str(),length);
+	    c_structure[length]=0;
+	}
+	
 	// ----------------------------------------
-	// call pf_fold
+	// call alipf_fold
 	alipf_fold(c_sequences,c_structure,NULL);
 	
 	// ----------------------------------------
@@ -394,12 +430,17 @@ namespace LocARNA {
 	    delete [] c_sequences[i];
 	}
 	delete [] c_sequences;
-	delete [] c_structure;
     }
     
     void
     RnaEnsembleImpl::compute_Qm2(){
 	assert(!used_alifold_);
+	
+	if (fold_constrained) {
+	    std::cerr << "Warning: computation of in loop probabilities with constraints."<<std::endl;
+	}
+
+
 	McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_);
 
 	size_type len = sequence_.length();
@@ -462,6 +503,11 @@ namespace LocARNA {
     RnaEnsembleImpl::compute_Qm2_ali(){
 	assert(used_alifold_);
 	assert(McCmat_);
+
+	if (fold_constrained) {
+	    std::cerr << "Warning: computation of in loop probabilities with constraints."<<std::endl;
+	}
+
 	McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(this->McCmat_);
 
 	size_type len   = sequence_.length();
