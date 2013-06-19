@@ -150,6 +150,7 @@ namespace LocARNA {
 	min_free_energy_(std::numeric_limits<double>::infinity()),
 	min_free_energy_structure_("")
     {
+	sequence_.normalize_rna_symbols();
 	compute_ensemble_probs(params,inLoopProbs,use_alifold);
     }
 
@@ -208,7 +209,7 @@ namespace LocARNA {
 	
 	char c_sequence[length+1];
 	std::string seqstring = 
-	    sequence_.seqentry(0).seq().to_string();
+	    sequence_.seqentry(0).seq().str();
 	
 	strcpy(c_sequence,seqstring.c_str());
 	
@@ -326,7 +327,7 @@ namespace LocARNA {
 	char **sequences = new char*[n_seq+1];
 	for (size_t i=0; i<n_seq; i++) {
 	    sequences[i]=new char[length+1];
-	    std::string seqstring = ma.seqentry(i).seq().to_string();
+	    std::string seqstring = ma.seqentry(i).seq().str();
 	    strncpy(sequences[i],seqstring.c_str(),length+1);
 	}
 	sequences[n_seq]=NULL; //sequences has to be NULL terminated for alifold() etc

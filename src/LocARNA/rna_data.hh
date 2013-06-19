@@ -30,8 +30,9 @@ namespace LocARNA {
      * BasePairs which defines the structure elements that are
      * considered by algorithms.
      *
-     * @note modify the pp format such that it contains the base pair
-     * cutoff probability; make this optional for legacy
+     * @note the class guarantees that sequences are normalized
+     * (uppercase, T->U) even when read in unnormalized form,
+     * e.g. from file or stream
      */
     class RnaData {
     private:

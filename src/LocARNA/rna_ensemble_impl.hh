@@ -25,7 +25,7 @@ namespace LocARNA {
 	
 	//RnaEnsemble *self_; //!<- pointer to corresponding RnaEnsemble object
     
-	const MultipleAlignment &sequence_; //!< reference to the sequence
+	MultipleAlignment sequence_; //!< the sequence
 	
 	//! whether pair probabilities are availabe
 	bool pair_probs_available_; 
@@ -50,18 +50,18 @@ namespace LocARNA {
 	std::string min_free_energy_structure_; //!< minimum free energy structure (if computed)
 
 	
-	/** 
-	 * @brief Construct from file
-	 * 
-	 * @param file file name
-	 * @param readPairProbs whether to read pair probabilities
-	 * @param readStackingProbs whether to read stacking probabilities
-	 * @param readInLoopProbs whether to read in loop probabilities
-	 */
-	RnaEnsembleImpl(const std::string &file,
-			bool readPairProbs,
-			bool readStackingProbs,
-			bool readInLoopProbs);
+	// /** 
+	//  * @brief Construct from file
+	//  * 
+	//  * @param file file name
+	//  * @param readPairProbs whether to read pair probabilities
+	//  * @param readStackingProbs whether to read stacking probabilities
+	//  * @param readInLoopProbs whether to read in loop probabilities
+	//  */
+	// RnaEnsembleImpl(const std::string &file,
+	// 		bool readPairProbs,
+	// 		bool readStackingProbs,
+	// 		bool readInLoopProbs);
 	
 	/** 
 	 * @brief Construct from sequence or multiple alignment

@@ -28,17 +28,29 @@ namespace LocARNA {
     RnaData::RnaData(const RnaEnsemble &rna_ensemble,
 		     double p_bpcut)
 	: pimpl_(new RnaDataImpl(this,
-				 rna_ensemble,
 				 p_bpcut)) {
+	bool stacking=true;
+	init_from_rna_ensemble(rna_ensemble,stacking);
     }
+
 
     RnaData::RnaData(const std::string &filename,
 		     double p_bpcut,
 		     const PFoldParams &pfoldparams)
 	: pimpl_(new RnaDataImpl(this,
-				 filename,
-				 p_bpcut,
-				 pfoldparams)) {
+				 p_bpcut)) {
+	bool complete=
+	    read_autodetect(filename,pfoldparams.stacking());
+    	
+	if (!complete) {
+	    // recompute all probabilities
+	    RnaEnsemble 
+		rna_ensemble(pimpl_->sequence_,
+			     pfoldparams,false,true); // use given parameters, no in loop, use alifold
+	    
+	    // initialize from RnaEnsemble; note: method is virtual
+	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	}
     }
     
     // do almost nothing
@@ -70,51 +82,6 @@ namespace LocARNA {
 	return pimpl_->has_stacking_;
     }
 
-    RnaDataImpl::RnaDataImpl(RnaData *self,
-			     const std::string &filename,
-			     double p_bpcut,
-			     const PFoldParams &pfoldparams)
-	:self_(self),
-	 sequence_(),
-	 p_bpcut_(p_bpcut),
-	 arc_probs_(0.0),
-	 arc_2_probs_(0.0),
-	 has_stacking_(false)
-    {	
-	// HACK: read_autodetect needs an initialized pimpl_ 
-	// how could we do this more cleanly?
-	self_->pimpl_=this;
-	
-	bool complete=
-	    self_->read_autodetect(filename,pfoldparams.stacking());
-    	
-	if (!complete) {
-	    // recompute all probabilities
-	    RnaEnsemble 
-		rna_ensemble(sequence_,
-			     pfoldparams,false,true); // use given parameters, no in loop, use alifold
-	    
-	    // initialize from RnaEnsemble; note: method is virtual
-	    self_->init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
-	}
-    }
-
-    RnaDataImpl::RnaDataImpl(RnaData *self,
-			     const RnaEnsemble &rna_ensemble,
-			     double p_bpcut)
-	:self_(self),
-	 sequence_(),
-	 p_bpcut_(p_bpcut),
-	 arc_probs_(0.0),
-	 arc_2_probs_(0.0),
-	 has_stacking_(false)
-    {
-	// HACK: we need an initialized pimpl_ 
-	self_->pimpl_=this;
-
-	bool stacking=true;
-	self_->init_from_rna_ensemble(rna_ensemble,stacking);
-    }
 
 
     // "consensus" constructor
@@ -152,19 +119,7 @@ namespace LocARNA {
     {
     }
     
-    ExtRnaData::ExtRnaData(const RnaEnsemble &rna_ensemble,
-			   double p_bpcut,
-			   double p_bpilcut,
-			   double p_uilcut)
-	:
-	RnaData(rna_ensemble,
-		p_bpcut),				  
-	pimpl_(new ExtRnaDataImpl(this,
-				  rna_ensemble,
-				  p_bpilcut,
-				  p_uilcut)) {
-    }
-    
+
     ExtRnaData::ExtRnaData(const std::string &filename,
 			   double p_bpcut,
 			   double p_bpilcut,
@@ -173,48 +128,25 @@ namespace LocARNA {
 	: 
 	RnaData(p_bpcut),
 	pimpl_(new ExtRnaDataImpl(this,
-				  filename,
 				  p_bpilcut,
-				  p_uilcut,
-				  pfoldparams)) {
-    }
+				  p_uilcut)) {
 
-    ExtRnaData::~ExtRnaData() {
-	delete pimpl_;
-    }
-
-    ExtRnaDataImpl::ExtRnaDataImpl(ExtRnaData *self,
-				   const std::string &filename,
-				   double p_bpilcut,
-				   double p_uilcut,
-				   const PFoldParams &pfoldparams)
-	:self_(self),
-	 p_bpilcut_(p_bpilcut),
-	 p_uilcut_(p_uilcut),
-	 arc_in_loop_probs_(arc_prob_matrix_t(0.0)),
-	 unpaired_in_loop_probs_(arc_prob_vector_t(0.0)),
-	 has_in_loop_probs_(false)
-    {
-	// HACK: read_autodetect needs an initialized pimpl_ 
-	// how could we do this more cleanly?
-	self_->pimpl_=this;
-	
 	bool complete=
-	    self_->read_autodetect(filename,pfoldparams.stacking());
+	    read_autodetect(filename,pfoldparams.stacking());
     	
 	if (!complete) {
 	    // recompute all probabilities
 	    RnaEnsemble 
-		rna_ensemble(self_->sequence(),
+		rna_ensemble(sequence(),
 			     pfoldparams,true,true); // use given parameters, in-loop, use alifold
 	    
 	    // initialize
-	    self_->init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
 	}
+
     }
 
     ExtRnaDataImpl::ExtRnaDataImpl(ExtRnaData *self,
-				   const RnaEnsemble &rna_ensemble,
 				   double p_bpilcut,
 				   double p_uilcut)
 	:self_(self),
@@ -224,12 +156,26 @@ namespace LocARNA {
 	 unpaired_in_loop_probs_(arc_prob_vector_t(0.0)),
 	 has_in_loop_probs_(false)
     {
-	// HACK: we need an initialized pimpl_ 
-	self_->pimpl_=this;
-
-	bool stacking=true;
-	self_->init_from_rna_ensemble(rna_ensemble,stacking);
     }
+
+    ExtRnaData::ExtRnaData(const RnaEnsemble &rna_ensemble,
+			   double p_bpcut,
+			   double p_bpilcut,
+			   double p_uilcut)
+	:
+	RnaData(rna_ensemble,
+		p_bpcut),				  
+	pimpl_(new ExtRnaDataImpl(this,
+				  p_bpilcut,
+				  p_uilcut)) {
+	bool stacking=true;
+	init_from_rna_ensemble(rna_ensemble,stacking);
+    }
+
+    ExtRnaData::~ExtRnaData() {
+	delete pimpl_;
+    }
+
 
     /*
      * Implementation note: we use an annoyingly complex mechanism
@@ -345,6 +291,8 @@ namespace LocARNA {
 	    throw failure("RnaData: Cannot read input data from file.");
 	}
 	
+	pimpl_->sequence_.normalize_rna_symbols();
+
 	// now, we have the sequence but not necessarily all required probabilities!
 	if (!inloopprobs_ok()) {
 	    recompute=true;
@@ -859,6 +807,7 @@ namespace LocARNA {
     RnaDataImpl::read_pp_sequence(std::istream &in) {
 	
 	sequence_ = MultipleAlignment(in,MultipleAlignment::FormatType::CLUSTAL);
+	sequence_.normalize_rna_symbols();
 	
 	return in;
     }

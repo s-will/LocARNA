@@ -437,6 +437,15 @@ namespace LocARNA {
 	}
     }
     
+    void MultipleAlignment::normalize_rna_symbols() {
+	for (std::vector<SeqEntry>::iterator it = alig_.begin();
+	     alig_.end() != it; ++it) {
+	    std::string seq = it->seq().str();
+	    normalize_rna_sequence(seq);
+	    it->set_seq( seq );
+	}
+    }
+
     bool
     MultipleAlignment::is_proper() const {
 	if (empty()) return true; // empty alignment is proper
@@ -459,7 +468,6 @@ namespace LocARNA {
 	return false;
     }
 
-		   
     size_type
     MultipleAlignment::deviation2(const string1 &a1,
 				  const string1 &a2,
@@ -818,7 +826,7 @@ namespace LocARNA {
     void
     MultipleAlignment::write_debug(ostream &out) const {
 	for (size_type i=0; i<alig_.size(); ++i) {
-	    out << alig_[i].name() << " \t" << alig_[i].seq().to_string()<<std::endl;
+	    out << alig_[i].name() << " \t" << alig_[i].seq().str()<<std::endl;
 	} 
     
     }
@@ -876,7 +884,7 @@ namespace LocARNA {
 	std::string structure_string = annotation(AnnoType::structure).single_string();
 	
 	for (size_type i=0; i<alig_.size(); i++) {
-	    const std::string seq = alig_[i].seq().to_string();
+	    const std::string seq = alig_[i].seq().str();
 	    assert(end <= seq.length()); 
 	    
 	    write_name_sequence_line(out,alig_[i].name(),

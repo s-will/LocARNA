@@ -61,50 +61,17 @@ namespace LocARNA {
 	// ----------------------------------------
 	// CONSTRUCTORS
 	
-	/** 
-	 * @brief Construct from RnaEnsemble with cutoff probability
-	 * 
-	 * @param self self pointer
-	 * @param rna_data data about RNA ensemble
-	 * @param p_bpcut cutoff probability
-	 * @param p_bpilcut cutoff probability base pair in loop
-	 * @param p_uilcut cutoff probability unpaired in loop
-	 */
-	ExtRnaDataImpl(RnaData *self,
-		       const RnaEnsemble &rna_data,
-		       double p_bpcut,
-		       double p_bpilcut,
-		       double p_uilcut);
-	
-	/** 
-	 * @brief Construct from input file
-	 * 
-	 * @param self self pointer
-	 * @param filename input file name
-	 * @param p_bpilcut probability cutoff base pair in loop 
-	 * @param p_uilcut  probability cutoff unpaired in loop 
-	 * @param pfoldparams partition folding parameters
-	 *
-	 * @note autodetects file format, see corresponding RnaDataImpl constructor
-	 */
-	ExtRnaDataImpl(ExtRnaData *self, 
-		       const std::string &filename,
-		       double p_bpilcut,
-		       double p_uilcut,
-		       const PFoldParams &pfoldparams);
 
 	/** 
-	 * @brief Construct from rna ensemble
+	 * @brief Construct
 	 * 
 	 * @param self self pointer
-	 * @param rna_ensemble rna ensemble
 	 * @param p_bpilcut probability cutoff base pair in loop 
 	 * @param p_uilcut  probability cutoff unpaired in loop 
 	 *
 	 * @note autodetects file format, see corresponding RnaDataImpl constructor
 	 */
 	ExtRnaDataImpl(ExtRnaData *self,
-		       const RnaEnsemble &rna_ensemble,
 		       double p_bpilcut,
 		       double p_uilcut);
 	

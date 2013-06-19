@@ -44,6 +44,18 @@ namespace LocARNA {
  *
  * MultipleAlignment can have anchor and structure annotation and can
  * read and write them.
+ *
+ * @note this class is agnostic of the type of sequences in the
+ * alignment; it does not check for 'allowed characters' nor transform
+ * characters.  However, normalize_rna_bases() is provided to perform
+ * a normalization in the case of RNAs, which is generally assumed by
+ * the alignment engines and Vienna folding routines. 
+ *
+ * @todo because this class does not know whether it contains RNA, it
+ * would be useful to have a derived class RNAMultipleAlignment. This
+ * class could guarantee that its sequences are normalized RNA
+ * sequences. Consequently, we could enforce by the type system that
+ * RnaEnsemble is generated only from RNAMultipleAlignment etc.
  */
 class MultipleAlignment {
 
@@ -214,6 +226,11 @@ public:
 	push_back(char c) {
 	    seq_.push_back(c);
 	}
+
+	//! @brief write access to seq
+	void
+	set_seq(const string1 &seq) {seq_=seq;}
+
 
     };
 
@@ -447,6 +464,16 @@ public:
      * sequence does not specify attributes
      */
     const Sequence & as_sequence() const;  
+
+    /**
+     * @brief normalize rna symbols
+     * @see normalize_rna_sequence()
+     *
+     * Normalize the symbols in all aligned sequences assuming that
+     * they code for RNA
+     */
+    void
+    normalize_rna_symbols();
     
     /**
      * @brief Number of rows of multiple aligment

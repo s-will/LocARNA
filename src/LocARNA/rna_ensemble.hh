@@ -41,6 +41,10 @@ namespace LocARNA {
      * of ViennaRNA-data structures the construction of an object
      * invalidates previous instances. We could make this an "protected"
      * option for exclusive internal use, e.g. by RnaData.
+     *
+     * @note the class guarantees that sequences are normalized
+     * (uppercase, T->U) even when read in unnormalized form,
+     * e.g. from file or stream or received from other objects
      */
     class RnaEnsemble {
     private:

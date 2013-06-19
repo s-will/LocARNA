@@ -59,7 +59,7 @@ main(int argc, char **argv) {
     assert(seq.contains("fdhA") && seq.contains(name_str));
     
     size_t index = seq.index(name_str);
-    assert(seq.seqentry(index).seq().to_string() == seq_str);
+    assert(seq.seqentry(index).seq().str() == seq_str);
     
     bool ok=false;
     MultipleAlignment *ma3=0L;

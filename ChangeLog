@@ -393,3 +393,4 @@ May/Jun, 2013
 	Support anchor and structure annotation in MultipleAlignment
 	RnaEnsemble constrains the folding by structure annotation of
 	Multiple Alignment (if given)
+	(Release 1.7.7)
