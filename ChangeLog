@@ -390,3 +390,6 @@ May/Jun, 2013
 	Change class Sequence to be a mere interface to MultipleAlignment that allows operator [] for column access
 	Make constraints optional part of multiple alignments; make write/readable with the alignment in clustal and pp format
 	Remove options anchorA, anchorB from locarna and locarna_X
+	Support anchor and structure annotation in MultipleAlignment
+	RnaEnsemble constrains the folding by structure annotation of
+	Multiple Alignment (if given)

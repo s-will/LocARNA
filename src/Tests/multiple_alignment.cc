@@ -37,7 +37,7 @@ main(int argc, char **argv) {
     assert(ma2->is_proper());
     
     //! test whether ma2 has correct size
-    assert(ma2->row_number() == 6);
+    assert(ma2->num_of_rows() == 6);
     
     //! test whether ma2 contains "fdhA" and "fruA" 
     assert (ma2->contains("fdhA") && ma2->contains("fruA"));
@@ -53,7 +53,7 @@ main(int argc, char **argv) {
     assert(seq.is_proper());
 
     //! test whether seq has correct size
-    assert(7 == seq.row_number());
+    assert(7 == seq.num_of_rows());
     
     //! test whether seq contains "fdhA" and "hdrA" 
     assert(seq.contains("fdhA") && seq.contains(name_str));
@@ -65,7 +65,7 @@ main(int argc, char **argv) {
     MultipleAlignment *ma3=0L;
 
     try {
-    	ma3 = new MultipleAlignment("Tests/archaea-wrong.fa",MultipleAlignment::FASTA);
+    	ma3 = new MultipleAlignment("Tests/archaea-wrong.fa",MultipleAlignment::FormatType::FASTA);
 	if (!ma3->is_proper()) throw(failure("Wrong format"));
 	if (ma3->empty()) throw(failure("Wrong format"));
     } catch(failure &f) {
@@ -75,7 +75,7 @@ main(int argc, char **argv) {
 
     ok=false;
     try {
-	MultipleAlignment ma4("Tests/archaea.fa",MultipleAlignment::CLUSTAL);
+	MultipleAlignment ma4("Tests/archaea.fa",MultipleAlignment::FormatType::CLUSTAL);
 	if (!ma4.is_proper()) throw(failure("Wrong format"));
 	if (ma4.empty()) throw(failure("Wrong format"));
 	//ma4.write_debug(std::cerr);
@@ -86,7 +86,7 @@ main(int argc, char **argv) {
 
     MultipleAlignment *ma5;
     
-    ma5 = new MultipleAlignment("Tests/archaea.fa",MultipleAlignment::FASTA);
+    ma5 = new MultipleAlignment("Tests/archaea.fa",MultipleAlignment::FormatType::FASTA);
     if (!ma5->is_proper()) throw(failure("Wrong format"));
     if (ma5->empty()) throw(failure("Wrong format"));
     
@@ -97,7 +97,7 @@ main(int argc, char **argv) {
     assert(seq.is_proper());
 
     //! test whether seq has correct size
-    assert(seq.row_number() == 3);
+    assert(seq.num_of_rows() == 3);
     
     {
 	// write and read again test
@@ -106,9 +106,9 @@ main(int argc, char **argv) {
 	seq.write(out);
 
 	std::istringstream in(out.str()); 
-	MultipleAlignment seq2(in,MultipleAlignment::CLUSTAL);
+	MultipleAlignment seq2(in,MultipleAlignment::FormatType::CLUSTAL);
 	
-	assert(seq.row_number() == seq2.row_number());
+	assert(seq.num_of_rows() == seq2.num_of_rows());
 	assert(seq.length() == seq2.length());
     }
 
