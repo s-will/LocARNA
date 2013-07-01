@@ -8,7 +8,6 @@ using namespace std;
 namespace LocARNA {
 
 //todo: remove
-bool verbose = true;
 bool debug = false;
 bool debug_trace_G = false;
 bool debug_VG = false;
@@ -17,7 +16,7 @@ bool debug_trace_F = false;
 bool debug_store_new_poss = false;
 bool debug_init_mat = false;
 bool debug_compute_LGLR = false;
-bool debug_fill_epm = true;
+bool debug_fill_epm = false;
 
 	// Constructor
     ExactMatcher::ExactMatcher(const Sequence &seqA_,
@@ -25,16 +24,14 @@ bool debug_fill_epm = true;
 			       const ArcMatchesIndexed &arc_matches_,
 			       const SparseTraceController &sparse_trace_controller_,
 			       PatternPairMap &foundEPMs_,
-			       const int &alpha_1_,
-			       const int &alpha_2_,
-			       const int &alpha_3_,
-			      // const int &difference_to_opt_score_,
-			       const int &min_subopt_score_,
-			      // const int &easier_scoring_par_,
-			      // const double &subopt_range_,
-			       const int &am_threshold_,
-			      // const double &cutoff_coverage_,
-			       const int &max_number_of_EPMs_
+			       int alpha_1_,
+			       int alpha_2_,
+			       int alpha_3_,
+			       score_t difference_to_opt_score_,
+			       score_t min_score_,
+			       score_t am_threshold_,
+			       long int max_number_of_EPMs_,
+			       bool verbose_
 			       )
 	: seqA(seqA_),
 	  seqB(seqB_),
@@ -48,17 +45,17 @@ bool debug_fill_epm = true;
 	  alpha_1(alpha_1_),
 	  alpha_2(alpha_2_),
 	  alpha_3(alpha_3_),
-	  //difference_to_opt_score(difference_to_opt_score_*100),
-	  min_subopt_score(min_subopt_score_*100),
-	 // easier_scoring_par(easier_scoring_par_),
-	 // subopt_range(subopt_range_),
+	  difference_to_opt_score(difference_to_opt_score_*100),
+	  min_score(min_score_*100),
 	  am_threshold(am_threshold_*100),
-	 // cutoff_coverage(cutoff_coverage_),
 	  max_number_of_EPMs(max_number_of_EPMs_),
+	  verbose(verbose_),
 	  pseudo_arcA(bpsA.num_bps(),0,seqA.length()),
 	  pseudo_arcB(bpsB.num_bps(),0,seqB.length()),
 	  invalid_mat_pos(std::numeric_limits<index_t>::max(),std::numeric_limits<index_t>::max())
     {
+
+    	if(difference_to_opt_score<0) difference_to_opt_score=-1; // difference_to_opt_score is not used
 
     	// set size of matrices
     	if(verbose) cout << "max dimensions " << sparse_mapperA.get_max_info_vec_size()
@@ -308,7 +305,7 @@ bool debug_fill_epm = true;
 
     	if(debug_compute_LGLR){
     		cout << endl; cout << "___________________________________" << endl;
-    		cout << "compute LGLR " << suboptimal << endl;
+    		cout << "compute LGLR " << suboptimal <<  " for arcs " << a << "," << b << endl;
     	}
 
     	// initialize matrices for using the sparse trace controller
@@ -319,7 +316,7 @@ bool debug_fill_epm = true;
     		// in suboptimal case we use the whole gap matrices, initialization is done once in the beginning
     	}
 
-    	//if(debug_compute_LGLR){ this->print_matrices(a,b,50,50,suboptimal);}
+    	if(debug_compute_LGLR){cout << "after init " << endl; this->print_matrices(a,b,50,50,suboptimal);}
 
        	index_t idxA = a.idx();
        	index_t idxB = b.idx();
@@ -354,79 +351,15 @@ bool debug_fill_epm = true;
 
        			if(debug_compute_LGLR && !compute_entry) cout << "do not compute current entry "<< endl;
 
-       			// determine the next position to the left on the diagonal
-       			//matpos_t idx_pos_diag = suboptimal ?
-       				//	matpos_t(idx_i-1,idx_j-1) :
-       				//	sparse_trace_controller.first_valid_mat_pos_before_with_tc(idxA,idxB,seq_pos,a.left(),b.left());
-       			//if(compute_entry){
-       				idx_pos_diag = sparse_trace_controller.first_valid_mat_pos_before_with_tc(idxA,idxB,seq_pos,a.left(),b.left());
-       				pair<matpos_t,matpos_t> idx_pos_diag_new = sparse_trace_controller.first_valid_mat_pos_before_with_tc_from_mat_pos(idxA,idxB,mat_pos,a.left(),b.left());
-       				//cout << "idx pos diag " << idx_pos_diag << endl;
-       				//cout << "new " << idx_pos_diag_new.first << endl;
-       				assert(idx_pos_diag == idx_pos_diag_new.first);
-       				idx_pos_diag = idx_pos_diag_new.first;
-       				idx_pos_top = idx_pos_diag_new.second;
-       				idx_pos_left = sparse_trace_controller.first_left_valid_mat_pos_with_tc(idxA,idxB,mat_pos,a.left(),b.left());
-       				//cout << "idx_pos diag " << idx_pos_diag << endl;
-       				//cout << "idx pos top " << idx_pos_top << endl;
-       				//cout << "idx pos left " << idx_pos_left << endl;
-       			//}
-
-       			if(debug_compute_LGLR) cout << "pos diag " << idx_pos_diag << endl;
-
-       			if(compute_entry) L(idx_i,idx_j)=compute_matrix_entry(a,b,mat_pos,idx_pos_diag,false,suboptimal);
-       			//compute entry only if idx pos is valid for the suboptimal case
-
-       			if(suboptimal){
-       				G_A(idx_i,idx_j)=G_A(idx_i-1,idx_j); //we fill the whole matrix
-
-       				//if(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,matpos_t(idx_pos_diag.first,idx_j))){
-       				if(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,matpos_t(idx_i-1,idx_j))){
-       					G_A(idx_i,idx_j)=max(G_A(idx_i,idx_j),L(idx_i-1,idx_j));//L(idx_pos_diag.first,idx_j));
-       				}
-
-       				//G_A(idx_i,idx_j)=max(L(idx_pos_diag.first,idx_j),
-       				//					 G_A(idx_pos_diag.first,idx_j));
-
-       				G_AB(idx_i,idx_j)=max(G_A(idx_i,idx_j-1),
-       									  G_AB(idx_i,idx_j-1)); //we fill whole matrix
-       				//if(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,matpos_t(idx_i,idx_pos_diag.second))){
-       				if(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,matpos_t(idx_i,idx_j-1))){
-       					G_AB(idx_i,idx_j)=max(G_AB(idx_i,idx_j),L(idx_i,idx_j-1));//L(idx_i,idx_pos_diag.second));
-       				}
-       				//G_AB(idx_i,idx_j)=max3(L(idx_i,idx_pos_diag.second),
-       				//					   G_A(idx_i,idx_pos_diag.second),
-       				//					   G_AB(idx_i,idx_pos_diag.second));
-       			}
-       			else{
-       				G_A(idx_i,idx_j)=max(L(idx_i,idx_j),
-       									 G_A(idx_pos_diag.first,idx_pos_diag.second));
-
-       				// check whether border cases access valid positions
-       				//if(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,matpos_t(idx_pos_diag.first,idx_j))){
-       				//	G_A(idx_i,idx_j) = max(G_A(idx_i,idx_j),
-       				//			               G_A(idx_pos_diag.first,idx_j));
-       				//}
-       				if(idx_pos_top!=invalid_mat_pos){
-       					assert(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,idx_pos_top));
-       					G_A(idx_i,idx_j) = max(G_A(idx_i,idx_j),
-       					       				G_A(idx_pos_top.first,idx_j));
-       				}
-
-       				//if(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,matpos_t(idx_i,idx_pos_diag.second))){
-       				//	G_A(idx_i,idx_j) = max(G_A(idx_i,idx_j),
-       				//			               G_A(idx_i,idx_pos_diag.second));
-       				//}
-       				if(idx_pos_left!=invalid_mat_pos){
-       					assert(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,idx_pos_left));
-       					G_A(idx_i,idx_j) = max(G_A(idx_i,idx_j),
-       							G_A(idx_i,idx_pos_left.second));
-       				}
-       			}
-
-       			if(debug_compute_LGLR) cout << "G_A " << G_A(idx_i,idx_j) << endl;
-
        			if(compute_entry){
+       				idx_pos_diag = sparse_trace_controller.first_valid_mat_pos_before_with_tc(idxA,idxB,seq_pos,a.left(),b.left());
+       				pair<matpos_t,matpos_t> idx_pos_diag_and_top = sparse_trace_controller.first_valid_mat_pos_before_with_tc_from_mat_pos(idxA,idxB,mat_pos,a.left(),b.left());
+       				assert(idx_pos_diag == idx_pos_diag_and_top.first);
+
+       				idx_pos_diag = idx_pos_diag_and_top.first;
+       				idx_pos_top = idx_pos_diag_and_top.second;
+       				//compute entry only if idx pos is valid for the suboptimal case
+       				L(idx_i,idx_j)=compute_matrix_entry(a,b,mat_pos,idx_pos_diag,false,suboptimal);
        				LR(idx_i,idx_j)=compute_matrix_entry(a,b,mat_pos,idx_pos_diag,true,suboptimal);
 
        				// update last filled position
@@ -434,9 +367,40 @@ bool debug_fill_epm = true;
        				last_pos_filled.second=idx_j;
        			}//compute entry only if idx pos is valid for the suboptimal case
 
-       			// update last filled position
-       			//last_pos_filled.first=idx_i;
-       			//last_pos_filled.second=idx_j;
+       			if(debug_compute_LGLR) cout << "pos diag " << idx_pos_diag << endl;
+
+       			if(suboptimal){
+       				G_A(idx_i,idx_j)=G_A(idx_i-1,idx_j); //we fill the whole matrix
+
+       				if(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,matpos_t(idx_i-1,idx_j))){
+       					G_A(idx_i,idx_j)=max(G_A(idx_i,idx_j),L(idx_i-1,idx_j));
+       				}
+
+       				G_AB(idx_i,idx_j)=max(G_A(idx_i,idx_j-1),
+       									  G_AB(idx_i,idx_j-1)); //we fill whole matrix
+
+       				if(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,matpos_t(idx_i,idx_j-1))){
+       					G_AB(idx_i,idx_j)=max(G_AB(idx_i,idx_j),L(idx_i,idx_j-1));
+       				}
+       			}
+       			else{
+       				idx_pos_left = sparse_trace_controller.first_left_valid_mat_pos_with_tc(idxA,idxB,mat_pos,a.left(),b.left());
+
+       				G_A(idx_i,idx_j)=max(L(idx_i,idx_j),
+       									 G_A(idx_pos_diag.first,idx_pos_diag.second));
+
+       				if(idx_pos_top!=invalid_mat_pos){
+       					assert(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,idx_pos_top));
+       					G_A(idx_i,idx_j) = max(G_A(idx_i,idx_j),
+       					       				G_A(idx_pos_top.first,idx_j));
+       				}
+       				if(idx_pos_left!=invalid_mat_pos){
+       					assert(sparse_trace_controller.is_valid_idx_pos(idxA,idxB,idx_pos_left));
+       					G_A(idx_i,idx_j) = max(G_A(idx_i,idx_j),
+       							G_A(idx_i,idx_pos_left.second));
+       				}
+       			}
+
        		}
        	}
 
@@ -452,6 +416,7 @@ bool debug_fill_epm = true;
        			LR(last_pos_filled.first,last_pos_filled.second)=infty_score_t::neg_infty;
        	}
        	if(debug_compute_LGLR) cout << "last pos filled " << last_pos_filled << endl;
+       	if(debug_compute_LGLR){cout << "filled matrix " << endl; this->print_matrices(a,b,20,20,suboptimal);}
        	return last_pos_filled;
      }
 
@@ -565,7 +530,9 @@ bool debug_fill_epm = true;
     	// L, G_A and G_AB in the suboptimal case
     	if(matrixLR){
     		score=max(L(idx_i_diag,idx_j_diag)+add_score,score);
-    		if(!suboptimal) score = max(G_A(idx_i_diag,idx_j_diag)+add_score,score);
+    		if(!suboptimal){
+    			score = max(G_A(idx_i_diag,idx_j_diag)+add_score,score);
+    		}
     		if(suboptimal){
     			//matidx_t idx_i_before = sparse_mapperA.first_valid_mat_pos_before(a.idx(),seq_pos_to_be_matched.first,a.left());
     			//matidx_t idx_j_before = sparse_mapperB.first_valid_mat_pos_before(b.idx(),seq_pos_to_be_matched.second,b.left());
@@ -624,26 +591,29 @@ bool debug_fill_epm = true;
        			}
        		}
        	}
-       	cout << "max in F " << max_in_F << endl;
-       	cout << "pos of max " << pos_of_max << endl;
+        if(verbose)	cout << "max in F " << max_in_F << endl;
+       	if(verbose) cout << "pos of max " << pos_of_max << endl;
     }
 
     // determines the EPMs via traceback
     void ExactMatcher::trace_EPMs(bool suboptimal){
-    	bool interval_method = false; //just for testing;
-    	score_t diff = 2*100; // just for testing
 
-    	if(!suboptimal) trace_EPMs_heuristic();
+    	// if difference_to_opt_score is not set, the interval method is used
+    	bool interval_method = (difference_to_opt_score==-1);
 
-    	else if(!interval_method){ // just for testing
+    	// do heuristic traceback
+    	if(!suboptimal) find_start_pos_for_tb(suboptimal);
+
+    	else if(!interval_method){ // use given difference_to_opt_score
+    		if(verbose) cout << "difference to opt score " << difference_to_opt_score << " is given " << endl;
     		initialize_gap_matrices(); //initialize gap matrices for suboptimal traceback
-    		trace_EPMs_suboptimal(diff,false);}
+    		find_start_pos_for_tb(suboptimal,difference_to_opt_score,false);}
 
-    	else{
+    	else{ // do interval search
     		initialize_gap_matrices(); //initialize gap matrices for suboptimal traceback
-    		bool debug_trace = false;
+
     		score_t max_in_F = F(pos_of_max.first,pos_of_max.second).finite_value();
-    		score_t max_diff_to_opt_score = max_in_F-this->min_subopt_score;
+    		score_t max_diff_to_opt_score = max_in_F-this->min_score;
     		score_t difference_to_opt_score;
     		int begin = 0;
     		int end = 1;
@@ -651,31 +621,22 @@ bool debug_fill_epm = true;
     		bool interval_found = false;
     		bool value_found = false;
 
-    		if(debug_trace) cout << "min_subopt score " << min_subopt_score << endl;
-    		if(debug_trace) cout  << "max diff to opt score " <<  max_diff_to_opt_score << endl;
-    		if(debug_trace) cout << "max in F " << max_in_F << endl;
-
     		while(!interval_found){
-    			if(debug_trace) cout << "current interval " << begin << "," << end << endl;
 
     			difference_to_opt_score = end*100;
 
-    			trace_EPMs_suboptimal(difference_to_opt_score,true);
-    			long int cur_num_EPMs=get_cur_number_of_EPMs();
+    			find_start_pos_for_tb(suboptimal,difference_to_opt_score,true);
 
-    			if(debug_trace) cout << "cur num EPMs " << cur_num_EPMs << endl;
+    			//number of EPMs is smaller than given number of EPMs and max_diff_to_opt_score is reached
+    			if((difference_to_opt_score>=max_diff_to_opt_score && cur_number_of_EPMs<=max_number_of_EPMs)
+    					|| check_num_EPMs()){ //number of EPMs is in the correct interval
 
-    			if((difference_to_opt_score>=max_diff_to_opt_score && cur_num_EPMs<=max_number_of_EPMs) //number of EPMs is smaller than given number of EPMs
-    					|| (cur_num_EPMs>=max_number_of_EPMs*0.8 && cur_num_EPMs<=max_number_of_EPMs)){ //nmber of EPMs is in the correct interval
-    					if(debug_trace) cout << "difference to optimal score is maximal " << endl;
-    					if(debug_trace) cout << "current interval " << begin << "," << end << endl;
-    					if(debug_trace) cout << "cur_num_EPMs " << cur_num_EPMs << endl;
-    					value_found=true; // we already found the correct value;
+    					interval_found=true;
+    					value_found=true; // take directly EPMs of the end, no interval halving
     					result_value = end;
-    					break; //-> take directly EPMs of the end, no interval halving
     			}
 
-    			else if(cur_num_EPMs<max_number_of_EPMs){
+    			else if(cur_number_of_EPMs<max_number_of_EPMs){
     				begin=end; // adjust interval
     				end=2*begin;
     			}
@@ -685,17 +646,12 @@ bool debug_fill_epm = true;
     			}
     		}
 
-    		if(debug_trace) cout << "________________________________________________________" << endl;
-    		if(debug_trace) cout << "start interval " << begin << "," << end << endl;
-    		if(debug_trace) cout << "________________________________________________________" << endl;
-
     		while(!value_found){
-    			if(debug_trace) cout << "current interval " << begin << "," << end << endl;
+
     			int middle = (begin+end)/2;
-    			if(debug_trace) cout << "middle " << middle << endl;
+
     			if(middle==begin){
     				// take the value from begin
-    				if(debug_trace) cout << "interval length is 1 " << endl;
     				value_found=true;
     				result_value=begin;
     			}
@@ -703,32 +659,122 @@ bool debug_fill_epm = true;
     			else{
 
     				difference_to_opt_score = middle*100; // if interval length=1 -> middle==begin
-    				trace_EPMs_suboptimal(difference_to_opt_score,true);
-    				long int cur_num_EPMs=get_cur_number_of_EPMs();
-    				if(debug_trace) cout << "cur number of EPMs " << cur_num_EPMs << endl;
+    				find_start_pos_for_tb(suboptimal,difference_to_opt_score,true);
 
-    				if(cur_num_EPMs==max_number_of_EPMs ||
-    						(cur_num_EPMs>=max_number_of_EPMs*0.8 && cur_num_EPMs<=max_number_of_EPMs)){
-    					if(debug_trace) cout << "number of EPMs " << cur_num_EPMs << " in correct interval " << endl;
+    				if(check_num_EPMs()){
     					value_found=true; // not more than 20% less EPMs than given
     					result_value=middle;
     				}
 
-    				else if(cur_num_EPMs<max_number_of_EPMs){
-    					if(debug_trace) cout << "begin=middle" << endl;
+    				else if(cur_number_of_EPMs<max_number_of_EPMs){
     					begin=middle; // adjust interval
     				}
     				else{
-    					if(debug_trace) cout << "end=middle" << endl;
     					end=middle; //adjust interval
     				}
     			}
     		}
     		//actually store the computed EPMs
     		difference_to_opt_score = result_value*100;
-    		trace_EPMs_suboptimal(difference_to_opt_score,false);
+    		find_start_pos_for_tb(suboptimal,difference_to_opt_score, false);
     	}
-    	cout << "found #EPMs " << get_cur_number_of_EPMs() << endl;
+    	if(verbose) cout << "found #EPMs " << this->cur_number_of_EPMs << endl;
+    }
+
+    void ExactMatcher::find_start_pos_for_tb(bool suboptimal, score_t difference_to_opt_score, bool count_EPMs){
+    	// reset EPM counter
+    	cur_number_of_EPMs=0;
+
+    	//bool suboptimal = (difference_to_opt_score!=-1);
+
+    	if(verbose) cout << "compute EPMs " << (suboptimal? "suboptimal " :
+    			"heuristic ") << " min score " << min_score << endl;
+
+    	/* -----------------------------------------------------------------------------------
+       	 for debugging
+
+       	const ArcMatch &am = arc_matches.arcmatch(128566); //example with many different arcmatches to proc
+       	const ArcMatch &am = arc_matches.arcmatch(215010); //example with high score
+       	const ArcMatch &am = arc_matches.arcmatch(61593); //96,for example 3
+       	const ArcMatch &am = arc_matches.arcmatch(39581);
+       	const Arc &a = bpsA.arc(583);
+       	const Arc &b = bpsB.arc(636);
+       	cout << "trace Arcs " << a << " and " << b << " with score " << D(a,b) << endl;
+       	epm_cont_t found_EPMs;
+       	trace_LGLR_suboptimal(a,b,324,found_EPMs,true);
+       	cout << "found epms "  << endl << found_EPMs << endl;
+       	return;
+       	cout << "trace am " << am.idx() << " with score " << score_for_arc_match(am,true)<< endl;
+       	cout << "number of arcmatches " << arc_matches.num_arc_matches() << endl;
+       	size_t max_size=0;
+       	        	for(size_t i=0;i<(arc_matches.num_arc_matches());++i){
+       	        		epm_cont_t found_EPMs;
+       	        		const ArcMatch &am = arc_matches.arcmatch(i);
+       	        		if(i%10000==0) cout <<  i << endl;
+       	        		if(i>170000 && i%1000==0) cout << i << endl;
+       	        		if(this->score_for_arc_match(am,true).is_finite()){
+       	        			if(i%10000==0) cout << "trace am " << am.idx() << " with score " << score_for_arc_match(am,true)<< endl;
+       	        			trace_LGLR_suboptimal(am,(infty_score_t)500,found_EPMs,true);
+       	        			//int count=0;
+       	        			if(found_EPMs.size()>max_size) max_size = found_EPMs.size();
+       	        		}
+       	        	}
+       	cout << "max number of EPMs found for arcmatch " << max_size << endl;
+
+       	trace_LGLR_suboptimal(a,b,500,found_EPMs,true);
+       	return;
+       	cout << "number of epms found " << found_EPMs.size() << endl;
+       	cout << "found epms " << found_EPMs << endl;
+
+       	-------------------------------------------------------------------------------------*/
+
+    	score_t min_score_tb = min_score;
+
+    	if(suboptimal){
+
+    		score_t max_in_F = F(pos_of_max.first,pos_of_max.second).finite_value();
+    		min_score_tb = max_in_F-difference_to_opt_score;
+    		if (min_score_tb < min_score) min_score_tb = min_score;
+    	}
+    	//score_t min_score_tb = suboptimal? subopt_score : min_score;
+    	if(verbose) cout << "score for traceback " << min_score_tb << endl;
+
+    	//compute traceback in F matrix
+    	for(size_type i=1;i<F.sizes().first;++i){
+    		if(debug_trace_F) cout << "for i range " << sparse_trace_controller.min_col(i) << ","
+    				<< sparse_trace_controller.max_col(i) << endl;
+
+    		size_t min_col = std::max((size_type)1,sparse_trace_controller.min_col(i));
+    		size_t max_col = std::min(F.sizes().second-1,sparse_trace_controller.max_col(i));
+
+    		for(size_t j=min_col;j<=max_col;++j){
+
+    			if(F(i,j)>=(infty_score_t)min_score_tb){
+
+    				if(i==F.sizes().first-1
+    						|| j==F.sizes().second-1
+    						|| (!sparse_trace_controller.is_valid(i+1,j+1)) // start traceback if next diagonal position is not valid
+    						|| seqA[i+1]!=seqB[j+1]){						// or the nucleotides do not match
+
+    					if(debug_trace_F) cout << "trace position  " << i << "," << j << endl;
+
+    					if(suboptimal){
+    						score_t max_tol_left=F(i,j).finite_value()-min_score_tb;
+    						assert(max_tol_left>=0);
+
+    						trace_F_suboptimal(i,j,max_tol_left,true,count_EPMs); // compute traceback from position (i,j)
+
+    						if(!check_PPM()){return;}
+    					}
+    					else{
+    						EPM cur_epm;
+    						trace_F_heuristic(i,j,cur_epm); // compute traceback from position (i,j)
+    						add_foundEPM(cur_epm,false); // store the traced epm in the corresponding datastructure
+    					}
+    				}
+    			}
+    		}
+    	}
     }
 
 
@@ -745,19 +791,10 @@ bool debug_fill_epm = true;
     // otherwise the base pair probabilities are taken into account
     infty_score_t ExactMatcher::score_for_am(const Arc &a, const Arc &b){
 
-    	infty_score_t result=infty_score_t(0);
+    	double probArcA = bpsA.get_arc_prob(a.left(),a.right());
+    	double probArcB = bpsB.get_arc_prob(b.left(),b.right());
 
-    	//if(easier_scoring_par){
-    	//	result= D(a,b)+FiniteInt(((2*alpha_1)+easier_scoring_par*2)*100);
-    	//}
-
-    	//else{
-    		double probArcA = bpsA.get_arc_prob(a.left(),a.right());
-    		double probArcB = bpsB.get_arc_prob(b.left(),b.right());
-
-    		result= D(a,b) + FiniteInt(((2*alpha_1)+(probArcA+probArcB)*alpha_2)*100);
-    	//}
-    	return result;
+    	return D(a,b) + FiniteInt(((2*alpha_1)+(probArcA+probArcB)*alpha_2)*100);
     }
 
 
@@ -825,53 +862,15 @@ bool debug_fill_epm = true;
     	//SinglePattern pattern2 = SinglePattern(patId,seq2_id,cur_epm.getPat2Vec());
     	//foundEPMs.add(patId, pattern1, pattern2, cur_epm.getStructure(), cur_epm.get_score() );
 
-    	//todo: check score in chaining -> small example heuristic vs. suboptimal
     	SinglePattern pattern1 = SinglePattern(patId,seq1_id,pat1Vec);
     	SinglePattern pattern2 = SinglePattern(patId,seq2_id,pat2Vec);
     	foundEPMs.add(patId, pattern1, pattern2, structure, cur_epm.get_score() );
     }
 
-    bool ExactMatcher::check_PPM(){
-    	if(cur_number_of_EPMs>=max_number_of_EPMs+1) return false;
-    	else return true;
-    }
+
 
     // ---------------------------------------------------------------------------------------------------------
     // heuristic (with TraceController)
-
-    // trace through F matrix and L, G_A and LR matrices to find maximally extended EPMs
-    // from each position (i,j)
-    void ExactMatcher::trace_EPMs_heuristic(){
-
-    	cout << "compute EPMs heuristic with trace controller " << endl;
-    	cout << "min score " << min_subopt_score << endl;
-
-    	for(size_type i=1;i<F.sizes().first;++i){
-    		if(debug_trace_F) cout << "for i range " << sparse_trace_controller.min_col(i) << ","
-    				       << sparse_trace_controller.max_col(i) << endl;
-
-    		pos_type min_col = std::max((size_type)1,sparse_trace_controller.min_col(i));
-    		pos_type max_col = std::min(F.sizes().second,sparse_trace_controller.max_col(i)+1);
-
-    		for(size_type j=min_col;j<max_col;++j){
-    			if(F(i,j)>(infty_score_t)min_subopt_score){
-
-    				// check whether the position needs to be traced (if the corresponding
-    				// EPM is maximally extended
-    				//if(i==F.sizes().first-1 || j==F.sizes().second-1 || seqA[i+1]!=seqB[j+1]){
-    				if(i==F.sizes().first-1 || j==max_col-1 || seqA[i+1]!=seqB[j+1]){
-
-    					EPM cur_epm;
-    					// compute traceback from position (i,j)
-    					trace_F_heuristic(i,j,cur_epm);
-    					// store the traced epm in the corresponding datastructure
-    					add_foundEPM(cur_epm,false);
-
-    				}
-    			}
-    		}
-    	}
-    }
 
     // traces through the F matrix from position (i,j) to find the best EPM that ends in (i,j)
     void ExactMatcher::trace_F_heuristic(pos_type i, pos_type j, EPM &cur_epm){
@@ -1149,96 +1148,6 @@ bool debug_fill_epm = true;
     // ---------------------------------------------------------------------------------------------------------
     // suboptimal
 
-    // trace through the F matrix and L, G_A, G_AB and LR matrices to find all maximally extended
-    // suboptimal EPMs up to a certain threshold
-    //todo: merge with trace_EPMs_heuristic
-    void ExactMatcher::trace_EPMs_suboptimal(score_t difference_to_opt_score, bool count_EPMs){
-    	// reset EPM counter
-    	cur_number_of_EPMs=0;
-    	if(verbose) {
-    	if(count_EPMs) cout << "count EPMs " << difference_to_opt_score << endl;
-    	else cout << "compute EPMs suboptimal " << difference_to_opt_score << endl;
-    	}
-    	// -----------------------------------------------------------------------------------
-    	// for debugging
-
-    	//const ArcMatch &am = arc_matches.arcmatch(128566); //example with many different arcmatches to proc
-    	//const ArcMatch &am = arc_matches.arcmatch(215010); //example with high score
-    	//const ArcMatch &am = arc_matches.arcmatch(61593); //96,for example 3
-    	//const ArcMatch &am = arc_matches.arcmatch(39581);
-    	//const Arc &a = bpsA.arc(583);
-    	//const Arc &b = bpsB.arc(636);
-    	//cout << "trace Arcs " << a << " and " << b << " with score " << D(a,b) << endl;
-    	//epm_cont_t found_EPMs;
-    	//trace_LGLR_suboptimal(a,b,324,found_EPMs,true);
-    	//cout << "found epms "  << endl << found_EPMs << endl;
-    	//return;
-    	//cout << "trace am " << am.idx() << " with score " << score_for_arc_match(am,true)<< endl;
-    	//cout << "number of arcmatches " << arc_matches.num_arc_matches() << endl;
-    	/*size_t max_size=0;
-        	for(size_t i=0;i<(arc_matches.num_arc_matches());++i){
-        		epm_cont_t found_EPMs;
-        		const ArcMatch &am = arc_matches.arcmatch(i);
-        		if(i%10000==0) cout <<  i << endl;
-        		if(i>170000 && i%1000==0) cout << i << endl;
-        		if(this->score_for_arc_match(am,true).is_finite()){
-        			if(i%10000==0) cout << "trace am " << am.idx() << " with score " << score_for_arc_match(am,true)<< endl;
-        			trace_LGLR_suboptimal(am,(infty_score_t)500,found_EPMs,true);
-        			//int count=0;
-        			if(found_EPMs.size()>max_size) max_size = found_EPMs.size();
-        		}
-        	}*/
-    	//cout << "max number of EPMs found for arcmatch " << max_size << endl;
-
-    	//trace_LGLR_suboptimal(a,b,500,found_EPMs,true);
-    	//return;
-    	//cout << "number of epms found " << found_EPMs.size() << endl;
-    	//cout << "found epms " << found_EPMs << endl;
-
-    	// -------------------------------------------------------------------------------------
-
-    	if(verbose) cout << "maximal score " << F(pos_of_max.first,pos_of_max.second) << endl;
-    	score_t max_in_F = F(pos_of_max.first,pos_of_max.second).finite_value();
-
-    	score_t subopt_score = this->min_subopt_score;
-    	subopt_score = max_in_F-difference_to_opt_score;
-
-    	if (subopt_score < min_subopt_score) subopt_score = min_subopt_score;
-
-    	if(verbose) cout << "subopt_score " << subopt_score << endl;
-
-    	//compute actual suboptimal traceback
-    	//for(pos_type i=1;i<F.sizes().first;++i){
-    	//for(pos_type j=1;j<F.sizes().second;++j){
-    	for(size_type i=1;i<F.sizes().first;++i){
-    		if(debug_trace_F) cout << "for i range " << sparse_trace_controller.min_col(i) << ","
-    				<< sparse_trace_controller.max_col(i) << endl;
-
-    		pos_type min_col = std::max((size_type)1,sparse_trace_controller.min_col(i));
-    		pos_type max_col = std::min(F.sizes().second,sparse_trace_controller.max_col(i)+1);
-
-    		for(size_type j=min_col;j<max_col;++j){
-
-    			if(F(i,j)>=(infty_score_t)subopt_score){
-
-    				if(i==F.sizes().first-1 || j==F.sizes().second-1 || seqA[i+1]!=seqB[j+1]){
-    					//todo: adjust for use with sparse trace controller
-
-    					score_t max_tol_left=F(i,j).finite_value()-subopt_score;
-    					assert(max_tol_left>=0);
-
-    					if(debug_trace_F) cout << "trace position subopt " << i << "," << j << " with max tol left " << max_tol_left << endl;
-    					// compute traceback from position (i,j)
-    					trace_F_suboptimal(i,j,max_tol_left,true,count_EPMs);
-
-    					//test
-    					if(!check_PPM()){return;}
-    				}
-    			}
-    		}
-    	}
-    }
-
     // traces through the F matrix from position (i,j) to find all suboptimal EPMs up to a certain
     // threshold that ends in (i,j)
     void ExactMatcher::trace_F_suboptimal(pos_type i,pos_type j,score_t max_tol,bool recurse,bool count_EPMs){
@@ -1342,23 +1251,8 @@ bool debug_fill_epm = true;
     		preproc_fill_epm(am_to_do_for_F,pos_cur_epm,found_epms,count_EPMs,min_allowed_score);
     	}
 
-    	//to test validate_epm_list todo:remove
-    	/*if(found_epms.size()>10){
-    		EPM epm_t;
-    		epm_t.add(1,1,'.');
-    		epm_t.add(2,2,'(');
-    		epm_t.add(3,3,'.');
-    		epm_t.add(7,4,'.');
-    		epm_t.add(8,5,'.');
-    		epm_t.add(9,6,'.');
-    		epm_t.add(10,7,')');
-    		epm_t.add(11,8,'.');
-    		found_epms.push_back(epm_t);
-    		cout << "found epms for " << i<< "," << j << ":" << endl << found_epms << endl;
-    	}*/
-
     	// check whether the EPM list doesn't contain duplicates and only maximally extended EPMs
-    	//if(!count_EPMs) assert(validate_epm_list(found_epms)); //todo: use again
+    	if(!count_EPMs) assert(validate_epm_list(found_epms));
 
     	//debugging
     	//cout << "number epms " << found_epms.size() << endl;
@@ -1648,7 +1542,7 @@ bool debug_fill_epm = true;
 
     				// store the sequence positions of the match
     				if(!count_EPMs) cur_epm->add(cur_pos_seq.first,cur_pos_seq.second,'.');
-    				else cur_epm->overwrite(cur_pos_seq.first,cur_pos_seq.second,'.',0);  // overwrite information
+    				else cur_epm->overwrite(cur_pos_seq.first,cur_pos_seq.second,'.',0);  // overwrite information when counting the EPMs
     						//-> use first position of vector as the storage for the last matched sequence position
     			}
     		}
@@ -1696,7 +1590,6 @@ bool debug_fill_epm = true;
     }
 
 	// traces through the G_A and G_B matrices for the suboptimal case
-    // todo: change current possibility instead of adding and removing
 	void ExactMatcher::trace_G_suboptimal(const Arc &a, const Arc &b,
 			const poss_L_LR &pot_new_poss, poss_L_LR &poss, size_type pos_cur_epm,
 			epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do,bool count_EPMs){
@@ -2278,18 +2171,12 @@ bool debug_fill_epm = true;
 
     	if(found_epms.size()>10000) cout << "validate epm list " << found_epms.size() << endl;
 
-    	//todo: remove again!
-    	//if(found_epms.size()>1000){
-    	//	cout << "epm list too long for validation " << endl;
-    	//	return true;
-    	//}
-
-    	int counter=0;
+    	//int counter=0;
 
     	for(epm_cont_t::const_iterator cur_epm = found_epms.begin();cur_epm!=found_epms.end();++cur_epm){
 
-    		if(counter%1000==0 && counter!=0) cout << counter << endl; // show progress
-    		++counter;
+    		//if(counter%1000==0 && counter!=0) cout << counter << endl; // show progress
+    		//++counter;
 
     		//go through all epms from the current epm on
     		epm_cont_t::const_iterator it = cur_epm;
@@ -2533,9 +2420,11 @@ bool debug_fill_epm = true;
     	out << "epm_id\t score\t structure\t positions" << endl;
     	for(PatternPairMap::patListCITER it = pat_pair_list.begin(); it != pat_pair_list.end();++it,++i){
     		const PatternPair &pat_pair = **it;
-    		out << i << "\t" << pat_pair.getScore() << "\t" << pat_pair.get_struct() <<  "\t"; //todo: fix
+    		out << i << "\t" << pat_pair.getScore() << "\t" << pat_pair.get_struct() <<  "\t";
     		const intVec &pat1 = pat_pair.getFirstPat().getPat();
     		const intVec &pat2 = pat_pair.getSecPat().getPat();
+
+    		assert(pat1.size()==pat2.size());
     		intVec::const_iterator it_pat1 = pat1.begin();
     		intVec::const_iterator it_pat2 = pat2.begin();
     		for(; it_pat1 != pat1.end(), it_pat2 != pat2.end(); ++it_pat1, ++it_pat2){

@@ -404,10 +404,10 @@ public:
 
 
 		matidx_t max_idx = std::numeric_limits<index_t>::max();
-		matpos_t max_mat_pos = matpos_t(max_idx,max_idx);
+		matpos_t invalid_mat_pos = matpos_t(max_idx,max_idx);
 
-		matpos_t diag_pos = max_mat_pos;
-		matpos_t top_pos = max_mat_pos;
+		matpos_t diag_pos = invalid_mat_pos;
+		matpos_t top_pos = invalid_mat_pos;
 
 		// take matrix postion next on the diagonal (based on the SparsificationMapper!)
 		matidx_t cur_row = mat_pos.first-1; //sparse_mapperA.first_valid_mat_pos_before(indexA,i,left_endA);
@@ -430,19 +430,19 @@ public:
 
 			//if(min_col<idx_after_max_col && min_col<=col_before){
 			if(min_col<idx_after_max_col){ 	// valid interval found
-				if(diag_pos==max_mat_pos && min_col<=col_before){	// valid diag pos found
+				if(diag_pos==invalid_mat_pos && min_col<=col_before){	// valid diag pos found
 					diag_pos = matpos_t(cur_row,std::min(idx_after_max_col-1,col_before));
 				}
-				if(top_pos==max_mat_pos && mat_pos.second>=min_col && mat_pos.second<idx_after_max_col){
+				if(top_pos==invalid_mat_pos && mat_pos.second>=min_col && mat_pos.second<idx_after_max_col){
 					top_pos = matpos_t(cur_row,mat_pos.second);
 				}
 			}
-			if(cur_row==0 || (diag_pos!=max_mat_pos && top_pos!=max_mat_pos)){
+			if(cur_row==0 || (diag_pos!=invalid_mat_pos && top_pos!=invalid_mat_pos)){
 				break;
 			}
 		}
 
-		assert(diag_pos!=max_mat_pos); //make sure we found a diagonal position
+		assert(diag_pos!=invalid_mat_pos); //make sure we found a diagonal position
 		//assert(idx_after_max_col>0);
 
 		//matidx_t max_col = idx_after_max_col-1;
@@ -452,7 +452,7 @@ public:
 
 		//assert(is_valid_idx_pos(indexA,indexB,result));
 		assert(is_valid_idx_pos(indexA,indexB,diag_pos));
-		if(top_pos!=max_mat_pos) assert(is_valid_idx_pos(indexA,indexB,top_pos));
+		if(top_pos!=invalid_mat_pos) assert(is_valid_idx_pos(indexA,indexB,top_pos));
 		return pair<matpos_t,matpos_t>(diag_pos,top_pos);
 	}
 
@@ -815,7 +815,7 @@ private:
 	//<state, max_tol, current matrix position, potential arcMatch, sequence position to be matched>
     typedef quintuple<int,infty_score_t,matpos_t,PairArcIdx,pair_seqpos_t> poss_L_LR;
 
-    //infty_score_t because of the check_poss, change to score_t!!!
+    //todo: infty_score_t because of the check_poss, change to score_t!!!
     //! a triple for storing the state, max tolerance left and the current matrix position (for backtracing in matrix G)
     typedef triple<int,infty_score_t,matpos_t> poss_in_G;//<state,max_tol,current matrix position>
 
@@ -845,17 +845,14 @@ private:
     int alpha_2; //!< multiplier for structural score
     int alpha_3; //!< multiplier for stacking score
 
-   // score_t difference_to_opt_score; //!< in the suboptimal traceback all EPMs which are at most difference_to_opt_score
+    int difference_to_opt_score; //!< in the suboptimal traceback all EPMs which are at most difference_to_opt_score
     								 // worse than the optimal score are considered
-    score_t min_subopt_score; //!< minimal score of a traced EPM
-    //score_t easier_scoring_par; //!< use only sequential (*alpha_1) and a constant structural score alpha (easier_scoring_par)
-    							//!< for each matched base of a basepair
-  //  double subopt_range; //!< trace EPMs within that range of best EPM score"
-    score_t am_threshold; //!< minimal arcmatch score in F matrix
-    //score_t subopt_score; //!< in the suboptimal traceback all EPMs with at least subopt_score are considered
-   // double cutoff_coverage; //!< Skip chaining if best EPM has larger coverage on shortest seq
+    int min_score; //!< minimal score of a traced EPM
+    int am_threshold; //!< minimal arcmatch score in F matrix
     long int max_number_of_EPMs; //!< maximal number of EPMs for the suboptimal traceback
-    long int cur_number_of_EPMs; //todo: describe
+    long int cur_number_of_EPMs; //!< number of EPMs for current suboptimal traceback
+
+    bool verbose; //!< whether to output additional information
 
     pair_seqpos_t pos_of_max; //!< the position of the maximum in matrix F
 
@@ -865,11 +862,6 @@ private:
     const Arc pseudo_arcB; //!< pseudo Arc for sequence B (0,seqB.length())
 
     const matpos_t invalid_mat_pos;
-
-    //todo: add description
-    long int get_cur_number_of_EPMs(){
-    	return cur_number_of_EPMs;
-    }
 
     /**
      * View on matrix D
@@ -1008,18 +1000,30 @@ private:
      */
     void add_foundEPM(EPM &cur_epm, bool count_EPMs);
 
-    bool check_PPM();
+    bool check_PPM(){
+    	if(this->difference_to_opt_score != -1) return true; //when we use the parameter difference_to_opt_score,
+    		//we enumerate all EPMs regardless of whether the number extends the max_number_of_EPMs
+    	if(cur_number_of_EPMs>=max_number_of_EPMs+1) return false;
+    	else return true;
+    }
+
+    /**
+     * \brief finds the start positions for the heuristic or suboptimal traceback
+     *
+     * @param suboptimal whether the suboptimal traceback is computed
+     * @param difference_to_opt_score the current difference to the optimal score (-1 if not used)
+     * @param count_EPMs whether the EPMs are counted or also stored in the PatternPairMap
+     */
+    void find_start_pos_for_tb(bool suboptimal, score_t difference_to_opt_score=-1, bool count_EPMs=false);
+
+    bool check_num_EPMs(){
+    	double valid_deviation = 0.8;
+    	return (cur_number_of_EPMs>=max_number_of_EPMs*valid_deviation && cur_number_of_EPMs<=max_number_of_EPMs);
+    }
 
 
     // --------------------------------------------
-    // heuristic traceback with TraceController
-
-    /**
-     * traces all EPMs with the heuristic traceback
-     * traces through F matrix and L, G and LR matrices to find maximally extended EPMs
-     * from each position (i,j)
-     */
-    void trace_EPMs_heuristic();
+    // heuristic traceback
 
     /**
      * \brief traces through the F matrix from position (i,j)
@@ -1062,18 +1066,6 @@ private:
 
     // --------------------------------------------
     // suboptimal traceback
-
-    /**
-     * traces all EPMs with the suboptimal traceback
-     * traces through F matrix and L, G_A, G_AB and LR matrices and enumerate
-     * all suboptimal EPMs with the difference difference_to_opt_score
-     * to the optimal score
-     *
-     * @param difference_to_opt_score score difference to the optimal score
-     * @param count_EPMs whether the EPMs are just counted or also
-     * stored in the PatternPairMap
-     */
-    void trace_EPMs_suboptimal(score_t difference_to_opt_score, bool count_EPMs);
 
     /**
      * \brief traces through the F matrix from position (i,j) to
@@ -1287,16 +1279,14 @@ public:
 		 const ArcMatchesIndexed &arc_matches_,
 		 const SparseTraceController &sparse_trace_controller_,
 		 PatternPairMap &foundEPMs_,
-		 const int &alpha_1,
-		 const int &alpha_2,
-		 const int &alpha_3,
-		 //const int &difference_to_opt_score,
-		 const int &min_score,
-		 //const int &easier_scoring_par,
-		 //const double &subopt_range_,
-		 const int &am_threshold_,
-		 //const double &cutoff_coverage_,
-		 const int &max_number_of_EPMs_
+		 int alpha_1_,
+		 int alpha_2_,
+		 int alpha_3_,
+		 score_t difference_to_opt_score_,
+		 score_t min_score_,
+		 score_t am_threshold_,
+		 long int max_number_of_EPMs_,
+		 bool opt_verbose_
 		 );
 
     ~ExactMatcher();
