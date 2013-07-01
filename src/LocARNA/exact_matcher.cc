@@ -2,6 +2,7 @@
 #include "arc_matches.hh"
 #include "exact_matcher.hh"
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -21,6 +22,8 @@ bool debug_fill_epm = false;
 	// Constructor
     ExactMatcher::ExactMatcher(const Sequence &seqA_,
 			       const Sequence &seqB_,
+			       const RnaData &rna_dataA_,
+			       const RnaData &rna_dataB_,
 			       const ArcMatchesIndexed &arc_matches_,
 			       const SparseTraceController &sparse_trace_controller_,
 			       PatternPairMap &foundEPMs_,
@@ -35,6 +38,8 @@ bool debug_fill_epm = false;
 			       )
 	: seqA(seqA_),
 	  seqB(seqB_),
+	  rna_dataA(rna_dataA_),
+	  rna_dataB(rna_dataB_),
 	  arc_matches(arc_matches_),
 	  bpsA(arc_matches_.get_base_pairsA()),
 	  bpsB(arc_matches_.get_base_pairsB()),
@@ -811,13 +816,15 @@ bool debug_fill_epm = false;
     	//stacking arcA
     	if(a.left()+1==inner_a.left() &&
     			a.right()==inner_a.right()+1){
-    		prob_stacking_arcA = bpsA.get_arc_2_prob(a.left(),a.right());
+    		//prob_stacking_arcA = bpsA.get_arc_2_prob(a.left(),a.right());
+    		prob_stacking_arcA = rna_dataA.joint_arc_prob(a.left(),a.right());
     	}
 
     	//stacking arcB
     	if(b.left()+1==inner_b.left() &&
     			b.right()==inner_b.right()+1){
-    		prob_stacking_arcB = bpsB.get_arc_2_prob(b.left(),b.right());
+    		//prob_stacking_arcB = bpsB.get_arc_2_prob(b.left(),b.right());
+    		prob_stacking_arcB = rna_dataB.joint_arc_prob(b.left(),b.right());
     	}
 
     	return (prob_stacking_arcA+prob_stacking_arcB)*100*alpha_3;
@@ -832,8 +839,8 @@ bool debug_fill_epm = false;
 
     	if(count_EPMs) return; //do not add EPM to patternPairMap, just count the EPMs
 
-    	static string seq1_id = seqA.names()[0];
-    	static string seq2_id = seqB.names()[0];
+    	static string seq1_id = seqA.seqentry(0).name();
+    	static string seq2_id = seqB.seqentry(0).name();
 
     	// sort the pattern vector of the current epm according
     	// to increasing positions
@@ -1371,9 +1378,9 @@ bool debug_fill_epm = false;
 
     			// structural matching
     			for(ArcIdxVec::const_iterator itA=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).begin();
-    					itA!=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).end();itA++){
+    					itA!=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).end();++itA){
     				for(ArcIdxVec::const_iterator itB=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).begin();
-    						itB!=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).end();itB++){
+    						itB!=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).end();++itB){
 
     					const Arc &inner_a = bpsA.arc(*itA);
     					const Arc &inner_b = bpsB.arc(*itB);
@@ -2348,7 +2355,7 @@ bool debug_fill_epm = false;
     void  PatternPairMap::makeOrderedMap()
     {
 	patternOrderedMap.clear();
-	for(patListITER i = patternList.begin();i!=patternList.end();i++)
+	for(patListITER i = patternList.begin();i!=patternList.end();++i)
 	    {
 		patternOrderedMap.insert(make_pair((*i)->getSize(),*i));
 	    }
@@ -2360,7 +2367,7 @@ bool debug_fill_epm = false;
 	    {
 		idMap.clear();
 		patternList.clear();
-		for (orderedMapITER i=patternOrderedMap.begin();i!=patternOrderedMap.end();i++)
+		for (orderedMapITER i=patternOrderedMap.begin();i!=patternOrderedMap.end();++i)
 		    {
 			add(i->second);
 		    }
@@ -2398,7 +2405,7 @@ bool debug_fill_epm = false;
     int  PatternPairMap::getMapBases()
     {
 	int bases = 0;
-	for(patListITER i = patternList.begin();i!=patternList.end();i++)
+	for(patListITER i = patternList.begin();i!=patternList.end();++i)
 	    {
 		bases += (*i)->getSize();
 	    }
@@ -2408,7 +2415,7 @@ bool debug_fill_epm = false;
     int  PatternPairMap::getMapEPMScore()
     {
 	int EPMscore = 0;
-	for(patListITER i = patternList.begin();i!=patternList.end();i++)
+	for(patListITER i = patternList.begin();i!=patternList.end();++i)
 	    {
 		EPMscore += (*i)->getEPMScore();
 	    }
@@ -2538,7 +2545,7 @@ bool debug_fill_epm = false;
 			    int maxScore = 0;
 
 			    // iterate over all EPMS to get best score
-			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); myIter++){
+			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); ++myIter){
 
 				//cout << i+j_1-1 << "," << k+l_2-1 << " patid: " <<  (*myIter)->getId() << endl;
 
@@ -2630,7 +2637,7 @@ bool debug_fill_epm = false;
 
 
 			    // over all EPMs which end at (i+j_1-1,k+l_2-1)
-			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); myIter++){
+			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); ++myIter){
 				//cout << "here " << (*myIter)->getId() << endl;
 
 				// check if current EPM fits inside current hole
@@ -2682,7 +2689,7 @@ bool debug_fill_epm = false;
 	intVec patternVec;
 	string structure;
 	char x;
-	for (PatternPairMap::patListCITER i=myMap.getList().begin();i != myMap.getList().end();i++)
+	for (PatternPairMap::patListCITER i=myMap.getList().begin();i != myMap.getList().end();++i)
 	    {
 		if(firstSeq)
 		    patternVec= (*i)->getFirstPat().getPat();
@@ -2738,7 +2745,7 @@ bool debug_fill_epm = false;
 		    label2Str << i << " 0.5 0.5 (" << i << ") Label\n";
 	    }
 
-	for (PatternPairMap::patListCITER i=myMap.getList().begin();i != myMap.getList().end();i++)
+	for (PatternPairMap::patListCITER i=myMap.getList().begin();i != myMap.getList().end();++i)
 	    {
 		intVec tmpvec1=(*i)->getFirstPat().getPat();
       
@@ -2797,7 +2804,7 @@ bool debug_fill_epm = false;
 	intVec positionsSeq1LCSEPM;
 	intVec positionsSeq2LCSEPM;
 
-	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();i++)
+	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();++i)
 	    {
 		positionsSeq1LCSEPM.insert(positionsSeq1LCSEPM.end(),(*i)->getFirstPat().getPat().begin(),(*i)->getFirstPat().getPat().end());
 		positionsSeq2LCSEPM.insert(positionsSeq2LCSEPM.end(),(*i)->getSecPat().getPat().begin(),(*i)->getSecPat().getPat().end());
@@ -2885,9 +2892,9 @@ bool debug_fill_epm = false;
 	seq2_2 += "#2";
 	seq2_3 += "#3";
 
-	outLocARNAfile << ">"<< seqA.names()[0] << endl << upperCase(sequenceA) << endl;
+	outLocARNAfile << ">"<< seqA.seqentry(0).name() << endl << upperCase(sequenceA) << endl;
 	outLocARNAfile << seq1_1 << endl << seq1_2 << endl << seq1_3 << endl;
-	outLocARNAfile << ">"<<seqB.names()[0] << endl << upperCase(sequenceB) << endl;
+	outLocARNAfile << ">"<<seqB.seqentry(0).name() << endl << upperCase(sequenceB) << endl;
 	outLocARNAfile << seq2_1 << endl << seq2_2 << endl << seq2_3 << endl << endl;
 
 	outLocARNAfile.close();
@@ -2902,7 +2909,7 @@ bool debug_fill_epm = false;
 	intVec positionsSeq1LCSEPM;
 	intVec positionsSeq2LCSEPM;
 
-	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();i++)
+	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();++i)
 	    {
 		positionsSeq1LCSEPM.insert(positionsSeq1LCSEPM.end(),(*i)->getFirstPat().getPat().begin(),(*i)->getFirstPat().getPat().end());
 		positionsSeq2LCSEPM.insert(positionsSeq2LCSEPM.end(),(*i)->getSecPat().getPat().begin(),(*i)->getSecPat().getPat().end());
@@ -2970,8 +2977,8 @@ bool debug_fill_epm = false;
 
 	outfile << "CLUSTAL W (1.83) multiple sequence alignment --- expaRNA 0.7.2 - exact pattern Alignment of RNA --- Score: "<< matchingsLCSEPM.size() << endl <<endl;
 
-	string tmp1 = seqA.names()[0] +"      ";
-	string tmp2 = seqB.names()[0] +"      ";
+	string tmp1 = seqA.seqentry(0).name() +"      ";
+	string tmp2 = seqB.seqentry(0).name() +"      ";
 	if (tmp1.length() < tmp2.length())
 	    tmp1.resize(tmp2.length(),' ');
 	else

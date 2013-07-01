@@ -26,6 +26,7 @@
  ************************************************************/
 
 #include "options.hh"
+#include "aux.hh"
 #include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,6 +35,7 @@
 
 
 #include <iostream>
+#include <vector>
 
 namespace LocARNA {
 
@@ -114,7 +116,7 @@ namespace LocARNA {
      */
     bool
     process_options(int argc, char *argv[], option_def *options) {
-	int i,j,k;        /* counter */
+	int i,k;        /* counter */
 	int num_opts; /* number of options in options[] */
 
 	int long_index; /* index in long_opts */
@@ -123,9 +125,9 @@ namespace LocARNA {
   
 	int success; // flag indicating success of decoding an option
 
-	char *short_opts; 
-	struct option *long_opts;
-	bool *is_set; // boolean var for each option: is the option set?
+	std::string short_opts; 
+	std::vector<struct option> long_opts;
+	std::vector<bool> is_set; // boolean var for each option: is the option set?
 
 	int index;
 
@@ -133,20 +135,16 @@ namespace LocARNA {
 
 	//std::cout <<"NUM Opts: "<<num_opts<<std::endl;
 
-	/* alloc sufficient memory */
-	short_opts = (char *)malloc(num_opts*2 + 1);
-	long_opts  = (struct option *)malloc((num_opts+1)*sizeof(struct option));
-	is_set     = (bool *)malloc(num_opts*sizeof(bool)); 
+	long_opts.resize(num_opts+1);
+	is_set.resize(num_opts);
 			
 	/* generate short options string and long options struct */
-	for (i=0,j=0,k=0; i<num_opts; ++i) {
+	for (i=0,k=0; i<num_opts; ++i) {
 	    /* short options */
 	    if (options[i].shortname) {
-		short_opts[j] = options[i].shortname;
-		++j;
+		short_opts += options[i].shortname;
 		if (options[i].argument!=0) { /* with argument */
-		    short_opts[j]=':';
-		    ++j;
+		    short_opts += ':';
 		}
 	    }
 
@@ -168,8 +166,6 @@ namespace LocARNA {
 	    }
 	}
 
-	short_opts[j]=0; // 0-terminate short options string
-		
 	/* clear option flags */
 	for (i=0; i<num_opts; ++i) {
 	    if (options[i].flag) *(options[i].flag) = FALSE;
@@ -187,14 +183,14 @@ namespace LocARNA {
 					options[i].deflt);
 		    if (!success) {
 			printf("INTERNAL ERROR. Option --%s: parsing of default argument failed\n",options[i].longname.c_str());
-			exit(-1);
+			throw(failure(""));
 		    }
 		}
 	    }
 	}
 
 	/* main loop to process options */
-	while ((c=getopt_long(argc,argv,short_opts,long_opts,&long_index))!=EOF) {
+	while ((c=getopt_long(argc,argv,short_opts.c_str(),&(long_opts[0]),&long_index))!=EOF) {
 
 	    switch (c) {
 	    case '?':
@@ -284,12 +280,7 @@ namespace LocARNA {
 				 (options[i].argname!="")?options[i].argname.c_str():"param");
 		    return FALSE;
 		}
-  
-	/* free allocated memory */
-	free(short_opts);
-	free(long_opts);
-	free(is_set);
-  
+    
 	return TRUE;
     }
 
@@ -478,7 +469,7 @@ namespace LocARNA {
     decode_argument(void *argument, int arg_type, const std::string &optarg) {
 	if (argument == 0) {
 	    fprintf(stderr,"process_options: no argument variable\n");
-	    exit(-1);
+	    throw failure("");
 	}
   
 	int success=0;
@@ -489,13 +480,14 @@ namespace LocARNA {
 	    success=1;
 	    break;
 	case O_ARG_INT:
-	    success=sscanf(optarg.c_str(), "%d", (int *)argument);
+	    // use large width limits for scanf (e.g., %20d limits ints to at most 20 characters) 
+	    success=sscanf(optarg.c_str(), "%20d", (int *)argument);
 	    break;
 	case O_ARG_FLOAT:
-	    success=sscanf(optarg.c_str(), "%f", (float *)argument);
+	    success=sscanf(optarg.c_str(), "%40f", (float *)argument);
 	    break;
 	case O_ARG_DOUBLE:
-	    success=sscanf(optarg.c_str(), "%lf", (double *)argument);
+	    success=sscanf(optarg.c_str(), "%80lf", (double *)argument);
 	    break;
 	case O_ARG_BOOL:
 	    *((bool *)argument) = false;
@@ -515,7 +507,7 @@ namespace LocARNA {
 	    break;
 	default:
 	    fprintf(stderr,"process_options: unknown argument type\n");
-	    exit(-1);
+	    throw failure("");
 	    break;
 	}
     

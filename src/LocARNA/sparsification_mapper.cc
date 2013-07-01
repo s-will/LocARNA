@@ -1,4 +1,6 @@
 #include "sparsification_mapper.hh"
+#include "sequence.hh"
+
 
 namespace LocARNA {
 
@@ -25,7 +27,7 @@ void SparsificationMapper::compute_mapping_idx_arcs(){
 				struct_pos.unpaired=true;
 			}
 			for(BasePairs::RightAdjList::const_iterator inner_arc=bps.right_adjlist(j).begin();
-					inner_arc!=bps.right_adjlist(j).end();inner_arc++){
+					inner_arc!=bps.right_adjlist(j).end();++inner_arc){
 				if(inner_arc->left()<=arc.left()) break;
 				if(!is_valid_arc(*inner_arc,arc)) continue;
 				left_adj_vec.at(arc.idx()).at(inner_arc->left()-arc.left()).push_back(inner_arc->idx());
@@ -51,7 +53,7 @@ void SparsificationMapper::compute_mapping_idx_arcs(){
 void SparsificationMapper::compute_mapping_idx_left_ends(){
 
 	info_for_pos struct_pos;
-	size_type seq_length = rnadata.get_sequence().length();
+	size_type seq_length = rnadata.length();
 //	std::cout << "compute_mapping_idx_left_ends: seq_length=" << seq_length << std::endl;
 	info_valid_seq_pos_vecs.resize(seq_length+1);
 	valid_mat_pos_vecs_before_eq.resize(seq_length+1);
@@ -75,7 +77,7 @@ void SparsificationMapper::compute_mapping_idx_left_ends(){
 			else
 			    iterate_left_adj_list(cur_left_end,cur_pos,0,struct_pos);
 			for(BasePairs::RightAdjList::const_iterator inner_arc=bps.right_adjlist(cur_pos).begin();
-				inner_arc!=bps.right_adjlist(cur_pos).end();inner_arc++){
+				inner_arc!=bps.right_adjlist(cur_pos).end();++inner_arc){
 			    if(inner_arc->left()<=cur_left_end) break;
 
 			    if (cur_left_end == 0)
@@ -117,7 +119,7 @@ void SparsificationMapper::valid_pos_external(pos_type cur_pos,const Arc *inner_
 
 void SparsificationMapper::iterate_left_adj_list(pos_type cur_left_end, pos_type cur_pos,const Arc *inner_arc, info_for_pos &struct_pos){
 	for(BasePairs::LeftAdjList::const_iterator arc=bps.left_adjlist(cur_left_end).begin();
-			arc!=bps.left_adjlist(cur_left_end).end();arc++){
+			arc!=bps.left_adjlist(cur_left_end).end();++arc){
 		if(cur_pos>=arc->right()) continue;
 		if(!inner_arc){
 			if(!is_valid_pos(*arc,cur_pos)) continue;
@@ -134,7 +136,7 @@ void SparsificationMapper::iterate_left_adj_list(pos_type cur_left_end, pos_type
 
 std::ostream &operator << (std::ostream &out, const vector<SparsificationMapper::InfoForPosVec> &pos_vecs_) {
 	size_type idx = 0;
-	for (vector<SparsificationMapper::InfoForPosVec>::const_iterator it = pos_vecs_.begin();it!=pos_vecs_.end();it++){
+	for (vector<SparsificationMapper::InfoForPosVec>::const_iterator it = pos_vecs_.begin();it!=pos_vecs_.end();++it){
 		out << "Idx " << idx << endl;
 		out << (*it) << endl;
 		idx++;
@@ -144,7 +146,7 @@ std::ostream &operator << (std::ostream &out, const vector<SparsificationMapper:
 
 std::ostream &operator << (std::ostream &out, const SparsificationMapper::InfoForPosVec &pos_vec_){
 	for(SparsificationMapper::InfoForPosVec::const_iterator it_bp = pos_vec_.begin();
-			it_bp!=pos_vec_.end();it_bp++){
+			it_bp!=pos_vec_.end();++it_bp){
 		out << "pos " << it_bp->seq_pos;
 		//int type = it_bp->type_of_pos;
 		bool unpaired = it_bp->unpaired;

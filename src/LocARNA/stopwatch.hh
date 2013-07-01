@@ -1,8 +1,12 @@
 #ifndef LOCARNA_STOPWATCH_HH
 #define LOCARNA_STOPWATCH_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <tr1/unordered_map>
-#include <iostream>
+#include <iosfwd>
 #include <string>
 
 
@@ -30,10 +34,24 @@ namespace LocARNA {
 
     public:
 	
+	/** 
+	 * @brief Constructor
+	 * 
+	 * @param print_on_exit whether to automatically print times on exit  
+	 */
 	StopWatch(bool print_on_exit=false);
+	
+
+	/** 
+	 * @brief Destructor 
+	 */
 	~StopWatch();
 	
-	
+	/** 
+	 * Control automatic printing of times at exit
+	 * 
+	 * @param print_on_exit whether to print on exit
+	 */
 	void
 	set_print_on_exit(bool print_on_exit);
 	
@@ -105,7 +123,6 @@ namespace LocARNA {
 	 * @param out output stream
 	 * 
 	 * @return output stream
-	 * @todo implement
 	 */
 	std::ostream &
 	print_info(std::ostream &out) const;

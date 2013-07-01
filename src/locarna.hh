@@ -1,6 +1,10 @@
 #ifndef LOCARNA_HH
 #define LOCARNA_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 // include all headers of the locarna library
 
 #include "LocARNA/sequence.hh"

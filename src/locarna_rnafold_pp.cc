@@ -11,8 +11,20 @@
  * computing pair probabilities of the input sequences.
  *
  * Reads sequence in fasta from cin and writes pp-files to cout
+ *
+ * command line argument --TEST provides a way to test for linking to
+ * the ViennaLib. (This should be eventually replaced by a less
+ * idiosyncratic mechanism.)
+ *
+ * @todo use RnaEnsemble to avoid code duplication (caution: at the
+ * time of writing, RnaEnsemble does not support constraints yet.)
  */
 /************************************************************/
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 
 #include <stdlib.h>
 #include <iostream>
@@ -32,9 +44,9 @@ extern "C" {
 #include <ViennaRNA/utils.h>
 }
 
-const   double sfact         = 1.07; // from RNAfold code
+const   double sfact         = 1.07; //!< weird factor from RNAfold code
 
-double cutoff = 0.0005;
+double cutoff = 0.0005; //!< default probability cutoff
 
 // using namespace LocARNA;
 
@@ -52,13 +64,11 @@ usage() {
 	<< "Options:" <<std::endl
 	<< std::endl
 	<< "  -C           use structural constraints" << std::endl
-	<< "  -noLP        forbid lonely base pairs" << std::endl
+	<< "  --noLP       forbid lonely base pairs" << std::endl
 	<< "  -p cutoff    set cutoff probability (default "<<cutoff<<")" << std::endl
 	<< std::endl	
 	<< "Reads the input sequence in simplified fasta format from stdin (no linebreaks!)."<<std::endl 
 	<< "Writes pp-format to stdout." << std::endl;
-
-    exit(-1);
 }
 
 /** 
@@ -80,13 +90,15 @@ main(int argc, char **argv) {
 	    } else {
 		std::cerr << "Option -p requires argument."<<std::endl;
 		usage();
+		return -1;
 	    }
 	} else if ( std::string(argv[i]).compare("--TEST") == 0 ) {
 	    std::cout << "1";
-	    exit(0);
+	    return 0;
 	} else {
 	    std::cerr << "Unknown command line argument: "<<argv[i]<<std::endl;
 	    usage();
+	    return -1;
 	}
     }
     
@@ -142,7 +154,7 @@ main(int argc, char **argv) {
     assign_plist_from_pr(&pl, probs, seq.length(), cutoff);
     
     // write pp file
-
+    
     std::cout << "SCORE: 0" << std::endl<< std::endl;
     
     std::cout << name << "    " << sequence << std::endl;
@@ -168,7 +180,7 @@ main(int argc, char **argv) {
 
     free(structure);
     
-    exit(0);
+    return 0;
 }
 
 #else
@@ -179,11 +191,11 @@ int
 main(int argc, char **argv) {
     if ( argc==2 && std::string(argv[1]).compare("--TEST") == 0 ) {
 	std::cout << "0";
-	exit(-1);
+	return -1;
     }
     std::cerr << "ERROR: locarna_rnafold_pp requires linking against Vienna librna.\n";
     std::cerr << "This program was compiled without configure option --enable-librna."<<std::endl;
     std::cerr << "Please reconfigure and recompile to activate this program. \n";
-    exit(-1);
+    return -1;
 }
-#endif
+#endif // HAVE_LIBRNA

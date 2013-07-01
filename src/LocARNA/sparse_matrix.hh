@@ -1,27 +1,29 @@
 #ifndef SPARSE_MATRIX_HH
 #define SPARSE_MATRIX_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include <iosfwd>
+
 #include <tr1/unordered_map>
 
-/* in order to save some space we use a hash for storing the entries of the sparse
-   matrices that allow fast acces to the basepairs (i,j) in a structure.
-*/
-
 namespace LocARNA {
-    
+
     /**
      * \brief Represents a sparse 2D matrix
      *
      * Sparse matrix of entries val_t implements the matrix by a hash
      * map. The class is designed to be largely exchangable with the
-     * non-sparse Matrix class. A proxy class is used to provide the
-     * same syntax for the interface.
+     * non-sparse Matrix class. (A proxy class is used to provide the
+     * same syntax for the interface.)
      *
      * @see Matrix
      */
 
     
-    template <class T>
+    template <typename T>
     class SparseMatrix {
     public:
 	
@@ -32,38 +34,42 @@ namespace LocARNA {
 	typedef std::pair<size_type,size_type> key_t; //!< type of matrix index pair
 
     protected:
-	
-	typedef std::tr1::unordered_map<key_t,value_t > map_t; //!< map type  
-	map_t the_map; //!< internal representation of sparse matrix
-	value_t def; //!< default value of matrix entries
+		
+	typedef std::tr1::unordered_map<key_t,value_t,pair_of_size_t_hash > map_t; //!<map type 
+	map_t the_map_; //!< internal representation of sparse matrix
+	value_t def_; //!< default value of matrix entries
     
     public:
 
-	//! \brief Stl-compatible constant iterator over matrix elements.
-	//!
-	//! Behaves like a const iterator of the hash map.
+	/**
+	 * \brief Stl-compatible constant iterator over matrix elements.
+	 *
+	 * Behaves like a const iterator of the hash map.
+	 */
 	typedef typename map_t::const_iterator const_iterator;
 	
 	
-	//! \brief Element of sparse matrix 
-	//! 
-	//! Proxy for sparse matrix entries. This is required for
-	//! non-const access to matrix elements in order to
-	//! provide a very similar syntax for the sparse data
-	//! structure and the corresponding non-sparse matrix.
+	/**
+	 * \brief Element of sparse matrix 
+	 * 
+	 * Proxy for sparse matrix entries. This is required for
+	 * non-const access to matrix elements in order to
+	 * provide a very similar syntax for the sparse data
+	 * structure and the corresponding non-sparse matrix.
+	 */
 	class element {
 	private:
-	    SparseMatrix<T> *m;
-	    key_t k;
+	    SparseMatrix<T> *m_;
+	    key_t k_;
 	public:
 	    /** 
 	     * @brief Construct as proxy for specified element in given sparse matrix
 	     * 
-	     * @param m_ pointer to sparse matrix
-	     * @param k_ key/index of entry in given sparse matrix
+	     * @param m pointer to sparse matrix
+	     * @param k key/index of entry in given sparse matrix
 	     *
 	     */
-	    element(SparseMatrix<T> *m_,key_t k_): m(m_),k(k_) {}
+	    element(SparseMatrix<T> *m,key_t k): m_(m),k_(k) {}
 
 	    /** 
 	     * @brief Access entry for which the class acts as proxy
@@ -73,9 +79,9 @@ namespace LocARNA {
 	     * If entry does not exist, return the default value
 	     */
 	    operator value_t() {
-		const_iterator it = m->the_map.find(k);
-		if ( it == m->the_map.end() ) 
-		    return m->def;
+		typename map_t::const_iterator it = m_->the_map_.find(k_);
+		if ( it == m_->the_map_.end() ) 
+		    return m_->def_;
 		else 
 		    return it->second;
 	    }
@@ -92,12 +98,12 @@ namespace LocARNA {
 	     * @note If entry does not exist, x is added to the default value
 	     */
 	    element
-	    operator +=(value_t x) {
-		const_iterator it = m->the_map.find(k);
-		if ( it == m->the_map.end() ) 
-		    m->the_map[k] = m->def + x;
+	    operator +=(const value_t &x) {
+		const_iterator it = m_->the_map_.find(k_);
+		if ( it == m_->the_map_.end() ) 
+		    m_->the_map_[k_] = m_->def_ + x;
 		else 
-		    m->the_map[k] += x;
+		    m_->the_map_[k_] += x;
 	    
 		return *this;
 	    }
@@ -111,14 +117,22 @@ namespace LocARNA {
 	     * 
 	     * @return *this after assigning x
 	     *
-	     * @note If x equals the default value, and the entry exists it is erased
+	     * @note If x equals the default value and the entry exists, it is erased
 	     */
-	    element
-	    operator =(value_t x) {
-		if (x!=m->def) {
-		    m->the_map[k] = x;
+	    element &
+	    operator =(const value_t &x) {
+		if (x==m_->def_) {
+		    m_->the_map_.erase(k_);
 		} else {
-		    m->the_map.erase(k);
+		    // the following replaces m_->the_map_[k_] = x;
+		    // but never calls the default constructor for value_t
+
+		    typename map_t::iterator it = m_->the_map_.find(k_);
+		    if ( it != m_->the_map_.end() ) { 
+			it->second = x;
+		    } else { 
+			m_->the_map_.insert(typename map_t::value_type(k_,x));
+		    }
 		}
 		return *this;
 	    }
@@ -128,10 +142,10 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct with default value
 	 * 
-	 * @param deflt default value of entries
+	 * @param def default value of entries
 	 */
-	SparseMatrix(value_t deflt) : the_map(),def(deflt) {}
-    
+	SparseMatrix(const value_t &def) : the_map_(),def_(def) {}
+
 	/** 
 	 * \brief Access to matrix element
 	 * 
@@ -153,9 +167,9 @@ namespace LocARNA {
 	 * @return matrix entry (i,j)
 	 */
 	const value_t & operator() (size_type i, size_type j) const {
-	    const_iterator it = the_map.find(key_t(i,j));
-	    if ( it == the_map.end() ) 
-		return def;
+	    const_iterator it = the_map_.find(key_t(i,j));
+	    if ( it == the_map_.end() ) 
+		return def_;
 	    else 
 		return it->second;
 	}
@@ -167,20 +181,82 @@ namespace LocARNA {
 	 * @param j index second dimension
 	 * @param val value to be written to entry (i,j)
 	 *
+	 * @note Unlike the assignment operator (via element), there is no
+	 * test whether the default value is assigned.
+	 * Use reset(i,j) if you want to reset matrix entries to the default. 
+	 *
 	 * @post writes entry. If entry didn't exist already it is created.
 	 */
-	void set(size_type i, size_type j, const value_t &val) {
-	    the_map[std::pair<int,int>(i,j)]=val;
+	void
+	set(size_type i, size_type j, const value_t &val) {
+	    typename map_t::iterator it = the_map_.find(key_t(i,j));
+	    if ( it != the_map_.end() ) { 
+		it->second = val;
+	    } else { 
+		the_map_.insert(typename map_t::value_type(key_t(i,j),val));
+	    }
+	}
+
+	/** 
+	 * \brief Write access to matrix element of const matrix
+	 * 
+	 * @param i index first dimension
+	 * @param j index second dimension
+	 *
+	 * @note Creates the entry (i,j) if it is not represented yet.
+	 *
+	 * @return reference to matrix entry (i,j)
+	 */
+	value_t & 
+	ref(size_type i, size_type j) {
+	    typename map_t::iterator it = the_map_.find(key_t(i,j));
+	    if ( it == the_map_.end() ) { 
+		the_map_.insert(typename map_t::value_type(key_t(i,j),def_));
+		it = the_map_.find(key_t(i,j));
+	    }
+	    return it->second;
 	}
     
+	/** 
+	 * @brief Set matrix entry to default value
+	 * 
+	 * @param i index first dimension
+	 * @param j index second dimension
+	 */
+	void
+	reset(size_type i, size_type j) {
+	    typename map_t::iterator it = the_map_.find(key_t(i,j));
+	    if ( it != the_map_.end() ) { 
+		the_map_.erase(key_t(i,j));
+	    } 
+	}
+
+	/**
+	 * @brief Size of sparse matrix
+	 * @return number of non-empty entries
+	 */
+	size_type
+	size() const {
+	    return the_map_.size();
+	}
+
+	/**
+	 * @brief Check for emptiness
+	 * @return true, if sparse matrix contains 
+	 * only implicite default entries.
+	 */
+	bool
+	empty() const {
+	    return the_map_.empty();
+	}
+	
 	/** 
 	 * @brief Clear the matrix
 	 */
 	void
 	clear() {
-	    the_map.clear();
+	    the_map_.clear();
 	}
-
 
 	/** 
 	 * \brief Begin const iterator over matrix entries
@@ -190,7 +266,7 @@ namespace LocARNA {
 	 * @see end()
 	 */
 	const_iterator begin() const {
-	    return the_map.begin();
+	    return the_map_.begin();
 	}
 	
 	/** 
@@ -200,7 +276,7 @@ namespace LocARNA {
 	 * @see begin()
 	 */
 	const_iterator end() const {
-	    return the_map.end();
+	    return the_map_.end();
 	}
 	
     };

@@ -1,6 +1,14 @@
+#ifndef LOCARNA_OPTIONS_HH
+#define LOCARNA_OPTIONS_HH
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 /*------------------------------------------------------------
 
   Copyright (C) 1999 by Sebastian Will.
+
   All Rights Reserved.
   
   ------------------------------------------------------------*/
@@ -20,9 +28,6 @@
  *  - hopefully useable for many cases
  *
  ************************************************************/
-
-#ifndef _OPTIONS_H
-#define _OPTIONS_H
 
 #include <getopt.h>
 

@@ -1,14 +1,17 @@
 #ifndef LOCARNA_PARAMS_HH
 #define LOCARNA_PARAMS_HH
-/*
-  Parameter for Aligner
-*/
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include <vector>
+#include <string>
 
 namespace LocARNA {
 
     class AnchorConstraints;
     class TraceController;
-
 
     /**
        \brief Description of free end gaps.
@@ -27,8 +30,9 @@ namespace LocARNA {
 	 *
 	 * @note the string description is suited to specify free end gaps in this way on the command line
 	 */
-	FreeEndgapsDescription(const std::string d) {
-	    desc.resize(4);
+	FreeEndgapsDescription(const std::string &d)
+	    : desc(4)
+	{
 	    if (d.length()>=4) {
 		for (size_t i=0; i<4; i++) desc[i] = (d[i]=='+');
 	    } else {

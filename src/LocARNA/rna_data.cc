@@ -1,375 +1,651 @@
+#include <stdio.h>
+#include <ctype.h> // import isspace
+
+#include <math.h> // import log
+
+#include <string>
 #include <fstream>
 #include <sstream>
-#include <map>
 
 #include "aux.hh"
-#include "rna_data.hh"
+#include "pfold_params.hh"
+#include "alignment.hh"
+#include "rna_ensemble.hh"
+#include "sequence_annotation.hh"
+#include "rna_data_impl.hh"
+#include "ext_rna_data_impl.hh"
 
-#include "alphabet.hh"
-
-#include "multiple_alignment.hh"
 
 #ifdef HAVE_LIBRNA
 extern "C" {
-//#include <ViennaRNA/fold_vars.h>
-#include <ViennaRNA/data_structures.h>
-#include <ViennaRNA/part_func.h>
-#include <ViennaRNA/fold.h>
-#include <ViennaRNA/utils.h>
-#include <ViennaRNA/energy_const.h>
-#include <ViennaRNA/loop_energies.h>
-#include <ViennaRNA/params.h>
-#include <ViennaRNA/pair_mat.h>
-#include <ViennaRNA/alifold.h>
-
-    FLT_OR_DBL *alipf_export_bppm(void);
+#  include <ViennaRNA/energy_const.h> // import TURN
 }
-
-#include "mcc_matrices.hh"
-
-#endif // HAVE_LIBRNA
+#endif
 
 
 namespace LocARNA {
 
-
-    // ------------------------------------------------------------
-    // implementation of class RnaData
-    //
-    RnaData::RnaData(const std::string &file,
-		     bool readPairProbs,
-		     bool readStackingProbs,
-		     bool readInLoopProbs)
-	:
-	sequence(),
-	arc_probs_(0),
-	arc_2_probs_(0),
-	seq_constraints_(""),
-	McCmat(0),
-	used_alifold(false)
-    {
-	init_from_file(file, readPairProbs, readStackingProbs, readInLoopProbs);
+    RnaData::RnaData(const RnaEnsemble &rna_ensemble,
+		     double p_bpcut)
+	: pimpl_(new RnaDataImpl(this,
+				 p_bpcut)) {
+	bool stacking=true;
+	init_from_rna_ensemble(rna_ensemble,stacking);
     }
-        
-    RnaData::RnaData(const Sequence &sequence_)
-	: sequence(sequence_),
-	  pair_probs_available_(false),	  
-	  arc_probs_(0),
-	  arc_2_probs_(0),
-	  seq_constraints_(""),
-	  McCmat(0),
-	  used_alifold(false)
-    {
+
+
+    RnaData::RnaData(const std::string &filename,
+		     double p_bpcut,
+		     const PFoldParams &pfoldparams)
+	: pimpl_(new RnaDataImpl(this,
+				 p_bpcut)) {
+	bool complete=
+	    read_autodetect(filename,pfoldparams.stacking());
+    	
+	if (!complete) {
+	    // recompute all probabilities
+	    RnaEnsemble 
+		rna_ensemble(pimpl_->sequence_,
+			     pfoldparams,false,true); // use given parameters, no in loop, use alifold
+	    
+	    // initialize from RnaEnsemble; note: method is virtual
+	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	}
+    }
+    
+    // do almost nothing
+    RnaData::RnaData(double p_bpcut)
+	: pimpl_(new RnaDataImpl(this,
+				 p_bpcut)) {
+    }
+    
+    // "consensus" constructor
+    RnaData::RnaData(const RnaData &rna_dataA,
+		     const RnaData &rna_dataB,
+		     const Alignment &alignment,
+		     double p_expA,
+		     double p_expB)
+	: pimpl_(new RnaDataImpl(this,
+				 rna_dataA,
+				 rna_dataB,
+				 alignment.alignment_edges(false),
+				 p_expA,
+				 p_expB)) {
     }
     
     RnaData::~RnaData() {
-#ifdef HAVE_LIBRNA
-	if (McCmat) {delete McCmat;} 
-#endif //HAVE_LIBRNA
+	delete pimpl_;
     }
 
-#ifdef HAVE_LIBRNA
-
-    void
-    RnaData::compute_ensemble_probs(const PFoldParams &params,bool inLoopProbs, bool use_alifold) {
-	
-	stopwatch.start("bpp");
-	
-	assert(use_alifold || sequence.row_number()==1);
-
-	used_alifold=use_alifold;
-
-	// run McCaskill and get access to results
-	// in McCaskill_matrices
-	if (!use_alifold) {
-	    compute_McCaskill_matrices(params,inLoopProbs);
-	} else {
-	    make_pair_matrix();
-	    compute_McCaskill_alifold_matrices(params,inLoopProbs);
-	}
-	
-	// initialize the object from base pair probabilities
-	// Use the same proability threshold as in RNAfold -p !
-	set_arc_probs_from_McCaskill_bppm(10e-6,params.stacking);
-	
-	// since we either have local copies of all McCaskill pf arrays
-	// or don't need them anymore,
-	// we can free the ones of the Vienna lib
-	if (!used_alifold) {
-	    free_pf_arrays();
-	} else {
-	    free_alipf_arrays();
-	}
-
-	pair_probs_available_=true;
-	in_loop_probs_available_=inLoopProbs;
-
-	stopwatch.stop("bpp");
-    }
-    
-    void
-    RnaData::compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs) {
-	assert(sequence.row_number()==1);
-
-	// use MultipleAlignment to get pointer to c-string of the
-	// first (and only) sequence in object sequence.
-	//
-	size_t length = sequence.length();
-	
-	char c_sequence[length+1];
-	std::string seqstring = MultipleAlignment(sequence).seqentry(0).seq().to_string();
-	strcpy(c_sequence,seqstring.c_str());
-	
-	char c_structure[length+1];
-	
-	// ----------------------------------------
-	// set folding parameters
-	if (params.noLP) {noLonelyPairs=1;}
-	
-	
-	// ----------------------------------------
-	// call fold for setting the pf_scale
-	double en = fold(c_sequence,c_structure);
-	// std::cout << c_structure << std::endl;
-	free_arrays();
-	
-	// set pf_scale
-	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
-	pf_scale = exp(-en/kT/length);
-
-	// ----------------------------------------
-	// call pf_fold
-	pf_fold(c_sequence,c_structure);
-	
-	// ----------------------------------------
-	// get McC data structures and copy
-	// 
-	// since the space referenced by pointers in McCmat will be
-	// overwritten by the next call to pf_fold, we have to copy
-	// the data structures if we want to keep them.
-	//
-	McCmat=new McC_matrices_t(c_sequence,inLoopProbs); // makes local copy (if needed)
-	
-	// precompute further tables (expMLbase, scale, qm2) for computations
-	// of probabilities unpaired / basepair in loop or external
-	// as they are required for Exparna P functionality
-	//
-	
-	if (inLoopProbs) {
-	    expMLbase.resize(length+1);
-	    scale.resize(length+1);
-	    
-	    // ----------------------------------------
-	    // from scale_pf_params
-	    //
-	    kT = McCmat->pf_params->kT;   /* kT in cal/mol  */
-	    
-	    /* scaling factors (to avoid overflows) */
-	    if (pf_scale == -1) { /* mean energy for random sequences: 184.3*length cal */
-		pf_scale = exp(-(-185+(McCmat->pf_params->temperature-37.)*7.27)/kT);
-		if (pf_scale<1) pf_scale=1;
-	    }
-	    
-	    scale[0] = 1.;
-	    scale[1] = 1./pf_scale;
-	    expMLbase[0] = 1;
-	    expMLbase[1] = McCmat->pf_params->expMLbase * scale[1];
-	    for (size_t i=2; i<=sequence.length(); i++) {
-		scale[i] = scale[i/2]*scale[i-(i/2)]; // scale[i] = pow(scale[1],(double)i)
-		expMLbase[i] = pow(McCmat->pf_params->expMLbase, (double)i) * scale[i];
-	    }
-	
-	    
-	    // ----------------------------------------
-	    // compute the Qm2 matrix
-	    compute_Qm2();
-	}
+    bool
+    RnaData::has_stacking() const {
+	return pimpl_->has_stacking_;
     }
 
 
-    void
-    RnaData::compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs) {
-	
-	size_t length = sequence.length();
-	size_t n_seq = sequence.row_number();
-	
-	// ----------------------------------------
-	// write sequences to array of C-strings
-	MultipleAlignment ma(sequence);
-	char **sequences = new char*[n_seq+1];
-	for (size_t i=0; i<n_seq; i++) {
-	    sequences[i]=new char[length+1];
-	    std::string seqstring = ma.seqentry(i).seq().to_string();
-	    strncpy(sequences[i],seqstring.c_str(),length+1);
-	}
-	sequences[n_seq]=NULL; //sequences has to be NULL terminated for alifold() etc
 
-	const char **c_sequences=const_cast<const char **>(sequences);
+    // "consensus" constructor
+    RnaDataImpl::RnaDataImpl(RnaData *self,
+			     const RnaData &rna_dataA,
+			     const RnaData &rna_dataB,
+			     const Alignment::edges_t &edges,
+			     double p_expA,
+			     double p_expB) 
+	:self_(self),
+	 sequence_(edges,rna_dataA.sequence(),rna_dataB.sequence()),
+	 p_bpcut_(),
+	 arc_probs_(0.0),
+	 arc_2_probs_(0.0),
+	 has_stacking_(false)
+    {
+	init_as_consensus_dot_plot(edges,
+				   rna_dataA,
+				   rna_dataB,
+				   p_expA,
+				   p_expB,
+				   rna_dataA.has_stacking() && rna_dataB.has_stacking());
+    }
 
-	// reserve space for structure
-	char *c_structure = new char[length+1];
-	
-	// ----------------------------------------
-	// set folding parameters
-	if (params.noLP) {noLonelyPairs=1;}
-	
-	// ----------------------------------------
-	// call fold for setting the pf_scale
-	double en = alifold(c_sequences,c_structure);
-	// std::cout << c_structure << std::endl;
-	free_alifold_arrays();
-	
-	// set pf_scale
-	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
-	pf_scale = exp(-en/kT/length);
-	
-	
-	// ----------------------------------------
-	// call pf_fold
-	alipf_fold(c_sequences,c_structure,NULL);
-	
-	// ----------------------------------------
-	// get McC data structures and copy
-	// 
-	// since the space referenced by pointers in McCmat will be
-	// overwritten by the next call to pf_fold, we have to copy
-	// the data structures if we want to keep them.
-	//
-	McCmat=new McC_ali_matrices_t(n_seq,length,inLoopProbs); // makes local copy (if needed)
-	
-	// precompute further tables (expMLbase, scale, qm2) for computations
-	// of probabilities unpaired / basepair in loop or external
-	// as they are required for Exparna P functionality
-	//
-	
-	if (inLoopProbs) {
-	    expMLbase.resize(length+1);
-	    scale.resize(length+1);
-	    
-	    // ----------------------------------------
-	    // from scale_pf_params
-	    //
-	    double scaling_factor=McCmat->pf_params->pf_scale;
-	    kT = McCmat->pf_params->kT / n_seq;   /* kT in cal/mol  */
-	    
-	    
-	    /* scaling factors (to avoid overflows) */
-	    if (scaling_factor == -1) { /* mean energy for random sequences: 184.3*length cal */
-		scaling_factor = exp(-(-185+(McCmat->pf_params->temperature-37.)*7.27)/kT);
-		if (scaling_factor<1) scaling_factor=1;
-		McCmat->pf_params->pf_scale=scaling_factor;
-	    }
-	    scale[0] = 1.;
-	    scale[1] = 1./scaling_factor;
 
-	    expMLbase[0] = 1;
-	    expMLbase[1] = McCmat->pf_params->expMLbase/scaling_factor;
-	    for (size_t i=2; i<=sequence.length(); i++) {
-		scale[i] = scale[i/2]*scale[i-(i/2)];
-		expMLbase[i] = pow(McCmat->pf_params->expMLbase, (double)i) * scale[i];
-	    }
-	    
-	    // ----------------------------------------
-	    // compute the Qm2 matrix
-	    compute_Qm2_ali();
-	}
-
-	//free c_sequences and c_structure
-	for (size_t i=0; i<n_seq; i++) {
-	    delete c_sequences[i];
-	}
-	delete c_sequences;
-	delete c_structure;
+    // do almost nothing
+    RnaDataImpl::RnaDataImpl(RnaData *self,
+			     double p_bpcut)
+	:self_(self),
+	 sequence_(),
+	 p_bpcut_(p_bpcut),
+	 arc_probs_(0.0),
+	 arc_2_probs_(0.0),
+	 has_stacking_(false)
+    {
     }
     
+
+    ExtRnaData::ExtRnaData(const std::string &filename,
+			   double p_bpcut,
+			   double p_bpilcut,
+			   double p_uilcut,
+			   const PFoldParams &pfoldparams)
+	: 
+	RnaData(p_bpcut),
+	pimpl_(new ExtRnaDataImpl(this,
+				  p_bpilcut,
+				  p_uilcut)) {
+
+	bool complete=
+	    read_autodetect(filename,pfoldparams.stacking());
+    	
+	if (!complete) {
+	    // recompute all probabilities
+	    RnaEnsemble 
+		rna_ensemble(sequence(),
+			     pfoldparams,true,true); // use given parameters, in-loop, use alifold
+	    
+	    // initialize
+	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	}
+
+    }
+
+    ExtRnaDataImpl::ExtRnaDataImpl(ExtRnaData *self,
+				   double p_bpilcut,
+				   double p_uilcut)
+	:self_(self),
+	 p_bpilcut_(p_bpilcut),
+	 p_uilcut_(p_uilcut),
+	 arc_in_loop_probs_(arc_prob_matrix_t(0.0)),
+	 unpaired_in_loop_probs_(arc_prob_vector_t(0.0)),
+	 has_in_loop_probs_(false)
+    {
+    }
+
+    ExtRnaData::ExtRnaData(const RnaEnsemble &rna_ensemble,
+			   double p_bpcut,
+			   double p_bpilcut,
+			   double p_uilcut)
+	:
+	RnaData(rna_ensemble,
+		p_bpcut),				  
+	pimpl_(new ExtRnaDataImpl(this,
+				  p_bpilcut,
+				  p_uilcut)) {
+	bool stacking=true;
+	init_from_rna_ensemble(rna_ensemble,stacking);
+    }
+
+    ExtRnaData::~ExtRnaData() {
+	delete pimpl_;
+    }
+
+
+    /*
+     * Implementation note: we use an annoyingly complex mechanism
+     * involving virtual methods and calls to interface-object methods
+     * from the implementation object's constructor to make this
+     * method usable in RnaData and ExtRnaData while avoiding code
+     * duplication. In hindsight, this seems rather pathetic. Could it
+     * be replaced by a simpler mechanism?
+     */
+    bool
+    RnaData::read_autodetect(const std::string &filename,
+			     bool stacking) {
+	bool failed=true;  //flag for signalling a failed attempt to
+			   //read a certain file format
+	
+	bool recompute=false; // do we need to recompute probabilities
+
+	pimpl_->has_stacking_=stacking;
+
+	// try dot plot ps format
+	if (failed) {
+	    failed=false;
+	    try {
+		read_ps(filename);
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+	    } catch (wrong_format_failure &f) {
+		failed=true;
+	    }
+	}
+
+
+	// try pp 2.0
+	if (failed) {
+	    recompute=false;
+	    failed=false;
+	    try {
+		// std::cerr << "Try reading pp "<<filename<<" ..."<<std::endl;
+		read_pp(filename);
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+	    } catch (wrong_format_failure &f) {
+		failed=true;
+	    }
+	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
+	    // else std::cerr << "  ... success."<<std::endl;
+	}
+	
+	
+	// try fasta format
+	if (failed) {
+	    recompute = true;
+	    failed=false;
+	    try {
+		MultipleAlignment ma(filename, MultipleAlignment::FormatType::FASTA);
+		pimpl_->sequence_ = ma;
+		// even if reading does not fail, we still want to
+		// make sure that the result is reasonable. Otherwise,
+		// we assume that the file is in a different format.
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+	    } catch (failure &f) {
+		failed=true;
+	    }
+	}
+	
+	// try old pp
+	if (failed) {
+	    recompute=false;
+	    failed=false;
+	    try {
+		// std::cerr << "Try reading old pp "<<filename<<" ..."<<std::endl;
+		read_old_pp(filename);
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+	    } catch (wrong_format_failure &f) {
+		failed=true;
+	    }
+	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
+	    // else std::cerr << "  ... success."<<std::endl;
+	}
+
+	// try clustal format
+	if (failed) {
+	    recompute=true;
+	    failed=false;
+	    try {
+		// std::cerr << "Try reading clustal "<<filename<<" ..."<<std::endl;
+		MultipleAlignment ma(filename, MultipleAlignment::FormatType::CLUSTAL);
+
+		pimpl_->sequence_ = ma;
+	    	// even if reading does not fail, we still want to
+		// make sure that the result is reasonable. Otherwise,
+		// we assume that the file is in a different format.
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+	    } catch (syntax_error_failure &f) {
+		throw failure((std::string)"RnaData: Cannot read input data from clustal file.\n\t"+f.what());
+	    }
+	    catch (failure &f) {
+		failed=true;
+	    }
+	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
+	    // else std::cerr << "  ... success."<<std::endl;
+	}
+	
+	if (failed) {
+	    throw failure("RnaData: Cannot read input data from file.");
+	}
+	
+	pimpl_->sequence_.normalize_rna_symbols();
+
+	// now, we have the sequence but not necessarily all required probabilities!
+	if (!inloopprobs_ok()) {
+	    recompute=true;
+	}
+	
+	return !recompute;
+    }
+
+    void
+    RnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
+				    bool stacking) {
+#     ifdef HAVE_LIBRNA
+	pimpl_->init_from_rna_ensemble(rna_ensemble,stacking);
+#     else
+	error_rnalib_unavailable(); 
+#     endif
+    }
+
+    void
+    ExtRnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
+				       bool stacking) {
+#     ifdef HAVE_LIBRNA
+	RnaData::init_from_rna_ensemble(rna_ensemble,stacking);
+	pimpl_->init_from_ext_rna_ensemble(rna_ensemble);
+#     else
+	error_rnalib_unavailable();
+#     endif
+    }
+
+#ifdef HAVE_LIBRNA
+    void
+    RnaDataImpl::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
+					bool stacking) {
+	assert(rna_ensemble.has_base_pair_probs());
+	
+	// ----------------------------------------
+	// init sequence	
+	sequence_ = rna_ensemble.multiple_alignment();
+	size_t len = sequence_.length();
+
+	// ----------------------------------------
+	// init base pair probabilities
+	arc_probs_.clear();
+	for( size_t i=1; i <= len; i++ ) {
+	    for( size_t j=i+TURN+1; j <= len; j++ ) {
+		
+		double p = rna_ensemble.arc_prob(i,j);
+		if (p > p_bpcut_) { // apply filter
+		    arc_probs_(i,j)=p;
+		}
+	    }
+	}
+	
+	// ----------------------------------------
+	// init stacking probabilities
+	arc_2_probs_.clear();
+	has_stacking_ = stacking;	
+	if (has_stacking_) {
+	    for( size_t i=1; i <= len; i++ ) {
+		for( size_t j=i+TURN+3; j <= len; j++ ) {
+		    double p2 = rna_ensemble.arc_2_prob(i,j);
+		    if (p2 > p_bpcut_) { // apply filter to joint probability !
+			arc_2_probs_(i,j)=p2;
+		    }
+		}
+	    }
+	}
+
+	// all set
+	return;
+    }
+
+    void
+    ExtRnaDataImpl::init_from_ext_rna_ensemble(const RnaEnsemble &rna_ensemble) {
+	// initialize in loop probabilities
+	// (usually, this is called after RnaDataImpl::init_from_rna_ensemble)
+	assert(rna_ensemble.has_in_loop_probs());
+
+	size_t len = self_->length();
+	
+	// ----------------------------------------
+	// init base pair probabilities
+	arc_in_loop_probs_.clear();
+	
+	// in loop
+	for(arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
+	    self_->arc_probs_end()!=it; ++it) {
+	    pos_type i = it->first.first;
+	    pos_type j = it->first.second;
+	    arc_prob_matrix_t m_ij(0.0);
+	    
+	    for( size_t ip=i+1; ip < j; ip++ ) {
+		for( size_t jp=ip+TURN+1; jp < j; jp++ ) {
+		    double p = rna_ensemble.arc_in_loop_prob(ip,jp,i,j);
+		    
+		    if ( p > p_bpilcut_ ) {
+			m_ij(ip,jp)=p;
+		    }
+		}
+	    }
+	    
+	    // set only if not empty; use set instead of assignment,
+	    // to avoid the comparison of complex SparseMatrix objects
+	    if (!m_ij.empty()) {
+		arc_in_loop_probs_.set(i,j,m_ij);
+	    }
+	}
+
+	// external
+	arc_prob_matrix_t m_ext(0.0);
+	for( size_t ip=1; ip < len; ip++ ) {
+	    for( size_t jp=ip+TURN+1; jp <= len; jp++ ) {
+		double p = rna_ensemble.arc_external_prob(ip,jp);
+		
+		if ( p > p_bpilcut_ ) {
+		    m_ext(ip,jp) = p;
+		}
+	    }
+	}
+
+	// set only if not empty; use set instead of assignment,
+	// to avoid the comparison of complex SparseMatrix objects
+	if (!m_ext.empty()) {
+	    arc_in_loop_probs_.set(0,self_->length()+1,m_ext);
+	}
+	
+	// ----------------------------------------
+	// init unpaired probabilities
+	unpaired_in_loop_probs_.clear();
+	
+	// in loop
+	for(arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
+	    self_->arc_probs_end()!=it; ++it) {
+	    pos_type i = it->first.first;
+	    pos_type j = it->first.second;
+	    arc_prob_vector_t v_ij(0.0);
+	    
+	    for( size_t k=i+1; k < j; k++ ) {
+		double p = rna_ensemble.unpaired_in_loop_prob(k,i,j);
+		if ( p > p_uilcut_ ) {
+		    v_ij[k] = p;
+		}
+	    }
+	    
+	    // set only if not empty; use set instead of assignment,
+	    // to avoid the comparison of complex SparseMatrix objects
+	    if (!v_ij.empty()) {
+		unpaired_in_loop_probs_.set(i,j,v_ij);
+	    }
+	}
+
+	// external
+	arc_prob_vector_t v_ext(0.0);
+	for( size_t k=1; k <= len; k++ ) {
+	    double p = rna_ensemble.unpaired_external_prob(k);
+	    
+	    if ( p > p_uilcut_ ) {
+		v_ext[k] = p;
+	    }
+	}
+
+	// set only if not empty; use set instead of assignment,
+	// to avoid the comparison of complex SparseMatrix objects
+	if (!v_ext.empty()) {
+	    unpaired_in_loop_probs_.set(0,self_->length()+1,v_ext);
+	}
+	
+	
+	// set flag
+	has_in_loop_probs_=true;
+
+	// all set
+	return;
+    } // end method init_from_ext_rna_ensemble
+
 #endif // HAVE_LIBRNA
 
-    void 
-    RnaData::init_from_file(const std::string &filename,
-			    bool readPairProbs,
-			    bool readStackingProbs,
-			    bool readInLoopProbs			       
-			  ) {
-	assert(!readStackingProbs || readPairProbs);
-	assert(!readInLoopProbs || readPairProbs);
-
-	std::ifstream in(filename.c_str());
-	if (! in.is_open()) {
-	    std::cerr << "Cannot open "<<filename<<" for reading."<<std::endl;
-	    exit(-1);
-	}
-
-	// set to true if probs become available
-	in_loop_probs_available_=false;
-	pair_probs_available_=false;
-	stacking_probs_available_=false;
-
-	std::string s;
-	// read first line and decide about file-format
-	in >> s;
-	in.close();
-	if (s == "%!PS-Adobe-3.0") {
-	    // try reading as dot.ps file (as generated by RNAfold)
-	    read_ps(filename,readPairProbs,readStackingProbs);
-	} else if (s.substr(0,7) == "CLUSTAL" || s[0]=='>') {
-	    //read to multiple alignment object
-	    MultipleAlignment ma(filename,
-				 (s[0]=='>')
-				 ?MultipleAlignment::FASTA
-				 :MultipleAlignment::CLUSTAL);
-	    // convert to sequence
-	    sequence = Sequence(ma);
-	} else {
-	    // try reading as PP-file (proprietary format, which is easy to read and contains pair probs)
-	    read_pp(filename,readPairProbs,readStackingProbs,readInLoopProbs);
-	}
-	
-	// DUMP for debugging
-	//std::cout << arc_probs_ << std::endl;
-	//std::cout << arc_2_probs_ << std::endl;
+    bool
+    ExtRnaData::inloopprobs_ok() const {
+	return pimpl_->has_in_loop_probs_;
     }
 
-    void RnaData::read_ps(const std::string &filename,
-			  bool readPairProbs,
-			  bool readStackingProbs
-			  ) {
-	assert(!readStackingProbs || readPairProbs);
-		
-	in_loop_probs_available_=false;
-	pair_probs_available_=readPairProbs;
+    const Sequence &
+    RnaData::sequence() const {
+	return pimpl_->sequence_.as_sequence();
+    }
+
+    const MultipleAlignment &
+    RnaData::multiple_alignment() const {
+	return pimpl_->sequence_;
+    }
+
+    size_type
+    RnaData::length() const {
+	return pimpl_->sequence_.length();
+    }
+    
+    double
+    RnaData::arc_cutoff_prob() const {
+	return pimpl_->p_bpcut_;
+    }
+    
+    double 
+    RnaData::arc_prob(pos_type i, pos_type j) const {
+	return pimpl_->arc_probs_(i,j);
+    }
+    
+    RnaData::arc_probs_const_iterator
+    RnaData::arc_probs_begin() const {
+	return pimpl_->arc_probs_.begin();
+    }
+
+    RnaData::arc_probs_const_iterator
+    RnaData::arc_probs_end() const {
+	return pimpl_->arc_probs_.end();
+    }
+
+
+    double
+    RnaData::joint_arc_prob(pos_type i, pos_type j) const {
+	return pimpl_->arc_2_probs_(i,j);
+    }
+    
+    double 
+    RnaData::stacked_arc_prob(pos_type i, pos_type j) const {
+	assert(pimpl_->arc_probs_(i+1,j-1)!=0);
 	
-	bool contains_stacking_probs=false;
+	return
+	    pimpl_->arc_2_probs_(i,j)
+	    /
+	    pimpl_->arc_probs_(i+1,j-1);
+    }
+
+    double 
+    RnaData::prob_paired_upstream(size_type i) const {
+	double prob_paired=0.0;
+	
+	for (size_type j=i+1; j<=length(); j++) {
+	    prob_paired += pimpl_->arc_probs_(i,j); 
+	}
+	
+	return prob_paired;
+    }
+    
+    double
+    RnaData::prob_paired_downstream(size_type i) const {
+	double prob_paired=0.0;
+	
+	for (size_type j=1; j<i; j++) {
+	    prob_paired += pimpl_->arc_probs_(j,i); 
+	}
+	
+	return prob_paired;
+    }
+    
+    double
+    RnaData::prob_unpaired(size_type i) const {
+	return 
+	    1.0
+	    - prob_paired_upstream(i)
+	    - prob_paired_downstream(i);
+    }
+    
+    double
+    ExtRnaData::arc_in_loop_cutoff_prob() const {
+	return pimpl_->p_bpilcut_;
+    }
+	
+    double 
+    ExtRnaData::arc_in_loop_prob(pos_type i, pos_type j,pos_type p, pos_type q) const {
+	ExtRnaDataImpl::arc_prob_matrix_t m_pq = pimpl_->arc_in_loop_probs_(p,q);
+	return m_pq(i,j);
+    }
+    
+    double 
+    ExtRnaData::arc_external_prob(pos_type i, pos_type j) const {
+	ExtRnaDataImpl::arc_prob_matrix_t m_ext = pimpl_->arc_in_loop_probs_(0,length()+1);
+	return m_ext(i,j);
+    }
+    
+    double
+    ExtRnaData::unpaired_in_loop_cutoff_prob() const {
+	return pimpl_->p_uilcut_;
+    }
+    
+    double 
+    ExtRnaData::unpaired_in_loop_prob(pos_type k,pos_type p, pos_type q) const {
+	ExtRnaDataImpl::arc_prob_vector_t v_pq = pimpl_->unpaired_in_loop_probs_(p,q);
+	return v_pq[k];
+    }
+    
+    double 
+    ExtRnaData::unpaired_external_prob(pos_type k) const {
+	ExtRnaDataImpl::arc_prob_vector_t v_ext = pimpl_->unpaired_in_loop_probs_(0,length()+1);
+	return v_ext[k];
+    }
+
+    void RnaData::read_ps(const std::string &filename) {
 	
 	std::ifstream in(filename.c_str());
-    	
-	std::string s;
-	while (in >> s && s!="/sequence") {
-	    if (s=="stacked") contains_stacking_probs=true;
+	std::string line;
+		
+	getline(in,line);
+	if (line!="%!PS-Adobe-3.0 EPSF-3.0") {
+	    throw wrong_format_failure();
+	}
+	
+	bool contains_stacking=false;
+	
+	std::string seqname = "seq"; // default sequence name
+	
+	while (getline(in,line) && !has_prefix(line,"/sequence")) {
+	    if (pimpl_->has_stacking_ && has_prefix(line,"% Probabilities for stacked pairs")) {
+		contains_stacking=true;
+	    } else if (has_prefix(line,"%delete next line to get rid of title")) {
+		getline(in,line);
+		std::istringstream in2(line);
+		std::string s;
+		while(in2 >> s) {
+		    if (s.length()>=2 && s[0]=='(' && s[s.length()-1]==')') {
+			seqname = s.substr(1,s.length()-2);
+			break;
+		    }
+		}
+		if (seqname.empty()) {
+		    throw syntax_error_failure("improper title specification");
+		}
+	    }
+	}
+	
+	if (!contains_stacking) {
+	    pimpl_->has_stacking_=false;
 	}
 
-	stacking_probs_available_ = readStackingProbs && contains_stacking_probs;
+	if (!has_prefix(line,"/sequence")) {
+	    throw syntax_error_failure("no sequence tag");
+	}
 	
-	in >> s; in >> s;
-
 	std::string seqstr="";
-	while (in >> s && s!=")") {
-	    s = s.substr(0,s.size()-1); // chop of last character
-	    // cout << s <<endl;
-	    seqstr+=s;
+	{
+	    std::string s;
+	    while (in >> s && s!=")") {
+		s = s.substr(0,s.size()-1); // chop of last character
+		// cout << s <<endl;
+		seqstr+=s;
+	    }
 	}
-	
-	std::string seqname = seqname_from_filename(filename);
 	
 	//! sequence characters should be upper case, and 
 	//! Ts translated to Us
 	normalize_rna_sequence(seqstr);
         
-	sequence.append_row(seqname,seqstr);
-            
-	std::string line;
-	
-	// return when reading of pair probs is not wanted
-	if (!readPairProbs) {return;}
+	pimpl_->sequence_.append(MultipleAlignment::SeqEntry(seqname,seqstr));
 	
 	while (getline(in,line)) {
 	    if (line.length()>4) {
@@ -388,72 +664,72 @@ namespace LocARNA {
 		
 		    //std::cout << i << " " << j << std::endl;
 		
-		    if (! (1<=i && i<j && j<=sequence.length())) {
+		    if (! (1<=i && i<j && j<=pimpl_->sequence_.length())) {
 			std::cerr << "WARNING: Input dotplot "<<filename<<" contains invalid line " << line << " (indices out of range)" << std::endl;
-			//exit(-1);
 		    } else {
 			if (type=="ubox") {
-			    set_arc_prob(i,j,p);
+			    pimpl_->arc_probs_(i,j)=p;
 			}
-			else if (readStackingProbs && contains_stacking_probs && type=="lbox") { // read a stacking probability
-			    set_arc_2_prob(i,j,p); // we store the joint probability of (i,j) and (i+1,j-1)
+			else if (pimpl_->has_stacking_ && type=="lbox") { // read a stacking probability
+			    pimpl_->arc_2_probs_(i,j)=p; // we store the joint probability of (i,j) and (i+1,j-1)
 			}
 		    }
 		}
 	    }
 	}
-    }
+    } // end read_ps
 
-
-    void RnaData::read_pp(const std::string &filename,
-			  bool readPairProbs,
-			  bool readStackingProbs,
-			  bool readInLoopProbs
-			  ) {
-	
-	assert(!readStackingProbs || readPairProbs);
-	assert(!readInLoopProbs || readPairProbs);
-	
-	in_loop_probs_available_=false; // this is not (yet) supported!
-	pair_probs_available_=readPairProbs;
+    void RnaData::read_old_pp(const std::string &filename) {
 	
 	std::ifstream in(filename.c_str());
 	
 	std::string name;
 	std::string seqstr;
 	
-    
+	
 	// ----------------------------------------
 	// read sequence/alignment
     
 	std::map<std::string,std::string> seq_map;
     
 	std::string line;
-    
-	while (getline(in,line) && line!="#" ) {
-	    if (line.length()>0 && line[0]!=' ') {
-		std::istringstream in(line);
-		in >> name >> seqstr;
+	std::string sequence_anchor_string="";
+	
+	bool contains_stacking=false;
+	
+	while (get_nonempty_line(in,line) && line!="#") { // iterate through lines; stop at the first line that equals "#"
+	    std::istringstream in(line);
+	    in >> name >> seqstr;
 	    
-		normalize_rna_sequence(seqstr);
+	    if ( in.fail() ) {
+		throw wrong_format_failure();
+	    }
 	    
-		if (name != "SCORE:") { // ignore the (usually first) line that begins with SCORE:
-		    if (name == "#C") {
-			seq_constraints_ += seqstr;
-		    } else {
-			seq_map[name] += seqstr;
-		    }
+	    
+	    if (name != "SCORE:") { // ignore the (usually first) line that begins with SCORE:
+		if (name == "#C") {
+		    sequence_anchor_string += seqstr;
+		} else {
+		    normalize_rna_sequence(seqstr);
+		    seq_map[name] += seqstr;
 		}
 	    }
 	}
-    
+	
+	if ( line!="#" ) {
+	    throw wrong_format_failure();
+	}
+	
+	if (sequence_anchor_string!="") {
+	    pimpl_->sequence_.set_annotation( MultipleAlignment::AnnoType::anchors, 
+					      SequenceAnnotation( sequence_anchor_string ));
+	}
+	
 	for (std::map<std::string,std::string>::iterator it=seq_map.begin(); it!=seq_map.end(); ++it) {
 	    // std::cout << "SEQ: " << it->first << " " << it->second << std::endl;
-	    sequence.append_row(it->first,it->second);
+	    pimpl_->sequence_.append(MultipleAlignment::SeqEntry(it->first,it->second));
 	}
-    
-	// return when reading of pair probs is not wanted
-	if (!readPairProbs) {return;}
+	
 	
 	// ----------------------------------------
 	// read base pairs
@@ -463,1019 +739,582 @@ namespace LocARNA {
 
 	// std::cout << "LEN: " << len<<std::endl;
 	
-	while( getline(in,line) ) {
+	while( get_nonempty_line(in,line) ) {
 	    std::istringstream in(line);
-      
+	    
 	    in>>i>>j>>p;
       
-	    if ( in.fail() ) continue; // skip lines that do not specify a base pair probability
-      
+	    if ( in.fail() ) {
+		throw syntax_error_failure("Invalid line \"" +line+ "\" does not specify base pair probability.");
+	    }
+	    
 	    if (i>=j) {
-		std::cerr << "Error in PP input line \""<<line<<"\" (i>=j).\n"<<std::endl;
-		exit(-1);
+		throw syntax_error_failure("Error in PP input line \""+line+"\" (i>=j).\n");
 	    }
       
-	    set_arc_prob(i,j,p);
-      
-	    if (readStackingProbs) {
-		double p2;
-	  
-		if (in >> p2) {
-		    set_arc_2_prob(i,j,p2); // p2 is joint prob of (i,j) and (i+1,j-1)
-		    stacking_probs_available_ = true;
-		}
-	    }
-	}
-    }
-    
-    void RnaData::clear_arc_probs() {
-	arc_probs_.clear();
-	arc_2_probs_.clear();
-	pair_probs_available_=false;
-	stacking_probs_available_=false;
-    }
-
-
-#ifdef HAVE_LIBRNA
-    void
-    RnaData::set_arc_probs_from_McCaskill_bppm(double threshold, bool stacking) {
-	clear_arc_probs();
-	
-	for( size_t i=1; i <= sequence.length(); i++ ) {
-	    for( size_t j=i+1; j <= sequence.length(); j++ ) {
-		
-		double p= McCmat->get_bppm(i,j);
-		
-		if (p >= threshold) { // apply filter
-		    set_arc_prob(i,j,p);
-		}
-	    }
-	}
-	if(stacking){
-	  plist* pl= stackProb(threshold);
-	  plist* p= pl;
-	  while(pl->i!=0){
-	    set_arc_2_prob(pl->i, pl->j, pl->p);
-	    pl++;
-	  }
-	  free(p);
-// 	  pl= stackProb(threshold);
-// 	  free(pl);
-	  pl= NULL;
-	  p= NULL;
-	}
-	
-	pair_probs_available_=true;
-	stacking_probs_available_=stacking;
-    }
-
-    void
-    RnaData::compute_Qm2(){
-	assert(!used_alifold);
-	McC_matrices_t *McCmat = static_cast<McC_matrices_t *>(this->McCmat);
-
-	size_type len = sequence.length();
-	
-
-	std::vector<FLT_OR_DBL> qqm(len+2,0);
-	std::vector<FLT_OR_DBL> qqm1(len+2,0);
-	
-	//qm1.resize((len+1)*(len+2)/2);
-	qm2.resize((len+1)*(len+2)/2);
-	
-	// initialize qqm1
-	for (size_type i=1; i<=len; i++) {
-	    qqm[i]=0;
-	    qqm1[i]=0;
-	}
-	
-	for(size_type j=TURN+2; j<=len; j++) {
-	    // --------------------
-	    // one column of Qm1, which will be needed in the calculation of Qm2  
-	    for(size_type i=j-TURN-1; i>=1; i--) {
-		char type=McCmat->get_ptype(i,j);
-		qqm[i]= qqm1[i]*expMLbase[1];
-		if(type) {
-		    qqm[i] +=
-			McCmat->get_qb(i,j)
-			* exp_E_MLstem(type,
-				       (i>1)   ? McCmat->S1[i-1] : -1, 
-				       (j<len) ? McCmat->S1[j+1] : -1,  
-				       McCmat->pf_params);
-		}
-		
-		//qm1[McCmat->iidx(i,j)]=qqm[i];
-
-		assert(qqm[i] <= McCmat->get_qm(i,j));
-		assert((!frag_len_geq(i,j-1,TURN+2)) || qqm1[i] <= McCmat->get_qm(i,j-1));
-	    }
-	    	    
-	    // --------------------
-	    // calculates column "j" of the Qm2 matrix
-	    if(j >= (2*(TURN+2))) {
-		for(size_type i = j-2*(TURN+2)+1; i>=1; i--) {
-		    qm2[McCmat->iidx(i,j)] = 0;
-		    for(size_type k = i + TURN+1; (k+1)+TURN+1 <= j; k++) {
-			qm2[McCmat->iidx(i,j)] +=
-			    McCmat->get_qm(i,k)*qqm[k+1];
-		    }
-		    assert(qm2[McCmat->iidx(i,j)] <= McCmat->get_qm(i,j));
-		}
-	    }
-	    	    
-	    // --------------------
-	    // swap qqm and qqm1 (in constant time)
-	    qqm1.swap(qqm);
-	}
-    }
-
-
-    void
-    RnaData::compute_Qm2_ali(){
-	assert(used_alifold);
-	assert(McCmat);
-	McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t *>(this->McCmat);
-
-	size_type len   = sequence.length();
-	size_type n_seq = sequence.row_number();
-	
-	std::vector<FLT_OR_DBL> qqm(len+2,0);
-	std::vector<FLT_OR_DBL> qqm1(len+2,0);
-	std::vector<int> type(n_seq);
-	
-	qm2.resize((len+1)*(len+2)/2);
-	
-	// initialize qqm1
-	for (size_type i=1; i<=len; i++)
-	    qqm1[i]=0;
-	
-	for(size_type j= TURN+2; j<=len; j++) {
-
-	    // --------------------
-	    // first, calculate one row of matrix Qm1, which is needed
-	    // in the subsequent calculation of Qm2
-	    //
-	    for(size_type i=j-TURN-1; i>=1; i--) {
-		
-		// get base pair types for i,j of all sequences
-		for (size_t s=0; s<n_seq; ++s) {
-		    type[s] = pair[McCmat->S[s][i]][McCmat->S[s][j]];
-		    if (type[s]==0) type[s]=7;
-		}
-		
-		qqm[i]= qqm1[i]*expMLbase[1];
-		
-		FLT_OR_DBL qbt1=1.0; // collects contribution "inner basepair of multiloop"
-		for (size_t s=0; s<n_seq; s++) {
-		    qbt1 *= exp_E_MLstem(type[s], 
-					 i>1 ? McCmat->S5[s][i] : -1,
-					 j<len ? McCmat->S3[s][j] : -1,
-					 McCmat->pf_params);
-		}
-		qqm[i] += McCmat->get_qb(i,j) * qbt1;
-
-	    }
+	    pimpl_->arc_probs_(i,j)=p;
 	    
-	    // --------------------
-	    // calculate a row of the matrix Qm2
-	    //
-	    if(j >= (2*(TURN+2))) {
-		for(size_type i = j-2*TURN-3; i>=1; i--) {
-		    qm2[McCmat->iidx(i+1,j-1)] = 0;
-		    for(size_type k = i+TURN+2; k< j-TURN-2; k++) {
-			qm2[McCmat->iidx(i+1,j-1)] +=
-			    McCmat->get_qm(i+1,k)*qqm1[k+1];
-		    }
-		}
-	    }
+	    double p2;
 	    
-	    // --------------------
-	    // swap row qqm and qqm1 (in constant time)
-	    qqm1.swap(qqm);
-	}
-    }
-
-    int
-    RnaData::ptype_of_admissible_basepair(size_type i,size_type j) const {
-	assert(!used_alifold);
-	McC_matrices_t *McCmat = static_cast<McC_matrices_t *>(this->McCmat);
-
-    	int type = McCmat->get_ptype(i,j);
-	
-	// immediately return 0.0 when i and j cannot pair
-	if ((type==0)
-	    || (((type==3)||(type==4))&&no_closingGU)
-	    || (McCmat->get_qb(i,j)==0.0)
-	    || (get_arc_prob(i,j)==0.0))
-	    {
-		return 0;
-	    }
-	
-	return type;
-    }
-
-    double RnaData::prob_unpaired_in_loop_ali(size_type k,size_type i,size_type j) const {
-    	assert(frag_len_geq(i,j,TURN+2));
-	assert(i<k);
-	assert(k<j);
-	
-	if (!in_loop_probs_available_) return 1.0;
-	
-	McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t*>( this->McCmat );
-	
-        size_t n_seq = sequence.row_number();
-	
-	// immediately return 0.0 if i and j do not pair
-	if (get_arc_prob(i,j)==0.0 || McCmat->get_qb(i,j)==0.0) {return 0.0;}
-	
-	// get base pair types for i,j of all sequences
-	std::vector<int> type(n_seq);
-	
-	for (size_t s=0; s<n_seq; ++s) {
-	    type[s] = pair[McCmat->S[s][i]][McCmat->S[s][j]];
-	    if (type[s]==0) type[s]=7;
-	}
-
-	// ------------------------------------------------------------
-	// hairpin contribution
-        //
-	
-	FLT_OR_DBL H=1.0;
-	
-	for (size_t s=0; s<n_seq; s++) {
-	    size_t u = McCmat->a2s[s][j-1]-McCmat->a2s[s][i];
-	    if (McCmat->a2s[s][i]<1) continue;
-	    char loopseq[10];
-	    if (u<7){
-		strncpy(loopseq, McCmat->Ss[s]+McCmat->a2s[s][i]-1, 10);
-	    }
-	    H *= exp_E_Hairpin(u, type[s],
-			       McCmat->S3[s][i], McCmat->S5[s][j], 
-			       loopseq, 
-			       McCmat->pf_params);
-        }
-        H *= scale[j-i+1];
-    
-	// ------------------------------------------------------------
-	// interior loop contributions
-	//
-	
-	FLT_OR_DBL I = 0.0;
-	
-	// case 1: i<k<i´<j´<j
-	for (size_t ip=k+1; ip <= std::min(i+MAXLOOP+1,j-TURN-2); ip++) {
-	    for (size_t jp = std::max(ip+TURN+1 + MAXLOOP ,j-1 + ip-i-1 ) - MAXLOOP; jp<j; jp++) {
-		
-		FLT_OR_DBL qloop=1.0;
-		
-		if (McCmat->get_qb(ip,jp)==0) {
-		    continue;
-		}
-		
-		for (size_t s=0; s<n_seq; s++) {
-		    size_t u1 = McCmat->a2s[s][ip-1] - McCmat->a2s[s][i];
-		    size_t u2 = McCmat->a2s[s][j-1] - McCmat->a2s[s][jp];
-		    
-		    int type_2 = pair[McCmat->S[s][jp]][McCmat->S[s][ip]]; 
-		    if (type_2 == 0) type_2 = 7;
-		    
-		    qloop *= exp_E_IntLoop( u1, u2,
-					    type[s], type_2,
-					    McCmat->S3[s][i],
-					    McCmat->S5[s][j],
-					    McCmat->S5[s][ip],
-					    McCmat->S3[s][jp],
-					    McCmat->pf_params
-					    );
-		}
-		
-		I += McCmat->get_qb(ip,jp) * scale[ip-i+j-jp] * qloop;
+	    if (pimpl_->has_stacking_ && (in >> p2)) {
+		pimpl_->arc_2_probs_(i,j)=p2; // p2 is joint prob of (i,j) and (i+1,j-1)
+		contains_stacking=true;
 	    }
 	}
- 
-	//case 2: i<i´<j´<k<j
-	for (size_t ip=i+1; ip <= std::min(i+MAXLOOP+1,k-TURN-2); ip++) {
-	    for (size_t jp = std::max(ip+TURN+1 + MAXLOOP,j-1+ ip-i-1) - MAXLOOP; jp<k; jp++) {
-		
-		FLT_OR_DBL qloop=1.0;
-		
-		if (McCmat->get_qb(ip,jp)==0) {
-		    continue;
-		}
-		
-		for (size_t s=0; s<n_seq; s++) {
-		    size_t u1 = McCmat->a2s[s][ip-1] - McCmat->a2s[s][i];
-		    size_t u2 = McCmat->a2s[s][j-1] - McCmat->a2s[s][jp];
-		    
-		    int type_2 = pair[McCmat->S[s][jp]][McCmat->S[s][ip]]; 
-		    if (type_2 == 0) type_2 = 7;
-		    
-		    qloop *= exp_E_IntLoop( u1, u2,
-					    type[s], type_2,
-					    McCmat->S3[s][i],
-					    McCmat->S5[s][j],
-					    McCmat->S5[s][ip],
-					    McCmat->S3[s][jp],
-					    McCmat->pf_params
-					    );
-		}
-		
-		I += McCmat->get_qb(ip,jp) * scale[ip-i+j-jp] * qloop;
-	    }
+	
+	if (!contains_stacking) {
+	    pimpl_->has_stacking_=false;
 	}
+	
+    } // end read_old_pp
     
     
-	// ------------------------------------------------------------
-	// multiloop contributions
-        //
 
-	FLT_OR_DBL M = 0.0;
+    void RnaData::read_pp(const std::string &filename) {
+	std::ifstream in(filename.c_str());
 	
-	// no base pair <= k:   i....k-----qm2-------j
-	// valid entries of qm2 have space for 2 inner base pairs,
-	// i.e. at least length of "(...)(...)" (for TURN=3)
-	if ( frag_len_geq(k+1, j-1, 2*(TURN+2)) ) {
-	    M += qm2[McCmat->iidx(k+1,j-1)] * expMLbase[k-i];
-	}
-	
-	// no base pair >= k
-	if ( frag_len_geq(i+1,k-1,2*(TURN+2)) ) {
-	    M += qm2[McCmat->iidx(i+1,k-1)] * expMLbase[j-k];
-	}
-	
-	// base pairs <k and >k
-	if ( frag_len_geq(i+1,k-1,TURN+2) && frag_len_geq(k+1,j-1,TURN+2) ) {
-	    M += McCmat->get_qm(i+1,k-1) * expMLbase[1] *  McCmat->get_qm(k+1,j-1);
-	}
-	
-	// multiply with contribution for closing of multiloop
-	
-	for (size_t s=0; s<n_seq; s++) {
-	    int tt = rtype[type[s]];
-	    
-	    M *= McCmat->pf_params->expMLclosing 
-		* exp_E_MLstem(tt,McCmat->S5[s][j],McCmat->S3[s][i], McCmat->pf_params);
-	}
-	M *= scale[2];
-	
-	FLT_OR_DBL Qtotal=H+I+M;
-	
-	double kTn   = McCmat->pf_params->kT/10.;   /* kT in cal/mol  */
-	
-	// multiply with pscore contribution for closing base pair (i,j),
-	// like in the calculation of Qb(i,j)
-	Qtotal *= exp(McCmat->get_pscore(i,j)/kTn);
-	
-	FLT_OR_DBL p_k_cond_ij = Qtotal/McCmat->get_qb(i,j); 
-	
-	FLT_OR_DBL res = p_k_cond_ij * McCmat->get_bppm(i,j);
-	
-	return res;
+	read_pp(in);
     }
     
-    double RnaData::prob_unpaired_in_loop(size_type k,size_type i,size_type j) const {
-	assert(i+TURN+1 <= j);
-	assert(i<k);
-	assert(k<j);
+    std::istream &
+    RnaData::read_pp(std::istream &in) {
 	
-	if (!in_loop_probs_available_) return 1.0;
+	std::string name;
+	std::string seqstr;
+    
+	std::string line;
 	
+	// check header
 	
-	if (used_alifold) {
-	    return prob_unpaired_in_loop_ali(k, i, j);
-	}
-	
-	assert(!used_alifold);
-	McC_matrices_t *McCmat = static_cast<McC_matrices_t *>(this->McCmat);
-
-	const char *c_sequence = McCmat->sequence;
-	
-	
-	int type = ptype_of_admissible_basepair(i,j);
-	
-	// immediately return 0.0 when i and j cannot pair
-	if (type==0) {return 0.0;}
-
-	// ------------------------------------------------------------
-	// Hairpin loop energy contribution
-	
-	size_t u=j-i-1;
-	FLT_OR_DBL H = exp_E_Hairpin(u, type, McCmat->S1[i+1], McCmat->S1[j-1],
-				     c_sequence+i-1, McCmat->pf_params) * scale[u+2];
-	
-	// ------------------------------------------------------------
-	// Interior loop energy contribution
-	FLT_OR_DBL I = 0.0;
-
-	// case 1: i<k<i´<j´<j
-	for (size_t ip=k+1; ip <= std::min(i+MAXLOOP+1,j-TURN-2); ip++) {
-	    size_t u1 = ip-i-1;
-	    for (size_t jp = std::max(ip+TURN+1+MAXLOOP,j-1+u1)-MAXLOOP; jp<j; jp++) {
-		int type2 = McCmat->get_ptype(ip,jp);
-		if (type2) {
-		    type2 = rtype[type2];
-		    I += McCmat->get_qb(ip,jp) 
-			* (scale[u1+j-jp+1] *
-			   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
-					 McCmat->S1[i+1],McCmat->S1[j-1],
-					 McCmat->S1[ip-1],McCmat->S1[jp+1], McCmat->pf_params));
-		}
-	    }
-	}
-	//case 2: i<i´<j´<k<j
-	for (size_t ip=i+1; ip<=std::min(i+MAXLOOP+1,k-TURN-2); ip++) {
-	    size_t u1 = ip-i-1;
-	    for (size_t jp=std::max(ip+TURN+1+MAXLOOP,j-1+u1)-MAXLOOP; jp<k; jp++) {
-		int type2 = McCmat->get_ptype(ip,jp);
-		if (type2) {
-		    type2 = rtype[type2];
-		    I += McCmat->get_qb(ip,jp)
-			* (scale[(int)(u1+j-jp+1)] *
-			   exp_E_IntLoop(u1,(int)(j-jp-1), type, type2,
-					 McCmat->S1[i+1],McCmat->S1[j-1],
-					 McCmat->S1[ip-1],McCmat->S1[jp+1], McCmat->pf_params));
-		}
-	    }
-	}
-	
-	// ------------------------------------------------------------
-	// Multiple loop energy contribution
-	FLT_OR_DBL M = 0.0;
-
-	FLT_OR_DBL M1=0.0;
-	FLT_OR_DBL M2=0.0;
-	FLT_OR_DBL M3=0.0;
-
-	// bases <=k unpaired
-	if ( frag_len_geq(k+1, j-1, 2*(TURN+2)) ) {
-	    M1 = expMLbase[frag_len(i+1,k)] * qm2[McCmat->iidx(k+1,j-1)];
-	}
-	
-	// bases >=k unpaired
-	if ( frag_len_geq(i+1, k-1, 2*(TURN+2)) ) {
-	    M2 = qm2[McCmat->iidx(i+1,k-1)] * expMLbase[frag_len(k,j-1)];
-	}
-	
-	// innner base pairs left and right of k
-	if ( frag_len_geq(i+1,k-1,TURN+2) && frag_len_geq(k+1,j-1,TURN+2) ) {
-	    M3 = McCmat->get_qm(i+1,k-1) * expMLbase[1] *  McCmat->get_qm(k+1,j-1);
-	}
-	
-	M=M1+M2+M3;
-	
-	// multiply with contribution for closing of multiloop
-	M *= McCmat->pf_params->expMLclosing 
-	    * exp_E_MLstem(rtype[type],McCmat->S1[j-1],McCmat->S1[i+1], McCmat->pf_params)
-	    * scale[2];
-	
-	FLT_OR_DBL Qtotal = H+I+M;
-
-	FLT_OR_DBL p_k_cond_ij = Qtotal/McCmat->get_qb(i,j); 
-
-	FLT_OR_DBL res = p_k_cond_ij * McCmat->get_bppm(i,j);
-	
-	return res;
-    }
-
-    double RnaData::prob_unpaired_external(size_type k) const {
-	assert(1<=k);
-	assert(k<=sequence.length());
-	
-	if (!in_loop_probs_available_) return 1.0;
-	
-	return (McCmat->q1k[k-1] * scale[1] * McCmat->qln[k+1]) / McCmat->qln[1];
-    }
-
-
-    double
-    RnaData::prob_basepair_in_loop_ali(size_type ip,
-				       size_type jp,
-				       size_type i,
-				       size_type j) const {
-
-	if (!in_loop_probs_available_) return 1.0;
-	
-	McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t *>(this->McCmat);
-	
-	size_t n_seq = sequence.row_number();
-	
-	// note: the following tests cover the case that the distances of i,j and ip,jp are too small
-
-	// immediately return 0.0 if i and j do not pair
-	if (get_arc_prob(i,j)==0.0 || McCmat->get_qb(i,j)==0.0) {return 0.0;}
-	
-	// immediately return 0.0 when ip and jp cannot pair
-	if (get_arc_prob(ip,jp)==0.0 || McCmat->get_qb(ip,jp)==0.0) {return 0.0;}
-	
-	assert(frag_len_geq(i,j,TURN+4));
-	assert(frag_len_geq(ip,jp,TURN+2));
-	assert(i<ip);
-	assert(jp<j);
-	
-	// ------------------------------------------------------------
-	// get base pair types
-	//
-	std::vector<int> type(n_seq);
-	std::vector<int> type2(n_seq);
-	
-	for (size_t s=0; s<n_seq; ++s) {
-	    type[s] = pair[McCmat->S[s][i]][McCmat->S[s][j]];
-	    if (type[s]==0) type[s]=7;
-
-	    type2[s] = pair[McCmat->S[s][ip]][McCmat->S[s][jp]];
-	    if (type2[s]==0) type2[s]=7;
+	getline(in,line);
+	if (!has_prefix(line,"#PP 2")) {
+	    throw  wrong_format_failure();
 	}
 
+	pimpl_->read_pp_sequence(in);
 
-	// note: I and M are computed without factor get_qb(ip,jp),
-	// which is multiplied only in the end.
-	
-	// ------------------------------------------------------------
-	// Interior loop energy contribution
-	//
-	FLT_OR_DBL I=0.0;
-	
-	if ((frag_len(i,ip)+frag_len(jp,j))<=MAXLOOP) {
-	    I = 1.0;
-	    for (size_t s=0; s<n_seq; s++) {
-		
-		size_t u1 = McCmat->a2s[s][ip-1] - McCmat->a2s[s][i];
-		size_t u2 = McCmat->a2s[s][j-1] - McCmat->a2s[s][jp];
-		
-		I *= exp_E_IntLoop(u1,u2,
-				   type[s], rtype[type2[s]],
-				   McCmat->S3[s][i],
-				   McCmat->S5[s][j],
-				   McCmat->S5[s][ip],
-				   McCmat->S3[s][jp],
-				   McCmat->pf_params);
-	    }
-	    I *= scale[ip-i+j-jp];
-	}
-	
-	// ------------------------------------------------------------
-	// Multiple loop energy contribution
-	//
-	FLT_OR_DBL M = 0.0;
-
-	// inner base pairs only right of (ip,jp)
-	if ( frag_len_geq(jp+1, j-1, TURN+2) ) {
-	    M += expMLbase[frag_len(i+1,ip-1)] * McCmat->get_qm(jp+1,j-1);
-	}
-	
-	// inner base pairs only left of (ip,jp)
-	if ( frag_len_geq(i+1, ip-1, TURN+2) ) {
-	    M += McCmat->get_qm(i+1,ip-1) * expMLbase[frag_len(jp+1,j-1)];
-	}
-	
-	// inner base pairs left and right of (ip,jp)
-	if ( frag_len_geq(i+1, ip-1, TURN+2) && frag_len_geq(jp+1, j-1, TURN+2) ) {
-	    M += McCmat->get_qm(i+1,ip-1) * McCmat->get_qm(jp+1,j-1);
-	}
-	
-	for (size_t s=0; s<n_seq; s++) {
-	    // multiply with factor for inner base pair
-	    M *= exp_E_MLstem(type2[s],
-			      McCmat->S5[s][ip],
-			      McCmat->S3[s][jp],
-			      McCmat->pf_params);
-	    
-	    // multiply with factors for closing base pair
-	    M *= McCmat->pf_params->expMLclosing
-		* exp_E_MLstem(rtype[type[s]],
-			       McCmat->S5[s][j],
-			       McCmat->S3[s][i],
-			       McCmat->pf_params);
-	}
-	
-	M *= scale[2]; // scale for closing base pair
-	
-	// ------------------------------------------------------------
-	FLT_OR_DBL Qtotal= (I+M);
-	
-	Qtotal *= McCmat->get_qb(ip,jp);
-
-	// multiply with pscore contribution for closing base pair (i,j),
-	// like in the calculation of Qb(i,j)
-	double kTn   = McCmat->pf_params->kT/10.;   /* kT in cal/mol  */
-	Qtotal *= exp(McCmat->get_pscore(i,j)/kTn);
-
-	
-	return
-	    (Qtotal/McCmat->get_qb(i,j))
-	    *McCmat->get_bppm(i,j);
-    }
-
-    double
-    RnaData::prob_basepair_in_loop(size_type ip,
-				   size_type jp,
-				   size_type i,
-				   size_type j) const {
-	
-	if (!in_loop_probs_available_) return 1.0;
-
-	if (used_alifold) {
-	    return prob_basepair_in_loop_ali(ip, jp, i, j);
-	}
-	
-	assert(!used_alifold);
-	McC_matrices_t *McCmat = static_cast<McC_matrices_t *>(this->McCmat);
-	
-
-	// note: I and M are computed without factor get_qb(ip,jp),
-	// which is multiplied only in the end.
-	
-	int type=ptype_of_admissible_basepair(i,j);
-	
-	// immediately return 0.0 when i and j cannot pair
-	if (type==0) {return 0.0;}
-	
-	int type2=ptype_of_admissible_basepair(ip,jp);
-	
-	// immediately return 0.0 when ip and jp cannot pair
-	if (type2==0) {return 0.0;}
-	
-	assert(frag_len_geq(i,j,TURN+4));
-	assert(frag_len_geq(ip,jp,TURN+2));
-	assert(i<ip);
-	assert(jp<j);
-
-	//calculating the Interior loop energy contribution
-	//
-	FLT_OR_DBL I=0.0;
-	
-	int u1 =(int)(ip-i-1);
-	int u2 =(int)(j-jp-1);
-	
-	if (u1+u2 <= MAXLOOP) {
-	    I = exp_E_IntLoop(u1,u2, type, rtype[type2],
-			      McCmat->S1[(int)(i+1)],
-			      McCmat->S1[(int)(j-1)],
-			      McCmat->S1[ip-1],
-			      McCmat->S1[jp+1],
-			      McCmat->pf_params)
-		* scale[u1+u2+2];
-	}
-	
-	//calculating Multiple loop energy contribution
-	//
-	FLT_OR_DBL M = 0.0;
-
-	
-	// inner base pairs only right of (ip,jp)
-	if ( frag_len_geq(jp+1, j-1, TURN+2) ) {
-	    M += expMLbase[frag_len(i+1,ip-1)] * McCmat->get_qm(jp+1,j-1);
-	}
-	
-	// inner base pairs only left of (ip,jp)
-	if ( frag_len_geq(i+1, ip-1, TURN+2) ) {
-	    M += McCmat->get_qm(i+1,ip-1) * expMLbase[frag_len(jp+1,j-1)];
-	}
-	
-	// inner base pairs left and right of (ip,jp)
-	if ( frag_len_geq(i+1, ip-1, TURN+2) && frag_len_geq(jp+1, j-1, TURN+2) ) {
-	    M += McCmat->get_qm(i+1,ip-1) * McCmat->get_qm(jp+1,j-1);
-	}
-	
-	// multiply with factor for inner base pair
-	M *= exp_E_MLstem(type2,
-			  McCmat->S1[ip-1],
-			  McCmat->S1[jp+1],
-			  McCmat->pf_params);
-	
-	// multiply with factors for closing base pair
-	M *= McCmat->pf_params->expMLclosing
-	    * exp_E_MLstem(rtype[type],
-			   McCmat->S1[j-1],
-			   McCmat->S1[i+1],
-			   McCmat->pf_params)
-	    * scale[2];
-	
-	FLT_OR_DBL Qtotal = I+M;
-	
-	Qtotal *= McCmat->get_qb(ip,jp);
-	
-	
-	return Qtotal/McCmat->get_qb(i,j)
-	    * McCmat->get_bppm(i,j);
-    }
-
-    double RnaData::prob_basepair_external(size_type i,size_type j) const {
-
-	if (!in_loop_probs_available_) return 1.0;
-	
-	size_t n=sequence.length();
-
-	assert(1<=i);
-	assert(i<j);
-	assert(j<=n);
-	assert(frag_len_geq(i,j,TURN+2));
-	
-	// immediately return 0.0 when i and j cannot pair
-	if (get_arc_prob(i,j)==0.0 || McCmat->get_qb(i,j)==0.0) {
-	    return 0.0;
-	}
-	
-	FLT_OR_DBL extloop;
-	
-	if (!used_alifold) {
-	    McC_matrices_t *McCmat = static_cast<McC_matrices_t *>(this->McCmat);
-	    extloop = exp_E_ExtLoop(McCmat->get_ptype(i,j),
-				    i>1 ? McCmat->S1[i-1] : -1, 
-				    j<n ? McCmat->S1[j+1] : -1, 
-				    McCmat->pf_params);
+	get_nonempty_line(in,line);
+	if( line == "#SECTION BASEPAIRS" ) {
+	    pimpl_->read_pp_arc_probabilities(in);
 	} else {
-	    McC_ali_matrices_t *McCmat = static_cast<McC_ali_matrices_t *>(this->McCmat);
-	    
-	    size_t n_seq=sequence.row_number();
-	    
-	    extloop=1.0;
-	    
-	    for (size_t s=0; s<n_seq; s++) {
-		int type = pair[McCmat->S[s][i]][McCmat->S[s][j]];
-		if (type==0) type=7;
+	    throw syntax_error_failure("Expected base pair section header.");
+	}
+    
+	return in;
+    }
+
+    std::istream &
+    RnaDataImpl::read_pp_sequence(std::istream &in) {
+	
+	sequence_ = MultipleAlignment(in,MultipleAlignment::FormatType::CLUSTAL);
+	sequence_.normalize_rna_symbols();
+	
+	return in;
+    }
+
+    void ExtRnaData::read_pp(const std::string &filename) {
+	std::ifstream in(filename.c_str());
+	RnaData::read_pp(in);
+	
+	std::string line;
+	get_nonempty_line(in,line);
+	
+	if( line == "#SECTION INLOOP" ) {
+	    pimpl_->read_pp_in_loop_probabilities(in);
+	    pimpl_->has_in_loop_probs_=true;
+	} else {
+	    pimpl_->has_in_loop_probs_=false;
+	}
+    }
+    
+    std::istream &
+    RnaDataImpl::read_pp_arc_probabilities(std::istream &in) {
+	// ----------------------------------------
+	// read base pairs
+    
+	bool contains_stacking=false;
+
+	// std::cout << "LEN: " << len<<std::endl;
+	std::string line;
+	while( get_nonempty_line(in,line) ) {
+	    if (line[0]=='#') {
+		// keyword line
 		
-		extloop *= exp_E_ExtLoop(type, i>1 ? McCmat->S5[s][i] : -1,
-					 j<n ? McCmat->S3[s][j] : -1,
-					 McCmat->pf_params);
-	    }
-	}
-
-	return
-	    (McCmat->q1k[i-1]
-	     * McCmat->get_qb(i,j)
-	     * extloop
-	     * McCmat->qln[j+1]
-	     )
-	    / McCmat->qln[1];
-
-    }
-    
-    std::ostream &
-    RnaData::write_unpaired_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const {
-	
-	// write lines for loops closed by base pairs
-	for(arc_prob_matrix_t::size_type i=1; i<=sequence.length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence.length(); ++j) {
-		if (arc_probs_(i,j)>threshold1) {
-		    bool had_entries=false;
-		    for(arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
-			double p=prob_unpaired_in_loop(k,i,j);
-			if (p>threshold2) {
-			    if (!had_entries) {out << i << " " << j; had_entries=true;}
-			    out << " " << k << " " << p;
-			}
+		if (has_prefix(line,"#END")) {
+		    // section end
+		    break;
+		} else if (has_prefix(line,"#BPCUT")) {
+		    std::istringstream in(line);
+		    std::string dummy;
+		    double p;
+		    in >> dummy >> p;
+		    if ( in.fail() ) {
+			throw syntax_error_failure("Cannot parse line \""+line+"\" in base pairs section.");
 		    }
-		    if (had_entries) out << std::endl;
+		    p_bpcut_ = std::max(p,p_bpcut_);
+		}  else if (has_prefix(line,"#STACK")) {
+		    contains_stacking = true;
 		}
-	    }
-	}
-	
-	// write lines for external loop
-	
-	bool had_entries=false;
-	for(arc_prob_matrix_t::size_type k=1; k<=sequence.length(); ++k) {
-	    double p=prob_unpaired_external(k);
-	    if (p>threshold2) {
-		if (!had_entries) {out << 0 << " " << (sequence.length()+1); had_entries=true;}
-		out << " " << k << " " << p;
-	    }
-	}
-	if (had_entries) out << std::endl;
-    	return out;
-    }
-    
-	
-    std::ostream &
-    RnaData::write_basepair_in_loop_probs(std::ostream &out,double threshold1,double threshold2) const {
-	// write lines for loops closed by base pairs
-	for(arc_prob_matrix_t::size_type i=1; i<=sequence.length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence.length(); ++j) {
-		if (arc_probs_(i,j)>threshold1) {
-		    bool had_entries=false;
-		    for(arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
-			for(arc_prob_matrix_t::size_type jp=ip+1; jp<=j-1; ++jp) {
-			    double p=prob_basepair_in_loop(ip,jp,i,j);
-			    if (p>threshold2) {
-				if (!had_entries) {out << i << " " << j; had_entries=true;}
-				out << " " << ip << " " << jp << " " << p;
-			    }
-			}
-		    }
-		    if (had_entries) out << std::endl;
+	    } else {
+		std::istringstream in(line);
+		size_t i,j;
+		double p;
+		in>>i>>j>>p;
+      
+		if ( in.fail() ) {
+		    throw syntax_error_failure("Cannot parse line \""+line+"\" in base pairs section.");
 		}
-	    }
-	}
-	
-	// write lines for external loop
-	bool had_entries=false;
-	for(arc_prob_matrix_t::size_type ip=1; ip<=sequence.length(); ++ip) {
-	    for(arc_prob_matrix_t::size_type jp=ip+1; jp<=sequence.length(); ++jp) {
-		double p=prob_basepair_external(ip,jp);
-		if (p>threshold2) {
-		    if (!had_entries) {out << 0 << " " << (sequence.length()+1); had_entries=true;}
-		    out << " " << ip << " " << jp << " " << p;
-		}
-	    }
-	}
-	if (had_entries) out << std::endl;
-    	return out;
-    }
-    
-    
-    std::ostream &
-    RnaData::write_basepair_and_in_loop_probs(std::ostream &out,double threshold1,double threshold2,double threshold3, bool write_probs, bool diff_encoding) const {
-	
-	size_t i=0;
-	size_t j=sequence.length()+1;
-
-	arc_prob_matrix_t::size_type last_i=i;
-	arc_prob_matrix_t::size_type last_j=j;
-	
-
-	// write line for external loop
-	
-	out << (diff_encoding?(int)i-(int)last_i:(int)i) << " " << (diff_encoding?(int)last_j-(int)j:(int)j)<< " 1 ;";
-	
-	arc_prob_matrix_t::size_type last_k=i;
-	for(arc_prob_matrix_t::size_type k=1; k<=sequence.length(); ++k) {
-	    double p=prob_unpaired_external(k);
-	    if (p>threshold2) {
-		out << " " << (diff_encoding?(k-last_k):k);
-		if (write_probs) out << " " << p;
-		last_k=k;
-	    }
-	}
-	out << ";";
-	
-	arc_prob_matrix_t::size_type last_ip=i;
-	arc_prob_matrix_t::size_type last_jp=j;
-	for(arc_prob_matrix_t::size_type ip=1; ip<=sequence.length(); ++ip) {
-	    for(arc_prob_matrix_t::size_type jp=sequence.length(); jp>ip; --jp) {
-		if (arc_probs_(ip,jp)>threshold1) {
-		    double p=prob_basepair_external(ip,jp);
-		    if (p>threshold3) {
-			out << " " << (diff_encoding?(int)ip-(int)last_ip:(int)ip) << " " << (diff_encoding?(int)last_jp-(int)jp:(int)jp);
-			if (write_probs) out << " " << p;
-			last_ip=ip;
-			last_jp=jp;
-		    }
-		}
-	    }
-	}
-	out << std::endl;
-
-	
-	// write lines for internal loops
-	for(arc_prob_matrix_t::size_type i=1; i<=sequence.length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence.length(); ++j) {
 		
-		if (arc_probs_(i,j)>threshold1) {
-		    
-		    out << (diff_encoding?(int)i-(int)last_i:(int)i) << " " << (diff_encoding?(int)last_j-(int)j:(int)j);
-		    last_i=i; 
-		    last_j=j;
-		    
-		    // write base pair and stacking probability
-		    out << " " << arc_probs_(i,j);
-		    if (arc_2_probs_(i,j)>threshold1) {
-			out << " " << arc_2_probs_(i,j);
-		    }
-		    out << " ;";
-		    
-		    // write unpaired in loop
-		    arc_prob_matrix_t::size_type last_k=i;
-		    for(arc_prob_matrix_t::size_type k=i+1; k<=j-1; ++k) {
-			double p=prob_unpaired_in_loop(k,i,j);
-			if (p>threshold2) {
-			    out << " " << (diff_encoding?(k-last_k):k);
-			    if (write_probs) out << " " << p;
-			    last_k=k;
-			}
-		    }
-		    
-		    out << " ;";
-		    
-		    arc_prob_matrix_t::size_type last_ip=i;
-		    arc_prob_matrix_t::size_type last_jp=j;
-		    
-		    for(arc_prob_matrix_t::size_type ip=i+1; ip<=j-1; ++ip) {
-			for(arc_prob_matrix_t::size_type jp=j-1; jp>ip ; --jp) {
-			    double p=prob_basepair_in_loop(ip,jp,i,j);
-			    if (p>threshold3) {
-				
-				out << " " << (diff_encoding?(int)ip-(int)last_ip:(int)ip) << " " << (diff_encoding?(int)last_jp-(int)jp:(int)jp);
-				if (write_probs) out << " " << p;
-				last_ip=ip;
-				last_jp=jp;
-			    }
-			}
-		    }
-		    out << std::endl;
+		if (!(1<=i && i<j && j<=sequence_.length())) {
+		    throw syntax_error_failure("Invalid indices in PP input line \""+line+"\".");
 		}
-	    }
-	}
-
-	return out;	
-    }
-
-
-#endif // HAVE_LIBRNA
-
-    std::ostream &
-    RnaData::write_basepair_probs(std::ostream &out,double threshold) const {
-	for(arc_prob_matrix_t::size_type i=1; i<=sequence.length(); ++i) {
-	    for(arc_prob_matrix_t::size_type j=i+1; j<=sequence.length(); ++j) {
 		
-		if (arc_probs_(i,j)>threshold) {
-		    out << i << " " << j;
-		    
-		    // write base pair and stacking probability
-		    out << " " << arc_probs_(i,j);
-		    if (arc_2_probs_(i,j)>threshold) {
-			out << " " << arc_2_probs_(i,j);
+		if (p>p_bpcut_) {
+		    arc_probs_(i,j)=p;
+		
+		    double p2;
+		
+		    if (has_stacking_ && (in >> p2)) {
+			if (p2>p_bpcut_) {
+			    arc_2_probs_(i,j)=p2; // p2 is joint prob of (i,j) and (i+1,j-1)
+			}
 		    }
 		}
 	    }
 	}
-	return out;
-    }
-    
-    std::string RnaData::seqname_from_filename(const std::string &s) const {
-	size_type i;
-	size_type j;
-    
-	assert(s.length()>0);
-    
-	for (i=s.length(); i>0 && s[i-1]!='/'; i--)
-	    ;
 
-	for (j=i; j<s.length() && s[j]!='.'; j++)
-	    ;
-
-	std::string name=s.substr(i,j-i);
-
-	if (name.length()>3 && name.substr(name.length()-3,3) == "_dp")
-	    name=name.substr(0,name.length()-3);
-    
-	return name;
+	if (!contains_stacking && arc_2_probs_.size()>0) {
+	    throw syntax_error_failure("Stacking probabilties found but stack keyword is missing.");
+	}
+	
+	return in;
     }
 
+    std::string
+    read_pp_in_loop_block(const std::string &firstline,std::istream &in) {
+	size_t pos = firstline.find(":");
+	assert(pos != std::string::npos);
+	
+	std::string block = firstline.substr(pos+1);
+	
+	if (block.size()==0) { 
+	    return block;
+	}
+	
+	std::string line;
+	while ( block[block.size()-1]=='\\' && getline(in,line) ) {
+	    block = block.substr(0,block.size()-1);
+	    block += line;
+	}
+	
+	return block;
+    }
+
+    std::istream &
+    ExtRnaDataImpl::read_pp_in_loop_probabilities(std::istream &in) {
+
+    	std::string line;
+	while( get_nonempty_line(in,line) ) {
+	    if (line[0]=='#') {
+		// keyword line
+		
+		if (has_prefix(line,"#END")) {
+		    // section end
+		    break;
+		} else if (has_prefix(line,"#BPILCUT")) {
+		    std::istringstream in(line);
+		    std::string dummy;
+		    double p;
+		    in >> dummy >> p;
+		    if ( in.fail() ) {
+			throw syntax_error_failure("Cannot parse line \""+line+"\" in in-loop section.");
+		    }
+		    p_bpilcut_ = std::max(p,p_bpilcut_);
+		} else if (has_prefix(line,"#UILCUT")) {
+		    std::istringstream in(line);
+		    std::string dummy;
+		    double p;
+		    in >> dummy >> p;
+		    if ( in.fail() ) {
+			throw syntax_error_failure("Cannot parse line \""+line+"\" in in-loop section.");
+		    }
+		    p_uilcut_ = std::max(p,p_uilcut_);
+		}
+	    } else {
+		size_t i;
+		size_t j;
+		{
+		    std::istringstream in(line);
+		    std::string sep;
+		    in>>i>>j>>sep;
+		    
+		    if (sep!=":") {
+			throw syntax_error_failure("Invalid line \""+line+"\" in in-loop section.");
+		    }
+		    if (!(1<=i && i<j && j<=self_->length())) {
+			throw syntax_error_failure("Index error in PP input line \""+line+"\" (i>=j).");
+		    }
+		}
+		
+		std::string block_string = read_pp_in_loop_block(line,in);
+		
+		std::vector<std::string> blocks;
+		split_at_separator(block_string,';',blocks);
+		
+		if (blocks.size() != 2) {
+		    std::cerr << "Faulty block: "<<block_string<<std::endl;
+		    throw syntax_error_failure("Invalid in loop probabilitity specification at line \""+line+"\"");
+		}
+		
+		{
+		    std::istringstream in1(blocks[0]);
+		    size_t ip;
+		    size_t jp;
+		    double p;
+		    while(in1 >> ip >> jp >> p) {
+			if (!(i<ip && ip<jp && jp<j)) {
+			    throw syntax_error_failure("Index error in in-loop specification.");
+			}
+			arc_in_loop_probs_.ref(i,j).set(ip,jp,p);
+		    }
+		}
+		
+		{
+		    std::istringstream in2(blocks[1]);
+		    size_t kp;
+		    double p;
+		    while(in2 >> kp >> p) {
+			if (!(i<kp && kp<j)) {
+			    throw syntax_error_failure("Index error in in-loop specification.");
+			}
+			unpaired_in_loop_probs_.ref(i,j)[kp] = p;
+		    }
+		}
+	    }
+	}
+	return in;
+    }
+    
     std::ostream &
     RnaData::write_pp(std::ostream &out,
-		      int width,
-		      double thresh1,
-		      double thresh2,
-		      double thresh3) const
-    {
-    
-	size_type length=sequence.length();
-    
-	// write sequence
-	for(size_type k=1; k<=length; k+=width) {
-	    sequence.write( out, k, std::min(length,k+width-1) );
-	    out <<std::endl;
-	}
-
-	// write constraints
-	if (seq_constraints_ != "") {
-	    out << "#C "<<seq_constraints_<<std::endl;
-	}
-    
-	// write separator
-	out << std::endl;
-	out << "#" << std::endl;
-    
-	// write probabilities
-    
-	for (size_type i=1; i<=length; i++) {
-	    for (size_type j=i+1; j<=length; j++) {
-		double p=get_arc_prob(i,j);
-		if (p > thresh1) {
-		    out << i << " " << j << " " << p;
-		
-		    // write joint probability if above threshold 1
-		    double p2=get_arc_2_prob(i,j);
-		    if ( p2 > thresh1 ) {
-			out << " " << p2;
-		    }
-		    
-		    // write positions of bases with unpaired in loop probabilities above threshold 2
-		
-		    for (size_type k=i+1; k<j; ++k) {
-		    }
-		    
-		    // write positions of base pairs with in loop probabilities above threshold 3
-		    
-		    out << std::endl;
-		}
-	    } // end for j
-	} // end for i
+		      double p_outbpcut) const {
 	
-	std::cerr << "Warning: rna_data::write_pp not fully implemented!"<<std::endl;
-
+	out << "#PP 2.0"
+	    << std::endl  
+	    << std::endl;
+	
+	pimpl_->write_pp_sequence(out);
+	
+	pimpl_->write_pp_arc_probabilities(out,p_outbpcut,pimpl_->has_stacking_);
+	
 	return out;
     }
     
-}
+    std::ostream &
+    ExtRnaData::write_pp(std::ostream &out,
+    			 double p_outbpcut,
+			 double p_outbpilcut,
+    			 double p_outuilcut
+    			 ) const {
+	
+	RnaData::write_pp(out,p_outbpcut);
+	
+	pimpl_->write_pp_in_loop_probabilities(out,
+					       p_outbpcut,
+					       p_outbpilcut,
+					       p_outuilcut);
+	
+    	return out;
+    }
     
+
+    std::ostream &
+    RnaDataImpl::write_pp_sequence(std::ostream &out) const {
+	out << sequence_;
+	
+	out << std::endl
+	    << "#END" << std::endl;
+	
+	return out;
+    }
+
+
+    /** 
+     * @brief output format for probabilities in pp files
+     * use limited precision; use scientific notation if it is shorter
+     */
+    std::string
+    format_prob(double prob) {
+	std::ostringstream outd;
+	outd.precision(3);
+	outd << prob;
+	
+	if (outd.str().length()<=6) {
+	    return outd.str();
+	}
+
+	std::ostringstream outs;
+	outs.setf( std::ios::scientific, std:: ios::floatfield );
+	outs.precision(2);
+	outs << prob;
+	
+	std::string s=outs.str();
+	size_t pos = s.find("e-0");
+	if (pos!=std::string::npos) {
+	    s.replace(pos,3,"e-");
+	}
+	
+	return s;
+    }
+    
+    /**
+     * @brief Write arc probabilities
+     * 
+     * Writes arc and stacking probabilities to stream; filters by
+     * probability threshold p_outbpcut
+     */
+    std::ostream &
+    RnaDataImpl::write_pp_arc_probabilities(std::ostream &out,
+					    double p_outbpcut,
+					    bool stacking
+					    ) const {
+	
+	out << std::endl
+	    << "#SECTION BASEPAIRS" << std::endl
+	    << std::endl
+	    << "#BPCUT "<<format_prob(std::max(p_bpcut_,p_outbpcut)) << std::endl;
+	
+	if (has_stacking_) {
+	    out << "#STACKS"<<std::endl;
+	}
+	out <<std::endl;
+	
+	// assume that for each entry in arc_2_probs_ there is a corresponding entry in arc_probs_
+#     ifndef NDEBUG
+	for (arc_prob_matrix_t::const_iterator it = arc_2_probs_.begin();
+	     arc_2_probs_.end() != it;
+	     ++it) {
+	    assert(arc_probs_(it->first.first,it->first.second)!=0.0);
+	}
+#     endif
+	
+	for (arc_prob_matrix_t::const_iterator it = arc_probs_.begin();
+	     arc_probs_.end() != it;
+	     ++it) {
+	    size_t i=it->first.first;
+	    size_t j=it->first.second;
+	    if (it->second > p_outbpcut) {
+		out << i << " " << j << " " << format_prob(it->second);
+		if (has_stacking_ && arc_2_probs_(i,j)>p_bpcut_) {
+		    out << " " << format_prob(arc_2_probs_(i,j));
+		}
+		out << std::endl;
+	    }
+	}
+
+	out << std::endl
+	    << "#END" << std::endl;
+	
+	return out;
+    }
+
+    std::ostream &
+    ExtRnaDataImpl::write_pp_in_loop_probabilities(std::ostream &out,
+						   double p_outbpcut,
+						   double p_outbpilcut,
+						   double p_outuilcut
+						   ) const {
+	out << std::endl
+	    << "#SECTION INLOOP" << std::endl
+	    << std::endl
+	    << "#BPILCUT " << format_prob(std::max(p_bpilcut_,p_outbpilcut)) << std::endl
+	    << "#UILCUT  " << format_prob(std::max(p_uilcut_,p_outuilcut)) << std::endl
+	    << std::endl;
+	
+	// write in-loop probabilities for all arcs with probability greater than p_outbpcut
+	for (arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
+	     self_->arc_probs_end() != it;
+	     ++it) {
+	    if (it->second > p_outbpcut) {
+		size_t i=it->first.first;
+		size_t j=it->first.second;
+		
+		out << i << " " << j << " :";
+		// if (arc_in_loop_probs_(i,j).size()>=5) {
+		//     out << std::endl << "   ";
+		// }
+		
+		write_pp_basepair_in_loop_probabilities(out,
+							arc_in_loop_probs_(i,j),
+							p_outbpilcut);
+		
+		out << " ;"; // separate base pair and unpaired probabilities
+		if (arc_in_loop_probs_(i,j).size()>=4 && unpaired_in_loop_probs_(i,j).size()>=4) {
+		    out << "\\" << std::endl << "   ";
+		}
+		
+		write_pp_unpaired_in_loop_probabilities(out,
+							unpaired_in_loop_probs_(i,j),
+							p_outuilcut
+							);
+		
+		out << std::endl;
+	    }
+	}
+	
+	out << std::endl
+	    << "#END" << std::endl;
+	
+	return out;
+    }
+    
+    std::ostream &
+    ExtRnaDataImpl::write_pp_basepair_in_loop_probabilities(std::ostream &out,
+							    const arc_prob_matrix_t &probs,
+							    double p_cut) const {
+	for (arc_prob_matrix_t::const_iterator it=probs.begin(); probs.end()!=it; ++it) {
+	    if (it->second > p_cut) {
+		out << " " << it->first.first << " " << it->first.second << " " << format_prob(it->second);
+	    }
+	}
+	return out;
+    }
+
+    std::ostream &
+    ExtRnaDataImpl::write_pp_unpaired_in_loop_probabilities(std::ostream &out,
+							    const arc_prob_vector_t &probs,
+							    double p_cut) const {
+	for (arc_prob_vector_t::const_iterator it=probs.begin(); probs.end()!=it; ++it) {
+	    if (it->second > p_cut) {
+		out << " " << it->first << " " << format_prob(it->second);
+	    }
+	}
+	return out;
+    }
+
+    
+    std::ostream &
+    RnaData::write_size_info(std::ostream &out) const {
+	out << "arcs: "<<pimpl_->arc_probs_.size();
+	if (pimpl_->has_stacking_) {
+	    out << "  stackings: "<<pimpl_->arc_2_probs_.size();
+	}
+	return out;
+    }
+
+    std::ostream &
+    ExtRnaData::write_size_info(std::ostream &out) const {
+	// count arcs in loop
+	size_t num_arcs_in_loop=0;
+	// count unpaired bases in loop
+	size_t num_unpaired_in_loop=0;
+
+	size_t len = length();
+	for( size_t i=1; i <= len; i++ ) {
+	    for( size_t j=i+1; j <= len; j++ ) {
+		num_arcs_in_loop += 
+		    arc_prob_matrix_t(pimpl_->arc_in_loop_probs_(i,j)).size();
+		num_unpaired_in_loop += 
+		    ExtRnaDataImpl::arc_prob_vector_t(pimpl_->unpaired_in_loop_probs_(i,j)).size();	
+	    }
+	}
+	
+	return
+	    RnaData::write_size_info(out)
+	    <<"  arcs in loops: " << num_arcs_in_loop << "  unpaireds in loops: " << num_unpaired_in_loop;
+    }
+
+
+    void
+    RnaDataImpl::init_as_consensus_dot_plot(const Alignment::edges_t &edges,
+					    const RnaData &rna_dataA,
+					    const RnaData &rna_dataB,
+					    double p_expA,
+					    double p_expB,
+					    bool stacking
+					    ) {
+	
+	const MultipleAlignment &seqA=rna_dataA.sequence();
+	const MultipleAlignment &seqB=rna_dataB.sequence();
+	size_t rowsA = seqA.num_of_rows();
+	size_t rowsB = seqB.num_of_rows();
+
+	double p_minA = rna_dataA.arc_cutoff_prob();
+	double p_minB = rna_dataB.arc_cutoff_prob();
+	
+	double p_minMean =
+	    exp(
+		(log(p_minA)*rowsA + log(p_minB)*rowsB)
+		/ (rowsA+rowsB)
+		);
+	
+	p_bpcut_ = p_minMean;
+	
+	for (size_type i=0; i<edges.size(); i++) {
+	    for (size_type j=i+3; j<edges.size(); j++) { // min loop size=3
+		// here we compute consensus pair probabilities
+		
+		double pA =
+		    (edges.first[i].is_gap() || edges.first[j].is_gap())
+		    ? 0
+		    : rna_dataA.arc_prob(edges.first[i], edges.first[j]);
+
+		double pB =
+		    (edges.second[i].is_gap() || edges.second[j].is_gap())
+		    ? 0
+		    : rna_dataB.arc_prob(edges.second[i], edges.second[j]);
+
+		double p = consensus_probability(pA,pB,rowsA,rowsB,p_expA,p_expB);
+
+		if (stacking) {
+		    double st_pA =
+			(edges.first[i].is_gap() || edges.first[j].is_gap())
+			? 0
+			: rna_dataA.joint_arc_prob(edges.first[i], edges.first[j]);
+		    
+		    double st_pB =
+			(edges.second[i].is_gap() || edges.second[j].is_gap())
+			? 0
+			: rna_dataB.joint_arc_prob(edges.second[i], edges.second[j]);
+
+		    double st_p = consensus_probability(st_pA,st_pB,rowsA,rowsB,p_expA,p_expB);
+
+		    if (p > p_minMean || st_p > p_minMean) {
+			arc_probs_(i+1,j+1) = p;
+			arc_2_probs_(i+1,j+1) = st_p;
+		    }
+
+		} else {
+		    if (p > p_minMean) {
+			arc_probs_(i+1,j+1) = p;
+		    }
+		}
+	    }
+	}
+    }
+    
+    double
+    RnaDataImpl::consensus_probability(double pA, double pB,
+				       size_t sizeA,size_t sizeB,
+				       double p_expA, double p_expB) const {
+	pA = std::max(std::min(p_expA,p_bpcut_*0.75), pA);
+	pB = std::max(std::min(p_expB,p_bpcut_*0.75), pB);
+
+	// weighted geometric mean
+	double p = exp(
+		       (log(pA)*sizeA + log(pB)*sizeB) /
+		       //---------------------------------------------------
+		       (sizeA + sizeB)
+		       );
+	
+	return p;
+
+	/*
+	  would something like
+	  if (pA<p_min*1.05) { pA = std::min(p_expA,p_min*0.75); }
+	  work better???
+	*/
+    }
+    
+
+} // end namespace LocARNA

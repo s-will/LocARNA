@@ -321,13 +321,27 @@ sub read_fasta {
     }
  
     my @fasta = ();
-    
+    my @read_names = ();
+
     my $line=<$fh>;
     while(defined($line)) {
 	if ($line=~/^>\s*(\S+)\s*(.*)/) {
 	    my $name=$1;
 	    my $description=$2;
 	    
+	    ## check for duplicate names in fasta
+	    if (grep(/^$name$/, @read_names)) {
+		print "Duplicate name \"$name\" in fasta input. ";
+		my $bar="foo bar bar";
+		if (length($description)>0) {
+		    $bar=$description;
+		}
+		print "Note that in \">$name $bar\", only \"$name\" is the name, ";
+		print "whereas the rest of the line \"$bar\" (after the blank) is interpreted as description.\n";
+		exit(-1);
+	    }
+	    push @read_names, $name;
+
 	    my $seq = { name  => $name,
 			descr => $description };
 	    
@@ -780,26 +794,36 @@ sub read_dp_ps {
 
 
 ## read pp file and return the alignment
+## auto-detect version of pp file
 sub read_pp_file_aln($) {
     my ($filename)=@_;
-    local *PP_IN;
+    my $pp_in;
    
-    open(PP_IN,$filename) || die "MLocarna::read_pp_file_aln: Cannot read $filename\n";
+    open($pp_in,$filename) || die "MLocarna::read_pp_file_aln: Cannot read $filename\n";
     
     my %aln;
     my %pairprobs;
 
     my $line;
+    my $pp_version=1.0;
+
+    if (($line = <$pp_in>) =~ /^#PP ([\d.]+)/ ) {
+	$pp_version=$1;
+	$line = <$pp_in>
+    }
     
-    while ($line = <PP_IN>) {
-	if ($line =~ /^\#\s*$/) { last; }
-    
+    while ($line) {
+	$line = <$pp_in>;
+	
+	if ($pp_version>=2 && $line =~ /^\#END/) { last; }
+	if ($pp_version<2 && $line =~ /^\#\s*$/) { last; }
+	
 	if (($line =~ /^(\S+)\s+(.+)/) && ($line !~ /^SCORE:/) ) {
 	    $aln{$1}.=$2;
 	}
     }
     
-    close PP_IN;
+    close $pp_in;
     
     return %aln;
 }
@@ -811,11 +835,12 @@ sub read_pp_file_aln($) {
 ##          the hash has keys "$i $j" and contains the probabilities p_ij (i<j)
 ##          positions in the hash are in [1..sequence length]
 ##
+## auto-detect version of pp file
 sub read_pp_file_pairprobs($) {
     my ($filename)=@_;
-    local *PP_IN;
+    my $pp_in;
 
-    open(PP_IN,$filename) || die "Can not read $filename\n";
+    open($pp_in,$filename) || die "Can not read $filename\n";
     
     #my %aln;
     my %pairprobs = read_pp_file_pairprob_info($filename);
@@ -838,30 +863,48 @@ sub read_pp_file_pairprobs($) {
 ##          in the pp file
 ##          positions in the hash are in [1..sequence length]
 ##
+## auto-detect version of pp file
 sub read_pp_file_pairprob_info($) {
     my ($filename)=@_;
-    local *PP_IN;
+    my $pp_in;
 
-    open(PP_IN,$filename) || die "Can not read $filename\n";
+    open($pp_in,$filename) || die "Can not read $filename\n";
     
     #my %aln;
     my %pairprobinfo;
 
     my $line;
 
-    while ($line = <PP_IN>) {
-	if ($line =~ /^\#\s*$/) { last; }
+    my $pp_version=1.0;
+    if (($line = <$pp_in>) =~ /^#PP ([\d.]+)/ ) {
+	$pp_version=$1;
+	$line = <$pp_in>
+    }
+
+    while ($line = <$pp_in>) {
+	if ($pp_version>=2 && $line =~ /^\#END/) { 
+	    while ($line = <$pp_in>) {
+		if ($line =~ /^\#SECTION BASEPAIRS/) { 
+		    last;
+		}
+	    }
+	    last;
+	}
+	if ($pp_version<2 && $line =~ /^\#\s*$/) { last; }
     }
     
-    while (($line = <PP_IN>)) {
-	if ($line =~ /(\S+)\s+(\S+)\s+(.+)/) {
+    while (($line = <$pp_in>)) {
+	if ($line =~ /^(\S+)\s+(\S+)\s+(.+)/) {
 	    my $i=$1;
 	    my $j=$2;
 	    my $pi=$3;
 	    $pairprobinfo{"$i $j"}=$pi;
 	}
+	if ($pp_version>=2 && $line =~ /^\#END/) { 
+	    last;
+	}
     }
-    close PP_IN;
+    close $pp_in;
     
     return %pairprobinfo;
 }

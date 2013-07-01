@@ -1,3 +1,6 @@
+#include "aux.hh"
+#include "global_stopwatch.hh"
+
 #include "aligner_n.hh"
 #include "anchor_constraints.hh"
 #include "trace_controller.hh"
@@ -425,7 +428,7 @@ void AlignerN::fill_D_entries(pos_type al, pos_type bl)
     if (trace_debugging_output)
 	std::cout << "fill_D_entries al: " << al << " bl: " << bl << std::endl;
 
-    UnmodifiedScoringViewN sv = def_scoring_view; //toask: where should we care about non_default scoring views
+    // UnmodifiedScoringViewN sv = def_scoring_view; //toask: where should we care about non_default scoring views
 
     //iterate through arcs begining at al,bl
     for(ArcMatchIdxVec::const_iterator it=arc_matches.common_left_end_list(al,bl).begin();  //tocheck:toask:todo: IMPORTANT! can we use arc_matches to get the common endlist?? arcA,arcB may not be matched!
@@ -556,7 +559,7 @@ AlignerN::align_D() {
 	    //compute IA
 //	    stopwatch.start("compIA");
 	    for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-		    arcB != adjlB.end(); arcB++)
+		    arcB != adjlB.end(); ++arcB)
 	    {
 		fill_IA_entries(al, *arcB, max_ar );
 	    }
@@ -565,7 +568,7 @@ AlignerN::align_D() {
 	    //comput IB
 //	    stopwatch.start("compIB");
 	    for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-		    arcA != adjlA.end(); arcA++)
+		    arcA != adjlA.end(); ++arcA)
 	    {
 		fill_IB_entries(*arcA, bl, max_br );
 	    }
@@ -597,8 +600,7 @@ AlignerN::align() {
     }
 
     if (params->SEQU_LOCAL) {
-	std::cerr << "SEQU_LOCAL is not supported by locarna_n\n" << std::endl;
-	exit(-1);
+	throw failure("SEQU_LOCAL is not supported by locarna_n");
     } else { // sequence global alignment
 
 	// align toplevel globally with potentially free endgaps (as given by description params->free_endgaps)
@@ -997,11 +999,11 @@ AlignerN::trace(ScoringView sv) {
     // free end gap version: trace_M(E_NO_NO,r.get_startA()-1,max_i,r.get_startB()-1,max_j,true,sv);
     seq_pos_t ps_al = r.get_startA() - 1;
     matidx_t last_mat_idx_pos_A = mapperA.number_of_valid_mat_pos(ps_al) -1;//tocheck: check the correctness
-    seq_pos_t last_seq_pos_A = mapperA.get_pos_in_seq_new(ps_al, last_mat_idx_pos_A);
+    //seq_pos_t last_seq_pos_A = mapperA.get_pos_in_seq_new(ps_al, last_mat_idx_pos_A);
 
     seq_pos_t ps_bl = r.get_startB() - 1;
     matidx_t last_mat_idx_pos_B = mapperB.number_of_valid_mat_pos(ps_bl) -1;//tocheck: check the correctness
-    seq_pos_t last_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_mat_idx_pos_B);
+    //seq_pos_t last_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_mat_idx_pos_B);
 
     trace_M(E_NO_NO, ps_al, last_mat_idx_pos_A, ps_bl, last_mat_idx_pos_B, true, sv); //TODO: right side for trace_M differs with align_M
 /*    for ( size_type k = last_seq_pos_A + 1; k <= r.get_endA(); k++)//tocheck: check the correctness

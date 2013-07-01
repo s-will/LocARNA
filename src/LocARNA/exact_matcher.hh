@@ -1,6 +1,9 @@
 #ifndef EXACT_MATCHER_HH
 #define EXACT_MATCHER_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <iostream>
 #include <sstream>
@@ -9,7 +12,10 @@
 #include <limits>
 #include <iterator>
 #include <tr1/unordered_map>
+#include "trace_controller.hh"
 #include "sparsification_mapper.hh"
+#include "tuples.hh"
+#include "scoring.hh"
 
 extern "C"
 {
@@ -225,7 +231,7 @@ std::ostream &operator << (std::ostream &out, const PatternPairMap::patListTYPE 
 	//!@brief returns the structure of the given sequence
 	char* getStructure(PatternPairMap& myMap, bool firstSeq, int length);
 	
-	std::string intvec2str(const std::vector<unsigned int>& V, const std::string delim){
+	std::string intvec2str(const std::vector<unsigned int>& V, const std::string &delim){
 	    std::stringstream oss;
 	    copy(V.begin(), V.end(), std::ostream_iterator<unsigned int>(oss, delim.c_str()));
 	    std::string tmpstr;
@@ -542,6 +548,7 @@ public:
 class EPM{
 
 public:
+    typedef BasePairs__Arc Arc; //!< arc class of BasePairs
 
 	typedef SparsificationMapper::seq_pos_t seqpos_t; //!< a type for a sequence position
 	typedef SparseTraceController::matpos_t matpos_t; //!< a type for a position in a sparsified matrix
@@ -792,6 +799,7 @@ T1 max4(const T1 &first,const T1 &second, const T1 &third, const T1 &fourth){
 }
 
 class ExactMatcher {
+    typedef BasePairs__Arc Arc; //!< use arc class of base pairs
 
 	typedef SparsificationMapper::ArcIdx ArcIdx; //!< type for the arc index
 	typedef SparsificationMapper::ArcIdxVec ArcIdxVec; //!< type for a vector of arc indices
@@ -806,8 +814,10 @@ class ExactMatcher {
 
 	typedef std::vector<EPM> epm_cont_t; //!< the container used for temporarily storing the EPMs
 	typedef std::pair<score_t,epm_cont_t > el_map_am_to_do_t; //!< type for storing for a given tolerance the list of epms
-	typedef std::map<PairArcIdx,el_map_am_to_do_t > map_am_to_do_t; //!< a map that stores for pairs of arc indices the tolerance
-																	// that is used for backtracing and the found EPMs
+	
+        //! a map that stores for pairs of arc indices the tolerance
+        //! that is used for backtracing and the found EPMs
+        typedef std::map<PairArcIdx,el_map_am_to_do_t > map_am_to_do_t; 
 private:
 
     //! a quintuple for storing the state, max tolerance left, current matrix position, potential pair of arc indices
@@ -815,13 +825,16 @@ private:
 	//<state, max_tol, current matrix position, potential arcMatch, sequence position to be matched>
     typedef quintuple<int,infty_score_t,matpos_t,PairArcIdx,pair_seqpos_t> poss_L_LR;
 
-    //todo: infty_score_t because of the check_poss, change to score_t!!!
+    //infty_score_t because of the check_poss, change to score_t!!!
     //! a triple for storing the state, max tolerance left and the current matrix position (for backtracing in matrix G)
     typedef triple<int,infty_score_t,matpos_t> poss_in_G;//<state,max_tol,current matrix position>
 
 
     const Sequence &seqA; //!< sequence A
     const Sequence &seqB; //!< sequence B
+
+    const RnaData &rna_dataA; //!< rna data A, used only for scoring arc matches (stacked & unstacked)
+    const RnaData &rna_dataB; //!< rna data B, @see rna_dataA
 
     const ArcMatchesIndexed &arc_matches; //!< the potential arc matches between A and B
 
@@ -951,8 +964,8 @@ private:
      * @return the best result for a sequential and structural matching, respectively
      */
     infty_score_t seq_str_matching(const Arc &a, const Arc &b, matpos_t mat_pos_diag,
-    		pair_seqpos_t seq_pos_to_be_matched, score_t add_score,
-    		bool matrixLR,bool suboptimal);
+    		pair_seqpos_t seq_pos_to_be_matched, score_t add_score,bool matrixLR,
+    		bool suboptimal);
 
     //! computes matrix F
     void compute_F();
@@ -1195,7 +1208,7 @@ private:
 
     /**
      * \brief computes the map for the missing arc matches and preprocesses the
-     *        filling of the EPMs and stores filling the first possibility
+     *        filling of the EPMs and stores the first possibility
      *
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
@@ -1232,9 +1245,6 @@ private:
     void fill_epm(const map_am_to_do_t &map_am_to_do, size_type vec_idx,
     		std::vector<score_t> &max_tol_left_up_to_pos, std::vector<const EPM*> &epms_to_insert,
     		score_t min_score, size_type pos_cur_epm, epm_cont_t &found_epms,bool count_EPMs);
-
-   // void set_score_and_add_foundEPM(score_t min_allowed_score, size_type pos_cur_epm, epm_cont_t &found_epms,
-   //     		bool count_EPMs);
 
     // --------------------------------------------
     // debugging/testing

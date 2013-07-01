@@ -26,13 +26,16 @@ my $help;
 my $man;
 my $quiet;
 my $verbose;
-
+my $write_sequence;
+my $fontsize=3;
 
 ## Getopt::Long::Configure("no_ignore_case");
 
 GetOptions(
     "minprob=f" => \$minprob,
     "probwidth=f" => \$probwidth,
+    "write-sequence" => \$write_sequence,
+    "fontsize=i" => \$fontsize,
     
     "verbose" => \$verbose,
     "quiet" => \$quiet,   
@@ -54,7 +57,7 @@ print
 %%Title: rna
 %%Creator: Sebastian Will
 %%Pages: 1
-%%BoundingBox: -10 -5 510 125
+%%BoundingBox: -10 -$fontsize 510 125
 %%EndComments
 
 %%BeginProlog
@@ -87,7 +90,7 @@ stroke
 
 0.25 setlinewidth
 
-/fsize 3 def
+/fsize $fontsize def
 /Helvetica findfont fsize scalefont setfont
 
 
@@ -134,20 +137,26 @@ print "0.25 setlinewidth\n";
 
 my $modulo = int(int($seqlength/30)/5)*5;
 
-if ($modulo==0) {$modulo=1;}
+if ($modulo==0 || $write_sequence) {$modulo=1;}
 
 for (my $i=1; $i<=$seqlength; $i++) {
-    
-	my $x = transformcoor $i;
-	my $c = substr $sequence,$i-1,1;
-	if ($i%$modulo == 0) {
-	    print "$x 0 moveto $x -2 lineto stroke\n";
-	    print "$x fsize 8 div sub -5 moveto ($i) show\n";
-	} else {
-	    print "$x 0 moveto $x -1 lineto stroke\n";
+    my $x = transformcoor $i;
+    my $c = substr $sequence,$i-1,1;
+    if ($i%$modulo == 0) {
+	print "$x 0 moveto $x -2 lineto stroke\n";
+	
+	my $c=$i;
+	if ($write_sequence) {
+	    $c=substr $sequence,$i-1,1;
 	}
+	
+	my $x1=$x-$fontsize/4*length($c);
+	my $y1=-$fontsize;
+	print "$x1 $y1 moveto ($c) show\n";
+    } else {
+	print "$x 0 moveto $x -1 lineto stroke\n";
+    }
 }
-
 
 print 
 "90 rotate
@@ -175,6 +184,7 @@ Options:
 
         --minprob        cutoff probability
         --probwidth      depency of arc drawing on their probability
+        --write-sequence output sequence labels instead of position indices
 
         --help           brief help message
         --man            full documentation
@@ -182,5 +192,9 @@ Options:
         --quiet          be quiet
 
 =head1 DESCRIPTION
+
+Draws ensemble base pair probabilities in a linear
+representation. Reads dot plot ps file (like written by RNAfold -p)
+from stdin and writes ps file to standard out.
 
 =cut

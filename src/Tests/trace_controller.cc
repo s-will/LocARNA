@@ -1,17 +1,17 @@
 #include <iostream>
 #include <string>
-#include <strstream>
+#include <sstream>
 
-#include "LocARNA/sequence.hh"
-#include "LocARNA/multiple_alignment.hh"
-#include "LocARNA/trace_controller.hh"
+#include <LocARNA/sequence.hh>
+#include <LocARNA/multiple_alignment.hh>
+#include <LocARNA/trace_controller.hh>
 
 using namespace LocARNA;
 
 bool verbose=false;
 
 int main(int argc, char**argv) {
-    int retVal = 77;
+    int retVal = 0;
 
     for (size_t i=1; i<(size_t)argc; i++)  {
 	if (std::string(argv[i])=="-v" || std::string(argv[i])=="--verbose") verbose=true;
@@ -48,22 +48,22 @@ int main(int argc, char**argv) {
     // 4         *
     // 5          *
     
-    std::istrstream example_ma_istream(example_ma.c_str());
+    std::istringstream example_ma_istream(example_ma.c_str());
     
     MultipleAlignment ma(example_ma_istream);
     
     if (verbose) {
 	std::cout <<"ma:"<<std::endl;
-	ma.print_debug(std::cout);
+	ma.write_debug(std::cout);
     }
     
     Sequence seqA;
     //seqA.append_row("fruA","CCUCGAGGGGAACCCGAAAGGGACCCGAGAGG");
-    seqA.append_row("seqA","A-CTTG");
+    seqA.append(Sequence::SeqEntry("seqA","A-CTTG"));
 
     Sequence seqB;
     //seqB.append_row("fdhA","CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG");
-    seqB.append_row("seqB","ACCT-G");
+    seqB.append(Sequence::SeqEntry("seqB","ACCT-G"));
     
     if (verbose) {
  	std::cout<<"seqA:"<<std::endl;
@@ -76,8 +76,6 @@ int main(int argc, char**argv) {
     
     //if (verbose) tc.print_debug(std::cout);
     
-    retVal=0;
-
     return retVal;
 
 }
