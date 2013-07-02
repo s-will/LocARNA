@@ -276,14 +276,12 @@ public:
 private:
 	const SparsificationMapper &sparse_mapperA; //!< sparsification mapper for sequence A
     const SparsificationMapper &sparse_mapperB; //!< sparsification mapper for sequence B
-	//const TraceController &trace_controller;
 
 public:
 	SparseTraceController(const SparsificationMapper &sparse_mapperA_,const SparsificationMapper &sparse_mapperB_,const TraceController &trace_controller_):
 		TraceController::TraceController(trace_controller_),
 		sparse_mapperA(sparse_mapperA_),
 		sparse_mapperB(sparse_mapperB_)
-		//trace_controller(trace_controller_)
 
 	{
 
@@ -762,10 +760,10 @@ inline std::ostream & operator << (std::ostream &out, const EPM &epm){
 //!
 //! quintuple stores five values first, second, third, fourth, fifth
 //! extension of triple to 4-tuple
-template<class T1,class T2,class T3,class T4,class T5>
-class quintuple: public quadruple<T1,T2,T3,T4> {
-public:
-	T5 fifth; //!< fifth value
+//template<class T1,class T2,class T3,class T4,class T5>
+//class quintuple: public quadruple<T1,T2,T3,T4> {
+//public:
+	//T5 fifth; //!< fifth value
 
 	/**
 	 * \brief Construct from five values
@@ -777,10 +775,10 @@ public:
 	 * @param x5 value 5
 	 *
 	 */
-	quintuple(const T1 &x1,const T2 &x2,const T3 &x3,const T4 &x4, const T5 &x5): quadruple<T1,T2,T3,T4>(x1,x2,x3,x4),fifth(x5) {
-	}
+	//quintuple(const T1 &x1,const T2 &x2,const T3 &x3,const T4 &x4, const T5 &x5): quadruple<T1,T2,T3,T4>(x1,x2,x3,x4),fifth(x5) {
+	//}
 
-};
+//};
 
 // prints pair
 template <class T1, class T2>
@@ -897,6 +895,12 @@ private:
      */
     infty_score_t &D(const Arc &a, const Arc &b){
     	return Dmat(a.idx(),b.idx());
+    }
+
+    bool nucleotide_match(pos_type pos_seqA, pos_type pos_seqB){
+    	assert(pos_seqA>=1 && pos_seqA<=seqA.length() &&
+    		   pos_seqB>=1 && pos_seqB<=seqB.length()); //seqA and seqB are 1-based!!!
+    	return (seqA[pos_seqA][0]==seqB[pos_seqB][0]);
     }
 
     // ----------------------------------------
@@ -1286,6 +1290,8 @@ public:
      */
     ExactMatcher(const Sequence &seqA_,
 		 const Sequence &seqB_,
+		 const RnaData &rna_dataA_,
+		 const RnaData &rna_dataB_,
 		 const ArcMatchesIndexed &arc_matches_,
 		 const SparseTraceController &sparse_trace_controller_,
 		 PatternPairMap &foundEPMs_,

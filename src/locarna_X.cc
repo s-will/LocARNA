@@ -385,6 +385,8 @@ main(int argc, char **argv) {
 
     ExactMatcher em(seqA,
 		    seqB,
+		    *rna_dataA,
+		    *rna_dataB,
 		    *arc_matches,
 		    sparse_trace_controller,
 		    myEPMs,

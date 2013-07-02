@@ -231,7 +231,7 @@ bool debug_fill_epm = false;
     		pos_type br=it->arcB().right();
 
     		// compute the arc match score only for matching arc matches
-    		if(seqA[al]==seqB[bl] && seqA[ar]==seqB[br]){
+    		if(nucleotide_match(al,bl) && nucleotide_match(ar,br)){
 
     			last_filled_pos=compute_LGLR(it->arcA(),it->arcB(),false);
 
@@ -261,7 +261,7 @@ bool debug_fill_epm = false;
     		pos_type br=it->arcB().right();
 
     		// compute the arc match score only for matching arc matches
-    		if(seqA[al]==seqB[bl] && seqA[ar]==seqB[br]){
+    		if(nucleotide_match(al,bl) && nucleotide_match(ar,br)){
 
     			// heuristic
     			last_filled_pos=compute_LGLR(it->arcA(),it->arcB(),false);
@@ -445,7 +445,7 @@ bool debug_fill_epm = false;
     	matidx_t idx_i = mat_pos.first;
     	matidx_t idx_j = mat_pos.second;
 
-    	if(seqA[i]==seqB[j]){
+    	if(nucleotide_match(i,j)){
     		// sequential matching
     		// if the position is likely to be unpaired we trace the sequential match
     		if(sparse_trace_controller.pos_unpaired(idxA,idxB,matpos_t(idx_i,idx_j))){
@@ -563,10 +563,8 @@ bool debug_fill_epm = false;
        			score_seq=infty_score_t(0);score_str=infty_score_t(0);
 
        			//sequential matching
-       			if(seqA[i]==seqB[j]){
-
+       			if(nucleotide_match(i,j)){
        				score_seq = F(i-1,j-1)+score_for_seq_match();
-
        			}
 
        			//structural matching
@@ -586,7 +584,6 @@ bool debug_fill_epm = false;
        				score_str = max(score_str,score_for_am(a,b)+
        							F(a.left()-1,b.left()-1));
        			}
-
        			F(i,j)=max(score_seq,score_str);
 
        			if(F(i,j)>(infty_score_t)max_in_F){
@@ -759,7 +756,8 @@ bool debug_fill_epm = false;
     				if(i==F.sizes().first-1
     						|| j==F.sizes().second-1
     						|| (!sparse_trace_controller.is_valid(i+1,j+1)) // start traceback if next diagonal position is not valid
-    						|| seqA[i+1]!=seqB[j+1]){						// or the nucleotides do not match
+    						|| !nucleotide_match(i+1,j+1)){						// or the nucleotides do not match
+    					//seqA[i+1]!=seqB[j+1]
 
     					if(debug_trace_F) cout << "trace position  " << i << "," << j << endl;
 
@@ -796,8 +794,10 @@ bool debug_fill_epm = false;
     // otherwise the base pair probabilities are taken into account
     infty_score_t ExactMatcher::score_for_am(const Arc &a, const Arc &b){
 
-    	double probArcA = bpsA.get_arc_prob(a.left(),a.right());
-    	double probArcB = bpsB.get_arc_prob(b.left(),b.right());
+    	//double probArcA = bpsA.get_arc_prob(a.left(),a.right());
+    	//double probArcB = bpsB.get_arc_prob(b.left(),b.right());
+    	double probArcA = rna_dataA.arc_prob(a.left(),a.right());
+    	double probArcB = rna_dataB.arc_prob(b.left(),b.right());
 
     	return D(a,b) + FiniteInt(((2*alpha_1)+(probArcA+probArcB)*alpha_2)*100);
     }
@@ -1196,7 +1196,7 @@ bool debug_fill_epm = false;
     					F(i,j)+F(i-1,j-1)+score_for_seq_match();
 
     			// sequential matching
-    			if(seqA[i]==seqB[j] && cur_max_tol>=(infty_score_t)0){
+    			if(nucleotide_match(i,j) && cur_max_tol>=(infty_score_t)0){
 
     				store_new_poss(pseudo_arcA,pseudo_arcB,false,poss_L_LR(in_F,cur_max_tol,dummy_pos,no_am,cur_pos),
     						poss,pos_cur_epm,found_epms,am_to_do_for_F,count_EPMs);
@@ -1776,7 +1776,7 @@ bool debug_fill_epm = false;
 
     		pair_seqpos_t pos_right_G_seq = sparse_trace_controller.get_pos_in_seq_new(idxA,idxB,pos_right_G);
 
-    		if(seqA[pos_right_G_seq.first] == seqB[pos_right_G_seq.second] // matching nucleotides
+    		if(nucleotide_match(pos_right_G_seq.first,pos_right_G_seq.second)//seqA[pos_right_G_seq.first] == seqB[pos_right_G_seq.second] // matching nucleotides
     		   && sparse_trace_controller.pos_unpaired(idxA,idxB,pos_right_G) // and unpaired
     		   && sparse_trace_controller.is_valid(pos_right_G_seq.first,pos_right_G_seq.second)){ // and valid
 
@@ -1824,7 +1824,8 @@ bool debug_fill_epm = false;
     	//		&& sparse_mapperB.matching_without_gap_possible(b,next_pos_from_left_seq.second) // matching without gap possible
 
     	if(sparse_trace_controller.matching_without_gap_possible_with_tc(idxA,idxB,mat_pos_diag,next_pos_from_left_seq)
-    			&& seqA[next_pos_from_left_seq.first]==seqB[next_pos_from_left_seq.second] // matching nucleotides
+    			&& nucleotide_match(next_pos_from_left_seq.first,next_pos_from_left_seq.second)
+    			//seqA[next_pos_from_left_seq.first]==seqB[next_pos_from_left_seq.second] // matching nucleotides
     			&& sparse_trace_controller.pos_unpaired(idxA,idxB,next_pos_from_left)){ // unpaired
 
     		if(debug_VG) cout << "not maximally extended to the left sequentially " << endl;
@@ -2089,7 +2090,8 @@ bool debug_fill_epm = false;
     		EPM::el_pat_vec cur_el = epm_to_test.pat_vec_at(i);
 
     		//two matched positions in the EPMs have the same nucleotide
-    		if(seqA[cur_el.first]!=seqB[cur_el.second]){
+    		if(!nucleotide_match(cur_el.first,cur_el.second)){
+    				//seqA[cur_el.first]!=seqB[cur_el.second]){
     			cerr << "two matched positions have a different nucleotides " << endl;
     			return false;
     		}
