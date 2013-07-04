@@ -1098,7 +1098,7 @@ sub read_clustalw_alignment {
     
     my $clustal_header=0;
     if (($line=<$fh>) =~ /^CLUSTAL/) {
-	$clustal_header=1;
+	$clustal_header=$line;
 	$line=<$fh>;
     }
     
@@ -1161,12 +1161,12 @@ sub read_clustalw_alnloh {
 ##
 ## the result hash associates names to alignment strings
 ##
-## returns ref of alignment hash
+## returns ref of alignment hash and the header line
 ##
 ########################################
 sub read_clustalw_aln {
     my ($aln_filename) = @_;
-		
+    
     my $fh;
     
     open($fh, "$aln_filename") 
@@ -1176,8 +1176,11 @@ sub read_clustalw_aln {
     close $fh;
     
     if (!$header) { die "Missing CLUSTAL header in $aln_filename."; }
-		
-    return $aln;    
+
+    # the return value was changed form just $aln to $header and $aln
+    # in order for stuff that only expects $aln to keep working
+    # $aln must be returned last
+    return $header, $aln;
 }
 
 
@@ -1679,6 +1682,133 @@ sub write_pp($$$$) {
     close OUT;
 }
 
+
+########################################
+## write_tcoffee_lib_file($filename,$alignments)
+##
+## takes a filename and an array ref of alignemtns and
+## outputs a tcoffe lib file
+##
+## arg $filename      name of the library file (is created)
+## arg \@alignments    ref to array of hash refs where key is the name
+##                     of the sequence and value the alignment row
+##                     of sequences given by names
+##
+## Lib format definitions can be found here:
+## http://www.tcoffee.org/Documentation/t_coffee/t_coffee_technical.htm#_Toc256781778
+########################################
+sub write_tcoffee_lib_file($$) {
+    my ($filename, $alignments) = @_;
+
+    # open the file
+    open(my $FILE, ">$filename");
+
+    # first collect all the sequences
+    my %sequences;
+    my $seqCounter = 1;
+    foreach my $aln (@{$alignments}) {
+        while( my ($name, $seq) = each(%{$aln->{rows}})){
+            if (!defined $sequences{$name}) {
+                my $temp = $seq;
+                # remove all non alphanumeric characters (i.e. Gap symbols)
+                $temp =~ s/\W//g;
+                $sequences{$name} = { "sequence" => $temp,
+                                        "number"   => $seqCounter};
+                $seqCounter++;
+            }
+        }
+    }
+
+    # write the header to the file
+    print $FILE "! TC_LIB_FORMAT_01\n";
+    # print number of sequences
+    print $FILE "" . ($seqCounter - 1) . "\n";
+
+    # print sequences
+    foreach my $key (sort{ $sequences{$a}->{number} <=> $sequences{$b}->{number}} (keys(%sequences))) {
+        print $FILE $key . " " . length($sequences{$key}->{sequence}) . " "
+                    . $sequences{$key}->{sequence} . "\n";
+    }
+
+    
+    foreach my $aln (@{$alignments}) {
+        # get the sequence indexes
+        my @tmp = keys(%{$aln->{rows}});
+        my $seqAname = $tmp[0];
+        my $seqA =  $aln->{rows}->{$tmp[0]};
+        my $seqBname = $tmp[1];
+        my $seqB =  $aln->{rows}->{$tmp[1]};
+        print $FILE "#" . $sequences{$seqAname}->{number} . " " . $sequences{$seqBname}->{number} . "\n";
+        # get the alignment edges
+        my $edges = get_alignment_edges($seqA, $seqB);
+        for(my $i = 0; $i < scalar(@{$edges}); $i++) {
+            if ($edges->[$i] != -1) {
+                print $FILE ($i + 1) . " " . ($edges->[$i] + 1) . " " . $aln->{score} . "\n";
+            }
+        }
+    }
+    print $FILE "! SEQ_1_TO_N\n";
+    close($FILE);
+}
+
+########################################
+## get_alignment_edges($sequenceA,$sequenceB)
+##
+## takes two rows of an alignment and returns an array ref
+## with an element for each position in the first sequence
+## where edges[$i] == -1 if the position is unmatched and
+##       edges[$i] == $j if the postion is matched to base $j of the other
+##                       sequence
+##
+## arg $sequenceA    first alignment row
+## arg $sequenceB    second alignment row
+##
+########################################
+sub get_alignment_edges($$)
+{
+  my ($sequenceA, $sequenceB) = @_;
+  
+  my @gappedA = split //, $sequenceA;
+  my @gappedB = split //, $sequenceB;
+  my $gapFree = $sequenceA;
+  $gapFree =~ s/\W//g;
+  my @seq = split //, $gapFree;
+
+  # a counter pair, pointing to the current position in both sequences
+  my @currentPos = (0 , 0);
+
+  for(my $i = 0; $i < scalar(@gappedA);$i++)
+  {
+    # case 1: match / mismatch
+    if ($gappedA[$i] ne "-" and $gappedB[$i] ne "-") {
+        # set the alignment edge
+        $seq[$currentPos[0]] = $currentPos[1];
+        
+        # count up the pointers
+        $currentPos[0]++;
+        $currentPos[1]++;
+        next;
+    }
+    # case 2: gap in first sequence
+    if ($gappedA[$i] eq "-" and $gappedB[$i] ne "-") {
+        # count up second counter
+        $currentPos[1]++;
+        next;
+    }
+    # case 3: gap in second sequence
+    if ($gappedA[$i] ne "-" and $gappedB[$i] eq "-") {
+        $seq[$currentPos[0]] = "-1";
+        
+        # count up first counter
+        $currentPos[0]++;
+        next;
+    }
+    # this should never be reached as that would mean - and - are matched
+    print "two gaps matched!!!!!";
+  }
+  
+  return \@seq;
+}
 
 ########################################
 ## extract_score_matrix_from_alignments($names,$pairwise_aln)
