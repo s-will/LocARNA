@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <set>
 #include <string>
-#include "string1.hh"
 
 namespace LocARNA {
     /** \brief An RNA secondary structure

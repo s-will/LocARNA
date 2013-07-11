@@ -31,7 +31,7 @@ namespace LocARNA {
 	compute_confusion_matrix(const RnaStructure &ref, const RnaStructure &pred);
     
     public:
-	
+ 	
 	/** 
 	 * Construct with reference and predicted structure (given as dot-bracket strings) 
 	 * 
@@ -124,14 +124,6 @@ namespace LocARNA {
 	double
 	spec() const;
 
-	/** 
-	 * Matthews' correlation coefficient
-	 * 
-	 * @return MCC = (TP*TN - FP*FN) / ((TN+FP)*(TN+FN)) 
-	 */
-	double
-	mcc() const;
-
  	/** 
 	 * F1 score (aka F-score, F-measure)
 	 * 
@@ -141,6 +133,15 @@ namespace LocARNA {
 	 */
 	double
 	f1_score() const;
+
+	/** 
+	 * Matthews' correlation coefficient
+	 * 
+	 * @return MCC = (TP*TN - FP*FN) / ((TN+FP)*(TN+FN)) 
+	 */
+	double
+	mcc() const;
+
 
     };
 

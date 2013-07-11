@@ -57,6 +57,21 @@ namespace LocARNA {
 
 
     double
+    ConfusionMatrix::ppv() const {
+	return tp()/((double)tp()+(double)fp());
+    }    
+
+    double
+    ConfusionMatrix::sens() const {
+	return tp()/((double)tp()+(double)fn());
+    }
+    
+    double
+    ConfusionMatrix::f1_score() const {
+	return ppv()*sens() / (ppv()+sens());
+    }
+    
+    double
     ConfusionMatrix::mcc() const {
 	size_t denominator_sq = (tp()+fp())*(tp()+fn())*(tn()+fp())*(tn()+fn());
     
