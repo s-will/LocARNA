@@ -95,14 +95,52 @@ namespace LocARNA {
 	fn() const {	
 	    return fn_;
 	}
-    
+
+	/** 
+	 * Positive prediction value
+	 *
+	 * aka precision
+	 * 
+	 * @return PPV = TP/(TP+FP)
+	 */
+	double
+	ppv() const;
+
+	/** 
+	 * Sensitivity
+	 * 
+	 * aka recall
+	 *
+	 * @return SENS = TP/(TP+FN)
+	 */
+	double
+	sens() const;
+
+	/** 
+	 * Specificity
+	 * 
+	 * @return SPEC = TN/(TN+FP)
+	 */
+	double
+	spec() const;
+
 	/** 
 	 * Matthews' correlation coefficient
 	 * 
-	 * @return Matthews' correlation coefficient
+	 * @return MCC = (TP*TN - FP*FN) / ((TN+FP)*(TN+FN)) 
 	 */
 	double
 	mcc() const;
+
+ 	/** 
+	 * F1 score (aka F-score, F-measure)
+	 * 
+	 * harmonic mean of PPV and SENS
+	 *
+	 * @return F1 = PPV*SENS / (PPV+SENS) 
+	 */
+	double
+	f1_score() const;
 
     };
 

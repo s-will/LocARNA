@@ -800,7 +800,7 @@ sub compute_reliability($$$) {
 		    
 		    my $pB2 =  $col2pos{$nameB}[$i2];
 		    
-		    #print STDERR "MLocarna::nnamepair($nameA,$nameB) $pA $pA2 $pB $pB2\n";
+		    #printerr "MLocarna::nnamepair($nameA,$nameB) $pA $pA2 $pB $pB2\n";
 		    if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 		    
 		    my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
@@ -926,10 +926,10 @@ sub write_dotplot_extended {
 	my $i=$1;
 	my $j=$2;
 	if ( $i < 1 ) {
-	    print STDERR "write_dotplot_extended: Out of range i: $i\n";
+	    printerr "write_dotplot_extended: Out of range i: $i\n";
 	}
 	if ( $j > length($sequence) ) {
-	    print STDERR "write_dotplot_extended: Out of range j: $j\n";
+	    printerr "write_dotplot_extended: Out of range j: $j\n";
 	}
 
 	
@@ -1157,7 +1157,7 @@ sub max_weight_structure($$$$$) {
 	    
 	    foreach my $k (@arc_ends) {
 		if (! defined $Nmat[$k+1][$j]) {
-		    print STDERR "$i $k $j\n";
+		    printerr "$i $k $j\n";
 		}
 		my $score = $Nmat[$i+1][$k-1] + $Nmat[$k+1][$j] + $arc_weights->{"$i $k"} * $struct_weight;
 		
