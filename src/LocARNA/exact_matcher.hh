@@ -755,31 +755,6 @@ inline std::ostream & operator << (std::ostream &out, const EPM &epm){
 	return out;
 };
 
-//todo: move to aux.hh?
-//! @brief Represents a 5-tuple
-//!
-//! quintuple stores five values first, second, third, fourth, fifth
-//! extension of triple to 4-tuple
-//template<class T1,class T2,class T3,class T4,class T5>
-//class quintuple: public quadruple<T1,T2,T3,T4> {
-//public:
-	//T5 fifth; //!< fifth value
-
-	/**
-	 * \brief Construct from five values
-	 *
-	 * @param x1 value 1
-	 * @param x2 value 2
-	 * @param x3 value 3
-	 * @param x4 value 4
-	 * @param x5 value 5
-	 *
-	 */
-	//quintuple(const T1 &x1,const T2 &x2,const T3 &x3,const T4 &x4, const T5 &x5): quadruple<T1,T2,T3,T4>(x1,x2,x3,x4),fifth(x5) {
-	//}
-
-//};
-
 // prints pair
 template <class T1, class T2>
 std::ostream& operator << (std::ostream& out, const std::pair<T1,T2>& pair){
