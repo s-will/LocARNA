@@ -227,7 +227,7 @@ namespace LocARNA {
 	    // else std::cerr << "  ... success."<<std::endl;
 	}
 	
-	
+
 	// try fasta format
 	if (failed) {
 	    recompute = true;
