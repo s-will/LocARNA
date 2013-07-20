@@ -20,10 +20,10 @@ namespace LocARNA {
 	// compute confusion matrix
     
 	// true positives base pairs are present in prediction and reference  
-	tp_=count_common_bps(ref,pred);
+	tp_ = count_common_bps(ref,pred);
     
 	// false positives base pairs are present in prediction but not in reference  
-	fp_=pred.size() - tp_;
+	fp_ = pred.size() - tp_;
     
 	// false negative base pairs are present in reference but not in prediction
 	fn_ = ref.size() - tp_;
@@ -68,7 +68,8 @@ namespace LocARNA {
     
     double
     ConfusionMatrix::f1_score() const {
-	return ppv()*sens() / (ppv()+sens());
+	if (ppv()==0 || sens()==0) return 0.0;
+	return 2.0 * ppv()*sens() / (ppv()+sens());
     }
     
     double
@@ -77,7 +78,9 @@ namespace LocARNA {
     
 	if (denominator_sq==0) return 0;
 	
-	return ((long int)(tp()*tn()) - (long int)(fp()*fn())) / sqrt((double)denominator_sq);
+	return
+	  ((double)((long int)(tp()*tn()) - (long int)(fp()*fn())))
+	  / sqrt((double)denominator_sq);
     }    
 
 } // end namespace LocARNA

@@ -129,7 +129,7 @@ namespace LocARNA {
 	 * 
 	 * harmonic mean of PPV and SENS
 	 *
-	 * @return F1 = PPV*SENS / (PPV+SENS) 
+	 * @return F1 = PPV*SENS / (PPV+SENS), if PPV+SENS!=0; 0, otherwise 
 	 */
 	double
 	f1_score() const;
@@ -137,7 +137,7 @@ namespace LocARNA {
 	/** 
 	 * Matthews' correlation coefficient
 	 * 
-	 * @return MCC = (TP*TN - FP*FN) / ((TN+FP)*(TN+FN)) 
+	 * @return MCC = (TP*TN - FP*FN) / sqrt( (TP+FP)*(TP+FN)*(TN+FP)*(TN+FN) ) 
 	 */
 	double
 	mcc() const;
