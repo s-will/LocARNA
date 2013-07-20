@@ -5,8 +5,7 @@
 #  include <config.h>
 #endif
 
-#include <iosfwd>
-
+#include <iostream>
 #include <tr1/unordered_map>
 
 namespace LocARNA {
