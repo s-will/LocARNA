@@ -37,13 +37,13 @@
 #include <string.h>
 #include <sstream>
 #include <string>
-
-extern "C" {
-#include <ViennaRNA/fold_vars.h>
-#include <ViennaRNA/fold.h>
-#include <ViennaRNA/part_func.h>
-#include <ViennaRNA/utils.h>
-}
+//
+//extern "C" {
+//#include <ViennaRNA/fold_vars.h>
+//#include <ViennaRNA/fold.h>
+//#include <ViennaRNA/part_func.h>
+//#include <ViennaRNA/utils.h>
+//}
 
 #include <LocARNA/options.hh>
 #include <LocARNA/multiple_alignment.hh>
@@ -60,7 +60,10 @@ using namespace LocARNA;
 	 * Concerning rnafold_pp: we need to support at least the following
     options/arguments
 
-    input file: Unlike RNAfold, we want to
+    input file: either format that is parsed by MultipleAlignment; it is not
+    necessary to support input in dot plot ps or pp formats; the new tool
+    should be able to read the input from file or from stdin (e.g. if no
+    filename is provided or filename=="-"). Unlike RNAfold, we want to
     interpret multiple sequences in fasta format as one alignment. We need
     to check that the input alignment is proper.
 
@@ -71,13 +74,6 @@ using namespace LocARNA;
     like --ignore-constraints. Alternatively, the behavior could be to use
     structure constraints only when -C is given and otherwise ignore them.
     The latter would be closer to the behavior of RNAfold; maybe a good idea:)].
-
-
-
-     input file: input format should be either FASTA or CLUSTAL;
-    if no filename is provided or filename=="-" then the input is read from stdin.
-
-    -C           use structural constraints. if it is intended to use structural constraints(annotations), this parameter should be set, otherwise the given constraints will be ignored.
 
     --noLP       forbid lonely base pairs
 
@@ -91,10 +87,12 @@ using namespace LocARNA;
 
     --prob_basepair_in_loop_threshold    Threshold for prob_basepair_in_loop
 
+    ( the cutoffs like in locarna_n/_X )
 
     -o,--output=<file>                       PP output [default: output to
     std::cout; if file is give output only to file]
 
+    optionally:
     --force-alifold    use alifold even for single sequences. [The standard
     behavior could be to use alifold unless the input contains only a single
     sequence.]
@@ -199,7 +197,7 @@ main(int argc, char **argv) {
 	std::cout << std::endl;
 	return -1;
     }
-    //todo: 	check that input is proper and catch the wrong inputs
+    //todo: check that input is proper and catch the wrong inputs
     MultipleAlignment::FormatType::type input_format;
     MultipleAlignment* mseq = NULL;
     // try fasta format
@@ -284,65 +282,6 @@ main(int argc, char **argv) {
 
     RnaEnsemble rna_ensemble(*mseq,pfoldparams, clp.opt_in_loop, use_alifold);
 
-    size_t len = mseq->length();
-
-    int num_bps = 0;
-    // ----------------------------------------
-    // print base pair probabilities
-    std::cout << "//**** print base pair probabilities****" << std::endl;
-    for( size_t i=1; i <= len; i++ ) {
-	for( size_t j=i+3+1; j <= len; j++ ) {
-
-	    double p = rna_ensemble.arc_prob(i,j);
-	    if (p > clp.min_prob) { // apply filter
-		std::cout <<  i << "\t" << j<<"\t" << p << std::endl;
-		num_bps++;
-	    }
-	}
-    }
-    std::cout << "//****num_bps: " << num_bps << "********************************" << std::endl;
-
-    if(mseq->num_of_rows() == 1)
-    {
-	const char *sequence=mseq->seqentry(0).seq().str().c_str(); //wow such a sequence call!
-	char *structure = (char *)space(mseq->length()+1);
-
-
-
-	dangles=2;
-
-	//for long sequence, compute special scaling factor
-	pf_scale=1.0;
-	fold_constrained=false;
-	std::cout << "locarna_rna_fold:\tseq:" << sequence << std::endl << "sturcture: " << structure << std::endl;
-
-	//double energy =
-	pf_fold(sequence,structure);
-
-	FLT_OR_DBL *probs = export_bppm();
-	plist *pl;
-	assign_plist_from_pr(&pl, probs, mseq->length(), clp.min_prob);
-
-
-	// read the pair_info structures from array pl
-	// and write the base pair probabilities to out
-	//
-	for(plist *pair=pl; pair->i!=0 && pair->j!=0; pair++) {
-	    if ( pair->p  >  clp.min_prob) {
-
-		double pnew = rna_ensemble.arc_prob(pair->i,pair->j);
-		std::cout << pair->i << "\t"
-			<< pair->j << "\t"
-			<< pair->p << "\t" << sqrt(pair->p) << "\t" << pnew << "\t" << sqrt(pnew) <<std::endl;
-	    }
-	}
-	free(pl);
-
-	free_arrays();
-	free_pf_arrays();
-
-	free(structure);
-    }
     // write pp file
 
     //set the appropriate ostream from input_file or std::cout
