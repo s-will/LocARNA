@@ -1028,7 +1028,7 @@ namespace LocARNA {
 	    assert(params->trace_controller.is_valid_match(arcA.right(),arcB.right()));
 	
 	    am_prob(arcA.idx(),arcB.idx()) =
-		(D(arcA,arcB)/(long double)partFunc)
+		(D(arcA,arcB)/(long double)partFunc) //!@todo check: why is that long double? do we need it? should we rather use  pf_t?
 		*  Dprime(arcA,arcB) * pf_scale / scoring->exp_arcmatch(*it);
 	
 	    //std::cout << arcA << " " << arcB << ": " << D(arcA,arcB) << " " << Dprime(arcA,arcB) << " " <<  am_prob(arcA.idx(),arcB.idx()) <<  std::endl;  

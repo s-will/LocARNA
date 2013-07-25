@@ -15,6 +15,7 @@
 #include "rna_data_impl.hh"
 #include "ext_rna_data_impl.hh"
 
+#include "LocARNA/global_stopwatch.hh"
 
 #ifdef HAVE_LIBRNA
 extern "C" {
@@ -377,6 +378,23 @@ namespace LocARNA {
 	// init base pair probabilities
 	arc_in_loop_probs_.clear();
 	
+	// ------------------------------
+	// construct helper data structure for efficiency:
+	// map left ends to right ends of all arcs in arc_probs_
+	std::vector<std::vector<size_t> > right_ends;
+	right_ends.resize(len+1);
+	for(arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
+	    self_->arc_probs_end()!=it; ++it) {
+	    pos_type i = it->first.first;
+	    pos_type j = it->first.second;
+	    right_ends[i].push_back(j);
+	}
+	for(std::vector<std::vector<size_t> >::iterator it = right_ends.begin();
+	    right_ends.end()!=it; ++it) {
+	    sort(it->begin(),it->end());
+	}
+	// end constructing helper data structure
+
 	// in loop
 	for(arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
 	    self_->arc_probs_end()!=it; ++it) {
@@ -384,15 +402,20 @@ namespace LocARNA {
 	    pos_type j = it->first.second;
 	    arc_prob_matrix_t m_ij(0.0);
 	    
-	    for( size_t ip=i+1; ip < j; ip++ ) {
-		for( size_t jp=ip+TURN+1; jp < j; jp++ ) {
+	    for(size_t ip=i+1; ip < j; ip++ ) {
+		// for( size_t jp=ip+TURN+1; jp < j; jp++ ) {
+		for(std::vector<size_t>::const_iterator jpit = right_ends[ip].begin();
+		    right_ends[ip].end()!=jpit && *jpit<j; ++jpit) {
+		    size_t jp = *jpit;
+
 		    double p = rna_ensemble.arc_in_loop_prob(ip,jp,i,j);
 		    
-		    if ( p > p_bpilcut_ ) {
-			m_ij(ip,jp)=p;
-		    }
-		}
+	    	    if ( p > p_bpilcut_ ) {
+	    		m_ij(ip,jp)=p;
+	    	    }
+	    	}
 	    }
+
 	    
 	    // set only if not empty; use set instead of assignment,
 	    // to avoid the comparison of complex SparseMatrix objects
@@ -404,7 +427,10 @@ namespace LocARNA {
 	// external
 	arc_prob_matrix_t m_ext(0.0);
 	for( size_t ip=1; ip < len; ip++ ) {
-	    for( size_t jp=ip+TURN+1; jp <= len; jp++ ) {
+	    for(std::vector<size_t>::const_iterator jpit = right_ends[ip].begin();
+		right_ends[ip].end()!=jpit; ++jpit) {
+		size_t jp = *jpit;
+
 		double p = rna_ensemble.arc_external_prob(ip,jp);
 		
 		if ( p > p_bpilcut_ ) {
@@ -413,8 +439,7 @@ namespace LocARNA {
 	    }
 	}
 
-	// set only if not empty; use set instead of assignment,
-	// to avoid the comparison of complex SparseMatrix objects
+	// set only if not empty; see above
 	if (!m_ext.empty()) {
 	    arc_in_loop_probs_.set(0,self_->length()+1,m_ext);
 	}
@@ -437,8 +462,7 @@ namespace LocARNA {
 		}
 	    }
 	    
-	    // set only if not empty; use set instead of assignment,
-	    // to avoid the comparison of complex SparseMatrix objects
+	    // set only if not empty; see above
 	    if (!v_ij.empty()) {
 		unpaired_in_loop_probs_.set(i,j,v_ij);
 	    }
@@ -454,8 +478,7 @@ namespace LocARNA {
 	    }
 	}
 
-	// set only if not empty; use set instead of assignment,
-	// to avoid the comparison of complex SparseMatrix objects
+	// set only if not empty; see above
 	if (!v_ext.empty()) {
 	    unpaired_in_loop_probs_.set(0,self_->length()+1,v_ext);
 	}
