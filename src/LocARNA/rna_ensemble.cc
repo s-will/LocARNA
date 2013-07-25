@@ -201,6 +201,7 @@ namespace LocARNA {
 	fold_constrained=false; // this is potentially changed below
 	if (params.noLP()) {noLonelyPairs=1;}
 	
+	    dangles=2;
 
 	// use MultipleAlignment to get pointer to c-string of the
 	// first (and only) sequence in object sequence.
@@ -228,15 +229,15 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// call fold for setting the pf_scale
-	min_free_energy_ = fold(c_sequence,c_structure);
+//	min_free_energy_ = fold(c_sequence,c_structure);
 	min_free_energy_structure_ = c_structure;
 	// std::cout << c_structure << std::endl;
-	free_arrays();
+//	free_arrays();
 	
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
-	pf_scale = exp(-min_free_energy_/kT/length);
-
+//	pf_scale = exp(-min_free_energy_/kT/length);
+	pf_scale = 1.0;
 	// copy structure annotation to c_structure to use as
 	// constraint for pf_fold
 	if (structure_anno.length()==length) {
@@ -246,6 +247,7 @@ namespace LocARNA {
 
 	// ----------------------------------------
 	// call pf_fold
+	std::cout << "rna_ensemble pf_fold:\tseq:" << c_sequence << std::endl << "sturcture: " << c_structure << std::endl;
 	pf_fold(c_sequence,c_structure);
 	
 	// ----------------------------------------
@@ -278,8 +280,9 @@ namespace LocARNA {
 	    if (pf_scale<1) pf_scale=1;
 	}
 	
-	scale_[0] = 1.;
-	scale_[1] = 1./pf_scale;
+	scale_[0] = 1.0;
+//	scale_[1] = 1./pf_scale;
+	scale_[1] = 1.0;
 
 
 	expMLbase_.resize(length+1);
@@ -317,6 +320,7 @@ namespace LocARNA {
 	// global settings for Vienna RNA lib
 	fold_constrained=false; // this is potentially changed below
 	if (params.noLP()) {noLonelyPairs=1;}
+	    dangles=2;
 
 	size_t length = sequence_.length();
 	size_t n_seq = sequence_.num_of_rows();
@@ -357,8 +361,8 @@ namespace LocARNA {
 	
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
-	pf_scale = exp(-min_free_energy_/kT/length);
-	
+//	pf_scale = exp(-min_free_energy_/kT/length);
+	pf_scale = 1.0;
 	
 	// copy structure annotation to c_structure to use as
 	// constraint for alipf_fold
@@ -390,7 +394,7 @@ namespace LocARNA {
 	// ----------------------------------------
 	// from scale_pf_params
 	//
-	double scaling_factor=McCmat_->pf_params_->pf_scale;
+	double scaling_factor= 1.0;//McCmat_->pf_params_->pf_scale;
 	// std::cerr << "scaling_factor "<<scaling_factor<<" pf_scale " << pf_scale << std::endl;
 	
 	kT = McCmat_->pf_params_->kT / n_seq;   /* kT in cal/mol  */
@@ -403,8 +407,8 @@ namespace LocARNA {
 	    McCmat_->pf_params_->pf_scale=scaling_factor;
 	}
 	scale_[0] = 1.;
-	scale_[1] = 1./scaling_factor;
-
+//	scale_[1] = 1./scaling_factor;
+	scale_[1] = 1.;
 
 	expMLbase_.resize(length+1);
 	
