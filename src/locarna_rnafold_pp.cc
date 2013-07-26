@@ -152,7 +152,7 @@ option_def my_options[] = {
     {"output",'o',0,O_ARG_STRING,&clp.output_file,"","f","Output file"},
     {"force-alifold",0,&clp.force_alifold,O_NO_ARG,0,O_NODEFAULT,"","Force alifold for single sequnces"},
     {"width",'w',0,O_ARG_INT,&clp.width,"120","size","Output width"},
-    {"test",0,&clp.test,O_NO_ARG,0,O_NODEFAULT,"","Test avialability"},
+    {"TEST",0,&clp.test,O_NO_ARG,0,O_NODEFAULT,"","Test avialability"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 
 };
