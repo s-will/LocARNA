@@ -19,7 +19,7 @@
 
 namespace LocARNA {
 
-bool trace_debugging_output=false;
+bool trace_debugging_output=false; //!< a static switch to enable generating debugging logs
 
 
 // ------------------------------------------------------------
@@ -101,6 +101,7 @@ AlignerN::~AlignerN() {
     if (mod_scoring!=0) delete mod_scoring;
 }
 
+// Computes and stores score of aligning a the subsequence between different possible leftSides & rightSides to the gap
 template <class ScoringView>
 void AlignerN::computeGapCosts(bool isA, ScoringView sv)
 {
@@ -133,32 +134,13 @@ void AlignerN::computeGapCosts(bool isA, ScoringView sv)
   	cout << "computed computeGapCosts " << (isA?'A':'B') << std::endl;
 
 }
-// Compute/Returns aligning to the gap, the sequence range between leftSide & rightSide, not including right/left side
+// Returns score of aligning a the subsequence between leftSide & rightSide to the gap, not including right/left side
 inline
 infty_score_t AlignerN::getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA) //todo: Precompute the matrix?!
 {
 //    if (trace_debugging_output)	cout << "getGapCostBetween: leftSide:" <<  leftSide << " rightSide:" << rightSide << "isA:" << isA << endl;
     assert(leftSide < rightSide);
-//    if (leftSide >= rightSide)	return infty_score_t::neg_infty;
-/*
-    infty_score_t gap_score = (infty_score_t)0;
-    for (pos_type lastPos = leftSide+1; lastPos < rightSide; lastPos++)
-    {
-	if ( (isA && params->constraints.aligned_in_a(lastPos))
-		|| ( !isA && params->constraints.aligned_in_b(lastPos)) ) {
-	    return infty_score_t::neg_infty;
-	}
-	else {
-	    gap_score += sv.scoring()->gapX( lastPos, isA);
-	}
 
-    }
-
-//    if (leftSide > 0 && ( (isA && rightSide < seqA.length()) || (!isA && rightSide < seqB.length()) ) )
-    if ( trace_debugging_output && !((isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) == gap_score) )
-	cout << "gap_score:" << gap_score.is_neg_infty() <<" "<< gap_score << "gapCostXmat:" << (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) << endl;
-	assert ( (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) == gap_score  );
-*/
     return (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide));
 }
 
