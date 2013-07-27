@@ -375,8 +375,8 @@ Mar, 2013
 	Prepare alignment evaluation functionality
 	Code cleanup/refactorizations
 	(1.7.6.9)
-	introduce configuration header config.h
-	fix man page dependency problem
+	Introduce configuration header config.h
+	Fix man page dependency problem
 
 May/Jun, 2013
 	Make sure that make check and make distcheck work
@@ -394,3 +394,7 @@ May/Jun, 2013
 	RnaEnsemble constrains the folding by structure annotation of
 	Multiple Alignment (if given)
 	(Release 1.7.7)
+	Support precomputing in loop probabilities for SPARSE
+	Fixed reading of PP 2.0
+	(Release 1.7.8)
+

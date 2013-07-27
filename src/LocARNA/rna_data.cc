@@ -795,7 +795,6 @@ namespace LocARNA {
 
     void RnaData::read_pp(const std::string &filename) {
 	std::ifstream in(filename.c_str());
-	
 	read_pp(in);
     }
     
@@ -835,8 +834,8 @@ namespace LocARNA {
 	return in;
     }
 
-    void ExtRnaData::read_pp(const std::string &filename) {
-	std::ifstream in(filename.c_str());
+    std::istream &
+    ExtRnaData::read_pp(std::istream &in) {
 	RnaData::read_pp(in);
 	
 	std::string line;
@@ -848,7 +847,9 @@ namespace LocARNA {
 	} else {
 	    pimpl_->has_in_loop_probs_=false;
 	}
+	return in;
     }
+
     
     std::istream &
     RnaDataImpl::read_pp_arc_probabilities(std::istream &in) {
@@ -935,87 +936,107 @@ namespace LocARNA {
 
     std::istream &
     ExtRnaDataImpl::read_pp_in_loop_probabilities(std::istream &in) {
-
     	std::string line;
 	while( get_nonempty_line(in,line) ) {
-	    if (line[0]=='#') {
-		// keyword line
-		
-		if (has_prefix(line,"#END")) {
-		    // section end
-		    break;
-		} else if (has_prefix(line,"#BPILCUT")) {
-		    std::istringstream in(line);
-		    std::string dummy;
-		    double p;
-		    in >> dummy >> p;
-		    if ( in.fail() ) {
-			throw syntax_error_failure("Cannot parse line \""+line+"\" in in-loop section.");
-		    }
-		    p_bpilcut_ = std::max(p,p_bpilcut_);
-		} else if (has_prefix(line,"#UILCUT")) {
-		    std::istringstream in(line);
-		    std::string dummy;
-		    double p;
-		    in >> dummy >> p;
-		    if ( in.fail() ) {
-			throw syntax_error_failure("Cannot parse line \""+line+"\" in in-loop section.");
-		    }
-		    p_uilcut_ = std::max(p,p_uilcut_);
-		}
+	    if (has_prefix(line,"#END")) {
+		// section ends
+		break;
+	    } else if (line[0]=='#') {
+		read_pp_in_loop_probabilities_kwline(line);
 	    } else {
-		size_t i;
-		size_t j;
-		{
-		    std::istringstream in(line);
-		    std::string sep;
-		    in>>i>>j>>sep;
-		    
-		    if (sep!=":") {
-			throw syntax_error_failure("Invalid line \""+line+"\" in in-loop section.");
-		    }
-		    if (!(1<=i && i<j && j<=self_->length())) {
-			throw syntax_error_failure("Index error in PP input line \""+line+"\" (i>=j).");
-		    }
-		}
-		
-		std::string block_string = read_pp_in_loop_block(line,in);
-		
-		std::vector<std::string> blocks;
-		split_at_separator(block_string,';',blocks);
-		
-		if (blocks.size() != 2) {
-		    std::cerr << "Faulty block: "<<block_string<<std::endl;
-		    throw syntax_error_failure("Invalid in loop probabilitity specification at line \""+line+"\"");
-		}
-		
-		{
-		    std::istringstream in1(blocks[0]);
-		    size_t ip;
-		    size_t jp;
-		    double p;
-		    while(in1 >> ip >> jp >> p) {
-			if (!(i<ip && ip<jp && jp<j)) {
-			    throw syntax_error_failure("Index error in in-loop specification.");
-			}
-			arc_in_loop_probs_.ref(i,j).set(ip,jp,p);
-		    }
-		}
-		
-		{
-		    std::istringstream in2(blocks[1]);
-		    size_t kp;
-		    double p;
-		    while(in2 >> kp >> p) {
-			if (!(i<kp && kp<j)) {
-			    throw syntax_error_failure("Index error in in-loop specification.");
-			}
-			unpaired_in_loop_probs_.ref(i,j)[kp] = p;
-		    }
-		}
+		read_pp_in_loop_probabilities_line(line);
 	    }
+	    
 	}
 	return in;
+    }
+
+    void
+    ExtRnaDataImpl::read_pp_in_loop_probabilities_kwline(const std::string &line) {
+	if (has_prefix(line,"#BPILCUT")) {
+	    std::istringstream in(line);
+	    std::string dummy;
+	    double p;
+	    in >> dummy >> p;
+	    if ( in.fail() ) {
+		throw syntax_error_failure("Cannot parse line \""
+					   +line+"\" in in-loop section.");
+	    }
+	    p_bpilcut_ = std::max(p,p_bpilcut_);
+	} else if (has_prefix(line,"#UILCUT")) {
+	    std::istringstream in(line);
+	    std::string dummy;
+	    double p;
+	    in >> dummy >> p;
+	    if ( in.fail() ) {
+		throw syntax_error_failure("Cannot parse line \""
+					   +line+"\" in in-loop section.");
+	    }
+	    p_uilcut_ = std::max(p,p_uilcut_);
+	}
+    }
+    
+    void
+    ExtRnaDataImpl::read_pp_in_loop_probabilities_line(const std::string &line) {
+	size_t i;
+	size_t j;
+
+	std::istringstream in(line);
+	std::string sep;
+	in>>i>>j>>sep;
+		    
+	if (sep!=":") {
+	    throw syntax_error_failure("Invalid line \""
+				       +line+"\" in in-loop section.");
+	}
+	if (!((1<=i && i<j && j<=self_->length()) // regular loop
+	      || (i==0 && j==self_->length()+1) // external loop
+	      )) {
+	    throw syntax_error_failure("Index error in PP input line \""
+				       +line+"\" (i>=j).");
+	}
+	
+		
+	std::string block_string = read_pp_in_loop_block(line,in);
+		
+	std::vector<std::string> blocks;
+	split_at_separator(block_string,';',blocks);
+		
+	if (blocks.size() != 2) {
+	    std::cerr << "Faulty block: "<<block_string<<std::endl;
+	    throw syntax_error_failure("Invalid in loop probabilitity "
+				       "specification at line \""
+				       +line+"\"");
+	}
+		
+	{
+	    std::istringstream in1(blocks[0]);
+	    size_t ip;
+	    size_t jp;
+	    double p;
+	    while(in1 >> ip >> jp >> p) {
+		if (!(i<ip && ip<jp && jp<j)) {
+		    throw 
+			syntax_error_failure("Index error in in-loop "
+					     "specification.");
+		}
+		arc_in_loop_probs_.ref(i,j).set(ip,jp,p);
+	    }
+	}
+		
+	{
+	    std::istringstream in2(blocks[1]);
+	    size_t kp;
+	    double p;
+	    while(in2 >> kp >> p) {
+		if (!(i<kp && kp<j)) {
+		    throw 
+			syntax_error_failure("Index error in in-loop "
+					     "specification.");
+		}
+		unpaired_in_loop_probs_.ref(i,j)[kp] = p;
+	    }
+	}
     }
     
     std::ostream &
@@ -1159,34 +1180,47 @@ namespace LocARNA {
 	     self_->arc_probs_end() != it;
 	     ++it) {
 	    if (it->second > p_outbpcut) {
-		size_t i=it->first.first;
-		size_t j=it->first.second;
-		
-		out << i << " " << j << " :";
-		// if (arc_in_loop_probs_(i,j).size()>=5) {
-		//     out << std::endl << "   ";
-		// }
-		
-		write_pp_basepair_in_loop_probabilities(out,
-							arc_in_loop_probs_(i,j),
-							p_outbpilcut);
-		
-		out << " ;"; // separate base pair and unpaired probabilities
-		if (arc_in_loop_probs_(i,j).size()>=4 && unpaired_in_loop_probs_(i,j).size()>=4) {
-		    out << "\\" << std::endl << "   ";
-		}
-		
-		write_pp_unpaired_in_loop_probabilities(out,
-							unpaired_in_loop_probs_(i,j),
-							p_outuilcut
-							);
-		
-		out << std::endl;
+		write_pp_in_loop_probability_line(out,
+						  it->first.first,
+						  it->first.second,
+						  p_outbpilcut,
+						  p_outuilcut);
 	    }
 	}
+
+	// write in loop probs for external loop
+	write_pp_in_loop_probability_line(out,
+					  0,self_->length()+1,
+					  p_outbpilcut,
+					  p_outuilcut);
 	
 	out << std::endl
 	    << "#END" << std::endl;
+	
+	return out;
+    }
+    
+    std::ostream &
+    ExtRnaDataImpl::write_pp_in_loop_probability_line(std::ostream &out,
+						      size_t i, size_t j,
+						      double p_bpilcut,
+						      double p_uilcut) const {
+	out << i << " " << j << " :";
+	// if (arc_in_loop_probs_(i,j).size()>=5) {
+	//     out << std::endl << "   ";
+	// }
+	
+	write_pp_basepair_in_loop_probabilities(out, arc_in_loop_probs_(i,j),
+						p_bpilcut);
+	
+	out << " ;"; // separate base pair and unpaired probabilities
+	if (arc_in_loop_probs_(i,j).size()>=4 && unpaired_in_loop_probs_(i,j).size()>=4) {
+	    out << "\\" << std::endl << "   ";
+	}
+	
+	write_pp_unpaired_in_loop_probabilities(out, unpaired_in_loop_probs_(i,j),
+						p_uilcut);
+	out << std::endl;
 	
 	return out;
     }
@@ -1197,7 +1231,9 @@ namespace LocARNA {
 							    double p_cut) const {
 	for (arc_prob_matrix_t::const_iterator it=probs.begin(); probs.end()!=it; ++it) {
 	    if (it->second > p_cut) {
-		out << " " << it->first.first << " " << it->first.second << " " << format_prob(it->second);
+		out << " " << it->first.first
+		    << " " << it->first.second
+		    << " " << format_prob(it->second);
 	    }
 	}
 	return out;

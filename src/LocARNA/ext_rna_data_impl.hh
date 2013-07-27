@@ -105,6 +105,24 @@ namespace LocARNA {
 	read_pp_in_loop_probabilities(std::istream &in);
 
 	
+	/**
+	 * @brief read keyword line in loop probability section of
+	 * pp-format
+	 *
+	 * @param line input line
+	 */
+	void
+	read_pp_in_loop_probabilities_kwline(const std::string &line);
+
+	/**
+	 * @brief read probability line in loop probability section of
+	 * pp-format
+	 *
+	 * @param line input line
+	 */
+	void
+	read_pp_in_loop_probabilities_line(const std::string &line);
+	
 	/** 
 	 * @brief Write in loop probability section of pp 2.0
 	 * 
@@ -121,7 +139,23 @@ namespace LocARNA {
 				       double p_outbpilcut,
 				       double p_outuilcut
 				       ) const;
-	
+
+	/** 
+	 * @brief Write a line of in loop probabilities for one base pair
+	 * 
+	 * @param out output stream
+	 * @param i left end
+	 * @param j right end
+	 * @param p_bpcut base pair in loop probability cutoff
+	 * @param p_ucut unpaired in loop probability cutoff
+	 * 
+	 * @return output stream
+	 */
+	std::ostream &
+	write_pp_in_loop_probability_line(std::ostream &out,
+					  size_t i, size_t j,
+					  double p_bpcut,
+					  double p_ucut) const;
 	/** 
 	 * @brief Write in loop base pair probabilities for a specific base pair
 	 * 

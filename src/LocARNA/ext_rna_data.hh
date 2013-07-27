@@ -188,13 +188,13 @@ namespace LocARNA {
 	/** 
 	 * Read data in pp format 2.0 with in-loop probabilities
 	 * 
-	 * @param in input file
+	 * @param in input stream
 	 *
 	 * @see RnaData::read_pp()
 	 */
 	virtual
-	void
-	read_pp(const std::string &in);
+	std::istream &
+	read_pp(std::istream &in);
 
 	/** 
 	 * @brief initialize from rna ensemble 
