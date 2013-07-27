@@ -15,9 +15,6 @@
  * command line argument --TEST provides a way to test for linking to
  * the ViennaLib. (This should be eventually replaced by a less
  * idiosyncratic mechanism.)
- *
- * @todo use RnaEnsemble to avoid code duplication (caution: at the
- * time of writing, RnaEnsemble does not support constraints yet.)
  */
 /************************************************************/
 
@@ -29,8 +26,6 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
-
-#ifdef HAVE_LIBRNA
 
 #include <math.h>
 
@@ -159,6 +154,8 @@ option_def my_options[] = {
 
 
 
+
+#ifdef HAVE_LIBRNA
 
 
 /** 
@@ -322,7 +319,7 @@ main(int argc, char **argv) {
 
     bool process_success=process_options(argc,argv,my_options);
 
-       if ( clp.test ) {
+    if ( clp.test ) {
 	std::cout << "0";
 	return -1;
     }
