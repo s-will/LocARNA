@@ -138,11 +138,11 @@ option_def my_options[] = {
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
     {"use-struct-constraints",'C',&clp.use_struct_constraints, O_NO_ARG, 0, O_NODEFAULT, "","Use structural constraints"},
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
-    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking"},
+    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Compute stacking terms"},
     {"in-loop",0,&clp.opt_in_loop,O_NO_ARG,0,O_NODEFAULT,"","Compute in-loop probabilities"},
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
-    {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.0005","threshold","Threshold for prob_unpaired_in_loop"},
-    {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0005","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
+    {"p_unpaired_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.0005","threshold","Threshold for prob_unpaired_in_loop"},
+    {"p_basepair_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0005","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
     {"output",'o',0,O_ARG_STRING,&clp.output_file,"","f","Output file"},
     {"force-alifold",0,&clp.force_alifold,O_NO_ARG,0,O_NODEFAULT,"","Force alifold for single sequnces"},
     {"width",'w',0,O_ARG_INT,&clp.width,"120","size","Output width"},
@@ -255,7 +255,7 @@ main(int argc, char **argv) {
 	}
 	catch (failure &f) {
 	    failed=true;
-	    std::cerr << f.what() << std::endl;
+//	    std::cerr << f.what() << std::endl;
 	}
 	if (failed)
 	{
