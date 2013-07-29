@@ -136,7 +136,6 @@ option_def my_options[] = {
     {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
     {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
-    {"input",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
     {"use-struct-constraints",'C',&clp.use_struct_constraints, O_NO_ARG, 0, O_NODEFAULT, "","Use structural constraints"},
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
     {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking"},
@@ -148,6 +147,8 @@ option_def my_options[] = {
     {"force-alifold",0,&clp.force_alifold,O_NO_ARG,0,O_NODEFAULT,"","Force alifold for single sequnces"},
     {"width",'w',0,O_ARG_INT,&clp.width,"120","size","Output width"},
     {"TEST",0,&clp.test,O_NO_ARG,0,O_NODEFAULT,"","Test avialability"},
+//    {"input",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
+    {"",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 
 };
