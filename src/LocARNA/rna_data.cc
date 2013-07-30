@@ -27,11 +27,11 @@ extern "C" {
 namespace LocARNA {
 
     RnaData::RnaData(const RnaEnsemble &rna_ensemble,
-		     double p_bpcut)
+		     double p_bpcut,
+		     const PFoldParams &pfoldparams)
 	: pimpl_(new RnaDataImpl(this,
 				 p_bpcut)) {
-	bool stacking=true;
-	init_from_rna_ensemble(rna_ensemble,stacking);
+	init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
     }
 
 
@@ -162,15 +162,16 @@ namespace LocARNA {
     ExtRnaData::ExtRnaData(const RnaEnsemble &rna_ensemble,
 			   double p_bpcut,
 			   double p_bpilcut,
-			   double p_uilcut)
+			   double p_uilcut,
+			   const PFoldParams &pfoldparams)
 	:
 	RnaData(rna_ensemble,
-		p_bpcut),				  
+		p_bpcut,
+		pfoldparams),
 	pimpl_(new ExtRnaDataImpl(this,
 				  p_bpilcut,
 				  p_uilcut)) {
-	bool stacking=true;
-	init_from_rna_ensemble(rna_ensemble,stacking);
+	init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
     }
 
     ExtRnaData::~ExtRnaData() {

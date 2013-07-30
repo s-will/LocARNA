@@ -299,12 +299,12 @@ main(int argc, char **argv) {
     RnaData* rna_data_ptr;
     if (clp.opt_in_loop)
     {
-	ExtRnaData ext_rna_data(rna_ensemble, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold);
+	ExtRnaData ext_rna_data(rna_ensemble, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold,pfoldparams);
 	ext_rna_data.write_pp(out_stream, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold);//toask: why should give the theresholds again
     }
     else
     {
-	RnaData rna_data(rna_ensemble, clp.min_prob);
+	RnaData rna_data(rna_ensemble, clp.min_prob, pfoldparams);
 	rna_data.write_pp(out_stream,clp.min_prob);
     }
 

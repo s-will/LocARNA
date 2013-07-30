@@ -43,13 +43,16 @@ namespace LocARNA {
 	 * @param p_bpcut cutoff probability for base pairs
 	 * @param p_bpilcut cutoff probability for base pairs in loops
 	 * @param p_uilcut cutoff probability for unpaired bases in loops
+	 * @param pfoldparams parameters for partition folding
+	 *
 	 *
 	 * @note requires that rnaensemble has in loop probabilities
 	 */
 	ExtRnaData(const RnaEnsemble &rna_ensemble,
 		   double p_bpcut,
 		   double p_bpilcut,
-		   double p_uilcut);
+		   double p_uilcut,
+		   const PFoldParams &pfoldparams);
 	
 	/** 
 	 * @brief Construct from input file
