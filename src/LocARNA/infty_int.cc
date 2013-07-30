@@ -6,27 +6,26 @@
 
 namespace LocARNA {
 
-    
-    const TaintedInftyInt::basic_type
-    TaintedInftyInt::min_finity = std::numeric_limits<TaintedInftyInt::basic_type>::min()/5;
+    const TaintedInftyInt::base_type
+    TaintedInftyInt::min_finity = std::numeric_limits<TaintedInftyInt::base_type>::min()/5;
 
-    const TaintedInftyInt::basic_type
-    TaintedInftyInt::max_finity = -(std::numeric_limits<TaintedInftyInt::basic_type>::min()/5)-1;
+    const TaintedInftyInt::base_type
+    TaintedInftyInt::max_finity = -(std::numeric_limits<TaintedInftyInt::base_type>::min()/5)-1;
 	
-    const TaintedInftyInt::basic_type
-    TaintedInftyInt::min_normal_neg_infty = std::numeric_limits<TaintedInftyInt::basic_type>::min()/5 * 3;
+    const TaintedInftyInt::base_type
+    TaintedInftyInt::min_normal_neg_infty = std::numeric_limits<TaintedInftyInt::base_type>::min()/5 * 3;
 
-    const TaintedInftyInt::basic_type
-    TaintedInftyInt::max_normal_pos_infty = -(std::numeric_limits<TaintedInftyInt::basic_type>::min()/5 * 3) -1;
+    const TaintedInftyInt::base_type
+    TaintedInftyInt::max_normal_pos_infty = -(std::numeric_limits<TaintedInftyInt::base_type>::min()/5 * 3) -1;
 
 
     const InftyInt
     InftyInt::neg_infty =
-	InftyInt(std::numeric_limits<TaintedInftyInt::basic_type>::min()/5 * 2);
+	InftyInt(std::numeric_limits<TaintedInftyInt::base_type>::min()/5 * 2);
     
     const InftyInt
     InftyInt::pos_infty = 
-	InftyInt(-(std::numeric_limits<TaintedInftyInt::basic_type>::min()/5 * 2));
+	InftyInt(-(std::numeric_limits<TaintedInftyInt::base_type>::min()/5 * 2));
 
     
     /** 

@@ -1,6 +1,10 @@
 #ifndef LOCARNA_FIT_ON_OFF_HH
 #define LOCARNA_FIT_ON_OFF_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <string>
 #include <vector>
 
@@ -13,8 +17,10 @@ namespace LocARNA {
 
     typedef long double pf_t;
 
-    //! \brief Implements fitting of a two-step function to a number sequence 
-    //!
+    /**
+     * \brief Implements fitting of a two-step function to a number sequence 
+     *
+     */
     class FitOnOff {
 	double delta_01;
 	double delta_10;
@@ -34,11 +40,13 @@ namespace LocARNA {
     
     public:
 
-	//! construct with parameters
-	//! @param x_ number sequence that we want to fit
-	//! @param delta_01_ penalty for change from a to b
-	//! @param delta_10_ penalty for change from b to a
-	//! @param beta_ is the inverse temperature
+	/**
+	 * construct with parameters
+	 * @param x_ number sequence that we want to fit
+	 * @param delta_01_ penalty for change from a to b
+	 * @param delta_10_ penalty for change from b to a
+	 * @param beta_ is the inverse temperature
+	 */
 	FitOnOff(numseq_t &x_, double delta_01_, double delta_10_, double beta_)
 	    : delta_01(delta_01_),
 	      delta_10(delta_10_),
@@ -59,31 +67,39 @@ namespace LocARNA {
 	
 	}
     
-	//! compute the viterbi score (and optionally path)
-	//! fills tables v, optionally compute t and trace
-	//! @param c0 off-value
-	//! @param c1 on-value
-	//! @param traceback whether to perform traceback
+	/**
+	 * compute the viterbi score (and optionally path)
+	 * fills tables v, optionally compute t and trace
+	 * @param c0 off-value
+	 * @param c1 on-value
+	 * @param traceback whether to perform traceback
+	 */
 	double
 	viterbi(double c0, double c1, bool traceback);
 
-	//! best path that is "on" (=c1) exactly once
-	//! @param c0 off-value
-	//! @param c1 on-value
-	//! @return score of best path
-	//! post: best path is in trace
+	/**
+	 * best path that is "on" (=c1) exactly once
+	 * @param c0 off-value
+	 * @param c1 on-value
+	 * @return score of best path
+	 * post: best path is in trace
+	 */
 	double
 	best_once_on(double c0, double c1);
     
     
-	//! compute forward partition functions
-	//! fills tables v
+	/**
+	 * compute forward partition functions
+	 * fills tables v
+	 */
 	pf_t
 	forward(double c0, double c1);
     
     
-	//! optimize c0 and c1 by gradient optimization
-	//! @return optimal c0 and c1 
+	/**
+	 * optimize c0 and c1 by gradient optimization
+	 * @return optimal c0 and c1 
+	 */
 	std::pair<double,double>
 	optimize(double c0, double c1);
     

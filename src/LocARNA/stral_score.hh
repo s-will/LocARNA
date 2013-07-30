@@ -1,20 +1,24 @@
 #ifndef LOCARNA_STRAL_SCORE_HH
 #define LOCARNA_STRAL_SCORE_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 
 #include <math.h>
 
 
 #include "aux.hh"
-#include "matrices.hh"
 #include "sequence.hh"
-#include "alphabet.hh"
-#include "rna_data.hh"
 
 namespace LocARNA {
 
+    template <class T> class Matrix;
+    template <class T> class Alphabet;
+    class RnaData;
+
     //! \brief Implements the stral-like scoring function
-    //!
     class StralScore {
     
 	typedef std::vector<double> p_vec_t;
@@ -22,13 +26,13 @@ namespace LocARNA {
 	Sequence seqA;
 	Sequence seqB;
     
-	p_vec_t p_upA;   // probability paired upstream seq A
-	p_vec_t p_downA; // probability paired downstream seq A
-	p_vec_t p_unA;   // probability unpaired seq A
+	p_vec_t p_upA;   //!< probability paired upstream seq A
+	p_vec_t p_downA; //!< probability paired downstream seq A
+	p_vec_t p_unA;   //!< probability unpaired seq A
     
-	p_vec_t p_upB;   // probability paired upstream seq B
-	p_vec_t p_downB; // probability paired downstream seq B
-	p_vec_t p_unB;   // probability unpaired seq B
+	p_vec_t p_upB;   //!< probability paired upstream seq B
+	p_vec_t p_downB; //!< probability paired downstream seq B
+	p_vec_t p_unB;   //!< probability unpaired seq B
     
 	const Matrix<double> &sim_mat;
 	const Alphabet<char> &alphabet;
@@ -61,19 +65,7 @@ namespace LocARNA {
 		   double pf_struct_weight_,
 		   double gap_opening_,
 		   double gap_extension_
-		   )
-	    : seqA(rnaA.get_sequence()),
-	      seqB(rnaB.get_sequence()),
-	      sim_mat(sim_mat_),
-	      alphabet(alphabet_),
-	      pf_struct_weight(pf_struct_weight_),
-	      gap_opening(gap_opening_),
-	      gap_extension(gap_extension_)
-	{
-	    // initialize the vectors
-	    init_prob_vecs(rnaA,p_upA,p_downA,p_unA);
-	    init_prob_vecs(rnaB,p_upB,p_downB,p_unB);
-	}
+		   );
 
 	/** 
 	 * \brief Compute STRAL-like similarity of two residues in the two RNAs
@@ -91,33 +83,7 @@ namespace LocARNA {
 	 * 
 	 * @return similarity of residues i in A and j in B. 
 	 */
-	double sigma(size_type i, size_type j) const {
-	    //
-	    //
-	    int pairs=0;
-	    double seq_score=0;
-	    for (size_type k=0; k<seqA.row_number(); k++) {
-		for (size_type l=0; l<seqB.row_number(); l++) {
-		    if (alphabet.in(seqA[i][k]) && alphabet.in(seqB[j][l])) {
-			seq_score += sim_mat(alphabet.idx(seqA[i][k]),alphabet.idx(seqB[j][l]));
-			pairs++;
-		    }
-		}
-	    }
-	    if (pairs!=0) seq_score /= pairs;
-	
-	    double res=
-		pf_struct_weight * ( sqrt( p_downA[i]*p_downB[j] ) + sqrt( p_upA[i]*p_upB[j] ) )
-		//    + sqrt( std::max(0.0,p_unA[i]*p_unB[j]) ) * seq_score;
-		+ seq_score;
-	    /* ATTENTION: in the StrAl paper it is claimed that not weighting the sequence score is beneficial,
-	       i.e. effectively p_unA[i]==p_unB[j]==1 in above return statement.
-	    */
-	
-	    //std::cout << "sigma(" << i << "," << j << ")=" << res << " " << seq_score << std::endl;
-	
-	    return res;
-	}
+	double sigma(size_type i, size_type j) const;
     
 	/** 
 	 * \brief Read gap opening cost

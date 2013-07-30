@@ -15,14 +15,16 @@ lib_LTLIBRARIES=libLocARNA-@API_VERSION@.la
 
 libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/sequence.cc LocARNA/stopwatch.cc LocARNA/options.cc	\
-	LocARNA/basepairs.cc LocARNA/alignment.cc LocARNA/rna_data.cc	\
+	LocARNA/basepairs.cc LocARNA/alignment.cc			\
+	LocARNA/rna_ensemble.cc LocARNA/rna_data.cc			\
 	LocARNA/scoring.cc LocARNA/infty_int.cc				\
 	LocARNA/match_probs.cc LocARNA/ribosum.cc			\
-	LocARNA/anchor_constraints.cc LocARNA/arc_matches.cc		\
-	LocARNA/aligner.cc LocARNA/stral_score.cc			\
-	LocARNA/aligner_p.cc LocARNA/trace_controller.cc		\
-	LocARNA/multiple_alignment.cc LocARNA/rna_structure.cc		\
-	LocARNA/confusion_matrix.cc LocARNA/global_stopwatch.cc
+	LocARNA/sequence_annotation.cc LocARNA/anchor_constraints.cc	\
+	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
+	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
+	LocARNA/trace_controller.cc LocARNA/multiple_alignment.cc	\
+	LocARNA/rna_structure.cc LocARNA/confusion_matrix.cc		\
+	LocARNA/global_stopwatch.cc
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -31,18 +33,24 @@ pkgconfig_DATA = ../LocARNA-$(API_VERSION).pc
 
 library_includedir=$(includedir)/LocARNA-$(API_VERSION)
 nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
-	LocARNA/stopwatch.hh LocARNA/options.hh LocARNA/matrices.hh	\
-	LocARNA/sparse_matrix.hh LocARNA/sequence.hh			\
-	LocARNA/basepairs.hh LocARNA/alignment.hh			\
-	LocARNA/alignment_impl.hh LocARNA/rna_data.hh			\
-	LocARNA/params.hh LocARNA/scoring.hh LocARNA/infty_int.hh	\
+	LocARNA/plusvector.hh LocARNA/stopwatch.hh LocARNA/options.hh	\
+	LocARNA/matrix.hh LocARNA/matrices.hh				\
+	LocARNA/sparse_matrix.hh LocARNA/sparse_vector.hh		\
+	LocARNA/sequence.hh LocARNA/basepairs.hh LocARNA/alignment.hh	\
+	LocARNA/alignment_impl.hh LocARNA/rna_ensemble.hh		\
+	LocARNA/rna_ensemble_impl.hh LocARNA/rna_data.hh		\
+	LocARNA/ext_rna_data.hh LocARNA/rna_data_impl.hh		\
+	LocARNA/ext_rna_data_impl.hh LocARNA/params.hh			\
+	LocARNA/pfold_params.hh LocARNA/scoring.hh			\
+	LocARNA/scoring_fwd.hh LocARNA/infty_int.hh			\
 	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
 	LocARNA/alphabet.icc LocARNA/ribosum.hh				\
+	LocARNA/ribosum85_60.icc LocARNA/sequence_annotation.hh	\
 	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
 	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
-	LocARNA/aligner_p.hh LocARNA/stral_score.hh			\
-	LocARNA/trace_controller.hh LocARNA/multiple_alignment.hh	\
-	LocARNA/ribosum85_60.icc LocARNA/rna_structure.hh		\
+	LocARNA/aligner_impl.hh LocARNA/aligner_p.hh			\
+	LocARNA/stral_score.hh LocARNA/trace_controller.hh		\
+	LocARNA/multiple_alignment.hh LocARNA/rna_structure.hh		\
 	LocARNA/confusion_matrix.hh LocARNA/discrete_distribution.hh	\
 	LocARNA/string1.hh LocARNA/type_wrapper.hh			\
 	LocARNA/global_stopwatch.hh LocARNA/tuples.hh
@@ -52,7 +60,7 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 ##   use extension .bin for binary locarna to avoid name collission in src dir
 ##
 bin_PROGRAMS = locarna.bin ribosum2cc locarna_p locarnap_fit	\
-               locarna_deviation locarna_rnafold_pp
+               locarna_deviation locarna_rnafold_pp ribosum2cc
 
 
 if HAVE_LIBRNA
@@ -84,12 +92,21 @@ transform = s/\.bin$$//
 # all binaries should be linked to libLocARNA
 LDADD=libLocARNA-$(API_VERSION).la
 
-BUILT_SOURCES=LocARNA/ribosum85_60.icc
+TESTS = Tests/multiple_alignment Tests/rna_data Tests/ext_rna_data	\
+        Tests/trace_controller Tests/rna_ensemble Tests/rna_structure
+check_PROGRAMS = $(TESTS)
+AM_DEFAULT_SOURCE_EXT = .cc
 
-check_PROGRAMS = test_trace_controller test_rna_data
-test_trace_controller_SOURCES = test_trace_controller.cc
-test_rna_data_SOURCES = test_rna_data.cc
-TESTS = $(check_PROGRAMS)
+MYTESTDATA = Tests/archaea.aln Tests/archaea.fa Tests/archaea-wrong.fa
+BUILT_SOURCES = $(MYTESTDATA)
+EXTRA_DIST=$(MYTESTDATA:%=%.data)
+Tests/archaea.aln: Tests/archaea.aln.data
+	cp $< $@
+Tests/archaea.fa: Tests/archaea.fa.data
+	cp $< $@
+Tests/archaea-wrong.fa: Tests/archaea-wrong.fa.data
+	cp $< $@
+CLEANFILES=$(MYTESTDATA)
 
 dist_locarna_bin_SOURCES = locarna.cc
 
@@ -98,9 +115,6 @@ locarna_p_SOURCES = locarna_p.cc
 locarna_X_SOURCES = locarna_X.cc 
 
 locarna_n_SOURCES = locarna_n.cc
-
-
-nodist_locarna_bin_SOURCES = LocARNA/ribosum85_60.icc
 
 ribosum2cc_SOURCES = ribosum2cc.cc
 
@@ -111,7 +125,14 @@ locarna_deviation_SOURCES = deviation.cc
 locarna_rnafold_pp_SOURCES = locarna_rnafold_pp.cc
 
 
-LocARNA/ribosum85_60.icc: ribosum2cc
+BUILT_SOURCES += LocARNA/ribosum85_60.icc
+
+# LocARNA/ribosum85_60.icc, we avoid to define the dependency from
+# ribosum2cc directly, but still require that ribosum2cc is made.
+# This makes it possible to include LocARNA/ribosum85_60.icc in the
+# distribution and compile without executing ribosum2cc, e.g. for
+# cross compiling.
+LocARNA/ribosum85_60.icc: ribosum2cc.cc $(top_srcdir)/Matrices/RIBOSUM85_60
+	make ribosum2cc 
 	./ribosum2cc Ribosum85_60 "$(top_srcdir)/Matrices/RIBOSUM85_60" >$@
 
-CLEANFILES=LocARNA/ribosum85_60.icc

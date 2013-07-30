@@ -6,9 +6,10 @@
 #include <limits>
 
 #include "aux.hh"
+#include "sequence.hh"
 #include "trace_controller.hh"
 #include "multiple_alignment.hh"
-#include "matrices.hh"
+#include "matrix.hh"
 
 #include <math.h>
 #include <assert.h>
@@ -44,11 +45,11 @@ namespace LocARNA {
 
 
     TraceRange::TraceRange(const SeqEntry &pseqA,
-					    const SeqEntry &pseqB,
-					    const SeqEntry &paliA,
-					    const SeqEntry &paliB,
-					    size_type delta) {
-    
+			   const SeqEntry &pseqB,
+			   const SeqEntry &paliA,
+			   const SeqEntry &paliB,
+			   size_type delta) {
+	
 	// pseqA and pseqB can contain gaps, therefore we call these strings profile sequences    
 
 	assert(paliA.seq().length() == paliB.seq().length());
@@ -335,7 +336,11 @@ namespace LocARNA {
 
     /* Construct from MultipleAlignment (as needed for progressive alignment) */
 
-    TraceController::TraceController(Sequence seqA, Sequence seqB, const MultipleAlignment *ma, int delta_,bool relaxed_merging_)
+    TraceController::TraceController(const Sequence &seqA,
+				     const Sequence &seqB,
+				     const MultipleAlignment *ma, 
+				     int delta_,
+				     bool relaxed_merging_)
 	: delta(delta_),
 	  relaxed_merging(relaxed_merging_)
     {
@@ -378,13 +383,13 @@ namespace LocARNA {
 	    std::vector<TraceRange> trs;
 
 	    //  iterate over all pairs of rows in the multiple alignment of seqA and seqB
-	    for (size_type i=0; i<maSeqA.row_number(); ++i) {
+	    for (size_type i=0; i<maSeqA.num_of_rows(); ++i) {
 		const SeqEntry &seqentryA = maSeqA.seqentry(i);
 		// get alignment string in reference corresponding to seqentryA
 		const std::string &nameA = seqentryA.name();
 		const SeqEntry &ref_seqentryA = ma->seqentry(nameA);
 	
-		for (size_type j=0; j<maSeqB.row_number(); ++j) {
+		for (size_type j=0; j<maSeqB.num_of_rows(); ++j) {
 		    const SeqEntry &seqentryB = maSeqB.seqentry(j);
 		    // get alignment string in reference corresponding to seqentryB
 		    const std::string &nameB = seqentryB.name();

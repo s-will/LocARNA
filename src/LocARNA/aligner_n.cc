@@ -19,7 +19,7 @@
 
 namespace LocARNA {
 
-bool trace_debugging_output=false;
+bool trace_debugging_output=false; //!< a static switch to enable generating debugging logs
 
 
 // ------------------------------------------------------------
@@ -101,6 +101,7 @@ AlignerN::~AlignerN() {
     if (mod_scoring!=0) delete mod_scoring;
 }
 
+// Computes and stores score of aligning a the subsequence between different possible leftSides & rightSides to the gap
 template <class ScoringView>
 void AlignerN::computeGapCosts(bool isA, ScoringView sv)
 {
@@ -133,32 +134,13 @@ void AlignerN::computeGapCosts(bool isA, ScoringView sv)
   	cout << "computed computeGapCosts " << (isA?'A':'B') << std::endl;
 
 }
-// Compute/Returns aligning to the gap, the sequence range between leftSide & rightSide, not including right/left side
+// Returns score of aligning a the subsequence between leftSide & rightSide to the gap, not including right/left side
 inline
 infty_score_t AlignerN::getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA) //todo: Precompute the matrix?!
 {
 //    if (trace_debugging_output)	cout << "getGapCostBetween: leftSide:" <<  leftSide << " rightSide:" << rightSide << "isA:" << isA << endl;
     assert(leftSide < rightSide);
-//    if (leftSide >= rightSide)	return infty_score_t::neg_infty;
-/*
-    infty_score_t gap_score = (infty_score_t)0;
-    for (pos_type lastPos = leftSide+1; lastPos < rightSide; lastPos++)
-    {
-	if ( (isA && params->constraints.aligned_in_a(lastPos))
-		|| ( !isA && params->constraints.aligned_in_b(lastPos)) ) {
-	    return infty_score_t::neg_infty;
-	}
-	else {
-	    gap_score += sv.scoring()->gapX( lastPos, isA);
-	}
 
-    }
-
-//    if (leftSide > 0 && ( (isA && rightSide < seqA.length()) || (!isA && rightSide < seqB.length()) ) )
-    if ( trace_debugging_output && !((isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) == gap_score) )
-	cout << "gap_score:" << gap_score.is_neg_infty() <<" "<< gap_score << "gapCostXmat:" << (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) << endl;
-	assert ( (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide)) == gap_score  );
-*/
     return (isA?gapCostAmat(leftSide,rightSide):gapCostBmat(leftSide, rightSide));
 }
 
@@ -428,7 +410,7 @@ void AlignerN::fill_D_entries(pos_type al, pos_type bl)
     if (trace_debugging_output)
 	std::cout << "fill_D_entries al: " << al << " bl: " << bl << std::endl;
 
-    UnmodifiedScoringViewN sv = def_scoring_view; //toask: where should we care about non_default scoring views
+    // UnmodifiedScoringViewN sv = def_scoring_view; //toask: where should we care about non_default scoring views
 
     //iterate through arcs begining at al,bl
     for(ArcMatchIdxVec::const_iterator it=arc_matches.common_left_end_list(al,bl).begin();  //tocheck:toask:todo: IMPORTANT! can we use arc_matches to get the common endlist?? arcA,arcB may not be matched!
@@ -559,7 +541,7 @@ AlignerN::align_D() {
 	    //compute IA
 //	    stopwatch.start("compIA");
 	    for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-		    arcB != adjlB.end(); arcB++)
+		    arcB != adjlB.end(); ++arcB)
 	    {
 		fill_IA_entries(al, *arcB, max_ar );
 	    }
@@ -568,7 +550,7 @@ AlignerN::align_D() {
 	    //comput IB
 //	    stopwatch.start("compIB");
 	    for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-		    arcA != adjlA.end(); arcA++)
+		    arcA != adjlA.end(); ++arcA)
 	    {
 		fill_IB_entries(*arcA, bl, max_br );
 	    }
@@ -999,11 +981,11 @@ AlignerN::trace(ScoringView sv) {
     // free end gap version: trace_M(E_NO_NO,r.get_startA()-1,max_i,r.get_startB()-1,max_j,true,sv);
     seq_pos_t ps_al = r.get_startA() - 1;
     matidx_t last_mat_idx_pos_A = mapperA.number_of_valid_mat_pos(ps_al) -1;//tocheck: check the correctness
-    seq_pos_t last_seq_pos_A = mapperA.get_pos_in_seq_new(ps_al, last_mat_idx_pos_A);
+    //seq_pos_t last_seq_pos_A = mapperA.get_pos_in_seq_new(ps_al, last_mat_idx_pos_A);
 
     seq_pos_t ps_bl = r.get_startB() - 1;
     matidx_t last_mat_idx_pos_B = mapperB.number_of_valid_mat_pos(ps_bl) -1;//tocheck: check the correctness
-    seq_pos_t last_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_mat_idx_pos_B);
+    //seq_pos_t last_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_mat_idx_pos_B);
 
     trace_M(E_NO_NO, ps_al, last_mat_idx_pos_A, ps_bl, last_mat_idx_pos_B, true, sv); //TODO: right side for trace_M differs with align_M
 /*    for ( size_type k = last_seq_pos_A + 1; k <= r.get_endA(); k++)//tocheck: check the correctness

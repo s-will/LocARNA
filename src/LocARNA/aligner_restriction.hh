@@ -1,6 +1,12 @@
 #ifndef LOCARNA_ALIGNER_RESTRICTION
 #define LOCARNA_ALIGNER_RESTRICTION
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include <iostream>
+
 namespace LocARNA {
 
     /**

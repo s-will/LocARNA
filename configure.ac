@@ -2,14 +2,16 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.7.6], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.7.8], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
-AC_SUBST([SO_VERSION], [1:0:1])
-AC_SUBST([API_VERSION], [1.1])
+AC_SUBST([SO_VERSION], [2:0:0])
+AC_SUBST([API_VERSION], [1.2])
 
 AC_CONFIG_MACRO_DIR([m4])
+
+AC_CONFIG_HEADERS([src/config.h:config.h.in])
 
 LT_INIT                     # for libtool
 AC_PROG_LIBTOOL             # deprecated; left for backward compatibility
@@ -30,6 +32,8 @@ AC_PATH_PROGS([PERL],[perl perl5])
 AC_PATH_PROG([HELP2MAN],[help2man],false)
 AC_PATH_PROG([POD2MAN],[pod2man],false)
 
+# for Vienna RNA
+AC_CHECK_FUNCS([strdup]) #defines HAVE_STRDUP if strdup is available
 
 # Vienna RNA package library path support, if not installed in standard directory/path
 VRNA_OK=true
@@ -83,22 +87,53 @@ AC_SUBST(LIBS,[""])
 AC_SUBST(LIBDEFS,[""]) # defines that have to be set when using the LocARNA library
 
 
+## ------------------------------
+## Vienna RNA lib configuration
+##
+## check whether pkg-config is available 
+AC_CHECK_PROG([PKG_CONFIG_AVAILABLE],pkg-config,[true],[false])
+##
+## if available, use pkg-config to configure the Vienna RNA library
+## 
+AS_IF([test "$PKG_CONFIG_AVAILABLE" == "true"],[
 # set PKG_CONFIG_PATH
 if test "$with_vrna" != "" ; then
    export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
 fi
-
+##
 AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
-    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.0.7],[],[VRNALIB_OK=false])
-    AC_DEFINE([HAVE_LIBRNA])
-    LDFLAGS="$VRNA_LIBS $LDFLAGS"
-
+    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.1],[],[VRNALIB_OK=false])
     if test "$with_vrna" != "" ; then
         VRNA_CFLAGS="$VRNA_CFLAGS -I$with_vrna/include"
     fi
+])
+],
+## if not available, guess the configuration
+##
+[
+  AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
+  AC_MSG_NOTICE([Guessing the library configuration, since pkg-config unavailable.])
+  if test "$with_vrna" == "" ; then
+    vrna_prefix="/usr/local"
+  else
+    vrna_prefix="$with_vrna"
+  fi
+  VRNA_LIBS="-L$vrna_prefix/lib -lRNA"
+  VRNA_CFLAGS="-I$vrna_prefix/include"
+  AC_MSG_NOTICE([LIBS=$VRNA_LIBS; CFLAGS=$VRNA_CFLAGS])
+  AC_MSG_NOTICE([To avoid guessing, please install pkg-config.])
+  ])
+])
+##
+## finally, set LDFLAGS and CPPFLAGS
+AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
+    AC_DEFINE([HAVE_LIBRNA],1,[Signal linking to Vienna RNA library])
+    LDFLAGS="$VRNA_LIBS $LDFLAGS"
+
     CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 ])
 AM_CONDITIONAL([HAVE_LIBRNA],[test "$ENABLE_LIBRNA" = "yes"])
+
 
 
 ####################
@@ -164,10 +199,10 @@ AC_ARG_ENABLE([debug],
 )
 AC_MSG_RESULT([$debug_it])
 if test x"$debug_it" = x"yes"; then
-    AC_DEFINE([DEBUG])
+    AC_DEFINE([DEBUG],1,[Turn on debugging])
     CPPFLAGS="$CPPFLAGS -g -Wall"
 else
-    AC_DEFINE([NDEBUG])
+    AC_DEFINE([NDEBUG],1,[Turn off debugging])
 fi
 
 ## CPPFLAGS="$CPPFLAGS -Wno-deprecated"
@@ -207,7 +242,7 @@ AC_ARG_ENABLE([large-pf],
 AC_MSG_RESULT([$use_large_pf])
 if test x"$use_large_pf" = x"yes"; then
     LIBDEFS="$LIBDEFS -DVERY_LARGE_PF"
-    AC_DEFINE([VERY_LARGE_PF])
+    AC_DEFINE([VERY_LARGE_PF],1,[Use long double type for partition functions])
 fi
 
 
@@ -256,7 +291,7 @@ fi
 if test "$VRNA_OK" = "false" -o "$VRNALIB_OK" = "false" ; then
    AC_MSG_NOTICE()
    AC_MSG_NOTICE([The Vienna RNA package (>=1.8) is required for compiling;])
-   AC_MSG_NOTICE([linking (--enable-librna) requires version >= 2.1.0.])
+   AC_MSG_NOTICE([linking (--enable-librna) requires version >= 2.1.1.])
    AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/~ivo/RNA/.])
    AC_MSG_NOTICE()
     

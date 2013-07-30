@@ -1,13 +1,16 @@
 #include <math.h>
 
+#include "alignment.hh"
 #include "alignment_impl.hh"
 
+#include "sequence.hh"
 #include "basepairs.hh"
 #include "rna_data.hh"
-#include "scoring.hh"
+#include "rna_structure.hh"
 #include "anchor_constraints.hh"
 #include "multiple_alignment.hh"
 #include "string1.hh"
+#include "plusvector.hh"
 
 #ifdef HAVE_LIBRNA
 extern "C" {
@@ -28,45 +31,73 @@ namespace LocARNA {
     
 
     Alignment::Alignment(const Sequence &seqA, 
-			 const Sequence &seqB, 
-			 const string1 &alistrA,
-			 const string1 &alistrB)
+    			 const Sequence &seqB, 
+			 const edges_t &edges)
 	: pimpl_(new AlignmentImpl(this,seqA,seqB)) {
-	throw failure("Alignment::Alignment(...) constructor from alignment strings not implemented.");
 	
-	assert(alistrA.length()==alistrB.length());
-
-	//size_t posA;
-	//size_t posB;
-	for(size_t i=0; i<alistrA.length(); ++i) {
-	    //...
+	// append all non-locality edges
+	for (size_t k=0; k<edges.size(); k++) {
+	    const edge_end_t &x = edges.first[k];
+	    const edge_end_t &y = edges.second[k];
+	    
+	    if (x.is_gap() && y.is_gap()) {
+		throw failure("Invalid alignment edges");
+	    }
+	    if (x.is_pos() && (x<1 || x>seqA.length())) {
+		throw failure("Alignment edge out of range (first sequence).");
+	    }
+	    if (y.is_pos() && (y<1 || y>seqB.length())) {
+		throw failure("Alignment edge out of range (second sequence).");
+	    }
+	    
+	    if (!((x.is_gap() && x.gap()==Gap::locality)
+		  ||
+		  (y.is_gap() && y.gap()==Gap::locality))) {
+		append(x,y);
+	    }
 	}
     }
 
+    Alignment::Alignment(const Alignment &alignment)
+	: pimpl_(new AlignmentImpl(*alignment.pimpl_))
+    {
+    }
+    
     Alignment::~Alignment() { delete pimpl_; }
 
-    void
-    Alignment::set_consensus_structure(const RnaStructure &structure) {
-	throw("Alignment::set_consensus_structure(...) not implemented");
+    Alignment &
+    Alignment::operator =(const Alignment &alignment)
+    {
+	pimpl_ = new AlignmentImpl(*alignment.pimpl_);
+	return *this;
     }
+    
     
     void
     Alignment::set_structures(const RnaStructure &structureA,const RnaStructure &structureB) {
-	throw("Alignment::set_structures(...) not implemented");
+	pimpl_->strA_ = structureA.to_string();
+	pimpl_->strB_ = structureB.to_string();
+	assert(pimpl_->strA_.length() == pimpl_->seqA_.length());
+	assert(pimpl_->strB_.length() == pimpl_->seqB_.length());
+    }
+
+    void
+    Alignment::set_consensus_structure(const RnaStructure &structure) {
+	set_structures(structure,structure);
     }
 
     void Alignment::clear() {
 	pimpl_->strA_.resize(pimpl_->seqA_.length()+1);
 	pimpl_->strB_.resize(pimpl_->seqB_.length()+1);
-	for (std::vector<char>::iterator it=pimpl_->strA_.begin(); it!=pimpl_->strA_.end(); ++it) *it='.';
-	for (std::vector<char>::iterator it=pimpl_->strB_.begin(); it!=pimpl_->strB_.end(); ++it) *it='.';
+	fill(pimpl_->strA_.begin(),pimpl_->strA_.end(),'.');
+	fill(pimpl_->strB_.begin(),pimpl_->strB_.end(),'.');
 	
 	pimpl_->a_.clear();
 	pimpl_->b_.clear();
     }
 
     void 
-    Alignment::append(int i, int j) {
+    Alignment::append(edge_end_t i, edge_end_t j) {
 	pimpl_->a_.push_back(i);
 	pimpl_->b_.push_back(j);
     }
@@ -82,529 +113,155 @@ namespace LocARNA {
 	pimpl_->strB_[i]='(';
 	pimpl_->strB_[j]=')';
     }
-
-    score_t
-    Alignment::evaluate(const BasePairs &bpsA,
-	     const BasePairs &bpsB,
-	     const Scoring &scoring) const {
-	throw failure("Alignment::evaluate(...) not implemented.");
-	return 0;
-    }
-    
-    score_t
-    Alignment::evaluate_optimize_consensus_structure(const BasePairs &bpsA,
-						     const BasePairs &bpsB, 
-						     const Scoring &scoring) const {
-	throw failure("Alignment::evaluate_optimize_consensus_structure(...) not implemented.");
-	return 0;
-    }
     
     
-    void Alignment::write(std::ostream &out, int width, infty_score_t score,
-			  bool local_out, bool pos_out, bool write_structure) const {
-	write_clustal(out, width, score, local_out, pos_out,false,write_structure);
-    }
+    const Alignment::edges_t 
+    Alignment::alignment_edges(bool only_local) const {
 
+	edge_ends_t endsA;
+	edge_ends_t endsB;
+	
+	const edge_ends_t &a=pimpl_->a_;
+	const edge_ends_t &b=pimpl_->b_;
 
+	size_t alisize=a.size();
 
-
-    void Alignment::write_clustal(std::ostream &out,
-				  int width,
-				  infty_score_t score,
-				  bool local_out,
-				  bool pos_out,
-				  bool clustal_format,
-				  bool write_structure) const {
-	if (!pos_out) std::cout<<std::endl;
-
-	const char loc_blank='~';
-
-	size_type alisize=pimpl_->a_.size();
-
-	assert(pimpl_->b_.size()==pimpl_->a_.size());
-
-	/* DEBUGGING output
-	   std::cout <<"a: " << a_.size()<<std::endl;
-	   for (size_type i=0; i<a_.size(); i++) {
-	   std::cout << a_[i]<< " ";
-	   }
-	   std::cout << std::endl;
-
-	   std::cout <<"b: " << b_.size()<<std::endl;
-	   for (size_type i=0; i<b_.size(); i++) {
-	   std::cout << b_[i]<< " ";
-	   }
-	   std::cout << std::endl;
-	*/
-
-	Sequence aliStrA;
-	Sequence aliSeqA;
-	Sequence aliSeqB;
-	Sequence aliStrB;
-    
-	// ----------------------------------------
-	// for new sequence objects, generate appropriately named sequence entries with empty sequences 
-	aliStrA.append(Sequence::SeqEntry("",""));
-	aliStrB.append(Sequence::SeqEntry("",""));
-	//
-	for(Sequence::const_iterator it=pimpl_->seqA_.begin(); pimpl_->seqA_.end()!=it; ++it)
-	    aliSeqA.append(Sequence::SeqEntry(it->name(),""));
-	//
-	for(Sequence::const_iterator it=pimpl_->seqB_.begin(); pimpl_->seqB_.end()!=it; ++it)
-	    aliSeqB.append(Sequence::SeqEntry(it->name(),""));
-	// ----------------------------------------
-    
-    
 	int lastA=1; // bases consumed in sequence A
 	int lastB=1; // ---------- "" ------------ B
-
-
+	
 	for (size_type i=0; i<alisize; i++) {
-	    //out << "("<<a_[i]<<","<<b_[i]<<") "; out.flush();
-
-	    if (!local_out) {
-		for (int j=lastA; j<pimpl_->a_[i]; j++) {
-		    aliStrA += pimpl_->strA_[j];
-		    aliSeqA += pimpl_->seqA_[j]; lastA++;
-		    aliSeqB += loc_blank;
-		    aliStrB += loc_blank;
-		}
-		for (int j=lastB; j<pimpl_->b_[i]; j++) {
-		    aliStrA += loc_blank;
-		    aliSeqA += loc_blank;
-		    aliSeqB += pimpl_->seqB_[j]; lastB++;
-		    aliStrB += pimpl_->strB_[j];
+	    if (a[i].is_pos()) {
+		for (size_t j=lastA; j<a[i]; j++) {
+		    if (!only_local) {
+			endsA.push_back(j);
+			endsB.push_back(Gap::locality);
+		    }
+		    lastA++;
 		}
 	    }
-
-	    if ( pimpl_->a_[i]==-1 ) {
-		aliStrA += '-';
-		aliSeqA += '-';
-	    } else if ( pimpl_->a_[i]==-2 ) {
-		aliStrA += '_';
-		aliSeqA += '_';
-	    } else {
-		aliStrA += pimpl_->strA_[pimpl_->a_[i]]; lastA++;
-		aliSeqA += pimpl_->seqA_[pimpl_->a_[i]];
+	    if (b[i].is_pos()) {
+		for (size_t j=lastB; j<b[i]; j++) {
+		    if (!only_local) {
+			endsA.push_back(Gap::locality);
+			endsB.push_back(j);
+		    }
+		    lastB++;
+		}
 	    }
-	    if ( pimpl_->b_[i]==-1 ) {
-		aliStrB += '-';
-		aliSeqB += '-';
+	    if ( a[i].is_pos() ) {
+		lastA++;
 	    }
-	    else if ( pimpl_->b_[i]==-2 ) {
-		aliStrB += '_';
-		aliSeqB += '_';
-	    } else {
-		aliStrB += pimpl_->strB_[pimpl_->b_[i]]; lastB++;
-		aliSeqB += pimpl_->seqB_[pimpl_->b_[i]];
+	    if ( b[i].is_pos() ) {
+		lastB++;
 	    }
+	    endsA.push_back(a[i]);
+	    endsB.push_back(b[i]);
 	}
-
-
-	if (!local_out) {
+	
+	if (!only_local) { 
 	    for (size_type j=lastA; j<=pimpl_->seqA_.length(); j++) {
-		aliStrA += pimpl_->strA_[j];
-		aliSeqA += pimpl_->seqA_[j]; lastA++;
-		aliSeqB += loc_blank;
-		aliStrB += loc_blank;
+		endsA.push_back(j);
+		endsB.push_back(Gap::locality);
+		lastA++;
 	    }
 	    for (size_type j=lastB; j<=pimpl_->seqB_.length(); j++) {
-		aliStrA += loc_blank;
-		aliSeqA += loc_blank;
-		aliSeqB += pimpl_->seqB_[j]; lastB++;
-		aliStrB += pimpl_->strB_[j];
+		endsA.push_back(Gap::locality);
+		endsB.push_back(j);
+		lastB++;
 	    }
 	}
 
-	if (clustal_format) {
-	    out << "CLUSTAL W --- "<<PACKAGE_STRING; // <<" - Local Alignment of RNA"
-	    if (pimpl_->seqA_.row_number()==1 && pimpl_->seqB_.row_number()==1)
-		out  <<" --- Score: " <<score;
-	    out  <<std::endl<<std::endl;
-	}
-	//else if (!pos_out)
-	//	if (pimpl_->seqA_.row_number()==1 && pimpl_->seqB_.row_number()==1)
-	//	    out << "SCORE: "<<score<<std::endl;
-
-
-	if (alisize>0) {
-	    size_type local_start_A=pimpl_->a_[0]; //!< pos where local alignment starts for A
-	    size_type local_start_B=pimpl_->b_[0]; //!< pos where local alignment starts for B
-
-	    size_type local_end_A=pimpl_->a_[alisize-1]; //!< pos where local alignment ends for A
-	    size_type local_end_B=pimpl_->b_[alisize-1]; //!< pos where local alignment ends for B
-
-	    size_type length=aliSeqA.length();
-	    size_type k=1;
-
-	    if (pos_out) {
-		out << "HIT " << score
-		    << " " << local_start_A
-		    << " " << local_start_B
-		    << " " << local_end_A
-		    << " " << local_end_B
-		    <<std::endl;
-	    }
-
-
-	    if (local_out) {
-		out << std::endl;
-		out << "\t+" << local_start_A << std::endl;
-		out << "\t+" << local_start_B << std::endl;
-	    }
-	
-	    if (!pos_out || local_out) {
-		out<<std::endl;
-
-		while (k <= length) {
-
-		    if (write_structure)
-			aliStrA.write( out, k, std::min(length,k+width-1) );
-		    aliSeqA.write( out, k, std::min(length,k+width-1) );
-		    aliSeqB.write( out, k, std::min(length,k+width-1) );
-
-		    if (write_structure)
-			aliStrB.write( out, k, std::min(length,k+width-1) );
-
-		    out<<std::endl;
-		    k+=width;
-		}
-	    }
-
-	    if (local_out) {
-		out << "\t+" << local_end_A << std::endl;
-		out << "\t+" << local_end_B << std::endl;
-	    }
-	} // end if (alisize>0)
-    }
-
-
-    /*
-      write pp output, which can be reread for progressive alignment!
-    */
-
-    void Alignment::write_pp(std::ostream &out,
-			     const BasePairs &bpsA,
-			     const BasePairs &bpsB,
-			     const Scoring &scoring,
-			     const AnchorConstraints &seqConstraints,
-			     int width,
-			     bool use_alifold) const {
-
-
-	size_type alisize = pimpl_->a_.size();
-
-	int lastA=1; // bases consumed in sequence A
-	int lastB=1; // ---------- "" ------------ B
-
-	plusvector<int> aliA;
-	plusvector<int> aliB;
-
-	for (size_type i=0; i<alisize; i++) {
-	    // out << "("<<a_[i]<<","<<b_[i]<<") "; out.flush();
-	    for (int j=lastA; j<pimpl_->a_[i]; j++) {
-		aliA += j; lastA++;
-		aliB += -2;
-	    }
-	    for (int j=lastB; j<pimpl_->b_[i]; j++) {
-		aliA += -2;
-		aliB += j; lastB++;
-	    }
-	    if ( pimpl_->a_[i] < 0 ) {
-		aliA += -1;
-	    } else {
-		aliA += pimpl_->a_[i]; lastA++;
-	    }
-	    if ( pimpl_->b_[i] < 0 ) {
-		aliB += -1;
-	    } else {
-		aliB += pimpl_->b_[i]; lastB++;
-	    }
-	}
-
-	for (size_type j=lastA; j<=pimpl_->seqA_.length(); j++) {
-	    aliA += j; lastA++;
-	    aliB += -2;
-	}
-	for (size_type j=lastB; j<=pimpl_->seqB_.length(); j++) {
-	    aliA += -2;
-	    aliB += j; lastB++;
-	}
-	/*
-	  for (int i=0; i<aliA.size(); i++) {
-	  std::cerr <<i<<":"<< aliA[i]<<";"<<aliB[i]<<" ";
-	  }
-	  std::cerr <<std::endl;
-	*/
-
-	write(out, width, (infty_score_t)0);
-
-	// ------------------------------------------------------------
-	// write consensus constraint string
-	//
-	if (!seqConstraints.empty()) {
-	    out << "#C ";
-
-	    std::vector<std::string> seqCStrings(seqConstraints.name_size());
-
-	    std::string noname="";
-	    for (size_type j=0; j<seqConstraints.name_size(); ++j) noname+=".";
-
-	    for (size_type i=0; i<aliA.size(); i++) {
-		const std::string &nameA = (aliA[i]>0)?seqConstraints.get_name_a(aliA[i]):"";
-		const std::string &nameB = (aliB[i]>0)?seqConstraints.get_name_b(aliB[i]):"";
-
-		std::string name=noname;
-
-		if (nameA!="") name =  nameA;
-		else if (nameB!="") name = nameB;
-
-		for (size_type j=0; j<seqConstraints.name_size(); ++j) {
-		    seqCStrings[j] += name[j];
-		}
-	    }
-
-	    for (size_type j=0; j<seqConstraints.name_size(); ++j) {
-		if (j!=0) out<<"#";
-		out <<seqCStrings[j];
-	    }
-	}
-
-	out << "\n\n";
-
-	// ------------------------------------------------------------
-	// write probability dot plot
-
-	out <<"#"<<std::endl;
-
-#    ifdef HAVE_LIBRNA
-	if (use_alifold) {
-	    double p_minA = bpsA.prob_min();
-	    double p_minB = bpsB.prob_min();
-	    double p_minMean =
-		exp(
-		    (log(p_minA)*pimpl_->seqA_.row_number()
-		     + log(p_minB)*pimpl_->seqB_.row_number())
-		    / (pimpl_->seqA_.row_number() + pimpl_->seqB_.row_number())
-		    );
-
-	    pimpl_->write_alifold_consensus_dot_plot(out,p_minMean);
-	    return;
-	}
-#    endif
-
-	assert(use_alifold==false /*HAVE_LIBRNA undefined*/);
-	pimpl_->write_consensus_dot_plot(out,aliA,aliB,bpsA,bpsB,scoring);
-
+	return edges_t(endsA,endsB);
     }
 
 
     size_type
-    Alignment::get_local_startA() const {return pimpl_->a_[0];}
+    Alignment::local_startA() const {return pimpl_->a_[0];}
     
     size_type
-    Alignment::get_local_endA() const {return pimpl_->a_[pimpl_->a_.size()-1];}
+    Alignment::local_endA() const {return pimpl_->a_[pimpl_->a_.size()-1];}
     
     size_type
-    Alignment::get_local_startB()  const {return pimpl_->b_[0];}
+    Alignment::local_startB()  const {return pimpl_->b_[0];}
 	
     size_type
-    Alignment::get_local_endB() const {return pimpl_->b_[pimpl_->b_.size()-1];}
+    Alignment::local_endB() const {return pimpl_->b_[pimpl_->b_.size()-1];}
 
     const Sequence &
-    Alignment::get_seqA() const {return pimpl_->seqA_;} 
+    Alignment::seqA() const {return pimpl_->seqA_;} 
 
     const Sequence &
-    Alignment::get_seqB() const {return pimpl_->seqB_;} 
+    Alignment::seqB() const {return pimpl_->seqB_;} 
 
-    const std::vector<int> &
-    Alignment::get_a() const {return pimpl_->a_;} 
+    // const std::vector<int> &
+    // Alignment::get_a() const {return pimpl_->a_;} 
 
-    const std::vector<int> &
-    Alignment::get_b() const {return pimpl_->b_;} 
+    // const std::vector<int> &
+    // Alignment::get_b() const {return pimpl_->b_;} 
 
-
-#ifdef HAVE_LIBRNA
-    void
-    AlignmentImpl::write_alifold_consensus_dot_plot(std::ostream &out, double cutoff) const {
-	char **sequences;
-
-	plist *pl;
-
-	// set some global variables that control alifold behavior
-	RibosumFile = NULL;
-	ribo = 1; //activate ribosum scoring
-	cv_fact=0.6; // best values for ribosum scoring according to RNAalifold man page
-	nc_fact=0.5;
-	dangles=2;
-	oldAliEn = 0;
-
-	// construct sequences array from sequences in alignment
-	MultipleAlignment ma(*self_); // generate multiple alignment from alignment object
-	sequences = new char *[ma.row_number()+1];
-	for (size_t i=0; i<ma.row_number(); i++) {
-	    sequences[i] = new char[ma.length()+1];
-	    // copy ma row to sequences[i]
-	    strcpy(sequences[i],ma.seqentry(i).seq().to_string().c_str());
-	}
-	sequences[ma.row_number()]=NULL;
-
-	int length = strlen(sequences[0]);
-	char *structure = new char[length+1];
-
-	// estimate specific scaling factor only for large instances
-	if (length > 1000) {
-	    // estimate nice scaling factor
-	    double min_en = alifold((const char **)sequences, structure);
-
-	    double sfact         = 1.07; // from RNAalifold.c code
-
-	    double kT = (temperature+273.15)*1.98717/1000.; /* in Kcal */
-	    pf_scale = exp(-(sfact*min_en)/kT/length); // set global variable
-	} else {
-	    pf_scale = 1.0;
-	}
-
-	// call ali pf fold
-	// double energy = // we don't need the energy
-	alipf_fold((const char **)sequences,structure,&pl);
-
-	// read the pair_info structures from array pl
-	// and write the base pair probabilities to out
-	//
-	for(plist *pair=pl; pair->i!=0 && pair->j!=0; pair++) {
-	    if ( pair->p  >  cutoff ) {
-		out << pair->i << " "
-		    << pair->j << " "
-		    << pair->p << std::endl;
-	    }
-	}
-
-	// free heap space
-	delete [] structure;
-	for (size_t i=0; i<ma.row_number(); i++) {
-	    delete [] sequences[i];
-	}
-	delete [] sequences;
-
-	free(pl);
-	free_alifold_arrays();
-    }
-#endif
 
     void
-    AlignmentImpl::write_consensus_dot_plot(std::ostream &out,
-					const plusvector<int> &aliA,
-					const plusvector<int> &aliB,
-					const BasePairs &bpsA,
-					const BasePairs &bpsB,
-					const Scoring &scoring
-					) const {
-	int lenA=seqA_.length();
-	int lenB=seqB_.length();
-
-	double p_minA = bpsA.prob_min();
-	double p_minB = bpsB.prob_min();
-	double p_expA = scoring.prob_exp(lenA);
-	double p_expB = scoring.prob_exp(lenB);
-
-	double p_minMean =
-	    exp(
-		(log(p_minA)*seqA_.row_number()
-		 + log(p_minB)*seqB_.row_number())
-		/ (seqA_.row_number() + seqB_.row_number())
-		);
-
-	//std::cout << "avg p_min: " << p_minMean << std::endl;
-	//std::cout << "p_expA: " << p_expA << std::endl;
-	//std::cout << "p_expB: " << p_expB << std::endl;
-
-	for (size_type i=0; i<aliA.size(); i++) {
-	    for (size_type j=i+3; j<aliB.size(); j++) { // min loop size=3
-		// here we compute consensus pair probabilities
-
-		double pA =
-		    (aliA[i]<0 || aliA[j]<0)
-		    ? 0
-		    : bpsA.get_arc_prob(aliA[i], aliA[j]);
-
-		double pB =
-		    (aliB[i]<0 || aliB[j]<0)
-		    ? 0
-		    : bpsB.get_arc_prob(aliB[i], aliB[j]);
-
-		double p = average_probs(pA,pB,p_minMean,p_expA,p_expB);
-
-		if (scoring.stacking()) {
-
-		    double st_pA =
-			(aliA[i]<0 || aliA[j]<0)
-			? 0
-			: bpsA.get_arc_2_prob(aliA[i], aliA[j]);
-
-		    double st_pB =
-			(aliB[i]<0 || aliB[j]<0)
-			? 0
-			: bpsB.get_arc_2_prob(aliB[i], aliB[j]);
-
-		    double st_p = average_probs(st_pA,st_pB,p_minMean,p_expA,p_expB);
-
-		    if (p > p_minMean || st_p > p_minMean) {
-			out << i+1 << " " << j+1 << " " << p << " " << st_p <<std::endl;
-			// std::cerr << p <<" <- "<<pA<<","<<pB<<" : "<<p_minA<<","<<p_minB<<";"<<p_minMean<<std::endl;
-		    }
-
-		} else {
-		    if (p > p_minMean) {
-			out << i+1 << " " << j+1 << " " << p <<std::endl;
-			// std::cerr << p <<" <- "<<pA<<","<<pB<<" : "<<p_minA<<","<<p_minB<<";"<<p_minMean<<std::endl;
-		    }
-		}
+    AlignmentImpl::write_debug(std::ostream &out, const Alignment::edge_ends_t &ends) {
+	for (size_type i=0; i<ends.size(); i++) {
+	    if (ends[i].is_pos()) {
+		out << ends[i] << " ";
+	    } else {
+		out << "g" << ends[i].gap().idx() << " ";
 	    }
 	}
-    }
-
-    double
-    AlignmentImpl::average_probs(double pA, double pB, double p_min,
-				 double p_expA, double p_expB) const {
-
-	/*
-	  probably better, something like
-
-	  if (pA<p_min*1.05) {
-	  pA = std::min(p_expA,p_min*0.75);
-	  }
-
-
-	*/
-
-	pA = std::max(std::min(p_expA,p_min*0.75), pA);
-	pB = std::max(std::min(p_expB,p_min*0.75), pB);
-
-	// weighted geometric mean
-	double p = exp(
-		       (log(pA)*seqA_.row_number() + log(pB)*seqB_.row_number()) /
-		       //---------------------------------------------------
-		       (seqA_.row_number() + seqB_.row_number())
-		       );
-
-	// weighted arithmetic mean
-	// p = (seqA_.row_number()*pA + seqB_.row_number()*pB)/(seqA_.row_number()+seqB_.row_number());
-	return p;
-    }
-
-    void AlignmentImpl::write_debug(std::ostream &out) const {
-
-	for (size_type i=0; i<a_.size(); i++) {
-	    out << a_[i] << " ";
-	}
 	out<<std::endl;
-	for (size_type i=0; i<b_.size(); i++) {
-	    out << b_[i] << " ";
-	}
-	out<<std::endl;
-
+    }
+    
+    void
+    AlignmentImpl::write_debug(std::ostream &out) const {
+	write_debug(out,a_);
+	write_debug(out,b_);
     }
 
+
+    std::string
+    Alignment::dot_bracket_structureA(bool only_local) const {
+	edges_t edges = alignment_edges(only_local);
+	return pimpl_->dot_bracket_structure(pimpl_->strA_,edges.first);
+    }
+
+    std::string
+    Alignment::dot_bracket_structureB(bool only_local) const {
+	edges_t edges = alignment_edges(only_local);
+	return pimpl_->dot_bracket_structure(pimpl_->strB_,edges.second);
+    }
+
+    std::string
+    AlignmentImpl::dot_bracket_structure(const std::string &str,
+					 const Alignment::edge_ends_t &x) {
+	std::string s;
+	for (size_t i=0; i<x.size(); i++) {
+	    if (x[i].is_pos()) {
+		s.push_back(str[x[i]]);
+	    } else if (x[i].is_gap()) {
+		s.push_back(gap_symbol(x[i].gap()));
+	    }
+	}
+	return s;
+    }
+
+    Alignment::edge_ends_t 
+    Alignment::alistr_to_edge_ends(const std::string alistr)
+    {
+	edge_ends_t xs;
+	size_t i=1;
+	
+	for (size_t k=0; k<alistr.size(); k++) {
+	    edge_end_t x;
+	    if (is_gap_symbol(alistr[k])) {
+		x = gap_code(alistr[k]);
+	    } else {
+		x = i;
+		i++;
+	    }
+	    xs.push_back(x);
+	}
+	return xs;
+    }
 
 }

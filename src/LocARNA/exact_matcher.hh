@@ -1,6 +1,10 @@
 #ifndef EXACT_MATCHER_HH
 #define EXACT_MATCHER_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 
 #include <iostream>
 #include <sstream>
@@ -9,8 +13,10 @@
 #include <limits>
 #include <iterator>
 #include <tr1/unordered_map>
+#include "trace_controller.hh"
 #include "sparsification_mapper.hh"
 #include "tuples.hh"
+#include "scoring.hh"
 
 extern "C"
 {
@@ -226,7 +232,7 @@ std::ostream &operator << (std::ostream &out, const PatternPairMap::patListTYPE 
 	//!@brief returns the structure of the given sequence
 	char* getStructure(PatternPairMap& myMap, bool firstSeq, int length);
 	
-	std::string intvec2str(const std::vector<unsigned int>& V, const std::string delim){
+	std::string intvec2str(const std::vector<unsigned int>& V, const std::string &delim){
 	    std::stringstream oss;
 	    copy(V.begin(), V.end(), std::ostream_iterator<unsigned int>(oss, delim.c_str()));
 	    std::string tmpstr;
@@ -451,6 +457,7 @@ public:
 class EPM{
 
 public:
+    typedef BasePairs__Arc Arc; //!< arc class of BasePairs
 
 	typedef SparsificationMapper::seq_pos_t seqpos_t; //!< a type for a sequence position
 	typedef SparseTraceController::matpos_t matpos_t; //!< a type for a position in a sparsified matrix
@@ -675,6 +682,7 @@ T1 max4(const T1 &first,const T1 &second, const T1 &third, const T1 &fourth){
 }
 
 class ExactMatcher {
+    typedef BasePairs__Arc Arc; //!< use arc class of base pairs
 
 	typedef SparsificationMapper::ArcIdx ArcIdx; //!< type for the arc index
 	typedef SparsificationMapper::ArcIdxVec ArcIdxVec; //!< type for a vector of arc indices
@@ -689,8 +697,10 @@ class ExactMatcher {
 
 	typedef std::vector<EPM> epm_cont_t; //!< the container used for temporarily storing the EPMs
 	typedef std::pair<score_t,epm_cont_t > el_map_am_to_do_t; //!< type for storing for a given tolerance the list of epms
-	typedef std::map<PairArcIdx,el_map_am_to_do_t > map_am_to_do_t; //!< a map that stores for pairs of arc indices the tolerance
-																	// that is used for backtracing and the found EPMs
+	
+        //! a map that stores for pairs of arc indices the tolerance
+        //! that is used for backtracing and the found EPMs
+        typedef std::map<PairArcIdx,el_map_am_to_do_t > map_am_to_do_t; 
 private:
 
     //! a quintuple for storing the state, max tolerance left, current matrix position, potential pair of arc indices
@@ -705,6 +715,9 @@ private:
 
     const Sequence &seqA; //!< sequence A
     const Sequence &seqB; //!< sequence B
+
+    const RnaData &rna_dataA; //!< rna data A, used only for scoring arc matches (stacked & unstacked)
+    const RnaData &rna_dataB; //!< rna data B, @see rna_dataA
 
     const ArcMatches &arc_matches; //!< the potential arc matches between A and B
 
@@ -985,7 +998,7 @@ private:
      */
     void trace_seq_str_matching_subopt(const Arc &a, const Arc &b,
     		score_t score_contr, matpos_t mat_pos_diag, pair_seqpos_t seq_pos_to_be_matched,
-    		const PairArcIdx am, poss_L_LR &poss, size_type pos_cur_epm,
+    		const PairArcIdx &am, poss_L_LR &poss, size_type pos_cur_epm,
     		epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do);
 
     /**
@@ -1130,6 +1143,8 @@ public:
      */
     ExactMatcher(const Sequence &seqA_,
 		 const Sequence &seqB_,
+		 const RnaData &rna_dataA_,
+		 const RnaData &rna_dataB_,
 		 const ArcMatches &arc_matches_,
 		 const SparseTraceController &sparse_trace_controller_,
 		 PatternPairMap &foundEPMs_,

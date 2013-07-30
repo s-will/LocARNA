@@ -265,7 +265,7 @@ sub get_normalized_seqname( $ ){
     if (exists $normalized_sequence_names_hash{$name}) {
 	return $normalized_sequence_names_hash{$name};
     } else {
-	print STDERR "ERROR: No normalized name was registered for the requested name $name.\n";
+	printerr "ERROR: No normalized name was registered for the requested name $name.\n";
 	exit(-1);
     }
 }
@@ -321,7 +321,7 @@ sub read_fasta {
     }
  
     my @fasta = ();
-    my @read_names = ();
+    my %seen_names;
 
     my $line=<$fh>;
     while(defined($line)) {
@@ -330,18 +330,18 @@ sub read_fasta {
 	    my $description=$2;
 	    
 	    ## check for duplicate names in fasta
-	    if (grep(/^$name$/, @read_names)) {
-		print "Duplicate name \"$name\" in fasta input. ";
-		my $bar="foo bar bar";
+	    if (exists $seen_names{$name}) {
+		printerr "Duplicate name \"$name\" in fasta input. ";
+		my $bar="some text here";
 		if (length($description)>0) {
 		    $bar=$description;
 		}
-		print "Note that in \">$name $bar\", only \"$name\" is the name, ";
-		print "whereas the rest of the line \"$bar\" (after the blank) is interpreted as description.\n";
+		printerr "Note that in \">$name $bar\", only \"$name\" is the name, ";
+		printerr "whereas the rest of the line \"$bar\" (after the blank) is interpreted as description.\n";
 		exit(-1);
 	    }
-	    push @read_names, $name;
-
+	    $seen_names{$name}=1;
+	    
 	    my $seq = { name  => $name,
 			descr => $description };
 	    
@@ -444,7 +444,7 @@ sub parse_mfasta($) {
     
     local *PMF_IN;
 
-    print STDERR "Use of parse_mfasta is deprecated. Use read_fasta instead.";
+    printerr "Use of parse_mfasta is deprecated. Use read_fasta instead.";
     
     open(PMF_IN,$file) || die "Cannot read mfasta file $file\n";
 
@@ -459,7 +459,7 @@ sub parse_mfasta($) {
 	    $name = substr $name,0,16;
 	    
 	    if (exists $mfasta{$name}) {
-		print STDERR "Duplicate name in mfasta: $name\n";
+		printerr "Duplicate name in mfasta: $name\n";
 		exit -1;
 	    }
 	    while (defined($line=<PMF_IN>) && ($line !~ /^>/)) {
@@ -502,7 +502,7 @@ sub parse_mfasta($) {
 sub parse_mfasta_constraints {
     my ($file) = @_;
 
-    print STDERR "Use of parse_mfasta_constraints is deprecated. Use read_fasta instead.";
+    printerr "Use of parse_mfasta_constraints is deprecated. Use read_fasta instead.";
 
     my %mfasta;
 
@@ -523,7 +523,7 @@ sub parse_mfasta_constraints {
 	    my $name = make_unique_seqname $longname,(keys %mfasta);
 	    
 	    if (exists $mfasta{$name}) {
-		print STDERR "Duplicate name in mfasta, cannot make unique : $name\n";
+		printerr "Duplicate name in mfasta, cannot make unique : $name\n";
 		exit -1;
 	    }
 	    
@@ -554,7 +554,7 @@ sub parse_mfasta_constraints {
     for my $name (@names) {
 	if (exists $strcons{$name}) {
 	    if (length $strcons{$name} != length $mfasta{$name}) {
-		print STDERR "Structure constraint length unequals sequence length for $name.\n";
+		printerr "Structure constraint length unequals sequence length for $name.\n";
 		exit -1;
 	    }
 
@@ -564,7 +564,7 @@ sub parse_mfasta_constraints {
 	my $i=1;
 	while (exists $seqcons{"$name\#$i"}) {
 	    if (length $seqcons{"$name\#$i"} != length $mfasta{$name}) {
-		print STDERR "Sequence constraint length unequals sequence length for $name.\n";
+		printerr "Sequence constraint length unequals sequence length for $name.\n";
 		exit -1;
 	    }
 	    
@@ -578,7 +578,7 @@ sub parse_mfasta_constraints {
 	
 	my $num_seq_constraint_lines=grep /$name\#/, keys %seqcons;
 	if ($i-1 != $num_seq_constraint_lines) {
-	    print STDERR "Bad sequence constraints for sequence $name.\n";
+	    printerr "Bad sequence constraints for sequence $name.\n";
 	    exit -1;
 	}
     }
@@ -586,7 +586,7 @@ sub parse_mfasta_constraints {
     for my $name (@names) {
 	if (($name!~/#/) &&  $has_seq_constraints) {
 	    if (! exists $mfasta{"$name\#C"}) {
-		print STDERR "Sequence constraint string missing for $name.\n";
+		printerr "Sequence constraint string missing for $name.\n";
 	    }
 	}
     }
@@ -794,26 +794,36 @@ sub read_dp_ps {
 
 
 ## read pp file and return the alignment
+## auto-detect version of pp file
 sub read_pp_file_aln($) {
     my ($filename)=@_;
-    local *PP_IN;
+    my $pp_in;
    
-    open(PP_IN,$filename) || die "MLocarna::read_pp_file_aln: Cannot read $filename\n";
+    open($pp_in,$filename) || die "MLocarna::read_pp_file_aln: Cannot read $filename\n";
     
     my %aln;
     my %pairprobs;
 
     my $line;
+    my $pp_version=1.0;
+
+    if (($line = <$pp_in>) =~ /^#PP ([\d.]+)/ ) {
+	$pp_version=$1;
+	$line = <$pp_in>
+    }
     
-    while ($line = <PP_IN>) {
-	if ($line =~ /^\#\s*$/) { last; }
-    
+    while ($line) {
+	$line = <$pp_in>;
+	
+	if ($pp_version>=2 && $line =~ /^\#END/) { last; }
+	if ($pp_version<2 && $line =~ /^\#\s*$/) { last; }
+	
 	if (($line =~ /^(\S+)\s+(.+)/) && ($line !~ /^SCORE:/) ) {
 	    $aln{$1}.=$2;
 	}
     }
     
-    close PP_IN;
+    close $pp_in;
     
     return %aln;
 }
@@ -825,11 +835,12 @@ sub read_pp_file_aln($) {
 ##          the hash has keys "$i $j" and contains the probabilities p_ij (i<j)
 ##          positions in the hash are in [1..sequence length]
 ##
+## auto-detect version of pp file
 sub read_pp_file_pairprobs($) {
     my ($filename)=@_;
-    local *PP_IN;
+    my $pp_in;
 
-    open(PP_IN,$filename) || die "Can not read $filename\n";
+    open($pp_in,$filename) || die "Can not read $filename\n";
     
     #my %aln;
     my %pairprobs = read_pp_file_pairprob_info($filename);
@@ -852,30 +863,48 @@ sub read_pp_file_pairprobs($) {
 ##          in the pp file
 ##          positions in the hash are in [1..sequence length]
 ##
+## auto-detect version of pp file
 sub read_pp_file_pairprob_info($) {
     my ($filename)=@_;
-    local *PP_IN;
+    my $pp_in;
 
-    open(PP_IN,$filename) || die "Can not read $filename\n";
+    open($pp_in,$filename) || die "Can not read $filename\n";
     
     #my %aln;
     my %pairprobinfo;
 
     my $line;
 
-    while ($line = <PP_IN>) {
-	if ($line =~ /^\#\s*$/) { last; }
+    my $pp_version=1.0;
+    if (($line = <$pp_in>) =~ /^#PP ([\d.]+)/ ) {
+	$pp_version=$1;
+	$line = <$pp_in>
+    }
+
+    while ($line = <$pp_in>) {
+	if ($pp_version>=2 && $line =~ /^\#END/) { 
+	    while ($line = <$pp_in>) {
+		if ($line =~ /^\#SECTION BASEPAIRS/) { 
+		    last;
+		}
+	    }
+	    last;
+	}
+	if ($pp_version<2 && $line =~ /^\#\s*$/) { last; }
     }
     
-    while (($line = <PP_IN>)) {
-	if ($line =~ /(\S+)\s+(\S+)\s+(.+)/) {
+    while (($line = <$pp_in>)) {
+	if ($line =~ /^(\S+)\s+(\S+)\s+(.+)/) {
 	    my $i=$1;
 	    my $j=$2;
 	    my $pi=$3;
 	    $pairprobinfo{"$i $j"}=$pi;
 	}
+	if ($pp_version>=2 && $line =~ /^\#END/) { 
+	    last;
+	}
     }
-    close PP_IN;
+    close $pp_in;
     
     return %pairprobinfo;
 }

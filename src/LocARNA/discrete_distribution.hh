@@ -1,6 +1,10 @@
 #ifndef LOCARNA_DISCRETE_DISTRIBUTION
 #define LOCARNA_DISCRETE_DISTRIBUTION
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 namespace LocARNA {
     
     // ------------------------------------------------------------

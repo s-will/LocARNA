@@ -1,4 +1,4 @@
-/**
+ /**
  * \file locarna_p.cc
  *
  * \brief Defines main function of locarna_p
@@ -31,8 +31,9 @@
 #include "LocARNA/anchor_constraints.hh"
 #include "LocARNA/trace_controller.hh"
 #include "LocARNA/multiple_alignment.hh"
-
 #include "LocARNA/ribosum85_60.icc"
+#include "LocARNA/pfold_params.hh"
+#include "LocARNA/global_stopwatch.hh"
 
 using namespace std;
 
@@ -82,14 +83,17 @@ bool opt_exp_prob; //!< opt_exp_prob
 int output_width=70; //!< output_width=70
 bool opt_write_arcmatch_probs; //!< opt_write_arcmatch_probs
 bool opt_write_basematch_probs; //!< opt_write_basematch_probs
+
+bool opt_stopwatch; //!< whether to print verbose output
+
 // ------------------------------------------------------------
 // File arguments
 
 std::string arcmatch_probs_file; //!< arcmatch_probs_file
 std::string basematch_probs_file; //!< basematch_probs_file
 
-std::string bpsfile1; //!< bpsfile1
-std::string bpsfile2; //!< bpsfile2
+std::string fileA; //!< fileA
+std::string fileB; //!< fileB
 
 std::string clustal_out; //!< clustal_out
 bool opt_clustal_out; //!< opt_clustal_out
@@ -111,9 +115,9 @@ bool opt_verbose; //!< opt_verbose
 bool opt_local_output; //!< opt_local_output
 bool opt_pos_output; //!< opt_pos_output
 
-bool opt_stacking=false; // not supported
-bool opt_no_lonely_pairs=false; // not supported
-
+bool opt_stacking=false; //!< stacking, not supported
+bool opt_no_lonely_pairs=false; //!< no lonely pairs, not supported
+#
 
 std::string ribosum_file; //!< ribosum_file
 bool use_ribosum; //!< use_ribosum
@@ -155,6 +159,8 @@ option_def my_options[] = {
     
     {"pf-scale",0,0,O_ARG_DOUBLE,&l_pf_scale,"1.0","scale","Scaling of the partition function. Use in order to avoid overflow."},
     
+    {"stopwatch",0,&opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
+
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
@@ -182,8 +188,8 @@ option_def my_options[] = {
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
-    {"",0,0,O_ARG_STRING,&bpsfile1,O_NODEFAULT,"bps-file 1","Basepairs input file 1"},
-    {"",0,0,O_ARG_STRING,&bpsfile2,O_NODEFAULT,"bps-file 2","Basepairs input file 2"},
+    {"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"bps-file 1","Basepairs input file 1"},
+    {"",0,0,O_ARG_STRING,&fileB,O_NODEFAULT,"bps-file 2","Basepairs input file 2"},
 
 
     {"",0,0,0,0,O_NODEFAULT,"",""}
@@ -207,7 +213,7 @@ option_def my_options[] = {
  */
 int
 main(int argc, char **argv) {
-    //stopwatch.set_print_on_exit(true);
+    stopwatch.start("total");
 
     typedef std::vector<int>::size_type size_type;
 
@@ -243,6 +249,10 @@ main(int argc, char **argv) {
 	return -1;
     }
 
+    if (opt_stopwatch) {
+	stopwatch.set_print_on_exit(true);
+    }
+
     if (opt_verbose)
 	print_options(my_options);
 
@@ -251,44 +261,35 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    RnaData rnadataA(bpsfile1,true,opt_stacking,false);
-    RnaData rnadataB(bpsfile2,true,opt_stacking,false);
-
-    // optionally fold
     PFoldParams pfparams(opt_no_lonely_pairs,opt_stacking);
-#if HAVE_LIBRNA
-    if (!rnadataA.pair_probs_available()) {
-	if (opt_verbose) {
-	    std::cout << "Compute ensemble probabilities for first input sequence."
-		      << std::endl;
-	}
-	rnadataA.compute_ensemble_probs(pfparams,false,true);
+    
+    RnaData *rna_dataA=0;
+    try {
+	rna_dataA = new RnaData(fileA,min_prob,pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<fileA <<std::endl
+		  << "       "<<f.what() <<std::endl;
+	return -1;
     }
-    if (!rnadataB.pair_probs_available()) {
-	if (opt_verbose) {
-	    std::cout << "Compute ensemble probabilities for second input sequence."
-		      << std::endl;
-	}
-	rnadataB.compute_ensemble_probs(pfparams,false,true);
+    
+    RnaData *rna_dataB=0;
+    try {
+	rna_dataB = new RnaData(fileB,min_prob,pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<fileB <<std::endl
+		  << "       "<<f.what() <<std::endl;
+	if (rna_dataA) delete rna_dataA;
+	return -1;
     }
-#else
-    if (!rnadataA.pair_probs_available() || !rnadataB.pair_probs_available()) {
-	std::cerr
-	    << "WARNING: Input contains no pair probabilities for one or both sequences,"<<std::endl
-	    << "         but their computation is disabled (recompile/reconfigure to enable)."<<std::endl
-	    << "         Continue without pair probabilities."
-	    << std::endl;
-    }
-#endif
-
-    Sequence seqA=rnadataA.get_sequence();
-    Sequence seqB=rnadataB.get_sequence();
-
+    
+    const Sequence &seqA=rna_dataA->sequence();
+    const Sequence &seqB=rna_dataB->sequence();
+    
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
-    AnchorConstraints seq_constraints(seqA.length(),"",seqB.length(),"");
-
+    AnchorConstraints seq_constraints(lenA,"",lenB,"");
+    
     // --------------------
     // handle max_diff restriction
     
@@ -309,12 +310,30 @@ main(int argc, char **argv) {
     if (max_diff_alignment_file!="") {
 	multiple_ref_alignment = new MultipleAlignment(max_diff_alignment_file);
     } else if (max_diff_pw_alignment!="") {
-	if ( seqA.row_number()!=1 || seqB.row_number()!=1 ) {
+	if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
 	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
 	    return -1;
 	}
 	
-	multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),seqB.seqentry(0).name(),max_diff_pw_alignment);
+	std::vector<std::string> alistr;
+	split_at_separator(max_diff_pw_alignment,'&',alistr);
+	
+	if (alistr.size()!=2) {
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; require exactly one '&' separating the alignment strings."
+		      << std::endl; 
+	    return -1;
+	}
+    
+	if (alistr[0].length() != alistr[1].length()) {
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; alignment strings have unequal lengths."
+		      << std::endl; 
+	    return -1;
+	}
+	
+	multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),
+						       seqB.seqentry(0).name(),
+						       alistr[0],
+						       alistr[1]);
     }
 
     // if (multiple_ref_alignment) {
@@ -335,17 +354,17 @@ main(int argc, char **argv) {
     ArcMatches *arc_matches;
     
     // initialize from RnaData
-    arc_matches = new ArcMatches(rnadataA,
-				 rnadataB,
+    arc_matches = new ArcMatches(*rna_dataA,
+				 *rna_dataB,
 				 min_prob,
 				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
 				 trace_controller,
 				 seq_constraints
 				 );
 	
-    BasePairs bpsA = arc_matches->get_base_pairsA();
-    BasePairs bpsB = arc_matches->get_base_pairsB();
-	
+    const BasePairs &bpsA = arc_matches->get_base_pairsA();
+    const BasePairs &bpsB = arc_matches->get_base_pairsB();
+    
     // ----------------------------------------
     // report on input in verbose mode
     if (opt_verbose) {
@@ -376,15 +395,12 @@ main(int argc, char **argv) {
 	}
     }
 
-    //  MatchProbs *match_probs=0L;
-
     // ----------------------------------------
     // construct scoring
-    if (opt_verbose) {
-	std::cout << "Construct scoring."<<std::endl;
-    }
+   
+    double my_exp_probA = opt_exp_prob?exp_prob:prob_exp_f(lenA);
+    double my_exp_probB = opt_exp_prob?exp_prob:prob_exp_f(lenB);
 
-	
     ScoringParams scoring_params(match_score,
 				 mismatch_score,
 				 indel_score,
@@ -393,7 +409,8 @@ main(int argc, char **argv) {
 				 struct_weight,
 				 tau_factor,
 				 0, // exclusion score
-				 opt_exp_prob?exp_prob:-1,
+				 my_exp_probA,
+				 my_exp_probB,
 				 l_temperature,
 				 false,//opt_stacking,
 				 false,//opt_mea_alignment,
@@ -403,7 +420,13 @@ main(int argc, char **argv) {
 				 0 //probability_scale
 				 );
 	
-    Scoring scoring(seqA,seqB,arc_matches,0L,&scoring_params,true);
+    Scoring scoring(seqA,seqB,
+		    *rna_dataA,
+		    *rna_dataB,
+		    *arc_matches,
+		    0L,
+		    scoring_params,
+		    true);
     
     // ------------------------------------------------------------
     // Computation of the alignment score
@@ -541,6 +564,8 @@ main(int argc, char **argv) {
     // clean up
     if(arc_matches) delete arc_matches;
     if (ribosum) delete ribosum;
+
+    stopwatch.stop("total");
     
     // DONE
     return 0;

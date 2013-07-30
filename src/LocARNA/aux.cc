@@ -1,6 +1,9 @@
 #include "aux.hh"
+#include <sstream>
 #include <iomanip>
 #include <algorithm>
+
+#include <iostream>
 
 namespace LocARNA {
     failure::~failure() throw() {};
@@ -10,11 +13,35 @@ namespace LocARNA {
 	//exception::what();
 	return msg_.c_str();
     }
+
+    // ------------------------------------------------------------
+    // gaps
+
+    // gap symbols
+    const std::string the_gap_symbols = "-_~.";
+
+    size_t Gap::size=0;
+    const Gap Gap::regular  = Gap(Gap::size++);
+    const Gap Gap::loop     = Gap(Gap::size++);
+    const Gap Gap::locality = Gap(Gap::size++);
+    const Gap Gap::other    = Gap(Gap::size++);
     
     bool
     is_gap_symbol(char c) {
-	return gap_symbols.find(c)!=std::string::npos;
+	return the_gap_symbols.find(c)!=std::string::npos;
     }
+    
+    char
+    gap_symbol(Gap gap) {
+	return the_gap_symbols[gap.idx()];
+    }
+
+    Gap gap_code(char symbol) {
+	assert(is_gap_symbol(symbol));
+	return Gap(the_gap_symbols.find(symbol)); 
+    }
+
+    // ------------------------------------------------------------
 
     /**
      * \brief Converts char to upper case
@@ -38,5 +65,88 @@ namespace LocARNA {
 	    if (seq[i]=='T') seq[i]='U';
 	}
     }
+
+    bool
+    has_prefix(const std::string &s, const std::string &p, size_t start) {
+	if (s.length()<p.length()-start) {
+	    return false;
+	}
+	return s.substr(start,p.length())==p;
+    }
+
+
+    void
+    split_at_separator(const std::string &s, char sep, std::vector<std::string> &v) {
+	std::string str=s;
+	v.clear();
+	size_t pos;
+	while ((pos=str.find(sep))!=std::string::npos) {
+	    if (pos>0) {
+		v.push_back(str.substr(0,pos));
+	    } else {
+		v.push_back("");
+	    }
+	    str = str.substr(pos+1); // note: if pos+1 == length of str, substr yields empty
+	}
+	v.push_back(str);
+    }
+
+    std::vector<std::string>
+    split_at_separator(const std::string &s, char sep) {
+	std::vector<std::string> v;
+	split_at_separator(s,sep,v);
+	return v;
+    }
+
+    
+    std::string
+    concat_with_separator(const std::vector<std::string> &v, char sep) {
+	if (v.size()==0) return "";
+	std::string s=v[0];
+	for (std::vector<std::string>::const_iterator it=v.begin()+1; v.end()!=it; ++it) {
+	    s += sep + *it;
+	}
+	return s;
+    }
+    
+    bool
+    get_nonempty_line(std::istream &in,
+			       std::string &line) {
+	const std::string whitespace = " \t";
+	while(getline(in,line)) {
+	    if (line.length()>0 &&
+		!isspace(line[0])) {
+		
+		//  collect lines in case of quoted newline
+		while (line[line.length()-1]=='\\') {
+		    line=line.substr(0,line.length()-1);
+		    std::string line1;
+		    if (getline(in,line1)) {
+			line+=" "+line1;
+		    } else {
+			break;
+		    }
+		}
+
+		// remove trailing white space
+		const size_t strEnd = line.find_last_not_of(whitespace);
+		line = line.substr(0, strEnd+1);
+		return true;
+	    }
+	}
+	line="";
+	return false;
+    }
+
+
+    void
+    error_rnalib_unavailable() {
+	std::ostringstream err;
+	err << "The requested functionality is not available," << std::endl
+	    << "       since LocARNA was compiled without libRNA support." << std::endl
+	    << "       Activation requires recompilation with configure option --enable-librna." <<std::endl; 
+	throw(failure(err.str()));
+    }
+    
 }
 

@@ -30,6 +30,7 @@
 
 #include "sequence.hh"
 #include "alphabet.hh"
+#include "rna_data.hh"
 #include "ribosum.hh"
 #include "stral_score.hh"
 
@@ -93,7 +94,7 @@ namespace  LocARNA {
 	    } else {
 		throw(std::ifstream::failure("Cannot read background probabilities."));
 	    }
-	} catch (std::ifstream::failure e) {
+	} catch (std::ifstream::failure &e) {
 	    std::stringstream err;
 	    
 	    err << "Cannot parse "<<filename<<". " <<e.what()<< std::endl
@@ -126,14 +127,14 @@ namespace  LocARNA {
     
 	std::vector<int> trans_tab(256,5);
 	for(size_type i=0; i<p.basenames.length(); i++) {
-	    char c=p.basenames[i];
+	    size_t c=p.basenames[i];
 	    trans_tab[c]=i;
 	}
     
 	size_t lenA=seqA.length();
 	size_t lenB=seqB.length();
     
-	if (seqA.row_number()!=1 || seqB.row_number()!=1) {
+	if (seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1) {
 	    std::cerr
 		<< "WARNING: the base match probabilities are currently computed only on the first sequence" << std::endl
 		<< "of a multiple alignment. I.e., this does not work correctly for multiple alignment yet." << std::endl;
@@ -366,8 +367,8 @@ namespace  LocARNA {
 			 bool flag_local)
     {
 	
-	size_type lenA=rnaA.get_sequence().length();
-	size_type lenB=rnaB.get_sequence().length();
+	size_type lenA=rnaA.length();
+	size_type lenB=rnaB.length();
 
 	Matrix<double> zM;
 	Matrix<double> zA;

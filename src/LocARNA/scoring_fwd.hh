@@ -1,6 +1,10 @@
 #ifndef LOCARNA_SCORING_FWD_HH
 #define LOCARNA_SCORING_FWD_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "infty_int.hh"
 
 namespace LocARNA {
@@ -22,7 +26,8 @@ namespace LocARNA {
     typedef double pf_score_t;
 #endif
 
-
+    class Scoring;
+    
 } // end namespace LocARNA
 
 #endif // LOCARNA_SCORING_FWD_HH

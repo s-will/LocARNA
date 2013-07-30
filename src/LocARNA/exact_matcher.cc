@@ -2,6 +2,7 @@
 #include "arc_matches.hh"
 #include "exact_matcher.hh"
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -17,6 +18,8 @@ bool debug_trace_F_heuristic = false;
 	// Constructor
     ExactMatcher::ExactMatcher(const Sequence &seqA_,
 			       const Sequence &seqB_,
+			       const RnaData &rna_dataA_,
+			       const RnaData &rna_dataB_,
 			       const ArcMatches &arc_matches_,
 			       const SparseTraceController &sparse_trace_controller_,
 			       PatternPairMap &foundEPMs_,
@@ -32,6 +35,8 @@ bool debug_trace_F_heuristic = false;
 			       )
 	: seqA(seqA_),
 	  seqB(seqB_),
+	  rna_dataA(rna_dataA_),
+	  rna_dataB(rna_dataB_),
 	  arc_matches(arc_matches_),
 	  bpsA(arc_matches_.get_base_pairsA()),
 	  bpsB(arc_matches_.get_base_pairsB()),
@@ -528,8 +533,8 @@ bool debug_trace_F_heuristic = false;
     	}
 
     	else{
-    		double probArcA = bpsA.get_arc_prob(a.left(),a.right());
-    		double probArcB = bpsB.get_arc_prob(b.left(),b.right());
+    		double probArcA = rna_dataA.arc_prob(a.left(),a.right());
+    		double probArcB = rna_dataB.arc_prob(b.left(),b.right());
 
     		result= D(a,b) + FiniteInt(((2*alpha_1)+(probArcA+probArcB)*alpha_2)*100);
     	}
@@ -550,13 +555,13 @@ bool debug_trace_F_heuristic = false;
     	//stacking arcA
     	if(a.left()+1==inner_a.left() &&
     			a.right()==inner_a.right()+1){
-    		prob_stacking_arcA = bpsA.get_arc_2_prob(a.left(),a.right());
+    		prob_stacking_arcA = rna_dataA.joint_arc_prob(a.left(),a.right());
     	}
 
     	//stacking arcB
     	if(b.left()+1==inner_b.left() &&
     			b.right()==inner_b.right()+1){
-    		prob_stacking_arcB = bpsB.get_arc_2_prob(b.left(),b.right());
+    		prob_stacking_arcB = rna_dataB.joint_arc_prob(b.left(),b.right());
     	}
 
     	return (prob_stacking_arcA+prob_stacking_arcB)*100*alpha_3;
@@ -1228,9 +1233,9 @@ bool debug_trace_F_heuristic = false;
 
     			// structural matching
     			for(ArcIdxVec::const_iterator itA=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).begin();
-    					itA!=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).end();itA++){
+    					itA!=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).end();++itA){
     				for(ArcIdxVec::const_iterator itB=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).begin();
-    						itB!=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).end();itB++){
+    						itB!=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).end();++itB){
 
     					const Arc &inner_a = bpsA.arc(*itA);
     					const Arc &inner_b = bpsB.arc(*itB);
@@ -1293,7 +1298,7 @@ bool debug_trace_F_heuristic = false;
 
     // traces a sequential or structural match for the suboptimal traceback
     void ExactMatcher::trace_seq_str_matching_subopt(const Arc &a, const Arc &b, score_t score_contr,
-    		matpos_t mat_pos_diag, pair_seqpos_t seq_pos_to_be_matched, const PairArcIdx am,
+    		matpos_t mat_pos_diag, pair_seqpos_t seq_pos_to_be_matched, const PairArcIdx &am,
     		poss_L_LR &poss, size_type pos_cur_epm, epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do){
 
     	bool matrixLR =  found_epms.at(pos_cur_epm).get_state()==in_LR;
@@ -2098,7 +2103,7 @@ bool debug_trace_F_heuristic = false;
     void  PatternPairMap::makeOrderedMap()
     {
 	patternOrderedMap.clear();
-	for(patListITER i = patternList.begin();i!=patternList.end();i++)
+	for(patListITER i = patternList.begin();i!=patternList.end();++i)
 	    {
 		patternOrderedMap.insert(make_pair((*i)->getSize(),*i));
 	    }
@@ -2110,7 +2115,7 @@ bool debug_trace_F_heuristic = false;
 	    {
 		idMap.clear();
 		patternList.clear();
-		for (orderedMapITER i=patternOrderedMap.begin();i!=patternOrderedMap.end();i++)
+		for (orderedMapITER i=patternOrderedMap.begin();i!=patternOrderedMap.end();++i)
 		    {
 			add(i->second);
 		    }
@@ -2148,7 +2153,7 @@ bool debug_trace_F_heuristic = false;
     int  PatternPairMap::getMapBases()
     {
 	int bases = 0;
-	for(patListITER i = patternList.begin();i!=patternList.end();i++)
+	for(patListITER i = patternList.begin();i!=patternList.end();++i)
 	    {
 		bases += (*i)->getSize();
 	    }
@@ -2158,7 +2163,7 @@ bool debug_trace_F_heuristic = false;
     int  PatternPairMap::getMapEPMScore()
     {
 	int EPMscore = 0;
-	for(patListITER i = patternList.begin();i!=patternList.end();i++)
+	for(patListITER i = patternList.begin();i!=patternList.end();++i)
 	    {
 		EPMscore += (*i)->getEPMScore();
 	    }
@@ -2286,7 +2291,7 @@ bool debug_trace_F_heuristic = false;
 			    int maxScore = 0;
 
 			    // iterate over all EPMS to get best score
-			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); myIter++){
+			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); ++myIter){
 
 				//cout << i+j_1-1 << "," << k+l_2-1 << " patid: " <<  (*myIter)->getId() << endl;
 
@@ -2378,7 +2383,7 @@ bool debug_trace_F_heuristic = false;
 
 
 			    // over all EPMs which end at (i+j_1-1,k+l_2-1)
-			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); myIter++){
+			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); ++myIter){
 				//cout << "here " << (*myIter)->getId() << endl;
 
 				// check if current EPM fits inside current hole
@@ -2430,7 +2435,7 @@ bool debug_trace_F_heuristic = false;
 	intVec patternVec;
 	string structure;
 	char x;
-	for (PatternPairMap::patListCITER i=myMap.getList().begin();i != myMap.getList().end();i++)
+	for (PatternPairMap::patListCITER i=myMap.getList().begin();i != myMap.getList().end();++i)
 	    {
 		if(firstSeq)
 		    patternVec= (*i)->getFirstPat().getPat();
@@ -2486,7 +2491,7 @@ bool debug_trace_F_heuristic = false;
 		    label2Str << i << " 0.5 0.5 (" << i << ") Label\n";
 	    }
 
-	for (PatternPairMap::patListCITER i=myMap.getList().begin();i != myMap.getList().end();i++)
+	for (PatternPairMap::patListCITER i=myMap.getList().begin();i != myMap.getList().end();++i)
 	    {
 		intVec tmpvec1=(*i)->getFirstPat().getPat();
       
@@ -2545,7 +2550,7 @@ bool debug_trace_F_heuristic = false;
 	intVec positionsSeq1LCSEPM;
 	intVec positionsSeq2LCSEPM;
 
-	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();i++)
+	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();++i)
 	    {
 		positionsSeq1LCSEPM.insert(positionsSeq1LCSEPM.end(),(*i)->getFirstPat().getPat().begin(),(*i)->getFirstPat().getPat().end());
 		positionsSeq2LCSEPM.insert(positionsSeq2LCSEPM.end(),(*i)->getSecPat().getPat().begin(),(*i)->getSecPat().getPat().end());
@@ -2650,7 +2655,7 @@ bool debug_trace_F_heuristic = false;
 	intVec positionsSeq1LCSEPM;
 	intVec positionsSeq2LCSEPM;
 
-	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();i++)
+	for (PatternPairMap::patListCITER i=matchedEPMs.getList().begin();i != matchedEPMs.getList().end();++i)
 	    {
 		positionsSeq1LCSEPM.insert(positionsSeq1LCSEPM.end(),(*i)->getFirstPat().getPat().begin(),(*i)->getFirstPat().getPat().end());
 		positionsSeq2LCSEPM.insert(positionsSeq2LCSEPM.end(),(*i)->getSecPat().getPat().begin(),(*i)->getSecPat().getPat().end());

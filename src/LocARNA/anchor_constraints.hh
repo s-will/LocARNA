@@ -1,6 +1,10 @@
 #ifndef LOCARNA_ANCHOR_CONSTRAINTS_HH
 #define LOCARNA_ANCHOR_CONSTRAINTS_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <map>
@@ -9,11 +13,12 @@
 
 #include <iosfwd>
 
-#include "aux.hh"
+//#include "aux.hh"
 
 namespace LocARNA {
+    
 
-    //! @brief Represents anchor constraints
+    //! @brief Represents anchor constraints between two sequences
     //! 
     //! Maintains the constraints on (non-structural) alignment edges
     //! that have to be satisfied during the alignment
@@ -61,48 +66,56 @@ namespace LocARNA {
 	// constructors
 
 	/**
-	   initialize the data structures
-	   given two string vectors
-       
-	   The constraints (=alignment edges that have to be satisfied)
-	   are encoded as follows:
-	   equal symbols in the sequences for A and B form an edge
-       
-	   In order to specify an arbitrary number of sequences,
-	   the strings can consist of several lines, then a symbol consists
-	   of all characters of the column. '.' and ' ' are neutral character
-       
-	   Example:
-	   seqCA={"..123...."}
-	   seqCB={"...12.3...."}
-       
-	   specifies the edges (3,4), (4,5), and (5,7)
+	 * @brief Construct from sequence lengths and anchor names
+	 * @param lenA length of sequence A
+	 * @param seqCA vector of anchor strings for sequence A
+	 * @param lenB length of sequence B
+	 * @param seqCB vector of anchor strings for sequence B
+	 *
+	 * The constraints (=alignment edges that have to be
+	 * satisfied) are encoded as follows: equal symbols in the
+	 * sequences for A and B form an edge
+	 *
+	 * In order to specify an arbitrary number of sequences, the
+	 * strings can consist of several lines, then a symbol
+	 * consists of all characters of the column. '.' and ' ' are
+	 * neutral character, in the sense that columns consisting
+	 * only of neutral characters do not specify names that have
+	 * to match. However, neutral characters are not identified in
+	 * names that contain at least one non-neutral character!
+	 *
+	 * Example:
+	 * seqCA={"..123...."}
+	 * seqCB={"...12.3...."}
+	 *
+	 * specifies the edges (3,4), (4,5), and (5,7)
 
-	   Example 2:
-	   seqCA={"..AAB....",
-	   "..121...."}
-	   seqCB={"...AA.B....",
-	   "...12.1...."}
-	   specifies the same constraints, allowing a larger name space for constraints.
-	*/
-    
-	AnchorConstraints(size_type lenA, 
+	 * Example 2:
+	 * seqCA={"..AAB....",
+	 * "..121...."}
+	 * seqCB={"...AA.B....",
+	 * "...12.1...."}
+	 * specifies the same constraints, allowing a larger name space for constraints.
+	 */
+    	AnchorConstraints(size_type lenA, 
 			  const std::vector<std::string> &seqCA,
 			  size_type lenB,
 			  const std::vector<std::string> &seqCB);
     
 	/**
-	   initialize the data structures
-	   given two strings
-       
-	   for semantics see first constructor, where 
-	   the strings are split into vectors of strings at '#' or '\n'
-	*/
+	 * @brief Construct from sequence lengths and anchor names
+	 * @param lenA length of sequence A
+	 * @param seqCA concatenated anchor strings for sequence A (separated by '#')
+	 * @param lenB length of sequence B
+	 * @param seqCB concatenated anchor strings for sequence B (separated by '#')
+	 *	 
+	 * for semantics of anchor strings see first constructor
+	 */
 	AnchorConstraints(size_type lenA,
 			  const std::string &seqCA,
 			  size_type lenB,
 			  const std::string &seqCB);
-    
+	
 	// -----------------------------------------------------------
 	// asking for constraint information
     
@@ -185,13 +198,6 @@ namespace LocARNA {
 	// ------------------------------------------------------------
 	// construction helper
     
-	//! Transform the input for the second constructor
-	//! to the input for the first.
-	//! Basically, splits string seq_str at '#'
-	static
-	void 
-	transform_input(std::vector<std::string> &seqVec,
-			const std::string &seqStr);
     
 	//! Translate input vector of strings <seq>
 	//! to a map of position names to sequence indices

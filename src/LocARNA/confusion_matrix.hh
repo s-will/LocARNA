@@ -1,16 +1,22 @@
 #ifndef LOCARNA_CONFUSION_MATRIX
 #define LOCARNA_CONFUSION_MATRIX
 
-#include "aux.hh"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include <cstddef>
+#include <string>
 
 namespace LocARNA {
     class RnaStructure;
 
-    /** Compare RNA secondary structure by their confusion matrix
-	
-	Computes confusion matrix and Matthews' correlation coefficient
-	@todo add other measures based on the confusion matrix; implement slide rule
-    */
+    /**
+     * @brief Compare RNA secondary structure by their confusion matrix
+     *
+     * Computes confusion matrix and Matthews' correlation coefficient
+     * @todo add other measures based on the confusion matrix; implement slide rule
+     */
     class ConfusionMatrix {
 	
 	size_t tp_;
@@ -25,20 +31,20 @@ namespace LocARNA {
 	compute_confusion_matrix(const RnaStructure &ref, const RnaStructure &pred);
     
     public:
-	
+ 	
 	/** 
 	 * Construct with reference and predicted structure (given as dot-bracket strings) 
 	 * 
-	 * @param ref_struct  reference structure
-	 * @param pred_struct predicted structure
+	 * @param ref  reference structure
+	 * @param pred predicted structure
 	 */
-	ConfusionMatrix(const std::string &ref_struct,const std::string &pred_struct);
+	ConfusionMatrix(const std::string &ref,const std::string &pred);
 
 	/** 
 	 * Construct with reference and predicted structure (given as base pair sets) 
 	 * 
-	 * @param ref_struct  reference structure
-	 * @param pred_struct predicted structure
+	 * @param ref  reference structure
+	 * @param pred predicted structure
 	 */	
 	ConfusionMatrix(const RnaStructure &ref, const RnaStructure &pred);
 
@@ -89,14 +95,53 @@ namespace LocARNA {
 	fn() const {	
 	    return fn_;
 	}
-    
+
+	/** 
+	 * Positive prediction value
+	 *
+	 * aka precision
+	 * 
+	 * @return PPV = TP/(TP+FP)
+	 */
+	double
+	ppv() const;
+
+	/** 
+	 * Sensitivity
+	 * 
+	 * aka recall
+	 *
+	 * @return SENS = TP/(TP+FN)
+	 */
+	double
+	sens() const;
+
+	/** 
+	 * Specificity
+	 * 
+	 * @return SPEC = TN/(TN+FP)
+	 */
+	double
+	spec() const;
+
+ 	/** 
+	 * F1 score (aka F-score, F-measure)
+	 * 
+	 * harmonic mean of PPV and SENS
+	 *
+	 * @return F1 = PPV*SENS / (PPV+SENS), if PPV+SENS!=0; 0, otherwise 
+	 */
+	double
+	f1_score() const;
+
 	/** 
 	 * Matthews' correlation coefficient
 	 * 
-	 * @return Matthews' correlation coefficient
+	 * @return MCC = (TP*TN - FP*FN) / sqrt( (TP+FP)*(TP+FN)*(TN+FP)*(TN+FN) ) 
 	 */
 	double
 	mcc() const;
+
 
     };
 

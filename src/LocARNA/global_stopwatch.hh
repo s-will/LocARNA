@@ -1,7 +1,11 @@
 #ifndef LOCARNA_GLOBAL_STOPWATCH
 #define LOCARNA_GLOBAL_STOPWATCH
 
-#include "LocARNA/stopwatch.hh"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include "stopwatch.hh"
 
 namespace LocARNA {
     //! global StopWatch object

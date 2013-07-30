@@ -1,8 +1,10 @@
+#include "alphabet.hh"
+#include "sequence.hh"
 #include "scoring.hh"
 #include "rna_data.hh"
-#include "sequence.hh"
-#include "alphabet.hh"
 #include "arc_matches.hh"
+#include "match_probs.hh"
+#include "ribosum.hh"
 
 
 #include <math.h>
@@ -21,16 +23,18 @@ namespace LocARNA {
 
     Scoring::Scoring(const Sequence &seqA_,
 		     const Sequence &seqB_,
-		     const ArcMatches *arc_matches_,
+		     const RnaData &rna_dataA_,
+		     const RnaData &rna_dataB_,
+		     const ArcMatches &arc_matches_,
 		     const MatchProbs *match_probs_,
-		     const ScoringParams *params_,
+		     const ScoringParams &params_,
 		     bool exp_scores
 		     ):
-	params(params_),
-	arc_matches(arc_matches_),
+	params(&params_),
+	arc_matches(&arc_matches_),
 	match_probs(match_probs_),
-	bpsA(&arc_matches_->get_base_pairsA()),
-	bpsB(&arc_matches_->get_base_pairsB()),
+	rna_dataA(rna_dataA_),
+	rna_dataB(rna_dataB_),
 	seqA(seqA_),
 	seqB(seqB_),
 	lambda_(0)
@@ -68,8 +72,8 @@ namespace LocARNA {
       params(s.params),
       arc_matches(s.arc_matches),
       match_probs(s.match_probs),
-      bpsA(s.bpsA),
-      bpsB(s.bpsB),
+      rna_dataA(s.rna_dataA),
+      rna_dataB(s.rna_dataB),
       seqA(s.seqA),
       seqB(s.seqB),
       lambda_(s.lambda_),
@@ -127,11 +131,11 @@ namespace LocARNA {
 	if (params->mea_scoring) {
 	    punA_tab.resize(lenA+1);
 	    for (size_type i=1; i<=lenA; ++i) {
-		punA_tab[i]=bpsA->prob_unpaired(i);
+		punA_tab[i]=rna_dataA.prob_unpaired(i);
 	    }
 	    punB_tab.resize(lenB+1);
 	    for (size_type i=1; i<=lenB; ++i) {
-		punB_tab[i]=bpsB->prob_unpaired(i);
+		punB_tab[i]=rna_dataB.prob_unpaired(i);
 	    }
 	}
 
@@ -225,8 +229,9 @@ namespace LocARNA {
     }
 
     void
-    Scoring::precompute_weights(const BasePairs &bps,
-				size_type len,
+    Scoring::precompute_weights(const RnaData &rna_data,
+				const BasePairs &bps,
+				double exp_prob,
 				std::vector<score_t> &weights,
 				std::vector<score_t> &stack_weights) {
 	size_type s   = bps.num_bps();
@@ -235,13 +240,13 @@ namespace LocARNA {
 	for (size_type i=0; i<s; i++) {
 	    const Arc &a=bps.arc(i);
 
-	    double p = bps.get_arc_prob(a.left(),a.right());
-	    weights[i] = probToWeight(p,len);
+	    double p = rna_data.arc_prob(a.left(),a.right());
+	    weights[i] = probToWeight(p,exp_prob);
 
 	    if (params->stacking) {
-		if (bps.get_arc_prob(a.left()+1,a.right()-1)>0) {
-		    double stack_p = bps.get_arc_stack_prob(a.left(),a.right());
-		    stack_weights[i] = probToWeight(stack_p,len);
+		if (rna_data.arc_prob(a.left()+1,a.right()-1)>0) {
+		    double stack_p = rna_data.stacked_arc_prob(a.left(),a.right());
+		    stack_weights[i] = probToWeight(stack_p,exp_prob);
 		    // std::cout << i << " " << stack_p << " " << stack_weights[i] << std::endl;
 		}
 	    }
@@ -252,22 +257,17 @@ namespace LocARNA {
     Scoring::precompute_weights() {
 	//score_t weight = 
 	//score_t cond_weight = probToWeight(cond_prob);
-
-	precompute_weights(*bpsA,seqA.length(),weightsA,stack_weightsA);
-	precompute_weights(*bpsB,seqB.length(),weightsB,stack_weightsB);
+	
+	precompute_weights(rna_dataA,arc_matches->get_base_pairsA(),params->exp_probA,weightsA,stack_weightsA);
+	precompute_weights(rna_dataB,arc_matches->get_base_pairsB(),params->exp_probB,weightsB,stack_weightsB);
     }
 
-    //! convert probability to weight for scoring. In standard case,
-    //! return normlized log of probability. In case of mea,
-    //! return score_res*probability.
     score_t
-    Scoring::probToWeight(double p, size_type len) const
+    Scoring::probToWeight(double p, double pe) const
     {
 	if (params->mea_scoring) {
 	    return round2score(params->probability_scale*p);
 	} else {
-	    double pe=prob_exp(len);
-
 	    return
 		round2score(
 			    round(params->struct_weight*
@@ -282,15 +282,6 @@ namespace LocARNA {
 	      */
 	}
     }
-
-    double Scoring::prob_exp(size_type len) const {
-	if (params->exp_prob >= 0) {
-	    return  params->exp_prob;
-	} else {
-	    return prob_exp_f(len);
-	}
-    }
-
 
     // here we implement a special treatment of gap cost in multiple alignment
     // gap cost is varied position specific in order to favor gapping columns
@@ -372,8 +363,8 @@ namespace LocARNA {
 	RibosumFreq *ribosum = static_cast<RibosumFreq *>(params->ribosum);
 
 
-	const size_type rowsA = seqA.row_number();
-	const size_type rowsB = seqB.row_number();
+	const size_type rowsA = seqA.num_of_rows();
+	const size_type rowsB = seqB.num_of_rows();
 
 	double score=0;
 	int gapless_combinations=0;
@@ -426,8 +417,8 @@ namespace LocARNA {
 
 	RibosumFreq *ribosum = static_cast<RibosumFreq *>(params->ribosum);
 
-	const size_type rowsA = seqA.row_number();
-	const size_type rowsB = seqB.row_number();
+	const size_type rowsA = seqA.num_of_rows();
+	const size_type rowsB = seqB.num_of_rows();
 
 	double score=0;
 	int considered_combinations=0;
@@ -480,8 +471,8 @@ namespace LocARNA {
 
 	// assert: if stacking score requested, inner arcs must have probability > 0,
 	// and there must be a non-zero joint probability of the arc and the inner arc in each RNA 
-	assert(!stacked || (bpsA->get_arc_prob(arcA.left()+1,arcA.right()-1)>0 && bpsB->get_arc_prob(arcB.left()+1,arcB.right()-1)>0));
-	assert(!stacked || (bpsA->get_arc_2_prob(arcA.left(),arcA.right())>0 && bpsB->get_arc_2_prob(arcB.left(),arcB.right())>0));
+	assert(!stacked || (rna_dataA.arc_prob(arcA.left()+1,arcA.right()-1)>0 && rna_dataB.arc_prob(arcB.left()+1,arcB.right()-1)>0));
+	assert(!stacked || (rna_dataA.joint_arc_prob(arcA.left(),arcA.right())>0 && rna_dataB.joint_arc_prob(arcB.left(),arcB.right())>0));
 
 	score_t sequence_contribution=0;
 
@@ -569,11 +560,11 @@ namespace LocARNA {
 		  (
 		   stacked
 		   ?
-		   (bpsA->get_arc_stack_prob(arcA.left(),arcA.right())
-		    + bpsB->get_arc_stack_prob(arcB.left(),arcB.right()))
+		   (rna_dataA.stacked_arc_prob(arcA.left(),arcA.right())
+		    + rna_dataB.stacked_arc_prob(arcB.left(),arcB.right()))
 		   :
-		   (bpsA->get_arc_prob(arcA.left(),arcA.right())
-		    + bpsB->get_arc_prob(arcB.left(),arcB.right()))
+		   (rna_dataA.arc_prob(arcA.left(),arcA.right())
+		    + rna_dataB.arc_prob(arcB.left(),arcB.right()))
 		   )
 		  *
 		  //

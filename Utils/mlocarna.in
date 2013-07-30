@@ -303,6 +303,11 @@ potentially existing input files.  (compare skip-pp). For use with
 special pairwise aligners (e.g. locarna_n) that recompute the base
 pair probabilities at each invokation.
 
+=item B<--in-loop-probabilities>
+
+Turn on precomputation of in loop probabilties. For use with special
+pairwise aligners (e.g. locarna_n) that use such probabilities.
+
 =back
 
 =head2 Multithreading
@@ -523,6 +528,8 @@ my $opt_eval_fasta;
 
 my $opt_no_bpp_precomputation;
 
+my $opt_in_loop_probabilities;
+
 my $width;
 
 my $max_diff_aln;
@@ -645,6 +652,9 @@ my %options_hash=
 
      # base pair probability precomputation
      "no-bpp-precomputation" => \$opt_no_bpp_precomputation,
+
+     # in-loop probability precomputation
+     "in-loop-probabilities" => \$opt_in_loop_probabilities,
      
      ## output
      "write-structure" => \$write_structure,
@@ -751,6 +761,8 @@ my @options = #options that are not or not automatically passed to locarna
      "eval-fasta",
      
      "no-bpp-precomputation",
+     
+     "in-loop-probabilities",
 
      "write-structure",
      
@@ -2308,7 +2320,10 @@ sub compute_alignment_from_dps( $$$$ ) {
         
     system $cmd || die "Command $cmd failed."; 
     
-    open(CA_IN,"$tmpfile") || die "compute_alignment: Cannot read temporary file $tmpfile\n";
+    open(CA_IN,"$tmpfile") || 
+	die 
+	"\nPairwise aligner failed to write alignment ($tmpfile.)\n  Failed call:\n    $cmd\n";
+	
     
     my @content=<CA_IN>;
    
@@ -2479,10 +2494,16 @@ sub compute_dotplot($$) {
     if ($HAVE_RNAFOLD_PP && ($RNAfold_args eq "") && (!defined($plfold_span)) 
 	&& (!$stacking) && ((! defined($constraints)) || ($constraints eq ""))) {
 	$RNAfoldp = "$bindir/locarna_rnafold_pp -p $min_prob ";
+	if ($opt_in_loop_probabilities) {
+	    $RNAfoldp.="--in-loop ";
+	}
 	$convert_to_pp=0;
 	$RNAfoldp_redirect=" > $ppname";
 	$seqname=$name;
     } else {
+	if ($opt_in_loop_probabilities) {
+	    print STDERR "Warning: cannot precompute in-loop probabilities.\n";
+	}
 	$RNAfold_args.=" >/dev/null" unless $verbose;
 	$seqname=$tmpname;
 	if (! defined($plfold_span)) {

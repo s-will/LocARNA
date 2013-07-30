@@ -370,4 +370,31 @@ Mar, 2013
 	Merge in new sparsification related code.
 	Added fasta input check in mlocarna.
 	(1.7.6)
+	Small bug fixes
+	Fix memory leaks
+	Prepare alignment evaluation functionality
+	Code cleanup/refactorizations
+	(1.7.6.9)
+	Introduce configuration header config.h
+	Fix man page dependency problem
+
+May/Jun, 2013
+	Make sure that make check and make distcheck work
+	Split RnaData into RnaData and RnaEnsemble
+	Introduce new version of pp format (2.0)
+	Read/write of inloop probabilities
+	Cleaner separation of reading/writing of alignments/probability data v.s. computation;
+	  in particulare remove I/O from Alignment class
+	Cleaner handling of gaps, alignment edges, and gap symbols in I/O
+	New option --stopwatch (in locarna*) to turn on detailed internal timing
+	Change class Sequence to be a mere interface to MultipleAlignment that allows operator [] for column access
+	Make constraints optional part of multiple alignments; make write/readable with the alignment in clustal and pp format
+	Remove options anchorA, anchorB from locarna and locarna_X
+	Support anchor and structure annotation in MultipleAlignment
+	RnaEnsemble constrains the folding by structure annotation of
+	Multiple Alignment (if given)
+	(Release 1.7.7)
+	Support precomputing in loop probabilities for SPARSE
+	Fixed reading of PP 2.0
+	(Release 1.7.8)
 

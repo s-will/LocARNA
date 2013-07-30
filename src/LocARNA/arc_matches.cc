@@ -1,5 +1,9 @@
 #include "arc_matches.hh"
 #include "trace_controller.hh"
+#include "anchor_constraints.hh"
+#include "rna_data.hh"
+#include "scoring.hh"
+#include "sequence.hh"
 
 #include <fstream>
 #include <sstream>
@@ -8,7 +12,13 @@
 namespace LocARNA {
 
 
-    bool ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
+    ArcMatches::~ArcMatches() {
+	delete bpsA;
+	delete bpsB;
+    }
+
+    bool
+    ArcMatches::is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const {
 	bool valid = 
 	    match_controller.is_valid_match(arcA.left(),arcB.left())
 	    &&
@@ -115,17 +125,17 @@ namespace LocARNA {
 	read_arcmatch_scores( arcmatch_scores_file, probability_scale );
     }
 
-    ArcMatches::ArcMatches(const RnaData &rnadataA,
-			   const RnaData &rnadataB,
+    ArcMatches::ArcMatches(const RnaData &rna_dataA,
+			   const RnaData &rna_dataB,
 			   double min_prob,
 			   size_type max_length_diff_, 
 			   const MatchController &match_controller_,
 			   const AnchorConstraints &constraints_
 			   )
-	: lenA(rnadataA.get_sequence().length()),
-	  lenB(rnadataB.get_sequence().length()),
-	  bpsA(new BasePairs(&rnadataA,min_prob)),
-	  bpsB(new BasePairs(&rnadataB,min_prob)),
+	: lenA(rna_dataA.length()),
+	  lenB(rna_dataB.length()),
+	  bpsA(new BasePairs(&rna_dataA,min_prob)),
+	  bpsB(new BasePairs(&rna_dataB,min_prob)),
 	  max_length_diff(max_length_diff_),
 	  match_controller(match_controller_),
 	  constraints(constraints_),

@@ -1,29 +1,38 @@
 #ifndef LOCARNA_SCORING_HH
 #define LOCARNA_SCORING_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <math.h>
 #include <vector>
 
 #include "aux.hh"
 
 #include "scoring_fwd.hh"
-#include "matrices.hh"
-#include "basepairs.hh"
-#include "rna_data.hh"
-#include "ribosum.hh"
-#include "match_probs.hh"
+#include "matrix.hh"
 
+#ifndef NDEBUG
+#include "sequence.hh"
+#endif
 
 namespace LocARNA {
 
 
     //#define MEA_SCORING_OLD
 
+    
     class RibosumFreq;
     class Scoring;
+    class Sequence;
+    class BasePairs;
+    class BasePairs__Arc;
     class ArcMatches;
     class ArcMatch;
-
+    class MatchProbs;
+    class RnaData;
+    
     //! matrix of scores supporting infinity
     typedef std::vector<infty_score_t> ScoreVector;
 
@@ -43,20 +52,24 @@ namespace LocARNA {
 
 
     
-    //! \brief Parameters for scoring 
-    //!    
-    //! Contains all parameters for doing the scoring of alignments in
-    //! class Scoring.  The class encapsulates the configuration of
-    //! the score.
-    //!
-    //! @see Scoring
+    /**
+     * \brief Parameters for scoring 
+     *    
+     * Contains all parameters for doing the scoring of alignments in
+     * class Scoring.  The class encapsulates the configuration of
+     * the score.
+     *
+     * @see Scoring
+     */
     class ScoringParams {
 	friend class Scoring;
 
-	//! constant bonus for a base match.
-	//! together with basemismatch yields the simplest form
-	//! of base match/mismatch scoring.
-	//! Can be replaced by RIBOSUM scores (planned).
+	/**
+	 * constant bonus for a base match.
+	 * together with basemismatch yields the simplest form
+	 * of base match/mismatch scoring.
+	 * Can be replaced by RIBOSUM scores (planned).
+	 */
 	score_t basematch;
     
 	//! constant cost of a base mismatch
@@ -68,23 +81,31 @@ namespace LocARNA {
 	//! cost per gap (for affine gap-cost). Use affine gap cost if non-zero.
 	score_t indel_opening;
         
-	//! the ribosum matrix, if non-null it is used
-	//! for base match/mismatch instead of constant values
-	//! and as contribution for arc-matchs (tau_factor)
+	/**
+	 * the ribosum matrix, if non-null it is used
+	 * for base match/mismatch instead of constant values
+	 * and as contribution for arc-matchs (tau_factor)
+	 */
 	RibosumFreq *ribosum;
     
-	//! Factor for structure contribution in the classic score.
-	//! Maximal contribution of 1/2 arc match
+	/**
+	 * Factor for structure contribution in the classic score.
+	 * Maximal contribution of 1/2 arc match
+	 */
 	score_t struct_weight;
     
-	//! Factor for the contribution of sequence score or
-	//! ribosum score to arc matchs
+	/**
+	 * Factor for the contribution of sequence score or
+	 * ribosum score to arc matchs
+	 */
 	score_t tau_factor;
     
 	//! cost of one exclusion.
 	score_t exclusion;
     
-	double exp_prob;
+	double exp_probA;
+
+	double exp_probB;
   
 	double temperature;
     
@@ -105,11 +126,13 @@ namespace LocARNA {
 	score_t gamma_factor;
 
     
-	//! resolution of the mea score.
-	//! Since the mea score is composed from
-	//! probabilities and scores are integral
-	//! there must be some factor to scale the probabilities
-	//! in order to get scores.
+	/**
+	 * resolution of the mea score.
+	 * Since the mea score is composed from
+	 * probabilities and scores are integral
+	 * there must be some factor to scale the probabilities
+	 * in order to get scores.
+	 */
 	score_t probability_scale;
     
 	/*
@@ -139,7 +162,8 @@ namespace LocARNA {
 	 * @param struct_weight_ 
 	 * @param tau_factor_ 
 	 * @param exclusion_ 
-	 * @param exp_prob_ 
+	 * @param exp_probA_ 
+	 * @param exp_probB_ 
 	 * @param temp_ 
 	 * @param stacking_ 
 	 * @param mea_scoring_ 
@@ -156,7 +180,8 @@ namespace LocARNA {
 		      score_t struct_weight_,
 		      score_t tau_factor_,
 		      score_t exclusion_,
-		      double exp_prob_,
+		      double exp_probA_,
+		      double exp_probB_,
 		      double temp_,
 		      bool stacking_,
 		      bool mea_scoring_,
@@ -173,7 +198,8 @@ namespace LocARNA {
 	      struct_weight(struct_weight_),
 	      tau_factor(tau_factor_),
 	      exclusion(exclusion_),
-	      exp_prob(exp_prob_),
+	      exp_probA(exp_probA_),
+	      exp_probB(exp_probB_),
 	      temperature(temp_),
 	      stacking(stacking_),
 	      mea_scoring(mea_scoring_),
@@ -185,77 +211,90 @@ namespace LocARNA {
 	}
     };
 
-    //! \brief Provides methods for the scoring of alignments
-    //!
-    //! Maintains and provides the scores for the alignment of two specific
-    //! Rnas.
-    //! Configurable via class ScoringParams, supports
-    //! the classic LocARNA-score as well as the LocARNA MEA-Score.
-    //! for "Classic Score" it supports
-    //!  * match/mismatch cost or RIBOSUM (planned) for bases
-    //!  * linear or affine gap cost
-    //!  * arc match scores build of arc probabilitiesmatch_probs
-    //!    and optionally base match contribution or RIBOSUM (planned)
-    //! for the "MEA Score" it supports
-    //!  * base match/mismatch scores derived from base match probabilities
-    //!  * RIBOSUM for base and arc match contribution
-    //!  * arc match score contributions from arc probabilities
-    //!  * weighting of single score contributions
-    //! 
-    //! The scoring class supports only characters ACGU, gap -, and N for ribosum scoring.
-    //! ALL other characters are treated as unknown characters and are basically ignored.
-    //! In consequence, IUPAC codes are handled badly. Even more important,
-    //! for ribosum scoring, sequences have to be upper case and Ts should be
-    //! converted to Us!!!
-    //! 
+    /**
+     * \brief Provides methods for the scoring of alignments
+     *
+     * Maintains and provides the scores for the alignment of two specific
+     * Rnas.
+     * Configurable via class ScoringParams, supports
+     * the classic LocARNA-score as well as the LocARNA MEA-Score.
+     * for "Classic Score" it supports
+     *  * match/mismatch cost or RIBOSUM (planned) for bases
+     *  * linear or affine gap cost
+     *  * arc match scores build of arc probabilitiesmatch_probs
+     *    and optionally base match contribution or RIBOSUM (planned)
+     * for the "MEA Score" it supports
+     *  * base match/mismatch scores derived from base match probabilities
+     *  * RIBOSUM for base and arc match contribution
+     *  * arc match score contributions from arc probabilities
+     *  * weighting of single score contributions
+     * 
+     * The scoring class supports only characters ACGU, gap -, and N for ribosum scoring.
+     * ALL other characters are treated as unknown characters and are basically ignored.
+     * In consequence, IUPAC codes are handled badly. Even more important,
+     * for ribosum scoring, sequences have to be upper case and Ts should be
+     * converted to Us!!!
+     * 
+     */
     class Scoring {
     public:
-    
+	typedef BasePairs__Arc Arc; //!< arc
+	
     private:
 	const ScoringParams *params; //!< a collection of parameters for scoring
     
 	const ArcMatches *arc_matches; //!< arc matches
     
-	const MatchProbs *match_probs; //! base match probabilities
+	const MatchProbs *match_probs; //!< base match probabilities
 
-	const BasePairs *bpsA; //!< base pairs for RNA A
-	const BasePairs *bpsB; //!< base pairs for RNA B
-	const Sequence &seqA; //! sequence A
-	const Sequence &seqB; //! sequence B
+	const RnaData &rna_dataA; //!< rna data for RNA A
+	const RnaData &rna_dataB; //!< rna data for RNA B
+	const Sequence &seqA; //!< sequence A
+	const Sequence &seqB; //!< sequence B
      
-	//! parameter for modified scoring in normalized local
-	//! alignment
+	/**
+	 * parameter for modified scoring in normalized local
+	 * alignment
+	 */
     	score_t lambda_;
 	
     public:
 	
-	//! @brief construct scoring object
-	//!
-	//! @param seqA first sequence
-	//! @param seqB second sequence
-	//! @param arc_matches the (significant) arc matches between the sequences
-	//! @param match_probs base match probabilities (can be empty for non-mea scores)
-	//! @param params a collection of parameters for scoring
-	//! @param exp_scores only if true, the results of the exp_*
-	//! scoring functions are defined, otherwise precomputations
-	//! can be ommitted.
+	/**
+	 * @brief construct scoring object
+	 *
+	 * @param seqA first sequence
+	 * @param seqB second sequence
+	 * @param rna_dataA probability data of first sequence
+	 * @param rna_dataB probability data of second sequence
+	 * @param arc_matches the (significant) arc matches between the sequences
+	 * @param match_probs pointer to base match probabilities (can be 0L for non-mea scores)
+	 * @param params a collection of parameters for scoring
+	 * @param exp_scores only if true, the results of the exp_*
+	 * scoring functions are defined, otherwise precomputations
+	 * can be ommitted.
+	 */
 	Scoring(const Sequence &seqA,
 		const Sequence &seqB,
-		const ArcMatches *arc_matches,
+		const RnaData &rna_dataA,
+		const RnaData &rna_dataB,
+		const ArcMatches &arc_matches,
 		const MatchProbs *match_probs,
-		const ScoringParams *params,
+		const ScoringParams &params,
 		bool exp_scores=false
 		);
 
     
-	//! modify scoring by a parameter lambda. Used in the
-	//! computational of normalized local alignment by fractional
-	//! programming in the form of the Dinkelbach algorithm.  The
-	//! modification is destructive.  modify_by_parameter(0) results
-	//! in unmodified scoring. Repeated modifications are valid.  The
-	//! Outcome is *undefined* when the Scoring object is used to
-	//! obtain exponentiated scores (methods exp_...) as in partition
-	//! function alignment.  @param lambda the parameter
+	/**
+	 * modify scoring by a parameter lambda. Used in the
+	 * computational of normalized local alignment by fractional
+	 * programming in the form of the Dinkelbach algorithm.  The
+	 * modification is destructive.  modify_by_parameter(0) results
+	 * in unmodified scoring. Repeated modifications are valid.  The
+	 * Outcome is *undefined* when the Scoring object is used to
+	 * obtain exponentiated scores (methods exp_...) as in partition
+	 * function alignment.  @param lambda the parameter
+	 */
 	void
 	modify_by_parameter(score_t lambda);
 
@@ -292,12 +331,14 @@ namespace LocARNA {
 	std::vector<pf_score_t> exp_gapcost_tabB; //!< table for exp gapcost in B
 
 
-	//! \brief Round a double to score_t.
-	//!
-	//! Proper rounding is more robust than truncate
-	//!
-	//! @param d score of type double
-	//! @return d rounded to integral type score_t
+	/**
+	 * \brief Round a double to score_t.
+	 *
+	 * Proper rounding is more robust than truncate
+	 *
+	 * @param d score of type double
+	 * @return d rounded to integral type score_t
+	 */
 	score_t round2score(double d) const {
 	    return (score_t)((d<0) ? (d-0.5) : (d+0.5));
 	}
@@ -314,15 +355,19 @@ namespace LocARNA {
 	score_t
 	sigma_(int i, int j) const;
 
-	//! \brief Precompute all base similarities
-	//! 
-	//! Precomputed similarities are stored in the sigma table.
+	/**
+	 * \brief Precompute all base similarities
+	 * 
+	 * Precomputed similarities are stored in the sigma table.
+	 */
 	void
 	precompute_sigma();
 	
-	//! \brief Precompute all Boltzmann weights of base similarities
-	//! 
-	//! Precomputed similarities are stored in the exp_sigma table.
+	/**
+	 * \brief Precompute all Boltzmann weights of base similarities
+	 * 
+	 * Precomputed similarities are stored in the exp_sigma table.
+	 */
 	void
 	precompute_exp_sigma();
 
@@ -341,33 +386,42 @@ namespace LocARNA {
 	/** 
 	 *  \brief Helper for precompute_weights (does job for one rna)
 	 * 
-	 * @param bps 
-	 * @param len 
-	 * @param weights 
-	 * @param stack_weights 
+	 * @param rna_data rna probability data
+	 * @param bps base pairs
+	 * @param exp_prob background probability
+	 * @param weights[out]        base pair score weights
+	 * @param stack_weights[out]  base pair stacking score weights
 	 */
 	void
-	precompute_weights(const BasePairs &bps,
-			   size_type len,
+	precompute_weights(const RnaData &rna_data,
+			   const BasePairs &bps,
+			   double exp_prob,
 			   std::vector<score_t> &weights,
 			   std::vector<score_t> &stack_weights);
     
-	//! returns weight that corresponds to probability p
-	//! in non-mea score
+	/**
+	 * @brief convert probability to weight for scoring
+	 * 
+	 * @param p probability
+	 * @param exp_prob background probability
+	 *
+	 * @return In standard case, normlized log of probability; in case
+	 * of mea, score_res*probability.
+	 */
 	score_t
-	probToWeight(double p, size_type len) const;
+	probToWeight(double p, double prob_exp) const;
     
-	double
-	prob_exp_f(int seqlen) const {return 1.0/(2.0*seqlen);}//!<expected probability of a base pair (null-model)
-    
-
-	//! returns probability of matching the concrete bases in an arcmatch,
-	//! probability is based on ribosum data
+	/**
+	 * returns probability of matching the concrete bases in an arcmatch,
+	 * probability is based on ribosum data
+	 */
 	double
 	ribosum_arcmatch_prob(const Arc &arcA, const Arc &arcB) const;    
     
-	//! returns score of matching the concrete bases in an arcmatch
-	//! based on ribosum data (only ribosum contribution)
+	/**
+	 * returns score of matching the concrete bases in an arcmatch
+	 * based on ribosum data (only ribosum contribution)
+	 */
 	score_t
 	ribosum_arcmatch_score(const Arc &arcA, const Arc &arcB) const;
     
@@ -449,7 +503,7 @@ namespace LocARNA {
 	 * arc_matches->explicit_scores()==true (This results in a
 	 * run-time error if !NDEBUG).
 	 */
-	score_t arcmatch(const Arc &arcA, const Arc &arcB, bool stacked=false) const;
+	score_t arcmatch(const BasePairs__Arc &arcA, const BasePairs__Arc &arcB, bool stacked=false) const;
 
 
 	/** 
@@ -462,7 +516,7 @@ namespace LocARNA {
 	 * @return 
 	 */
 	score_t  
-	arcDel(const Arc &arc, bool gapAorB, bool stacked=false) const;
+	arcDel(const BasePairs__Arc &arc, bool gapAorB, bool stacked=false) const;
 
 	/** 
 	 * @brief Boltzmann weight of score of arc match

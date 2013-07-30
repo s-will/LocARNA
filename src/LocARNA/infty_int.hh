@@ -1,6 +1,10 @@
 #ifndef LOCARNA_INFTY_INT_HH
 #define LOCARNA_INFTY_INT_HH
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <algorithm>
 #include <iosfwd>
 #include <assert.h>
@@ -22,18 +26,18 @@ namespace LocARNA {
        The infinity integer classes TaintedInftyInt, InftyInt and
        FiniteInt support efficient addition and
        minimization/maximization of potentially infinite integer
-       values. For this purpose, the range of the basic type (long
+       values. For this purpose, the range of the base type (long
        int) is restricted. With this encoding, two normal infinite
        values (InftyInt) of the same sign can be added without
        resulting in overflow. This yields a non-normal
        TaintedInftyInt, which still allows to add finite integers
        (FiniteInt) without overflow (at least as long as the added
        finite integers do not exceed the remaining range of
-       [-m..m-1]), where m=2^(s-1) and s is the width of the basic
+       [-m..m-1]), where m=2^(s-1) and s is the width of the base
        type, e.g. 64.
 
-       The range of the basic type is split into subranges, where s is
-       the number of bits in the basic type: 
+       The range of the base type is split into subranges, where s is
+       the number of bits in the base type: 
        
        * negative infinity        [ -m..-m/5 [
        * normal negative infinity [ -3m/5..-m/5 [
@@ -51,37 +55,58 @@ namespace LocARNA {
     */
     class TaintedInftyInt {
     public:
-	//! the basic type
-	typedef long int basic_type;
+	//! the base type
+	typedef long int base_type;
 
     protected:
-	basic_type val;
-	static const basic_type min_finity;
-	static const basic_type max_finity;
-	static const basic_type min_normal_neg_infty;
-	static const basic_type max_normal_pos_infty;
+	base_type val; //!< value
+	
+	//! minimum finite value
+	static const base_type min_finity;
+
+	//! maximum finite value
+	static const base_type max_finity;
+	
+	//! minimum normal infinite value
+	static const base_type min_normal_neg_infty;
+	
+	//! maximum normal infinite value
+	static const base_type max_normal_pos_infty;
     public:
 	
+	/** 
+	 * @brief Construct empty
+	 */
 	TaintedInftyInt(): val(0) {
 	}
 
+	/** 
+	 * @brief Construct from base type
+	 * @param x base type value
+	 */
 	explicit
-	TaintedInftyInt(const basic_type &x)
+	TaintedInftyInt(const base_type &x)
 	    : val(x) {
 	}
 	
-	TaintedInftyInt(const TaintedInftyInt &x)
-	    : val(x.val) {
-	}
-
+	/** 
+	 * @brief minimum finite value
+	 * 
+	 * @return minimum finite value
+	 */
 	static
-	basic_type
+	base_type
 	min_finite() {
 	    return min_finity;
 	}
 
+	/** 
+	 * @brief maximum finite value
+	 * 
+	 * @return maximum finite value
+	 */
 	static
-	basic_type
+	base_type
 	max_finite() {
 	    return max_finity;
 	}
@@ -126,39 +151,108 @@ namespace LocARNA {
 	    return min_normal_neg_infty <= val &&  val <= max_normal_pos_infty;
 	}
 	
-	basic_type 
+	/** 
+	 * @brief Convert finite value to base type
+	 * 
+	 * @return value
+	 * @pre is finite
+	 */
+	base_type 
 	finite_value() const {
 	    assert(is_finite());
 	    return val;
 	}
 
+	/** 
+	 * @brief Assignment
+	 * 
+	 * @param x finite int to be assigned
+	 * 
+	 * @return *this
+	 */
 	TaintedInftyInt &
 	operator =(const FiniteInt &x);
 
+	/** 
+	 * @brief Equality test
+	 * 
+	 * @param x operand 1 (tainted)
+	 * @param y operand 2 (tainted)
+	 * 
+	 * @return whether x equals y
+	 */
 	friend
 	bool
 	operator ==(const TaintedInftyInt &x, const TaintedInftyInt &y);
 	
+	/** 
+	 * @brief Add
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * 
+	 * @return x plus y
+	 */
 	friend
 	TaintedInftyInt
 	operator +(const TaintedInftyInt &x, const FiniteInt &y);
 	
+	/** 
+	 * @brief Subtract
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * 
+	 * @return x minus y
+	 */
 	friend
 	TaintedInftyInt
 	operator -(const TaintedInftyInt &x, const FiniteInt &y);
 
+	/** 
+	 * @brief Add
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * 
+	 * @return x plus y
+	 */
 	friend
 	TaintedInftyInt
 	operator +(const InftyInt &x, const InftyInt &y);
 	
+	/** 
+	 * @brief Subtract
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * 
+	 * @return x minus y
+	 */
 	friend 
 	TaintedInftyInt
 	operator -(const InftyInt &x, const InftyInt &y);
 	
+	/** 
+	 * @brief Minimum
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * 
+	 * @return min of x and y
+	 */
 	friend
 	TaintedInftyInt
 	min(const TaintedInftyInt &x, const TaintedInftyInt &y);
 
+	/** 
+	 * @brief Maximum
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * 
+	 * @return max of x and y
+	 */
 	friend
 	TaintedInftyInt
 	max(const TaintedInftyInt &x, const TaintedInftyInt &y);
@@ -166,8 +260,8 @@ namespace LocARNA {
 	/** 
 	 * Greater than operator
 	 * 
-	 * @param x
-	 * @param y 
+	 * @param x operand 1
+	 * @param y operand 2
 	 * 
 	 * @return whether x is greater than y
 	 *
@@ -181,8 +275,8 @@ namespace LocARNA {
 	/** 
 	 * Less than operator
 	 * 
-	 * @param x
-	 * @param y 
+	 * @param x operand 1
+	 * @param y operand 2
 	 * 
 	 * @return whether x is less than y
 	 *
@@ -196,8 +290,8 @@ namespace LocARNA {
 	/** 
 	 * Greater or equal than operator
 	 * 
-	 * @param x
-	 * @param y 
+	 * @param x operand 1
+	 * @param y operand 2
 	 * 
 	 * @return whether x is greater or equal than y
 	 *
@@ -211,8 +305,8 @@ namespace LocARNA {
 	/** 
 	 * Less or equal than operator
 	 * 
-	 * @param x
-	 * @param y 
+	 * @param x operand 1
+	 * @param y operand 2
 	 * 
 	 * @return whether x is less or equal than y
 	 *
@@ -267,18 +361,46 @@ namespace LocARNA {
 	}
     public:
 	
+	/** 
+	 * @brief Construct empty
+	 * 
+	 */
 	InftyInt(): TaintedInftyInt() {
 	}
 
+	/** 
+	 * @brief Construct from base type
+	 *
+	 * @param x value of base type 
+	 */
 	explicit
-	InftyInt(const basic_type &x):TaintedInftyInt(x) {
+	InftyInt(const base_type &x):TaintedInftyInt(x) {
 	    assert(is_normal());
 	}
 	
+	/** 
+	 * @brief Construct from finite int
+	 *
+	 * @param x value
+	 */
 	InftyInt(const FiniteInt &x);
 	
-	InftyInt(const InftyInt &x);
-	
+	/** 
+	 * @brief Construct from potentially tainted
+	 * 
+	 * @param x value
+	 */
+	InftyInt(const TaintedInftyInt &x) :TaintedInftyInt(x) {
+	    normalize();
+	}
+
+	/** 
+	 * @brief Assignment from potentially tainted infty int
+	 * 
+	 * @param x value
+	 * 
+	 * @return *this
+	 */
 	InftyInt &
 	operator =(TaintedInftyInt &x) {
 	    val = x.val;
@@ -286,20 +408,47 @@ namespace LocARNA {
 	    return *this;
 	}
 
-	InftyInt(const TaintedInftyInt &x) :TaintedInftyInt(x) {
-	    normalize();
-	}
-
+	/** 
+	 * Add in place
+	 * 
+	 * @param x operand
+	 * 
+	 * @return *this after operation
+	 */
 	InftyInt &
 	operator +=(const FiniteInt &x);
 
+	/** 
+	 * Subtract in place
+	 * 
+	 * @param x operand
+	 * 
+	 * @return *this after operation
+	 */
 	InftyInt &
 	operator -=(const FiniteInt &x);
 
+
+	/** 
+	 * Add
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * 
+	 * @return x plus y
+	 */
 	friend
 	InftyInt
 	operator +(const InftyInt &x, const FiniteInt &y);
 	
+	/** 
+	 * Subtract
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * 
+	 * @return x minus y
+	 */
 	friend
 	InftyInt
 	operator -(const InftyInt &x, const FiniteInt &y);
@@ -313,22 +462,48 @@ namespace LocARNA {
     class FiniteInt : public InftyInt {
     public:
 
+	/** 
+	 * @brief Construct empty
+	 */
 	FiniteInt(): InftyInt() {
 	}
 	
-	FiniteInt(basic_type x): InftyInt(x) {
+	/** 
+	 * @brief Construct from base type value
+	 * @param x value
+	 */
+	FiniteInt(base_type x): InftyInt(x) {
 	    assert(is_finite());
 	}
 	
-	const basic_type &
+	/** 
+	 * @brief Access finite value 
+	 * 
+	 * @return value
+	 */
+	const base_type &
 	finite_value() const {
 	    return val;
 	}
 	
+	/** 
+	 * @brief Add
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * @return x plus y
+	 */
 	friend
 	FiniteInt
 	operator +(const FiniteInt &x, const FiniteInt &y);
-	
+
+	/** 
+	 * @brief Subtract
+	 * 
+	 * @param x operand 1
+	 * @param y operand 2
+	 * @return x minus y
+	 */
 	friend
 	FiniteInt
 	operator -(const FiniteInt &x, const FiniteInt &y);
@@ -444,10 +619,6 @@ namespace LocARNA {
     InftyInt::InftyInt(const FiniteInt &x): TaintedInftyInt(x) {
     }
     
-    inline
-    InftyInt::InftyInt(const InftyInt &x): TaintedInftyInt(x) {
-    }
-
     inline
     bool
     operator > (const TaintedInftyInt &x, const TaintedInftyInt &y) {
