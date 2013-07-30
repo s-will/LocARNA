@@ -809,7 +809,7 @@ private:
     const RnaData &rna_dataA; //!< rna data A, used only for scoring arc matches (stacked & unstacked)
     const RnaData &rna_dataB; //!< rna data B, @see rna_dataA
 
-    const ArcMatchesIndexed &arc_matches; //!< the potential arc matches between A and B
+    const ArcMatchesIndexed *arc_matches; //!< the potential arc matches between A and B
 
     const BasePairs &bpsA; //!< base pairs of A
     const BasePairs &bpsB; //!< base pairs of B
@@ -837,6 +837,9 @@ private:
     int am_threshold; //!< minimal arcmatch score in F matrix
     long int max_number_of_EPMs; //!< maximal number of EPMs for the suboptimal traceback
     long int cur_number_of_EPMs; //!< number of EPMs for current suboptimal traceback
+
+    bool inexact_struct_match; //! whether to allow inexact structure matches (arc matches)
+    score_t struct_mismatch_score; //! how to score a nucleotide mismatch in an arc match
 
     bool verbose; //!< whether to output additional information
 
@@ -872,10 +875,19 @@ private:
     	return Dmat(a.idx(),b.idx());
     }
 
-    bool nucleotide_match(pos_type pos_seqA, pos_type pos_seqB){
+    bool nucleotide_match(seqpos_t pos_seqA, seqpos_t pos_seqB){
     	assert(pos_seqA>=1 && pos_seqA<=seqA.length() &&
     		   pos_seqB>=1 && pos_seqB<=seqB.length()); //seqA and seqB are 1-based!!!
     	return (seqA[pos_seqA][0]==seqB[pos_seqB][0]);
+    }
+
+    bool seq_matching(ArcIdx idxA, ArcIdx idxB, matpos_t cur_mat_pos, pair_seqpos_t cur_seq_pos){
+    	//pair_seqpos_t seq_pos = sparse_trace_controller.get_pos_in_seq_new(idxA,idxB,cur_mat_pos);
+    	seqpos_t i = cur_seq_pos.first;
+    	seqpos_t j = cur_seq_pos.second;
+
+    	return sparse_trace_controller.pos_unpaired(idxA,idxB,cur_mat_pos) &&
+				nucleotide_match(i,j);
     }
 
     // ----------------------------------------
@@ -883,7 +895,8 @@ private:
 
 
     //! initializes the gap matrices (G_A and G_AB) for the suboptimal traceback
-    //! (-> not needed anymore if SparseTraceController is used)
+    //! (-> the gap matrices are initialized for the suboptimal traceback once in the beginning
+    //! as the whole matrices are filled)
     void initialize_gap_matrices();
 
     //! initializes the F matrix for using the SparseTraceController
@@ -1229,7 +1242,7 @@ private:
     // debugging/testing
 
     // print the matrices in the condensed form
-    void print_matrices(const Arc &a, const Arc &b, size_type offset_A, size_type offset_B, bool suboptimal);
+    void print_matrices(const Arc &a, const Arc &b, size_type offset_A, size_type offset_B, bool suboptimal,bool add_info);
 
     // checks whether an epm is valid, i.e. only one gap per arc match etc.
     bool validate_epm(const EPM &epm_to_test);
@@ -1267,7 +1280,7 @@ public:
 		 const Sequence &seqB_,
 		 const RnaData &rna_dataA_,
 		 const RnaData &rna_dataB_,
-		 const ArcMatchesIndexed &arc_matches_,
+		 const ArcMatchesIndexed *arc_matches_,
 		 const SparseTraceController &sparse_trace_controller_,
 		 PatternPairMap &foundEPMs_,
 		 int alpha_1_,
@@ -1277,6 +1290,8 @@ public:
 		 score_t min_score_,
 		 score_t am_threshold_,
 		 long int max_number_of_EPMs_,
+		 bool inexact_struct_match,
+		 score_t struct_mismatch_score,
 		 bool opt_verbose_
 		 );
 

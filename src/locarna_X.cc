@@ -85,6 +85,9 @@ int difference_to_opt_score;
 int min_score;
 int am_threshold;
 long int number_of_EPMs;
+bool inexact_struct_match;
+int struct_mismatch_score;
+
 std::string seq_constraints_A;
 std::string seq_constraints_B;
 
@@ -126,7 +129,7 @@ option_def my_options[] = {
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
 
-    {"ignore-constraints",0,&opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
+    //{"ignore-constraints",0,&opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
     
     {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","This help"},
@@ -141,11 +144,13 @@ option_def my_options[] = {
     {"alpha_2",0,0,O_ARG_INT,&alpha_2,"1","alpha_2","Multiplier for structural score"},
     {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Multiplier for stacking score, 0 means no stacking contribution"},
     {"suboptimal",0,&opt_suboptimal,O_NO_ARG,0,O_NODEFAULT,"suboptimal_traceback","Use a suboptimal traceback for the computation of the exact pattern matchings"},
-    {"difference_to_optimal_score",0,0,O_ARG_INT,&difference_to_opt_score,"-1","threshold","Threshold for suboptimal traceback"},
+    {"diff-to-opt-score",0,0,O_ARG_INT,&difference_to_opt_score,"-1","threshold","Threshold for suboptimal traceback"},
     {"min_score",0,0,O_ARG_INT,&min_score,"3","min","Minimal score of a traced EPM"},
     {"am-threshold",0,0,O_ARG_INT,&am_threshold,"3","am","Minimal arcmatch score in F matrix"},
     {"number-of-EPMs",0,0,O_ARG_INT,&number_of_EPMs,"1000","threshold","Maximal number of EPMs for the suboptimal traceback"},
-    
+    {"inexact-struct-match",0,&inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"inexact structure match","inexact structure matches possible"},
+    {"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-2","structural mismatch score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
+
     {"stopwatch",0,&opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
     {"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"file A","input file A"},
@@ -332,7 +337,8 @@ main(int argc, char **argv) {
 				 trace_controller,
 				 seq_constraints
 				 );
-    
+
+
     const BasePairs &bpsA = arc_matches->get_base_pairsA();
     const BasePairs &bpsB = arc_matches->get_base_pairsB();
     
@@ -387,7 +393,7 @@ main(int argc, char **argv) {
 		    seqB,
 		    *rna_dataA,
 		    *rna_dataB,
-		    *arc_matches,
+		    arc_matches,
 		    sparse_trace_controller,
 		    myEPMs,
 		    alpha_1,
@@ -397,6 +403,8 @@ main(int argc, char **argv) {
 		    min_score,
 		    am_threshold,
 		    number_of_EPMs,
+		    inexact_struct_match,
+		    struct_mismatch_score,
 		    opt_verbose
 		    );
 
@@ -410,8 +418,8 @@ main(int argc, char **argv) {
     cout << "time_cpu preprocessing = " << setprecision(3) << endR_preproc - startR_preproc << " sec" << endl << endl;
 
     //test
-    //em.test_arcmatch_score();
-    //cout << "end test arcmatch score " << endl;
+    em.test_arcmatch_score();
+    cout << "end test arcmatch score " << endl;
     //return 0;
 
     time_t start_computeMatrices = time (NULL);
