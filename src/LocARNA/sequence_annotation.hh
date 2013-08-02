@@ -94,7 +94,7 @@ namespace LocARNA {
 	 * @brief initialize the static member empty_instance
 	 *
 	 */
-	static SequenceAnnotation
+	static SequenceAnnotation&
 	get_empty_instance() {
 	    return SequenceAnnotation::empty_instance;
 	}
