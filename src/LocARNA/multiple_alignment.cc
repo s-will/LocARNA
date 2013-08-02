@@ -446,6 +446,19 @@ namespace LocARNA {
 	}
     }
 
+    const SequenceAnnotation &
+    MultipleAlignment::annotation(const AnnoType::type &annotype) const {
+
+	assert(0<=annotype && annotype<num_of_annotypes());
+
+    	annotation_map_t::const_iterator it = annotations_.find(annotype);
+
+    	if ( it != annotations_.end() ) {
+    	    return it->second;
+    	} else {
+	    return SequenceAnnotation::get_empty_instance();
+    	}
+        }
     bool
     MultipleAlignment::is_proper() const {
 	if (empty()) return true; // empty alignment is proper

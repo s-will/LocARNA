@@ -504,19 +504,8 @@ public:
      * @note returns ref to empty annotation if annotation is not available
      */
     const SequenceAnnotation &
-    annotation(const AnnoType::type &annotype) const {
-	static SequenceAnnotation empty;
-	assert(0<=annotype && annotype<num_of_annotypes());
-	
-	annotation_map_t::const_iterator it = annotations_.find(annotype);
-	
-	if ( it != annotations_.end() ) {
-	    return it->second;
-	} else {
-	    return empty;
-	}
-    }
-    
+    annotation(const AnnoType::type &annotype) const;
+
     /**
      * @brief Write access to annotation
      * @param prefix annotation prefix

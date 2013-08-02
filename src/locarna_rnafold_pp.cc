@@ -296,7 +296,6 @@ main(int argc, char **argv) {
     }
     std::ostream out_stream(buff);
 
-    RnaData* rna_data_ptr;
     if (clp.opt_in_loop)
     {
 	ExtRnaData ext_rna_data(rna_ensemble, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold,pfoldparams);
