@@ -293,7 +293,7 @@ bool debug_check_poss = false;
 
     			// the arc match score is the maximum of the last matrix entry in
     			// matrices LR, L or G_A (as we used the heuristic computation)
-    			infty_score_t score_suboptimal =max4(LR(last_i,last_j),L(last_i,last_j),G_A(last_i,last_j),G_AB(last_i,last_j));
+    			infty_score_t score_suboptimal =max(max(LR(last_i,last_j),L(last_i,last_j)),max(G_A(last_i,last_j),G_AB(last_i,last_j)));
     			//cout << "suboptimal " << endl;
     			//cout << "last filled pos " << last_filled_pos << endl;
     			//this->print_matrices(it->arcA(),it->arcB(),20,20,true);
@@ -781,14 +781,11 @@ bool debug_check_poss = false;
     	double probArcA = rna_dataA.arc_prob(a.left(),a.right());
     	double probArcB = rna_dataB.arc_prob(b.left(),b.right());
 
-    	//score_t str_mismatch_left = (nucleotide_match(a.left(),b.left())) ? 1 : struct_mismatch_score;
-    	//score_t str_mismatch_right = (nucleotide_match(a.right(),b.right())) ? 1 : struct_mismatch_score;
-    	//score_t seq_contr = (str_mismatch_left + str_mismatch_right)*alpha_1;
+    	score_t str_mismatch_left = (nucleotide_match(a.left(),b.left())) ? 1 : struct_mismatch_score;
+    	score_t str_mismatch_right = (nucleotide_match(a.right(),b.right())) ? 1 : struct_mismatch_score;
+    	score_t seq_contr = (str_mismatch_left + str_mismatch_right)*alpha_1;
 
-    	//infty_score_t result  =D(a,b) + FiniteInt((FiniteInt::base_type)(2*alpha_1+(probArcA+probArcB)*alpha_2)*100);
-    	//if(a.idx() == 1) cout << "result " << result << endl;
-
-    	return D(a,b) + FiniteInt((FiniteInt::base_type)((2*alpha_1+(probArcA+probArcB)*alpha_2)*100));
+    	return D(a,b) + FiniteInt((FiniteInt::base_type)((seq_contr+(probArcA+probArcB)*alpha_2)*100));
 
     }
 
@@ -1156,7 +1153,7 @@ bool debug_check_poss = false;
     			assert(j>=1);
 
     			if(debug_trace_F) cout << "i,j " << i<< " " << j << endl;
-    			if(debug_trace_F) cout << "cur epm " << found_epms.at(pos_cur_epm) << endl;
+    			//if(debug_trace_F) cout << "cur epm " << found_epms.at(pos_cur_epm) << endl;
 
     			cur_max_tol = (infty_score_t)found_epms.at(pos_cur_epm).get_max_tol_left()-
     					F(i,j)+F(i-1,j-1)+score_for_seq_match();
@@ -1226,7 +1223,7 @@ bool debug_check_poss = false;
     	}
 
     	// check whether the EPM list doesn't contain duplicates and only maximally extended EPMs
-    	if(!count_EPMs){
+    	if(!count_EPMs && !inexact_struct_match){
     		assert(validate_epm_list(found_epms));
     	}
     }
@@ -1749,6 +1746,18 @@ bool debug_check_poss = false;
     				if(!score_for_am(inner_a,inner_b).is_finite()) continue;
     				// covers also the case where arcmatch is not in the range of the trace controller
 
+    				//todo: check if this is what we want: then we enumerate all EPMs that cannot be extended while improving
+    				// the score
+    				// problem: a lot of combinations might be enumerated, as an EPM might be extended in a multitude of ways
+    				// while worsening the score
+    				// possibly trace only positive values in LGLR and F matrix -> don't allow arcmatches with negative score?!
+    				// -> the same if statement in computation + trace back?
+    				// problem that maybe after the arcmatch the score increases as a lot of exact matches can be found
+    				if(score_for_am(inner_a,inner_b)<(infty_score_t)0) continue;
+
+    				assert(sparse_trace_controller.is_valid(inner_a.left(),inner_b.left()));
+    				assert(sparse_trace_controller.is_valid(inner_a.right(),inner_b.right()));
+
     				if(debug_VG) cout << "inner am " << inner_a << "," << inner_b << endl;
     				if(debug_VG) cout << "pos right L seq " << pos_right_L_seq << endl;
 
@@ -1792,8 +1801,17 @@ bool debug_check_poss = false;
     			const Arc &inner_b = bpsB.arc(*itB);
     			if(!score_for_am(inner_a,inner_b).is_finite()) continue;
 
+    			assert(sparse_trace_controller.is_valid(inner_a.left(),inner_b.left()));
+    			assert(sparse_trace_controller.is_valid(inner_a.right(),inner_b.right()));
+
+    			//todo: check if this is what we want: then we enumerate all EPMs that cannot be extended while improving
+    			// the score
+    			// problem: a lot of combinations might be enumerated, as an EPM might be extended in a multitude of ways
+    			// while worsening the score
+    			if(score_for_am(inner_a,inner_b)<(infty_score_t)0) continue;
+
     			if(debug_VG) cout << "inner am " << inner_a << "," << inner_b << endl;
-    			if(debug_VG) cout << "pos lfet LR seq " << pos_left_LR_seq << endl;
+    			if(debug_VG) cout << "pos left LR seq " << pos_left_LR_seq << endl;
 
     			// if arc match fits into the gap, the epm is not maximally extended
     			if(inner_a.right()<pos_left_LR_seq.first && inner_b.right()<pos_left_LR_seq.second){
@@ -2085,18 +2103,18 @@ bool debug_check_poss = false;
     	//validate connectivity of the epm
     	for(int k=0;k<2;++k){
 
-    		std::vector<EPM::pair_size_t_pat_vec > arcmatches_to_validate;
+    		std::vector<pair<pos_type,pos_type> > arcmatches_to_validate;
     		bool gap = true;
-    		arcmatches_to_validate.push_back(EPM::pair_size_t_pat_vec(0,pat_vec_size-1));
+    		arcmatches_to_validate.push_back(pair<pos_type,pos_type>(0,pat_vec_size-1));
 
     		while(arcmatches_to_validate.size()!=0){
 
-    			EPM::pair_size_t_pat_vec part_under_am = arcmatches_to_validate.back();
+    			pair<pos_type,pos_type> part_under_am = arcmatches_to_validate.back();
     			arcmatches_to_validate.pop_back();
-    			if(part_under_am != EPM::pair_size_t_pat_vec(0,pat_vec_size-1)) gap=false; //in the F matrix no gap is allowed
+    			if(part_under_am != pair<pos_type,pos_type>(0,pat_vec_size-1)) gap=false; //in the F matrix no gap is allowed
 
     			//go over the part under the am (including the right end!)
-    			for(EPM::pat_vec_t::size_type i=part_under_am.first;i<=part_under_am.second;++i){
+    			for(pos_type i=part_under_am.first;i<=part_under_am.second;++i){
 
     				EPM::el_pat_vec cur_pat_vec = epm_to_test.pat_vec_at(i);
     				unsigned int cur_el = (k==0) ? epm_to_test.pat_vec_at(i).first : epm_to_test.pat_vec_at(i).second;
@@ -2134,7 +2152,7 @@ bool debug_check_poss = false;
 
     					//if there are positions to check in the inner arcmatch, we store the inner arcmatch to check later,
     					//including the position of the ')'
-    					if(i>=pos_after_left_end) arcmatches_to_validate.push_back(EPM::pair_size_t_pat_vec(pos_after_left_end,i));
+    					if(i>=pos_after_left_end) arcmatches_to_validate.push_back(pair<pos_type,pos_type>(pos_after_left_end,i));
 
     					//after incrementation of the for-loop, the next position to be checked is the one after the ')'
     				}

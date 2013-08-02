@@ -29,7 +29,7 @@ namespace LocARNA {
 class SparsificationMapper{
 
 public:
-    typedef BasePairs__Arc Arc;
+    typedef BasePairs__Arc Arc; //!< type of arc
 	typedef size_t ArcIdx; //!< type of arc index
 	typedef vector<ArcIdx> ArcIdxVec; //!< vector of arc indices
 	typedef pos_type matidx_t; //!< type for a matrix position
@@ -65,7 +65,7 @@ private:
 	const ExtRnaData &rnadata; //! RnaData
 	const double prob_unpaired_in_loop_threshold; //!threshold for a unpaired position under a loop
 	const double prob_basepair_in_loop_threshold; //!threshold for a basepair under a loop
-	size_type max_info_vec_size;
+	size_type max_info_vec_size; //! the maximal size of the info vectors
 	//! for each index all valid sequence positions with additional information is stored \n
 	//! index_t->matidx_t->info_for_pos
 	vector<InfoForPosVec> info_valid_seq_pos_vecs;
@@ -125,6 +125,9 @@ public:
 		}
 	}
 
+	/**
+	 * returns the maximal size of the info vectors
+	 */
 	size_type get_max_info_vec_size() const
 	{
 	    return max_info_vec_size;
@@ -150,6 +153,14 @@ public:
 	valid_arcs_right_adj(index_t idx, matidx_t pos) const {
 		return info_valid_seq_pos_vecs.at(idx).at(pos).valid_arcs;
 	}
+
+	/**
+	 * gives the first valid matrix position before or equal to a sequence position
+	 * @param index index
+	 * @param pos sequence position
+	 * @param left_end the index left end; if not set, it is set to the index (for example when indexing by the left end is used)
+	 * @return the first valid matrix position before or equal to the position pos at the index left_end
+	 */
 	matidx_t first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
 	    if (left_end == numeric_limits<index_t>::max())
 		left_end = index;
@@ -159,10 +170,10 @@ public:
 
 	/**
 	 * gives the first valid matrix position before a sequence position
-	 * @param left_end the index left end
+	 * @param index index
 	 * @param pos sequence position
+	 * @param left_end the index left end;if not set, it is set to the index (for example when indexing by the left end is used)
 	 * @return the first valid matrix position before the position pos at the index left_end
-	 * @note use if indexing by the common left end is used
 	 */
 	inline
 	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
@@ -228,25 +239,17 @@ public:
 		return left_adj_vec.at(arc.idx()).at(pos-arc.left());
 	}
 
-	/**
-	 * is sequential matching possible?
-	 * @param idx arc index
-	 * @param pos matrix position
-	 * @return true, if the sequence positions that corresponds
-	 * 				 to the matrix positions pos and pos-1 are adjacent \n
-	 * 		   false, otherwise
-	 */
-	/*bool seq_matching(ArcIdx idx,matidx_t pos)const {
-		return info_valid_seq_pos_vecs.at(idx).at(pos-1).seq_pos+1
-				==info_valid_seq_pos_vecs.at(idx).at(pos).seq_pos;
-	}*/
-
 	//! class destructor
 	virtual ~SparsificationMapper(){
 	}
 
-	// gives the index that stores the first sequence position that is greater than or equal to min_col
-	// if it does not exist, return num_pos
+	/** gives the index that stores the first sequence position that is greater than or equal to min_col
+	 *  if it does not exist, return the number of valid matrix positions num_pos
+	 *  @param index index
+	 *  @param min_col the minimal column in the non-sparsified matrix
+	 *  @param left_end the index left end; if not set, it is set to the index (for example when indexing by the left end is used)
+	 *  @return matrix position that stores the first sequence position that is greater than or equal to min_col
+	 */
 	matidx_t idx_geq(index_t index, seq_pos_t min_col, index_t left_end = std::numeric_limits<index_t>::max()) const{
 
 		if (left_end == std::numeric_limits<index_t>::max())
@@ -271,9 +274,13 @@ public:
 		return idx_geq;
 	}
 
-	// gives the index position after the index position that stores the first sequence position
-	// that is less than or equal to max_col
-	// if it does not exist return 0
+	/** gives the index position after the index position that stores the first sequence position that is less than or equal to max_col
+	 *  if it does not exist return 0
+	 *  @param index index
+	 *  @param max_col the maximal column in the non-sparsified matrix
+	 *  @param left_end the index left end; if not set, it is set to the index (for example when indexing by the left end is used)
+	 *  @return matrix position that stores the first sequence position that is less than or equal to max_col
+	 */
 	matidx_t idx_after_leq(index_t index, seq_pos_t max_col, index_t left_end = std::numeric_limits<index_t>::max()) const{
 
 		if (left_end == std::numeric_limits<index_t>::max())
@@ -313,13 +320,20 @@ private:
 		return rnadata.arc_in_loop_prob(inner_arc.left(),inner_arc.right(),arc.left(),arc.right())>=prob_basepair_in_loop_threshold;
 	}
 
+	/**
+	 * Is the inner_arc a valid external arc?
+	 * @param inner_arc inner arc
+	 * @return true, if the probability of the arc inner_arc to be external is greater or equal to the threshold for
+	 * 			     basepair under a loop \n
+	 * 		   false, otherwise
+	 */
 	bool is_valid_arc_external(const Arc &inner_arc)const{
 			return rnadata.arc_external_prob(inner_arc.left(),inner_arc.right())>=prob_basepair_in_loop_threshold;
 	}
 
 public:
 	/**
-	 * Is pos valid?
+	 * Is position pos valid?
 	 * @param arc Arc
 	 * @param pos sequence position
 	 * @return true, if the probability that the inner_arc occurs in the loop closed by the arc is
@@ -330,12 +344,23 @@ public:
 	    assert(arc.left()<pos && pos<arc.right());
 	    return rnadata.unpaired_in_loop_prob(pos,arc.left(),arc.right())>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
 	}
+
+	/**
+	 * Is position pos a valid external position?
+	 * @param pos sequence position
+	 * @return true, if the sequence position pos has a probability to be external greater than or equal to prob_unpaired_in_loop_threshold
+	 */
 	bool is_valid_pos_external(seq_pos_t pos) const{
 	    return rnadata.unpaired_external_prob(pos)>=prob_unpaired_in_loop_threshold; //todo: additional variable for external case
 	}
-
 };
 
+/**
+ * prints a vector
+ * @param out output stream object
+ * @param vec vector
+ * @return output stream object
+ */
 template <class T>
 std::ostream& operator<<(std::ostream& out, const vector<T>& vec){
 	for(typename vector<T>::const_iterator it = vec.begin();it!=vec.end();it++){
@@ -344,7 +369,20 @@ std::ostream& operator<<(std::ostream& out, const vector<T>& vec){
 	return out;
 }
 
+/**
+ * prints all valid sequence positions with additional information for all indices
+ * @param out output stream object
+ * @param pos_vecs_ input vector
+ * @return output stream object
+ */
 std::ostream &operator << (std::ostream &out, const vector<SparsificationMapper::InfoForPosVec> &pos_vecs_);
+
+/**
+ * prints all valid sequence positions with additional information for one index
+ * @param out output stream object
+ * @param pos_vec_ input vector
+ * @return output stream object
+ */
 std::ostream &operator << (std::ostream &out, const SparsificationMapper::InfoForPosVec &pos_vec_);
 
 } //end namespace

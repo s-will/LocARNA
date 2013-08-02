@@ -278,6 +278,13 @@ private:
     const SparsificationMapper &sparse_mapperB; //!< sparsification mapper for sequence B
 
 public:
+    /**
+     * @brief constructor
+     *
+     * @param sparse_mapperA_ sparsification mapper for sequence A
+     * @param sparse_mapperB_ sparsification mapper for sequence B
+     * @param trace_controller_ trace controller
+     */
 	SparseTraceController(const SparsificationMapper &sparse_mapperA_,const SparsificationMapper &sparse_mapperB_,const TraceController &trace_controller_):
 		TraceController::TraceController(trace_controller_),
 		sparse_mapperA(sparse_mapperA_),
@@ -337,9 +344,12 @@ public:
 	 *
 	 * @param indexA index that is used for sequence A
 	 * @param indexB index that is used for sequence B
-	 * @param idx_i row index in the sparsified matrix
+	 * @param cur_pos_seq the pair of positions in sequence A and B, respectively
+	 * @param left_endA set to left end of the arc in sequence A if indexing by the arcs is used
+	 * 					default setting is the index for sequence A if indexing by the left ends is used
 	 * @param left_endB set to left end of the arc in sequence B if indexing by the arcs is used
 	 * 					default setting is the index for sequence B if indexing by the left ends is used
+	 * @return the first valid matrix position before the sequence position cur_pos_seq
 	 */
 	matpos_t first_valid_mat_pos_before_with_tc(index_t indexA, index_t indexB,pair_seqpos_t cur_pos_seq,
 			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
@@ -394,8 +404,19 @@ public:
 
 	}
 
-	// computes from a given matrix position mat_pos the next valid position on the diagonal and
-	// additionally the first valid position in the column mat_pos.second to the top
+	/**
+	 * \brief computes from a given matrix position mat_pos the next valid position on the diagonal and
+	 * additionally the first valid position in the column mat_pos.second to the top
+	 * @param indexA index that is used for sequence A
+	 * @param indexB index that is used for sequence B
+	 * @param mat_pos the current matrix position
+	 * @param left_endA set to left end of the arc in sequence A if indexing by the arcs is used
+	 * 					default setting is the index for sequence A if indexing by the left ends is used
+	 * @param left_endB set to left end of the arc in sequence B if indexing by the arcs is used
+	 * 					default setting is the index for sequence B if indexing by the left ends is used
+	 * @return the pair of the first valid diagonal matrix position and the first valid matrix position to the top
+	 * 		   if the position to the top does not exists, return an invalid matrix position
+	 */
 	// returns pair<diag_pos,top_pos>
 	pair<matpos_t,matpos_t> first_valid_mat_pos_before_with_tc_from_mat_pos(index_t indexA, index_t indexB,matpos_t mat_pos,
 			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
@@ -460,6 +481,20 @@ public:
 		return pair<matpos_t,matpos_t>(diag_pos,top_pos);
 	}
 
+	/**
+	 * \brief computes the first valid matrix position to the left
+	 *
+	 * @param indexA index that is used for sequence A
+	 * @param indexB index that is used for sequence B
+	 * @param mat_pos the current matrix position
+	 * @param left_endA set to left end of the arc in sequence A if indexing by the arcs is used
+	 * 					default setting is the index for sequence A if indexing by the left ends is used
+	 * @param left_endB set to left end of the arc in sequence B if indexing by the arcs is used
+	 * 					default setting is the index for sequence B if indexing by the left ends is used
+	 *
+	 * @return the first valid matrix position to the left of mat_pos
+	 * 		   if the position to the left does not exists, return an invalid matrix position
+	 */
 	matpos_t first_left_valid_mat_pos_with_tc(index_t indexA, index_t indexB,matpos_t mat_pos,
 			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
 
@@ -480,8 +515,8 @@ public:
 	 * \brief maps the matrix position cur_pos to the corresponding pair
 	 * of positions in sequence A and B
 	 *
-	 * @param indexA index that is used for sequence A
-	 * @param indexB index that is used for sequence B
+	 * @param idxA index that is used for sequence A
+	 * @param idxB index that is used for sequence B
 	 * @param cur_pos a pair of positions in sequence A and B
 	 */
 	pair_seqpos_t get_pos_in_seq_new(index_t idxA, index_t idxB,//const Arc &a, const Arc &b,
@@ -500,8 +535,8 @@ public:
 	 * returns true iff the corresponding sequence position of the position idx_pos_diag is directly
 	 * left adjacent to the sequence position pair seq_pos_to_be_matched, i.e. a continuative matching
 	 * in matrix LR is possible without switching to a gap matrix
-	 * @param indexA index that is used for sequence A
-	 * @param indexB index that is used for sequence B
+	 * @param idxA index that is used for sequence A
+	 * @param idxB index that is used for sequence B
 	 * @param idx_pos_diag a position in the condensed matrix
 	 * @param seq_pos_to_be_matched a pair of positions in sequence A and B
 	 */
@@ -513,8 +548,8 @@ public:
 
 	/**
 	 * \brief checks whether the matrix position pos can be unpaired in both sequences
-	 * @param indexA index that is used for sequence A
-	 * @param indexB index that is used for sequence B
+	 * @param idxA index that is used for sequence A
+	 * @param idxB index that is used for sequence B
 	 * @param pos position in the condensed matrix
 	 */
 	bool pos_unpaired(index_t idxA, index_t idxB,
@@ -526,8 +561,8 @@ public:
 	/**
 	 * \brief checks whether a matrix position is valid
 	 *
-	 * @param indexA index that is used for sequence A
-	 * @param indexB index that is used for sequence B
+	 * @param idxA index that is used for sequence A
+	 * @param idxB index that is used for sequence B
 	 * @param mat_pos a position in the condensed matrix
 	 */
 	bool is_valid_idx_pos(index_t idxA, index_t idxB,
@@ -559,9 +594,6 @@ public:
 	typedef triple<seqpos_t,seqpos_t,char> el_pat_vec;
 
 	typedef std::vector<el_pat_vec> pat_vec_t; //!< type for pattern vector
-	//typedef std::vector<int>::size_type size_type;  //!< type of a size
-
-	typedef std::pair<pat_vec_t::size_type,pat_vec_t::size_type> pair_size_t_pat_vec;
 
 private:
 
@@ -609,103 +641,187 @@ public:
 	// getter methods
 	//-----------------------------------------------------------------------
 
+	//! returns the score of the EPM
 	score_t get_score() const{return score;}
 
+	//! return the current matrix state of the EPM
 	int get_state() const{return state;}
 
+	//! returns the current matrix position of the EPM
 	const matpos_t & get_cur_pos() const{return cur_pos;}
 
+	//! returns the maximal tolerance that is left for the EPM
 	const score_t & get_max_tol_left() const{return max_tol_left;}
 
+	//! returns whether it is the first insertion into the EPM
 	const bool & get_first_insertion() const{return first_insertion;}
 
 	//-----------------------------------------------------------------------
 	// setter methods
 	//-----------------------------------------------------------------------
 
+	/**
+	 * sets the score of the EPM
+	 * @param score_ score
+	 */
 	void set_score(score_t score_){	score=score_;}
 
+	/**
+	 * sets the matrix state of the EPM
+	 * @param state_ matrix state
+	 */
 	void set_state(int state_){	state=state_;}
 
+	/**
+	 * sets the matrix position of the EPM
+	 * @param cur_pos_ matrix position
+	 */
 	void set_cur_pos(matpos_t cur_pos_){cur_pos = cur_pos_;}
 
+	/**
+	 * sets the maximal tolerance that is left for the EPM
+	 * @param tol maximal tolerance
+	 */
 	void set_max_tol_left(score_t tol){max_tol_left=tol;}
 
+	/**
+	 * sets the flag first_insertion for the EPM
+	 * @param first_insertion_ whether it is the first_insertion
+	 */
 	void set_first_insertion(bool first_insertion_){first_insertion=first_insertion_;}
 
-
-	//! returns the pair of arc indices at position pos
+	/**
+	 * returns the pair of arc indices at position pos
+	 * @param idx index in the PairArcIdxVec
+	 * @return returns the PairArcIdx at the index idx in the am_to_do vector
+	 */
 	const PairArcIdx& get_am(PairArcIdxVec::size_type idx) const{
 		assert(idx<am_to_do.size());
 		return am_to_do[idx];
 	}
 
-	//! returns the number of pairs of arc indices that need to be computed
+	/**
+	 * returns the number of pairs of arc indices that need to be computed
+	 * @return the number of arc matches in am_to_do
+	 */
 	PairArcIdxVec::size_type number_of_am(){return am_to_do.size();}
 
 	//! deletes the list am_to_do
 	void clear_am_to_do(){am_to_do.clear();}
 
-	//! begin of vector that stores the pairs of arc indices that need to be computed
+	/**
+	 * begin of vector that stores the pairs of arc indices that need to be computed
+	 * @return an iterator to the beginning of am_to_do
+	 */
 	PairArcIdxVec::const_iterator am_begin() const {return am_to_do.begin();}
 
-	//! end of vector that stores the pairs of arc indices that need to be computed
+	/**
+	 * end of vector that stores the pairs of arc indices that need to be computed
+	 * @return an iterator to the end of am_to_do
+	 */
 	PairArcIdxVec::const_iterator am_end() const {return am_to_do.end();}
 
-	//! returns the element of the pattern vector at position pos
+	/**
+	 * returns the element of the pattern vector at position pos
+	 * @param idx index
+	 * @return the element of the pattern vector at idx
+	 */
 	el_pat_vec pat_vec_at(pat_vec_t::size_type idx) const{
 		assert(idx<pat_vec.size());
 		return pat_vec[idx];
 	}
 
-	//! return the size of the pattern vector
+	/**
+	 * return the size of the pattern vector
+	 * @return the size of the pattern vector pat_vec
+	 */
 	pat_vec_t::size_type pat_vec_size() const{return pat_vec.size();}
 
-	//! begin of pattern vector
+	/**
+	 * begin of pattern vector
+	 * @return an iterator to the beginning of the pattern vector pat_vec
+	 */
 	pat_vec_t::const_iterator begin() const{return pat_vec.begin();}
 
-	//! end of pattern vector
+	/**
+	 * end of pattern vector
+	 * @return an iterator to the end of the pattern vector pat_vec
+	 */
 	pat_vec_t::const_iterator end() const{return pat_vec.end();}
 
 
-	//! returns the last sequence position that is matched in the EPM
+	/**
+	 * returns the last sequence position that is matched in the EPM
+	 * @return the last sequence position that is matched in the EPM
+	 */
 	pair_seqpos_t last_matched_pos(){
 		assert(!pat_vec.empty());
 		return pair_seqpos_t(pat_vec.back().first,pat_vec.back().second);
 	}
 
-	//! adds an element to the pattern vector
-	void add(seqpos_t pos1_,seqpos_t pos2_,char c){pat_vec.push_back(el_pat_vec(pos1_,pos2_,c));}
+	/**
+	 * adds an element to the pattern vector
+	 * @param posA position in sequence A that is added to the pattern vector
+	 * @param posB position in sequence B that is added to the pattern vector
+	 * @param c char that specifies the match (sequential match '.', structural match '(' or ')' )
+	 */
+	void add(seqpos_t posA,seqpos_t posB,char c){pat_vec.push_back(el_pat_vec(posA,posB,c));}
 
-	void overwrite(seqpos_t pos1_,seqpos_t pos2_,char c,pat_vec_t::size_type pos){
-		if(pat_vec.size()<=pos){pat_vec.push_back(el_pat_vec(pos1_,pos2_,c));}
-		pat_vec.at(pos)=el_pat_vec(pos1_,pos2_,c);
+	/**
+	 * overwrites the element at position pos of the pattern vector
+	 * @param posA position in sequence A that is added to the pattern vector
+	 * @param posB position in sequence B that is added to the pattern vector
+	 * @param c char that specifies the match (sequential match '.', structural match '(' or ')' )
+	 * @param pos position in the pattern vector
+	 */
+	void overwrite(seqpos_t posA,seqpos_t posB,char c,pat_vec_t::size_type pos){
+		if(pat_vec.size()<=pos){pat_vec.push_back(el_pat_vec(posA,posB,c));}
+		pat_vec.at(pos)=el_pat_vec(posA,posB,c);
 	}
 
-	//! appends an arc match to the EPM
+	/**
+	 * appends an arc match to the EPM
+	 * @param a arc in sequence A
+	 * @param b arc in sequence B
+	 */
 	void add_am(const Arc &a, const Arc &b){
 		add(a.right(),b.right(),')');
 		add(a.left(),b.left(),'(');
 	}
 
+	/**
+	 * stores an arc match in the am_to_do data structure
+	 * @param a arc in sequence A
+	 * @param b arc in sequence B
+	 */
 	void store_am(const Arc &a, const Arc &b){
 		const PairArcIdx &pair_arc_idx = PairArcIdx(a.idx(),b.idx());
 		//store the pair of arc indices in the am_to_do datastructure
 		am_to_do.push_back(pair_arc_idx);
 	}
 
-	//!returns a pair of arc indices that needs to be processed
+	/**
+	 * returns a pair of arc indices that is processed
+	 * @return the pair of arc indices that is processed next
+	 */
 	PairArcIdx next_arcmatch(){
 		PairArcIdx arc_idx = am_to_do.back();
 		am_to_do.pop_back();
 		return arc_idx;
 	}
 
-	//! sort the pattern vector according to the positions in the first sequence
-	//! (automatically also sorted according to the positions in the second sequence)
+	/**
+	 * sorts the pattern vector according to the positions in the first sequence
+	 * (automatically also sorted according to the positions in the second sequence)
+	 */
 	void sort_patVec(){sort(pat_vec.begin(), pat_vec.end(),compare_el_pat_vec());}
 
-	//! checks whether the current EPM includes the EPM epm_to_test
+	/**
+	 * checks whether the current EPM includes the EPM epm_to_test
+	 * @param epm_to_test EPM that is checked
+	 * @return true, if the current EPM includes the EPM epm_to_test
+	 * 		   false, otherwise
+	 */
 	bool includes(const EPM &epm_to_test) const{
 		assert(pat_vec_size()>=epm_to_test.pat_vec_size());
 		return std::includes(this->begin(),this->end(),
@@ -713,12 +829,19 @@ public:
 				compare_el_pat_vec());
 	}
 
-	//! inserts the pattern vector of the EPM epm_to_insert into the current EPM
+	/**
+	 * inserts the pattern vector of the EPM epm_to_insert into the current EPM
+	 * @param epm_to_insert EPM that is inserted
+	 */
 	void insert(const EPM &epm_to_insert){
 		pat_vec.insert(pat_vec.end(),epm_to_insert.begin(),epm_to_insert.end());
 	}
 
-	//! prints the EPM
+	/**
+	 * prints the EPM
+	 * @param out output stream object
+	 * @param verbose whether to write additional information
+	 */
 	void print_epm(std::ostream &out, bool verbose) const{
 		out << "_________________________________________________" << std::endl;
 		out << "epm with score " << this->score << std::endl;
@@ -744,12 +867,23 @@ public:
 	}
 };
 
-//! compare EPMs (for sorting according to the tolerance left)
+/**
+ * compare EPMs (for sorting according to the tolerance left)
+ * @params epm1 input EPM
+ * @params epm2 input EPM
+ * @return true, if the maximal tolerance that is left for epm1 is larger than the one for epm2
+ * 		   false, otherwise
+ */
 inline bool operator< (const EPM &epm1, const EPM &epm2) {
 	return epm1.get_max_tol_left()>epm2.get_max_tol_left();
 }
 
-//! prints the EPM
+/**
+ * prints the EPM
+ * @param out output stream object
+ * @param epm EPM that is printed
+ * @return output stream object
+ */
 inline std::ostream & operator << (std::ostream &out, const EPM &epm){
 	epm.print_epm(out,false);
 	return out;
@@ -761,16 +895,29 @@ std::ostream& operator << (std::ostream& out, const std::pair<T1,T2>& pair){
 	return out << "(" << pair.first << "," << pair.second << ") ";
 }
 
+/**
+ * computes the maximum of three values
+ * @param first first value
+ * @param second second value
+ * @param third third value
+ * @return the maximum of the three input values
+ */
 template <class T1>
 T1 max3(const T1 &first,const T1 &second, const T1 &third){
 	return max(max(first,second),third);
 }
 
-template <class T1>
-T1 max4(const T1 &first,const T1 &second, const T1 &third, const T1 &fourth){
-	return max(max(first,second),max(third,fourth));
-}
 
+/**
+ * @brief Computes exact pattern matchings (EPM) between two RNA sequences
+ *
+ * There exist two different tracebacks: the heuristic and the suboptimal one. The heuristic traceback computes one EPM
+ * that ends at a position in the matrix F, if it is maximally extended. The suboptimal traceback enumerates all suboptimal EPMs
+ * up to a certain score (--diff-to-opt-score) or enumerates a certain number of EPMs (--number-of-EPMs).
+ *
+ * The list of all traced EPMs can either be written in a file or handed over to the PatternPairMap to do the chaining in order to
+ * find the best set of EPMs that can be simultaneously be part of an alignment.
+ */
 class ExactMatcher {
     typedef BasePairs__Arc Arc; //!< use arc class of base pairs
 
@@ -1259,22 +1406,22 @@ public:
      *
      * @param seqA_ sequence A
      * @param seqB_ sequence B
+     * @param rna_dataA_ sparsified data of RNA ensemble for sequence A
+     * @param rna_dataB_ sparsified data of RNA ensemble for sequence B
      * @param arc_matches_ arc matches
      * @param sparse_trace_controller_ trace controller combined with the sparsification mapper
      * @param foundEPMs_ pattern pair map to store the list of all EPMs
-     * @param alpha_1 sequential weight
-     * @param alpha_2 structural weight
-     * @param alpha_3 stacking weight
+     * @param alpha_1_ sequential weight
+     * @param alpha_2_ structural weight
+     * @param alpha_3_ stacking weight
      * @param difference_to_opt_score_ all EPMs with a score difference not more than
      *                                 difference_to_opt_score_ from the optimal score are traced
-     * @param min_score the minimal score of an EPMs that is traced
-     * @param easier_scoring_par_ structural matches are scored independent of the probability of
-     *                           the basepairs
-     * @param subopt_range_ trace EPMs within that range of best EPM score
+     * @param min_score_ the minimal score of an EPMs that is traced
      * @param am_threshold_ minimal arcmatch score in F matrix
-     * @param cutoff_coverage_ use only the best EPM as a chain if it has a larger coverage than
-     *                         cutoff_coverage_ on shortest seq
-     * @param number_of_EPMs_ maximal number of EPMs for the suboptimal tracebac
+     * @param max_number_of_EPMs_ maximal number of EPMs for the suboptimal traceback
+     * @param inexact_struct_match_ whether to allow inexact structure matches
+     * @param struct_mismatch_score_ the mismatch score for two nucleotides in an arcmatch (only used if inexact_struct_match_ is set)
+     * @param opt_verbose_ whether to write additional information
      */
     ExactMatcher(const Sequence &seqA_,
 		 const Sequence &seqB_,
@@ -1290,8 +1437,8 @@ public:
 		 score_t min_score_,
 		 score_t am_threshold_,
 		 long int max_number_of_EPMs_,
-		 bool inexact_struct_match,
-		 score_t struct_mismatch_score,
+		 bool inexact_struct_match_,
+		 score_t struct_mismatch_score_,
 		 bool opt_verbose_
 		 );
 
@@ -1301,7 +1448,7 @@ public:
     //! matrices L, G_A and LR
     void compute_arcmatch_score();
 
-    // debugging
+    //! for debugging
     void test_arcmatch_score();
 
     /**
