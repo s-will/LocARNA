@@ -565,6 +565,9 @@ main(int argc, char **argv) {
     if(arc_matches) delete arc_matches;
     if (ribosum) delete ribosum;
 
+    if (rna_dataA) delete rna_dataA;
+    if (rna_dataB) delete rna_dataB;
+
     stopwatch.stop("total");
     
     // DONE

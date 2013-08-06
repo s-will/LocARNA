@@ -57,6 +57,9 @@ using namespace std;
 const std::string
 VERSION_STRING = (std::string)PACKAGE_STRING;
 
+const bool DO_TRACE=true;
+//const bool DO_TRACE=false;
+
 // ------------------------------------------------------------
 // Parameter
 
@@ -232,6 +235,13 @@ main(int argc, char **argv) {
     
     // ------------------------------------------------------------
     // parameter consistency
+
+    //trace_controller not yet implemented for suboptimal traceback!
+    if(DO_TRACE && opt_suboptimal && max_diff !=-1){
+	cerr << "suboptimal traceback is not implemented yet with max_diff option " << endl;
+	return 0;
+    }
+    
     
     //if no stacking should be considered, set the parameter for stacking to 0
     if(!opt_stacking){
@@ -328,7 +338,7 @@ main(int argc, char **argv) {
     // ----------------------------------------
     // construct set of relevant arc matches
     //
-    ArcMatches *arc_matches;
+    ArcMatches *arc_matches=0L;
     
     // initialize from RnaData
     arc_matches = new ArcMatches(*rna_dataA,
@@ -426,8 +436,6 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Traceback
     //
-    const bool DO_TRACE=true;
-    //const bool DO_TRACE=false;
     if (DO_TRACE) {
 	
 //	if (opt_verbose) {
@@ -442,12 +450,6 @@ main(int argc, char **argv) {
 
 	if(opt_suboptimal)  cout << endl << "start suboptimal traceback..." << endl;
 	else cout << endl << "start heuristic traceback..." << endl;
-
-	//trace_controller not yet implemented for suboptimal traceback!
-	if(opt_suboptimal && max_diff !=-1){
-		cerr << "suboptimal traceback is not implemented yet with max_diff option " << endl;
-		return 0;
-	}
 
 	em.trace_EPMs(opt_suboptimal);
 
@@ -536,9 +538,13 @@ main(int argc, char **argv) {
 
     // ----------------------------------------
     // DONE
-    delete arc_matches;
-    cout << "... locarna_X finished!" << endl << endl;
 
+    if (arc_matches) delete arc_matches;
+
+    if (rna_dataA) delete rna_dataA;
+    if (rna_dataB) delete rna_dataB;
+
+    cout << "... locarna_X finished!" << endl << endl;
     stopwatch.stop("total");
 
     return 0;
