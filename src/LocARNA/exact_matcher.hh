@@ -817,19 +817,6 @@ public:
 	void sort_patVec(){sort(pat_vec.begin(), pat_vec.end(),compare_el_pat_vec());}
 
 	/**
-	 * checks whether the current EPM includes the EPM epm_to_test
-	 * @param epm_to_test EPM that is checked
-	 * @return true, if the current EPM includes the EPM epm_to_test
-	 * 		   false, otherwise
-	 */
-	bool includes(const EPM &epm_to_test) const{
-		assert(pat_vec_size()>=epm_to_test.pat_vec_size());
-		return std::includes(this->begin(),this->end(),
-				epm_to_test.begin(),epm_to_test.end(),
-				compare_el_pat_vec());
-	}
-
-	/**
 	 * inserts the pattern vector of the EPM epm_to_insert into the current EPM
 	 * @param epm_to_insert EPM that is inserted
 	 */
@@ -956,7 +943,7 @@ private:
     const RnaData &rna_dataA; //!< rna data A, used only for scoring arc matches (stacked & unstacked)
     const RnaData &rna_dataB; //!< rna data B, @see rna_dataA
 
-    const ArcMatchesIndexed *arc_matches; //!< the potential arc matches between A and B
+    const ArcMatches &arc_matches; //!< the potential arc matches between A and B
 
     const BasePairs &bpsA; //!< base pairs of A
     const BasePairs &bpsB; //!< base pairs of B
@@ -1427,7 +1414,7 @@ public:
 		 const Sequence &seqB_,
 		 const RnaData &rna_dataA_,
 		 const RnaData &rna_dataB_,
-		 const ArcMatchesIndexed *arc_matches_,
+		 const ArcMatches &arc_matches_,
 		 const SparseTraceController &sparse_trace_controller_,
 		 PatternPairMap &foundEPMs_,
 		 int alpha_1_,

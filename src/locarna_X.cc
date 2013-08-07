@@ -327,7 +327,7 @@ main(int argc, char **argv) {
     // ----------------------------------------
     // construct set of relevant arc matches
     //
-    ArcMatchesIndexed *arc_matches;
+    ArcMatches *arc_matches;
     
     // initialize from RnaData
     arc_matches = new ArcMatchesIndexed(*rna_dataA,
@@ -393,7 +393,7 @@ main(int argc, char **argv) {
 		    seqB,
 		    *rna_dataA,
 		    *rna_dataB,
-		    arc_matches,
+		    *arc_matches,
 		    sparse_trace_controller,
 		    myEPMs,
 		    alpha_1,
@@ -417,10 +417,10 @@ main(int argc, char **argv) {
     cout << endl << "time_wall preprocessing = " << setprecision(3) << end_preproc - start_preproc << " sec" << endl;
     cout << "time_cpu preprocessing = " << setprecision(3) << endR_preproc - startR_preproc << " sec" << endl << endl;
 
-    //test
+#ifndef NDEBUG
+    cout << "test arcmatch score... " << endl;
     em.test_arcmatch_score();
-    cout << "end test arcmatch score " << endl;
-    //return 0;
+#endif
 
     time_t start_computeMatrices = time (NULL);
     //compute matrices for finding best and enumerating all matchings

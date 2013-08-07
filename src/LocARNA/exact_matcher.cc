@@ -13,6 +13,7 @@ bool debug = false;
 bool debug_trace_G = false;
 bool debug_VG = false;
 bool debug_trace_LGLR_subopt = false;
+bool debug_trace_LGLR_heuristic = false;
 bool debug_trace_F = false;
 bool debug_store_new_poss = false;
 bool debug_init_mat = false;
@@ -25,7 +26,7 @@ bool debug_check_poss = false;
 			       const Sequence &seqB_,
 			       const RnaData &rna_dataA_,
 			       const RnaData &rna_dataB_,
-			       const ArcMatchesIndexed *arc_matches_,
+			       const ArcMatches &arc_matches_,
 			       const SparseTraceController &sparse_trace_controller_,
 			       PatternPairMap &foundEPMs_,
 			       int alpha_1_,
@@ -44,8 +45,8 @@ bool debug_check_poss = false;
 	  rna_dataA(rna_dataA_),
 	  rna_dataB(rna_dataB_),
 	  arc_matches(arc_matches_),
-	  bpsA(arc_matches_->get_base_pairsA()),
-	  bpsB(arc_matches_->get_base_pairsB()),
+	  bpsA(arc_matches_.get_base_pairsA()),
+	  bpsB(arc_matches_.get_base_pairsB()),
 	  sparse_trace_controller(sparse_trace_controller_),
 	  sparse_mapperA(sparse_trace_controller.get_sparse_mapperA()),
 	  sparse_mapperB(sparse_trace_controller.get_sparse_mapperB()),
@@ -231,7 +232,7 @@ bool debug_check_poss = false;
     	matpos_t last_filled_pos; //the last position that was filled in the matrices
 
     	// for all arc matches from inside to outside
-    	for(ArcMatchVec::const_iterator it=arc_matches->begin();it!=arc_matches->end();++it){
+    	for(ArcMatchVec::const_iterator it=arc_matches.begin();it!=arc_matches.end();++it){
 
     		pos_type al=it->arcA().left();
     		pos_type ar=it->arcA().right();
@@ -261,7 +262,7 @@ bool debug_check_poss = false;
     	matpos_t last_filled_pos;
 
     	// for all arc matches from inside to outside
-    	for(ArcMatchVec::const_iterator it=arc_matches->begin();it!=arc_matches->end();++it){
+    	for(ArcMatchVec::const_iterator it=arc_matches.begin();it!=arc_matches.end();++it){
 
     		pos_type al=it->arcA().left();
     		pos_type ar=it->arcA().right();
@@ -318,9 +319,9 @@ bool debug_check_poss = false;
     // compute L, G_A (G matrix) and LR matrix
     ExactMatcher::matpos_t ExactMatcher::compute_LGLR(const Arc &a, const Arc &b, bool suboptimal){
 
-    	if(debug_compute_LGLR && a.idx()==353 && b.idx()==386){
-    		//cout << endl; cout << "___________________________________" << endl;
-    		//cout << "compute LGLR " << (suboptimal? "suboptimal" : "heuristic") <<  " for arcs " << a << "," << b << endl;
+    	if(debug_compute_LGLR && a.idx()==6 && b.idx()==10){
+    		cout << endl; cout << "___________________________________" << endl;
+    		cout << "compute LGLR " << (suboptimal? "suboptimal" : "heuristic") <<  " for arcs " << a << "," << b << endl;
     	}
 
     	// initialize matrices for using the sparse trace controller
@@ -329,6 +330,11 @@ bool debug_check_poss = false;
     	if(!suboptimal){
     		init_mat(G_A,a,b,infty_score_t(0),infty_score_t(0),infty_score_t(0));
     		// in suboptimal case we use the whole gap matrices, initialization is done once in the beginning
+    	}
+
+    	if(debug_compute_LGLR && a.idx()==6 && b.idx()==10){
+    		cout << "matrices after initialization " << endl;
+    		print_matrices(a,b,30,30,false,true);
     	}
 
        	index_t idxA = a.idx();
@@ -355,7 +361,7 @@ bool debug_check_poss = false;
 
        		for(idx_j=std::max((matidx_t)1,min_idx_j);idx_j<idx_after_max_idx_j;++idx_j){
 
-       			//if(debug_compute_LGLR && a.idx()==353 && b.idx()==386) cout << "cur mat pos " << matpos_t(idx_i,idx_j) << endl;
+       			if(debug_compute_LGLR && a.idx()==6 && b.idx()==10) cout << "cur mat pos " << matpos_t(idx_i,idx_j) << endl;
 
        			matpos_t mat_pos = matpos_t(idx_i,idx_j);
        			pair_seqpos_t seq_pos = sparse_trace_controller.get_pos_in_seq_new(idxA,idxB,mat_pos);
@@ -380,7 +386,7 @@ bool debug_check_poss = false;
        				last_pos_filled.second=idx_j;
        			}//compute entry only if idx pos is valid for the suboptimal case
 
-       			//if(debug_compute_LGLR && a.idx()==353 && b.idx()==386) cout << "pos diag " << idx_pos_diag << endl;
+       			if(debug_compute_LGLR && a.idx()==6 && b.idx()==10) cout << "pos diag " << idx_pos_diag << endl;
 
        			if(suboptimal){
        				G_A(idx_i,idx_j)=G_A(idx_i-1,idx_j); //we fill the whole matrix
@@ -460,6 +466,9 @@ bool debug_check_poss = false;
 
     			score_seq = seq_str_matching(a,b,mat_pos_diag,seq_pos,
     					score_for_seq_match(),matrixLR,suboptimal);
+    			if((!score_seq.is_neg_infty()) && debug_compute_LGLR && a.idx()==6 && b.idx()==10){
+    				cout << "seq match " << endl;
+    			}
 
     	}
     	//structural matching
@@ -487,6 +496,10 @@ bool debug_check_poss = false;
 
     			score_str = max(seq_str_matching(a,b,mat_pos_diag_str,
     					last_seq_pos_to_be_matched,score_am_stacking,matrixLR,suboptimal),score_str);
+
+    			if((!score_str.is_neg_infty()) && debug_compute_LGLR && a.idx()==6 && b.idx()==10){
+    				cout << "str match " << inner_a<< "," << inner_b << ": " << score_str << endl;
+    			}
     		}
     	}
     	return max(score_seq,score_str);
@@ -550,10 +563,10 @@ bool debug_check_poss = false;
        			}
 
        			//structural matching
-       			for(ArcMatchIdxVec::const_iterator it=arc_matches->common_right_end_list(i,j).begin();
-       					arc_matches->common_right_end_list(i,j).end() != it; ++it ) {
+       			for(ArcMatchIdxVec::const_iterator it=arc_matches.common_right_end_list(i,j).begin();
+       					arc_matches.common_right_end_list(i,j).end() != it; ++it ) {
 
-       				const ArcMatch &am = arc_matches->arcmatch(*it);
+       				const ArcMatch &am = arc_matches.arcmatch(*it);
        				const Arc &a = am.arcA();
        				const Arc &b = am.arcB();
 
@@ -673,7 +686,7 @@ bool debug_check_poss = false;
     	//bool suboptimal = (difference_to_opt_score!=-1);
 
     	if(verbose) cout << "compute EPMs " << (suboptimal? "suboptimal " :
-    			"heuristic ") << "with min score " << min_score  << (count_EPMs? " count EPMs " : " enumerate EPMs")<< endl;
+    			"heuristic ") << "with min score " << min_score  << (count_EPMs? " count EPMs " : " enumerate EPMs ")<< "with ";
 
     	/* -----------------------------------------------------------------------------------
        	 for debugging
@@ -750,7 +763,7 @@ bool debug_check_poss = false;
     						trace_F_suboptimal(i,j,max_tol_left,true,count_EPMs); // compute traceback from position (i,j)
 
     						if(!check_PPM()){ // cancel traceback as maximal number of EPMs is reached
-    							if(verbose) cout << "more than " << cur_number_of_EPMs << " EPMs " << endl;
+    							if(verbose && count_EPMs) cout << "more than " << cur_number_of_EPMs << " EPMs " << endl;
     							return;}
     					}
     					else{
@@ -762,6 +775,7 @@ bool debug_check_poss = false;
     			}
     		}
     	}
+    	if(verbose && check_PPM() && count_EPMs) cout << cur_number_of_EPMs << " EPMs " << endl;
     }
 
 
@@ -874,7 +888,7 @@ bool debug_check_poss = false;
 
     	while(!(F(i,j)==(infty_score_t)0)){
 
-    		//if(debug_trace_F) cout << "i,j " << i << "," << j << endl;
+    		if(debug_trace_F) cout << "i,j " << i << "," << j << endl;
 
     		assert(i>=1 && j>=1);
     		assert(sparse_trace_controller.is_valid(i,j));
@@ -884,10 +898,10 @@ bool debug_check_poss = false;
     			i--;j--;
     		}
     		else{
-    			for(ArcMatchIdxVec::const_iterator it=arc_matches->common_right_end_list(i,j).begin();
-    					arc_matches->common_right_end_list(i,j).end() != it; ++it){
+    			for(ArcMatchIdxVec::const_iterator it=arc_matches.common_right_end_list(i,j).begin();
+    					arc_matches.common_right_end_list(i,j).end() != it; ++it){
 
-    				const ArcMatch &am = arc_matches->arcmatch(*it);
+    				const ArcMatch &am = arc_matches.arcmatch(*it);
 
     				const Arc &a = am.arcA();
     				const Arc &b = am.arcB();
@@ -934,11 +948,22 @@ bool debug_check_poss = false;
 
     	if(state==in_LR) assert(LR(idx_i,idx_j)==D(a,b));
 
+    	if(debug_trace_LGLR_heuristic){
+    		print_matrices(a,b,30,30,false,true);
+    		cout << "last filled pos " << cur_pos << endl;
+    		cout << "state " << state << endl;
+    	}
+
     	//repeat until we end up in the first row or column
     	while(cur_pos.first!=0 && cur_pos.second!=0){
 
     		idx_i = cur_pos.first;
     		idx_j = cur_pos.second;
+
+    		if(debug_trace_LGLR_heuristic){
+    			cout << "cur pos " << cur_pos << endl;
+    			cout << "cur state " << state << endl;
+    		}
 
     		pair_seqpos_t cur_seq_pos = sparse_trace_controller.get_pos_in_seq_new(idxA,idxB,cur_pos);
     		seqpos_t i = cur_seq_pos.first;
@@ -968,56 +993,58 @@ bool debug_check_poss = false;
     			bool str_matching_poss =false;
 
     			// check for sequential matching
-    			//if(sparse_trace_controller.pos_unpaired(idxA,idxB,cur_pos) && nucleotide_match(i,j)){
     			if(seq_matching(idxA,idxB,cur_pos,cur_seq_pos)){
 
     				seq_matching_poss = trace_seq_str_matching_heuristic(a,b,state,cur_pos,mat_pos_diag,
     						cur_seq_pos,score_for_seq_match());
-    				if(seq_matching_poss){ cur_epm.add(i,j,'.');}
-    			}
-
-
-    			else{
-    				// check for structural matching
-    				for(ArcIdxVec::const_iterator itA=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).begin();
-    						itA!=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).end();++itA){
-    					for(ArcIdxVec::const_iterator itB=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).begin();
-    							itB!=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).end();++itB){
-
-    						const Arc &inner_a = bpsA.arc(*itA);
-    						const Arc &inner_b = bpsB.arc(*itB);
-
-    						const infty_score_t &score_for_inner_am = score_for_am(inner_a,inner_b);
-    						if(score_for_inner_am.is_neg_infty()) continue;
-
-    						matpos_t last_seq_pos_to_be_matched(inner_a.left(),inner_b.left());
-
-    						matpos_t idx_pos_before =
-    								sparse_trace_controller.first_valid_mat_pos_before_with_tc(idxA,idxB,
-    										last_seq_pos_to_be_matched,a.left(),b.left());
-
-    						assert(score_for_inner_am.is_finite());
-    						score_t score_am_stacking = score_for_inner_am.finite_value()
-    																+ score_for_stacking(a,b,inner_a,inner_b);
-
-    						str_matching_poss = trace_seq_str_matching_heuristic(a,b,state,cur_pos,idx_pos_before,
-    								last_seq_pos_to_be_matched,score_am_stacking);
-
-    						if(str_matching_poss){
-    							cur_epm.add_am(inner_a,inner_b);
-    							cur_epm.store_am(inner_a,inner_b);
-    							break;
-    						}
-    					}
-    					if(str_matching_poss) break;
+    				if(seq_matching_poss){
+    					cur_epm.add(i,j,'.');
+    					break;
     				}
-    				assert(seq_matching_poss || str_matching_poss);
     			}
+
+    			// check for structural matching
+    			for(ArcIdxVec::const_iterator itA=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).begin();
+    					itA!=sparse_mapperA.valid_arcs_right_adj(idxA,idx_i).end();++itA){
+    				for(ArcIdxVec::const_iterator itB=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).begin();
+    						itB!=sparse_mapperB.valid_arcs_right_adj(idxB,idx_j).end();++itB){
+
+    					const Arc &inner_a = bpsA.arc(*itA);
+    					const Arc &inner_b = bpsB.arc(*itB);
+
+    					const infty_score_t &score_for_inner_am = score_for_am(inner_a,inner_b);
+    					if(score_for_inner_am.is_neg_infty()) continue;
+
+    					matpos_t last_seq_pos_to_be_matched(inner_a.left(),inner_b.left());
+
+    					matpos_t idx_pos_before =
+    							sparse_trace_controller.first_valid_mat_pos_before_with_tc(idxA,idxB,
+    									last_seq_pos_to_be_matched,a.left(),b.left());
+
+    					assert(score_for_inner_am.is_finite());
+    					score_t score_am_stacking = score_for_inner_am.finite_value()
+    																		+ score_for_stacking(a,b,inner_a,inner_b);
+
+    					str_matching_poss = trace_seq_str_matching_heuristic(a,b,state,cur_pos,idx_pos_before,
+    							last_seq_pos_to_be_matched,score_am_stacking);
+
+    					if(str_matching_poss){
+    						cur_epm.add_am(inner_a,inner_b);
+    						cur_epm.store_am(inner_a,inner_b);
+    						break;
+    					}
+    				}
+    				if(str_matching_poss) break;
+    			}
+    			assert(seq_matching_poss || str_matching_poss);
     		}break;
 
     		case in_G_A:
     		{
     			assert(idx_i>=1 && idx_j>=1);
+    			if(debug_trace_LGLR_heuristic){
+    				cout << "in_G_A " << endl;
+    			}
 
     			matpos_t mat_pos_left = sparse_trace_controller.first_left_valid_mat_pos_with_tc(idxA,idxB,cur_pos,a.left(),b.left());
 
@@ -1166,10 +1193,10 @@ bool debug_check_poss = false;
 
     			}
     			// structural matching
-    			for(ArcMatchIdxVec::const_iterator it=arc_matches->common_right_end_list(i,j).begin();
-    					arc_matches->common_right_end_list(i,j).end() != it; ++it ) {
+    			for(ArcMatchIdxVec::const_iterator it=arc_matches.common_right_end_list(i,j).begin();
+    					arc_matches.common_right_end_list(i,j).end() != it; ++it ) {
 
-    				const ArcMatch &am = arc_matches->arcmatch(*it);
+    				const ArcMatch &am = arc_matches.arcmatch(*it);
     				const Arc &a = am.arcA();
     				const Arc &b = am.arcB();
     				const PairArcIdx pair_arcs(a.idx(),b.idx());
@@ -1222,8 +1249,11 @@ bool debug_check_poss = false;
     		preproc_fill_epm(am_to_do_for_F,pos_cur_epm,found_epms,count_EPMs,min_allowed_score);
     	}
 
+    	//test
+    	//found_epms.push_back(found_epms.at(0));
+
     	// check whether the EPM list doesn't contain duplicates and only maximally extended EPMs
-    	if(!count_EPMs && !inexact_struct_match){
+    	if(!count_EPMs){
     		assert(validate_epm_list(found_epms));
     	}
     }
@@ -2162,8 +2192,7 @@ bool debug_check_poss = false;
     	return true;
     }
 
-    // checks the validity of the epm list, i.e. that no epm is contained in another epm (all
-    // epms are maximally extended)
+    // checks the validity of the epm list, i.e. that no epm is contained multiple times
     bool ExactMatcher::validate_epm_list(epm_cont_t &found_epms){
 
     	if(found_epms.size()>10000) cout << "validate epm list " << found_epms.size() << endl;
@@ -2172,94 +2201,23 @@ bool debug_check_poss = false;
 
     	for(epm_cont_t::const_iterator cur_epm = found_epms.begin();cur_epm!=found_epms.end();++cur_epm){
 
-    		//if(counter%1000==0 && counter!=0) cout << counter << endl; // show progress
-    		//++counter;
-
     		//go through all epms from the current epm on
     		epm_cont_t::const_iterator it = cur_epm;
 
     		++it; //compare to all other epms after cur_epm
+    		bool equal;
 
     		for(;it!=found_epms.end();++it){
-
-    			const EPM &bigger_epm = (cur_epm->pat_vec_size()>=it->pat_vec_size()) ? *cur_epm : *it;
-    			const EPM &smaller_epm = (cur_epm->pat_vec_size()>=it->pat_vec_size()) ? *it : *cur_epm;
-
-    			bool includes = bigger_epm.includes(smaller_epm);
-
-    			//if(cur_epm->pat_vec_size()>= it->pat_vec_size()){
-    			//	result = cur_epm->includes(*it);
-    			//}
-
-    			//else{result = it->includes(*cur_epm);}
-
-    			if(includes){
-    				//see example:
-    				//mouse.fa human.fa -P 0.01 -D 30 --suboptimal --chaining -v --number-of-EPMs 10000
-
-    				// check whether all arc matches have the same left and right endpoint in both sequences
-    				EPM::pat_vec_t::size_type i, pos_left_end, pos_right_end;
-    				pos_type al, ar, bl, br;
-    				ArcMatchIdxVec am_vec_cur_epm, am_vec_it;
-    				int balance;
-
-    				for(int k=0;k<2;++k){ // do for both epms
-
-    					const EPM &epm = (k==0) ? *cur_epm : *it;
-    					ArcMatchIdxVec &am_vec = (k==0) ? am_vec_cur_epm : am_vec_it;
-    					i=0;
-
-    					while(i<epm.pat_vec_size()){ // extract the arcmatches from epms
-    						if(epm.pat_vec_at(i).third=='('){
-    							balance = 1;
-    							pos_left_end = i; // i -> first '(' bracket
-
-    							while(balance!=0){ //find corresponding closing bracket
-    								++i;
-    								assert(i<epm.pat_vec_size());
-    								if(epm.pat_vec_at(i).third=='(') ++balance;
-    								if(epm.pat_vec_at(i).third==')') --balance;
-    							} // i is the position of the corresponding ')' bracket
-    							pos_right_end = i;
-
-    							al = epm.pat_vec_at(pos_left_end).first;
-    							ar = epm.pat_vec_at(pos_right_end).first;
-    							bl = epm.pat_vec_at(pos_left_end).second;
-    							br = epm.pat_vec_at(pos_right_end).second;
-
-    							const Arc &arcA = bpsA.arc(al,ar);
-    							const Arc &arcB = bpsB.arc(bl,br);
-
-    							assert(al == arcA.left() && ar == arcA.right());
-    							assert(bl == arcB.left() && br == arcB.right());
-
-    							// look up correponding arcmatch index
-    							const ArcMatch::idx_type &am_idx = arc_matches->am_index(arcA.idx(),arcB.idx());
-
-    							// assert that we found a valid arcmatch idx
-    							assert(am_idx != arc_matches->invalid_am_index());
-
-    							am_vec.push_back(am_idx); // store arcmatch index
-    							i=pos_left_end; // reset i
-    						}
-    						++i; // outermost while loop
+    			if(cur_epm->pat_vec_size() == it->pat_vec_size()){
+    				equal = true;
+    				EPM::pat_vec_t::const_iterator it2 = it->begin();
+    				for(EPM::pat_vec_t::const_iterator it1 = cur_epm->begin();
+    						it1 != cur_epm->end();++it1,++it2){
+    					if(!(it1->first==it2->first && it1->second == it2->second && it1->third == it2->third)){
+    						equal=false;
     					}
-    					sort(am_vec.begin(),am_vec.end());
     				}
-
-    				// check whether arcmatch indices are equal
-    				const ArcMatchIdxVec &bigger_vec = (am_vec_cur_epm.size()>=am_vec_it.size()) ? am_vec_cur_epm : am_vec_it;
-    				const ArcMatchIdxVec &smaller_vec = (am_vec_cur_epm.size()>=am_vec_it.size()) ? am_vec_it : am_vec_cur_epm;
-
-    				includes = std::includes(bigger_vec.begin(),bigger_vec.end(),
-    						smaller_vec.begin(),smaller_vec.end());
-
-    				if(includes){
-    					cerr << "one pattern is included in another one! " << endl;
-    					cerr << *cur_epm << endl;
-    					cerr << *it << endl;
-    					return false;
-    				}
+    				if(equal) return false;
     			}
     		}
     	}
