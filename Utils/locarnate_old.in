@@ -1,0 +1,2027 @@
+#!@PERL@ -I@prefix@/lib/perl
+
+my $prefix = "@prefix@";
+my $exec_prefix = "@exec_prefix@";
+my $bindir = "@bindir@";
+
+## the tcoffe version to use
+my $t_coffee = "@TCOFFEE@";
+
+## vienna package programs
+my $RNAfold = "@RNAfold@";
+my $RNAalifold = "@RNAalifold@";
+
+
+use strict;
+use warnings;
+
+use FileHandle;
+use DirHandle;
+use FindBin;
+
+use lib $FindBin::RealBin;
+
+use Error;
+use Options;
+use Utilities;
+use Alignment;
+use Structure;
+
+### global varibales ###
+my $locarna = "$bindir/locarna";
+my $base_path = 'results';
+my $ribosum_file = "$prefix/share/locarna/Matrices/RIBOSUM85_60";
+
+###########################################################################
+# main                                                                    
+###########################################################################
+
+### options ###
+
+my $version = '0.9';
+my $description = 'Calculates a multiple local RNA sequence structure'
+    .' alignment of the sequences given by INPUT';
+
+my @definition = (
+  # ["long", "short", "default", "description"],
+
+  # extern programs
+  ['RNAfold', undef, $RNAfold,  undef],
+  ['locarna', undef, $locarna,  undef],
+  ['t_coffee', undef, $t_coffee,  undef],
+  ['RNAalifold', undef, $RNAalifold,  undef],
+
+  # unnamed options
+  ['INPUT', 'NN', 'REQ',  undef],
+
+  # generic options
+  [undef, undef, undef, "\n".'Generic options:'],
+  ['help', undef, 'FLAG', 'display this help and exit'],
+  ['version', undef, 'FLAG', 'output version information and exit'],
+  ['verbose', 'v', 'FLAG', 'explain what is being done'],
+  ['recycle', 'r', 'FLAG', undef],
+
+  # output options
+  [undef, undef, undef, "\n".'Output:'],
+  ['results', 'R', '', 'directory for results (all formats and '
+   .'intermediate data)'],
+  ['clustal', 'C', '', 'filename for results in clustal format'],
+  ['fasta', 'F', '', 'filename for results in fasta format'],
+  ['stockholm', 'S', '', 'filename for results in stockholm format'],
+
+  # configuration options
+  [undef, undef, undef, "\n".'Configuration:'],
+  [undef, undef, undef, ' Locarna:'],
+  ['match', 'm', undef, 'Match score'],                              # 50
+  ['mismatch', 'M', undef, 'Mismatch score'],                         # 0
+  ['ribosum-file', undef, $ribosum_file, 
+   'Ribosum file for base and arc match scores'],
+  ['indel', 'i', undef, 'Indel score'],                            # -100
+  ['indel-opening', undef, undef, 'Indel opening score'],          # -200
+  ['struct-weight', 's', undef, 'Maximal weight of 1/2 arc match'], # 100
+  ['tau', 't', undef, 'Tau factor in percent'],                       # 0
+  ['exclusion', 'E', undef, 'Exclusion weight'],                   # 0
+  ['no-stacking', undef, 'FLAG', 'Turn of stacking terms'],
+  ['no-struc', undef, 'FLAG', 'Turn of structure locality'],
+  ['no-seq', undef, 'FLAG', 'Turn of sequence locality'],
+  ['min-prob', 'p', undef, 'Minimal probability'],
+  ['max-diff-am', 'D', undef, 'Maximal difference for sizes of matched arcs'],
+
+  [undef, undef, undef, ' T-coffee:'],
+  ['double', 'd', 'FLAG', 'double weights for edges with basepairs']);
+
+my $remote_file = $FindBin::RealBin.'/.locarnate_rc';
+
+my $options = new locarnate::Options($version, $description, 
+                                     \@definition, $remote_file);
+
+if ($options->value('help')) {
+  *STDERR->print($options->help_message());
+  exit(0);
+}
+elsif ($options->value('version')) {
+  *STDERR->print($options->version_message());
+  exit(0);
+}
+elsif ($options->error()) {
+  *STDERR->print($options->error_message());
+  *STDERR->print("\n");
+  *STDERR->print($options->help_message());
+  exit(1);
+}
+
+### calculations ###
+
+my $results_path = determine_directory($options);
+
+my $sequences = parse_input($options);
+
+if (!$options->value('recycle')) {
+  calculate_dot_plots($options, $results_path, $sequences);
+}
+
+my $bps = parse_dot_plots($options, $results_path, $sequences);
+# \@bps
+# []  \@bps_begin
+#     []  \@bps_end
+#         []  $prob
+
+if (!$options->value('recycle')) {
+  calculate_pairwise_alignments($options, $results_path, $sequences);
+}
+
+my $pair_alignments = parse_pair_alignments($options, $results_path, 
+                                            $sequences);
+# \@alignments
+# []  $alignment
+
+write_pair_alignments($options, $results_path, $sequences, 
+                      $pair_alignments);
+
+if (!$options->value('recycle')) {
+  calculate_mult_alignment($options, $results_path, $sequences,
+                           $bps, $pair_alignments);
+}
+
+my $mult_alignment = parse_mult_alignment($options, $results_path, 
+                                          $sequences);
+
+my $cons_rates = determine_cons_rates($options, $sequences, 
+                                      $pair_alignments, $mult_alignment);
+# \@cons_rates
+# []  $column_rate
+
+# determine_exclusions($options, $sequences, $pair_alignments, 
+#                      $mult_alignment, $cons_rates);
+
+calculate_cons_data($options, $results_path, 
+                    $mult_alignment, $cons_rates);
+
+my $cons_data = parse_cons_data($options, $results_path, $cons_rates);
+# \%cons_data
+# {'seq'}    $seq
+# {'struc'}  $struc
+
+# join_exclusions($options, $sequences, $mult_alignment, 
+#                 $cons_rates, $cons_data);
+
+write_clustal($options, $results_path, $sequences, 
+              $mult_alignment, $cons_rates);
+write_fasta($options, $results_path, $sequences, 
+            $mult_alignment, $cons_rates);
+
+write_stockholm($options, $results_path, $sequences, 
+                $mult_alignment, $cons_rates, $cons_data);
+
+write_flat($options, $results_path, $sequences, 
+           $mult_alignment, $cons_rates, $cons_data);
+
+cleanup($options, $results_path, $sequences);
+
+
+###########################################################################
+# subs                                                                    
+###########################################################################
+
+sub determine_directory {
+  if (@_ != 1) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options = $_[0];
+
+  my $path = $options->value('results');
+
+  if ($path ne '') {
+    unless (locarnate::Utilities::dir_exists($path)) {
+      if ($options->value('recycle')) { 
+        locarnate::Error::error('Path for recycling does not exists');
+      }
+      locarnate::Utilities::mk_dir($path);
+    }
+    else {
+      if (!$options->value('recycle')) {
+        locarnate::Error::warning('Path "'.$path.'" already exists', 1);
+      }
+    }
+  }
+  else {
+    if ($options->value('recycle')) { 
+      locarnate::Error::error('No path for recycling given');
+    }
+
+    # result dir is base path + input name + counter
+    if (!locarnate::Utilities::dir_exists($base_path)) {
+      locarnate::Utilities::mk_dir($base_path);
+    }
+    locarnate::Utilities::mk_dir($base_path);
+    my $name = $options->value('INPUT');
+    $name =~ s/[^\/]*\///g;
+    $name =~ s/\.[^\.]*$//g;
+
+    $path = $base_path.'/'.$name;
+    my $counter = 1;
+    while (locarnate::Utilities::dir_exists($path)) {
+      if ($counter == 1) {
+        $path .= '_2';
+      }
+      else {
+        $path =~ s/_\d+$/_$counter/;
+      }
+      ++$counter;
+    }
+    locarnate::Utilities::mk_dir($path);
+  }
+
+  *STDERR->print('Results are writen in "'.$path.'"'."\n");
+  $path = locarnate::Utilities::abs_dir($path);
+
+  return($path);
+}
+
+sub parse_input {
+  if (@_ != 1) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options = $_[0];
+
+  my $file_name = $options->value('INPUT');
+
+  *STDERR->print('Parse sequences...'."\r");
+
+  my $file = new FileHandle($file_name, 'r');
+  unless ($file) {
+    locarnate::Error::error('Can\'t open file "'.$file_name.'"');
+  }
+
+  my $sequences = new locarnate::Alignment();
+  my $counter = 1;
+  my $struc_file = undef;
+  while (my $line = $file->getline()) {
+    locarnate::Utilities::uncomment(\$line);
+    locarnate::Utilities::trim(\$line);
+
+    if (!$line) {
+      next;
+    }
+    elsif ($line =~ m/^>/) {
+      chomp($line);
+      my $tag = substr($line, 1, length($line) - 1);
+      $tag = locarnate::Utilities::trim($tag);
+      if (!$tag) {
+        locarnate::Error::error('Sequence '.$counter.' in "'.
+                          $file_name.'" has no valid tag');
+      }
+      elsif ($sequences->exists_sequence_tag($tag)) {
+        locarnate::Error::error('Multiple tag "'.$tag.'" found in "'.
+                                $file_name.'"');
+      }
+
+      my $filePos = $file->getpos;
+      my $found_struc = 0;
+      while (my $line = $file->getline()) {
+        locarnate::Utilities::uncomment(\$line);
+        locarnate::Utilities::trim(\$line);
+        if (!$line) {
+          next;
+        }
+        elsif ($line =~ m/^>/) {
+          # next tag
+          $file->setpos($filePos);
+          last;
+        }
+        elsif ($line =~ m/^[ACGTURYMKWSBDHVNacgturymkwsbdhvn]+$/) {
+          # seq
+          $sequences->append_sequence({'seq' => $line}, $tag);
+        }
+        elsif ($line =~ m/^[().]+$/) {
+          # struc
+          $sequences->append_sequence({'struc' => $line}, $tag);
+          if (!defined($struc_file)) {
+            $struc_file = 1;
+          }
+          $found_struc = 1;
+        }
+        else {
+          locarnate::Error::error('sequence '.$counter.
+                            ' in "'.$file_name.'" has no valid RNA '.
+                            'sequence: "'.$line.'"');
+        }
+        $filePos = $file->getpos;
+      }
+      if (!defined($struc_file)) {
+        $struc_file = 0;
+      }
+
+      if ($struc_file && !$found_struc) {
+        locarnate::Error::error('sequence '.$counter.
+                          ' in "'.$file_name.'" has no structure data');
+      }
+      elsif (!$struc_file && $found_struc) {
+        locarnate::Error::error('sequence '.($counter - 1).
+                          ' in "'.$file_name.'" has no structure data');
+      }
+      if (!$sequences->exists_sequence_tag($tag, 'seq')) {
+        locarnate::Error::error('sequence '.$counter.
+                          ' in "'.$file_name.'" has no sequence data');
+      }
+      if ($sequences->exists_sequence_tag($tag, 'struc') &&
+          $sequences->sequence_size($tag, 'struc') != 
+          $sequences->sequence_size($tag, 'seq')) {
+        locarnate::Error::error('sequence '.$counter.
+                          ' in "'.$file_name.'" has different "seq" and '.
+                          '"struc" sizes');
+      }
+      ++$counter;
+    }
+    else {
+      locarnate::Error::error('No fasta format "'.$line.
+                        '" in file "'.$file_name.'"');
+    }
+  }
+
+  $file->close();
+
+  if ($sequences->sequence_size() < 2) {
+    locarnate::Error::error('At least two sequences needed');
+  }
+
+  *STDERR->print('Parse sequences... done! Found '.
+                 $sequences->sequence_size().
+                 ' sequences.'."\n");
+
+  return($sequences);
+}
+
+sub calculate_dot_plots {
+  if (@_ != 3) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+
+  *STDERR->print('Calculate pair probabilities...'."\r");
+
+  locarnate::Utilities::mk_dir($results_path.'/dp');
+
+  # write fasta file
+  my $file_name = $results_path.'/dp/input.fa';
+  my $file = new FileHandle($file_name, 'w');
+  unless ($file) {
+    locarnate::Error::error('can\'t create file "'.$file_name.'"');
+  }
+
+  my $struc_file = 0;
+  for (my $i = 0; $i < $sequences->sequence_size(); ++$i) {
+    my $tag = '>S'.($i + 1);
+    $file->print($tag."\n");
+    my $sequence = $sequences->sequence($i, 'seq');
+    $file->print($sequence."\n");
+    if ($sequences->exists_sequence_tag($i, 'struc')) {
+      my $structure = $sequences->sequence($i, 'struc');
+      $file->print($structure."\n");
+      $struc_file = 1;
+    }
+  }
+  $file->close();
+
+
+  # call RNAfold
+  my $cwd = locarnate::Utilities::cw_dir();
+  chdir($results_path.'/dp');
+  
+  my $call = $options->value('RNAfold');
+  if ($struc_file) {
+    $call .= ' -C';
+  }
+  if ($options->value('no-stacking')) {
+    $call .= ' -p';
+  }
+  else {
+    $call .= ' -p2';
+  }
+  $call .= ' <'.$file_name.' 1>/dev/null';
+  my $code = system($call);
+
+  if ($code) {
+    locarnate::Error::error('Can\'t perform RNAfold calculation '.
+                      '(developed under Vienna Package 1.7.2)');
+  }
+
+  chdir($cwd);
+
+  *STDERR->print('Calculate pair probabilities... done!'."\n");
+}
+
+sub parse_dot_plots {
+  if (@_ != 3) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+
+  *STDERR->print('Parse pair probabilities...'."\r");
+
+  my @bps = ();
+
+  for (my $i = 0; $i < $sequences->sequence_size(); ++$i) {
+    my $seq_size = $sequences->sequence_size($i , 'seq');
+    my @bps_begin = ();
+    for (my $j = 0; $j < $seq_size; ++$j) {
+      my @bps_end = ();
+      for (my $k = 0; $k < $seq_size; ++$k) {
+        push(@bps_end, -1);
+      }
+      push(@bps_begin, \@bps_end);
+    }
+
+    my $file_name = $results_path.'/dp/S'.($i + 1);
+
+    if ($options->value('no-stacking')) {
+      $file_name .= '_dp.ps';
+    }
+    else {
+      $file_name .= '_dp2.ps';
+    }
+    my $file = new FileHandle($file_name, 'r');
+    unless ($file) {
+      locarnate::Error::error('Can\'t open file "'.$file_name.'"');
+    }
+
+    while (my $line = $file->getline()) {
+      if ($line =~ m/^(\d+) (\d+) ([\.\d]+) ubox$/) {
+        my $begin = $1 - 1;
+        my $end = $2 - 1;
+        my $prob = $3 ** 2;
+
+        $bps_begin[$begin]->[$end] = $prob;
+      }
+    }
+    $file->close();
+
+    push(@bps, \@bps_begin);
+  }
+
+  *STDERR->print('Parse pair probabilities... done!'."\n");
+
+  return(\@bps);
+}
+
+sub calculate_pairwise_alignments {
+  if (@_ != 3) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+
+  my $parameter = ' ';
+
+  if ($options->value('match')) {
+    $parameter .= '--match='.$options->value('match').' ';
+  }
+  if ($options->value('mismatch')) {
+    $parameter .= '--mismatch='.$options->value('mismatch').' ';
+  }
+  if ($options->value('ribosum-file') ne '') {
+    $parameter .= '--ribosum-file='.$options->value('ribosum-file').' ';
+  }
+  if ($options->value('indel')) {
+    $parameter .= '--indel='.$options->value('indel').' ';
+  }
+  if ($options->value('indel-opening') ne '') {
+    $parameter .= '--indel-opening='.$options->value('indel-opening').' ';
+  }
+  if ($options->value('struct-weight')) {
+    $parameter .= '--struct-weight='.$options->value('struct-weight').' ';
+  }
+  if ($options->value('tau')) {
+    $parameter .= '--tau='.$options->value('tau').' ';
+  }
+  if ($options->value('exclusion')) {
+    $parameter .= '--exclusion='.$options->value('exclusion').' ';
+  }
+  if (!$options->value('no-stacking')) {
+    $parameter .= '--stacking ';
+  }
+  if (!$options->value('no-struc')) {
+    $parameter .= '--struct-local=1 ';
+  }
+  if (!$options->value('no-seq')) {
+    $parameter .= '--sequ-local=1 ';
+  }
+  if ($options->value('min-prob')) {
+    $parameter .= '--min-prob='.$options->value('min-prob').' ';
+  }
+  if ($options->value('max-diff-am')) {
+    $parameter .= '--max-diff-am='.$options->value('max-diff-am').' ';
+  }
+
+  locarnate::Utilities::mk_dir($results_path.'/pair');
+
+  my $bd = locarnate::Utilities::bin_dir();
+
+  my $counter = 0;
+  my $number = $sequences->sequence_size() * 
+      ($sequences->sequence_size() - 1) / 2;
+  for (my $i = 0; $i < $sequences->sequence_size() - 1; ++$i) {
+    my $first = $results_path.'/dp/S'.($i + 1);
+    if ($options->value('no-stacking')) {
+      $first .= '_dp.ps';
+    }
+    else {
+      $first .= '_dp2.ps';
+    }
+    for (my $j = $i + 1; $j < $sequences->sequence_size(); ++$j) {
+      ++$counter;
+      *STDERR->print("\r".(' 'x80));
+      *STDERR->print("\r".'Calculate pairwise alignment '.
+                     $counter.'/'.$number.' (Seq '.($i + 1).' <-> Seq '.
+                     ($j + 1).')...');
+      my $second = $results_path.'/dp/S'.($j + 1);
+      if ($options->value('no-stacking')) {
+        $second .= '_dp.ps';
+      }
+      else {
+        $second .= '_dp2.ps';
+      }
+
+      my $result = $results_path.'/pair/S'.($i + 1).'_S'.($j + 1).'.aln';
+      
+      my $call = $options->value('locarna').' '.$parameter.
+          ' --clustal='.$result.' --write-structure '
+          .$first.' '.$second.' 1>/dev/null 2>/dev/null';
+
+      my $code = system($call);
+      if ($code) {
+        # first locarna version hat no parameter --write-structure
+        my $call = $options->value('locarna').' '.$parameter.
+            ' --clustal='.$result.' '
+            .$first.' '.$second.' 1>/dev/null 2>/dev/null';
+
+        my $code = system($call);
+        if ($code) {
+          locarnate::Error::error('Can\'t perform locARNA calculation'.
+                            ' (developed under locarna 1.4.5, call:'.$call.')');
+        }
+      }
+    }
+  }
+  *STDERR->print(' done!'."\n");
+}
+
+sub parse_pair_alignments {
+  if (@_ != 3) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+
+  *STDERR->print('parse pairwise alignments...'."\r");
+
+  my @alignments = ();
+
+  for (my $i = 0; $i < $sequences->sequence_size() - 1; ++$i) {
+    for (my $j = $i + 1; $j < $sequences->sequence_size(); ++$j) {
+      my $file_name = $results_path.'/pair/S'.($i + 1).
+          '_S'.($j + 1).'.aln';
+      my $file = new FileHandle($file_name, 'r');
+      unless ($file) {
+        locarnate::Error::error('Can\'t open file "'.$file_name.'"');
+      }
+
+      my $alignment = new locarnate::Alignment();
+
+
+      my $tag = 'S'.($i + 1).'_S'.($j + 1);
+
+      while (my $line = $file->getline()) {
+        locarnate::Utilities::trim(\$line);
+        if ($line eq '') {
+          next;
+        }
+        elsif ($line =~ m/^CLUSTAL W.*Score: (.+)/) {
+          my $score = $1;
+          if ($score !~ m/-?\d+/) {
+            $score = 0;
+          }
+          $alignment->set_score($score);
+        }
+        else {
+          my $struc = $line;
+          $line = $file->getline();
+          locarnate::Utilities::trim(\$line);
+          my @columns = split(/\s+/, $line);
+          if (@columns != 2) {
+            locarnate::Error::error('Unkown syntax in locarna results. Found "'.
+                              $line.'" instead of tag with sequence in file "'.
+                              $file_name.'" (developed under locarna 1.4.5)');
+          }
+          $alignment->append_sequence({'seq' => $columns[1]}, 
+                                      $columns[0]);
+          $alignment->append_sequence({'struc' => $struc}, 
+                                      $columns[0]);
+          $line = $file->getline();
+          locarnate::Utilities::trim(\$line);
+          @columns = split(/\s+/, $line);
+          if (@columns != 2) {
+            locarnate::Error::error('Unkown syntax in locarna results. Found "'.
+                              $line.'" instead of tag with sequence in file "'.
+                              $file_name.'" (developed under locarna 1.4.5)');
+          }
+          $alignment->append_sequence({'seq' => $columns[1]}, 
+                                      $columns[0]);
+          $line = $file->getline();
+          locarnate::Utilities::trim(\$line);
+          $alignment->append_sequence({'struc' => $line}, 
+                                      $columns[0]);
+        }
+      }
+      $file->close();
+
+      # check for correct locarna output format
+      if ($alignment->sequence_size() != 2) {
+        locarnate::Error::error('Unkown syntax in locarna results. Found '.
+                          $alignment->sequence_size().
+                          ' sequences instead of 2.'.
+                          ' (developed under locarna 1.4.5)');
+      }
+
+      $alignment->check(['seq'], []);
+
+      for (my $k = 0; $k < $alignment->sequence_size(); ++$k) {
+        my $seq = $alignment->sequence($k, 'seq');
+        if ($seq =~ m/([^ACGUTRYMKWSBDHVNacgutrymkwsbdhvn\-~_])/) {
+          locarnate::Error::error('Sequence '.($k + 1).' in "'.$file_name.
+                            '" is no valid RNA alignment sequence');
+        }
+      }
+      push(@alignments, $alignment);
+    }
+  }
+
+  *STDERR->print('Parse pairwise alignments... done!'."\n");
+
+  return(\@alignments);
+}
+
+sub write_pair_alignments {
+  if (@_ != 4) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  *STDERR->print('Write pairwise alignments...'."\r");
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+  my $alignments = $_[3];
+
+  # write alignments
+  my $file_name = $results_path.'/pair/overview.txt';
+  my $file = new FileHandle($file_name, 'w');
+  unless ($file) {
+    locarnate::Error::error('Can\'t create file "'.$file_name.'"');
+  }
+
+  my $counter = 0;
+  for (my $i = 0; $i < $sequences->sequence_size() - 1; ++$i) {
+    my $first_tag = $sequences->sequence_tag($i);
+    for (my $j = $i + 1; $j < $sequences->sequence_size(); ++$j) {
+      my $second_tag = $sequences->sequence_tag($j);
+      my $alignment = $alignments->[$counter];
+      $file->print('Alignment '.($counter + 1).': Seq '.($i + 1).' ('.
+                   $first_tag.') <-> Seq '.($j + 1).' ('.
+                   $second_tag.'): '.$alignment->score()."\n");
+
+      for (my $k = 0; $k < $alignment->sequence_size(); ++$k) {
+        my $seq = $alignment->sequence($k, 'seq');
+        $seq =~ s/~/-/g;
+        $file->print($seq."\n");
+      }
+      my $struc = $alignment->sequence(0, 'struc');
+      $struc =~ s/~/./g;
+      $file->print($struc."\n");
+      $file->print("\n");
+      ++$counter;
+    }
+  }
+
+  *STDERR->print('Write pairwise alignments... done!'."\n");
+}
+
+sub calculate_mult_alignment {
+  if (@_ != 5) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+  my $bps = $_[3];
+  my $alignments = $_[4];
+
+  locarnate::Utilities::mk_dir($results_path.'/mult');
+
+  *STDERR->print('Calculate multiple alignment...'."\r");
+
+  # write library
+  my $file_name = $results_path.'/mult/edges.lib';
+  my $file = new FileHandle($file_name, 'w');
+  unless ($file) {
+    locarnate::Error::error('Can\'t create file "'.$file_name.'"');
+  }
+
+  $file->print('! T-COFFEE_LIB_FORMAT_01'."\n");
+  $file->print($sequences->sequence_size()."\n");
+  for (my $i = 0; $i < $sequences->sequence_size(); ++$i) {
+    my $sequence = $sequences->sequence($i, 'seq');
+    $file->print("\n");
+    $file->print('seq'.($i + 1).'F '.length($sequence).' '.$sequence."\n");
+  }
+
+  # worst alignment gets 1000, the best 1000 +
+
+  my @scores = ();
+  my $counter = 0;
+  for (my $i = 0; $i < $sequences->sequence_size() - 1; ++$i) {
+    for (my $j = $i + 1; $j < $sequences->sequence_size(); ++$j) {
+      my $alignment = $alignments->[$counter];
+      my $score = $alignment->score();
+      push(@scores, $score);
+      ++$counter;
+    }
+  }
+
+  my %score_place = ();
+  @scores = sort {$a <=> $b} (@scores);
+  for (my $i = 0; $i < @scores; ++$i) {
+    my $score = $scores[$i];
+    if (!exists($score_place{$score})) {
+      $score_place{$score} = $i;
+    }
+    else {
+      ++$score_place{$score};
+    }
+  }
+  my $place_correction = 1000;
+  if (@{$alignments} > 2) {
+    $place_correction = 1000 / (@{$alignments} - 1);
+  }
+
+  $counter = 0;
+  for (my $i = 0; $i < $sequences->sequence_size() - 1; ++$i) {
+    for (my $j = $i + 1; $j < $sequences->sequence_size(); ++$j) {
+      my $alignment = $alignments->[$counter];
+      my $score = $alignment->score();
+      my $place = $score_place{$score};
+      $file->print("\n");
+      $file->print('#'.($i + 1).' '.($j + 1)."\n");
+      $file->print("\n");
+      for (my $k = 0; $k < $alignment->columns(); ++$k) {
+        my $weight = sprintf("%.0f", 1000 + $place * $place_correction);
+        # my $weight = 1000;
+        my $first_seq_pos = $alignment->sequence_align_to_seq(0, 'seq', $k);
+        my $second_seq_pos = $alignment->sequence_align_to_seq(1, 'seq', $k);
+        if ($first_seq_pos >= 0 && $second_seq_pos >= 0) {
+          if ($options->value('double')) {
+            if ($alignment->sequence(0, 'struc', $k) eq '(' ||
+                $alignment->sequence(0, 'struc', $k) eq ')') {
+              $weight *= 2;
+              
+            }
+          }
+          $file->print(($first_seq_pos + 1).' '.($second_seq_pos + 1).' '.
+                       $weight."\n");
+        }
+      }
+      ++$counter;
+    }
+  }
+  $file->print('! SEQ_1_TO_N'."\n");
+
+  $file->close();
+
+
+  my $cwd = locarnate::Utilities::cw_dir();
+  chdir($results_path.'/mult');
+
+  my $aln_file_name = $results_path.'/mult/tcoffee.aln';
+  my $out_file_name = $results_path.'/mult/tcoffee.out';
+  my $err_file_name = $results_path.'/mult/tcoffee.err';
+
+  my $call = $options->value('t_coffee').' -in=L'.$file_name.
+      ' -outfile='.$aln_file_name.' 1>'.$out_file_name.
+      ' 2>'.$err_file_name;
+
+  my $code = system($call);
+
+  # TODO: debuggin only
+  print $call;
+  # ===================
+  if ($code) {
+    print($call."\n");
+    locarnate::Error::error('Can\'t perform t_coffee calculation'.
+                      ' (developed under T-Coffee 5.31)');
+  }
+
+  chdir($cwd);
+
+  *STDERR->print('Calculate multiple alignment... done!'."\n");
+}
+
+sub parse_mult_alignment {
+  if (@_ != 3) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+
+  *STDERR->print('Parse multiple alignment...'."\r");
+
+  my $file_name = $results_path.'/mult/tcoffee.aln';
+  my $file = new FileHandle($file_name, 'r');
+  unless ($file) {
+    locarnate::Error::error('Can\'t open file "'.$file_name.'"');
+  }
+
+  my $alignment = new locarnate::Alignment();
+
+  while (my $line = $file->getline()) {
+    locarnate::Utilities::trim(\$line);
+    if ($line =~ m/^seq(\d+)F/) {
+      my $seq_id = $1 - 1;
+      my @columns = split(/\s+/, $line);
+      my $seq = $columns[1];
+      $seq = uc($seq);
+      $alignment->append_sequence({'seq' => $seq}, 'S'.$seq_id);
+    }
+  }
+
+  $alignment->check(['seq'], []);
+
+  $file->close();
+
+  *STDERR->print('Parse multiple alignment... done!'."\n");
+
+  return($alignment);
+}
+
+sub determine_cons_rates {
+  if (@_ != 4) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $sequences = $_[1];
+  my $pair_alignments = $_[2];
+  my $mult_alignment = $_[3];
+
+  *STDERR->print('Determine conservation rates...'."\r");
+
+  my @cons_rates = ();
+
+  # actual, the conservation rate of a columns is the number of
+  # pairs without gaps in the multiple alignment that are also
+  # present in a pairwise alignment divided by the number of all
+  # pairs
+
+  # to do: possible correction by the rate of gaps in a column
+
+  for (my $k = 0; $k < $mult_alignment->columns(); ++$k) {
+    my $pair_sum = 0;
+    my $all_sum = 0;
+    my $counter = 0;
+    for (my $i = 0; $i < $sequences->sequence_size() - 1; ++$i) {
+
+      my $first_seq = 
+          $mult_alignment->sequence_align_to_seq('S'.$i, 'seq', $k);
+      for (my $j = $i + 1; $j < $sequences->sequence_size(); ++$j) {
+        my $second_seq = 
+            $mult_alignment->sequence_align_to_seq('S'.$j, 'seq', $k);
+        ++$all_sum;
+        if ($first_seq >= 0 && $second_seq >= 0) {
+          my $first_align = $pair_alignments->[$counter]->
+              sequence_align_to_seq(0, 'seq', $first_seq);
+          my $second_align = $pair_alignments->[$counter]->
+              sequence_align_to_seq(1, 'seq', $second_seq);
+          if ($first_align == $second_align) {
+            ++$pair_sum;
+          }
+        }
+        ++$counter;
+      }
+    }
+    push(@cons_rates, ($pair_sum / $all_sum));
+  }
+
+  *STDERR->print('Determine conservation rates... done!'."\n");
+
+  return(\@cons_rates);
+}
+
+sub determine_exclusions {
+  if (@_ != 5) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $sequences = $_[1];
+  my $pair_alignments = $_[2];
+  my $mult_alignment = $_[3];
+  my $cons_rates = $_[4];
+
+  *STDERR->print('determine exclusions...'."\r");
+
+
+  for (my $i = 0; $i < $mult_alignment->columns(); ++$i) {
+    # each column in mult alignment
+    for (my $j = 0; $j < $mult_alignment->sequence_size(); ++$j) {
+
+      my $char = $mult_alignment->sequence($j, 'seq', $i);
+      if ($char ne '-') {
+        next;
+      }
+      # each species in mult alignment with gap at column
+      my $gaps = 0;
+      my $exclusions = 0;
+      my $match = 0;
+      for (my $k = 0; $k < $mult_alignment->sequence_size(); ++$k) {
+        if ($k == $j) {
+          next;
+        }
+        my $ref_seq_pos = $mult_alignment->sequence_align_to_seq($k, 'seq', $i);
+        if ($ref_seq_pos < 0) {
+          next;
+        }
+        # each other species in mult alignment with no gap at column
+
+        my $first_id = $j;
+        my $second_id = $k;
+        if ($k < $j) {
+          $first_id = $k;
+          $second_id = $j;
+        }
+
+        my $pair_id = 0;
+        for (my $l = 0; $l < $first_id; ++$l) {
+          $pair_id += $mult_alignment->sequence_size() - $l - 1;
+        }
+        $pair_id += $second_id - $first_id - 1;
+
+        my $alignment = $pair_alignments->[$pair_id];
+        my $ref_align_pos = undef;
+        my $gap_char = undef;
+        if ($k < $j) {
+          $ref_align_pos = $alignment->
+              sequence_seq_to_align(0, 'seq', $ref_seq_pos);
+          $gap_char = $alignment->
+              sequence_align_to_seq(1, 'seq', $ref_align_pos);
+        }
+        else {
+          $ref_align_pos = $alignment->
+              sequence_seq_to_align(1, 'seq', $ref_seq_pos);
+          $gap_char = $alignment->
+              sequence_align_to_seq(0, 'seq', $ref_align_pos);
+        }
+        if ($gap_char == -1) {
+          ++$gaps;
+        }
+        elsif ($gap_char == -2) {
+          ++$exclusions;
+        }
+        else {
+          ++$match;
+        }
+      }
+      if ($exclusions > 0 && $exclusions >= $gaps 
+          && $exclusions >= $match) {
+        $mult_alignment->part($j)->set_exclusion($i);
+      }
+      elsif ($match > 0 && $match > $exclusions 
+             && $match >= $gaps) {
+        $mult_alignment->part($j)->set_unkown($i);
+      }
+    }
+  }
+
+  # correction of unkown chars (matches are biggest part)
+  for (my $i = 0; $i < $mult_alignment->parts_size(); ++$i) {
+    # change unkown chars after exclusion to exclusion
+    my $exclusion = 0;
+    for (my $j = 0; $j < $mult_alignment->length(); ++$j) {
+      my $pos = $mult_alignment->part($i)->pos_align_to_seq($j);
+      if ($pos == -2) {
+        $exclusion = 1;
+      }
+      elsif ($pos >= 0) {
+        $exclusion = 0;
+      }
+      
+      if ($pos == -3 && $exclusion) {
+        $mult_alignment->part($i)->set_exclusion($j);
+      }
+    }
+
+    # change unkown chars in front of exclusion to exclusion
+    $exclusion = 0;
+    for (my $j = $mult_alignment->length() - 1; $j >= 0; --$j) {
+      my $pos = $mult_alignment->part($i)->pos_align_to_seq($j);
+      if ($pos == -2) {
+        $exclusion = 1;
+      }
+      elsif ($pos >= 0) {
+        $exclusion = 0;
+      }
+      
+      if ($pos == -3 && $exclusion) {
+        $mult_alignment->part($i)->set_exclusion($j);
+      }
+    }
+
+    # change all other unkown chars to gap
+    for (my $j = 0; $j < $mult_alignment->length(); ++$j) {
+      my $pos = $mult_alignment->part($i)->pos_align_to_seq($j);
+      if ($pos == -3) {
+        $mult_alignment->part($i)->set_gap($j);
+      }
+    }
+  }
+
+  # determine for each column the kind (exclusion or normal)
+  for (my $i = 0; $i < $mult_alignment->length(); ++$i) {
+    # each column in mult alignment
+    my $gaps = 0;
+    my $exclusions = 0;
+    my $match = 0;
+    for (my $j = 0; $j < $mult_alignment->parts_size(); ++$j) {
+      my $pos = $mult_alignment->part($j)->pos_align_to_seq($i);
+      if ($pos >= 0) {
+        ++$match;
+      }
+      elsif ($pos == -1) {
+        ++$gaps;
+      }
+      elsif ($pos == -2) {
+        ++$exclusions;
+      }
+      else {
+        locarnate::Error::error('unkown alignment pos');
+      }
+    }
+    my $is_exclusion = 0;
+    if ($exclusions > 0 && $exclusions >= $gaps) {
+      # column is exclusion column if exclusions > gaps
+      $is_exclusion = 1;
+    }
+    for (my $j = 0; $j < $mult_alignment->parts_size(); ++$j) {
+      my $pos = $mult_alignment->part($j)->pos_align_to_seq($i);
+      if ($pos < 0 && $is_exclusion) {
+        $mult_alignment->part($j)->set_exclusion($i);
+        $cons_rates->[$i] = -1;
+      }
+      elsif ($pos < 0) {
+        $mult_alignment->part($j)->set_gap($i);
+      }
+    }
+  }
+
+  *STDERR->print('determine exclusions... done!'."\n");
+}
+
+sub calculate_cons_data {
+  if (@_ != 4) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $mult_alignment = $_[2];
+  my $cons_rates = $_[3];
+
+  *STDERR->print('Calculate consensus information...'."\r");
+
+  my %cons_data = ();
+
+  locarnate::Utilities::mk_dir($results_path.'/cons');
+
+  my $file_name = $results_path.'/cons/cons.in';
+
+  my $file = new FileHandle($file_name, 'w');
+  unless ($file) {
+    locarnate::Error::error('Can\'t create file "'.$file_name.'"');
+  }
+
+  $file->print('CLUSTAL'."\n");
+  $file->print("\n");
+  $file->print("\n");
+
+  # determine max name length
+  my $max_length = length($sequences->sequence_size()) + 1;
+
+  for (my $i = 0; $i < $sequences->sequence_size(); ++$i) {
+    my $name = 'S'.($i + 1);
+    $file->print($name);
+    my $spaces = $max_length + 5 - length($name);
+    for (my $j = 0; $j < $spaces; ++$j) {
+      $file->print(' ');
+    }
+    my $counter = 0;
+    for (my $j = 0; $j < $mult_alignment->columns(); ++$j) {
+      my $char = $mult_alignment->sequence($i, 'seq', $j);
+      my $rate = $cons_rates->[$j];
+      if ($rate >= 0) {
+        $file->print($char);
+        $counter = 0;
+      }
+      elsif ($counter < 4) {
+        $file->print('N');
+        ++$counter;
+      }
+    }
+    $file->print("\n");
+  }
+  # conservation
+  my $spaces = $max_length + 5;
+
+  for (my $j = 0; $j < $spaces; ++$j) {
+    $file->print(' ');
+  }
+  my $counter = 0;
+  for (my $j = 0; $j < $mult_alignment->columns(); ++$j) {
+    my $rate = $cons_rates->[$j];
+    if ($rate >= 0) {
+      if ($rate >= 0.5) {
+        $file->print('*');
+      }
+      else {
+        $file->print(' ');
+      }
+      $counter = 0;
+    }
+    elsif ($counter < 4) {
+      $file->print(' ');
+      ++$counter;
+    }
+  }
+  $file->print("\n");
+
+  $file->close();
+  my $out_file_name = $results_path.'/cons/cons.out';
+  my $err_file_name = $results_path.'/cons/cons.err';
+
+  my $cwd = locarnate::Utilities::cw_dir();
+  chdir($results_path.'/cons');
+
+  my $call = $options->value('RNAalifold').' '.$file_name.
+      ' 1>'.$out_file_name.' 2>'.$err_file_name;
+
+  my $code = system($call);
+  if ($code) {
+    locarnate::Error::error('Can\'t perform consensus calculation with RNAalifold'.
+                      ' (developed under Vienna Package 1.7.2)'); 
+  }
+
+  system('mv '.$results_path.'/cons/alirna.ps '.$results_path.'/result.ps');
+
+  chdir($cwd);
+
+  *STDERR->print('Calculate consensus information... done!'."\n");
+}
+
+sub parse_cons_data {
+  if (@_ != 3) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $cons_rates = $_[2];
+
+  *STDERR->print('Parse consensus informations...'."\r");
+
+  my %cons_data = ();
+
+  my $file_name = $results_path.'/cons/cons.out';
+  my $file = new FileHandle($file_name, 'r');
+  unless ($file) {
+    locarnate::Error::error('Can\'t open file "'.$file_name.'"');
+  }
+
+  my $seq = locarnate::Utilities::trim($file->getline());
+  my $struc = substr(locarnate::Utilities::trim($file->getline()), 
+                     0, length($seq));
+
+  my $counter = 0;
+  for (my $i = 0; $i < @{$cons_rates}; ++$i) {
+    if ($cons_rates->[$i] >= 0) {
+      $counter = 0;
+    }
+    else {
+      ++$counter;
+    }
+    if ($counter > 4) {
+      $seq = substr($seq, 0, $i).'_'.substr($seq, $i);
+      $struc = substr($struc, 0, $i).'.'.substr($struc, $i);
+    }
+  }
+
+  $cons_data{'seq'} = $seq;
+  $cons_data{'struc'} = $struc;
+
+  *STDERR->print('Parse consensus informations... done!'."\n");
+
+  return(\%cons_data);
+}
+
+sub join_exclusions {
+  if (@_ != 5) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $sequences = $_[1];
+  my $mult_alignment = $_[2];
+  my $cons_rates = $_[3];
+  my $cons_data = $_[4];
+
+  *STDERR->print('join exclusions...'."\r");
+
+
+  $mult_alignment = $mult_alignment->{'alignment'};
+
+  my $seq = $cons_data->{'seq'};
+  $seq =~ s/_/N/g; # for correct bp begin and end position
+  my $struc = substr($cons_data->{'struc'}, 0, 
+                     length($cons_data->{'seq'}));
+
+  my $part = new Part(0, $seq, $struc);
+
+  my $last_pos = 0;
+  my $out_seq = '';
+
+  for (my $i = 0; $i < $part->bps_size(); ++$i) {
+    my $bp_begin = $part->bp_begin($i);
+    my $bp_end = $part->bp_end($i);
+
+    if ($bp_end < $last_pos) {
+      next;
+    }
+    $out_seq .= '.'x($bp_begin - $last_pos);
+    $out_seq .= '_'x($bp_end - $bp_begin + 1);
+    $last_pos = $bp_end + 1;
+  }
+  $out_seq .= '.'x(length($seq) - $last_pos);
+
+  # calc cons structure of exclusion
+  my $file_name = $results_path.'/cons/cons_ex0.in';
+
+  my $file = new FileHandle($file_name, 'w');
+  unless ($file) {
+    locarnate::Error::error('Can\'t create file "'.$file_name.'"');
+  }
+
+  $file->print('CLUSTAL'."\n");
+  $file->print("\n");
+  $file->print("\n");
+
+  # determine max name length
+  my $max_length = length(@{$sequences}) + 1;
+
+  for (my $i = 0; $i < @{$sequences}; ++$i) {
+    my $name = 'S'.($i + 1);
+    $file->print($name);
+    my $spaces = $max_length + 5 - length($name);
+    for (my $j = 0; $j < $spaces; ++$j) {
+      $file->print(' ');
+    }
+    my $ex_length = 0;
+    for (my $j = 0; $j < length($out_seq); ++$j) {
+      my $out_char = substr($out_seq, $j, 1);
+      if ($out_char eq '.') {
+        my $char = substr($mult_alignment->part($i)->sequence(), $j, 1);
+        $char =~ s/~/-/;
+        $file->print($char);
+        $ex_length = 0;
+      }
+      elsif ($ex_length < 4) {
+        my $char = 'N';
+        $file->print($char);
+        ++$ex_length;
+      }
+    }
+    $file->print("\n");
+  }
+  # conservation
+  my $spaces = $max_length + 5;
+
+  for (my $j = 0; $j < $spaces; ++$j) {
+    $file->print(' ');
+  }
+  my $ex_length = 0;
+  for (my $j = 0; $j < length($out_seq); ++$j) {
+    my $out_char = substr($out_seq, $j, 1);
+    if ($out_char eq '.') {
+      my $char = '*';
+      $file->print($char);
+      $ex_length = 0;
+    }
+    elsif ($ex_length < 4) {
+      my $char = ' ';
+      $file->print($char);
+      ++$ex_length;
+    }
+  }
+  $file->print("\n");
+  $file->close();
+
+  my $out_file_name = $results_path.'/cons/cons_ex0.out';
+  my $err_file_name = $results_path.'/cons/cons_ex0.err';
+
+  my $cwd = locarnate::Utilities::cw_dir();
+  chdir($results_path.'/cons');
+
+  my $call = $options->value('RNAalifold').' '.$file_name.
+      ' 1>'.$out_file_name.' 2>'.$err_file_name;
+  my $code = system($call);
+  if ($code) {
+    locarnate::Error::error('can\'t perform consensus calculation');
+  }
+
+  system('mv '.$results_path.'/cons/alirna.ps '.$results_path.
+         '/cons/ex0.ps');
+
+  chdir($cwd);
+
+  # parse date
+  $file = new FileHandle($out_file_name, 'r');
+  unless ($file) {
+    locarnate::Error::error('Can\'t open file "'.$out_file_name.'"');
+  }
+
+  my $calc_seq = locarnate::Utilities::trim($file->getline());
+  my $calc_struc = substr(locarnate::Utilities::trim($file->getline()), 
+                          0, length($seq));
+  $file->close();
+
+  my $correct_struc = '';
+  $ex_length = 0;
+  my $pos = 0;
+  for (my $i = 0; $i < length($out_seq); ++$i) {
+    my $out_char = substr($out_seq, $i, 1);
+    if ($out_char eq '.') {
+      $correct_struc .= substr($calc_struc, $pos, 1);
+      ++$pos;
+      $ex_length = 0;
+    }
+    else {
+      $correct_struc .= substr($struc, $i, 1);
+      if ($ex_length < 4) {
+        ++$pos;
+      }
+      ++$ex_length;
+    }
+  }
+
+  $cons_data->{'struc'} = $correct_struc;
+
+  # join exclusions inside of the same bp
+  my $counter = 1;
+  for (my $i = 0; $i < $part->bps_size(); ++$i) {
+    # each base pair
+    my $bp_begin = $part->bp_begin($i);
+    my $bp_end = $part->bp_end($i);
+    my $ex_begin = undef;
+    my $ex_end = undef;
+    my $pos = $bp_begin;
+    while ($pos <= $bp_end) {
+      # each pos inside bp
+
+      if ($cons_rates->[$pos] < 0) {
+        # update exclusion begin and end 
+        if (!defined($ex_begin)) {
+          $ex_begin = $pos;
+        }
+        $ex_end = $pos;
+      }
+
+      my $inner_exists = 0;
+      for (my $j = $i; $j < $part->bps_size(); ++$j) {
+        # search for base pairs inside base pair and skip this area
+        my $inner_begin = $part->bp_begin($j);
+        my $inner_end = $part->bp_end($j);
+        if ($pos != $bp_begin && $pos == $inner_begin) {
+          $pos = $inner_end;
+          $inner_exists = 1;
+          last;
+        }
+        elsif ($inner_begin > $bp_end) {
+          last;
+        }
+      }
+      if (!$inner_exists) {
+        ++$pos;
+      }
+    }
+
+    if (defined($ex_begin)) {
+      # join exclusions
+      for (my $j = $ex_begin; $j <= $ex_end; ++$j) {
+        for (my $k = 0; $k < $mult_alignment->parts_size(); ++$k) {
+          my $pos = $mult_alignment->part($k)->pos_align_to_seq($j);
+          if ($pos < 0) {
+            $mult_alignment->part($k)->set_exclusion($j);
+          }
+        }
+        $cons_rates->[$j] = -1;
+      }
+
+      # calc cons structure of exclusion
+      my $file_name = $results_path.'/cons/cons_ex'.$counter.'.in';
+
+      my $file = new FileHandle($file_name, 'w');
+      unless ($file) {
+        locarnate::Error::error('Can\'t create file "'.$file_name.'"');
+      }
+
+      $file->print('CLUSTAL'."\n");
+      $file->print("\n");
+      $file->print("\n");
+
+      # determine max name length
+      my $max_length = length(@{$sequences}) + 1;
+
+      for (my $i = 0; $i < @{$sequences}; ++$i) {
+        my $name = 'S'.($i + 1);
+        $file->print($name);
+        my $spaces = $max_length + 5 - length($name);
+        for (my $j = 0; $j < $spaces; ++$j) {
+          $file->print(' ');
+        }
+        $file->print('GGGGNN'); # simulation of surrounding bp
+        for (my $j = $ex_begin; $j <= $ex_end; ++$j) {
+          my $char = substr($mult_alignment->part($i)->sequence(), $j, 1);
+          $char =~ s/~/-/;
+          $file->print($char);
+        }
+        $file->print('NNCCCC');
+        $file->print("\n");
+      }
+      # conservation
+      my $spaces = $max_length + 5;
+
+      for (my $j = 0; $j < $spaces; ++$j) {
+        $file->print(' ');
+      }
+      $file->print('****  ');
+      for (my $j = $ex_begin; $j <= $ex_end; ++$j) {
+        my $rate = $cons_rates->[$j];
+        if ($rate >= 0.5) {
+          $file->print('*');
+        }
+        else {
+          $file->print(' ');
+        }
+      }
+      $file->print('  ****');
+      $file->print("\n");
+
+      $file->close();
+
+      my $out_file_name = $results_path.'/cons/cons_ex'.$counter.'.out';
+      my $err_file_name = $results_path.'/cons/cons_ex'.$counter.'.err';
+
+      my $cwd = locarnate::Utilities::cw_dir();
+      chdir($results_path.'/cons');
+
+      my $call = $options->value('RNAalifold').' '.$file_name.
+          ' 1>'.$out_file_name.' 2>'.$err_file_name;
+      my $code = system($call);
+      if ($code) {
+        locarnate::Error::error('can\'t perform consensus calculation');
+      }
+
+      system('mv '.$results_path.'/cons/alirna.ps '.$results_path.
+             '/cons/ex'.$counter.'.ps');
+
+      chdir($cwd);
+
+      # parse date
+      $file = new FileHandle($out_file_name, 'r');
+      unless ($file) {
+        locarnate::Error::error('Can\'t open file "'.$out_file_name.'"');
+      }
+
+      my $seq = locarnate::Utilities::trim($file->getline());
+      my $struc = substr(locarnate::Utilities::trim($file->getline()), 
+                         0, length($seq));
+      $seq = substr($seq, 6, length($seq) - 12);
+      $struc = substr($struc, 6, length($struc) - 12);
+
+      $file->close();
+
+      my $cons_struc = $cons_data->{'struc'};
+      $cons_data->{'struc'} = substr($cons_struc, 0, $ex_begin).
+          $struc.substr($cons_struc, $ex_end + 1);
+    }
+  }
+
+  $pos = 0;
+  while ($pos < length($seq)) {
+    for (my $i = 0; $i < $mult_alignment->parts_size(); ++$i) {
+      my $align_pos = $mult_alignment->part($i)->pos_align_to_seq($pos);
+      if ($align_pos == -2) {
+        $mult_alignment->part($i)->set_gap($pos);
+        $cons_rates->[$pos] = 0;
+      }
+    }
+    
+    my $skip_bp = 0;
+    for (my $i = 0; $i < $part->bps_size(); ++$i) {
+      # each base pair
+      my $bp_begin = $part->bp_begin($i);
+      my $bp_end = $part->bp_end($i);
+      if ($pos == $bp_begin) {
+        $pos = $bp_end;
+        $skip_bp = 1;
+        last;
+      }
+    }
+    if (!$skip_bp) {
+      ++$pos;
+    }
+  }
+
+  *STDERR->print('join exclusions... done!'."\n");
+}
+
+sub write_clustal {
+  if (@_ != 5) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+  my $mult_alignment = $_[3];
+  my $cons_rates = $_[4];
+
+  *STDERR->print('Write clustal file...'."\r");
+
+  # write clustal format
+
+  my $name = $options->value('INPUT');
+  $name =~ s/[^\/]*\///g;
+  $name =~ s/\..*//g;
+
+  my $file_name = $results_path.'/result.aln';
+
+  my $file = new FileHandle($file_name, 'w');
+  unless ($file) {
+    locarnate::Error::error('Can\'t create file "'.$file_name.'"');
+  }
+
+  $file->print('CLUSTAL multiple sequence alignment of RNA family '.$name."\n");
+  $file->print("\n");
+  $file->print("\n");
+
+  # determine max name length
+  my $max_length = 0;
+  for (my $i = 0; $i < $sequences->sequence_size(); ++$i) {
+    my $name = $sequences->sequence_tag($i);
+    if (length($name) > $max_length) {
+      $max_length = length($name);
+    }
+  }
+  my $alignment_length = $mult_alignment->columns();
+
+  my $columns = -1;
+
+  my $bps_per_block = $columns;
+  if ($bps_per_block <= 0) {
+    $bps_per_block = $alignment_length;
+  }
+
+  my $position = 0;
+
+  while ($position < $alignment_length) {
+    $file->print("\n");
+    # seq
+    for (my $i = 0; $i < $mult_alignment->sequence_size(); ++$i) {
+      my $tag = $mult_alignment->sequence_tag($i);
+      my $index = substr($tag, 1);
+      my $name = $sequences->sequence_tag($index);
+      $file->print($name);
+      my $spaces = $max_length + 5 - length($name);
+      for (my $j = 0; $j < $spaces; ++$j) {
+        $file->print(' ');
+      }
+      my $part = substr($mult_alignment->sequence($i, 'seq'), $position, 
+                        $bps_per_block);
+      $file->print($part."\n");
+    }
+
+    my $spaces = $max_length + 5;
+
+    # conservation
+    for (my $j = 0; $j < $spaces; ++$j) {
+      $file->print(' ');
+    }
+    for (my $j = $position; $j < $position + $bps_per_block 
+         && $j < $mult_alignment->columns(); ++$j) {
+      my $rate = $cons_rates->[$j];
+      if ($rate >= 0.5) {
+        $file->print('+');
+      }
+      else {
+        $file->print(' ');
+      }
+    }
+    $file->print("\n");
+
+    $position += $bps_per_block;
+  }
+
+  $file->close();
+
+  *STDERR->print('Write clustal file... done!'."\n");
+}
+
+sub write_fasta {
+  if (@_ != 5) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+  my $mult_alignment = $_[3];
+  my $cons_rates = $_[4];
+
+  *STDERR->print('Write fasta file...'."\r");
+
+  # write clustal format
+
+  my $name = $options->value('INPUT');
+  $name =~ s/[^\/]*\///g;
+  $name =~ s/\..*//g;
+
+  my $file_name = $results_path.'/result.fa';
+
+  my $file = new FileHandle($file_name, 'w');
+  unless ($file) {
+    locarnate::Error::error('Can\'t create file "'.$file_name.'"');
+  }
+
+  for (my $i = 0; $i < $mult_alignment->sequence_size(); ++$i) {
+    my $tag = $mult_alignment->sequence_tag($i);
+    my $index = substr($tag, 1);
+    my $name = $sequences->sequence_tag($index);
+    $file->print('>'.$name."\n");
+    my $seq = $mult_alignment->sequence($i, 'seq');
+    $file->print($seq."\n");
+  }
+
+  $file->close();
+
+  *STDERR->print('Write fasta file... done!'."\n");
+}
+
+sub write_stockholm {
+  if (@_ != 6) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+  my $mult_alignment = $_[3];
+  my $cons_rates = $_[4];
+  my $cons_data = $_[5];
+
+  *STDERR->print('Write stockholm file...'."\r");
+
+  # write clustal format
+
+  my $name = $options->value('INPUT');
+  $name =~ s/[^\/]*\///g;
+  $name =~ s/\..*//g;
+
+  my $file_name = $results_path.'/result.stk';
+
+  my $file = new FileHandle($file_name, 'w');
+  unless ($file) {
+    locarnate::Error::error('Can\'t create file "'.$file_name.'"');
+  }
+
+  $file->print('# STOCKHOLM 1.0'."\n");
+  $file->print("\n");
+  $file->print('#=GF ID   '.$name."\n");
+  $file->print('#=GF SQ   '.$sequences->sequence_size()."\n");
+
+  # determine max name length
+  my $max_length = length('#=GC SS_cons');
+  for (my $i = 0; $i < $sequences->sequence_size(); ++$i) {
+    my $name = $sequences->sequence_tag($i);
+    if (length($name) > $max_length) {
+      $max_length = length($name);
+    }
+  }
+  my $alignment_length = $mult_alignment->columns();
+
+  my $columns = -1;
+
+  my $bps_per_block = $columns;
+  if ($bps_per_block <= 0) {
+    $bps_per_block = $alignment_length;
+  }
+
+  my $position = 0;
+
+  while ($position < $alignment_length) {
+    $file->print("\n");
+    # seq
+    for (my $i = 0; $i < $mult_alignment->sequence_size(); ++$i) {
+      my $tag = $mult_alignment->sequence_tag($i);
+      my $index = substr($tag, 1);
+      my $name = $sequences->sequence_tag($index);
+      $file->print($name);
+      my $spaces = $max_length + 5 - length($name);
+      for (my $j = 0; $j < $spaces; ++$j) {
+        $file->print(' ');
+      }
+      my $part = substr($mult_alignment->sequence($i, 'seq'), $position, 
+                        $bps_per_block);
+      $part =~ s/-/./g;
+      $part =~ s/~/-/g;
+      $file->print($part."\n");
+    }
+
+    my $spaces = $max_length + 5;
+
+    # struc
+    $file->print('#=GC SS_cons');
+    for (my $j = length('#=GC SS_cons'); $j < $spaces; ++$j) {
+      $file->print(' ');
+    }
+    my $struc = $cons_data->{'struc'};
+    if ($position + $bps_per_block >= $alignment_length) {
+      my $part = substr($struc, $position);
+      $part =~ s/\(/</g;
+      $part =~ s/\)/>/g;
+      $file->print($part."\n");
+    }
+    else {
+      my $part = substr($struc, $position, $bps_per_block);
+      $part =~ s/\(/</g;
+      $part =~ s/\)/>/g;
+      $file->print($part."\n");
+    }
+
+    # conservation
+    $file->print('#=GC conservation');
+    for (my $j = length('#=GC conservation'); $j < $spaces; ++$j) {
+      $file->print(' ');
+    }
+    for (my $j = $position; $j < $position + $bps_per_block 
+         && $j < $mult_alignment->columns(); ++$j) {
+      my $rate = $cons_rates->[$j];
+      if ($rate >= 0.5) {
+        $file->print('+');
+      }
+      elsif ($rate < 0) {
+        $file->print('-');
+      }
+      else {
+        $file->print('.');
+      }
+    }
+    $file->print("\n");
+
+    $position += $bps_per_block;
+  }
+  $file->print('//'."\n");
+
+  $file->close();
+
+  *STDERR->print('Write stockholm file... done!'."\n");
+}
+
+sub write_flat {
+  if (@_ != 6) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+  my $mult_alignment = $_[3];
+  my $cons_rates = $_[4];
+  my $cons_data = $_[5];
+
+  *STDERR->print('Write flat file...'."\r");
+
+  # write flat format
+
+  my $name = $options->value('INPUT');
+  $name =~ s/[^\/]*\///g;
+  $name =~ s/\..*//g;
+
+  my $file_name = $results_path.'/result.txt';
+
+  my $file = new FileHandle($file_name, 'w');
+  unless ($file) {
+    locarnate::Error::error('Can\'t create file "'.$file_name.'"');
+  }
+
+  $file->print('Mulora (multiple local sequence structure '.
+               'RNA alignments): '.$name."\n");
+
+  # determine max name length
+  my $max_length = length('#=GC SS_cons');
+  for (my $i = 0; $i < $sequences->sequence_size(); ++$i) {
+    my $name = $sequences->sequence_tag($i);
+    if (length($name) > $max_length) {
+      $max_length = length($name);
+    }
+  }
+  my $alignment_length = $mult_alignment->columns();
+
+  my $columns = -1;
+
+  my $bps_per_block = $columns;
+  if ($bps_per_block <= 0) {
+    $bps_per_block = $alignment_length;
+  }
+
+  my $position = 0;
+
+  while ($position < $alignment_length) {
+    $file->print("\n");
+    # seq
+    for (my $i = 0; $i < $mult_alignment->sequence_size(); ++$i) {
+      my $tag = $mult_alignment->sequence_tag($i);
+      my $index = substr($tag, 1);
+      my $name = $sequences->sequence_tag($index);
+      $file->print($name);
+      my $spaces = $max_length + 5 - length($name);
+      for (my $j = 0; $j < $spaces; ++$j) {
+        $file->print(' ');
+      }
+      my $part = substr($mult_alignment->sequence($i, 'seq'), $position, 
+                        $bps_per_block);
+      $file->print($part."\n");
+    }
+
+    my $spaces = $max_length + 5;
+
+    # struc
+    $file->print('structure');
+    for (my $j = length('structure'); $j < $spaces; ++$j) {
+      $file->print(' ');
+    }
+    my $struc = $cons_data->{'struc'};
+    if ($position + $bps_per_block >= $alignment_length) {
+      my $part = substr($struc, $position);
+      $file->print($part."\n");
+    }
+    else {
+      my $part = substr($struc, $position, $bps_per_block);
+      $file->print($part."\n");
+    }
+    
+    # conservation
+    $file->print('conservation');
+    for (my $j = length('conservation'); $j < $spaces; ++$j) {
+      $file->print(' ');
+    }
+    for (my $j = $position; $j < $position + $bps_per_block 
+         && $j < $mult_alignment->columns(); ++$j) {
+      my $rate = $cons_rates->[$j];
+      if ($rate >= 0.5) {
+        $file->print('*');
+      }
+      elsif ($rate < 0) {
+        $file->print('~');
+      }
+      else {
+        $file->print(' ');
+      }
+    }
+    $file->print("\n");
+
+    $position += $bps_per_block;
+  }
+
+  $file->close();
+
+
+  *STDERR->print('Write flat file... done!'."\n");
+}
+
+sub cleanup {
+  if (@_ != 3) {
+    locarnate::Error::debug('Wrong argument number');
+  }
+
+  my $options =  $_[0];
+  my $results_path = $_[1];
+  my $sequences = $_[2];
+
+  my $results_written = 0;
+
+  if ($options->value('clustal') ne '') {
+    my $call = 'cp '.$results_path.'/result.aln '.$options->value('clustal');
+    my $code = system($call);
+    if ($code) {
+      locarnate::Error::error('Can\'t create clustal file "'
+                              .$options->value('clustal').'"');
+    }
+    $results_written = 1;
+  }
+  if ($options->value('fasta') ne '') {
+    my $call = 'cp '.$results_path.'/result.fa '.$options->value('fasta');
+    my $code = system($call);
+    if ($code) {
+      locarnate::Error::error('Can\'t create fasta file "'
+                              .$options->value('fasta').'"');
+    }
+    $results_written = 1;
+  }
+  if ($options->value('stockholm') ne '') {
+    my $call = 'cp '.$results_path.'/result.stk '
+        .$options->value('stockholm');
+    my $code = system($call);
+    if ($code) {
+      locarnate::Error::error('Can\'t create stockholm file "'
+                              .$options->value('stockholm').'"');
+    }
+    $results_written = 1;
+  }
+
+  # cleanup if results exists
+  if ($results_written && $options->value('results') eq '') {
+    # delete unused files
+    for (my $i = 0; $i < $sequences->sequence_size(); ++$i) {
+      my $name = 'S'.($i + 1).'_ss.ps';
+      unlink($results_path.'/dp/'.$name);
+      $name = 'S'.($i + 1).'_dp.ps';
+      unlink($results_path.'/dp/'.$name);
+      if (!$options->value('no-stacking')) {
+        my $name = 'S'.($i + 1).'_dp2.ps';
+        unlink($results_path.'/dp/'.$name);
+      }
+      for (my $j = $i + 1; $j < $sequences->sequence_size(); ++$j) {
+        my $name = 'S'.($i + 1).'_S'.($j + 1).'.aln';
+        unlink($results_path.'/pair/'.$name);
+      }
+    }
+    unlink($results_path.'/dp/input.fa');
+    unlink($results_path.'/pair/overview.txt');
+    unlink($results_path.'/mult/tcoffee.aln');
+    unlink($results_path.'/cons/cons.out');
+    unlink($results_path.'/mult/edges.dnd');
+    unlink($results_path.'/mult/edges.lib');
+    unlink($results_path.'/mult/tcoffee.aln.html');
+    unlink($results_path.'/mult/tcoffee.err');
+    unlink($results_path.'/mult/tcoffee.out');
+    unlink($results_path.'/cons/cons.in');
+    unlink($results_path.'/cons/cons.err');
+    unlink($results_path.'/cons/cons_ex0.in');
+    unlink($results_path.'/cons/cons_ex0.out');
+    unlink($results_path.'/cons/cons_ex0.err');
+    unlink($results_path.'/cons/alirna.ps');
+    unlink($results_path.'/cons/RNAalifold.in');
+
+    my $counter = 0;
+    while (unlink($results_path.'/cons/ex'.$counter.'.ps')) {
+      unlink($results_path.'/cons/cons_ex'.$counter.'.in');
+      unlink($results_path.'/cons/cons_ex'.$counter.'.out');
+      unlink($results_path.'/cons/cons_ex'.$counter.'.err');
+      unlink($results_path.'/cons/ex'.$counter.'.ps');
+      ++$counter;
+    }
+
+    rmdir($results_path.'/dp/');
+    rmdir($results_path.'/pair/');
+    rmdir($results_path.'/mult/');
+    rmdir($results_path.'/cons/');
+    unlink($results_path.'/result.ps');
+    unlink($results_path.'/result.fa');
+    unlink($results_path.'/result.aln');
+    unlink($results_path.'/result.txt');
+    unlink($results_path.'/result.stk');
+    rmdir($results_path);
+  }
+}
+
+__END__
