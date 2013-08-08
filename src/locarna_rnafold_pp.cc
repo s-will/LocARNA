@@ -196,7 +196,7 @@ main(int argc, char **argv) {
 	return -1;
     }
     //todo: check that input is proper and catch the wrong inputs
-    MultipleAlignment::FormatType::type input_format;
+    // MultipleAlignment::FormatType::type input_format;
     MultipleAlignment* mseq = NULL;
     // try fasta format
     bool failed = false;
@@ -224,7 +224,7 @@ main(int argc, char **argv) {
 
     if (!failed)
     {
-	input_format = MultipleAlignment::FormatType::FASTA;
+	//input_format = MultipleAlignment::FormatType::FASTA;
     }
     else
     { //
@@ -296,7 +296,6 @@ main(int argc, char **argv) {
     }
     std::ostream out_stream(buff);
 
-    RnaData* rna_data_ptr;
     if (clp.opt_in_loop)
     {
 	ExtRnaData ext_rna_data(rna_ensemble, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold,pfoldparams);
@@ -319,8 +318,8 @@ int
 main(int argc, char **argv) {
 
     bool process_success=process_options(argc,argv,my_options);
-
-    if ( clp.test ) {
+    
+    if ( process_success && clp.test ) {
 	std::cout << "0";
 	return -1;
     }

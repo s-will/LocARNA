@@ -39,6 +39,13 @@ namespace LocARNA {
 	 */
 	annotation_t annotation_;
 	
+	/**
+	 * @brief A static constant empty instance of type SequenceAnnotation
+	 */
+	static
+	const
+	SequenceAnnotation empty_instance_;
+
     public:
 	
 	/**
@@ -83,7 +90,18 @@ namespace LocARNA {
 	SequenceAnnotation(const AlignmentEdges &edges, 
 			const SequenceAnnotation &annotationA,
 			const SequenceAnnotation &annotationB);
-	
+
+
+	/**
+	 * @brief initialize the static member empty_instance
+	 *
+	 */
+	static 
+	const SequenceAnnotation&
+	empty_instance() {
+	    return SequenceAnnotation::empty_instance_;
+	}
+
 	/**
 	 * @brief Size of the represented range
 	 *

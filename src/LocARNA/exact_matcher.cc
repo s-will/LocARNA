@@ -2271,8 +2271,11 @@ bool debug_trace_F_heuristic = false;
 	for (unsigned int a = 0; a < D_h.size();++a)
 	    D_h[a].resize(l - k + 2,0);
 
-	for(unsigned int j_1 = 1; j_1 < (j-i+2); ++j_1)
-	    for (unsigned int l_2 = 1; l_2 < (l-k+2); ++l_2)
+	assert(i<=j);
+	assert(k<=l);
+
+	for(unsigned int j_1 = 1; j_1 < size_t(j-i+2); ++j_1)
+	    for (unsigned int l_2 = 1; l_2 < size_t(l-k+2); ++l_2)
 		{
 		    if (debug==true){
 			//	cout << "debug " << j_1 << "," << l_2 << endl;

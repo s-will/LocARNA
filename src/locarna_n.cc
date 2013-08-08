@@ -835,6 +835,8 @@ main(int argc, char **argv) {
 	//if (clp.opt_verbose)
 	//    aligner.get_alignment().write_debug(std::cout);
     }
+
+    bool return_code=0;
     
     if (clp.opt_normalized || DO_TRACE) { // if we did a trace (one way or
 				      // the other)
@@ -916,7 +918,7 @@ main(int argc, char **argv) {
 	    
 	    } else {
 		cerr << "Cannot write to "<<clp.clustal_out<<endl<<"! Exit.";
-		return -1;
+		return_code = -1;
 	    }
 	}
 	if (clp.opt_pp_out) {
@@ -933,14 +935,22 @@ main(int argc, char **argv) {
 		consensus.write_pp(out);
 	    } else {
 		cerr << "Cannot write to "<<clp.pp_out<<endl<<"! Exit.";
-		return -1;
+		return_code = -1;
 	    }
 	}
     }
     
-    stopwatch.stop("total");
+    if (match_probs) delete match_probs;
+    if (arc_matches) delete arc_matches;
+    if (multiple_ref_alignment) delete multiple_ref_alignment;
+    //if (ribosum) delete ribosum;
     
+    if (rna_dataA) delete rna_dataA;
+    if (rna_dataB) delete rna_dataB;
+      
+    stopwatch.stop("total");
+
     // ----------------------------------------
     // DONE
-    return 0;
+    return return_code;
 }

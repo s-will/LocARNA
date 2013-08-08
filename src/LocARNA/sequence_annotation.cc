@@ -8,7 +8,9 @@
 
 namespace LocARNA {
     
-    
+    // initialization of the static member empty_instance
+    const SequenceAnnotation SequenceAnnotation::empty_instance_;
+
     // consensus constructor
     SequenceAnnotation::SequenceAnnotation(const AlignmentEdges &edges,
 				     const SequenceAnnotation &annotationA,
