@@ -67,32 +67,58 @@ my $description = 'Calculates a multiple local RNA sequence structure'
 
 # all options are collected in the options hash
 my %options;
-$options{RNAfold} = "RNAfold";
+$options{"BP-Probability-Calculator"} = "locarna_rnafold_pp";
 $options{TCoffee} = "t_coffee";
+$options{Locarna} = $bindir . "/locarna";
 
+$options{tcoffee_params} = "";
+$options{pairwise_aligner_parameter} = "";
+$options{pp_calculator_params} = "";
 
 GetOptions("help!" => \$options{help},
-           "pairwise_parameters=s" => \$options{pairwise_aligner_parameter});
+           "pairwise_parameters=s" => \$options{pairwise_aligner_parameter},
+           "tcoffee_parameters=s" => \$options{tcoffee_params},
+           "pp_preprocessing_parameters=s" => \$options{pp_preprocessing_params},
+           );
 
 pod2usage() if ($options{help});
 
 ### calculations ###
 
+# check pairwise aligner parameters
+my $checkresult = check_locarna_params(\%options, $options{pairwise_aligner_parameter});
+if ($checkresult ne "") {
+    print "Locarna parameters invalid. Locarna says: " . $checkresult . "\n";
+    exit(1);
+}
+
+# check t_coffe parameters
+$checkresult = check_tcoffee_params(\%options, $options{tcoffee_params});
+if ($checkresult ne "") {
+    print "Tcoffee parameters invalid. Tcoffee says: " . $checkresult . "\n";
+    exit(1);
+}
+# check locarna_rnafold_pp parameters
+$checkresult = check_pp_parameters(\%options, $options{pp_preprocessing_params});
+if ($checkresult ne "") {
+    print "Locarna_rnafold_pp parameters invalid. Locarna_rnafold_pp says: " . $checkresult . "\n";
+    exit(1);
+}
 my $results_path = "test_results";
 mkdir($results_path);
-pod2usage("Not enought arguments!\n") if scalar(@ARGV) < 1;
+pod2usage("Not enough arguments!\n") if scalar(@ARGV) < 1;
 my $sequences = MLocarna::read_fasta($ARGV[scalar(@ARGV) - 1]);
 
 
 calculate_basepair_probabilities(\%options, $results_path, $sequences);
+
+mkdir($results_path."/pair");
 
 my $pair_alignments =
   MLocarna::PairwiseAligners::locarna_compute_pairwise_alignments(
     \%options, $results_path, $sequences, $bindir);
 
 my $libfile = ($results_path . "/input.lib");
-
-print "libfile = $libfile\n";
 
 MLocarna::write_tcoffee_lib_file($libfile, $pair_alignments);
 
@@ -150,36 +176,22 @@ sub calculate_basepair_probabilities {
 
   mkdir($results_path.'/dp');
 
-  # write fasta file
-  my $file_name = $results_path.'/dp/input.fa';
-  open(my $file , ">" . $file_name);
+  my $pp_tool_call = $bindir . "/" . $options->{"BP-Probability-Calculator"};
 
   for (my $i = 0; $i < scalar(@{$sequences}); ++$i) {
     my $tag = '>S'.($i + 1);
-    $file->print($tag."\n");
-    my $sequence = $sequences->[$i]->{seq};
-    print $file ($sequence."\n");
+
+    # the filename of the pp file
+    my $pp_file = $results_path . "/dp/S" . ($i + 1) . ".pp";
     
-  }
-  close $file;
+    my $sequence = $sequences->[$i]->{seq};
 
-
-  # call RNAfold
-  chdir($results_path.'/dp');
-  
-  my $call = $options->{RNAfold};
-
-  $call .= ' -p < input.fa 1>/dev/null';
-  my $code = system($call);
-
-  # parse the dot plots
-  for (my $i = 0; $i < scalar(@{$sequences}); ++$i) {
-    my ($s, $prob) = MLocarna::read_dp_ps("S" . ($i+1) . "_dp.ps");
-    # add pairwise probabilities to the sequence
-    $sequences->[$i]->{pairProbs} = $prob;
+    # open pipe to pp tool
+    open (my $PIPE, "|$pp_tool_call -o $pp_file");
+    print $PIPE $tag . "\n" . $sequence . "\n";
+    close($PIPE);
   }
 
-  chdir($prefix);
   *STDERR->print('Calculate pair probabilities... done!'."\n");
 }
 
@@ -205,7 +217,7 @@ sub calculate_pairwise_alignments {
 
   for (my $i = 0; $i < $numSequences - 1; ++$i) {
     # the path to the dotplot of the this sequence
-    my $first = $results_path.'/dp/S'.($i + 1) .= '_dp.ps';
+    my $first = $results_path.'/dp/S'.($i + 1) .= '.pp';
 
     # iterate over all other sequences in the rest of the array and compute
     # pairwise alignment
@@ -216,7 +228,7 @@ sub calculate_pairwise_alignments {
                      $counter.'/'.$number.' (Seq '.($i + 1).' <-> Seq '.
                      ($j + 1).')...');
       # path to the dot plot of the other sequence
-      my $second = $results_path.'/dp/S'.($j + 1) . '_dp.ps';
+      my $second = $results_path.'/dp/S'.($j + 1) . '.pp';
 
       # path to the output file
       my $result = $results_path.'/pair/S'.($i + 1).'_S'.($j + 1).'.aln';
@@ -236,7 +248,7 @@ sub calculate_pairwise_alignments {
         my $code = system($call);
         if ($code) {
           print('Can\'t perform locARNA calculation'.
-                            " (developed under locarna 1.4.5, call:\n".$call.')');
+                            " (developed under locarna 1.7.8, call:\n".$call.")\n");
         }
       }
     }
@@ -286,7 +298,7 @@ sub calculate_mult_alignment {
   my $out_file_name = $results_path.'/mult/tcoffee.out';
   my $err_file_name = $results_path.'/mult/tcoffee.err';
 
-  my $call = $options->{TCoffee}.' -in=L'.$libFile.
+  my $call = $options->{TCoffee} . " " . $options->{tcoffee_params} . ' -in=L'.$libFile.
       ' -outfile='.$aln_file_name.' 1>'.$out_file_name.
       ' 2>'.$err_file_name;
 
@@ -297,3 +309,74 @@ sub calculate_mult_alignment {
   *STDERR->print('Calculate multiple alignment... done!'."\n");
 } 
 
+
+sub check_locarna_params {
+    # Runs Locarna without input file, but with all given parameters
+    # if locarna complains that there is no input file, all other
+    # parameters are ok
+    # otherwise the incorrect parameters are returned
+    my ($options, $parameters) = @_;
+    
+    my $call = $options->{Locarna} . " $parameters 2>&1";
+    
+    my @output = `$call`;
+
+    if ($output[0] =~ /Mandatory option and\/or argument missing: <file 1>/) {
+        return "";
+    }
+    my $error = $output[0];
+
+    # try to remove the binary path from the error message
+    my @errorsplit = split /:/, $error;
+    if (scalar(@errorsplit) > 1) {
+        $error = $errorsplit[1];
+    }
+    chomp $error;
+    return $error;
+}
+
+sub check_tcoffee_params {
+    # Runs Locarna without input file, but with all given parameters
+    # if locarna complains that there is no input file, all other
+    # parameters are ok
+    # otherwise the incorrect parameters are returned
+    my ($options, $parameters) = @_;
+    
+    my $call = $options->{TCoffee} . " $parameters 2>&1";
+    
+    my @output = `$call`;
+
+    foreach my $line (@output) {
+        if( $line =~ /needs a value/ or $line =~ /IS NOT A PARAMETER/) {
+            chomp $line;
+            return $line;
+        }
+    }
+    return "";
+}
+
+sub check_pp_parameters {
+    # Runs locarna_rnafol_pp without input file, but with all given parameters
+    # and checks if it complains
+    my ($options, $parameters) = @_;
+    
+    my $call = $bindir . "/" .$options->{"BP-Probability-Calculator"} . " $parameters 2>&1";
+    
+    my @output = `$call hopefully_this_file_does_not_exist.pdf.txt`;
+
+    my $error =  $output[0];
+
+    if ($error =~ /Error in input format/) {
+        return "";
+    }
+
+    # try to remove bin path
+    
+    # try to remove the binary path from the error message
+    my @errorsplit = split /:/, $error;
+    if (scalar(@errorsplit) > 1) {
+        $error = $errorsplit[1];
+    }
+    chomp $error;
+    return $error;   
+}

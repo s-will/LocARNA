@@ -26,7 +26,7 @@ sub locarna_compute_pairwise_alignments {
 
   for (my $i = 0; $i < $numSequences - 1; ++$i) {
     # the path to the dotplot of the this sequence
-    my $first = $results_path.'/dp/S'.($i + 1) .= '_dp.ps';
+    my $first = $results_path.'/dp/S'.($i + 1) .= '.pp';
 
     # iterate over all other sequences in the rest of the array and compute
     # pairwise alignment
@@ -37,7 +37,7 @@ sub locarna_compute_pairwise_alignments {
                      $counter.'/'.$number.' (Seq '.($i + 1).' <-> Seq '.
                      ($j + 1).')...');
       # path to the dot plot of the other sequence
-      my $second = $results_path.'/dp/S'.($j + 1) . '_dp.ps';
+      my $second = $results_path.'/dp/S'.($j + 1) . '.pp';
 
       # path to the output file
       my $result = $results_path.'/pair/S'.($i + 1).'_S'.($j + 1).'.aln';
@@ -47,11 +47,10 @@ sub locarna_compute_pairwise_alignments {
           ' --clustal='.$result.' --write-structure '
           .$first.' '.$second.' 1>/dev/null 2>/dev/null';
 
-      print "$call\n";
       my $code = system($call);
       if ($code) {
         print('Can\'t perform locARNA calculation'.
-                            " (developed under locarna 1.4.5, call:\n".$call.')');
+                            " (developed under locarna 1.7.8, call:\n".$call.")\n");
       }
     }
   }
