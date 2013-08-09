@@ -1783,6 +1783,7 @@ bool debug_check_poss = false;
     				// possibly trace only positive values in LGLR and F matrix -> don't allow arcmatches with negative score?!
     				// -> the same if statement in computation + trace back?
     				// problem that maybe after the arcmatch the score increases as a lot of exact matches can be found
+    				// check whether the arcmatch score is possible with the current max tol left
     				if(score_for_am(inner_a,inner_b)<(infty_score_t)0) continue;
 
     				assert(sparse_trace_controller.is_valid(inner_a.left(),inner_b.left()));

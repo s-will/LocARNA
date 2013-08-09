@@ -38,213 +38,400 @@ namespace LocARNA {
     typedef std::vector<intPPair>::const_iterator	IntPPairCITER;
 
 
+    /**
+     * \brief stores a Pattern in one sequence
+     */
+    class SinglePattern
+    {
+    public:
+    	SinglePattern(){};
 
-class SinglePattern
-{
-public:
-      SinglePattern(){};
-      SinglePattern(const std::string& myId_,const std::string& seqId_,const intVec& mySinglePattern_)
-      	      	      	      :myId(myId_),seqId(seqId_),pattern(mySinglePattern_)
-      	      	      	      {};
+    	/**
+    	 * \brief constructor
+    	 * @param myId_ pattern Id
+    	 * @param seqId_ sequence Id
+    	 * @param mySinglePattern_ pattern for single sequence
+    	 */
+    	SinglePattern(const std::string& myId_,const std::string& seqId_,const intVec& mySinglePattern_)
+    	:myId(myId_),seqId(seqId_),pattern(mySinglePattern_)
+    	{};
 
-	virtual ~SinglePattern() { pattern.clear(); };
+    	/**
+    	 * \brief Destructor
+    	 */
+    	virtual ~SinglePattern() { pattern.clear(); };
 
-	const std::string&        getmyId()  const { return myId; };
-	const std::string&	getseqId() const {return seqId; };
-	const intVec&        getPat() const { return pattern; };
+    	/**
+    	 * read access
+    	 * @return pattern Id of the SinglePattern
+    	 */
+    	const std::string&        getmyId()  const { return myId; };
+
+    	/**
+    	 * read access
+    	 * @return seqeuence Id of the SinglePattern
+    	 */
+    	const std::string&	getseqId() const {return seqId; };
+
+    	/**
+    	 * read access
+    	 * @return pattern of the SinglePattern
+    	 */
+    	const intVec&        getPat() const { return pattern; };
 
     private:
 
-	std::string         myId;
-	std::string	     seqId;
-	intVec         pattern;
+    	std::string         myId; //!< pattern Id
+    	std::string	     seqId; //!< sequence Id
+    	intVec         pattern; //!< pattern
     };
 
-    //--------------------------------------------------------------------------
-    // class PatternPair
-    //    is able to manage an EPM, consists of 2 singlepatterns, one in each RNA
-    //--------------------------------------------------------------------------
+    /**
+     * \brief is able to manage an EPM, consists of 2 singlepatterns, one in each RNA
+     */
     class PatternPair
     {
     public:
-	PatternPair(){};
-	PatternPair(const std::string& myId,const SinglePattern& myFirstPat,const SinglePattern& mySecPat, const std::string& structure_, int& score_)
-	    : id(myId),first(myFirstPat),second(mySecPat), structure(structure_), EPMscore(score_)
-	{
-	    if (first.getPat().size() != second.getPat().size()){
-		std::cerr << "Error! PatternPair cannot be constructed due to different sizes of SinglePatterns!" << std::endl;
-	    }
-	    score = EPMscore;
-	    size = first.getPat().size();
-	};
+    	PatternPair(){};
 
-	virtual ~PatternPair()
-	{
-	    insideBounds.clear();
-	};
+    	/**
+    	 * \brief Constructor
+    	 * @param myId Id for PatternPair
+    	 * @param myFirstPat first Pattern
+    	 * @param mySecPat second Pattern
+    	 * @param structure_ structure
+    	 * @param score_ score
+    	 */
+    	PatternPair(const std::string& myId,const SinglePattern& myFirstPat,const SinglePattern& mySecPat, const std::string& structure_, int& score_)
+    	: id(myId),first(myFirstPat),second(mySecPat), structure(structure_), EPMscore(score_)
+    	{
+    		if (first.getPat().size() != second.getPat().size()){
+    			std::cerr << "Error! PatternPair cannot be constructed due to different sizes of SinglePatterns!" << std::endl;
+    		}
+    		score = EPMscore;
+    		size = first.getPat().size();
+    	};
 
-	const std::string& 		getId() const { return id; };
-	const int& 		getSize() const { return size; };
-	const SinglePattern& 	getFirstPat() const { return first; };
-	const SinglePattern& 	getSecPat() const { return second;};
-	void		resetBounds();
-	void		setOutsideBounds(intPPair myPPair);
-	const   intPPair 		getOutsideBounds() const { return outsideBounds; };
-	void		addInsideBounds(intPPair myPPair);
-	const   std::vector<intPPair>& getInsideBounds() const { return insideBounds; };
+    	//! \brief Destructor
+    	virtual ~PatternPair()
+    	{
+    		insideBounds.clear();
+    	};
 
-	void			setEPMScore(int myScore);
-	const		int 			getScore() const { return score;  };
-	const		int 			getEPMScore() const { return EPMscore; };
- 	const std::string& get_struct() const{return structure;};
+    	/**
+    	 * read access
+    	 * @return Id of the PatternPair
+    	 */
+    	const std::string& 		getId() const { return id; };
+
+    	/**
+    	 * read access
+    	 * @return size of the PatternPair
+    	 */
+    	const int& 		getSize() const { return size; };
+
+    	/**
+    	 * read access
+    	 * @return first pattern of the PatternPair
+    	 */
+    	const SinglePattern& 	getFirstPat() const { return first; };
+
+    	/**
+    	 * read access
+    	 * @return second pattern of the PatternPair
+    	 */
+    	const SinglePattern& 	getSecPat() const { return second;};
+
+    	//! clears the insideBounds
+    	void		resetBounds();
+
+    	/**
+    	 * write access
+    	 * @param myPPair outsideBounds are set to myPPair
+    	 */
+    	void		setOutsideBounds(intPPair myPPair);
+
+    	/**
+    	 * read access
+    	 * @return outside Bounds of the PatternPair
+    	 */
+    	const   intPPair 		getOutsideBounds() const { return outsideBounds; };
+
+    	//! adds the inside Bound myPPair
+    	void		addInsideBounds(intPPair myPPair);
+
+    	/**
+    	 * read access
+    	 * @return inside Bounds of the PatternPair
+    	 */
+    	const   std::vector<intPPair>& getInsideBounds() const { return insideBounds; };
+
+    	/**
+    	 * write access
+    	 * @param myScore EPMscore is set to myScore
+    	 */
+    	void			setEPMScore(int myScore);
+
+    	/**
+    	 * read access
+    	 * @return score of the PatternPair
+    	 */
+    	const		int 			getScore() const { return score;  };
+
+    	/**
+    	 * read access
+    	 * @return EPMscore of the PatternPair
+    	 */
+    	const		int 			getEPMScore() const { return EPMscore; };
+
+    	/**
+    	 * read access
+    	 * @return structure of the PatternPair
+    	 */
+    	const std::string& get_struct() const{return structure;};
 
     private:
-	std::string         	id;
-	int            	size;
-	SinglePattern  	first;
-	SinglePattern  	second;
-	  
-	std::string 		structure;
-	int				score;
-	int				EPMscore;
-	std::vector<intPPair>   insideBounds;
-	intPPair           outsideBounds;
+    	std::string         	id; //!< Id of the PatternPair
+    	int            	size; //!< size of the PatternPair
+    	SinglePattern  	first; //!< first pattern of the PatternPair
+    	SinglePattern  	second; //!< second pattern of the PatternPair
+
+    	std::string 		structure; //!< structure of the PatternPair
+    	int				score; //!< score of the PatternPair
+    	int				EPMscore; //!< EPMscore of the PatternPair
+    	std::vector<intPPair>   insideBounds; //!< the inside bounds of the EPM
+    	intPPair           outsideBounds; //!< the outside bounds of the EPM
     };
-   
-    //--------------------------------------------------------------------------
-    // class PatternPairMap
-    //    manage a set of EPMs (PatternPair)
-    //--------------------------------------------------------------------------
-    class PatternPairMap
-    {
-    public:
-	typedef  PatternPair                                  selfValueTYPE;
-	typedef  PatternPair*				               		SelfValuePTR;
 
-	typedef  std::multimap<int,SelfValuePTR,std::greater<int> >     orderedMapTYPE;
-	typedef  orderedMapTYPE::const_iterator               orderedMapCITER;
-	typedef  orderedMapTYPE::iterator                     orderedMapITER;
-	typedef  std::list<SelfValuePTR>                           patListTYPE;
-	typedef  patListTYPE::iterator                        patListITER;
-	typedef  patListTYPE::const_iterator                  patListCITER;
-	typedef  std::tr1::unordered_map<std::string,SelfValuePTR> PatternIdMapTYPE;
+/**
+ * \brief manage a set of EPMs (PatternPair)
+ */
+class PatternPairMap
+{
+public:
+	typedef  PatternPair                                  selfValueTYPE; //!< PatternPair
+	typedef  PatternPair*				               		SelfValuePTR; //!< pointer to PatternPair
+
+	typedef  std::multimap<int,SelfValuePTR,std::greater<int> >     orderedMapTYPE; //!< ordered map type
+	typedef  orderedMapTYPE::const_iterator               orderedMapCITER; //!< const iterator for the map
+	typedef  orderedMapTYPE::iterator                     orderedMapITER; //!< iterator for the map
+	typedef  std::list<SelfValuePTR>                           patListTYPE; //!< list of patternPairs
+	typedef  patListTYPE::iterator                        patListITER; //!< iterator for the list of PatternPairs
+	typedef  patListTYPE::const_iterator                  patListCITER; //!< const iterator for the list of PatternPairs
+	typedef  std::tr1::unordered_map<std::string,SelfValuePTR> PatternIdMapTYPE; //!< map type patternId -> pointer to PatternPair
 
 
+	//! Contructor
 	PatternPairMap();
-	PatternPairMap(const PatternPairMap& myPairMap)
-	    :patternList(myPairMap.patternList),
-	     patternOrderedMap(myPairMap.patternOrderedMap),
-	     idMap(myPairMap.idMap)  { minPatternSize = 100000;};
 
+	//! Copy Constructor
+	//! @param myPairMap PatternPairMap
+	PatternPairMap(const PatternPairMap& myPairMap)
+	:patternList(myPairMap.patternList),
+	 patternOrderedMap(myPairMap.patternOrderedMap),
+	 idMap(myPairMap.idMap)  { minPatternSize = 100000;};
+
+	//! Destructor
 	virtual ~PatternPairMap();
 
+	/**
+	 * \brief adds a PatternPair consisting of two SinglePatterns to the PatternPairMap
+	 * @param id Id of the PatternPair
+	 * @param first first pattern
+	 * @param second second pattern
+	 * @param structure structure of the PatternPair
+	 * @param score score of the PatternPair
+	 */
 	void              add( const std::string& id,
-			       const SinglePattern& first,
-			       const SinglePattern& second,
-			       const std::string& structure,
-			       int score
-			       );
+			const SinglePattern& first,
+			const SinglePattern& second,
+			const std::string& structure,
+			int score
+	);
+
+	/**
+	 * \brief adds a PatternPair to the PatternPairMap
+	 * @param value pointer to the PatternPair
+	 */
 	void              add(const SelfValuePTR value);
+
+	//! creates the ordered Map
 	void              makeOrderedMap();
+
+	//! updates the PatternPairMap from the ordered Map
 	void              updateFromMap();
+
+	/**
+	 * \brief gets the PatternPair with the Id id
+	 * @param id Id of PatternPair
+	 * @return PatternPair with Id id
+	 */
 	const    PatternPair&      getPatternPair(const std::string& id)const;
+
+	/**
+	 * \brief gets the pointer to the PatternPair with the Id id
+	 * @param id Id of PatternPair
+	 * @return pointer to the PatternPair with Id id
+	 */
 	const    SelfValuePTR      getPatternPairPTR(const std::string& id)const;
+
+	/**
+	 * read access
+	 * @return list of PatternPairs
+	 */
 	const    patListTYPE&      getList() const;
+
+	/**
+	 * read access
+	 * @return ordered Map
+	 */
 	const    orderedMapTYPE&   getOrderedMap() const;
+
+	/**
+	 * write access
+	 * @return ordered Map
+	 */
 	orderedMapTYPE&   getOrderedMap2();
+
+	/**
+		 * read access
+		 * @return size of the idMap
+		 */
 	const    int               size()   const;
+
+	/**
+	 * \brief computes the number of mapped bases
+	 * @return the number of mapped bases in the patternList
+	 */
 	int		 getMapBases();
+
+	/**
+	 * \brief computes the score of the list of PatternPairs patternList
+	 * @return the sum of scores of all EPMs in the patternList
+	 */
 	int  	         getMapEPMScore();
+
+	/**
+	 * read access
+	 * @return the minimum size of a Pattern
+	 */
 	const    int		 getMinPatternSize() const { return minPatternSize; };
 
-    private:
+private:
 
-	patListTYPE        patternList;
-	orderedMapTYPE     patternOrderedMap;
-	PatternIdMapTYPE   idMap;
-	int minPatternSize;
-    };
+	patListTYPE        patternList; //!< list of PatternPairs
+	orderedMapTYPE     patternOrderedMap; //!< ordered Map
+	PatternIdMapTYPE   idMap; //!< map: patternId -> pointer to PatternPair
+	int minPatternSize; //!< minimum size of a Pattern
+};
 
-// write pattern list of the PatternPairMap to stream
+/**
+ * \brief write pattern list of the PatternPairMap to stream
+ * @param out output stream object
+ * @param the pattern list of the PatternPairMap
+ * @return output stream object
+ */
 std::ostream &operator << (std::ostream &out, const PatternPairMap::patListTYPE &pat_pair_map);
 
+/**
+ * \brief computes the best chain of EPMs, the LCS-EPM
+ */
+class LCSEPM
+{
+public:
 
-    class LCSEPM
-    {
-    public:
-
+	/**
+	 * Constructor
+	 * @param seqA_ first sequence
+	 * @param seqB_ second sequence
+	 * @param myPatterns input PatternPairMap
+	 * @param myLCSEPM output PatternPairMap
+	 * @param EPM_min_size_ minimum size of an EPM
+	 */
 	LCSEPM(const	Sequence& 		seqA_,
-	       const	Sequence& 		seqB_,
-	       const 	PatternPairMap& myPatterns,
-	       PatternPairMap& myLCSEPM,
-	       const	int&		EPM_min_size_ )
+			const	Sequence& 		seqB_,
+			const 	PatternPairMap& myPatterns,
+			PatternPairMap& myLCSEPM,
+			const	int&		EPM_min_size_ )
 
-	    :seqA(seqA_),
-	     seqB(seqB_),
-	     matchedEPMs(myLCSEPM),
-	     patterns(myPatterns),
-	     EPM_min_size(EPM_min_size_){};
-		
+	:seqA(seqA_),
+	 seqB(seqB_),
+	 matchedEPMs(myLCSEPM),
+	 patterns(myPatterns),
+	 EPM_min_size(EPM_min_size_){};
+
+	//! Destructor
 	virtual		~LCSEPM();
 
+	/**
+	 * \brief output chained EPMs to PS files
+	 * @param sequenceA first sequence
+	 * @param sequenceB second sequence
+	 * @param myMap PatternPairMap for the two sequences
+	 * @param file1 name of the output file for the first sequence
+	 * @param file2 name of the output file for the second sequence
+	 */
 	void 		MapToPS(const std::string& sequenceA, const std::string& sequenceB, PatternPairMap& myMap, const std::string& file1, const std::string& file2);
-        void		calculateLCSEPM();
 
-        //! outputs anchor constraints to be used as input for locarna
-        void		output_locarna(const std::string& sequenceA, const std::string& sequenceB, const std::string& outfile);
-        void		output_clustal(const std::string& outfile_name);
+	//! calculates the best chain of EPMs, the LCS-EPM
+	void		calculateLCSEPM();
 
-    private:
+	//! outputs anchor constraints to be used as input for locarna
+	void		output_locarna(const std::string& sequenceA, const std::string& sequenceB, const std::string& outfile);
+	//! writes chain as clustal alignment
+	void		output_clustal(const std::string& outfile_name);
 
-        struct HoleCompare2 {
-	    bool operator()(const intPPairPTR & h1, const intPPairPTR & h2) const {
-		// first compare size of holes
-		if (h1->first.second - h1->first.first-1 < h2->first.second - h2->first.first-1){
-		    return true; }
-		// compare if holes are identical in both structures
-		if (h1->first.second - h1->first.first-1 == h2->first.second - h2->first.first-1){
-		    if ((h1->first.first == h2->first.first) && (h1->first.second == h2->first.second) &&
-			(h1->second.first==h2->second.first) && (h1->second.second==h2->second.second))
-			{ return true; }
+private:
+
+	struct HoleCompare2 {
+		bool operator()(const intPPairPTR & h1, const intPPairPTR & h2) const {
+			// first compare size of holes
+			if (h1->first.second - h1->first.first-1 < h2->first.second - h2->first.first-1){
+				return true; }
+			// compare if holes are identical in both structures
+			if (h1->first.second - h1->first.first-1 == h2->first.second - h2->first.first-1){
+				if ((h1->first.first == h2->first.first) && (h1->first.second == h2->first.second) &&
+						(h1->second.first==h2->second.first) && (h1->second.second==h2->second.second))
+				{ return true; }
+			}
+
+			return false;
 		}
-
-		return false;
-	    }
-        };
-
-        typedef     std::multimap<intPPairPTR,PatternPairMap::SelfValuePTR,HoleCompare2>	HoleOrderingMapTYPE2;
-        typedef     HoleOrderingMapTYPE2::const_iterator HoleMapCITER2;
-
-
-        void    preProcessing			();
-        void    calculateHoles3			();
-	void    calculatePatternBoundaries	(PatternPair* myPair);
-        void 	calculateTraceback2		(const int i,const int j,const int k,const int l,std::vector < std::vector<int> > holeVec);
-        int 	D_rec2				(const int& i,const  int& j,const int& k,const int& l,std::vector < std::vector<int> >& D_h,const bool debug);
-
-        int 	max3				(int a, int b, int c)
-	{
-	    int tmp = a>b? a:b;
-	    return (tmp>c? tmp:c);
 	};
-	
+
+	typedef     std::multimap<intPPairPTR,PatternPairMap::SelfValuePTR,HoleCompare2>	HoleOrderingMapTYPE2;
+	typedef     HoleOrderingMapTYPE2::const_iterator HoleMapCITER2;
+
+
+	void    preProcessing			();
+	void    calculateHoles3			();
+	void    calculatePatternBoundaries	(PatternPair* myPair);
+	void 	calculateTraceback2		(const int i,const int j,const int k,const int l,std::vector < std::vector<int> > holeVec);
+	int 	D_rec2				(const int& i,const  int& j,const int& k,const int& l,std::vector < std::vector<int> >& D_h,const bool debug);
+
+	int 	max3				(int a, int b, int c)
+	{
+		int tmp = a>b? a:b;
+		return (tmp>c? tmp:c);
+	};
+
 	//!@brief returns the structure of the given sequence
 	char* getStructure(PatternPairMap& myMap, bool firstSeq, int length);
-	
+
 	std::string intvec2str(const std::vector<unsigned int>& V, const std::string &delim){
-	    std::stringstream oss;
-	    copy(V.begin(), V.end(), std::ostream_iterator<unsigned int>(oss, delim.c_str()));
-	    std::string tmpstr;
-	    tmpstr = oss.str();
-	    if (tmpstr.length()>0) tmpstr.erase(tmpstr.end()-1);
-	    return tmpstr;
+		std::stringstream oss;
+		copy(V.begin(), V.end(), std::ostream_iterator<unsigned int>(oss, delim.c_str()));
+		std::string tmpstr;
+		tmpstr = oss.str();
+		if (tmpstr.length()>0) tmpstr.erase(tmpstr.end()-1);
+		return tmpstr;
 	}
 
 	std::string upperCase(const std::string &seq){
-	    std::string s= "";
-	    for(unsigned int i= 0; i<seq.length(); i++)
-		s+= toupper(seq[i]);
-	    return s;
+		std::string s= "";
+		for(unsigned int i= 0; i<seq.length(); i++)
+			s+= toupper(seq[i]);
+		return s;
 	}
 
 	std::vector< std::vector <std::vector<PatternPairMap::SelfValuePTR> > >	EPM_Table2;
@@ -252,9 +439,9 @@ std::ostream &operator << (std::ostream &out, const PatternPairMap::patListTYPE 
 	const 	Sequence&				seqA;
 	const 	Sequence& 				seqB;
 	PatternPairMap&				matchedEPMs;
-        const 	PatternPairMap&         		patterns;
+	const 	PatternPairMap&         		patterns;
 	const int& 					EPM_min_size;
-    };
+};
 
 
 /**
@@ -275,16 +462,16 @@ public:
 
 private:
 	const SparsificationMapper &sparse_mapperA; //!< sparsification mapper for sequence A
-    const SparsificationMapper &sparse_mapperB; //!< sparsification mapper for sequence B
+	const SparsificationMapper &sparse_mapperB; //!< sparsification mapper for sequence B
 
 public:
-    /**
-     * @brief constructor
-     *
-     * @param sparse_mapperA_ sparsification mapper for sequence A
-     * @param sparse_mapperB_ sparsification mapper for sequence B
-     * @param trace_controller_ trace controller
-     */
+	/**
+	 * @brief constructor
+	 *
+	 * @param sparse_mapperA_ sparsification mapper for sequence A
+	 * @param sparse_mapperB_ sparsification mapper for sequence B
+	 * @param trace_controller_ trace controller
+	 */
 	SparseTraceController(const SparsificationMapper &sparse_mapperA_,const SparsificationMapper &sparse_mapperB_,const TraceController &trace_controller_):
 		TraceController::TraceController(trace_controller_),
 		sparse_mapperA(sparse_mapperA_),
@@ -555,7 +742,7 @@ public:
 	bool pos_unpaired(index_t idxA, index_t idxB,
 			matpos_t pos) const{
 		return sparse_mapperA.pos_unpaired(idxA,pos.first)
-			   && sparse_mapperB.pos_unpaired(idxB,pos.second);
+				&& sparse_mapperB.pos_unpaired(idxB,pos.second);
 	}
 
 	/**
