@@ -8,10 +8,10 @@
 #include <assert.h>
 #include <set>
 #include <string>
-#include "string1.hh"
 
 namespace LocARNA {
-    /** \brief An RNA secondary structure
+    /** 
+     * @brief An RNA secondary structure
      *
      * Represents a structure (for a sequence of given length) as set
      * of base pairs. Supports parsing of dot-bracket strings and
@@ -23,14 +23,27 @@ namespace LocARNA {
 	typedef std::pair<size_t,size_t> bp_t;
 
 	//! base pair set type
-	typedef std::set<bp_t> bps_t;
-
+	typedef std::set<bp_t,std::less<bp_t> > bps_t;
+	
     private:
 	size_t length_;
 	bps_t bps_; 
+	
+	static const char unpaired_symbol_='.';
+	static const std::string open_symbols_;
+	static const std::string close_symbols_;
+	
+	bool
+	parse(const std::string &s,
+	      bps_t &bps,
+	      char op,
+	      char cl);
 
 	bool
-	parse(const std::string &s,bps_t &bps);
+	parse(const std::string &s,
+	      bps_t &bps, 
+	      const std::string &op_syms,
+	      const std::string &cl_syms);
 
 	void 
 	assert_valid_bp(const bp_t &bp) {
@@ -40,22 +53,43 @@ namespace LocARNA {
 	}
 
     public:
-
 	/** 
-	 * \brief construct empty
+	 * @brief construct empty
 	 */
 	RnaStructure(): length_(0), bps_() {}
 
 	/** 
-	 * \brief construct from dot-bracket string
+	 * @brief construct from dot-bracket string
 	 * 
-	 * @param structure dot-bracket string describing non-crossing structure 
+	 * @param structure dot-bracket string
+	 *
+	 * We recognize different bracket pairs: (),[],{},<>, and
+	 * letter pairs Aa, Bb, etc ; the structure string can encode
+	 * crossing base pairs like in 
+	 *
+	 * .(((..[[...]]..)))..
+	 *
+	 * All such base pairs are recognized.
 	 */
 	RnaStructure(const std::string &structure);
-    
-    
+
+	
 	/** 
-	 * Base pair for membership test
+	 * @brief Equality operator
+	 * 
+	 * @param s rna structure to be compared
+	 * @return whether equal
+	 */
+	bool
+	operator ==(const RnaStructure &s) const {
+	    return 
+		this->length_ == s.length_
+		&&
+		this->bps_ == s.bps_;
+	}
+
+	/** 
+	 * @brief Base pair for membership test
 	 * 
 	 * @param x base pair
 	 * 
@@ -66,17 +100,17 @@ namespace LocARNA {
 	    return bps_.find(x) != bps_.end();
 	}
 
-	/** \brief sequence length 
+	/** @brief sequence length 
 	 */
 	size_t
 	length() const {return length_;}
 
-	/** \brief number of base pairs
+	/** @brief number of base pairs
 	 */
 	size_t
 	size() const {return bps_.size();}
 
-	/** \brief insert base pair
+	/** @brief insert base pair
 	 * @param bp base pair
 	 */
 	void
@@ -85,7 +119,7 @@ namespace LocARNA {
 	    bps_.insert(bp);
 	}
 
-	/** \brief remove base pair
+	/** @brief remove base pair
 	 * @param bp base pair
 	 */
 	void
@@ -94,7 +128,7 @@ namespace LocARNA {
 	    bps_.erase(bp);
 	}
 	
-	/** \brief clear structure
+	/** @brief clear structure
 	    set structure to empty
 	 */
 	void
@@ -120,12 +154,78 @@ namespace LocARNA {
 	const_iterator end() const {return bps_.end();}
 	
 	/** 
-	 * \brief convert to dot-bracket string
-	 * @return dot-bracket string 
+	 * @brief convert to dot-bracket string 
+	 *
+	 * @return dot-bracket string
+	 *
+	 * If the structure contains crossing base pairs, such base
+	 * pairs are encoded using more than one pair of bracket
+	 * symbols.  ( see constructor from dot bracket string ).  The
+	 * use of bracket symbols is greedy from left to right,
+	 * following the order defined in the class (by constants
+	 * open_symbols_ and close_symbols_).
 	 */
 	std::string
 	to_string() const;
+	
+    private:
+	std::string
+	to_string( const bps_t &bps ) const;
 
+    public:
+	
+	/**
+	 * @brief Check for empty structure / class PLAIN
+	 *
+	 * @param bps set of base pairs
+	 *
+	 * @return whether structure is empty
+	 */
+	bool
+	empty(const bps_t &bps) const;
+
+	bool
+	empty() const {return empty(bps_);}
+	
+	/**
+	 * @brief Check for class NESTED
+	 *
+	 * @param bps set of base pairs
+	 *
+	 * @return whether structure is in the nested class (i.e., not
+	 * in classes crossing or unlimited)
+	 *
+	 * A structure is in the class nested if no base pairs cross
+	 * or share common ends.
+	 *
+	 * @see in_crossing() for naming
+	 */
+	bool
+	nested(const bps_t &bps) const;
+	
+	bool
+	nested() const {return nested(bps_);}
+
+	/**
+	 * @brief Check for class CROSSING
+	 *
+	 * @param bps set of base pairs
+	 *
+	 * @return whether structure is in the crossing class (i.e.,
+	 * not in unlimited)
+	 *
+	 * A structure is in the crossing class if no base pairs share
+	 * common ends.
+	 *
+	 * @note this does *not* test for the presence of crossing
+	 * base pairs. For the latter, use !nested().
+	 */
+	bool
+	crossing(const bps_t &bps) const;
+
+	bool
+	crossing() const {return crossing(bps_);}
+	
     }; // end class RnaStructure
 
 

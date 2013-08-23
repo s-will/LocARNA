@@ -56,7 +56,8 @@ namespace LocARNA {
 	 * and does not keep a reference
 	 */
 	RnaData(const RnaEnsemble &rna_ensemble,
-		double p_bpcut);
+		double p_bpcut,
+		const PFoldParams &pfoldparams);
 
 	/** 
 	 * @brief Construct from file

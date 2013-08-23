@@ -294,9 +294,12 @@ namespace LocARNA {
      * @param in input stream 
      * @param[out] line line
      *
-     * Get the next line of stream in that is neither emtpy nor
-     * starts with white space (the latter is considered a comment
-     * in pp and (our variant of) clustalw files).
+     * Get the next line of stream in that is neither emtpy nor starts
+     * with white space (the latter is considered a comment in pp and
+     * (our variant of) clustalw files). 
+
+     * While newline is quoted concatenate lines. (note: this is kept
+     * simple, such that we cannot quote quotes)
      * 
      * @note on failure, sets line to empty 
      *

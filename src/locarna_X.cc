@@ -57,6 +57,9 @@ using namespace std;
 const std::string
 VERSION_STRING = (std::string)PACKAGE_STRING;
 
+const bool DO_TRACE=true;
+//const bool DO_TRACE=false;
+
 // ------------------------------------------------------------
 // Parameter
 
@@ -331,17 +334,16 @@ main(int argc, char **argv) {
     // ----------------------------------------
     // construct set of relevant arc matches
     //
-    ArcMatches *arc_matches;
+    ArcMatches *arc_matches=0L;
     
     // initialize from RnaData
-    arc_matches = new ArcMatchesIndexed(*rna_dataA,
+    arc_matches = new ArcMatches(*rna_dataA,
 				 *rna_dataB,
 				 min_prob,
 				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(seqA.length(),seqB.length()),
 				 trace_controller,
 				 seq_constraints
 				 );
-
 
     const BasePairs &bpsA = arc_matches->get_base_pairsA();
     const BasePairs &bpsB = arc_matches->get_base_pairsB();
@@ -436,8 +438,6 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Traceback
     //
-    const bool DO_TRACE=true;
-    //const bool DO_TRACE=false;
     if (DO_TRACE) {
 	
 //	if (opt_verbose) {
@@ -547,9 +547,13 @@ main(int argc, char **argv) {
 
     // ----------------------------------------
     // DONE
-    delete arc_matches;
-    cout << "... locarna_X finished!" << endl << endl;
 
+    if (arc_matches) delete arc_matches;
+
+    if (rna_dataA) delete rna_dataA;
+    if (rna_dataB) delete rna_dataB;
+
+    cout << "... locarna_X finished!" << endl << endl;
     stopwatch.stop("total");
 
     return 0;

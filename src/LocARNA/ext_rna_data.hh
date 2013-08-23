@@ -43,13 +43,16 @@ namespace LocARNA {
 	 * @param p_bpcut cutoff probability for base pairs
 	 * @param p_bpilcut cutoff probability for base pairs in loops
 	 * @param p_uilcut cutoff probability for unpaired bases in loops
+	 * @param pfoldparams parameters for partition folding
+	 *
 	 *
 	 * @note requires that rnaensemble has in loop probabilities
 	 */
 	ExtRnaData(const RnaEnsemble &rna_ensemble,
 		   double p_bpcut,
 		   double p_bpilcut,
-		   double p_uilcut);
+		   double p_uilcut,
+		   const PFoldParams &pfoldparams);
 	
 	/** 
 	 * @brief Construct from input file
@@ -188,13 +191,13 @@ namespace LocARNA {
 	/** 
 	 * Read data in pp format 2.0 with in-loop probabilities
 	 * 
-	 * @param in input file
+	 * @param in input stream
 	 *
 	 * @see RnaData::read_pp()
 	 */
 	virtual
-	void
-	read_pp(const std::string &in);
+	std::istream &
+	read_pp(std::istream &in);
 
 	/** 
 	 * @brief initialize from rna ensemble 

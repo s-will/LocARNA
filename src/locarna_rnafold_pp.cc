@@ -15,9 +15,6 @@
  * command line argument --TEST provides a way to test for linking to
  * the ViennaLib. (This should be eventually replaced by a less
  * idiosyncratic mechanism.)
- *
- * @todo use RnaEnsemble to avoid code duplication (caution: at the
- * time of writing, RnaEnsemble does not support constraints yet.)
  */
 /************************************************************/
 
@@ -29,8 +26,6 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
-
-#ifdef HAVE_LIBRNA
 
 #include <math.h>
 
@@ -141,24 +136,27 @@ option_def my_options[] = {
     {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
     {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
-    {"input",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
     {"use-struct-constraints",'C',&clp.use_struct_constraints, O_NO_ARG, 0, O_NODEFAULT, "","Use structural constraints"},
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
-    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking"},
+    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Compute stacking terms"},
     {"in-loop",0,&clp.opt_in_loop,O_NO_ARG,0,O_NODEFAULT,"","Compute in-loop probabilities"},
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
-    {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.0005","threshold","Threshold for prob_unpaired_in_loop"},
-    {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0005","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
+    {"p_unpaired_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.0005","threshold","Threshold for prob_unpaired_in_loop"},
+    {"p_basepair_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0005","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
     {"output",'o',0,O_ARG_STRING,&clp.output_file,"","f","Output file"},
     {"force-alifold",0,&clp.force_alifold,O_NO_ARG,0,O_NODEFAULT,"","Force alifold for single sequnces"},
     {"width",'w',0,O_ARG_INT,&clp.width,"120","size","Output width"},
-    {"test",0,&clp.test,O_NO_ARG,0,O_NODEFAULT,"","Test avialability"},
+    {"TEST",0,&clp.test,O_NO_ARG,0,O_NODEFAULT,"","Test avialability"},
+//    {"input",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
+    {"",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 
 };
 
 
 
+
+#ifdef HAVE_LIBRNA
 
 
 /** 
@@ -198,7 +196,7 @@ main(int argc, char **argv) {
 	return -1;
     }
     //todo: check that input is proper and catch the wrong inputs
-    MultipleAlignment::FormatType::type input_format;
+    // MultipleAlignment::FormatType::type input_format;
     MultipleAlignment* mseq = NULL;
     // try fasta format
     bool failed = false;
@@ -226,7 +224,7 @@ main(int argc, char **argv) {
 
     if (!failed)
     {
-	input_format = MultipleAlignment::FormatType::FASTA;
+	//input_format = MultipleAlignment::FormatType::FASTA;
     }
     else
     { //
@@ -257,7 +255,7 @@ main(int argc, char **argv) {
 	}
 	catch (failure &f) {
 	    failed=true;
-	    std::cerr << f.what() << std::endl;
+//	    std::cerr << f.what() << std::endl;
 	}
 	if (failed)
 	{
@@ -298,15 +296,14 @@ main(int argc, char **argv) {
     }
     std::ostream out_stream(buff);
 
-    RnaData* rna_data_ptr;
     if (clp.opt_in_loop)
     {
-	ExtRnaData ext_rna_data(rna_ensemble, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold);
+	ExtRnaData ext_rna_data(rna_ensemble, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold,pfoldparams);
 	ext_rna_data.write_pp(out_stream, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold);//toask: why should give the theresholds again
     }
     else
     {
-	RnaData rna_data(rna_ensemble, clp.min_prob);
+	RnaData rna_data(rna_ensemble, clp.min_prob, pfoldparams);
 	rna_data.write_pp(out_stream,clp.min_prob);
     }
 
@@ -321,8 +318,8 @@ int
 main(int argc, char **argv) {
 
     bool process_success=process_options(argc,argv,my_options);
-
-       if ( clp.test ) {
+    
+    if ( process_success && clp.test ) {
 	std::cout << "0";
 	return -1;
     }

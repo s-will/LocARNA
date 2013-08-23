@@ -117,6 +117,17 @@ namespace LocARNA {
 	    if (line.length()>0 &&
 		!isspace(line[0])) {
 		
+		//  collect lines in case of quoted newline
+		while (line[line.length()-1]=='\\') {
+		    line=line.substr(0,line.length()-1);
+		    std::string line1;
+		    if (getline(in,line1)) {
+			line+=" "+line1;
+		    } else {
+			break;
+		    }
+		}
+
 		// remove trailing white space
 		const size_t strEnd = line.find_last_not_of(whitespace);
 		line = line.substr(0, strEnd+1);

@@ -34,8 +34,8 @@ namespace LocARNA {
      */
     class AlignerN {
     public:
-	typedef BasePairs__Arc Arc;
-	typedef SparsificationMapper::ArcIdx ArcIdx; //!< type of arc index
+	typedef BasePairs__Arc Arc;	//!< type for an arc a.k.a base pair
+	typedef SparsificationMapper::ArcIdx ArcIdx; //!< type for arc index
 	typedef SparsificationMapper::ArcIdxVec ArcIdxVec; //!< vector of arc indices
 	typedef SparsificationMapper::matidx_t matidx_t; //!< type for a matrix position
 	typedef SparsificationMapper::seq_pos_t seq_pos_t; //!< type for a sequence position
@@ -57,8 +57,8 @@ namespace LocARNA {
 	const Sequence &seqA; //!< sequence A
 	const Sequence &seqB; //!< sequence B
 
-	const SparsificationMapper& mapperA;
-	const SparsificationMapper& mapperB;
+	const SparsificationMapper& mapperA; //!< sparsification mapping for seq A
+	const SparsificationMapper& mapperB; //!< sparsification mapping for seq B
 
 	const ArcMatches &arc_matches; //!< the potential arc matches between A and B
 
@@ -84,8 +84,8 @@ namespace LocARNA {
 	 */
 	std::vector<M_matrix_t> Ms;
 
-	ScoreMatrix gapCostAmat;
-	ScoreMatrix gapCostBmat;
+	ScoreMatrix gapCostAmat; //!< a matrix to store cost of deleting/inserting a subsequence of sequence A, indexed by neighboring positions of the range
+	ScoreMatrix gapCostBmat; //!< a matrix to store cost of deleting/inserting a subsequence of sequence B, indexed by neighboring positions of the range
 
 
 	int min_i; //!< subsequence of A left end, not used in locarna_n
@@ -208,7 +208,7 @@ namespace LocARNA {
 	    /**
 	     * Construct for AlignerN object
 	     *
-	     * @param aligner The aligner object
+	     * @param alignerN The aligner object
 	     *
 	     * @note scoring object in aligner has to be modified by lambda already
 	     */
@@ -284,13 +284,26 @@ namespace LocARNA {
 	template <class ScoringView>
 	void init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
 
+	/**
+	 * \brief compute and stores score of aligning subsequences to the gap
+	 *
+	 * @param isA a switch to determine the target sequence A or B
+	 * @param sv the scoring view to be used
+	 *
+	*/
 	template <class ScoringView>
 	void computeGapCosts(bool isA, ScoringView sv);
 
+
+	/**
+	 * \brief return score of aligning a subsequence to the gap
+	 *
+	 * @param leftSide sequence position before left side of the subsequence
+	 * @param rightSide sequence position after right side of the subsequence
+	 * @param isA a switch to determine the target sequence A or B
+	 */
 	infty_score_t getGapCostBetween( pos_type leftSide, pos_type rightSide, bool isA);
 
-	template <class ScoringView>
-	void compute_gap_costs( pos_type xl, pos_type xr, const Arc& arcY, std::vector<infty_score_t> &blockGapCostsX, bool isA, ScoringView sv );
 
 	/**
 	 * \brief compute IA/IB value of single element
@@ -332,8 +345,8 @@ namespace LocARNA {
 	 *
 	 * @param al position in sequence A: left end of current arc match
 	 * @param bl position in sequence B: left end of current arc match
-	 * @param i position in sequence A, for which score is computed
-	 * @param j position in sequence B, for which score is computed
+	 * @param index_i index position in sequence A, for which score is computed
+	 * @param index_j index position in sequence B, for which score is computed
 	 * @param state the state, selects the matrix M (currently one possible state=noEx)
 	 * @param sv the scoring view to be used
 	 * @returns score of M(i,j) for the arcs left ended by al, bl
@@ -362,10 +375,10 @@ namespace LocARNA {
 	 * 
 	 * @param state the state selects Mmatrices (currently one possible state=noEx)
 	 * @param al left end of arc in A
-	 * @param i  right end of subsequence in A
-	 * @param bl left end of arc in B
-	 * @param j right end of subsequence in B
-	 * @param top_level whether alignment is on top level
+	 * @param i_index  index for right end of subsequence in A
+	 * @param bl index for left end of arc in B
+	 * @param j_index right end of subsequence in B
+	 * @param tl whether alignment is on top level
 	 * @param sv scoring view 
 	 */
 	template<class ScoringView>
@@ -476,7 +489,7 @@ namespace LocARNA {
 	 * Read/Write access to IAorIB matrix
 	 *
 	 * @param i rightside position in seqA/B
-	 * @param arac arc in A/B
+	 * @param arc arc in A/B
 	 * @param isA switch to determine IA/IB
 	 * @return IA/IB matrix entry for position k and arc
 	 */

@@ -93,7 +93,7 @@ transform = s/\.bin$$//
 LDADD=libLocARNA-$(API_VERSION).la
 
 TESTS = Tests/multiple_alignment Tests/rna_data Tests/ext_rna_data	\
-        Tests/trace_controller Tests/rna_ensemble
+        Tests/trace_controller Tests/rna_ensemble Tests/rna_structure
 check_PROGRAMS = $(TESTS)
 AM_DEFAULT_SOURCE_EXT = .cc
 
