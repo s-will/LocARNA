@@ -1248,8 +1248,8 @@ private:
 
     bool nucleotide_match(seqpos_t pos_seqA, seqpos_t pos_seqB){
     	assert(pos_seqA>=1 && pos_seqA<=seqA.length() &&
-    		   pos_seqB>=1 && pos_seqB<=seqB.length()); //seqA and seqB are 1-based!!!
-    	return (seqA[pos_seqA][0]==seqB[pos_seqB][0]);
+    		   pos_seqB>=1 && pos_seqB<=seqB.length()); //seqA and seqB are 1-based
+    	return (seqA[pos_seqA]==seqB[pos_seqB]);
     }
 
     bool seq_matching(ArcIdx idxA, ArcIdx idxB, matpos_t cur_mat_pos, pair_seqpos_t cur_seq_pos){
