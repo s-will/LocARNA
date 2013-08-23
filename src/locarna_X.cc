@@ -118,38 +118,37 @@ using namespace LocARNA;
 bool opt_help;
 bool opt_version;
 bool opt_verbose;
-bool opt_stacking;
+//bool opt_stacking;
 bool opt_postscript_output;
 bool opt_suboptimal;
+bool no_add_filter;
+bool no_stacking;
 
 bool opt_stopwatch;
 
 option_def my_options[] = {
-    {"min-prob",'P',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
+    {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
-
-    //{"ignore-constraints",0,&opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
-    
-    {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","This help"},
+    {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
     {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
-    {"stacking",'S',&opt_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","Use stacking terms (needs stack-probs by RNAfold -p2)"},
+    {"no-stacking",0,&no_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","Use stacking terms (needs stack-probs by RNAfold -p2)"},
     {"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"2","min_size","User-defined minimum size for Exact Pattern Matches (chaining only)"},
-    {"prob_unpaired_in_loop_threshold",'p',0,O_ARG_DOUBLE,&prob_unpaired_in_loop_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
-    {"prob_basepair_in_loop_threshold",'q',0,O_ARG_DOUBLE,&prob_basepair_in_loop_threshold,"0.001","threshold","Threshold for prob_basepair_in_loop"},
+    {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_unpaired_in_loop_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
+    {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_basepair_in_loop_threshold,"0.001","threshold","Threshold for prob_basepair_in_loop"},
     {"alpha_1",0,0,O_ARG_INT,&alpha_1,"1","alpha_1","Multiplier for sequential score"},
     {"alpha_2",0,0,O_ARG_INT,&alpha_2,"1","alpha_2","Multiplier for structural score"},
     {"alpha_3",0,0,O_ARG_INT,&alpha_3,"1","alpha_3","Multiplier for stacking score, 0 means no stacking contribution"},
     {"suboptimal",0,&opt_suboptimal,O_NO_ARG,0,O_NODEFAULT,"suboptimal_traceback","Use a suboptimal traceback for the computation of the exact pattern matchings"},
     {"diff-to-opt-score",0,0,O_ARG_INT,&difference_to_opt_score,"-1","threshold","Threshold for suboptimal traceback"},
     {"min_score",0,0,O_ARG_INT,&min_score,"3","min","Minimal score of a traced EPM"},
-    {"am-threshold",0,0,O_ARG_INT,&am_threshold,"3","am","Minimal arcmatch score in F matrix"},
     {"number-of-EPMs",0,0,O_ARG_INT,&number_of_EPMs,"1000","threshold","Maximal number of EPMs for the suboptimal traceback"},
-    {"inexact-struct-match",0,&inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"inexact structure match","inexact structure matches possible"},
-    {"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-2","structural mismatch score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
+    {"inexact-struct-match",0,&inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool","inexact structure matches possible"},
+    {"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-6","structural mismatch score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
+    {"no-add-filter",0,&no_add_filter,O_NO_ARG,0,O_NODEFAULT,"bool","Apply an additional filter to enumerate only EPMs that are maximally extended (only inexact)"},
 
     {"stopwatch",0,&opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
@@ -158,7 +157,6 @@ option_def my_options[] = {
     {"PS_fileA",'a',0,O_ARG_STRING,&psFileA,"","psFileA","Postscript output file for sequence A"},
     {"PS_fileB",'b',0,O_ARG_STRING,&psFileB,"","psFileB","Postscript output file for sequence B"},
     {"output-ps", 0,&opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"","Output best EPM chain as colored postscript"},
-    //{"output-locarna", 'o',&opt_locarna_output,O_NO_ARG,0,O_NODEFAULT,"","Output fasta file with anchor constraints for locarna"},
     {"output-locarna",'o',0,O_ARG_STRING,&locarna_output,"","constraintsFile","Fasta file with anchor constraints for locarna"},
     {"output-clustal",0,0,O_ARG_STRING,&clustal_output,"","filename","Write file with chain as alignment in clustalw format"},
     {"output-epm-list",0,0,O_ARG_STRING,&epm_list_output,"","epm list","A list of all found epms"},
@@ -228,18 +226,24 @@ main(int argc, char **argv) {
     if (opt_verbose) {
       print_options(my_options);
     }
-    
+
     // ------------------------------------------------------------
     // parameter consistency
     
     //if no stacking should be considered, set the parameter for stacking to 0
-    if(!opt_stacking){
+    if(no_stacking){
     	alpha_3 = 0;
     }
 
     if(!chaining && chained_epm_list_output.size()>0){
     	cout << "Enable chaining in order to output chained epm list " << endl;
     	chaining = true;
+    }
+
+    // no filtering needed if we do exact matching
+    if(!inexact_struct_match){
+    	if(!no_add_filter) cout << "Disable filtering as only exact matches are considered " << endl;
+    	no_add_filter = true;
     }
 
     // ------------------------------------------------------------
@@ -256,7 +260,7 @@ main(int argc, char **argv) {
     getrusage( RUSAGE_SELF, &ruse );
     double start_foldR = static_cast<double>( ruse.ru_utime.tv_sec ) + static_cast<double>( ruse.ru_utime.tv_usec )/1E6;
 
-    PFoldParams pfparams(no_lonely_pairs,opt_stacking);
+    PFoldParams pfparams(no_lonely_pairs,(!no_stacking));
 
     ExtRnaData *rna_dataA=0;
     try {
@@ -401,10 +405,11 @@ main(int argc, char **argv) {
 		    alpha_3,
 		    difference_to_opt_score,
 		    min_score,
-		    am_threshold,
+		    //am_threshold,
 		    number_of_EPMs,
 		    inexact_struct_match,
 		    struct_mismatch_score,
+		    no_add_filter,
 		    opt_verbose
 		    );
 

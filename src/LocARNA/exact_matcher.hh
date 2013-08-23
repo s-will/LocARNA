@@ -320,7 +320,7 @@ public:
 private:
 
 	patListTYPE        patternList; //!< list of PatternPairs
-	orderedMapTYPE     patternOrderedMap; //!< ordered Map
+	orderedMapTYPE     patternOrderedMap; //!< ordered Map with respect to the size of the PatternPairs
 	PatternIdMapTYPE   idMap; //!< map: patternId -> pointer to PatternPair
 	int minPatternSize; //!< minimum size of a Pattern
 };
@@ -791,11 +791,12 @@ private:
 	matpos_t cur_pos; //!< the current matrix position in the traceback, needed for suboptimal traceback
 	score_t max_tol_left; //!< the maximal tolerance left, needed for the suboptimal traceback
 	bool first_insertion; //!< whether we have already inserted something in the current EPM in the filling step
+	bool invalid; //!< whether an EPM is invalid (includes in another EPM and has a lower score)
 
 	PairArcIdxVec am_to_do;//!< contains the pairs of arc indices which need to be traced
 
 	//! compare two elements of the pattern vector
-	class compare_el_pat_vec {
+	struct compare_el_pat_vec {
 	public:
 		bool
 		operator () (const EPM::el_pat_vec &el1,const EPM::el_pat_vec &el2)const {
@@ -811,6 +812,14 @@ private:
 
 	};
 
+	struct compare_el_am_to_do {
+	public:
+		bool
+		operator () (const EPM::PairArcIdx &el1, const EPM::PairArcIdx &el2)const {
+			return (el1.first<el2.first) || ((el1.first==el2.first) && el1.second < el2.second);
+		}
+	};
+
 public:
 
     //!Constructor
@@ -819,7 +828,8 @@ public:
 		state(0),
 		cur_pos(matpos_t(0,0)),
 		max_tol_left(0),
-		first_insertion(true)
+		first_insertion(true),
+		invalid(false)
 	{}
 
 	virtual ~EPM(){} //!< destructor
@@ -841,7 +851,11 @@ public:
 	const score_t & get_max_tol_left() const{return max_tol_left;}
 
 	//! returns whether it is the first insertion into the EPM
-	const bool & get_first_insertion() const{return first_insertion;}
+	bool get_first_insertion() const{return first_insertion;}
+
+	bool is_invalid() const{
+		return invalid;
+	}
 
 	//-----------------------------------------------------------------------
 	// setter methods
@@ -876,6 +890,10 @@ public:
 	 * @param first_insertion_ whether it is the first_insertion
 	 */
 	void set_first_insertion(bool first_insertion_){first_insertion=first_insertion_;}
+
+	void set_invalid(){
+		invalid = true;
+	}
 
 	/**
 	 * returns the pair of arc indices at position pos
@@ -1004,11 +1022,43 @@ public:
 	void sort_patVec(){sort(pat_vec.begin(), pat_vec.end(),compare_el_pat_vec());}
 
 	/**
+	 * sorts the list of arcmatches am_to_do, such that includes_am works
+	 */
+	void sort_am_to_do(){
+		sort(am_to_do.begin(), am_to_do.end(), compare_el_am_to_do());
+	}
+
+	/**
 	 * inserts the pattern vector of the EPM epm_to_insert into the current EPM
 	 * @param epm_to_insert EPM that is inserted
 	 */
 	void insert(const EPM &epm_to_insert){
 		pat_vec.insert(pat_vec.end(),epm_to_insert.begin(),epm_to_insert.end());
+	}
+
+	/**
+	 * checks whether the current EPM includes the EPM epm_to_test
+	 * @param epm_to_test EPM that is checked
+	 * @return true, if the current EPM includes the EPM epm_to_test
+	 * 		   false, otherwise
+	 */
+	bool includes(const EPM &epm_to_test) const{
+		assert(pat_vec_size()>=epm_to_test.pat_vec_size());
+		return std::includes(this->begin(),this->end(),
+				epm_to_test.begin(),epm_to_test.end(),
+				compare_el_pat_vec());
+	}
+
+	/**
+	 * checks whether the arcmatches of the current EPM includes the arcmatches of the epm_to_test
+	 * @param epm_to_test EPM that is checked
+	 * @return true, if the arcmatches of the current EPM includes the arcmatches of the EPM epm_to_test
+	 * 		   false, otherwise
+	 */
+	bool includes_am(const EPM &epm_to_test) const{
+		return std::includes(am_begin(),am_end(),
+				epm_to_test.am_begin(),epm_to_test.am_end(),
+				compare_el_am_to_do());
 	}
 
 	/**
@@ -1035,7 +1085,6 @@ public:
 			out << "score " << score << std::endl;
 			out << "pos " << this->cur_pos.first << "," << this->cur_pos.second << std::endl;
 			out << "state " << this->state << std::endl;
-
 		}
 		out << "______________________________________________________" << std::endl;
 	}
@@ -1106,12 +1155,13 @@ class ExactMatcher {
 	typedef EPM::PairArcIdx PairArcIdx; //!< type for pair of arc indices
 	typedef EPM::PairArcIdxVec PairArcIdxVec; //!< type for vector of pairs of arc indices
 
-	typedef std::vector<EPM> epm_cont_t; //!< the container used for temporarily storing the EPMs
+	typedef std::list<EPM> epm_cont_t; //!< the container used for temporarily storing the EPMs
+	typedef epm_cont_t::iterator epm_it_t; //!< iterator for epm_cont_t
 	typedef std::pair<score_t,epm_cont_t > el_map_am_to_do_t; //!< type for storing for a given tolerance the list of epms
 	
         //! a map that stores for pairs of arc indices the tolerance
         //! that is used for backtracing and the found EPMs
-        typedef std::map<PairArcIdx,el_map_am_to_do_t > map_am_to_do_t; 
+        typedef std::tr1::unordered_map <PairArcIdx,el_map_am_to_do_t,pair_of_size_t_hash > map_am_to_do_t;
 private:
 
     //! a quintuple for storing the state, max tolerance left, current matrix position, potential pair of arc indices
@@ -1155,12 +1205,12 @@ private:
     int difference_to_opt_score; //!< in the suboptimal traceback all EPMs which are at most difference_to_opt_score
     								 // worse than the optimal score are considered
     int min_score; //!< minimal score of a traced EPM
-    int am_threshold; //!< minimal arcmatch score in F matrix
     long int max_number_of_EPMs; //!< maximal number of EPMs for the suboptimal traceback
     long int cur_number_of_EPMs; //!< number of EPMs for current suboptimal traceback
 
     bool inexact_struct_match; //! whether to allow inexact structure matches (arc matches)
     score_t struct_mismatch_score; //! how to score a nucleotide mismatch in an arc match
+    bool no_add_filter; //! whether to apply a second filter when allowing inexact structure matches
 
     bool verbose; //!< whether to output additional information
 
@@ -1407,6 +1457,15 @@ private:
     void trace_F_suboptimal(pos_type i,pos_type j,score_t max_tol, bool recurse, bool count_EPMs);
 
     /**
+     * \brief applies a second filter criterion if inexact structure matches are allowed
+     *
+     * all EPMs that cannot be extended while obtaining a better score, are kept
+     *
+     * @param found_epms the list of traced epms
+     */
+    void apply_filter(epm_cont_t &found_epms);
+
+    /**
      * \brief traces through the L, G_A, G_AB and LR matrix and stores
      * 	  all suboptimal solutions in the datastructure found_epms
      *
@@ -1432,7 +1491,7 @@ private:
      * @param mat_pos_diag next diagonal matrix position
      * @param seq_pos_to_be_matched the sequence position that will be matched
      *        (in case of an arc match the left ends of the arc match)
-     * @param pos_cur_epm the position of the current EPM in found_epms (the list of EPMs)
+     * @param cur_epm an iterator to the current EPM in found_epms (the list of EPMs)
      * @param am the arc match that is currently traced (pseudo arc for sequential match)
      * @param poss stores the first possiblity that was encountered for each position
      * @param found_epms the list of all traced EPMs
@@ -1443,8 +1502,8 @@ private:
      */
     void trace_seq_str_matching_subopt(const Arc &a, const Arc &b,
     		score_t score_contr, matpos_t mat_pos_diag, pair_seqpos_t seq_pos_to_be_matched,
-    		const PairArcIdx &am, poss_L_LR &poss, size_type pos_cur_epm,
-    		epm_cont_t &found_epms, map_am_to_do_t &map_am_to_do, bool count_EPMs);
+    		const PairArcIdx &am, poss_L_LR &poss, epm_it_t cur_epm, epm_cont_t &found_epms,
+    		map_am_to_do_t &map_am_to_do, bool count_EPMs);
 
     /**
      * \brief checks whether the new possibility is valid
@@ -1453,7 +1512,7 @@ private:
      * @param b arc in second sequence
      * @param pot_new_poss the potential new possibility for the traceback
      * @param poss stores the first possiblity that was encountered for each position
-     * @param pos_cur_epm the position of the current EPM in found_epms (the list of EPMs)
+     * @param cur_epm an iterator to the current EPM in found_epms (the list of EPMs)
      * @param found_epms the list of all traced EPMs
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
@@ -1463,8 +1522,8 @@ private:
      * @return whether pot_new_poss is valid
      */
     bool check_poss(const Arc &a, const Arc &b, const poss_L_LR &pot_new_poss,
-    		poss_L_LR &poss, size_type pos_cur_epm, epm_cont_t &found_epms,
-    		map_am_to_do_t &am_to_do_for_cur_am, bool count_EPMs);
+        		poss_L_LR &poss, epm_it_t cur_epm, epm_cont_t &found_epms,
+        		map_am_to_do_t &am_to_do_for_cur_am, bool count_EPMs);
 
 
     /**
@@ -1476,7 +1535,7 @@ private:
      *        from the current position
      * @param new_poss the new possibility for the traceback that is stored
      * @param poss stores the first possiblity that was encountered for each position
-     * @param pos_cur_epm the position of the current EPM in found_epms (the list of EPMs)
+     * @param cur_epm an iterator to the current EPM in found_epms (the list of EPMs)
      * @param found_epms the list of all traced EPMs
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
@@ -1484,7 +1543,7 @@ private:
      * stored in the PatternPairMap
      */
     void store_new_poss(const Arc &a, const Arc &b, bool last_poss,
-    		const poss_L_LR &new_poss, poss_L_LR &poss, size_type pos_cur_epm,
+    		const poss_L_LR &new_poss, poss_L_LR &poss, epm_it_t cur_epm,
     		epm_cont_t &found_epms, map_am_to_do_t &am_to_do_for_cur_am, bool count_EPMs);
 
     /**
@@ -1495,7 +1554,7 @@ private:
      * @param b arc in second sequence
      * @param pot_new_poss the potential new possibility for the traceback
      * @param poss stores the first possiblity that was encountered for each position
-     * @param pos_cur_epm the position of the current EPM in found_epms (the list of EPMs)
+     * @param cur_epm an iterator to the current EPM in found_epms (the list of EPMs)
      * @param found_epms the list of all traced EPMs
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
@@ -1503,7 +1562,7 @@ private:
      * stored in the PatternPairMap
      */
     void trace_G_suboptimal(const Arc &a, const Arc &b, const poss_L_LR &pot_new_poss,
-    		poss_L_LR &poss, size_type pos_cur_epm, epm_cont_t &found_epms,
+    		poss_L_LR &poss, epm_it_t cur_epm, epm_cont_t &found_epms,
     		map_am_to_do_t &map_am_to_do, bool count_EPMs);
 
     /**
@@ -1526,7 +1585,7 @@ private:
      * @param map_am_to_do stores for each arc match that was traced the corresponding
      *                     list of EPMs for the current arc match
 
-     * @param pos_cur_epm the position of the current EPM in found_epms (the list of EPMs)
+     * @param cur_epm an iterator to the current EPM in found_epms (the list of EPMs)
      * @param found_epms the list of all traced EPMs
      * @param count_EPMs whether the EPMs are just counted or also
      * stored in the PatternPairMap
@@ -1534,7 +1593,7 @@ private:
      *                          for assigning the correct score after the filling of the EPM!)
      *                          from L/LR Matrix: dummy value -1
      */
-    void preproc_fill_epm(map_am_to_do_t &am_to_do, size_type pos_cur_epm,
+    void preproc_fill_epm(map_am_to_do_t &am_to_do, epm_it_t cur_epm,
     		epm_cont_t &found_epms, bool count_EPMs, score_t min_allowed_score=-1);
 
     /**
@@ -1549,7 +1608,7 @@ private:
      * @param min_score from F Matrix: minimal score of suboptimal EPMs (only used
      *                  for assigning the correct score after the filling of the EPM!)
      *                  from L/LR Matrix: dummy value -1
-     * @param pos_cur_epm the position of the current EPM in found_epms (the list of EPMs)
+     * @param cur_epm an iterator to the current EPM in found_epms (the list of EPMs)
      * @param found_epms the list of all traced EPMs
      * @param count_EPMs whether the EPMs are just counted or also
      * stored in the PatternPairMap
@@ -1557,7 +1616,7 @@ private:
      */
     void fill_epm(const map_am_to_do_t &map_am_to_do, size_type vec_idx,
     		std::vector<score_t> &max_tol_left_up_to_pos, std::vector<const EPM*> &epms_to_insert,
-    		score_t min_score, size_type pos_cur_epm, epm_cont_t &found_epms,bool count_EPMs);
+    		score_t min_score, epm_it_t cur_epm, epm_cont_t &found_epms,bool count_EPMs);
 
     // --------------------------------------------
     // debugging/testing
@@ -1591,10 +1650,10 @@ public:
      * @param difference_to_opt_score_ all EPMs with a score difference not more than
      *                                 difference_to_opt_score_ from the optimal score are traced
      * @param min_score_ the minimal score of an EPMs that is traced
-     * @param am_threshold_ minimal arcmatch score in F matrix
      * @param max_number_of_EPMs_ maximal number of EPMs for the suboptimal traceback
      * @param inexact_struct_match_ whether to allow inexact structure matches
      * @param struct_mismatch_score_ the mismatch score for two nucleotides in an arcmatch (only used if inexact_struct_match_ is set)
+     * @param apply_filter_ whether to apply an additional filter when allowing inexact structure matches
      * @param opt_verbose_ whether to write additional information
      */
     ExactMatcher(const Sequence &seqA_,
@@ -1609,10 +1668,10 @@ public:
 		 int alpha_3_,
 		 score_t difference_to_opt_score_,
 		 score_t min_score_,
-		 score_t am_threshold_,
 		 long int max_number_of_EPMs_,
 		 bool inexact_struct_match_,
 		 score_t struct_mismatch_score_,
+		 bool apply_filter_,
 		 bool opt_verbose_
 		 );
 
