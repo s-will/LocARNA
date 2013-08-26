@@ -12,7 +12,7 @@ use MLocarna;
 
 sub locarna_compute_pairwise_alignments {
     
-  my ($options, $results_path, $sequences, $bindir) = @_;
+  my ($options, $results_path, $sequences, $bindir, $pp_dir) = @_;
 
   my $numSequences = scalar(@{$sequences});
 
@@ -26,7 +26,7 @@ sub locarna_compute_pairwise_alignments {
 
   for (my $i = 0; $i < $numSequences - 1; ++$i) {
     # the path to the dotplot of the this sequence
-    my $first = $results_path.'/dp/S'.($i + 1) .= '.pp';
+    my $first = $pp_dir . '/S'.($i + 1) .= '.pp';
 
     # iterate over all other sequences in the rest of the array and compute
     # pairwise alignment
@@ -37,7 +37,7 @@ sub locarna_compute_pairwise_alignments {
                      $counter.'/'.$number.' (Seq '.($i + 1).' <-> Seq '.
                      ($j + 1).')...');
       # path to the dot plot of the other sequence
-      my $second = $results_path.'/dp/S'.($j + 1) . '.pp';
+      my $second = $pp_dir . '/S'.($j + 1) . '.pp';
 
       # path to the output file
       my $result = $results_path.'/pair/S'.($i + 1).'_S'.($j + 1).'.aln';
@@ -78,10 +78,6 @@ sub locarna_compute_pairwise_alignments {
   *STDERR->print('Parse pairwise alignments... done!'."\n");
 
   return(\@alignments);
-}
-
-sub locarna_parse_pairwise_alignments {
-
 }
 
 1;
