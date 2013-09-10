@@ -6,7 +6,9 @@ locarnate
 
 =head1 SYNOPSIS
 
-locarnate [-parwise_parameters <parameters> --help] <inputFile>
+locarnate [--parwise_params <parameters> --tcoffee_params <parameters>
+           --pp_calculater_params <parameters> --help
+           --output <outputFolder> ] <inputFile>
     
     Creates MSAs using different pairwise aligners and TCoffee as
     a multiple alignment tool
@@ -16,7 +18,13 @@ AUTHOR: Niklas Meinzer <meinzern@informatik.uni-freiburg.de
 OPTIONS
 
 
-        --parwise_parameters    parameters for the pairwise alignment step
+        --parwise_params    parameters for the pairwise alignment step
+
+        --tcoffee_params    parameters for tcoffee
+
+        --pp_calculator_params  parameters for locarna_rnafold_pp
+
+        --output            path to output folder 
         
         --help  display this help message and exit
 
@@ -72,13 +80,14 @@ $options{TCoffee} = "t_coffee";
 $options{Locarna} = $bindir . "/locarna";
 
 $options{tcoffee_params} = "";
-$options{pairwise_aligner_parameter} = "";
+$options{pairwise_aligner_params} = "";
 $options{pp_calculator_params} = "";
 
 GetOptions("help!" => \$options{help},
-           "pairwise_parameters=s" => \$options{pairwise_aligner_parameter},
+           "pairwise_parameters=s" => \$options{pairwise_aligner_params},
            "tcoffee_parameters=s" => \$options{tcoffee_params},
-           "pp_preprocessing_parameters=s" => \$options{pp_preprocessing_params},
+           "pp_preprocessing_parameters=s" => \$options{pp_calculator_params},
+           "output=s" => \$options{output_path}
            );
 
 pod2usage() if ($options{help});
@@ -86,7 +95,7 @@ pod2usage() if ($options{help});
 ### calculations ###
 
 # check pairwise aligner parameters
-my $checkresult = check_locarna_params(\%options, $options{pairwise_aligner_parameter});
+my $checkresult = check_locarna_params(\%options, $options{pairwise_aligner_params});
 if ($checkresult ne "") {
     print "Locarna parameters invalid. Locarna says: " . $checkresult . "\n";
     exit(1);
@@ -99,24 +108,47 @@ if ($checkresult ne "") {
     exit(1);
 }
 # check locarna_rnafold_pp parameters
-$checkresult = check_pp_parameters(\%options, $options{pp_preprocessing_params});
+$checkresult = check_pp_parameters(\%options, $options{pp_calculator_params});
 if ($checkresult ne "") {
     print "Locarna_rnafold_pp parameters invalid. Locarna_rnafold_pp says: " . $checkresult . "\n";
     exit(1);
 }
 my $results_path = "test_results";
+if(defined $options{output_path}) {
+    $results_path = $options{output_path};
+}
 mkdir($results_path);
 pod2usage("Not enough arguments!\n") if scalar(@ARGV) < 1;
-my $sequences = MLocarna::read_fasta($ARGV[scalar(@ARGV) - 1]);
 
+# sequence input is either a fasta file or a folder containing the
+# .pp files, if preprocessing should be skipped
+my $sequence_input = $ARGV[scalar(@ARGV) - 1];
 
-calculate_basepair_probabilities(\%options, $results_path, $sequences);
+if (!-e $sequence_input) {
+    print "No such file or directory: " . $sequence_input;
+    exit(1);
+}
+# if the given file is not a directory, assume it's a fasta file and
+# proceed with preprocessing
+my $sequences;
+# pp_dir is the directory the .pp files can be found
+my $pp_dir; 
+if (!(-d $sequence_input)) {
+    $sequences = MLocarna::read_fasta($ARGV[scalar(@ARGV) - 1]);
+
+    calculate_basepair_probabilities(\%options, $results_path, $sequences);
+    # pp files are now under results_path/pp
+    $pp_dir = $results_path . "/pp";
+} else {
+    $sequences = parse_pp_directory($sequence_input);
+    $pp_dir = $sequence_input;
+}
 
 mkdir($results_path."/pair");
 
 my $pair_alignments =
   MLocarna::PairwiseAligners::locarna_compute_pairwise_alignments(
-    \%options, $results_path, $sequences, $bindir);
+    \%options, $results_path, $sequences, $bindir, $pp_dir);
 
 my $libfile = ($results_path . "/input.lib");
 
@@ -174,7 +206,7 @@ sub calculate_basepair_probabilities {
 
   *STDERR->print('Calculate pair probabilities...'."\r");
 
-  mkdir($results_path.'/dp');
+  mkdir($results_path.'/pp');
 
   my $pp_tool_call = $bindir . "/" . $options->{"BP-Probability-Calculator"};
 
@@ -182,7 +214,7 @@ sub calculate_basepair_probabilities {
     my $tag = '>S'.($i + 1);
 
     # the filename of the pp file
-    my $pp_file = $results_path . "/dp/S" . ($i + 1) . ".pp";
+    my $pp_file = $results_path . "/pp/S" . ($i + 1) . ".pp";
     
     my $sequence = $sequences->[$i]->{seq};
 
@@ -193,67 +225,6 @@ sub calculate_basepair_probabilities {
   }
 
   *STDERR->print('Calculate pair probabilities... done!'."\n");
-}
-
-
-
-sub calculate_pairwise_alignments {
-  if (@_ != 3) {
-    locarnate::Error::debug('Wrong argument number');
-  }
-
-  my $options =  $_[0];
-  my $results_path = $_[1];
-  my $sequences = $_[2];
-
-  my $numSequences = scalar(@{$sequences});
-
-  my $parameter = ' ';
-
-  my $counter = 0;
-  # how many pairwise alignments must be calculated?
-  my $number = $numSequences * 
-      ($numSequences - 1) / 2;
-
-  for (my $i = 0; $i < $numSequences - 1; ++$i) {
-    # the path to the dotplot of the this sequence
-    my $first = $results_path.'/dp/S'.($i + 1) .= '.pp';
-
-    # iterate over all other sequences in the rest of the array and compute
-    # pairwise alignment
-    for (my $j = $i + 1; $j < $numSequences; ++$j) {
-      ++$counter;
-      *STDERR->print("\r".(' 'x80));
-      *STDERR->print("\r".'Calculate pairwise alignment '.
-                     $counter.'/'.$number.' (Seq '.($i + 1).' <-> Seq '.
-                     ($j + 1).')...');
-      # path to the dot plot of the other sequence
-      my $second = $results_path.'/dp/S'.($j + 1) . '.pp';
-
-      # path to the output file
-      my $result = $results_path.'/pair/S'.($i + 1).'_S'.($j + 1).'.aln';
-
-      # assemble the call to locarna
-      my $call = $bindir .'/locarna '.$parameter.
-          ' --clustal='.$result.' --write-structure '
-          .$first.' '.$second.' 1>/dev/null 2>/dev/null';
-
-      my $code = system($call);
-      if ($code) {
-        # first locarna version had no parameter --write-structure
-        my $call = $bindir .'/locarna '.$parameter.
-            ' --clustal='.$result.' '
-            .$first.' '.$second.' 1>/dev/null 2>/dev/null';
-
-        my $code = system($call);
-        if ($code) {
-          print('Can\'t perform locARNA calculation'.
-                            " (developed under locarna 1.7.8, call:\n".$call.")\n");
-        }
-      }
-    }
-  }
-  *STDERR->print(' done!'."\n");
 }
 
 sub parse_pair_alignments {
@@ -379,4 +350,40 @@ sub check_pp_parameters {
     }
     chomp $error;
     return $error;   
+}
+
+sub parse_pp_directory {
+    my ($dir) = @_;
+
+    opendir(my $DIR, $dir);
+
+    my @result;
+
+    # iterate over files in dir
+    while(my $file = readdir($DIR)) {
+        if ($file =~ /(.+)\.pp/) {
+            my $newseq = { "name" => $1,
+                            "seq" => get_sequence_from_pp_file($dir . "/" .$file)};
+            push(@result, $newseq);
+        }
+    }
+    closedir($DIR);
+    return \@result;
+}
+
+
+sub get_sequence_from_pp_file {
+    my ($file) = @_;
+
+    open(my $FILE, "<$file");
+    my @data = <$FILE>;
+    # the sequence should be on the third line of the file
+    my $seqline = $data[2];
+    chomp $seqline;
+    my $seq = "";
+    if ($seqline =~ /\S+\s+(\S+)/) {
+        $seq = $1;
+    }
+    close($FILE);
+    return $seq;
 }
