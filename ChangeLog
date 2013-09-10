@@ -397,4 +397,9 @@ May/Jun, 2013
 	Support precomputing in loop probabilities for SPARSE
 	Fixed reading of PP 2.0
 	(Release 1.7.8)
-
+	Change default behavior of mlocarna for local alignment: proceed
+	with only-local subalignments; options
+	--local-progressive and --global-progressive control behavior, where
+	--global-progressive activates the old one.
+	(Release 1.7.9)
+	

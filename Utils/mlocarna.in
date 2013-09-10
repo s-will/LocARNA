@@ -154,6 +154,19 @@ constraints, since it ignores them for all but the pairwise alignments
 of single sequences. Furthermore, note that it does not support
 B<--stacking>.
 
+=item B<--local-progressive>
+
+Align only the subalignment of locally aligned subsequences in
+subsequent steps of the progressive multiple alignment. Note: this is
+only effective if local alignment is turned on. (Default for
+sequence local alignment; turn off by B<--global-progressive>)
+
+=item B<--global-progressive> 
+
+Use alignments including "locality gaps" in subsequent steps of the
+progressive multiple alignment. Note: this is only effective if local
+alignment is turned on. (Opposite of B<--local-progressive>)
+
 =item B<--max-diff-aln=<file>> 
 
 Restrict maximal difference to the alignment in <file> in clustalw
@@ -536,6 +549,11 @@ my $max_diff_aln;
 
 my $alifold_consensus_dp;
 
+my $sequ_local;
+
+my $opt_local_progressive;
+my $opt_global_progressive;
+
 Getopt::Long::Configure("no_ignore_case");
 
 my %options_hash=
@@ -670,6 +688,10 @@ my %options_hash=
      
      "keep-sequence-order" => \$keep_sequence_order,
 
+     "local-progressive" => \$opt_local_progressive,
+     
+     "global-progressive" => \$opt_global_progressive,
+     
      "version" => \$version,
 
      "help"=> \$help,
@@ -769,6 +791,9 @@ my @options = #options that are not or not automatically passed to locarna
      "width=i",
 
      "keep-sequence-order",
+
+     "local-progressive",
+     "global-progressive",
      
      "verbose|v",
      "moreverbose",
@@ -1043,7 +1068,21 @@ if ($write_structure) {
     $locarna_params .= " --write-structure";
 }
 
+##################################################
+## use global or local alignments in subsequent progressive steps
+##
+## make local progressive default, if sequence local alignment is turned on
+if ((grep $options_hash{"sequ-local"}, ("on","true","t","1"))
+    && !$opt_global_progressive) {
+    $opt_local_progressive=1;
+}
 
+if ($opt_local_progressive) {
+    if ($opt_global_progressive) {
+	printerr "Warning: local overrides global progressive alignment!\n"
+    }
+    $locarna_params .= " --local-file-output";
+}
 
 
 ## no stacking for locarna_p
