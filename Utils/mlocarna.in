@@ -1830,8 +1830,9 @@ sub perform_multiple_alignment($) {
     ## compute and show alifold prediction
     
     my $alistr = compute_alifold_structure("$results_dir/result.aln");
-    
-    printmsg 3, "alifold            ".$alistr;
+    chomp $alistr;
+
+    printmsg 3, "alifold            "."$alistr\n";
     
     # in probabilistic mode compute and store alifold dotplot
     if ($probabilistic) {
