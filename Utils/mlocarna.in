@@ -1631,7 +1631,7 @@ sub perform_multiple_alignment($) {
 	$tree = upgma_tree(\@names,$score_matrix);
 		
     } elsif ($#names == 1) { # for only two sequences, tree is unique
-	$tree="(".quotemeta($names[0]).",".quotemeta($names[1]).")";
+	$tree="(".quotemeta($names[0]).",".quotemeta($names[1]).");";
     } elsif ($graphkernel) {
 	
 	sub noop_system {
