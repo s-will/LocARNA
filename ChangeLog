@@ -404,3 +404,6 @@ May/Jun, 2013
 	global-progressive control behavior, where --global-progressive
 	reactivates the previous one.
 	(Release 1.7.9)
+	Newick bugfix
+	Small modifications for library use (e.g. for carna)
+	(Release 1.7.10)
