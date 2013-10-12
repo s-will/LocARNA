@@ -1,11 +1,4 @@
-#!/usr/bin/perl
-
-
-############################################################
-### Options
-###
-use Getopt::Long;
-use Pod::Usage;
+#!/usr/bin/perl -w
 
 =head1 NAME
 
@@ -60,9 +53,28 @@ seq1_comb_75.pp # ... same as previous for probability >=0.5
 + analogous files for seq2 and seq3
 
 
+All pp files have to be in format "PP 2.0"!
+
 =head1 DESCRIPTION
 =cut
 
+
+############################################################
+### Options
+###
+use warnings;
+use strict;
+
+use Getopt::Long;
+use Pod::Usage;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
+use MLocarna;
+
+my $verbose;
+my $quiet;
 my $help;
 my $man;
 my $ofile="averagedot";
@@ -83,116 +95,19 @@ pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 
-
-
-
 ##################################################################################
 
-## read pp file and return the alignment
-sub read_pp_file_aln($) {
-    my ($filename)=@_;
-    local *PP_IN;
-  
-    open(PP_IN,$filename) || die "read_pp_file_aln: Cannot read '$filename'\n";
-   
-    my %aln;
-    my %pairprobs;
-
-    my $line;
-   
-    while ($line = <PP_IN>) {
-    if ($line =~ /^\#\s*$/) { last; }
-   
-    if (($line =~ /^(\S+)\s+(.+)/) && ($line !~ /^SCORE:/) ) {
-        $aln{$1}.=$2;
-    }
-    }
-   
-    close PP_IN;
-   
-    return %aln;
-}
-
-
-## read a pp file and return a hash of pair probability information
-##
-## @param $filename name of the pp file
-## @returns hash of pair probability information reported in the file
-##          the hash has keys "$i $j" and contains the probability information
-##          for this pair;
-##          this information is the rest of the line starting with "$i $j"
-##          in the pp file
-##          positions in the hash are in [1..sequence length]
-##
-sub read_pp_file_pairprob_info($) {
-    my ($filename)=@_;
-    local *PP_IN;
-
-    open(PP_IN,$filename) || die "Can not read $filename\n";
-   
-    #my %aln;
-    my %pairprobinfo;
-
-    my $line;
-
-    while ($line = <PP_IN>) {
-	if ($line =~ /^\#\s*$/) { last; }
-	
-	if ($line =~ /^(\S+)\s+(.+)/) {
-	    #$aln{$1}.=$2;
-	}
-    }
-    
-    while (($line = <PP_IN>)) {
-	if ($line =~ /(\S+)\s+(\S+)\s+(.+)/) {
-	    my $i=$1;
-	    my $j=$2;
-	    my $pi=$3;
-	    $pairprobinfo{"$i $j"}=$pi;
-	}
-    }
-    close PP_IN;
-    
-    return %pairprobinfo;
-			       }
-
-
-## read a pp file and return a hash of pair probabilities
-##
-## @param $filename name of the pp file
-## @returns hash of pair probabilities reported in the file
-##          the hash has keys "$i $j" and contains the probabilities p_ij (i<j)
-##          positions in the hash are in [1..sequence length]
-##
-sub read_pp_file_pairprobs($) {
-    my ($filename)=@_;
-    local *PP_IN;
-
-    open(PP_IN,$filename) || die "Can not read $filename\n";
-   
-    #my %aln;
-    my %pairprobs = read_pp_file_pairprob_info($filename);
-    
-    foreach my $k (keys %pairprobs) {
-	#print "pairprob: '$k'->'$pairprobs{$k}'\n" if $verbose;
-	$pairprobs{$k} =~ /^(\S+)/;
-	$pairprobs{$k} = $1;
-    }
-   
-    return %pairprobs;
-}
-
-
-sub write_pp_file {
+sub write_pp_annotated {
     my ($filename,$sequence,$probUR,$probLL,$threshold,$colorLL)=@_;
     
     open(OUT,"> $filename") || die "Can't open file >$filename< for writing";
     
-    print OUT "\n";
+    print OUT "#PP 2.0\n\n";
+
     while ( my ($name, $row) = each %$sequence ) {
 	print OUT "$name\t\t$row\n";
     }
-    print OUT "\n\n\n#\n";
+    print OUT "\n#END\n\n#SECTION BASEPAIRS\n\n";
     
     foreach my $id (keys %{$probUR}){
 	my $highlight = 0;
@@ -202,6 +117,8 @@ sub write_pp_file {
 	print OUT $fileLine;
 	print $fileLine if $verbose;
     }
+    
+    print OUT "\n#END\n";
     
     close OUT;
 }
@@ -233,7 +150,7 @@ foreach my $filename (@sequenceppFiles){
     my $offset=0;
     my $alIndex =0;
     my $seqIndex =0;
-    foreach $character (split //, $row) {
+    foreach my $character (split //, $row) {
 	if($character ne "-"){
 	    #print "$seqIndex --> $alIndex\n" if $verbose;
 	    $seq2aln[$seqIndex]=$alIndex;
@@ -247,8 +164,8 @@ foreach my $filename (@sequenceppFiles){
 	$k =~ /^(\d+)\s+(\d+)/ or die "invalid index in dot plot:'$k'\n";
 	my $sx = $1;
 	my $sy = $2;
-	my $ax = @seq2aln[$sx-1]+1;
-	my $ay = @seq2aln[$sy-1]+1;
+	my $ax = $seq2aln[$sx-1]+1;
+	my $ay = $seq2aln[$sy-1]+1;
 	#print "($sx,$sy)-->($ax,$ay)\n" if $verbose;
 	$alnDotPlot{"$ax $ay"} = $seqDotPlot{$k};
     }
@@ -304,30 +221,33 @@ foreach my $id (keys %sumProbs){
 #################### OUTPUT
 
 
-write_pp_file("$ofile.pp",\%alignment,\%averageProbs,\%averageProbs,2,\%scaledDeviation);
+write_pp_annotated("$ofile.pp",\%alignment,\%averageProbs,\%averageProbs,2,\%scaledDeviation);
 foreach my $filename (@sequenceppFiles){
     my %sequenceData = read_pp_file_aln($filename);
     my $sequenceName = (keys %sequenceData)[0];
     my %tempHash = ($sequenceName => $alignment{$sequenceName});
-    print "write file for: $sequenceName and threshold $threshold\n" if $verbose;
-    write_pp_file($filename.".pp",
-		  \%tempHash,
-		  $alignmentDotPlots{$sequenceName},\%averageProbs,2,\%scaledDeviation);
+    print "write file for: $sequenceName\n" if $verbose;
+    write_pp_annotated($filename.".pp",
+		       \%tempHash,
+		       $alignmentDotPlots{$sequenceName},
+		       \%averageProbs,2,\%scaledDeviation);
 }
 
-foreach $threshold (@thresholds){
+foreach my $threshold (@thresholds){
     print "write average file for threshold $threshold\n" if $verbose;
-    write_pp_file($ofile."_comb_".($threshold*100).".pp",
-		  \%alignment,\%averageProbs,\%averageProbs,$threshold,\%scaledDeviation);
+    write_pp_annotated($ofile."_comb_".($threshold*100).".pp",
+		       \%alignment,\%averageProbs,\%averageProbs,
+		       $threshold,\%scaledDeviation);
     
     foreach my $filename (@sequenceppFiles){
 	my %sequenceData = read_pp_file_aln($filename);
 	my $sequenceName = (keys %sequenceData)[0];
 	my %tempHash = ($sequenceName => $alignment{$sequenceName});
 	print "write file for: $sequenceName and threshold $threshold\n" if $verbose;
-	write_pp_file($filename."_comb_".($threshold*100).".pp",
-		       \%tempHash,
-		      $alignmentDotPlots{$sequenceName},\%averageProbs,$threshold,\%scaledDeviation);
+	write_pp_annotated($filename."_comb_".($threshold*100).".pp",
+			   \%tempHash,
+			   $alignmentDotPlots{$sequenceName},
+			   \%averageProbs,$threshold,\%scaledDeviation);
     }
 }
 
