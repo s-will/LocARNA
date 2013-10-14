@@ -65,11 +65,13 @@ namespace LocARNA {
 		     const RnaData &rna_dataB,
 		     const Alignment &alignment,
 		     double p_expA,
-		     double p_expB)
+		     double p_expB,
+		     bool only_local
+		     )
 	: pimpl_(new RnaDataImpl(this,
 				 rna_dataA,
 				 rna_dataB,
-				 alignment.alignment_edges(false),
+				 alignment.alignment_edges(only_local),
 				 p_expA,
 				 p_expB)) {
     }
@@ -1294,11 +1296,9 @@ namespace LocARNA {
 					    bool stacking
 					    ) {
 	
-	const MultipleAlignment &seqA=rna_dataA.sequence();
-	const MultipleAlignment &seqB=rna_dataB.sequence();
-	size_t rowsA = seqA.num_of_rows();
-	size_t rowsB = seqB.num_of_rows();
-
+	size_t rowsA = rna_dataA.sequence().num_of_rows();
+	size_t rowsB = rna_dataB.sequence().num_of_rows();
+	
 	double p_minA = rna_dataA.arc_cutoff_prob();
 	double p_minB = rna_dataB.arc_cutoff_prob();
 	
@@ -1311,7 +1311,7 @@ namespace LocARNA {
 	p_bpcut_ = p_minMean;
 	
 	for (size_type i=0; i<edges.size(); i++) {
-	    for (size_type j=i+3; j<edges.size(); j++) { // min loop size=3
+	    for (size_type j=i+1; j<edges.size(); j++) {
 		// here we compute consensus pair probabilities
 		
 		double pA =

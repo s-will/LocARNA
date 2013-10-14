@@ -152,7 +152,8 @@ struct command_line_parameters {
     bool opt_help; //!< whether to print help
     bool opt_version; //!< whether to print version
     bool opt_verbose; //!< whether to print verbose output
-    bool opt_local_output; //!< whether to use local output
+    bool opt_local_output; //!< whether to write local output
+    bool opt_local_file_output; //!< whether to write local output to files (pp, aln)
     bool opt_pos_output; //!< whether to output positions
 
     bool opt_write_structure; //!< whether to write structure
@@ -250,7 +251,8 @@ option_def my_options[] = {
     {"alifold-consensus-dp",0,&clp.opt_alifold_consensus_dp,O_NO_ARG,0,O_NODEFAULT,"","Compute consensus dot plot by alifold"},
 #endif
 
-    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
+    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment (to standard out)"},
+    {"local-file-output",'L',&clp.opt_local_file_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment to pp and clustal files"},
     {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
     {"score-components",0,&clp.opt_score_components,O_NO_ARG,0,O_NODEFAULT,"","Output components of the score (experimental)"},
@@ -879,7 +881,7 @@ main(int argc, char **argv) {
 						      alignment.dot_bracket_structureB(clp.opt_local_output)));
 	    }
 	    
-	    if (clp.opt_local_output) {
+	    if (clp.opt_pos_output) {
 		std::cout  << std::endl 
 			   << "\t+" << alignment.local_startA() << std::endl
 			   << "\t+" << alignment.local_startB() << std::endl
@@ -889,7 +891,7 @@ main(int argc, char **argv) {
 	    std::cout << std::endl;
 	    ma.write(std::cout,clp.output_width);
 
-	    if (clp.opt_local_output) {
+	    if (clp.opt_pos_output) {
 		std::cout  << std::endl 
 			   << "\t+" << alignment.local_endA() << std::endl
 			   << "\t+" << alignment.local_endB() << std::endl
@@ -918,7 +920,7 @@ main(int argc, char **argv) {
 	    std::ofstream out(clp.clustal_out.c_str());
 	    if (out.good()) {
 
-		MultipleAlignment ma(alignment);
+		MultipleAlignment ma(alignment, clp.opt_local_file_output);
 		
 		out << "CLUSTAL W --- "<<PACKAGE_STRING;
 		
@@ -929,8 +931,8 @@ main(int argc, char **argv) {
 
 		if (clp.opt_write_structure) {
 		    // annotate multiple alignment with structures
-		    ma.prepend(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureA(false)));
-		    ma.append(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureB(false)));
+		    ma.prepend(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureA(clp.opt_local_file_output)));
+		    ma.append(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureB(clp.opt_local_file_output)));
 		}
 
 		ma.write(out,clp.output_width);
@@ -953,7 +955,7 @@ main(int argc, char **argv) {
 	    if (out.good()) {
 		
 		if (clp.opt_alifold_consensus_dp) {
-		    MultipleAlignment ma(alignment);
+		    MultipleAlignment ma(alignment,clp.opt_local_file_output);
 		    RnaEnsemble ens(ma,pfparams,false,true); // alifold the alignment
 		    RnaData consensus(ens,clp.min_prob,pfparams); // construct rna data from ensemble
 		    consensus.write_pp(out); // write alifold dot plot
@@ -963,7 +965,8 @@ main(int argc, char **argv) {
 				      *rna_dataB,
 				      alignment,
 				      my_exp_probA,
-				      my_exp_probB);
+				      my_exp_probB,
+				      clp.opt_local_file_output);
 		    consensus.write_pp(out); // write averaged dot plot
 		}
 	    } else {

@@ -219,10 +219,10 @@ namespace LocARNA {
      * Configurable via class ScoringParams, supports
      * the classic LocARNA-score as well as the LocARNA MEA-Score.
      * for "Classic Score" it supports
-     *  * match/mismatch cost or RIBOSUM (planned) for bases
+     *  * match/mismatch cost or RIBOSUM for bases
      *  * linear or affine gap cost
      *  * arc match scores build of arc probabilitiesmatch_probs
-     *    and optionally base match contribution or RIBOSUM (planned)
+     *    and optionally base match contribution or RIBOSUM
      * for the "MEA Score" it supports
      *  * base match/mismatch scores derived from base match probabilities
      *  * RIBOSUM for base and arc match contribution
@@ -421,6 +421,8 @@ namespace LocARNA {
 	/**
 	 * returns score of matching the concrete bases in an arcmatch
 	 * based on ribosum data (only ribosum contribution)
+	 *
+	 * @todo: check, this should use log2 (i.e. base 2 logarithms) as other logs in RIBOSUM scores
 	 */
 	score_t
 	ribosum_arcmatch_score(const Arc &arcA, const Arc &arcB) const;
