@@ -7,8 +7,8 @@ locarnate
 =head1 SYNOPSIS
 
 locarnate [--parwise_params <parameters> --tcoffee_params <parameters>
-           --pp_calculater_params <parameters> --help
-           --output <outputFolder> ] <inputFile>
+           --pp_calculater_params <parameters> --help --pairwise_aligner <locarna or exparna>
+           --output <outputFolder> --library-only <lib-file>] <inputFile>
     
     Creates MSAs using different pairwise aligners and TCoffee as
     a multiple alignment tool
@@ -24,7 +24,12 @@ OPTIONS
 
         --pp_calculator_params  parameters for locarna_rnafold_pp
 
-        --output            path to output folder 
+        --output            path to output folder
+
+        --library-only      if given only a t-coffee library will be written
+                            without actual computation
+
+        --pairwise_aligner  which pairwise aligner to use (default: locarna)
         
         --help  display this help message and exit
 
@@ -83,40 +88,57 @@ $options{tcoffee_params} = "";
 $options{pairwise_aligner_params} = "";
 $options{pp_calculator_params} = "";
 
+$options{pairwise_aligner} = "locarna";
+
+$options{library_only} = 0;
+
 GetOptions("help!" => \$options{help},
            "pairwise_parameters=s" => \$options{pairwise_aligner_params},
            "tcoffee_parameters=s" => \$options{tcoffee_params},
            "pp_preprocessing_parameters=s" => \$options{pp_calculator_params},
-           "output=s" => \$options{output_path}
+           "library-only" => \$options{library_only},
+           "output=s" => \$options{output_path},
+           "pairwise_aligner=s" => \$options{pairwise_aligner}
            );
 
 pod2usage() if ($options{help});
 
-### calculations ###
-
-# check pairwise aligner parameters
-my $checkresult = check_locarna_params(\%options, $options{pairwise_aligner_params});
-if ($checkresult ne "") {
-    print "Locarna parameters invalid. Locarna says: " . $checkresult . "\n";
+if ( ($options{pairwise_aligner} ne "locarna") && ($options{pairwise_aligner} ne "exparna")){
+    print "Unsupported pairwise aligner: " . $options{pairwise_aligner} . "\n";
     exit(1);
 }
 
+
+### calculations ###
+
 # check t_coffe parameters
-$checkresult = check_tcoffee_params(\%options, $options{tcoffee_params});
+my $checkresult = check_tcoffee_params(\%options, $options{tcoffee_params});
 if ($checkresult ne "") {
     print "Tcoffee parameters invalid. Tcoffee says: " . $checkresult . "\n";
     exit(1);
 }
+
+# check pairwise aligner parameters
+if ($options{pairwise_aligner} eq "locarna") {
+    $checkresult = check_locarna_params(\%options, $options{pairwise_aligner_params});
+    if ($checkresult ne "") {
+        print "Locarna parameters invalid. Locarna says: " . $checkresult . "\n";
+        exit(1);
+    }
+}
+
 # check locarna_rnafold_pp parameters
 $checkresult = check_pp_parameters(\%options, $options{pp_calculator_params});
 if ($checkresult ne "") {
     print "Locarna_rnafold_pp parameters invalid. Locarna_rnafold_pp says: " . $checkresult . "\n";
     exit(1);
 }
+
 my $results_path = "test_results";
 if(defined $options{output_path}) {
     $results_path = $options{output_path};
 }
+
 mkdir($results_path);
 pod2usage("Not enough arguments!\n") if scalar(@ARGV) < 1;
 
@@ -146,16 +168,31 @@ if (!(-d $sequence_input)) {
 
 mkdir($results_path."/pair");
 
-my $pair_alignments =
-  MLocarna::PairwiseAligners::locarna_compute_pairwise_alignments(
-    \%options, $results_path, $sequences, $bindir, $pp_dir);
-
+### Calculate pairwise alignments
 my $libfile = ($results_path . "/input.lib");
+if ($options{pairwise_aligner} eq "locarna") {
+    my $pair_alignments =
+      MLocarna::PairwiseAligners::locarna_compute_pairwise_alignments(
+        \%options, $results_path, $sequences, $bindir, $pp_dir);
 
-MLocarna::write_tcoffee_lib_file($libfile, $pair_alignments);
+    # write the t-coffee library file
+    MLocarna::write_tcoffee_lib_file($libfile, $pair_alignments);
+} elsif ($options{pairwise_aligner} eq "exparna") {
+    my $pair_alignments =
+      MLocarna::PairwiseAligners::exparna_compute_pairwise_alignments(
+        \%options, $results_path, $sequences, $bindir, $pp_dir);
 
-calculate_mult_alignment(\%options, $results_path, $libfile);
-                           
+    MLocarna::PairwiseAligners::exparna_result_to_tcoffee_lib_file(
+        $libfile, $pair_alignments, $sequences);
+}
+
+# finally call tcoffee to calculate the multiple alignment
+if(not $options{library_only}) {
+    calculate_mult_alignment(\%options, $results_path, $libfile);
+} else {
+    print "Tcoffee library file written to $libfile\n";
+    exit(0);
+}
 #~ 
 #~ my $mult_alignment = parse_mult_alignment($options, $results_path, 
                                           #~ $sequences);
@@ -208,7 +245,8 @@ sub calculate_basepair_probabilities {
 
   mkdir($results_path.'/pp');
 
-  my $pp_tool_call = $bindir . "/" . $options->{"BP-Probability-Calculator"};
+  my $pp_tool_call = $bindir . "/" . $options->{"BP-Probability-Calculator"}
+    . " " . $options->{pp_calculator_params};
 
   for (my $i = 0; $i < scalar(@{$sequences}); ++$i) {
     my $tag = '>S'.($i + 1);
