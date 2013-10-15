@@ -8,7 +8,8 @@ locarnate
 
 locarnate [--parwise_params <parameters> --tcoffee_params <parameters>
            --pp_calculater_params <parameters> --help --pairwise_aligner <locarna or exparna>
-           --output <outputFolder> --library-only <lib-file>] <inputFile>
+           --output <outputFolder> --library-only <lib-file> --library-name <name>
+           --additional-libraries <list_of_libraries>] <inputFile>
     
     Creates MSAs using different pairwise aligners and TCoffee as
     a multiple alignment tool
@@ -29,12 +30,20 @@ OPTIONS
         --library-only      if given only a t-coffee library will be written
                             without actual computation
 
+        --library-name      the file name of the produced t-coffee library
+                            (default: "input.lib")
+
+        --additional-libraries  a comma separated list of paths to t-coffee
+                                library files that should be given to t-coffee
+                                in addition to the one generated during this run
+
         --pairwise_aligner  which pairwise aligner to use (default: locarna)
         
         --help  display this help message and exit
 
 
 =cut
+
 
 my $prefix = "@prefix@";
 my $exec_prefix = "@exec_prefix@";
@@ -91,6 +100,8 @@ $options{pp_calculator_params} = "";
 $options{pairwise_aligner} = "locarna";
 
 $options{library_only} = 0;
+$options{library_name} = "input.lib";
+$options{additional_libraries} = "";
 
 GetOptions("help!" => \$options{help},
            "pairwise_parameters=s" => \$options{pairwise_aligner_params},
@@ -98,8 +109,11 @@ GetOptions("help!" => \$options{help},
            "pp_preprocessing_parameters=s" => \$options{pp_calculator_params},
            "library-only" => \$options{library_only},
            "output=s" => \$options{output_path},
-           "pairwise_aligner=s" => \$options{pairwise_aligner}
+           "pairwise_aligner=s" => \$options{pairwise_aligner},
+           "library-name=s" => \$options{library_name},
+           "additional-libraries=s" => \$options{additional_libraries}
            );
+
 
 pod2usage() if ($options{help});
 
@@ -169,7 +183,7 @@ if (!(-d $sequence_input)) {
 mkdir($results_path."/pair");
 
 ### Calculate pairwise alignments
-my $libfile = ($results_path . "/input.lib");
+my $libfile = ($results_path . "/" . $options{library_name});
 if ($options{pairwise_aligner} eq "locarna") {
     my $pair_alignments =
       MLocarna::PairwiseAligners::locarna_compute_pairwise_alignments(
@@ -306,6 +320,16 @@ sub calculate_mult_alignment {
   my $aln_file_name = $results_path.'/mult/tcoffee.aln';
   my $out_file_name = $results_path.'/mult/tcoffee.out';
   my $err_file_name = $results_path.'/mult/tcoffee.err';
+
+  # if additional libraries were given prepare them for passing to tcoffee
+  if (length($options->{additional_libraries}) > 0) {
+      print "asd " . $options->{additional_libraries} ."\n";
+    my @libs = split /,/, $options->{additional_libraries};
+    foreach my $l (@libs){
+        # attach each file to the lib File string
+        $libFile .= ",L" . $l;
+    }
+  }
 
   my $call = $options->{TCoffee} . " " . $options->{tcoffee_params} . ' -in=L'.$libFile.
       ' -outfile='.$aln_file_name.' 1>'.$out_file_name.
