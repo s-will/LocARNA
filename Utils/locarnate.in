@@ -90,7 +90,7 @@ my $description = 'Calculates a multiple local RNA sequence structure'
 # all options are collected in the options hash
 my %options;
 $options{"BP-Probability-Calculator"} = "locarna_rnafold_pp";
-$options{TCoffee} = "t_coffee";
+$options{TCoffee} = $t_coffee;
 $options{Locarna} = $bindir . "/locarna";
 
 $options{tcoffee_params} = "";

@@ -18,7 +18,7 @@ sub locarna_compute_pairwise_alignments {
   my $numSequences = scalar(@{$sequences});
 
   # get locarna parameters
-  my $parameter = $options->{pairwise_aligner_parameter} or "";
+  my $parameter = $options->{pairwise_aligner_params} or "";
 
   my $counter = 0;
   # how many pairwise alignments must be calculated?
