@@ -456,9 +456,9 @@ namespace LocARNA {
     	if ( it != annotations_.end() ) {
     	    return it->second;
     	} else {
-	    return SequenceAnnotation::get_empty_instance();
+	    return SequenceAnnotation::empty_instance();
     	}
-        }
+    }
     bool
     MultipleAlignment::is_proper() const {
 	if (empty()) return true; // empty alignment is proper

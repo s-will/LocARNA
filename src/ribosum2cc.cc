@@ -21,4 +21,5 @@ int main(int argc, char **argv) {
     RibosumFreq ribosum(file);
 
     ribosum.write_CC_code(ribname);
+    return 0;
 }

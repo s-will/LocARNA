@@ -42,7 +42,9 @@ namespace LocARNA {
 	/**
 	 * @brief A static constant empty instance of type SequenceAnnotation
 	 */
-	static SequenceAnnotation empty_instance;
+	static
+	const
+	SequenceAnnotation empty_instance_;
 
     public:
 	
@@ -94,9 +96,10 @@ namespace LocARNA {
 	 * @brief initialize the static member empty_instance
 	 *
 	 */
-	static SequenceAnnotation&
-	get_empty_instance() {
-	    return SequenceAnnotation::empty_instance;
+	static 
+	const SequenceAnnotation&
+	empty_instance() {
+	    return SequenceAnnotation::empty_instance_;
 	}
 
 	/**

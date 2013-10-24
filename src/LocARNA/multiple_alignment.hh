@@ -249,24 +249,31 @@ public:
 	 * @param ma multiple alignment
 	 * @param col_index column index
 	 */
-	AliColumn(const MultipleAlignment &ma,size_type col_index): ma_(ma),col_index_(col_index) {}
+	AliColumn(const MultipleAlignment &ma,size_type col_index): ma_(ma),col_index_(col_index) {
+	    assert(1<=col_index);
+	    assert(col_index<=ma.length());
+	}
 	
 	/** 
 	 * @brief element access
 	 * 
-	 * @param row_index index of alignment row
+	 * @param row_index 0-based index of alignment row
 	 * 
 	 * @return character at row in the represented column
 	 */
 	const char &
-	operator [](size_type row_index) const {return ma_.seqentry(row_index).seq()[col_index_];}
+	operator [](size_type row_index) const {
+	    return ma_.seqentry(row_index).seq()[col_index_];
+	}
 
 	/** 
 	 * @brief Size / Number of rows 
 	 * @return number of rows of the multiple alignment
 	 */
 	size_type 
-	size() const {return ma_.num_of_rows();}
+	size() const {
+	    return ma_.num_of_rows();
+	}
 
 	/** 
 	 * @brief Test equality
@@ -279,7 +286,9 @@ public:
 	operator ==(const AliColumn &ac) const {
 	    bool ret = this->size()==ac.size();
 	    for (size_type i=0; ret && i<size(); i++) {
-		ret = ret && (this->ma_.seqentry(i).seq()[col_index_] == ac.ma_.seqentry(i).seq()[col_index_]);
+		ret = ( this->ma_.seqentry(i).seq()[this->col_index_]
+			== 
+			ac.ma_.seqentry(i).seq()[ac.col_index_] );
 	    }
 	    return ret;
 	}

@@ -196,7 +196,7 @@ main(int argc, char **argv) {
 	return -1;
     }
     //todo: check that input is proper and catch the wrong inputs
-    MultipleAlignment::FormatType::type input_format;
+    // MultipleAlignment::FormatType::type input_format;
     MultipleAlignment* mseq = NULL;
     // try fasta format
     bool failed = false;
@@ -224,7 +224,7 @@ main(int argc, char **argv) {
 
     if (!failed)
     {
-	input_format = MultipleAlignment::FormatType::FASTA;
+	//input_format = MultipleAlignment::FormatType::FASTA;
     }
     else
     { //
@@ -318,8 +318,8 @@ int
 main(int argc, char **argv) {
 
     bool process_success=process_options(argc,argv,my_options);
-
-    if ( clp.test ) {
+    
+    if ( process_success && clp.test ) {
 	std::cout << "0";
 	return -1;
     }

@@ -86,6 +86,7 @@ namespace LocARNA {
 	 * @param alignment Alignment of A and B
 	 * @param p_expA background probability for A
 	 * @param p_expB background probability for B
+	 * @param only_local if true, construct only local alignment
 	 *
 	 * The object uses mean cutoff probability of the given
 	 * objects; The background probability is used in computing
@@ -100,7 +101,9 @@ namespace LocARNA {
 		const RnaData &rna_dataB,
 		const Alignment &alignment,
 		double p_expA,
-		double p_expB);
+		double p_expB, 
+		bool only_local=false
+		);
 	
     protected:
     	/** 
