@@ -309,13 +309,13 @@ namespace LocARNA {
 	out << "min_col_vector: ";
 	for (std::vector<size_type>::const_iterator it=min_col_vector.begin(); it!=min_col_vector.end(); ++it) {
 	    out.width(3);
-	    out << *it;
+	    out << *it<<" ";
 	}
 	out << std::endl;
 	out << "max_col_vector: ";
 	for (std::vector<size_type>::const_iterator it=max_col_vector.begin(); it!=max_col_vector.end(); ++it) {
 	    out.width(3);
-	    out << *it;
+	    out << *it<<" ";
 	}
 	out << std::endl;
     }
@@ -453,7 +453,7 @@ namespace LocARNA {
 	// };
 
 #ifndef NDEBGUG
-	//TraceRange::print_debug(std::cout);
+	TraceRange::print_debug(std::cout);
     
 	for (size_type i=1; i < min_col_vector.size(); ++i) {
 	    assert(min_col_vector[i-1]<=min_col_vector[i]); // monotony

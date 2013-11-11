@@ -85,7 +85,10 @@ namespace LocARNA {
 	return pimpl_->has_stacking_;
     }
 
-
+    void
+    RnaData::set_anchors(const SequenceAnnotation &anchors) {
+	pimpl_->sequence_.set_annotation(MultipleAlignment::AnnoType::anchors,anchors);
+    }
 
     // "consensus" constructor
     RnaDataImpl::RnaDataImpl(RnaData *self,
