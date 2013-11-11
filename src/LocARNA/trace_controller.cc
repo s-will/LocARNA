@@ -327,11 +327,32 @@ namespace LocARNA {
     TraceController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delta) {
 	// fill vectors for min_j and max_j
 	for (size_type i=0; i<=lenA; i++) {
-	    min_col_vector[i] = std::max(delta, (size_type)(ceil(i*lenB/lenA)))-delta;
-	    max_col_vector[i] = std::min(lenB, (size_type)(floor(i*lenB/lenA+delta)));
+	    
+	    size_type x = i*lenB*(lenA+lenB);
+	    size_type y = 2*delta*lenA*lenB;
+	    size_type z = lenA*(lenA+lenB);
+	    
+	     // guarantee sufficiently large delta
+	    if (lenA>lenB) { 
+		y = std::max(y, (lenA+lenB)*lenA/2);
+	    } else if (lenB>lenA) {
+		y = std::max(y, (lenA+lenB)*lenB/2);
+	    }
+
+	    min_col_vector[i] = x>y ? size_type((x-y+z-1)/z) : 0;
+	    max_col_vector[i] = std::min( size_type((x+y)/z), lenB );
+
 	}
     }
 
+    // void
+    // TraceController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delta) {
+    // 	// fill vectors for min_j and max_j
+    // 	for (size_type i=0; i<=lenA; i++) {
+    // 	    min_col_vector[i] = std::max(delta, (size_type)(ceil(i*lenB/lenA)))-delta;
+    // 	    max_col_vector[i] = std::min(lenB, (size_type)(floor(i*lenB/lenA+delta)));
+    // 	}
+    // }
 
 
     /* Construct from MultipleAlignment (as needed for progressive alignment) */
