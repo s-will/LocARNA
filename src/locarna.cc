@@ -682,9 +682,11 @@ main(int argc, char **argv) {
 				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
 				 ?0
 				 :clp.indel_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
+				 0, // this is indel__loop_score, for consistency and least modification to locarna.cc has been set to zero
 				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
 				 ?0
 				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
+				 0, // this is indel_opening_loop_score, for consistency and least modification to locarna.cc has been set to zero
 				 ribosum,
 				 clp.struct_weight,
 				 clp.tau_factor,

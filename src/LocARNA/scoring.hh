@@ -78,8 +78,14 @@ namespace LocARNA {
 	//! cost per indel (for linear or affine gap cost).
 	score_t indel;
 
+	//! cost per indel for loops (for linear or affine gap cost).
+	score_t indel_loop;
+
 	//! cost per gap (for affine gap-cost). Use affine gap cost if non-zero.
 	score_t indel_opening;
+        
+	//! cost per gap for loops(for affine gap-cost). Use affine gap cost if non-zero.
+	score_t indel_opening_loop;
         
 	/**
 	 * the ribosum matrix, if non-null it is used
@@ -157,7 +163,9 @@ namespace LocARNA {
 	 * @param basematch_ 
 	 * @param basemismatch_ 
 	 * @param indel_ 
+	 * @param indel_loop_
 	 * @param indel_opening_ 
+	 * @param indel_opening_loop_
 	 * @param ribosum_ 
 	 * @param struct_weight_ 
 	 * @param tau_factor_ 
@@ -175,7 +183,9 @@ namespace LocARNA {
 	ScoringParams(score_t basematch_,
 		      score_t basemismatch_,
 		      score_t indel_,
+		      score_t indel_loop_,
 		      score_t indel_opening_,
+		      score_t indel_opening_loop_,
 		      RibosumFreq *ribosum_,
 		      score_t struct_weight_,
 		      score_t tau_factor_,
@@ -193,7 +203,9 @@ namespace LocARNA {
 	    : basematch(basematch_),
 	      basemismatch(basemismatch_),
 	      indel(indel_),
+	      indel_loop(indel_loop_),
 	      indel_opening(indel_opening_),
+	      indel_opening_loop(indel_opening_loop_),
 	      ribosum(ribosum_),
 	      struct_weight(struct_weight_),
 	      tau_factor(tau_factor_),
@@ -327,6 +339,7 @@ namespace LocARNA {
 	//
 	Matrix<pf_score_t> exp_sigma_tab; //!< precomputed table of exp base match similarities 
 	pf_score_t exp_indel_opening_score; //!< precomputed value for exp of indel opening cost
+	pf_score_t exp_indel_opening_loop_score; //!< precomputed value for exp of indel opening cost for loops
 	std::vector<pf_score_t> exp_gapcost_tabA; //!< table for exp gapcost in A
 	std::vector<pf_score_t> exp_gapcost_tabB; //!< table for exp gapcost in B
 
@@ -617,12 +630,27 @@ namespace LocARNA {
 	score_t indel_opening() const {
 	    return params->indel_opening;
 	}
+
+	//! multiply an score by the ratio of indel_loop/indel
+	score_t loop_indel_score(const score_t score) const {
+	    return round2score(score * params->indel_loop / params->indel);
+	}
+	//! cost to begin a new indel
+	score_t indel_opening_loop() const {
+	    return params->indel_opening_loop;
+	}
     
+
 	//! exp of cost to begin a new indel
 	pf_score_t exp_indel_opening() const {
 	    return exp_indel_opening_score;
 	}
     
+	//! exp of cost to begin a new indel in loops
+	pf_score_t exp_indel_opening_loop() const {
+	    return exp_indel_opening_loop_score;
+	}
+
 	//
 	// ------------------------------------------------------------
 	

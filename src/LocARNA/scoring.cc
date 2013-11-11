@@ -616,7 +616,7 @@ namespace LocARNA {
 	if (! params->mea_scoring) {
 	    return
 		// base pair weights
-		gapX(arcX.left(), isA) + gapX(arcX.right(), isA) +
+		loop_indel_score(gapX(arcX.left(), isA) + gapX(arcX.right(), isA)) + //score of aligining base-pair ends wo gap, such that it is multiply by gamma_loop ratio
 	        (
 		 stacked
 		 ?

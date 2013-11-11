@@ -404,7 +404,9 @@ main(int argc, char **argv) {
     ScoringParams scoring_params(match_score,
 				 mismatch_score,
 				 indel_score,
+				 0, //indel__loop_score
 				 indel_opening_score,
+				 0, 
 				 ribosum,
 				 struct_weight,
 				 tau_factor,
