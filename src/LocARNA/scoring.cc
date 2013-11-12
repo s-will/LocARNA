@@ -57,6 +57,7 @@ namespace LocARNA {
 	precompute_gapcost();
 	precompute_weights();
 
+	apply_unpaired_penalty();
 	if (exp_scores) {
 	    exp_indel_opening_score =
 		boltzmann_weight(params->indel_opening);
@@ -102,6 +103,24 @@ namespace LocARNA {
     Scoring::subtract(Matrix<score_t> &m,score_t x) const {
 	m.transform(std::bind2nd(std::minus<score_t>(),x));
     }
+
+
+
+    void
+    Scoring::apply_unpaired_penalty() {
+
+
+	// subtract unpaired_penalty from precomputed tables
+	// * simga_tab
+	// * gapcost_tabA
+	// * gapcost_tabB
+
+	subtract(sigma_tab, 2*params->unpaired_penalty);
+	subtract(gapcost_tabA, params->unpaired_penalty);
+	subtract(gapcost_tabB, params->unpaired_penalty);
+
+    }
+
 
     void
     Scoring::modify_by_parameter(score_t lambda) {
