@@ -62,8 +62,6 @@ use lib $FindBin::Bin;
 
 use LocARNA_RNAz;
 
-
-
 ## bioperl packages
 
 use Bio::Seq;

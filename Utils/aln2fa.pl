@@ -1,17 +1,12 @@
-#!@PERL@ -I@prefix@/lib/perl
+#!/usr/bin/perl
 
 =head1 NAME
 
-alnsel.pl
+aln2fa.pl
 
 =head1 SYNOPSIS
 
-alnsel.pl input.aln [options] [names]
-
-=head1 DESCRIPTION
-
-Select subset of sequences from multiple alignment file.
-
+aln2fa.pl input.aln [options]
 
 Options:
 
@@ -29,14 +24,22 @@ Full documentation
 
 Verbose
 
+=item  B<-d,--degap>
+
+Remove gaps from sequences
+
 =back
+
+=head1 DESCRIPTION
+
+Convert input.aln to fasta format
 
 =cut
 
-
+use warnings;
 use strict;
 use FindBin;
-use lib $FindBin::Bin;
+use lib "$FindBin::Bin/../lib/perl";
 
 ##------------------------------------------------------------
 ## options
@@ -48,20 +51,25 @@ my $help;
 my $man;
 my $verbose;
 
+my $degap;
+
 GetOptions(	   
     "verbose" => \$verbose,
     "help"=> \$help,
     "man" => \$man,
+
+    "d|degap" => \$degap 
+
     ) || pod2usage(2);
 
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 my $inputfilename;
-if (@ARGV > 1) {
-    $inputfilename = shift @ARGV;
+if ($#ARGV == 0) {
+    $inputfilename = $ARGV[0];
 }else {
-    print STDERR "Input filename missing and/or names.\n";
+    print STDERR "Input filename missing.\n";
     pod2usage(1);
 }
 
@@ -72,18 +80,13 @@ use MLocarna;
 
 my $aln = read_clustalw_alnloh("$inputfilename");
 
-my @alnsel=();
-for my $i (0..@$aln-1) {
-    my $name=$aln->[$i]{name};
-    if (grep /^$name$/, @ARGV) {
-	push @alnsel,@$aln[$i];
+if ($degap) {
+    for my $i (0..@$aln-1) {
+	$aln->[$i]{seq} =~ s/[-~]//g;
     }
 }
 
-project_alnloh(\@alnsel);
-
-print STDOUT "CLUSTAL W\n\n";
-write_clustalw_alnloh(*STDOUT, \@alnsel,75,0);
+print sprint_fasta_alnloh($aln,75);
 
 ## ------------------------------------------------------------
 

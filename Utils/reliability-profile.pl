@@ -1,4 +1,4 @@
-#!@PERL@ -I@prefix@/lib/perl
+#!/usr/bin/perl
 # -*- perl -*-
 
 ### ============================================================================
@@ -111,15 +111,15 @@ projected to the sequence with given sequence name (or containing
 =cut
 
 
+use warnings;
 use strict;
+
+use FindBin;
 
 ## ------------------------------------------------------------
 ## global constants
-my $prefix = "@prefix@";
-my $exec_prefix = "@exec_prefix@";
-my $bindir = "@bindir@";
 
-my $LOCARNAP_FIT="$bindir/locarnap_fit";
+my $LOCARNAP_FIT="$FindBin::Bin/locarnap_fit";
 
 ##------------------------------------------------------------
 ## options
