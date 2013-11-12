@@ -474,7 +474,7 @@ namespace LocARNA {
 	// };
 
 #ifndef NDEBGUG
-	TraceRange::print_debug(std::cout);
+	//TraceRange::print_debug(std::cout);
     
 	for (size_type i=1; i < min_col_vector.size(); ++i) {
 	    assert(min_col_vector[i-1]<=min_col_vector[i]); // monotony
