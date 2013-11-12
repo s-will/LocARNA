@@ -18,7 +18,7 @@ sub locarna_compute_pairwise_alignments {
   my $numSequences = scalar(@{$sequences});
 
   # get locarna parameters
-  my $parameter = $options->{pairwise_aligner_params} or "";
+  my $parameter = $options->{pairwise_aligner_params} || "";
 
   my $counter = 0;
   # how many pairwise alignments must be calculated?
@@ -86,7 +86,7 @@ sub exparna_compute_pairwise_alignments {
     my $numSequences = scalar(@{$sequences});
 
     # get exparna parameters
-    my $parameter = $options->{pairwise_aligner_parameter} or "";
+    my $parameter = $options->{pairwise_aligner_params} || "";
 
     my $counter = 0;
     # how many pairwise alignments must be calculated?
@@ -113,12 +113,12 @@ sub exparna_compute_pairwise_alignments {
             my $second = $pp_dir . '/S'.($j + 1) . '.pp';
 
             # path to the output file
-            my $result = $results_path.'/pair/S'.($i + 1).'_S'.($j + 1).'.aln';
+            my $output_file = $results_path.'/pair/S'.($i + 1).'_S'.($j + 1).'.aln';
 
             # assemble the call to exparna
             my $call = $bindir ."/locarna_X $first $second " .
-                "--number-of-EPMs 20 --suboptimal --inexact-struct-match --output-epm-list=" .
-                $result . " 1>/dev/null 2>/dev/null";
+                $parameter . " --output-epm-list=" .
+                $output_file . " 1>/dev/null 2>/dev/null";
 
             my $code = system($call);
             if ($code) {
@@ -126,7 +126,7 @@ sub exparna_compute_pairwise_alignments {
                                 " (developed under locarna 1.7.8, call:\n".$call.")\n");
             }
 
-            $result{"$i-$j"} = parse_exparna_output($result);
+            $result{"$i-$j"} = parse_exparna_output($options,$output_file);
         }
     }
     print "\n";
@@ -135,32 +135,38 @@ sub exparna_compute_pairwise_alignments {
 
 # Takes an exparna output file and returns a list of baspairs with score
 sub parse_exparna_output {
-    my ($file) = @_;
+    my ($options,$file) = @_;
 
     open(my $FILE, "<$file");
 
     my $header = <$FILE>;
 
-    # this array holds hashes of the form {posA => int, posB => int, score => int}
-    my  @result = ();
+    # this hash holds hashes of the form (posA-posB) => score
+    my %aln_edges = ();
 
     # iterate over all EPMs
     while (my $line = <$FILE>) {
         # expects output like this: "<epm_id>\t<score>\t<structure>\t<list_of_pairs separated with :>"
         if ($line =~ /^\d+\t(\d+)\t.+\t(.+)$/) {
-            my $score = $1;
+             my $score = (($options->{scaling_factor} == -1) ? $1 : $options->{scaling_factor});
             my @pairs = split /\s+/, $2;
             # iterate over all basepairs of this EPM
             foreach my $p (@pairs) {
                 my ($posA, $posB) = split /:/, $p;
-
-                push(@result, {"score" => $score, "posA" => $posA, "posB" => $posB});
+                
+				if (exists $aln_edges{($posA . "-" . $posB)}) {
+					$aln_edges{($posA . "-" . $posB)} += $score;
+                }
+                else{
+					$aln_edges{($posA . "-" . $posB)} = $score;
+                }
+                #push(@result, {"score" => $score, "posA" => $posA, "posB" => $posB});
             }
         }
     }
-    print scalar(@result);
+    #print scalar(@result);
     close($FILE);
-    return \@result;
+    return \%aln_edges;
 }
 
 sub exparna_result_to_tcoffee_lib_file {
@@ -176,20 +182,30 @@ sub exparna_result_to_tcoffee_lib_file {
     # print sequences
     for(my $i = 0; $i < scalar(@{$sequences}); $i++) {
         print $FILE "S" . ($i + 1) . " " . length($sequences->[$i]->{seq}) . " " . $sequences->[$i]->{seq} . "\n";
+        ##print $FILE $sequences->[$i]->{name} . " " . length($sequences->[$i]->{seq}) . " " . $sequences->[$i]->{seq} . "\n";
     }
 
     # iterate over alignments
-    while (my ($key, $value) = each(%{$alignments})) {
+    #while (my ($key, $value) = each(%{$alignments})) {
+     for my $key ( keys %$alignments){
+    
+		my $value = {%$alignments}->{$key};
         my ($s1, $s2) = split /-/, $key;
         $s1++;
         $s2++;
-        print "$key $value " . scalar(@{$value}) ."\n";
+        #print "$key " . keys(%$value) ."\n";
         print $FILE "#$s1 $s2\n";
 
         # iterate over all basepairs
-        for(my $i = 0; $i < scalar(@{$value}); $i++) {
-            print $FILE $value->[$i]->{posA} . " " . $value->[$i]->{posB} . " " . $value->[$i]->{score} . "\n";
-        }
+        #for(my $i = 0; $i < scalar(@{$value}); $i++) {
+        #    print $FILE $value->[$i]->{posA} . " " . $value->[$i]->{posB} . " " . $value->[$i]->{score} . "\n";
+        #}
+        for my $alnEdge ( keys %$value ) { 
+			my $score = {%$value}->{$alnEdge};
+			my @pos = split(/-/,$alnEdge);
+			#print "$pos[0] $pos[1] => $score \n";
+			print $FILE "$pos[0] $pos[1] $score \n";
+		}
     }
     
     print $FILE "! SEQ_1_TO_N\n";
