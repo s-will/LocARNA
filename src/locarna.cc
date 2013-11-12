@@ -252,7 +252,7 @@ option_def my_options[] = {
 #endif
 
     {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment (to standard out)"},
-    {"local-file-output",'L',&clp.opt_local_file_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment to pp and clustal files"},
+    {"local-file-output",0,&clp.opt_local_file_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment to pp and clustal files"},
     {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
     {"score-components",0,&clp.opt_score_components,O_NO_ARG,0,O_NODEFAULT,"","Output components of the score (experimental)"},
@@ -682,9 +682,11 @@ main(int argc, char **argv) {
 				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
 				 ?0
 				 :clp.indel_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
+				 0, // this is indel__loop_score, for consistency and least modification to locarna.cc has been set to zero
 				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
 				 ?0
 				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
+				 0, // this is indel_opening_loop_score, for consistency and least modification to locarna.cc has been set to zero
 				 ribosum,
 				 clp.struct_weight,
 				 clp.tau_factor,
@@ -708,7 +710,7 @@ main(int argc, char **argv) {
 		    *arc_matches,
 		    match_probs,
 		    scoring_params,
-		    false // no Boltzmann weights
+		    false // no Boltzmann weights (as required for LocARNA-P)
 		    );    
 
     if (clp.opt_write_arcmatch_scores) {
@@ -938,7 +940,7 @@ main(int argc, char **argv) {
 		ma.write(out,clp.output_width);
 		
 	    } else {
-		std::cerr << "Cannot write to "<<clp.clustal_out<<std::endl<<"! Exit.";
+		std::cerr << "Cannot write to "<<clp.clustal_out<<"! Exit."<<std::endl;
 		return_code=-1;
 	    }
 	}

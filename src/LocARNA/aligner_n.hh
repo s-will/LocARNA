@@ -76,6 +76,17 @@ namespace LocARNA {
 	//! matrix indexed by positions of elements of the seqB positions and the arc indices of RNA A
 	ScoreMatrix IBmat;
 
+
+	//! matrix indexed by positions of elements of the seqA positions and the arc indices of RNA B
+	ScoreMatrix IADmat;
+	//! matrix indexed by positions of elements of the seqB positions and the arc indices of RNA A
+	ScoreMatrix IBDmat;
+
+	//! matrix for the affine gap cost model base deletion
+	ScoreMatrix Emat;
+	//! matrix for the affine gap cost model base insertion
+	ScoreMatrix Fmat;
+
 	/**
 	 * M matrices
 	 * @note in the case of structure local alignment, 
@@ -282,7 +293,7 @@ namespace LocARNA {
 	 * 
 	 */
 	template <class ScoringView>
-	void init_M(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
+	void init_M_E_F(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
 
 	/**
 	 * \brief compute and stores score of aligning subsequences to the gap
@@ -339,7 +350,35 @@ namespace LocARNA {
 	 */
 	void fill_IB_entries ( Arc arcA, pos_type bl, pos_type max_br);
 
+	/**
+	* \brief compute E matrix value of single matrix element
+	*
+	* @param state the state, selects the matrix M (currently one possible state=noEx)
+	* @param al
+	* @param i_index position in sequence A:
+	* @param j_index position in sequence B:
+	* @param i_seq_pos position in sequence A, for which score is computed
+	* @param i_prev_seq_pos position in sequence A, first valid seq position before i_index
+	* @param sv the scoring view to be used
+	* @returns score of E(i,j)
+	*/
+		template<class ScoringView>
+	infty_score_t compute_E_entry(int state, index_t al, matidx_t i_index, matidx_t j_index, seq_pos_t i_seq_pos, seq_pos_t i_prev_seq_pos, ScoringView sv);
 
+	/**
+	* \brief compute F matrix value of single matrix element
+	*
+	* @param state the state, selects the matrix M (currently one possible state=noEx)
+	* @param bl
+	* @param i_index position in sequence A:
+	* @param j_index position in sequence B:
+	* @param j_seq_pos position in sequence B, for which score is computed
+	* @param j_prev_seq_pos position in sequence B, first valid seq position before i_index
+	* @param sv the scoring view to be used
+	* @returns score of E(i,j)
+	*/
+		template<class ScoringView>
+	infty_score_t compute_F_entry(int state, index_t bl, matidx_t i_index, matidx_t j_index, seq_pos_t i_seq_pos, seq_pos_t i_prev_seq_pos, ScoringView sv);
 	/**
 	 * \brief compute M value of single matrix element
 	 *
@@ -354,6 +393,7 @@ namespace LocARNA {
 	 */
 	template<class ScoringView>
 	infty_score_t compute_M_entry(int state, index_t al, index_t bl, matidx_t index_i, matidx_t index_j,ScoringView sv);
+//---------------------------------------------------------------------------------
 
 	/**
 	 * align the loops closed by arcs (al,ar) and (bl,br).
@@ -367,11 +407,40 @@ namespace LocARNA {
 	 * 
 	 * @pre arc-match (al,ar)~(bl,br) valid due to constraints and heuristics
 	 */
-	void align_M(pos_type al,pos_type ar,pos_type bl,pos_type br,
+	void fill_M_entries(pos_type al,pos_type ar,pos_type bl,pos_type br,
 		     bool allow_exclusion);
 
 	/** 
-	 * \brief trace back within an match of arcs
+	 * \brief trace back base deletion within a match of arcs
+	 * 
+	 * @param state the state selects E matrices (currently one possible state=noEx)
+	 * @param al left end of arc in A
+	 * @param i  right end of subsequence in A
+	 * @param bl left end of arc in B
+	 * @param j right end of subsequence in B
+	 * @param top_level whether alignment is on top level
+	 * @param sv scoring view
+	 */
+	template<class ScoringView>
+	void trace_E(int state,pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool top_level, ScoringView sv);
+
+	/**
+	 * \brief trace back base insertion within a match of arcs
+	 *
+	 * @param state the state selects F matrices (currently one possible state=noEx)
+	 * @param al left end of arc in A
+	 * @param i  right end of subsequence in A
+	 * @param bl left end of arc in B
+	 * @param j right end of subsequence in B
+	 * @param top_level whether alignment is on top level
+	 * @param sv scoring view
+	 */
+	template<class ScoringView>
+	void trace_F(int state,pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool top_level, ScoringView sv);
+
+
+	/** 
+	 * \brief trace back within an arc match
 	 * 
 	 * @param state the state selects Mmatrices (currently one possible state=noEx)
 	 * @param al left end of arc in A
@@ -397,10 +466,21 @@ namespace LocARNA {
 	 */
 	template <class ScoringView>
 	void trace_M_noex(int state,
-			  pos_type al, pos_type i,
-			  pos_type bl,pos_type j,
-			  bool top_level,
-			  ScoringView sv);
+			pos_type al, pos_type i,
+			pos_type bl,pos_type j,
+			bool top_level,
+			ScoringView sv);
+
+
+	/**
+	* trace IAD IBD matrix
+	* @param arcA the corresponding arc in A which defines the IAD/IBD element
+	* @param arcB the corresponding arc in B which defines the IAD/IBD element
+	* @param sv scoring view
+	*/
+	template <class ScoringView>
+	void trace_IXD(const Arc &arcA, const Arc &arcB, bool isA, ScoringView sv);
+
 
 	/**
 	 * trace D matrix
@@ -495,10 +575,27 @@ namespace LocARNA {
 	 */
 	infty_score_t &IX(const pos_type i, const Arc &arc, bool isA) {
 
-	    if ( isA )
-		return IAmat(i, arc.idx());
-	    else
-		return IBmat(arc.idx(), i);
+		if ( isA )
+			return IAmat(i, arc.idx());
+		else
+			return IBmat(arc.idx(), i);
+
+	}
+
+	/**
+	 * Read/Write access to IAD orIBD matrix
+	 *
+	 * @param i rightside position in seqA/B
+	 * @param arac arc in A/B
+	 * @param isA switch to determine IA/IB
+	 * @return IA/IB matrix entry for position k and arc
+	 */
+	infty_score_t &IXD(const Arc &arc1, const Arc &arc2, bool isA) {
+
+		if ( isA )
+			return IADmat(arc1.idx(), arc2.idx());
+		else
+			return IBDmat(arc2.idx(), arc1.idx());
 
 	}
 
@@ -521,7 +618,7 @@ namespace LocARNA {
 	 * @return IB matrix entry for arc a and position k in b
 	 */
 	infty_score_t &IB(const Arc &a, const pos_type k) {
-	    return IBmat(a.idx(), k);
+		return IBmat(a.idx(), k);
 	}
 
 	/**

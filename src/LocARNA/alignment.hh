@@ -190,6 +190,15 @@ namespace LocARNA {
 
 	
 	/**
+	   \brief Add a basepair to the structure of A
+	*/
+	void add_deleted_basepairA(int i, int j);
+	/**
+	   \brief Add a basepair to the structure of B
+	*/
+	void add_deleted_basepairB(int i, int j);
+
+	/**
 	 * @brief All alignment edges
 	 *
 	 * @param only_local if true, return only local edges

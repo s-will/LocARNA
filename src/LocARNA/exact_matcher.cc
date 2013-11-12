@@ -2816,8 +2816,8 @@ bool debug_check_poss = false;
 	//free_arrays();
     }
 
-    void LCSEPM::output_locarna(const string& sequenceA, const string& sequenceB, const string& outfile){
-
+    pair<SequenceAnnotation,SequenceAnnotation>
+    LCSEPM::anchor_annotation() {
 	// extract matching edges (pairs of positions) from LCS-EPM
 	vector<intPair> matchingsLCSEPM;
 	intVec positionsSeq1LCSEPM;
@@ -2841,31 +2841,33 @@ bool debug_check_poss = false;
 		matchingsLCSEPM.push_back(make_pair(positionsSeq1LCSEPM[i],positionsSeq2LCSEPM[i]));
 	    }
 	//string outname = "locarna_constraints_input.txt"; //"/home/radwan/Exparna_P/LocARNA/src/locarna_constraints_input.txt";
-	ofstream outLocARNAfile (outfile.c_str());
 
 	int last_edge_seq1,last_edge_seq2;
 	last_edge_seq1=0;
 	last_edge_seq2=0;
 
-	string seq1_1,seq1_2,seq1_3,seq2_1,seq2_2,seq2_3;
+	SequenceAnnotation annoA(3);
+	SequenceAnnotation annoB(3);
+	
 	int edge = 100;
 
-	for (vector<intPair>::iterator i_edge = matchingsLCSEPM.begin(); (i_edge != matchingsLCSEPM.end() && seq1_1.size()<seqA.length() && seq2_2.size()<seqB.length());++i_edge)
+	for (vector<intPair>::iterator i_edge = matchingsLCSEPM.begin();
+	     (i_edge != matchingsLCSEPM.end()
+	      && annoA.length()<seqA.length() && annoB.length()<seqB.length());
+	     ++i_edge)
 	    {
 		//cout << "first: " << (*i_edge).first << " second: " << (*i_edge).second << endl;
 
-		for (int i=last_edge_seq1+1;(i<(int)((*i_edge).first)&&seq1_1.size()<seqA.length());++i)
+		for (size_type i=last_edge_seq1+1;
+		     (i<i_edge->first && annoA.length()<seqA.length());++i)
 		    {
-			seq1_1.push_back('.');
-			seq1_2.push_back('.');
-			seq1_3.push_back('.');
+			annoA.push_back_name("...");
 		    }
 
-		for (int j=last_edge_seq2+1;(j<(int)((*i_edge).second)&&seq2_2.size()<seqB.length());++j)
+		for (size_type j=last_edge_seq2+1;
+		     (j<i_edge->second && annoB.length()<seqB.length());++j)
 		    {
-			seq2_1.push_back('.');
-			seq2_2.push_back('.');
-			seq2_3.push_back('.');
+			annoB.push_back_name("...");
 		    }
 
 		ostringstream edge_st_;
@@ -2874,54 +2876,57 @@ bool debug_check_poss = false;
 		edge_st = edge_st_.str();
 		const char *c_str_edge = edge_st.c_str();
 
-		seq1_1.push_back(c_str_edge[0]);
-		seq1_2.push_back(c_str_edge[1]);
-		seq1_3.push_back(c_str_edge[2]);
-
-		seq2_1.push_back(c_str_edge[0]);
-		seq2_2.push_back(c_str_edge[1]);
-		seq2_3.push_back(c_str_edge[2]);
-
+		annoA.push_back_name(c_str_edge);
+	
+		annoB.push_back_name(c_str_edge);
+		
 		++edge;
-
+		
 		last_edge_seq1= (*i_edge).first;
 		last_edge_seq2 = (*i_edge).second;
 	    }
-
+	
 	// end stuff
-	for (size_type i=last_edge_seq1+1;i<=seqA.length() && seq1_1.size()<seqA.length();++i)
+	for (size_type i=last_edge_seq1+1;
+	     i<=seqA.length() && annoA.length()<seqA.length();++i)
 	    {
-		seq1_1.push_back('.');
-		seq1_2.push_back('.');
-		seq1_3.push_back('.');
+		annoA.push_back_name("...");
 	    }
 
-	for (size_type j=last_edge_seq2+1;j<=seqB.length() && seq2_1.size()<seqB.length();++j)
+	for (size_type j=last_edge_seq2+1;
+	     j<=seqB.length() && annoB.length()<seqB.length();++j)
 	    {
-		seq2_1.push_back('.');
-		seq2_2.push_back('.');
-		seq2_3.push_back('.');
+		annoB.push_back_name("...");
 	    }
-
-	seq1_1 += "#1";
-	seq1_2 += "#2";
-	seq1_3 += "#3";
-
-	seq2_1 += "#1";
-	seq2_2 += "#2";
-	seq2_3 += "#3";
-
-	outLocARNAfile << ">"<< seqA.seqentry(0).name() << endl << upperCase(sequenceA) << endl;
-	outLocARNAfile << seq1_1 << endl << seq1_2 << endl << seq1_3 << endl;
-	outLocARNAfile << ">"<<seqB.seqentry(0).name() << endl << upperCase(sequenceB) << endl;
-	outLocARNAfile << seq2_1 << endl << seq2_2 << endl << seq2_3 << endl << endl;
-
-	outLocARNAfile.close();
-
-
+	
+	return pair<SequenceAnnotation,SequenceAnnotation>(annoA,annoB);
     }
 
-    void	LCSEPM::output_clustal(const string& outfile_name)
+    void LCSEPM::output_locarna(const string& sequenceA, const string& sequenceB, const string& outfile){
+
+	pair<SequenceAnnotation,SequenceAnnotation> anchors = anchor_annotation();
+	
+	ofstream outLocARNAfile (outfile.c_str());
+
+	outLocARNAfile << ">"<< seqA.seqentry(0).name() << endl 
+		       << upperCase(sequenceA) << endl;
+	for (size_type i=0; i<3; i++) {
+	    outLocARNAfile << anchors.first.annotation_string(i) << "#" <<(i+1) << endl; 
+	}
+
+	outLocARNAfile << ">"<<seqB.seqentry(0).name() << endl 
+		       << upperCase(sequenceB) << endl;
+	for (size_type i=0; i<3; i++) {
+	    outLocARNAfile << anchors.first.annotation_string(i) << "#" <<(i+1) << endl; 
+	}
+	outLocARNAfile << endl;
+
+	outLocARNAfile.close();
+    }
+
+
+    void
+    LCSEPM::output_clustal(const string& outfile_name)
     {
 	// extract matching edges (pairs of positions) from LCS-EPM
 	vector<intPair> matchingsLCSEPM;

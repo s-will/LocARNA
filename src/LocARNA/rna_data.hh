@@ -17,7 +17,8 @@ namespace LocARNA {
     class RnaEnsemble;
     class RnaDataImpl;
     class PFoldParams;
-
+    class SequenceAnnotation;
+    
     /**
      * @brief represent sparsified data of RNA ensemble
      * 
@@ -284,7 +285,15 @@ namespace LocARNA {
 	 */
 	bool
 	has_stacking() const;
-	
+
+	/**
+	 * @brief Write access to alignment anchors
+	 * @param anchors alignment anchors
+	 * @see MultipleAlignment::set_annotation()
+	 */
+	void
+	set_anchors(const SequenceAnnotation &anchors);
+
     protected:
 	
 	/** 

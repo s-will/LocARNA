@@ -67,9 +67,13 @@ struct command_line_parameters {
     int mismatch_score; //!< mismatch score
     
     int indel_score; //!< indel extension score
+
+    int indel_score_loop; //!< indel extension score
     
     int indel_opening_score; //!< indel opening score
     
+    int indel_opening_loop_score; //!< indel opening score for loops
+
     int temperature; //!< temperature
     
     int struct_weight; //!< structure weight
@@ -194,8 +198,8 @@ struct command_line_parameters {
     bool opt_normalized; //!< whether to do normalized alignment
     int normalized_L; //!< normalized_L
 
-    double prob_unpaired_in_loop_threshold; // threshold for prob_unpaired_in_loop
-    double prob_basepair_in_loop_threshold; // threshold for prob_basepait_in_loop
+    double prob_unpaired_in_loop_threshold; //!< threshold for prob_unpaired_in_loop
+    double prob_basepair_in_loop_threshold; //!< threshold for prob_basepait_in_loop
 
 };
 
@@ -217,7 +221,9 @@ option_def my_options[] = {
     {"ribosum-file",0,0,O_ARG_STRING,&clp.ribosum_file,"RIBOSUM85_60","f","Ribosum file"},
     {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,"true","bool","Use ribosum scores"},
     {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
-//    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"0","score","Indel opening score"},
+    {"indel-loop",'i',0,O_ARG_INT,&clp.indel_score_loop,"-350","score","Indel score for loops"},
+    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"0","score","Indel opening score"},
+    {"indel-opening-loop",0,0,O_ARG_INT,&clp.indel_opening_loop_score,"0","score","Indel opening score for loops"},
     {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score","Maximal weight of 1/2 arc match"},
     {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
@@ -361,12 +367,7 @@ main(int argc, char **argv) {
 	std::cerr << "Exclusions is not supported" << std::endl;
 	return -1;
     }
-    if ( clp.indel_opening_score != 0 )
-    {
-	std::cerr << "Affine gap cost is not supported" << std::endl;
-	return -1;
-    }
-
+   
 
     if( clp.no_lonely_pairs )
     {
@@ -704,8 +705,14 @@ main(int argc, char **argv) {
 				 :clp.indel_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
 				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
 				 ?0
+				 :clp.indel_score_loop * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
+				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+				 ?0
 				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 ribosum.get(),
+				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+				 ?0
+				 :clp.indel_opening_loop_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
+				ribosum.get(),
 				 clp.struct_weight,
 				 clp.tau_factor,
 				 clp.exclusion_score,

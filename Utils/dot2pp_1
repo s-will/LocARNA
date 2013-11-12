@@ -10,7 +10,7 @@ dot2pp <infile.dp_ps >outfile.pp
 
 =head1 DESCRIPTION
 
-Convert a dot plot file (like produced by RNAfold -p) to a pp2.0 file,
+Convert a dot plot file (like produced by RNAfold -p) to a pp file,
 which is an locarna proprietary format for representing dot plots.
 Reads dotplot from stdin and write pp file to stdout.
 
@@ -66,7 +66,7 @@ while (my $line=<STDIN>) {
 	    $line =~ s/[^UACTG]//g;
 	    $sequence.=$line;
 	}
-	print "#PP 2.0\n\n$name $sequence\n\n#END\n\n#SECTION BASEPAIRS\n\n";
+	print "SCORE: 0\n\n$name $sequence\n\n#\n";
     } elsif( $line =~ /(\d+)\s+(\d+)\s+([\d.]+)\s+ubox/ ) {
 	my $i=$1;
 	my $j=$2;
@@ -76,4 +76,3 @@ while (my $line=<STDIN>) {
 	# print " > $line";
     }
 }
-print "\n#END\n";
