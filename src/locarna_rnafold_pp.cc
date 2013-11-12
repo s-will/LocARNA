@@ -32,13 +32,6 @@
 #include <string.h>
 #include <sstream>
 #include <string>
-//
-//extern "C" {
-//#include <ViennaRNA/fold_vars.h>
-//#include <ViennaRNA/fold.h>
-//#include <ViennaRNA/part_func.h>
-//#include <ViennaRNA/utils.h>
-//}
 
 #include <LocARNA/options.hh>
 #include <LocARNA/multiple_alignment.hh>
@@ -97,11 +90,10 @@ using namespace LocARNA;
 
     We need mechanisms to catch wrong input; some of these things are
     already handled in the lib classes, which raise exceptions on errors.
-    You should catch such exceptions and print errors on wrong input.
+    catch such exceptions and print errors on wrong input.
     Currently the constraint string is not  checked for allowed characters
     (see RNAfold man page) and balanced parentheses; probably this could
-    crash the fold routine of RNAlib.  Can you please suggest a solution? I
-    think, we should check this in the set_annotation method of
+    crash the fold routine of RNAlib. check this in the set_annotation method of
     MultipleAlignment, which would make it impossible to put
     MultipleAlignment objects into some inconsistent state.
 	 * */
@@ -112,21 +104,21 @@ using namespace LocARNA;
 //! avoids name conflicts and makes downstream code more informative.
 //!
 struct command_line_parameters {
-    bool opt_help; //!< whether to print help
-    bool opt_version; //!< whether to print version
-    bool opt_verbose; //!< whether to print verbose output
-    std::string input_file; //!< input_file
-    bool use_struct_constraints; //!< -C use structural constraints
-    bool no_lonely_pairs; //!< no lonely pairs option
-    bool opt_stacking; //!< whether to stacking
-    bool opt_in_loop; //!< whether to compute in-loop probabilities
-    double min_prob;  //! < only pairs with a probability of at least min_prob are taken into account
+    bool opt_help; 	//!< whether to print help
+    bool opt_version; 	//!< whether to print version
+    bool opt_verbose; 	//!< whether to print verbose output
+    std::string input_file; 		//!< input_file
+    bool use_struct_constraints; 	//!< -C use structural constraints
+    bool no_lonely_pairs; 		//!< no lonely pairs option
+    bool opt_stacking; 		//!< whether to stacking
+    bool opt_in_loop; 		//!< whether to compute in-loop probabilities
+    double min_prob; 		//! < only pairs with a probability of at least min_prob are taken into account
     double prob_unpaired_in_loop_threshold; //!< threshold for prob_unpaired_in_loop
     double prob_basepair_in_loop_threshold; //!< threshold for prob_basepait_in_loop
-    std::string output_file; //!< output file name
-    bool force_alifold; //!< use alifold even for single sequences.
-    uint width; //!< Output width
-    bool test; //!< Test the binary and return 1 if it the functionality is available
+    std::string output_file; 	//!< output file name
+    bool force_alifold; 	//!< use alifold even for single sequences.
+    uint width; 	//!< Output width
+    bool test; 		//!< Test the binary and return 1 if it the functionality is available
 };
 //! \brief holds command line parameters of locarna
 command_line_parameters clp;
