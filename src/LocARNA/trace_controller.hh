@@ -258,9 +258,11 @@ namespace LocARNA {
 
     private:
 	/**
-	 * constrain the min/max j without reference alignment by delta only
-	 * such that
-	 * match i~j is allowed iff | i*lenB/lenA - j | <= delta
+	 * constrain the min/max j without reference alignment by
+	 * delta only such that match i~j is allowed iff | i/n - j/m |
+	 * <= delta/((n+m)/2), unless delta is too small to connect
+	 * the matrix entries; in the latter case delta is chosen
+	 * minimally.
 	 */
 	void
 	constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);

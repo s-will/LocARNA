@@ -394,9 +394,11 @@ May/Jun, 2013
 	RnaEnsemble constrains the folding by structure annotation of
 	Multiple Alignment (if given)
 	(Release 1.7.7)
+Jul, 2013
 	Support precomputing in loop probabilities for SPARSE
 	Fixed reading of PP 2.0
 	(Release 1.7.8)
+Sep 2013
 	LocARNATE: new code, improvements
 	Exparna-P: Suboptimal traceback and improvements
 	Change default behavior of mlocarna for sequence-local alignment: proceed
@@ -404,3 +406,12 @@ May/Jun, 2013
 	global-progressive control behavior, where --global-progressive
 	reactivates the previous one.
 	(Release 1.7.9)
+Oct 2013
+	Newick bugfix
+	Small modifications for library use (e.g. for carna)
+	(Release 1.7.10)
+Nov 2013
+	Improve max-diff heuristic (without reference alignment): make
+	symmetric and always allow sufficiently large deviation
+	(Release 1.7.11)
+	

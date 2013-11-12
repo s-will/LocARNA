@@ -16,6 +16,7 @@
 #include "sparsification_mapper.hh"
 #include "tuples.hh"
 #include "scoring.hh"
+#include "ext_rna_data.hh"
 
 extern "C"
 {
@@ -375,9 +376,14 @@ public:
 
 	//! calculates the best chain of EPMs, the LCS-EPM
 	void		calculateLCSEPM();
-
+    
+        //! get anchor annotation
+        pair<SequenceAnnotation,SequenceAnnotation>
+	anchor_annotation();
+    
 	//! outputs anchor constraints to be used as input for locarna
 	void		output_locarna(const std::string& sequenceA, const std::string& sequenceB, const std::string& outfile);
+
 	//! writes chain as clustal alignment
 	void		output_clustal(const std::string& outfile_name);
 

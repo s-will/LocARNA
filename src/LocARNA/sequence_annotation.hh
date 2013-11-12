@@ -50,8 +50,9 @@ namespace LocARNA {
 	
 	/**
 	 * @brief Construct empty
+	 * @param name_length length of names
 	 */
-	SequenceAnnotation():annotation_() {}
+	SequenceAnnotation(size_type name_length=0):annotation_(name_length) {}
 	
 	/**
 	 * @brief Construct single string

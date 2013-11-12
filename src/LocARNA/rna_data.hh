@@ -17,7 +17,8 @@ namespace LocARNA {
     class RnaEnsemble;
     class RnaDataImpl;
     class PFoldParams;
-
+    class SequenceAnnotation;
+    
     /**
      * @brief represent sparsified data of RNA ensemble
      * 
@@ -51,9 +52,11 @@ namespace LocARNA {
 	 * 
 	 * @param rna_ensemble RNA ensemble data
 	 * @param p_bpcut cutoff probability
+	 * @param pfoldparams folding parameters (controls stacking)
 	 *
-	 * @note RnaData copies all required data from rna_data
-	 * and does not keep a reference
+	 * @note RnaData copies all required data from rna_ensemble
+	 * and does not keep a reference; if pfoldparams.stacking is true,
+	 * copy stacking terms
 	 */
 	RnaData(const RnaEnsemble &rna_ensemble,
 		double p_bpcut,
@@ -284,7 +287,15 @@ namespace LocARNA {
 	 */
 	bool
 	has_stacking() const;
-	
+
+	/**
+	 * @brief Write access to alignment anchors
+	 * @param anchors alignment anchors
+	 * @see MultipleAlignment::set_annotation()
+	 */
+	void
+	set_anchors(const SequenceAnnotation &anchors);
+
     protected:
 	
 	/** 

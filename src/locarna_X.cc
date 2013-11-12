@@ -106,6 +106,7 @@ std::string fileB;
 string psFileA;
 string psFileB;
 string locarna_output;
+string output_anchor_pp;
 string clustal_output;
 string epm_list_output;
 string chained_epm_list_output;
@@ -161,6 +162,7 @@ option_def my_options[] = {
     {"PS_fileB",'b',0,O_ARG_STRING,&psFileB,"","psFileB","Postscript output file for sequence B"},
     {"output-ps", 0,&opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"","Output best EPM chain as colored postscript"},
     {"output-locarna",'o',0,O_ARG_STRING,&locarna_output,"","constraintsFile","Fasta file with anchor constraints for locarna"},
+    {"output-anchor-pp",0,0,O_ARG_STRING,&output_anchor_pp,"","fileroot","PP files <fileroot>_A.pp and <fileroot>_B.pp, merging input PPs and anchor constraints from chaining"},
     {"output-clustal",0,0,O_ARG_STRING,&clustal_output,"","filename","Write file with chain as alignment in clustalw format"},
     {"output-epm-list",0,0,O_ARG_STRING,&epm_list_output,"","epm list","A list of all found epms"},
     {"output-chained-epm-list",0,0,O_ARG_STRING,&chained_epm_list_output,"","chained epm list","A list of all EPMs that are present in the chain"},
@@ -520,9 +522,28 @@ main(int argc, char **argv) {
 
     	//if(opt_locarna_output){
     	if(locarna_output.size()>0){
-    	if (opt_verbose) { cout << "write locarna anchor constraints..." << endl;}
-    	myChaining.output_locarna(maA.consensus_sequence(), maB.consensus_sequence(), locarna_output);
+	    if (opt_verbose) { cout << "write locarna anchor constraints..." << endl;}
+	    myChaining.output_locarna(maA.consensus_sequence(), maB.consensus_sequence(), locarna_output);
     	}
+
+    	if(output_anchor_pp.size()>0){
+	    if (opt_verbose) { cout << "write pp files with anchor constraints..." << endl;}
+	    
+	    pair<SequenceAnnotation,SequenceAnnotation> anchors = myChaining.anchor_annotation();
+	    
+	    rna_dataA->set_anchors(anchors.first);
+	    rna_dataB->set_anchors(anchors.second);
+	    
+	    std::ofstream outA((output_anchor_pp+"_A.pp").c_str());
+	    std::ofstream outB((output_anchor_pp+"_B.pp").c_str());
+
+	    rna_dataA->write_pp(outA);
+	    rna_dataB->write_pp(outB);
+
+	    outA.close();
+	    outB.close();
+	    
+	}
 
     	if (clustal_output.size()>0){
     		if (opt_verbose) { cout << "write chain as clustal alignment..." << endl;}

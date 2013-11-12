@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.7.9], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.7.11], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
@@ -299,4 +299,4 @@ if test "$VRNA_OK" = "false" -o "$VRNALIB_OK" = "false" ; then
 fi
 
 
-AC_OUTPUT([src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/mlocarna Utils/locarnate Utils/aln2fa.pl Utils/alnsel.pl Utils/pp2dot Utils/mlocarna_nnames Utils/locarna-mea Utils/reliability-profile.pl])
+AC_OUTPUT([src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/mlocarna Utils/locarnate Utils/aln2fa.pl Utils/alnsel.pl Utils/mlocarna_nnames Utils/locarna-mea Utils/reliability-profile.pl])

@@ -68,6 +68,7 @@ of the fit, and the background and hit reliability.
 
 
 use strict;
+use FindBin;
 
 ## ------------------------------------------------------------
 ## parameter
@@ -76,7 +77,6 @@ my $seqname="DroMel";
 my $str_weight=3;
 my $delta=0.5;
 
-my $LOCARNA_HOME = "/home/will/Research/Projects/LocARNA";
 
 
 ##------------------------------------------------------------
@@ -190,7 +190,7 @@ while(<>) {
     
     my $outfile="$output_dir/$locus_name".($revcompl?"-rc":"");
     
-    my $command="$LOCARNA_HOME/Utils/reliability-profile.pl ".
+    my $command="$BinDir::Bin/reliability-profile.pl ".
 	"--seqname $seqname ".
 	"--structure-weight=$str_weight ".
 	($show_sw?"--show-sw ":"").

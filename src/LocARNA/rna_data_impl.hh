@@ -188,7 +188,6 @@ namespace LocARNA {
 			      double p_expA,
 			      double p_expB) const;
 
-	
     }; // end class RnaDataImpl
     
 
