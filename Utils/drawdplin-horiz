@@ -1,0 +1,191 @@
+#!/usr/bin/perl -w
+
+############################################################
+##
+## draw a linear represenation of basepairs in a dotplot file
+## generates a postscript drawing
+##
+## USAGE: $0 <dp >ps
+## 
+## ##########################################################
+
+
+
+use strict;
+
+##------------------------------------------------------------
+## options
+use Getopt::Long;
+use Pod::Usage;
+
+
+my $minprob=1e-6; ## minimal probability for filtering arcs
+my $probwidth=0; ## factor for drawing arcs differently by their prob.
+
+my $help;
+my $man;
+my $quiet;
+my $verbose;
+
+
+## Getopt::Long::Configure("no_ignore_case");
+
+GetOptions(
+    "minprob=f" => \$minprob,
+    "probwidth=f" => \$probwidth,
+    
+    "verbose" => \$verbose,
+    "quiet" => \$quiet,   
+    "help"=> \$help,
+    "man" => \$man
+    ) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+## ------------------------------------------------------------
+## main part
+
+my $date=`date`;
+
+my $seqlength;
+
+sub transformcoor {
+    my ($i) = @_;
+    return ($i-1) * 432.0/($seqlength+1);
+}
+
+my $sequence="";
+while (my $line = <STDIN>) {
+    if ( $line =~ /^\/sequence/ ) {
+        while (($line=<STDIN>) !~ /def$/ ) {
+            $line =~ s/[^A-Za-z-]//g;
+            $sequence.=$line;
+        }
+	chomp $sequence;
+        $seqlength = length($sequence);
+    
+	print
+"%!PS-Adobe-3.0 EPSF-3.0
+%%CreationDate: Tue Jul 18 16:17:35 CEST 2006
+%%Title: rna
+%%Creator: Sebastian Will
+%%Pages: 1
+%%BoundingBox: -5 -10 125 442
+%%EndComments
+
+%%BeginProlog
+
+/MyDict 100 dict def
+
+
+/arc {
+    /y exch def
+    /x exch def
+    /h y x sub 0.3 mul def
+    /o y x sub 0.05 mul def
+    
+    newpath
+    x 0 moveto
+    x o add h y o sub h y 0 curveto
+    stroke
+} bind def
+
+1 setlinewidth
+0 0 0 setrgbcolor
+
+%%Page: 1 1
+MyDict begin
+
+%% rotate and translate the page
+-90 rotate
+-432 432 $seqlength 1 add div add 0 translate
+
+
+%% sequence base line 
+newpath
+-2 0 moveto
+432 $seqlength 1 add div $seqlength 1 sub mul 2 add  0 lineto
+stroke
+
+0.25 setlinewidth
+
+/fsize 3 def
+/Helvetica findfont fsize scalefont setfont
+
+
+%% arcs
+";
+	
+    } elsif( $line =~ /(\d+)\s+(\d+)\s+([\d.]+)\s+ubox/ ) {
+        my $i=$1;
+        my $j=$2;
+	my $p=$3*$3;
+	
+	if ($probwidth>0) {
+	    my $width=$p * $probwidth;
+	    print "$width setlinewidth\n";
+	}
+
+	if ( $p >= $minprob) {
+	    my $x = transformcoor $i;
+	    my $y = transformcoor $j;
+	
+	    printf "$x $y arc\n";
+	}
+    }
+}
+
+print "0.25 setlinewidth\n";
+
+my $modulo = int(int($seqlength/30)/5)*5;
+
+if ($modulo==0) {$modulo=1;}
+
+for (my $i=1; $i<=$seqlength; $i++) {
+    
+	my $x = transformcoor $i;
+	my $c = substr $sequence,$i-1,1;
+	if ($i%$modulo == 0) {
+	    print "$x 0 moveto $x -2 lineto stroke\n";
+	    # print "$x fsize 8 div sub -5 moveto ($i) show\n";
+	} else {
+	    print "$x 0 moveto $x -1 lineto stroke\n";
+	}
+}
+
+
+print 
+"%%PageTrailer
+showpage
+%%Trailer
+end
+%%EOF
+";
+
+
+## ------------------------------------------------------------
+
+__END__
+
+=head1 NAME
+
+drawdplin
+
+=head1 SYNOPSIS
+
+drawdplin [options]
+
+Options:
+
+        --minprob        cutoff probability
+        --probwidth      depency of arc drawing on their probability
+
+        --help           brief help message
+        --man            full documentation
+        --verbose        be verbose
+        --quiet          be quiet
+
+=head1 DESCRIPTION
+
+=cut
