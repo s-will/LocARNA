@@ -1,0 +1,35 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+
+\newcommand{\A}{{\cal A}}
+\begin{document}
+
+%% M^u number of unpaired alignment edges
+%% N_{lg}^{A} number of positions in loop deletions of A
+%% N_{lo}^{A} number of openings of loop deletions in A
+%% N_g^{A} number of deleted positions in A that are not in loop deletions
+%% N_g^{A} number of gap openings in A that are not opening loop deletions
+%% N_g^{uA} number of unpaired positions counted for N_g^{A}
+
+\begin{align*}
+  score^{seq}(\A,S_A,S_B)
+  &= sf \sum_{(i,j)\in\A,i\in S^u_A, j\in S^u_B} \sigma(A_i,B_k)  \qquad // (sf=1)\\
+  &- \alpha^{seq}_m [\log p_{avg}^{uA} + \log p_{avg}^{uB} ] M^u \\
+  &- \alpha_g^{seq} [ (N_g^{uA}+N_{lg}^{uA}) \log p_{avg}^{uA} + (N_g^{uB}+N_{lg}^{uB}) \log p_{avg}^{uB} ] \\
+  &+ sw^u [ \sum_{i\in S^u_A} \log p^{uA}_i + \sum_{i\in S^u_A} \log p^{uB}_k ] \\
+  &+ \gamma [ N^A_g + N^B_g ] \\
+  &+ \beta [ N^A_o + N^B_o ] \\
+  &+ \gamma_{loop} [ N^A_{lg} + N^B_{lg} ] \\
+  &+ \beta_{loop} [ N^A_{lo} + N^B_{lo} ] \\
+  %% 
+  score^{str}(\A,S_A,S_B)
+  &= sw^p [ \sum_{(i,j)\in S_A} \log p^A_{ij} + \sum_{(k,l)\in S_B} \log p^B_{kl} ] \\ 
+  &- \alpha^{str} [ \log p^A_{avg} |S_A|  + \log p^B_{avg} |S_B| ] \\
+  &+ tf \sum_{(i,j)\in S_A,(k,l)\in S_B,(i,j)\in\A,(k,l)\in \A} \tau(A_i,A_j,B_k,B_l)\\
+  %%
+  score(\A,S_A,S_B) &= score^{seq}(\A,S_A,S_B) + score^{str}(\A,S_A,S_B)
+\end{align*}
+
+
+\end{document}

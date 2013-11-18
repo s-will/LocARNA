@@ -17,7 +17,7 @@ locarna_p.1: ../src/locarna_p.cc
 mlocarna.1: ../Utils/mlocarna.in
 	-$(POD2MAN)  ../Utils/mlocarna >$@
 
-reliability-profile.pl.1: ../Utils/reliability-profile.pl.in
+reliability-profile.pl.1: ../Utils/reliability-profile.pl
 	-$(POD2MAN) ../Utils/reliability-profile.pl >$@
 
 locarnap-revisit-RNAz-hits.pl.1: ../Utils/locarnap-revisit-RNAz-hits.pl

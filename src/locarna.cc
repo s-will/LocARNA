@@ -77,6 +77,8 @@ struct command_line_parameters {
     
     int temperature; //!< temperature
     
+    int unpaired_penalty; //!< penalty for unpaired bases
+
     int struct_weight; //!< structure weight
 
     //! contribution of sequence similarity in an arc match (in percent)
@@ -228,6 +230,7 @@ option_def my_options[] = {
     {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,"true","bool","Use ribosum scores"},
     {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
     {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-500","score","Indel opening score"},
+    {"unpaired_penalty",0,0,O_ARG_INT,&clp.unpaired_penalty,"0","score","Penalty for unpaired bases"},
     {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score","Maximal weight of 1/2 arc match"},
     {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
@@ -688,6 +691,7 @@ main(int argc, char **argv) {
 				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
 				 0, // this is indel_opening_loop_score, for consistency and least modification to locarna.cc has been set to zero
 				 ribosum,
+				 clp.unpaired_penalty,
 				 clp.struct_weight,
 				 clp.tau_factor,
 				 clp.exclusion_score,

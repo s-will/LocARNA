@@ -1,4 +1,4 @@
-#!@PERL@ -I@prefix@/lib/perl
+#!/usr/bin/perl
 # -*- perl -*-
 
 =head1 mlocarna_nnames
@@ -29,16 +29,16 @@ Full documentation
 
 =cut
 
+use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use MLocarna;
 use MLocarna::SparseMatrix;
 use MLocarna::Trees;
 use MLocarna::MatchProbs;
 use MLocarna::Aux;
 
-
-use strict;
-use FindBin;
-use lib $FindBin::Bin;
 
 ##------------------------------------------------------------
 ## options

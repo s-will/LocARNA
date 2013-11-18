@@ -408,6 +408,7 @@ main(int argc, char **argv) {
 				 indel_opening_score,
 				 0, 
 				 ribosum,
+				 0, //unpaired_weight
 				 struct_weight,
 				 tau_factor,
 				 0, // exclusion score

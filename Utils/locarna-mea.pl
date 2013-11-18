@@ -1,4 +1,4 @@
-#!@PERL@ -I@prefix@/lib/perl
+#/usr/bin/perl
 # -*- perl -*-
 
 =head1 NAME
@@ -27,13 +27,16 @@ secondary structure with maximum sum of base pair probabilities.
 
 =cut
 
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
 
 use MLocarna;
 use MLocarna::Aux;
 use MLocarna::MatchProbs;
 
-use strict;
-use warnings;
 
 use Cwd 'abs_path';
 

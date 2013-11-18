@@ -93,7 +93,10 @@ namespace LocARNA {
 	 * and as contribution for arc-matchs (tau_factor)
 	 */
 	RibosumFreq *ribosum;
-    
+
+	//! penalty/cost for unpaired bases matched/mismatched/gapped
+	score_t unpaired_penalty;
+
 	/**
 	 * Factor for structure contribution in the classic score.
 	 * Maximal contribution of 1/2 arc match
@@ -167,6 +170,7 @@ namespace LocARNA {
 	 * @param indel_opening_ 
 	 * @param indel_opening_loop_
 	 * @param ribosum_ 
+	 * @param unpaired_penalty_
 	 * @param struct_weight_ 
 	 * @param tau_factor_ 
 	 * @param exclusion_ 
@@ -187,6 +191,7 @@ namespace LocARNA {
 		      score_t indel_opening_,
 		      score_t indel_opening_loop_,
 		      RibosumFreq *ribosum_,
+		      score_t unpaired_penalty_,
 		      score_t struct_weight_,
 		      score_t tau_factor_,
 		      score_t exclusion_,
@@ -207,6 +212,7 @@ namespace LocARNA {
 	      indel_opening(indel_opening_),
 	      indel_opening_loop(indel_opening_loop_),
 	      ribosum(ribosum_),
+	      unpaired_penalty(unpaired_penalty_),
 	      struct_weight(struct_weight_),
 	      tau_factor(tau_factor_),
 	      exclusion(exclusion_),
@@ -309,6 +315,14 @@ namespace LocARNA {
 	 */
 	void
 	modify_by_parameter(score_t lambda);
+
+	/**
+	 * subtract the fixed unpaired_penalty from base match and base indel scores
+	 * it is similar to @modify_by_parameter method
+	 * Please note that the base match and gap scores of ALL bases including the paired ones will be modified!
+	 */
+	void
+	apply_unpaired_penalty();
 
 	/** 
 	 * @brief Get factor lambda for normalized alignment

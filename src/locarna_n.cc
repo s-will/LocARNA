@@ -713,6 +713,7 @@ main(int argc, char **argv) {
 				 ?0
 				 :clp.indel_opening_loop_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
 				ribosum.get(),
+				 0, //unpaired_weight
 				 clp.struct_weight,
 				 clp.tau_factor,
 				 clp.exclusion_score,
