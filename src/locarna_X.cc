@@ -122,7 +122,6 @@ using namespace LocARNA;
 bool opt_help;
 bool opt_version;
 bool opt_verbose;
-//bool opt_stacking;
 bool opt_postscript_output;
 bool opt_suboptimal;
 bool no_add_filter;
