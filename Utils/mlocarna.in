@@ -1355,20 +1355,24 @@ sub convert_fix_structure_to_pp($$$$$) {
 
     open(OUT,">$ppfilename") || die "Cannot write $!";
 
-    print OUT "\n";
+    print OUT "#PP 2.0\n\n";
     print OUT "$name\t$seq\n";
+    
     if (defined $constraints && $constraints ne "") {
-	print OUT "#C $constraints\n";
+    	my @cs = split /\#/, $constraints;
+	for (my $i=0; $i<@cs;$i++) {
+	    print OUT "#A".($i+1)." ".$cs[$i]."\n";
+	}
     }
-    print OUT "\n";
-    print OUT "\n";
-    print OUT "#\n";
+    print OUT "\n#END\n\n";
+    print OUT "#SECTION BASEPAIRS\n\n";
     
     for (my $i=0; $i<=$#str; $i++) {
 	if ($str[$i]>$i) {
 	    print OUT ($i+1)." ".($str[$i]+1)." 1.0\n";
 	}
     }
+    print OUT "\n#END\n"; 
 }
 ### ------------------------------------------------------------
 ### ------------------------------------------------------------
@@ -2151,7 +2155,7 @@ sub write_pp_projected($$$) {
 	my %name_pairprobs = read_pp_file_pairprobs("$input_dir/".get_normalized_seqname($name));	
 	
 	if ( exists $name_aln{"#C"} && (!$ignore_constraints)) {
-	    my $constraints = $name_aln{"#C"};
+	    # my $constraints = $name_aln{"#C"};
 	    printerr "WARNING: constraints ignored in iterative alignment.\n";
 	}
 	
@@ -2603,8 +2607,14 @@ sub compute_dotplot($$) {
 	    }
 	    elsif ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#S"}) {
 		# if a structure constraint is defined do constraint folding
+		print "Hey, found constraints and call our own rnafoldp\n";
 		my $constraint_string = $seqs->[$i]->{"ANNO\#S"};
-		systemverb_withinput(">$seqname\n$seq_str\n$constraint_string\n",
+		
+		print "Here is my input:\n";
+		print "$seqname $seq_str\n\#S $constraint_string\n";
+		
+		
+		systemverb_withinput("$seqname $seq_str\n\#S $constraint_string\n",
 				     "$RNAfoldp -C $RNAfoldp_redirect");
 	    } else {
 		systemverb_withinput(">$seqname\n$seq_str\n",

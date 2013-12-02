@@ -604,11 +604,18 @@ sub convert_dp_to_pp_with_constraints($$$$$$) {
     open(PP_OUT,">$ppfile") || die "Cannot open $ppfile for writing."; 
     open(DP_IN,"$dpfile") || die "Cannot open $dpfile for reading."; 
     
-    print PP_OUT "SCORE: 0\n\n";
+    print PP_OUT "#PP 2.0\n\n";
     print PP_OUT "$name $sequence\n";
     if (defined $constraints && $constraints ne "") {
-	print PP_OUT "#C $constraints\n";
+	my @cs = split /\#/, $constraints;
+	for (my $i=0; $i<@cs;$i++) {
+	    print PP_OUT "#A".($i+1)." ".$cs[$i]."\n";
+	}
     }
+    
+    print PP_OUT "\n#END\n"; 
+
+    print PP_OUT "\n#SECTION BASEPAIRS\n\n"; 
     
     my %pp;
     
@@ -636,13 +643,14 @@ sub convert_dp_to_pp_with_constraints($$$$$$) {
     
     close DP_IN;
     
-    print PP_OUT "\n\#\n";
     
     for my $i ( keys %pp ) {
 	for my $j ( keys %{ $pp{$i} } ) {
 	    print PP_OUT "$i $j $pp{$i}{$j}\n";
 	}
     }
+
+    print PP_OUT "\n\#END\n";
     
     close PP_OUT;
 }
