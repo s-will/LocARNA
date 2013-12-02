@@ -414,4 +414,5 @@ Nov 2013
 	Improve max-diff heuristic (without reference alignment): make
 	symmetric and always allow sufficiently large deviation
 	(Release 1.7.11)
+	Fix bug in locarna_rnafold_pp (reading clustalw from stdin)
 	
