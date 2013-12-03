@@ -79,8 +79,9 @@ public:
     struct AnnoType {
 	//! inner type
 	enum type {
-	    structure, //!< structure annotation (often, constraint)
-	    anchors    //!< anchor annotation (for anchor constraints)
+	    structure,       //!< structure annotation (often, constraint)
+	    fixed_structure, //!< structure annotation (a single structure)
+	    anchors          //!< anchor annotation (for anchor constraints)
 	};
     };
     

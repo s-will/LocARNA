@@ -14,8 +14,9 @@ namespace LocARNA {
      * @brief An RNA secondary structure
      *
      * Represents a structure (for a sequence of given length) as set
-     * of base pairs. Supports parsing of dot-bracket strings and
-     * traversal of base pairs.
+     * of base pairs. Supports parsing of dot-bracket strings
+     * (potentially including pseudoknots) and traversal of base
+     * pairs.
      */
     class RnaStructure {
     public:

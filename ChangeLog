@@ -417,3 +417,4 @@ Nov 2013
 	Fix bug in locarna_rnafold_pp (reading clustalw from stdin)
 	Fix bug concerning structure constraints
 	Update format conversions in mlocarna to pp 2.0 format
+	Support for fixed structure constraints (directly in C++)

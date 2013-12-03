@@ -27,7 +27,7 @@ namespace LocARNA {
      *
      * Interprets structure annotation of the multiple alignment as
      * structure constraint string; if existant, the string has to be
-     * valid!
+     * valid! Fixed structure annotation is ignored.
      *
      * @todo support constraints for in loop probabilities
      *
@@ -54,8 +54,9 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct from sequence or multiple alignment
 	 * 
-	 * Computes ensemble partition functions and probabilities using McCaskill's algorithm.
-	 * Optionally computes additional matrices required for in-loop probabilities.
+	 * Computes ensemble partition functions and probabilities
+	 * using McCaskill's algorithm.  Optionally computes
+	 * additional matrices required for in-loop probabilities.
 	 *
 	 * @param ma the RNA sequence or alignment as MultipleAlignment object
 	 * @param params pfolding parameters

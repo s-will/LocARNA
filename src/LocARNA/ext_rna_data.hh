@@ -200,6 +200,18 @@ namespace LocARNA {
 	read_pp(std::istream &in);
 
 	/** 
+	 * @brief initialize from fixed structure
+	 * 
+	 * @param structure fixed structure
+	 *
+	 * @note overloaded to initialize with additional information
+	 * (in loop probabilities)
+	 */
+	virtual
+	void
+	init_from_fixed_structure(const SequenceAnnotation &structure);
+
+	/** 
 	 * @brief initialize from rna ensemble 
 	 * 
 	 * @param rna_ensemble rna ensemble

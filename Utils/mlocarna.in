@@ -2607,13 +2607,8 @@ sub compute_dotplot($$) {
 	    }
 	    elsif ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#S"}) {
 		# if a structure constraint is defined do constraint folding
-		print "Hey, found constraints and call our own rnafoldp\n";
 		my $constraint_string = $seqs->[$i]->{"ANNO\#S"};
-		
-		print "Here is my input:\n";
-		print "$seqname $seq_str\n\#S $constraint_string\n";
-		
-		
+				
 		systemverb_withinput("$seqname $seq_str\n\#S $constraint_string\n",
 				     "$RNAfoldp -C $RNAfoldp_redirect");
 	    } else {
