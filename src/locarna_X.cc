@@ -64,6 +64,7 @@ const bool DO_TRACE=true;
 // Parameter
 
 double min_prob; // only pairs with a probability of at least min_prob are taken into account
+double out_min_prob; // only pairs with a probability of at least min_prob are taken into account
 
 bool no_lonely_pairs=false; // no lonely pairs option (currently not supported)
 
@@ -132,6 +133,8 @@ bool opt_stopwatch;
 
 option_def my_options[] = {
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
+    {"out-min-prob",'p',0,O_ARG_DOUBLE,&out_min_prob,"0.0005","prob",
+     "Minimal probability for output"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
     
@@ -270,7 +273,7 @@ main(int argc, char **argv) {
     ExtRnaData *rna_dataA=0;
     try {
 	rna_dataA = new ExtRnaData(fileA,
-				   min_prob,
+				   out_min_prob,
 				   prob_basepair_in_loop_threshold,
 				   prob_unpaired_in_loop_threshold,
 				   pfparams);
@@ -283,7 +286,7 @@ main(int argc, char **argv) {
     ExtRnaData *rna_dataB=0;
     try {
 	rna_dataB = new ExtRnaData(fileB,
-				   min_prob,
+				   out_min_prob,
 				   prob_basepair_in_loop_threshold,
 				   prob_unpaired_in_loop_threshold,
 				   pfparams);
