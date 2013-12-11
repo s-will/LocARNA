@@ -418,3 +418,4 @@ Nov 2013
 	Fix bug concerning structure constraints
 	Update format conversions in mlocarna to pp 2.0 format
 	Support for fixed structure constraints (directly in C++)
+	(Release 1.7.12)
