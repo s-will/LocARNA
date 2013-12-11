@@ -28,7 +28,8 @@ sequence_constraint_string
 compute_alignment_from_seqs
 compute_alignment_score
 read_dp_ps
-read_pp_file_aln
+read_pp_file_aln_wo_anno
+read_pp_file_aln_w_anno
 read_pp_file_pairprobs
 read_pp_file_pairprob_info
 convert_dp_to_pp_with_constraints
@@ -43,7 +44,7 @@ project_str_to_aln_seq
 
 clone_hash
 
-read_aln
+read_aln_wo_anno
 write_aln
 project_aln
 project_alnloh
@@ -801,9 +802,23 @@ sub read_dp_ps {
 }
 
 
-## read pp file and return the alignment
+## read pp file and return the alignment w/o constraints
 ## auto-detect version of pp file
-sub read_pp_file_aln($) {
+sub read_pp_file_aln_wo_anno {
+    my ($filename)=@_;
+    my %aln = read_pp_file_aln_w_anno($filename);
+    
+    for my $k (keys %aln) {
+	if ($k =~ /^#/) { ## delete names beginning with '#'
+	    delete $aln{$k};
+	}
+    }
+    return %aln;
+}
+
+## read pp file and return the alignment w/ constraints
+## auto-detect version of pp file
+sub read_pp_file_aln_w_anno {
     my ($filename)=@_;
     my $pp_in;
    
@@ -1430,14 +1445,15 @@ sub write_aln($) {
 
 
 ########################################
-## read_aln($filename)
+## read_aln_wo_anno($filename)
 ##
 ## read multiple alignment in CLUSTALW aln format from file $filename
+## ignores annotation starting with #
 ##
 ## returns ref of alignment hash
 ##
 ########################################
-sub read_aln($) {
+sub read_aln_wo_anno {
     my ($aln_filename) = @_;
     local *ALN_IN;
     
@@ -1459,7 +1475,9 @@ sub read_aln($) {
 	    my $name=$1;
 	    my $seq=$2;
 	    
-	    $aln{$name} .= $seq;
+	    if ($name !~ /^#/) { # ignore annotation
+		$aln{$name} .= $seq;
+	    }
 	}
     }
     
