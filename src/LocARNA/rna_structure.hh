@@ -176,15 +176,21 @@ namespace LocARNA {
     public:
 	
 	/**
-	 * @brief Check for empty structure / class PLAIN
+	 * @brief Check base pair set for empty structure / class PLAIN
 	 *
 	 * @param bps set of base pairs
 	 *
+	 * @return whether given base pair set represents empty structure
+	 */
+	static
+	bool
+	empty(const bps_t &bps);
+	
+	/**
+	 * @brief Check for empty structure / class PLAIN
+	 *
 	 * @return whether structure is empty
 	 */
-	bool
-	empty(const bps_t &bps) const;
-
 	bool
 	empty() const {return empty(bps_);}
 	
@@ -201,9 +207,15 @@ namespace LocARNA {
 	 *
 	 * @see in_crossing() for naming
 	 */
+	static
 	bool
-	nested(const bps_t &bps) const;
+	nested(const bps_t &bps);
 	
+	/**
+	 * @brief Check for nested structure / class NESTED
+	 *
+	 * @return whether structure is nested class
+	 */
 	bool
 	nested() const {return nested(bps_);}
 
@@ -221,9 +233,15 @@ namespace LocARNA {
 	 * @note this does *not* test for the presence of crossing
 	 * base pairs. For the latter, use !nested().
 	 */
+	static
 	bool
-	crossing(const bps_t &bps) const;
-
+	crossing(const bps_t &bps);
+	
+	/**
+	 * @brief Check for crossing structure / class CROSSING
+	 *
+	 * @return whether structure is in crossing class
+	 */
 	bool
 	crossing() const {return crossing(bps_);}
 	
