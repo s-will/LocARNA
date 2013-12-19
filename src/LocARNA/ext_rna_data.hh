@@ -203,13 +203,15 @@ namespace LocARNA {
 	 * @brief initialize from fixed structure
 	 * 
 	 * @param structure fixed structure
+	 * @param stacking whether to initialize stacking terms
 	 *
 	 * @note overloaded to initialize with additional information
 	 * (in loop probabilities)
 	 */
 	virtual
 	void
-	init_from_fixed_structure(const SequenceAnnotation &structure);
+	init_from_fixed_structure(const SequenceAnnotation &structure,
+				  bool stacking);
 
 	/** 
 	 * @brief initialize from rna ensemble 

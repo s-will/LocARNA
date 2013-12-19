@@ -79,13 +79,17 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// METHODS
+
+
 	/** 
 	 * @brief initialize from fixed structure
 	 * 
 	 * @param structure fixed structure
+	 * @param stacking whether to initialize stacking terms
 	 */
 	void
-	init_from_fixed_structure(const SequenceAnnotation &structure);
+	init_from_fixed_structure(const SequenceAnnotation &structure,
+				  bool stacking);
 
 	/** 
 	 * @brief initialize from rna ensemble 
@@ -135,7 +139,10 @@ namespace LocARNA {
 	 *
 	 * @param out ouput stream
 	 * @param p_outbpcut cutoff probabilitiy
-	 * @param stacking whether to write stacking probabilities
+	 * @param stacking whether to write stacking probabilities; if
+	 *   stacking but !has_stacking_, no stacking terms are
+	 *   written but flag #STACKS is written to output
+	 *
 	 * @return stream
 	 *
 	 * Write only base pairs with probabilities greater than
