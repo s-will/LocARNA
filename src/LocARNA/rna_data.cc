@@ -14,6 +14,7 @@
 #include "sequence_annotation.hh"
 #include "rna_data_impl.hh"
 #include "ext_rna_data_impl.hh"
+#include "rna_structure.hh"
 
 #include "LocARNA/global_stopwatch.hh"
 
@@ -184,26 +185,21 @@ namespace LocARNA {
     }
 
 
-    /*
-     * Implementation note: we use an annoyingly complex mechanism
-     * involving virtual methods and calls to interface-object methods
-     * from the implementation object's constructor to make this
-     * method usable in RnaData and ExtRnaData while avoiding code
-     * duplication. In hindsight, this seems rather pathetic. Could it
-     * be replaced by a simpler mechanism?
-     */
     bool
     RnaData::read_autodetect(const std::string &filename,
 			     bool stacking) {
 	bool failed=true;  //flag for signalling a failed attempt to
 			   //read a certain file format
 	
-	bool recompute=false; // do we need to recompute probabilities
+	bool sequence_only=false; 
+	// does the file format contain only sequence information or
+	// should we assume that the base pair probabilities are given
 
 	pimpl_->has_stacking_=stacking;
 
 	// try dot plot ps format
 	if (failed) {
+	    sequence_only=false;
 	    failed=false;
 	    try {
 		read_ps(filename);
@@ -218,7 +214,7 @@ namespace LocARNA {
 
 	// try pp 2.0
 	if (failed) {
-	    recompute=false;
+	    sequence_only=false;
 	    failed=false;
 	    try {
 		// std::cerr << "Try reading pp "<<filename<<" ..."<<std::endl;
@@ -236,7 +232,7 @@ namespace LocARNA {
 
 	// try fasta format
 	if (failed) {
-	    recompute = true;
+	    sequence_only = true;
 	    failed=false;
 	    try {
 		MultipleAlignment ma(filename, MultipleAlignment::FormatType::FASTA);
@@ -254,7 +250,7 @@ namespace LocARNA {
 	
 	// try old pp
 	if (failed) {
-	    recompute=false;
+	    sequence_only=false;
 	    failed=false;
 	    try {
 		// std::cerr << "Try reading old pp "<<filename<<" ..."<<std::endl;
@@ -271,7 +267,7 @@ namespace LocARNA {
 
 	// try clustal format
 	if (failed) {
-	    recompute=true;
+	    sequence_only=true;
 	    failed=false;
 	    try {
 		// std::cerr << "Try reading clustal "<<filename<<" ..."<<std::endl;
@@ -284,6 +280,17 @@ namespace LocARNA {
 		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
 		    failed=true;
 		}
+		
+		// handle potential fixed structure in MA
+		if (!failed) {
+		    typedef MultipleAlignment::AnnoType AT;
+		    
+		    if (ma.has_annotation(AT::fixed_structure)) {
+			init_from_fixed_structure(ma.annotation(AT::fixed_structure));
+			sequence_only=false;
+		    }
+		}
+		
 	    } catch (syntax_error_failure &f) {
 		throw failure((std::string)"RnaData: Cannot read input data from clustal file.\n\t"+f.what());
 	    }
@@ -301,12 +308,33 @@ namespace LocARNA {
 	pimpl_->sequence_.normalize_rna_symbols();
 
 	// now, we have the sequence but not necessarily all required probabilities!
-	if (!inloopprobs_ok()) {
-	    recompute=true;
-	}
-	
-	return !recompute;
+	// return whether (re)computation of probabilities is required
+	return !sequence_only && inloopprobs_ok();
     }
+
+    void
+    RnaData::init_from_fixed_structure(const SequenceAnnotation &structure) {
+	pimpl_->init_from_fixed_structure(structure);
+    }
+    
+    void
+    RnaDataImpl::init_from_fixed_structure(const SequenceAnnotation &structure) {
+	assert(structure.length() == sequence_.length());
+	RnaStructure rna_structure(structure.single_string());
+	
+	p_bpcut_=1.0;
+	
+	for (RnaStructure::const_iterator it=rna_structure.begin();
+	     rna_structure.end() != it; ++it) {
+	    arc_probs_(it->first,it->second)=1.0;
+	}
+    }
+
+    void
+    ExtRnaData::init_from_fixed_structure(const SequenceAnnotation &structure) {
+	std::cerr << "STUB: ExtRnaData::init_from_fixed_structure()" << std::endl;
+    }
+
 
     void
     RnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,

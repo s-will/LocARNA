@@ -64,6 +64,7 @@ const bool DO_TRACE=true;
 // Parameter
 
 double min_prob; // only pairs with a probability of at least min_prob are taken into account
+double out_min_prob; // minimal probability for output
 
 bool no_lonely_pairs=false; // no lonely pairs option (currently not supported)
 
@@ -131,6 +132,8 @@ bool opt_stopwatch;
 
 option_def my_options[] = {
 		{"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
+		{"out-min-prob",'p',0,O_ARG_DOUBLE,&out_min_prob,"0.0005","prob",
+    	 "Minimal probability for output (min-prob overrides if smaller)"},
 		{"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
 		{"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
 
@@ -244,32 +247,32 @@ main(int argc, char **argv) {
 
 	PFoldParams pfparams(no_lonely_pairs,(!no_stacking));
 
-	ExtRnaData *rna_dataA=0;
-	try {
-		rna_dataA = new ExtRnaData(fileA,
-				min_prob,
-				prob_basepair_in_loop_threshold,
-				prob_unpaired_in_loop_threshold,
-				pfparams);
-	} catch (failure &f) {
-		std::cerr << "ERROR: failed to read from file "<<fileA <<std::endl
-				<< "       "<< f.what() <<std::endl;
-		return -1;
-	}
-
-	ExtRnaData *rna_dataB=0;
-	try {
-		rna_dataB = new ExtRnaData(fileB,
-				min_prob,
-				prob_basepair_in_loop_threshold,
-				prob_unpaired_in_loop_threshold,
-				pfparams);
-	} catch (failure &f) {
-		std::cerr << "ERROR: failed to read from file "<<fileB <<std::endl
-				<< "       "<< f.what() <<std::endl;
-		if (rna_dataA) delete rna_dataA;
-		return -1;
-	}
+    ExtRnaData *rna_dataA=0;
+    try {
+	rna_dataA = new ExtRnaData(fileA,
+				   std::min(min_prob,out_min_prob),
+				   prob_basepair_in_loop_threshold,
+				   prob_unpaired_in_loop_threshold,
+				   pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<fileA <<std::endl
+		  << "       "<< f.what() <<std::endl;
+	return -1;
+    }
+    
+    ExtRnaData *rna_dataB=0;
+    try {
+	rna_dataB = new ExtRnaData(fileB,
+				   std::min(min_prob,out_min_prob),
+				   prob_basepair_in_loop_threshold,
+				   prob_unpaired_in_loop_threshold,
+				   pfparams);
+    } catch (failure &f) {
+	std::cerr << "ERROR: failed to read from file "<<fileB <<std::endl
+		  << "       "<< f.what() <<std::endl;
+	if (rna_dataA) delete rna_dataA;
+	return -1;
+    }
 
 	const Sequence &seqA=rna_dataA->sequence();
 	const Sequence &seqB=rna_dataB->sequence();
@@ -311,9 +314,10 @@ main(int argc, char **argv) {
 	arc_matches = new ArcMatches(*rna_dataA,
 			*rna_dataB,
 			min_prob,
-			(max_diff_am!=-1)?(size_type)max_diff_am:std::max(seqA.length(),seqB.length()),
-					trace_controller,
-					seq_constraints
+			(max_diff_am!=-1)?
+			(size_type)max_diff_am:std::max(seqA.length(),seqB.length()),
+			trace_controller,
+			seq_constraints
 	);
 
 	const BasePairs &bpsA = arc_matches->get_base_pairsA();

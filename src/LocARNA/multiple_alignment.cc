@@ -23,8 +23,12 @@ namespace LocARNA {
     std::vector<std::string>
     initial_annotation_tags() {
 	std::vector<std::string> as;
-	as.push_back("S"); // = AnnoType::structure
-	as.push_back("A"); // = AnnoType::anchors
+	as.resize(3);
+	
+	as[MultipleAlignment::AnnoType::structure]="S";
+	as[MultipleAlignment::AnnoType::fixed_structure]="FS";
+	as[MultipleAlignment::AnnoType::anchors]="A";
+	
 	return as;
     }
     const std::vector<std::string> MultipleAlignment::annotation_tags = initial_annotation_tags();
@@ -217,7 +221,8 @@ namespace LocARNA {
 	std::vector<std::string> anchors;
 
 	std::string structure_string="";
-
+	std::string fixed_structure_string="";
+	
 	alig_.clear();
 	
 	get_nonempty_line(in,line);
@@ -229,6 +234,7 @@ namespace LocARNA {
 	
 	const std::string anchors_tag   = "#"+annotation_tags[AnnoType::anchors];
 	const std::string structure_tag = "#"+annotation_tags[AnnoType::structure];
+	const std::string fixed_structure_tag = "#"+annotation_tags[AnnoType::fixed_structure];
 	
 	do {
 	    if (line[0]=='#') {
@@ -256,20 +262,25 @@ namespace LocARNA {
 		    }
 		    
 		    anchors[idx-1] += astr;
-		} else if (has_prefix(line,structure_tag)) {
+		} else if (has_prefix(line,structure_tag) 
+			   || has_prefix(line,fixed_structure_tag)) {
 		    std::istringstream in(line);
 		    std::string tag;
 		    std::string str;
 		    in >> tag >> str;
 		    
 		    if ( in.fail() ) {
-			throw syntax_error_failure("Invalid tag with structure prefix "+structure_tag+".");
+			throw syntax_error_failure("Invalid tag with structure prefix "
+						   +structure_tag+".");
 		    }
 		    
 		    if (tag==structure_tag) {
 			structure_string += str;
+		    } else if (tag==fixed_structure_tag) {
+		    	fixed_structure_string += str;
 		    } else {
-			throw syntax_error_failure("Unknown tag with structure prefix "+structure_tag+".");
+			throw syntax_error_failure("Unknown tag with structure prefix "
+						   +structure_tag+".");
 		    }
 		}
 	    } else {
@@ -317,9 +328,25 @@ namespace LocARNA {
 		throw syntax_error_failure("Structure annotation of wrong length.");
 	    }
 	    try {
-		set_annotation( AnnoType::structure, SequenceAnnotation(structure_string) );
+		set_annotation( AnnoType::structure,
+				SequenceAnnotation(structure_string) );
 	    } catch(failure &f) {
-		throw syntax_error_failure((std::string)"Wrong structure annotation."+f.what());
+		throw syntax_error_failure((std::string)"Wrong structure annotation."
+					   +f.what());
+	    }
+	}
+
+	// check and set fixed structure string
+	if (!fixed_structure_string.empty()) {
+	    if (fixed_structure_string.length() != length()) {
+		throw syntax_error_failure("Fixed structure annotation of wrong length.");
+	    }
+	    try {
+		set_annotation( AnnoType::fixed_structure,
+				SequenceAnnotation(fixed_structure_string) );
+	    } catch(failure &f) {
+		throw syntax_error_failure((std::string)"Wrong fixed structure annotation."
+					   +f.what());
 	    }
 	}
 	
@@ -894,7 +921,11 @@ namespace LocARNA {
 	assert(1<=start);
 	assert(end+1>=start);
 	    	
-	std::string structure_string = annotation(AnnoType::structure).single_string();
+	std::string structure_string = 
+	    annotation(AnnoType::structure).single_string();
+	
+	std::string fixed_structure_string = 
+	    annotation(AnnoType::fixed_structure).single_string();
 	
 	for (size_type i=0; i<alig_.size(); i++) {
 	    const std::string seq = alig_[i].seq().str();
@@ -925,6 +956,13 @@ namespace LocARNA {
 	    write_name_sequence_line(out,
 				     structure_tag,
 				     structure_string.substr(start-1,end-start+1));
+	}
+
+	if (has_annotation(AnnoType::fixed_structure)) {
+	    const std::string structure_tag   = "#"+annotation_tags[AnnoType::fixed_structure];
+	    write_name_sequence_line(out,
+				     structure_tag,
+				     fixed_structure_string.substr(start-1,end-start+1));
 	}
 	
 	return out;

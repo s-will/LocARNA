@@ -299,6 +299,18 @@ namespace LocARNA {
     protected:
 	
 	/** 
+	 * @brief initialize from fixed structure
+	 * 
+	 * @param structure fixed structure
+	 *
+	 * @note can be overloaded to initialize with additional
+	 * information (in loop probabilities)
+	 */
+	virtual
+	void
+	init_from_fixed_structure(const SequenceAnnotation &structure);
+
+	/** 
 	 * @brief initialize from rna ensemble 
 	 * 
 	 * @param rna_ensemble rna ensemble
@@ -311,6 +323,7 @@ namespace LocARNA {
 	void
 	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
 			       bool stacking);
+	
 
 	/** 
 	 * @brief read and initialize from file, autodetect format

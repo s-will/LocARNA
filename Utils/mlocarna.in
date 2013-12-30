@@ -1263,7 +1263,7 @@ sub main {
 	
         ## iterate $it_reliable_structure times using reliable structures as structure constraints 
 	for (my $it=0; $it<$it_reliable_structure; $it++) {
-	    my $aln = read_aln("$tgtdir/$results_dir/result.aln");
+	    my $aln = read_aln_wo_anno("$tgtdir/$results_dir/result.aln");
 	    
 	    my $reliable_structures = compute_and_write_reliabilities($aln);
 	    
@@ -1275,7 +1275,7 @@ sub main {
 	    perform_multiple_alignment($seqs);
 	}
 	
-	my $aln = read_aln("$tgtdir/$results_dir/result.aln");
+	my $aln = read_aln_wo_anno("$tgtdir/$results_dir/result.aln");
 	compute_and_write_reliabilities($aln);
 
     } ## end if probabilistic
@@ -1355,20 +1355,24 @@ sub convert_fix_structure_to_pp($$$$$) {
 
     open(OUT,">$ppfilename") || die "Cannot write $!";
 
-    print OUT "\n";
+    print OUT "#PP 2.0\n\n";
     print OUT "$name\t$seq\n";
+    
     if (defined $constraints && $constraints ne "") {
-	print OUT "#C $constraints\n";
+    	my @cs = split /\#/, $constraints;
+	for (my $i=0; $i<@cs;$i++) {
+	    print OUT "#A".($i+1)." ".$cs[$i]."\n";
+	}
     }
-    print OUT "\n";
-    print OUT "\n";
-    print OUT "#\n";
+    print OUT "\n#END\n\n";
+    print OUT "#SECTION BASEPAIRS\n\n";
     
     for (my $i=0; $i<=$#str; $i++) {
 	if ($str[$i]>$i) {
 	    print OUT ($i+1)." ".($str[$i]+1)." 1.0\n";
 	}
     }
+    print OUT "\n#END\n"; 
 }
 ### ------------------------------------------------------------
 ### ------------------------------------------------------------
@@ -2089,8 +2093,8 @@ sub call_locarna_prob( $$$$$ ) {
     
     ## extract the alignments from the pp files
     #
-    my %alnA = read_pp_file_aln($inA);
-    my %alnB = read_pp_file_aln($inB);
+    my %alnA = read_pp_file_aln_wo_anno($inA);
+    my %alnB = read_pp_file_aln_wo_anno($inB);
     
     my $tmpprefix = threadsafe_name("$global_tmpprefix");
     
@@ -2147,11 +2151,13 @@ sub write_pp_projected($$$) {
     
     foreach my $name (@names) {
 	my @posmap = project_seq($alnP{$name});
-	my %name_aln = read_pp_file_aln("$input_dir/".get_normalized_seqname($name));	
-	my %name_pairprobs = read_pp_file_pairprobs("$input_dir/".get_normalized_seqname($name));	
+	my %name_aln =
+	    read_pp_file_aln_w_anno("$input_dir/".get_normalized_seqname($name));	
+	my %name_pairprobs =
+	    read_pp_file_pairprobs("$input_dir/".get_normalized_seqname($name));	
 	
 	if ( exists $name_aln{"#C"} && (!$ignore_constraints)) {
-	    my $constraints = $name_aln{"#C"};
+	    # my $constraints = $name_aln{"#C"};
 	    printerr "WARNING: constraints ignored in iterative alignment.\n";
 	}
 	
@@ -2604,8 +2610,14 @@ sub compute_dotplot($$) {
 	    elsif ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#S"}) {
 		# if a structure constraint is defined do constraint folding
 		my $constraint_string = $seqs->[$i]->{"ANNO\#S"};
-		systemverb_withinput(">$seqname\n$seq_str\n$constraint_string\n",
-				     "$RNAfoldp -C $RNAfoldp_redirect");
+		
+		if ( $RNAfoldp =~ /locarna_rnafold_pp/ ) { ## which input format? for RNAfold or locarna_rnafold_pp?
+		    systemverb_withinput("$seqname $seq_str\n\#S $constraint_string\n",
+					 "$RNAfoldp -C $RNAfoldp_redirect");
+		} else { 
+		    systemverb_withinput(">$seqname\n$seq_str\n$constraint_string\n",
+					 "$RNAfoldp -C $RNAfoldp_redirect");
+		}
 	    } else {
 		systemverb_withinput(">$seqname\n$seq_str\n",
 				     "$RNAfoldp $RNAfoldp_redirect");
@@ -2888,7 +2900,7 @@ sub perform_iterative_refinement_one_round($$$$$) {
 	
 	printmsg 2, "Realign split @namesA --- @namesB\n";
 	
-	my $aln = read_aln("$current_alignment_name.aln");
+	my $aln = read_aln_wo_anno("$current_alignment_name.aln");
 	
 	my $intermediate_name = "$intermediate_dir/".new_intermediate_name();
 	
@@ -2949,7 +2961,7 @@ sub run_evaluation_mode {
 	}
 	$aln = \%alnhash;
     } else {
-	$aln = read_aln($alnfile);
+	$aln = read_aln_wo_anno($alnfile);
     }
     
      ## register normalized names that can be used as filenames
@@ -3031,7 +3043,7 @@ sub reference_alignment_option {
 ## check whether $reference_aln contains an alignment of the sequences $seq
 ## 
 ## @param $seqs list of sequences with names (as returned by read_fasta)
-## @param $reference_aln reference alignment in loh (as returned by read_aln)
+## @param $reference_aln reference alignment in loh (as returned by read_aln_wo_anno)
 ##
 ## @returns boolean whether $reference_aln contains an alignment of the sequences $seq
 ##

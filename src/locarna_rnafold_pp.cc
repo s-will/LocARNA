@@ -187,6 +187,19 @@ main(int argc, char **argv) {
 	std::cout << std::endl;
 	return -1;
     }
+
+    //Reading from stdinput with autodetect of file format works by copying the entire stdinput
+    //to memory. Then, autodetection can work on this copy.
+    
+    // if we want to get input from stdin, copy content of stdin to stdin_content
+    std::string stdin_content;
+    if (clp.input_file=="-") { 
+	std::stringstream stdin;
+	stdin << std::cin.rdbuf();
+	stdin_content=stdin.str();
+    }
+    
+
     //todo: check that input is proper and catch the wrong inputs
     // MultipleAlignment::FormatType::type input_format;
     MultipleAlignment* mseq = NULL;
@@ -199,8 +212,9 @@ main(int argc, char **argv) {
 	    mseq = new MultipleAlignment(clp.input_file, MultipleAlignment::FormatType::FASTA);
 	}
 	else
-	{
-	    mseq = new MultipleAlignment(std::cin, MultipleAlignment::FormatType::FASTA);
+	    {
+		std::istringstream in(stdin_content);
+		mseq = new MultipleAlignment(in, MultipleAlignment::FormatType::FASTA);
 	}
 	// even if reading does not fail, we still want to
 	// make sure that the result is reasonable. Otherwise,
@@ -232,7 +246,8 @@ main(int argc, char **argv) {
 		}
 		else
 		{
-		    mseq = new MultipleAlignment (std::cin, MultipleAlignment::FormatType::CLUSTAL);
+		    std::stringstream in(stdin_content);
+		    mseq = new MultipleAlignment (in, MultipleAlignment::FormatType::CLUSTAL);
 
 		// make sure that the result is reasonable. Otherwise,
 		}
