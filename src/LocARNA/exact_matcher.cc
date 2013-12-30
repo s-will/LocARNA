@@ -719,6 +719,7 @@ namespace LocARNA {
     // returns the score for an arcmatch (the basepair match itself plus the part under it)
     // if easier_scoring_par is set, each basepair match is scored equally
     // otherwise the base pair probabilities are taken into account
+    // D(a,b) is -inf for inexact matches when only exact matches are considered
     infty_score_t ExactMatcher::score_for_am(const Arc &a, const Arc &b){
 
     	double probArcA = rna_dataA.arc_prob(a.left(),a.right());
