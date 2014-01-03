@@ -211,7 +211,7 @@ foreach my $id (keys %sumProbs){
     
     my $average = $sumProb/$numSequences;
     my $squaresAverage =  $sumSquareProb/$numSequences;
-    my $deviation = sqrt($squaresAverage-$average*$average);
+    my $deviation = sqrt(max(0,$squaresAverage-$average*$average));
     
     $averageProbs{$id}=$average;
     $scaledDeviation{$id}= 1 -2* $deviation;
