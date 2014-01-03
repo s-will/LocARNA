@@ -1,5 +1,4 @@
-#/usr/bin/perl
-# -*- perl -*-
+#!/usr/bin/perl
 
 =head1 NAME
 
@@ -13,6 +12,8 @@ locarna_mea infile.pp
 
 Reads a base pair probabilities from a pp file and computes the
 secondary structure with maximum sum of base pair probabilities.
+
+(Ignores potential annotation including structure constraints.)
 
 =head1 OPTIONS
 
@@ -39,17 +40,6 @@ use MLocarna::MatchProbs;
 
 
 use Cwd 'abs_path';
-
-## ------------------------------------------------------------
-## global constants
-
-
-$MLocarna::PACKAGE_STRING="@PACKAGE_STRING@";
-
-my $prefix = "@prefix@";
-my $exec_prefix = "@exec_prefix@";
-my $bindir = "@bindir@";
-
 
 ##------------------------------------------------------------
 ## options
@@ -82,7 +72,7 @@ if (!defined($inputfile)) {
 ## main part
 
 my %pairprobs = read_pp_file_pairprobs("$inputfile");
-my %aln = read_pp_file_aln("$inputfile");
+my %aln = read_pp_file_aln_wo_anno("$inputfile");
 
 # compute and print a maximum reliability structure for the consensus reliabilities
 my @empty=();
