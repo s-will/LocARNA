@@ -19,7 +19,7 @@ AUTHOR: Niklas Meinzer <meinzern@informatik.uni-freiburg.de
 OPTIONS
 
 
-        --parwise_params    parameters for the pairwise alignment step
+        --pairwise_parameters    parameters for the pairwise alignment step
 
         --tcoffee_params    parameters for tcoffee
 
@@ -38,6 +38,8 @@ OPTIONS
                                 in addition to the one generated during this run
 
         --pairwise_aligner  which pairwise aligner to use (default: locarna)
+        
+        --scaling_factor each edge from each EPM gets the same weight (exparna only!)
         
         --help  display this help message and exit
 
@@ -102,6 +104,7 @@ $options{pairwise_aligner} = "locarna";
 $options{library_only} = 0;
 $options{library_name} = "input.lib";
 $options{additional_libraries} = "";
+$options{scaling_factor} = "-1";
 
 GetOptions("help!" => \$options{help},
            "pairwise_parameters=s" => \$options{pairwise_aligner_params},
@@ -111,7 +114,8 @@ GetOptions("help!" => \$options{help},
            "output=s" => \$options{output_path},
            "pairwise_aligner=s" => \$options{pairwise_aligner},
            "library-name=s" => \$options{library_name},
-           "additional-libraries=s" => \$options{additional_libraries}
+           "additional-libraries=s" => \$options{additional_libraries},
+            "scaling_factor=i" => \$options{scaling_factor}
            );
 
 
@@ -120,6 +124,11 @@ pod2usage() if ($options{help});
 if ( ($options{pairwise_aligner} ne "locarna") && ($options{pairwise_aligner} ne "exparna")){
     print "Unsupported pairwise aligner: " . $options{pairwise_aligner} . "\n";
     exit(1);
+}
+
+if($options{pairwise_aligner} eq "locarna" && $options{scaling_factor} ne -1){
+	print "scaling factor not implemented for locarna \n";
+	exit(1);
 }
 
 
@@ -430,6 +439,9 @@ sub parse_pp_directory {
         }
     }
     closedir($DIR);
+    
+    ## sort sequences according to the order in the original fasta file (S1,S2,...Sn)
+    @result = sort { substr($a->{name},1,length($a->{name})) <=> substr($b->{name},1,length($b->{name}))} @result;
     return \@result;
 }
 

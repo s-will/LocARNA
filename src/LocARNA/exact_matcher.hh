@@ -544,7 +544,7 @@ public:
 	 * 					default setting is the index for sequence B if indexing by the left ends is used
 	 * @return the first valid matrix position before the sequence position cur_pos_seq
 	 */
-	matpos_t first_valid_mat_pos_before_with_tc(index_t indexA, index_t indexB,pair_seqpos_t cur_pos_seq,
+	matpos_t diag_pos_bef(index_t indexA, index_t indexB,pair_seqpos_t cur_pos_seq,
 			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
 
 		bool debug_valid_mat_pos = false;
@@ -611,7 +611,7 @@ public:
 	 * 		   if the position to the top does not exists, return an invalid matrix position
 	 */
 	// returns pair<diag_pos,top_pos>
-	pair<matpos_t,matpos_t> first_valid_mat_pos_before_with_tc_from_mat_pos(index_t indexA, index_t indexB,matpos_t mat_pos,
+	pair<matpos_t,matpos_t> diag_top_pos_bef(index_t indexA, index_t indexB,matpos_t mat_pos,
 			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
 		// find valid matrix position based on the SparsificationMapper
 
@@ -688,8 +688,11 @@ public:
 	 * @return the first valid matrix position to the left of mat_pos
 	 * 		   if the position to the left does not exists, return an invalid matrix position
 	 */
-	matpos_t first_left_valid_mat_pos_with_tc(index_t indexA, index_t indexB,matpos_t mat_pos,
+	matpos_t left_pos_bef(index_t indexA, index_t indexB,matpos_t mat_pos,
 			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
+
+		matidx_t max_idx = std::numeric_limits<index_t>::max();
+		matpos_t invalid_mat_pos = matpos_t(max_idx,max_idx);
 
 		matpos_t left_pos = matpos_t(std::numeric_limits<index_t>::max(),std::numeric_limits<index_t>::max());
 		matidx_t cur_row = mat_pos.first;
@@ -701,6 +704,7 @@ public:
 			}
 			if(cur_col==0) break;
 		}
+		if(left_pos!=invalid_mat_pos) assert(is_valid_idx_pos(indexA,indexB,left_pos));
 		return left_pos;
 	}
 
@@ -712,11 +716,8 @@ public:
 	 * @param idxB index that is used for sequence B
 	 * @param cur_pos a pair of positions in sequence A and B
 	 */
-	pair_seqpos_t get_pos_in_seq_new(index_t idxA, index_t idxB,//const Arc &a, const Arc &b,
+	pair_seqpos_t pos_in_seq(index_t idxA, index_t idxB,//const Arc &a, const Arc &b,
 			const matpos_t &cur_pos) const{
-		//cout << "get pos in seq new " << cur_pos.first << "," << cur_pos.second;
-		//cout << "valid mat pos idxA " << sparse_mapperA.number_of_valid_mat_pos(idxA);
-		//cout << "valid mat pos idxB " << sparse_mapperB.number_of_valid_mat_pos(idxB) << endl;
 
 		return pair_seqpos_t(sparse_mapperA.get_pos_in_seq_new(idxA,cur_pos.first),
 				sparse_mapperB.get_pos_in_seq_new(idxB,cur_pos.second));
@@ -733,9 +734,9 @@ public:
 	 * @param idx_pos_diag a position in the condensed matrix
 	 * @param seq_pos_to_be_matched a pair of positions in sequence A and B
 	 */
-	bool matching_without_gap_possible_with_tc(index_t idxA, index_t idxB,
+	bool matching_wo_gap(index_t idxA, index_t idxB,
 			matpos_t idx_pos_diag, pair_seqpos_t seq_pos_to_be_matched) const{
-		pair_seqpos_t pos_diag = this->get_pos_in_seq_new(idxA,idxB,idx_pos_diag);
+		pair_seqpos_t pos_diag = pos_in_seq(idxA,idxB,idx_pos_diag);
 		return (pos_diag.first+1 == seq_pos_to_be_matched.first) && (pos_diag.second+1==seq_pos_to_be_matched.second);
 	}
 
@@ -760,7 +761,7 @@ public:
 	 */
 	bool is_valid_idx_pos(index_t idxA, index_t idxB,
 			matpos_t mat_pos) const{
-		pair_seqpos_t seq_pos = get_pos_in_seq_new(idxA,idxB,mat_pos);
+		pair_seqpos_t seq_pos = pos_in_seq(idxA,idxB,mat_pos);
 		return is_valid(seq_pos.first,seq_pos.second);
 	}
 
@@ -797,7 +798,8 @@ private:
 	matpos_t cur_pos; //!< the current matrix position in the traceback, needed for suboptimal traceback
 	score_t max_tol_left; //!< the maximal tolerance left, needed for the suboptimal traceback
 	bool first_insertion; //!< whether we have already inserted something in the current EPM in the filling step
-	bool invalid; //!< whether an EPM is invalid (includes in another EPM and has a lower score)
+	bool invalid; //!< only used in the suboptimal traceback when inexact structural matches are allowed
+				  //! an EPM is invalid if it includes another EPM or is included in another EPM with a higher score
 
 	PairArcIdxVec am_to_do;//!< contains the pairs of arc indices which need to be traced
 
@@ -859,6 +861,8 @@ public:
 	//! returns whether it is the first insertion into the EPM
 	bool get_first_insertion() const{return first_insertion;}
 
+	//! returns whether the EPM is invalid
+	//! (only used in the suboptimal traceback when inexact structural matches are allowed)
 	bool is_invalid() const{
 		return invalid;
 	}
@@ -897,6 +901,7 @@ public:
 	 */
 	void set_first_insertion(bool first_insertion_){first_insertion=first_insertion_;}
 
+	//! sets the flag invalid for the EPM
 	void set_invalid(){
 		invalid = true;
 	}
