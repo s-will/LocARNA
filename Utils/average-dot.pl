@@ -68,6 +68,8 @@ use strict;
 use Getopt::Long;
 use Pod::Usage;
 
+use List::Util qw[min max];
+
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
 
