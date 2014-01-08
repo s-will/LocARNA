@@ -598,117 +598,6 @@ public:
 	}
 
 	/**
-	 * \brief computes from a given matrix position mat_pos the next valid position on the diagonal and
-	 * additionally the first valid position in the column mat_pos.second to the top
-	 * @param indexA index that is used for sequence A
-	 * @param indexB index that is used for sequence B
-	 * @param mat_pos the current matrix position
-	 * @param left_endA set to left end of the arc in sequence A if indexing by the arcs is used
-	 * 					default setting is the index for sequence A if indexing by the left ends is used
-	 * @param left_endB set to left end of the arc in sequence B if indexing by the arcs is used
-	 * 					default setting is the index for sequence B if indexing by the left ends is used
-	 * @return the pair of the first valid diagonal matrix position and the first valid matrix position to the top
-	 * 		   if the position to the top does not exists, return an invalid matrix position
-	 */
-	// returns pair<diag_pos,top_pos>
-	pair<matpos_t,matpos_t> diag_top_pos_bef(index_t indexA, index_t indexB,matpos_t mat_pos,
-			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
-		// find valid matrix position based on the SparsificationMapper
-
-		bool debug_valid_mat_pos = false;
-
-		if(debug_valid_mat_pos) cout << "first valid mat pos before with tc from mat pos " << endl;
-		if(debug_valid_mat_pos) cout << "for mat pos " << mat_pos.first << "," << mat_pos.second << endl;
-
-
-		matidx_t max_idx = std::numeric_limits<index_t>::max();
-		matpos_t invalid_mat_pos = matpos_t(max_idx,max_idx);
-
-		matpos_t diag_pos = invalid_mat_pos;
-		matpos_t top_pos = invalid_mat_pos;
-
-		// take matrix postion next on the diagonal (based on the SparsificationMapper!)
-		matidx_t cur_row = mat_pos.first-1; //sparse_mapperA.first_valid_mat_pos_before(indexA,i,left_endA);
-		matidx_t col_before = mat_pos.second-1; //sparse_mapperB.first_valid_mat_pos_before(indexB,j,left_endB);
-
-		matidx_t min_col,idx_after_max_col;
-
-		//bool diag_pos_found = false;
-		//bool top_pos_found = false;
-
-		// find a valid position that is valid also based on the TraceController
-		// go through the rows and find an interval that includes the column col_before or lies
-		// before the column col_before
-		for(;;--cur_row){
-
-			min_col = min_col_idx(indexA,indexB,cur_row,left_endB);
-			idx_after_max_col = idx_after_max_col_idx(indexA,indexB,cur_row,left_endB);
-
-			if(debug_valid_mat_pos) cout << "interval " << min_col << "," << idx_after_max_col << endl;
-
-			//if(min_col<idx_after_max_col && min_col<=col_before){
-			if(min_col<idx_after_max_col){ 	// valid interval found
-				if(diag_pos==invalid_mat_pos && min_col<=col_before){	// valid diag pos found
-					diag_pos = matpos_t(cur_row,std::min(idx_after_max_col-1,col_before));
-				}
-				if(top_pos==invalid_mat_pos && mat_pos.second>=min_col && mat_pos.second<idx_after_max_col){
-					top_pos = matpos_t(cur_row,mat_pos.second);
-				}
-			}
-			if(cur_row==0 || (diag_pos!=invalid_mat_pos && top_pos!=invalid_mat_pos)){
-				break;
-			}
-		}
-
-		assert(diag_pos!=invalid_mat_pos); //make sure we found a diagonal position
-		//assert(idx_after_max_col>0);
-
-		//matidx_t max_col = idx_after_max_col-1;
-
-		// the column of the new position is the col_before or lies before it
-		//matpos_t result = matpos_t(cur_row,std::min(max_col,col_before));
-
-		//assert(is_valid_idx_pos(indexA,indexB,result));
-		assert(is_valid_idx_pos(indexA,indexB,diag_pos));
-		if(top_pos!=invalid_mat_pos) assert(is_valid_idx_pos(indexA,indexB,top_pos));
-		return pair<matpos_t,matpos_t>(diag_pos,top_pos);
-	}
-
-	/**
-	 * \brief computes the first valid matrix position to the left
-	 *
-	 * @param indexA index that is used for sequence A
-	 * @param indexB index that is used for sequence B
-	 * @param mat_pos the current matrix position
-	 * @param left_endA set to left end of the arc in sequence A if indexing by the arcs is used
-	 * 					default setting is the index for sequence A if indexing by the left ends is used
-	 * @param left_endB set to left end of the arc in sequence B if indexing by the arcs is used
-	 * 					default setting is the index for sequence B if indexing by the left ends is used
-	 *
-	 * @return the first valid matrix position to the left of mat_pos
-	 * 		   if the position to the left does not exists, return an invalid matrix position
-	 */
-	matpos_t left_pos_bef(index_t indexA, index_t indexB,matpos_t mat_pos,
-			index_t left_endA =  std::numeric_limits<index_t>::max(), index_t left_endB =  std::numeric_limits<index_t>::max())const{
-
-		matidx_t max_idx = std::numeric_limits<index_t>::max();
-		matpos_t invalid_mat_pos = matpos_t(max_idx,max_idx);
-
-		matpos_t left_pos = matpos_t(std::numeric_limits<index_t>::max(),std::numeric_limits<index_t>::max());
-		matidx_t cur_row = mat_pos.first;
-		matidx_t cur_col = mat_pos.second-1;
-		for(;;--cur_col){
-			if(is_valid_idx_pos(indexA,indexB,matpos_t(cur_row,cur_col))){
-				left_pos = matpos_t(cur_row,cur_col);
-				break;
-			}
-			if(cur_col==0) break;
-		}
-		if(left_pos!=invalid_mat_pos) assert(is_valid_idx_pos(indexA,indexB,left_pos));
-		return left_pos;
-	}
-
-	/**
 	 * \brief maps the matrix position cur_pos to the corresponding pair
 	 * of positions in sequence A and B
 	 *
@@ -1141,6 +1030,19 @@ T1 max3(const T1 &first,const T1 &second, const T1 &third){
 	return max(max(first,second),third);
 }
 
+/**
+ * computes the maximum of four values
+ * @param first first value
+ * @param second second value
+ * @param third third value
+ * @param fourth value
+ * @return the maximum of the four input values
+ */
+template <class T1>
+T1 max4(const T1 &first,const T1 &second, const T1 &third, const T1 &fourth){
+	return max(max3(first,second,third),fourth);
+}
+
 
 /**
  * @brief Computes exact pattern matchings (EPM) between two RNA sequences
@@ -1231,8 +1133,6 @@ private:
 
     const Arc pseudo_arcA; //!< pseudo Arc for sequence A (0,seqA.length())
     const Arc pseudo_arcB; //!< pseudo Arc for sequence B (0,seqB.length())
-
-    const matpos_t invalid_mat_pos;
 
     /**
      * View on matrix D

@@ -49,8 +49,7 @@ namespace LocARNA {
 	  no_add_filter(no_add_filter_),
 	  verbose(verbose_),
 	  pseudo_arcA(bpsA.num_bps(),0,seqA.length()),
-	  pseudo_arcB(bpsB.num_bps(),0,seqB.length()),
-	  invalid_mat_pos(std::numeric_limits<index_t>::max(),std::numeric_limits<index_t>::max())
+	  pseudo_arcB(bpsB.num_bps(),0,seqB.length())
     {
 
     	if(difference_to_opt_score<0) difference_to_opt_score=-1; // difference_to_opt_score is not used
@@ -315,15 +314,13 @@ namespace LocARNA {
        		for(idx_j=std::max((matidx_t)1,min_idx_j);idx_j<idx_after_max_idx_j;++idx_j){
 
        			matpos_t mat_pos = matpos_t(idx_i,idx_j);
+       			pair_seqpos_t seq_pos = sparse_trace_controller.pos_in_seq(idxA,idxB,mat_pos);
 
        			bool compute_entry=(!suboptimal) || sparse_trace_controller.is_valid_idx_pos(idxA,idxB,mat_pos);
 
        			if(compute_entry){
-       				pair<matpos_t,matpos_t> idx_pos_diag_and_top =
-       						sparse_trace_controller.diag_top_pos_bef(idxA,idxB,mat_pos,a.left(),b.left());
 
-       				idx_pos_diag = idx_pos_diag_and_top.first;
-       				idx_pos_top = idx_pos_diag_and_top.second;
+       				idx_pos_diag = sparse_trace_controller.diag_pos_bef(idxA,idxB,seq_pos,a.left(),b.left());
        				//compute entry only if idx pos is valid for the suboptimal case
        				L(idx_i,idx_j)=compute_matrix_entry(a,b,mat_pos,idx_pos_diag,false,suboptimal);
        				LR(idx_i,idx_j)=compute_matrix_entry(a,b,mat_pos,idx_pos_diag,true,suboptimal);
@@ -351,30 +348,16 @@ namespace LocARNA {
        				}
        			}
        			// heuristic case; we fill G_A only for valid matrix positions
-       			// 1) we came from matrix L or diagonally from G_A
+       			// 1) we came from matrix L
+       			// 2) we came diagonally from G_A
        			// 2) we came from G_A from the top
        			// 3) we came from G_A from the left
        			else{
-       				idx_pos_left = sparse_trace_controller.left_pos_bef(idxA,idxB,mat_pos,a.left(),b.left());
 
-       				G_A(idx_i,idx_j)=max(L(idx_i,idx_j),
-       									 G_A(idx_pos_diag.first,idx_pos_diag.second));
-
-       				if(idx_pos_top!=invalid_mat_pos){
-       					G_A(idx_i,idx_j) = max(G_A(idx_i,idx_j),
-       					       				G_A(idx_pos_top.first,idx_j));
-       				}
-       				if(idx_pos_left!=invalid_mat_pos){
-       					G_A(idx_i,idx_j) = max(G_A(idx_i,idx_j),
-       							G_A(idx_i,idx_pos_left.second));
-       				}
+       				G_A(idx_i,idx_j)=max4(L(idx_i,idx_j),G_A(idx_pos_diag.first,idx_pos_diag.second),
+       									 G_A(idx_i-1,idx_j),G_A(idx_i,idx_j-1));
        			}
-
        		}
-       	}
-
-       	if(sparse_trace_controller.get_delta() == (size_type)-1){
-       		if(num_posA>1 && num_posB>1) assert(last_pos_filled==matpos_t(num_posA-1,num_posB-1));
        	}
 
        	// if the right ends of the arcs cannot be reached without creating a gap, we store in the last
@@ -888,10 +871,7 @@ namespace LocARNA {
 
     		assert(sparse_trace_controller.is_valid(i,j));
 
-    		pair<matpos_t,matpos_t> mat_possibilities =
-    				sparse_trace_controller.diag_top_pos_bef(idxA,idxB,cur_pos,a.left(),b.left());
-    		matpos_t mat_pos_diag = mat_possibilities.first;
-    		matpos_t mat_pos_top = mat_possibilities.second;
+    		matpos_t mat_pos_diag = sparse_trace_controller.diag_pos_bef(idxA,idxB,cur_seq_pos,a.left(),b.left());
 
     		matidx_t idx_i_diag = mat_pos_diag.first;
     		matidx_t idx_j_diag = mat_pos_diag.second;
@@ -953,8 +933,6 @@ namespace LocARNA {
     		{
     			assert(idx_i>=1 && idx_j>=1);
 
-    			matpos_t mat_pos_left = sparse_trace_controller.left_pos_bef(idxA,idxB,cur_pos,a.left(),b.left());
-
     			if(G_A(idx_i,idx_j)==L(idx_i,idx_j)){
     				state=in_L;
     			}
@@ -963,14 +941,12 @@ namespace LocARNA {
     				cur_pos=matpos_t(idx_i_diag,idx_j_diag);
     			}
 
-    			else if(mat_pos_top != invalid_mat_pos
-    					&& G_A(idx_i,idx_j) == G_A(mat_pos_top.first,mat_pos_top.second)){
-    				cur_pos = mat_pos_top;
+    			else if(G_A(idx_i,idx_j) == G_A(idx_i-1,idx_j)){
+    				cur_pos = matpos_t(idx_i-1,idx_j);
     			}
 
-    			else if(mat_pos_left != invalid_mat_pos
-    					&& G_A(idx_i,idx_j)==G_A(mat_pos_left.first,mat_pos_left.second)){
-    				cur_pos = mat_pos_left;
+    			else if(G_A(idx_i,idx_j)==G_A(idx_i,idx_j-1)){
+    				cur_pos = matpos_t(idx_i,idx_j-1);
     			}
 
     			else{
