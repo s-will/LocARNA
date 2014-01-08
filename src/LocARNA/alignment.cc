@@ -123,8 +123,8 @@ namespace LocARNA {
 
 	void 
 	Alignment::add_deleted_basepairB(int i, int j) {
-	pimpl_->strB_[i]=']';
-	pimpl_->strB_[j]='[';
+	pimpl_->strB_[i]='[';
+	pimpl_->strB_[j]=']';
 	}
 
     const Alignment::edges_t 
