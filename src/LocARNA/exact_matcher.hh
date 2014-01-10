@@ -1123,7 +1123,7 @@ private:
 
     bool inexact_struct_match; //! whether to allow inexact structure matches (arc matches)
     score_t struct_mismatch_score; //! how to score a nucleotide mismatch in an arc match
-    bool no_add_filter; //! whether to apply a second filter when allowing inexact structure matches
+    bool add_filter; //! whether to apply a second filter when allowing inexact structure matches
 
     bool verbose; //!< whether to output additional information
 

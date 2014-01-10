@@ -24,7 +24,7 @@ namespace LocARNA {
 			       long int max_number_of_EPMs_,
 			       bool inexact_struct_match_,
 			       score_t struct_mismatch_score_,
-			       bool no_add_filter_,
+			       bool add_filter_,
 			       bool verbose_
 			       )
 	: seqA(seqA_),
@@ -46,7 +46,7 @@ namespace LocARNA {
 	  max_number_of_EPMs(max_number_of_EPMs_),
 	  inexact_struct_match(inexact_struct_match_),
 	  struct_mismatch_score(struct_mismatch_score_),
-	  no_add_filter(no_add_filter_),
+	  add_filter(add_filter_),
 	  verbose(verbose_),
 	  pseudo_arcA(bpsA.num_bps(),0,seqA.length()),
 	  pseudo_arcB(bpsB.num_bps(),0,seqB.length())
@@ -602,7 +602,7 @@ namespace LocARNA {
     	if(verbose) cout << "compute EPMs " << (suboptimal? "suboptimal " :
     			"heuristic ") << (inexact_struct_match? "inexact," : "exact,") << " with min score "
     			<< min_score  << (count_EPMs? ", count EPMs, " : ", enumerate EPMs, ")
-    			<< (no_add_filter? "no additional filter": "use additional filter")<< " with ";
+    			<< (add_filter? "use additional filter": "no additional filter")<< " with ";
 
     	/* -----------------------------------------------------------------------------------
        	 for debugging
@@ -1133,7 +1133,7 @@ namespace LocARNA {
     	}
 
     	// apply filtering method here, if we allow arcmatches with negative score (e.g. am-threshold is not used)
-    	if(!no_add_filter){
+    	if(add_filter){
     		apply_filter(found_epms);
     	}
 
@@ -1334,7 +1334,7 @@ namespace LocARNA {
     	}
 
     	//apply filtering step
-    	if(!no_add_filter){
+    	if(add_filter){
     		apply_filter(found_epms);
     	}
 
