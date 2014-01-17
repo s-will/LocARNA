@@ -1,0 +1,163 @@
+#!@PERL@ -I@prefix@/lib/perl
+
+=head1 NAME
+
+exploc-p
+
+=head1 SYNOPSIS
+
+exploc-p [--exparnap-params <parameters> --locarna-params <parameters> --output <outputFolder> --output-time --verbose] <inputFile1> <inputFile2>
+    
+    Implementation of the exploc-p pipeline
+
+AUTHOR: Christina Otto <schmiedc@informatik.uni-freiburg.de
+
+OPTIONS
+
+
+        --exparnap-params	parameters for Exparna-P
+
+        --locarna-params		parameters for LocARNA
+
+        --output            	path to output folder
+        
+        --output-time		output time for Preprocessing, ExpaRNA-P and LocARNA
+                
+        --verbose			show the output of ExpaRNA-P and LocARNA
+        
+        --help  			display this help message and exit
+
+=cut
+
+
+my $prefix = "@prefix@";
+my $exec_prefix = "@exec_prefix@";
+my $bindir = "@bindir@";
+
+use strict;
+use warnings;
+
+use Pod::Usage;
+use Getopt::Long;
+
+my $exparnap_params = "";
+my $locarna_params = "";
+my $output_folder = "";
+my ($output_time,$verbose,$help);
+
+GetOptions("exparnap-params=s" => \$exparnap_params,
+           "locarna-params=s" => \$locarna_params,
+           "output=s" => \$output_folder,
+           "output-time" => \$output_time,
+           "verbose" => \$verbose,
+		 "help" => \$help
+           );
+           
+pod2usage() if $help;
+
+if($output_folder ne ""){
+	## change to output directory -> output will be written there
+	chdir $output_folder or die "Couldn't change to directory $output_folder: $!";
+}
+
+if(scalar(@ARGV)<2){print STDERR "not enough arguments provided! \n"; pod2usage();}
+
+my $input_file1 = $ARGV[0];
+my $input_file2 = $ARGV[1]; 
+
+## check Exparna-P params (output-anchor-pp)
+my @exparnap_params_arr = split(/ /,$exparnap_params);
+my $name_anchor_pp="";
+for my $i (0 .. scalar(@exparnap_params_arr)-1) {
+	if($exparnap_params_arr[$i] eq "--output-anchor-pp"){$name_anchor_pp=$exparnap_params_arr[$i+1] if $i+1<scalar(@exparnap_params_arr);}
+}
+if($name_anchor_pp eq ""){
+	$name_anchor_pp = "anchor-pp";
+	$exparnap_params = $exparnap_params . " --output-anchor-pp $name_anchor_pp";
+}
+
+## check if LocARNA params specify --min-prob
+my @locarna_params_arr = split(/ /,$locarna_params);
+my $min_prob_locarna = -1;
+for my $i (0 .. scalar(@locarna_params_arr)-1) {
+	if($locarna_params_arr[$i] eq "--min-prob"){
+		$min_prob_locarna = $locarna_params_arr[$i+1] if $i+1<scalar(@locarna_params_arr);
+	}
+}
+
+## set --out-min-prob for ExpaRNA-P
+if($min_prob_locarna != -1) {
+	$exparnap_params = $exparnap_params . " --out-min-prob $min_prob_locarna";
+}
+
+## add option stopwatch in order to extract the runtimes
+if($output_time){
+	$exparnap_params = $exparnap_params . " --stopwatch";
+	$locarna_params = $locarna_params . " --stopwatch";
+}
+
+## call ExpaRNA-P
+$exparnap_params = $exparnap_params . " " . $input_file1 . " " . $input_file2 ;
+my $exparnap_call = $bindir."/locarna_X " . $exparnap_params;
+
+if($verbose){ print "ExparnaP call: $exparnap_call \n \n"; }
+
+my $exparnap_out = `$exparnap_call 2>&1`;
+
+if($verbose){ print $exparnap_out . "\n";}
+
+## check whether pp files with anchor constraints exist
+my $anchor_pp_A = $name_anchor_pp . "_A.pp";
+my $anchor_pp_B = $name_anchor_pp . "_B.pp";
+
+if(! (-e $anchor_pp_A && -e $anchor_pp_B) ){
+	die "anchor pp files - $anchor_pp_A and $anchor_pp_B - do not exist! \n";
+}
+
+## call LocARNA with anchor constraints
+
+my $locarna_call = $bindir."/locarna " . $locarna_params . " " . $anchor_pp_A . " " . $anchor_pp_B;
+
+if($verbose){ print "LocARNA call: $locarna_call \n";}
+
+my $locarna_out = `$locarna_call 2>&1`;
+
+print $locarna_out;
+
+if($output_time){
+
+	## parse preprocessing and total time 
+	my ($preproc_time, $exparnap_time) = (0,0);
+	extract_times(\$exparnap_out,\$preproc_time,\$exparnap_time);
+	
+	## substract preprocessing time from total ExpARNA-P time
+	$exparnap_time -= $preproc_time;
+	
+	## parse total time 
+	my ($dummy, $locarna_time) = (0,0);
+	extract_times(\$locarna_out,\$dummy,\$locarna_time);
+	
+	print "\n";
+	print "------------------------------- \n";
+	print "Stopped Times \n";
+	print "time Preprocessing: $preproc_time \n";
+	print "time Exparna-P: $exparnap_time \n";
+	print "time LocARNA: $locarna_time \n";
+}
+
+##-------------------------------------------------------------------------------------------------------------
+
+sub extract_times{
+	my $out = shift; # reference to output
+	my $preproc_time = shift;
+	my $total_time  = shift;
+	my @output = split(/\n/,$$out);
+	foreach(@output){
+		if($_ =~ m/\s*bpp\s*(\d+\.\d+)s.*/){
+			$$preproc_time = $1;
+		}
+		elsif($_ =~ m/\s*total\s*(\d+\.\d+)s.*/){
+			$$total_time = $1;
+		}
+	}
+}
