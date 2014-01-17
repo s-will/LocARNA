@@ -17,6 +17,9 @@ namespace LocARNA {
      * of base pairs. Supports parsing of dot-bracket strings
      * (potentially including pseudoknots) and traversal of base
      * pairs.
+     *
+     * Generally, base pairs (i,j) have to be oriented, i.e. i<j;
+     * compare private method assert_valid_bp()
      */
     class RnaStructure {
     public:
@@ -97,7 +100,7 @@ namespace LocARNA {
 	 * @return whether structure contains the base pair
 	 */
 	bool
-	contains(bp_t x) const {
+	contains(const bp_t &x) const {
 	    return bps_.find(x) != bps_.end();
 	}
 
@@ -135,6 +138,28 @@ namespace LocARNA {
 	void
 	clear() {bps_.clear();}
 
+	
+	// This is not well supported by the current structure
+	// represenation. Therefore, we don't offer such functionality.
+	// /**
+	//  * @brief Check whether a loop contains a position
+	//  * 
+	//  * @param k position
+	//  * @param x loop; (0,length+1) means external loop
+	//  * 
+	//  * @return whether the loop enclosed by x contains k
+	//  *
+	//  * Definition: the loop enclosed by (i,j) contains k iff i<k<j
+	//  * and there is no base pair (i',j') in the structure, where
+	//  * i<i'<k<j'<j. Note that we don't require (i,j) to be element
+	//  * of the structure.
+	//  *
+	//  * k can be member of more than one loop unless nested().
+	//  */
+	// bp_t
+	// in_loop_of(size_t k, bp_t x) const;
+	
+
 	//support contant iteration over base pair set
 	
 	//! constant iterator over base pairs
@@ -165,6 +190,8 @@ namespace LocARNA {
 	 * use of bracket symbols is greedy from left to right,
 	 * following the order defined in the class (by constants
 	 * open_symbols_ and close_symbols_).
+	 *
+	 * @pre structure is in crossing class!
 	 */
 	std::string
 	to_string() const;
@@ -176,15 +203,21 @@ namespace LocARNA {
     public:
 	
 	/**
-	 * @brief Check for empty structure / class PLAIN
+	 * @brief Check base pair set for empty structure / class PLAIN
 	 *
 	 * @param bps set of base pairs
 	 *
+	 * @return whether given base pair set represents empty structure
+	 */
+	static
+	bool
+	empty(const bps_t &bps);
+	
+	/**
+	 * @brief Check for empty structure / class PLAIN
+	 *
 	 * @return whether structure is empty
 	 */
-	bool
-	empty(const bps_t &bps) const;
-
 	bool
 	empty() const {return empty(bps_);}
 	
@@ -201,9 +234,15 @@ namespace LocARNA {
 	 *
 	 * @see in_crossing() for naming
 	 */
+	static
 	bool
-	nested(const bps_t &bps) const;
+	nested(const bps_t &bps);
 	
+	/**
+	 * @brief Check for nested structure / class NESTED
+	 *
+	 * @return whether structure is nested class
+	 */
 	bool
 	nested() const {return nested(bps_);}
 
@@ -221,9 +260,15 @@ namespace LocARNA {
 	 * @note this does *not* test for the presence of crossing
 	 * base pairs. For the latter, use !nested().
 	 */
+	static
 	bool
-	crossing(const bps_t &bps) const;
-
+	crossing(const bps_t &bps);
+	
+	/**
+	 * @brief Check for crossing structure / class CROSSING
+	 *
+	 * @return whether structure is in crossing class
+	 */
 	bool
 	crossing() const {return crossing(bps_);}
 	

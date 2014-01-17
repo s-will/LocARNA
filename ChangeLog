@@ -419,3 +419,6 @@ Nov 2013
 	Update format conversions in mlocarna to pp 2.0 format
 	Support for fixed structure constraints (directly in C++)
 	(Release 1.7.12)
+	Fix bug that compromised LocARNA-P w/ anchor-constraints in 1.7.12
+	In-loop support for fixed structure constraints
+	(Release 1.7.13)

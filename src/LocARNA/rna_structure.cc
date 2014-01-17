@@ -119,12 +119,12 @@ namespace LocARNA {
     }
     
     bool
-    RnaStructure::empty(const bps_t &bps) const {
-	return bps_.empty();
+    RnaStructure::empty(const bps_t &bps) {
+	return bps.empty();
     }
 
     bool
-    RnaStructure::nested(const bps_t &bps) const {
+    RnaStructure::nested(const bps_t &bps) {
 	std::stack<size_t> st;
 	
 	// we rely on the less ordering of the base pair set
@@ -147,7 +147,7 @@ namespace LocARNA {
     }
     
     bool
-    RnaStructure::crossing(const bps_t &bps) const {
+    RnaStructure::crossing(const bps_t &bps) {
 	std::tr1::unordered_set<size_t> seen_position;
 	
 	for (bps_t::const_iterator it=bps.begin(); bps.end()!=it; ++it) {

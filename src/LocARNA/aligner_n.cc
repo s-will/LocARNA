@@ -757,7 +757,7 @@ AlignerN::align() {
 	fill_M_entries(ps_al, last_index_A, ps_bl, last_index_B, false); //tocheck: always use get_startA-1 (not zero) in sparsification_mapper and other parts
 	stopwatch.stop("align top level");
 	if (trace_debugging_output) std::cout << "M matrix:" << std::endl << Ms[0] << std::endl;
-	std::cout << "M(" << last_index_A << "," << last_index_B << ")=" << Ms[E_NO_NO]( last_index_A, last_index_B) << "getGapCostBetween are:"<< getGapCostBetween( last_valid_seq_pos_A, ps_ar, true) << "  "  << getGapCostBetween( last_valid_seq_pos_B, ps_br, false) << std::endl;
+	if (trace_debugging_output) std::cout << "M(" << last_index_A << "," << last_index_B << ")=" << Ms[E_NO_NO]( last_index_A, last_index_B) << " getGapCostBetween are:"<< getGapCostBetween( last_valid_seq_pos_A, ps_ar, true) << std::endl;//"  "  << getGapCostBetween( last_valid_seq_pos_B, ps_br, false) << std::endl;
 	return Ms[E_NO_NO]( last_index_A, last_index_B)
 		+ getGapCostBetween( last_valid_seq_pos_A, ps_ar, true)  //toask: where should we care about non_default scoring views
 		+ getGapCostBetween( last_valid_seq_pos_B, ps_br, false) ; //no free end gaps

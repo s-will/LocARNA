@@ -286,7 +286,8 @@ namespace LocARNA {
 		    typedef MultipleAlignment::AnnoType AT;
 		    
 		    if (ma.has_annotation(AT::fixed_structure)) {
-			init_from_fixed_structure(ma.annotation(AT::fixed_structure));
+			init_from_fixed_structure(ma.annotation(AT::fixed_structure),
+						  stacking);
 			sequence_only=false;
 		    }
 		}
@@ -313,12 +314,14 @@ namespace LocARNA {
     }
 
     void
-    RnaData::init_from_fixed_structure(const SequenceAnnotation &structure) {
-	pimpl_->init_from_fixed_structure(structure);
+    RnaData::init_from_fixed_structure(const SequenceAnnotation &structure,
+				       bool stacking) {
+	pimpl_->init_from_fixed_structure(structure,stacking);
     }
     
     void
-    RnaDataImpl::init_from_fixed_structure(const SequenceAnnotation &structure) {
+    RnaDataImpl::init_from_fixed_structure(const SequenceAnnotation &structure,
+					   bool stacking) {
 	assert(structure.length() == sequence_.length());
 	RnaStructure rna_structure(structure.single_string());
 	
@@ -327,14 +330,113 @@ namespace LocARNA {
 	for (RnaStructure::const_iterator it=rna_structure.begin();
 	     rna_structure.end() != it; ++it) {
 	    arc_probs_(it->first,it->second)=1.0;
+	
+	    if (stacking) {
+		if (rna_structure.contains(RnaStructure::bp_t(it->first+1,it->second-1))) {
+		    arc_2_probs_(it->first,it->second)=1.0;
+		}
+	    }
+	}
+	has_stacking_=stacking;
+    }
+
+    void
+    ExtRnaData::init_from_fixed_structure(const SequenceAnnotation &structure,
+					  bool stacking) {
+	RnaData::init_from_fixed_structure(structure,stacking);
+	pimpl_->init_from_fixed_structure(structure);
+    }
+
+    void
+    ExtRnaDataImpl::init_fixed_unpaired_in_loop(size_t i,
+						size_t j,
+						const RnaStructure &rna_structure) {
+	for (size_t k=i+1; k<j; ++k) {
+	    bool contained=true;
+	    for (RnaStructure::const_iterator it2=rna_structure.begin();
+		 contained && rna_structure.end() != it2; ++it2) {
+		if (i < it2->first
+		    && it2->first <= k
+		    && k <= it2->second
+		    && it2->second < j) {
+		    
+		    contained=false;
+		    // k=it2->second-1; // micro-optimization
+		}
+	    }
+	    if (contained) {
+		std::cout << "UIL "<<i<<" "<<j<<": "<<k<<std::endl;
+		unpaired_in_loop_probs_.ref(i,j)[k] = 1.0;
+	    }
+	    
 	}
     }
 
     void
-    ExtRnaData::init_from_fixed_structure(const SequenceAnnotation &structure) {
-	std::cerr << "STUB: ExtRnaData::init_from_fixed_structure()" << std::endl;
+    ExtRnaDataImpl::init_fixed_basepairs_in_loop(size_t i,
+						 size_t j,
+						 const RnaStructure &rna_structure) {
+	for (RnaStructure::const_iterator it2=rna_structure.begin();
+	     rna_structure.end() != it2; ++it2) {
+	    
+	    bool contained=true;
+	    
+	    if (it2->first <= i
+		|| j <= it2->second) {
+		contained=false;
+	    }
+	    for (RnaStructure::const_iterator it3=rna_structure.begin();
+		 contained && rna_structure.end() != it3; ++it3) {
+		if (i < it3->first
+		    && it3->first < it2->first
+		    && it2->second < it3->second
+		    && it3->second < j) {
+		    
+		    contained=false;
+		}
+	    }
+	    if (contained) {
+		std::cout << "BPIL "<<i<<" "<<j<<" "
+			  << ": "<<it2->first<<" "<<it2->second<<" "
+			  << std::endl;
+		arc_in_loop_probs_.ref(i,j)(it2->first,it2->second) = 1.0;
+	    }
+	    
+	}
     }
+    
 
+    void
+    ExtRnaDataImpl::init_from_fixed_structure(const SequenceAnnotation &structure) {
+	RnaStructure rna_structure(structure.single_string());
+	
+	// initialize in loop probabilities
+	//
+	// for each base pair, we enumerate the bases and base pairs
+	// that are contained in its loop.
+	//
+	// NOTE: we implement a very inefficient approach!  note
+	// that this seems acceptable (for a start), since -as generated here-
+	// rna_structure contains only a linear number of base pairs
+	// (which limits run-time to cubic).
+	//
+	
+	for (RnaStructure::const_iterator it=rna_structure.begin();
+	     rna_structure.end() != it; ++it) {
+	    
+	    init_fixed_unpaired_in_loop(it->first,it->second,rna_structure);
+
+	    init_fixed_basepairs_in_loop(it->first,it->second,rna_structure);
+	}
+
+	// external loop
+
+	init_fixed_unpaired_in_loop(0,rna_structure.length()+1,rna_structure);
+	
+	init_fixed_basepairs_in_loop(0,rna_structure.length()+1,rna_structure);
+	
+	
+    }
 
     void
     RnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
@@ -1162,7 +1264,7 @@ namespace LocARNA {
 	    << std::endl
 	    << "#BPCUT "<<format_prob(std::max(p_bpcut_,p_outbpcut)) << std::endl;
 	
-	if (has_stacking_) {
+	if (stacking) {
 	    out << "#STACKS"<<std::endl;
 	}
 	out <<std::endl;
@@ -1183,7 +1285,7 @@ namespace LocARNA {
 	    size_t j=it->first.second;
 	    if (it->second > p_outbpcut) {
 		out << i << " " << j << " " << format_prob(it->second);
-		if (has_stacking_ && arc_2_probs_(i,j)>p_bpcut_) {
+		if (stacking && has_stacking_ && arc_2_probs_(i,j)>p_bpcut_) {
 		    out << " " << format_prob(arc_2_probs_(i,j));
 		}
 		out << std::endl;

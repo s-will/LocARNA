@@ -141,7 +141,7 @@ sub member {
 
 
 
-my %aln = read_pp_file_aln("$inputfile");
+my %aln = read_pp_file_aln_wo_anno("$inputfile");
 my %pairprobinfo = read_pp_file_pairprob_info("$inputfile");
 
 ############################################################

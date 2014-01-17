@@ -493,6 +493,20 @@ main(int argc, char **argv) {
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
+
+    //---------------------------------------------------------------
+    //Anchor constraint alignment is not supported by locarna_n yet, todo: support it!
+    if ( ! (seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ||
+	    ! (seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ) {
+	std::cout << "WARNING sequence constraints found in the input but will be ignored."<<std::endl;
+
+    }
+    LocARNA::SequenceAnnotation emptyAnnotation;
+    rna_dataA->set_anchors(emptyAnnotation);
+    rna_dataB->set_anchors(emptyAnnotation);
+    //---------------------------------------------------------------
+
+
         // --------------------
     // handle max_diff restriction  
     

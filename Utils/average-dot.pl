@@ -68,6 +68,8 @@ use strict;
 use Getopt::Long;
 use Pod::Usage;
 
+use List::Util qw[min max];
+
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
 
@@ -130,14 +132,14 @@ sub write_pp_annotated {
 ###
 
 print "read alignment\n" if $verbose;
-my %alignment = read_pp_file_aln($alignmentppFile);
+my %alignment = read_pp_file_aln_wo_anno($alignmentppFile);
 my %sequenceData; # a hash from sequence name to sequence string
 my %sequenceDotPlots; # dot plots with indices w.r.t. individual sequence
 my %alignmentDotPlots; # dot plots with indices w.r.t. alignment
 
 foreach my $filename (@sequenceppFiles){
     print "read sequence $filename\n" if $verbose;
-    my %sequenceHash = read_pp_file_aln($filename);
+    my %sequenceHash = read_pp_file_aln_wo_anno($filename);
     my $sequenceName = (keys %sequenceHash)[0];
     print "Sequence name = $sequenceName\n" if $verbose;
     my %seqDotPlot = read_pp_file_pairprobs($filename);
@@ -211,7 +213,7 @@ foreach my $id (keys %sumProbs){
     
     my $average = $sumProb/$numSequences;
     my $squaresAverage =  $sumSquareProb/$numSequences;
-    my $deviation = sqrt($squaresAverage-$average*$average);
+    my $deviation = sqrt(max(0,$squaresAverage-$average*$average));
     
     $averageProbs{$id}=$average;
     $scaledDeviation{$id}= 1 -2* $deviation;
@@ -223,7 +225,7 @@ foreach my $id (keys %sumProbs){
 
 write_pp_annotated("$ofile.pp",\%alignment,\%averageProbs,\%averageProbs,2,\%scaledDeviation);
 foreach my $filename (@sequenceppFiles){
-    my %sequenceData = read_pp_file_aln($filename);
+    my %sequenceData = read_pp_file_aln_wo_anno($filename);
     my $sequenceName = (keys %sequenceData)[0];
     my %tempHash = ($sequenceName => $alignment{$sequenceName});
     print "write file for: $sequenceName\n" if $verbose;
@@ -240,7 +242,7 @@ foreach my $threshold (@thresholds){
 		       $threshold,\%scaledDeviation);
     
     foreach my $filename (@sequenceppFiles){
-	my %sequenceData = read_pp_file_aln($filename);
+	my %sequenceData = read_pp_file_aln_wo_anno($filename);
 	my $sequenceName = (keys %sequenceData)[0];
 	my %tempHash = ($sequenceName => $alignment{$sequenceName});
 	print "write file for: $sequenceName and threshold $threshold\n" if $verbose;
