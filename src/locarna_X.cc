@@ -66,7 +66,7 @@ const bool DO_TRACE=true;
 double min_prob; // only pairs with a probability of at least min_prob are taken into account
 double out_min_prob; // minimal probability for output
 
-bool no_lonely_pairs=false; // no lonely pairs option (currently not supported)
+bool no_lonely_pairs=false;
 
 int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
@@ -155,6 +155,7 @@ option_def my_options[] = {
 		{"no-inexact-struct-match",0,&exact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool","inexact structure matches possible"},
 		{"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-9","structural mismatch score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
 		{"add-filter",0,&add_filter,O_NO_ARG,0,O_NODEFAULT,"bool","Apply an additional filter to enumerate only EPMs that are maximally extended (only inexact)"},
+		{"noLP",0,&no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
 
 		{"stopwatch",0,&opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
