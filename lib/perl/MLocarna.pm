@@ -1272,15 +1272,20 @@ sub write_clustalw_alnloh {
     }
     
     my $offset=0;
-    while(1) {	
+    while(1) {
 	my $more=0;
 
 	foreach my $seq (@$aln) {
 	    
 	    my $s=$seq->{seq};
+	    
 	    if (defined($width)) {
-		$s = substr $s,$offset,$width;
-		$more |= length($seq->{seq})>$offset+$width;
+		if ($offset<length($s)) {
+		    $s = substr $s,$offset,$width;
+		    $more |= length($seq->{seq})>$offset+$width;
+		} else {
+		    $s="";
+		}
 	    }
 	    print $fh sprintf("%-".$maxlen."s %s\n",$seq->{name},$s);
 	}
@@ -1891,9 +1896,14 @@ sub extract_score_matrix_from_alignments($$) {
 	    
 	    my @aln = @{ $pairwise_alns[$a][$b] };
 		
-	    $aln[0] =~ /Score: ([\d\.\-]+)/ || die "Cannot extract score for sequence $a vs. $b.\n";
+	    $aln[0] =~ /Score: (\S+)/ || die "Cannot extract score for sequence $a vs. $b.\n";
 	    my $score=$1;
 	    
+	    ## replace -inf scores by something strongly negative (that
+	    ## does not immediately overflow); apparently, too negative values confuse tree construction
+	    if ($score eq "-inf") {$score=-1e8;} 
+	    #{$score = sprintf "%d",$score; $score=-sqrt(-$score);}
+
 	    $score_matrix[$a][$b] = $score;
 	    $score_matrix[$b][$a] = $score;
 	}

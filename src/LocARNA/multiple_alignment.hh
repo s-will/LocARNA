@@ -428,7 +428,8 @@ public:
      * @param only_local if true, construct only local alignment
      *
      * Automatically computes a consensus anchor string if anchors are
-     * available. Does not compute some kind of consensus structure,
+     * available. Consensus anchors containing duplicate names are cleared.
+     * Does not compute some kind of consensus structure,
      * even if structure annotation of sequences A and B in Alignment
      * is available.
      */
@@ -441,8 +442,9 @@ public:
      * @param seqB sequence B
      *
      * Automatically computes a consensus anchor string if anchors are
-     * available.  Does not compute some kind of consensus structure, even if
-     * structure annotation of sequences A and B is available.
+     * available. Consensus anchors containing duplicate names are
+     * cleared. Does not compute some kind of consensus structure,
+     * even if structure annotation of sequences A and B is available.
      */
     MultipleAlignment(const AlignmentEdges &edges,
 		      const Sequence &seqA,

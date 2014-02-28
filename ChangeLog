@@ -422,3 +422,11 @@ Nov 2013
 	Fix bug that compromised LocARNA-P w/ anchor-constraints in 1.7.12
 	In-loop support for fixed structure constraints
 	(Release 1.7.13)
+	Bugfix: computation of consensus anchor constraints could fail; now resolve
+	name clashs by selecting lexicographically smaller name.
+	(Release 1.7.13.1)
+	Handle inconsistencies due to anchor constraints in conflict
+	with other constraints/heuristics, e.g. max-diff: 1) accept -inf
+	pairwise similarities for guide tree construction; 2) clear
+	consensus anchor strings with duplicate names
+	(Release 1.7.14)

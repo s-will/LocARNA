@@ -146,8 +146,8 @@ namespace LocARNA {
 	sequence() const;
 
 	/**
-	 * @brief Get the multiple alignment as sequence
-	 * @return sequence
+	 * @brief Get the multiple alignment
+	 * @return multiple alignment
 	 */
 	const MultipleAlignment &
 	multiple_alignment() const;

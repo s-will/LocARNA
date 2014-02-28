@@ -272,7 +272,7 @@ namespace LocARNA {
 	    return left_[i];
 	}
 	
-	//! returns the list of arcs with left end i //TODO: comment: right or left?
+	//! returns the list of arcs with left end i
 	const RightAdjList &
 	right_adjlist(int i) const { return right_[i];}
 

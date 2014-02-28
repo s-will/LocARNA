@@ -922,6 +922,7 @@ main(int argc, char **argv) {
 	// ----------------------------------------
 	// optionally write output formats
 	//
+
 	if (clp.opt_clustal_out) {
 	    std::ofstream out(clp.clustal_out.c_str());
 	    if (out.good()) {
@@ -961,7 +962,7 @@ main(int argc, char **argv) {
 	    if (out.good()) {
 		
 		if (clp.opt_alifold_consensus_dp) {
-		    MultipleAlignment ma(alignment,clp.opt_local_file_output);
+		    MultipleAlignment ma(alignment, clp.opt_local_file_output);
 		    RnaEnsemble ens(ma,pfparams,false,true); // alifold the alignment
 		    RnaData consensus(ens,clp.min_prob,pfparams); // construct rna data from ensemble
 		    consensus.write_pp(out); // write alifold dot plot
@@ -973,6 +974,7 @@ main(int argc, char **argv) {
 				      my_exp_probA,
 				      my_exp_probB,
 				      clp.opt_local_file_output);
+
 		    consensus.write_pp(out); // write averaged dot plot
 		}
 	    } else {

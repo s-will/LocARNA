@@ -79,9 +79,9 @@ namespace LocARNA {
 	 * @param annotationB annotation B
 	 * @return consensus annotation of A and B
 	 *
-	 * The consensus of two annotation is defined only for compatible
-	 * annotation and alignment edges, i.e. the alignment must align
-	 * all equal names and must not align different names.
+	 * @note If two different names are aligned (name clash!), the lexicographically smaller name is
+	 * selected to resolve the conflict
+	 * @note If two equal names are not aligned, this can result in duplicate names in the consensus
 	 * 
 	 * The consensus contains all names that appear in either A or B or both at the 
 	 * position of the corresponding alignment edge.
@@ -89,8 +89,8 @@ namespace LocARNA {
 	 * @pre names in annotationA and annotationB must have the same lengths
 	 */
 	SequenceAnnotation(const AlignmentEdges &edges, 
-			const SequenceAnnotation &annotationA,
-			const SequenceAnnotation &annotationB);
+			   const SequenceAnnotation &annotationA,
+			   const SequenceAnnotation &annotationB);
 
 
 	/**
@@ -141,11 +141,10 @@ namespace LocARNA {
 	 */
 	const std::string &
 	annotation_string(size_t i) const {
-	    assert(0<=i);
-	    assert(i<annotation_.size());
+	    assert(0<=i && i<annotation_.size());
 	    return annotation_[i];
 	}
-
+	
 	/** 
 	 * Annotation description as single string
 	 * 
@@ -154,9 +153,7 @@ namespace LocARNA {
 	 * @return string of annotation strings separated by sep
 	 */
 	std::string
-	single_string(char sep='#') const {
-	    return concat_with_separator(annotation_,sep);
-	}
+	single_string(char sep='#') const;
 	
 	/**
 	 * @brief Test for neutral character
@@ -165,7 +162,7 @@ namespace LocARNA {
 	 */
 	static
 	bool
-	is_neutral(char c) {
+	is_neutral_char(char c) {
 	    return c==' ' || c=='.';
 	}
 	
@@ -175,13 +172,15 @@ namespace LocARNA {
 	 */
 	static
 	bool
-	is_neutral(const name_t &name) { 
-	    for (name_t::const_iterator it=name.begin();
-		 name.end()!=it; ++it) {
-		if (! is_neutral(*it) ) return false;
-	    }
-	    return true;
-	}
+	is_neutral(const name_t &name);
+
+	/**
+	 * @brief Test neutral name at a position
+	 * @param i position of name
+	 * @return whether name at position i is neutral, i.e. contains no non-neutral characters
+	 */
+	bool
+	is_neutral_pos(size_t i) const;
 	
 	/**
 	 * @brief Access name at position
@@ -189,17 +188,7 @@ namespace LocARNA {
 	 * @return name at position i
 	 */
 	std::string 
-	name(size_t i) const {
-	    assert(1<=i);
-	    assert(i<=length());
-	    
-	    name_t name="";
-	    for (size_t k=0; k<annotation_.size(); k++) {
-		char c = annotation_[k][i-1];
-		name += c;
-	    }
-	    return name;
-	}
+	name(size_t i) const;
 
 	/** 
 	 * @brief Push back name to the annotation strings in annotation_ 
@@ -207,12 +196,30 @@ namespace LocARNA {
 	 * @param name Name
 	 */
 	void
-	push_back_name(const name_t &name) {
-	    assert(name.size()==annotation_.size());
-	    for (size_t k=0; k<annotation_.size(); k++) {
-		annotation_[k] += name[k];
-	    }
-	}
+	push_back_name(const name_t &name);
+
+	/*
+	 * @brief test for duplicate names
+	 * @return whether annotation contains duplicate names
+	 */
+	bool
+	duplicate_names() const;
+	
+	/*
+	 * @brief test for name clashs
+	 *
+	 * @param edges alignment edges between A and B
+	 * @param annotationA annotation A
+	 * @param annotationB annotation B
+	 *
+	 * @return whether names in A and B clash when aligned via edges
+	 */
+	static
+	bool
+	clashing_names(const AlignmentEdges &edges, 
+		       const SequenceAnnotation &annotationA,
+		       const SequenceAnnotation &annotationB);
+	
     };
 }
 

@@ -122,13 +122,15 @@ namespace LocARNA {
 	 annotations_(),
 	 name2idx_() {
 	
-	set_annotation(AnnoType::anchors,
-		       SequenceAnnotation
-		       (alignment.alignment_edges(only_local),
-			alignment.seqA().annotation(AnnoType::anchors),
-			alignment.seqB().annotation(AnnoType::anchors)));
-			
+	SequenceAnnotation
+	    anchors(alignment.alignment_edges(only_local),
+		 alignment.seqA().annotation(AnnoType::anchors),
+		 alignment.seqB().annotation(AnnoType::anchors));
 	
+	if (! anchors.duplicate_names() ) {
+	    set_annotation(AnnoType::anchors, anchors);
+	}
+			
 	init(alignment.alignment_edges(only_local),
 	     alignment.seqA(),
 	     alignment.seqB());
@@ -140,11 +142,16 @@ namespace LocARNA {
 	:alig_(),
 	 annotations_(),
 	 name2idx_() {
-	set_annotation(AnnoType::anchors,
-		       SequenceAnnotation
-		       (edges,
-			seqA.annotation(AnnoType::anchors),
-			seqB.annotation(AnnoType::anchors)));
+
+	SequenceAnnotation 
+	    anchors(edges,
+		 seqA.annotation(AnnoType::anchors),
+		 seqB.annotation(AnnoType::anchors));
+	
+	if (! anchors.duplicate_names() ) {
+	    set_annotation(AnnoType::anchors,
+			   anchors);
+	}
 	
 	init(edges,seqA,seqB);
     }
