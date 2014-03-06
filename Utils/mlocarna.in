@@ -2027,7 +2027,8 @@ sub clone_share_hash {
 
 
 
-## calls locarna on nameA and nameB in input_dir and writes to $tgt.pp and $tgt.aln
+## calls pairwise aligner ($pw_aligner) on nameA and nameB in
+## input_dir and writes to $tgt.pp and $tgt.aln
 sub call_locarna( $$$ ) {
     my ($inA,$inB,$tgt) = @_;
     
@@ -2045,6 +2046,10 @@ sub call_locarna( $$$ ) {
     printmsg 1, "\n";
     system($cmd)==0
 	|| die "Cannot execute $pw_aligner\n";
+    
+    if ((! -e "$tgt.aln") || (! -e "$tgt.pp")) {
+	die "Pairwise aligner ($pw_aligner) failed to write alignment to file";
+    }
     
     system "cat $tgt.aln | grep -v '^CLUSTAL --- LocARNA'" if $verbose;
 
@@ -2125,6 +2130,10 @@ sub call_locarna_prob( $$$$$ ) {
     system($cmd)==0
 	|| die "Cannot execute $pw_aligner\n";
     
+    if ((! -e "$tgt.aln") || (! -e "$tgt.pp")) {
+	die "Pairwise aligner ($pw_aligner) failed to write alignment to file";
+    }
+
     system "cat $tgt.aln" if ($verbose);
     
     if (!$fast_mea && !$only_basematch_probs) {
