@@ -1982,6 +1982,10 @@ sub compute_match_probs($$$$$$$) {
 	printmsg 1, "$cmd\n";
 	system($cmd)==0 || die "Cannot compute match probabilities by $cmd";
 	
+	if ((! -e $tmpfile_bm) || (! -e $tmpfile_am)) {
+	    die "Pairwise aligner failed to write match probabilities to file; called by $cmd";
+	}
+	
 	#if ($moreverbose) {
 	#    system("cat $tmpfile_bm");
 	#    system("cat $tmpfile_am");
