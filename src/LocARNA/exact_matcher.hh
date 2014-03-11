@@ -657,7 +657,6 @@ public:
 };
 
 
-//todo: merge EPM and patternPair (of Exparna)
 /**
  * \brief a class for the representation of exact pattern matches (EPM)
  */
@@ -932,7 +931,7 @@ public:
 	 * inserts the pattern vector of the EPM epm_to_insert into the current EPM
 	 * @param epm_to_insert EPM that is inserted
 	 */
-	void insert(const EPM &epm_to_insert){
+	void insert_epm(const EPM &epm_to_insert){
 		pat_vec.insert(pat_vec.end(),epm_to_insert.begin(),epm_to_insert.end());
 	}
 
@@ -1164,7 +1163,6 @@ private:
     }
 
     bool seq_matching(ArcIdx idxA, ArcIdx idxB, matpos_t cur_mat_pos, pair_seqpos_t cur_seq_pos){
-    	//pair_seqpos_t seq_pos = sparse_trace_controller.get_pos_in_seq_new(idxA,idxB,cur_mat_pos);
     	seqpos_t i = cur_seq_pos.first;
     	seqpos_t j = cur_seq_pos.second;
 

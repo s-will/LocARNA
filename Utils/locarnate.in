@@ -7,7 +7,7 @@ locarnate
 =head1 SYNOPSIS
 
 locarnate [--parwise_params <parameters> --tcoffee_params <parameters>
-           --pp_calculater_params <parameters> --help --pairwise_aligner <locarna or exparna>
+           --pp_calculater_params <parameters> --help --pairwise_aligner <locarna or exparnap>
            --output <outputFolder> --library-only <lib-file> --library-name <name>
            --additional-libraries <list_of_libraries>] <inputFile>
     
@@ -39,7 +39,7 @@ OPTIONS
 
         --pairwise_aligner  which pairwise aligner to use (default: locarna)
         
-        --scaling_factor each edge from each EPM gets the same weight (exparna only!)
+        --scaling_factor each edge from each EPM gets the same weight (exparnap only!)
         
         --help  display this help message and exit
 
@@ -121,7 +121,7 @@ GetOptions("help!" => \$options{help},
 
 pod2usage() if ($options{help});
 
-if ( ($options{pairwise_aligner} ne "locarna") && ($options{pairwise_aligner} ne "exparna")){
+if ( ($options{pairwise_aligner} ne "locarna") && ($options{pairwise_aligner} ne "exparnap")){
     print "Unsupported pairwise aligner: " . $options{pairwise_aligner} . "\n";
     exit(1);
 }
@@ -200,7 +200,7 @@ if ($options{pairwise_aligner} eq "locarna") {
 
     # write the t-coffee library file
     MLocarna::write_tcoffee_lib_file($libfile, $pair_alignments);
-} elsif ($options{pairwise_aligner} eq "exparna") {
+} elsif ($options{pairwise_aligner} eq "exparnap") {
     my $pair_alignments =
       MLocarna::PairwiseAligners::exparna_compute_pairwise_alignments(
         \%options, $results_path, $sequences, $bindir, $pp_dir);

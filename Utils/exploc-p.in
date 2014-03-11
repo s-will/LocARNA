@@ -98,7 +98,7 @@ if($output_time){
 
 ## call ExpaRNA-P
 $exparnap_params = $exparnap_params . " " . $input_file1 . " " . $input_file2 ;
-my $exparnap_call = $bindir."/locarna_X " . $exparnap_params;
+my $exparnap_call = $bindir."/exparna_p " . $exparnap_params;
 
 if($verbose){ print "ExparnaP call: $exparnap_call \n \n"; }
 
