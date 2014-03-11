@@ -54,9 +54,6 @@ namespace LocARNA {
 
     	if(difference_to_opt_score<0) difference_to_opt_score=-1; // difference_to_opt_score is not used
 
-    	// set size of matrices
-    	if(verbose) cout << "max dimensions " << sparse_mapperA.get_max_info_vec_size()
-    			       <<  "x" << sparse_mapperB.get_max_info_vec_size() << endl;
     	if(verbose) cout << "do " << (inexact_struct_match? "inexact" : "exact") << " structure matching ";
     	if(verbose) if(inexact_struct_match) cout << "with mismatch score " << struct_mismatch_score;
     	if(verbose) cout << endl;
@@ -453,10 +450,8 @@ namespace LocARNA {
     			score = max(G_A(idx_i_diag,idx_j_diag)+add_score,score);
     		}
     		if(suboptimal){
-    			//matidx_t idx_i_before = sparse_mapperA.first_valid_mat_pos_before(a.idx(),seq_pos_to_be_matched.first,a.left());
-    			//matidx_t idx_j_before = sparse_mapperB.first_valid_mat_pos_before(b.idx(),seq_pos_to_be_matched.second,b.left());
-    			score = max(G_A(idx_i_diag,idx_j_diag)+add_score,score);//max(G_A(idx_i-1,idx_j-1)+add_score,score);
-    			score = max(G_AB(idx_i_diag,idx_j_diag)+add_score,score);//max(G_AB(idx_i-1,idx_j-1)+add_score,score);
+    			score = max(G_A(idx_i_diag,idx_j_diag)+add_score,score);
+    			score = max(G_AB(idx_i_diag,idx_j_diag)+add_score,score);
     		}
     	}
     	return score;
@@ -501,8 +496,6 @@ namespace LocARNA {
        			}
        		}
        	}
-        if(verbose)	cout << "max in F " << max_in_F << endl;
-       	if(verbose) cout << "pos of max " << pos_of_max << endl;
     }
 
     // determines the EPMs via traceback
@@ -597,50 +590,10 @@ namespace LocARNA {
     	// reset EPM counter
     	cur_number_of_EPMs=0;
 
-    	//bool suboptimal = (difference_to_opt_score!=-1);
-
     	if(verbose) cout << "compute EPMs " << (suboptimal? "suboptimal " :
     			"heuristic ") << (inexact_struct_match? "inexact," : "exact,") << " with min score "
     			<< min_score  << (count_EPMs? ", count EPMs, " : ", enumerate EPMs, ")
     			<< (add_filter? "use additional filter": "no additional filter")<< " with ";
-
-    	/* -----------------------------------------------------------------------------------
-       	 for debugging
-
-       	const ArcMatch &am = arc_matches.arcmatch(128566); //example with many different arcmatches to proc
-       	const ArcMatch &am = arc_matches.arcmatch(215010); //example with high score
-       	const ArcMatch &am = arc_matches.arcmatch(61593); //96,for example 3
-       	const ArcMatch &am = arc_matches.arcmatch(39581);
-       	const Arc &a = bpsA.arc(583);
-       	const Arc &b = bpsB.arc(636);
-       	cout << "trace Arcs " << a << " and " << b << " with score " << D(a,b) << endl;
-       	epm_cont_t found_EPMs;
-       	trace_LGLR_suboptimal(a,b,324,found_EPMs,true);
-       	cout << "found epms "  << endl << found_EPMs << endl;
-       	return;
-       	cout << "trace am " << am.idx() << " with score " << score_for_arc_match(am,true)<< endl;
-       	cout << "number of arcmatches " << arc_matches.num_arc_matches() << endl;
-       	size_t max_size=0;
-       	        	for(size_t i=0;i<(arc_matches.num_arc_matches());++i){
-       	        		epm_cont_t found_EPMs;
-       	        		const ArcMatch &am = arc_matches.arcmatch(i);
-       	        		if(i%10000==0) cout <<  i << endl;
-       	        		if(i>170000 && i%1000==0) cout << i << endl;
-       	        		if(this->score_for_arc_match(am,true).is_finite()){
-       	        			if(i%10000==0) cout << "trace am " << am.idx() << " with score " << score_for_arc_match(am,true)<< endl;
-       	        			trace_LGLR_suboptimal(am,(infty_score_t)500,found_EPMs,true);
-       	        			//int count=0;
-       	        			if(found_EPMs.size()>max_size) max_size = found_EPMs.size();
-       	        		}
-       	        	}
-       	cout << "max number of EPMs found for arcmatch " << max_size << endl;
-
-       	trace_LGLR_suboptimal(a,b,500,found_EPMs,true);
-       	return;
-       	cout << "number of epms found " << found_EPMs.size() << endl;
-       	cout << "found epms " << found_EPMs << endl;
-
-       	-------------------------------------------------------------------------------------*/
 
     	score_t min_score_tb = min_score;
 
@@ -716,11 +669,9 @@ namespace LocARNA {
 
     }
 
-
-    // todo: use get_arc_stack_prob (conditional probability) instead?
     // returns the stacking score
     // checks whether a and inner_a (and b and inner_b) are stacked and adds the
-    // joint (conditional better?) probability that a and inner_a (b and inner_b) occur simultaneously
+    // joint probability that a and inner_a (b and inner_b) occur simultaneously
     score_t ExactMatcher::score_for_stacking(const Arc &a, const Arc &b,
     		const Arc &inner_a,const Arc &inner_b){
 
@@ -730,14 +681,12 @@ namespace LocARNA {
     	//stacking arcA
     	if(a.left()+1==inner_a.left() &&
     			a.right()==inner_a.right()+1){
-    		//prob_stacking_arcA = bpsA.get_arc_2_prob(a.left(),a.right());
     		prob_stacking_arcA = rna_dataA.joint_arc_prob(a.left(),a.right());
     	}
 
     	//stacking arcB
     	if(b.left()+1==inner_b.left() &&
     			b.right()==inner_b.right()+1){
-    		//prob_stacking_arcB = bpsB.get_arc_2_prob(b.left(),b.right());
     		prob_stacking_arcB = rna_dataB.joint_arc_prob(b.left(),b.right());
     	}
 
@@ -747,8 +696,6 @@ namespace LocARNA {
     //adds a found EPM to the patternPairMap (datastructure used for chaining algorithm)
     void ExactMatcher::add_foundEPM(EPM &cur_epm, bool count_EPMs){
 
-    	//static int count = 0;
-    	//++count;
     	++cur_number_of_EPMs;
 
     	if(count_EPMs) return; //do not add EPM to patternPairMap, just count the EPMs
@@ -764,7 +711,6 @@ namespace LocARNA {
     	assert(validate_epm(cur_epm));
 
     	stringstream ss;
-    	//ss << "pat_" << count;
     	ss << "pat_" << cur_number_of_EPMs;
     	string patId= ss.str();
 
@@ -779,10 +725,6 @@ namespace LocARNA {
     		structure.push_back(it->third);
     	}
 
-    	//SinglePattern pattern1 = SinglePattern(patId,seq1_id,cur_epm.getPat1Vec());
-    	//SinglePattern pattern2 = SinglePattern(patId,seq2_id,cur_epm.getPat2Vec());
-    	//foundEPMs.add(patId, pattern1, pattern2, cur_epm.getStructure(), cur_epm.get_score() );
-
     	SinglePattern pattern1 = SinglePattern(patId,seq1_id,pat1Vec);
     	SinglePattern pattern2 = SinglePattern(patId,seq2_id,pat2Vec);
     	foundEPMs.add(patId, pattern1, pattern2, structure, cur_epm.get_score() );
@@ -791,7 +733,7 @@ namespace LocARNA {
 
 
     // ---------------------------------------------------------------------------------------------------------
-    // heuristic (with TraceController)
+    // heuristic
 
     // traces through the F matrix from position (i,j) to find the best EPM that ends in (i,j)
     void ExactMatcher::trace_F_heuristic(pos_type i, pos_type j, EPM &cur_epm){
@@ -1061,16 +1003,12 @@ namespace LocARNA {
     			pos_type j =cur_pos.second;
     			assert(i>=1 && j>=1);
 
-    			//cur_max_tol = (infty_score_t)found_epms.at(pos_cur_epm).get_max_tol_left()-
-    			//		F(i,j)+F(i-1,j-1)+score_for_seq_match();
     			cur_max_tol = (infty_score_t)cur_epm->get_max_tol_left()-
     	    					F(i,j)+F(i-1,j-1)+score_for_seq_match();
 
     			// sequential matching
     			if(nucleotide_match(i,j) && cur_max_tol>=(infty_score_t)0){
 
-    				//store_new_poss(pseudo_arcA,pseudo_arcB,false,poss_L_LR(in_F,cur_max_tol,dummy_pos,no_am,cur_pos),
-    				//		poss,pos_cur_epm,found_epms,am_to_do_for_F,count_EPMs);
     				store_new_poss(pseudo_arcA,pseudo_arcB,false,poss_L_LR(in_F,cur_max_tol,dummy_pos,no_am,cur_pos),
     				    			poss,cur_epm,found_epms,am_to_do_for_F,count_EPMs);
 
@@ -1084,18 +1022,12 @@ namespace LocARNA {
     				const Arc &b = am.arcB();
     				const PairArcIdx pair_arcs(a.idx(),b.idx());
 
-    				//cur_max_tol =(infty_score_t)found_epms.at(pos_cur_epm).get_max_tol_left()-
-    				//		F(i,j)+F(am.arcA().left()-1,am.arcB().left()-1)+score_for_am(a,b);
     				cur_max_tol =(infty_score_t)cur_epm->get_max_tol_left()-
     				    			F(i,j)+F(am.arcA().left()-1,am.arcB().left()-1)+score_for_am(a,b);
 
     				if(cur_max_tol>=(infty_score_t)0){
 
     					assert(score_for_am(a,b).is_finite());
-
-    					//store_new_poss(pseudo_arcA,pseudo_arcB,false,
-    					//			poss_L_LR(in_F,cur_max_tol,dummy_pos,pair_arcs,cur_pos),
-        				//			poss,pos_cur_epm,found_epms,am_to_do_for_F,count_EPMs);
 
     					store_new_poss(pseudo_arcA,pseudo_arcB,false,
     					    		poss_L_LR(in_F,cur_max_tol,dummy_pos,pair_arcs,cur_pos),
@@ -1105,13 +1037,10 @@ namespace LocARNA {
     			assert(poss.first!=-1); // we found at least one possibility
 
     			// store the first possibility
-    			//store_new_poss(pseudo_arcA,pseudo_arcB,true,poss,poss,pos_cur_epm,found_epms,am_to_do_for_F,count_EPMs);
     			store_new_poss(pseudo_arcA,pseudo_arcB,true,poss,poss,cur_epm,found_epms,am_to_do_for_F,count_EPMs);
 
 
     			// update current position
-    			//EPM &cur_epm = found_epms.at(pos_cur_epm);
-       			//pair_seqpos_t last_matched_pos = cur_epm.last_matched_pos();
     			pair_seqpos_t last_matched_pos = cur_epm->last_matched_pos();
     			cur_pos = pair_seqpos_t(last_matched_pos.first-1,last_matched_pos.second-1);
     		}
@@ -1119,10 +1048,8 @@ namespace LocARNA {
     		finished=true;
 
     		// search for next epm to process (epm that is not traced completely)
-    		//for(;pos_cur_epm<found_epms.size();++pos_cur_epm){
     		for(;cur_epm!=found_epms.end();++cur_epm){
 
-    			//pair_seqpos_t last_matched_pos = found_epms.at(pos_cur_epm).last_matched_pos();
     			pair_seqpos_t last_matched_pos = cur_epm->last_matched_pos();
     			if(!(F(last_matched_pos.first-1,last_matched_pos.second-1)==infty_score_t(0))){
     				finished=false;
@@ -1140,7 +1067,6 @@ namespace LocARNA {
     	// all epms are traced completely
     	// -> fill the missing parts (arcmatches which have been jumped over)
     	if(recurse){ //just for debugging!
-    		//preproc_fill_epm(am_to_do_for_F,pos_cur_epm,found_epms,count_EPMs,min_allowed_score);
     		preproc_fill_epm(am_to_do_for_F,cur_epm,found_epms,count_EPMs,min_allowed_score);
     	}
 
@@ -1434,7 +1360,6 @@ namespace LocARNA {
     		// the subsequent extension to the copied epm and reset pointer
     		if(!last_poss){
     			found_epms.push_back(*cur_epm);
-    			//cur_epm = &found_epms.back();
     			cur_epm = found_epms.end();
     			assert(!found_epms.empty());
     			--cur_epm;
@@ -1449,11 +1374,6 @@ namespace LocARNA {
 
     				// store the sequence positions of the match
     				cur_epm->add(cur_pos_seq.first,cur_pos_seq.second,'.');
-
-    				//else cur_epm->overwrite(cur_pos_seq.first,cur_pos_seq.second,'.',0);
-    						// overwrite information when counting the EPMs
-    						//-> use first position of vector as the storage for the last matched sequence position
-    						// we need all traced EPMs for filtering
     			}
     		}
 
@@ -1466,9 +1386,7 @@ namespace LocARNA {
     			const Arc &inner_a = bpsA.arc(pair_arc_idx.first);
     			const Arc &inner_b = bpsB.arc(pair_arc_idx.second);
 
-    			//if(!count_EPMs)
-    				cur_epm->add_am(inner_a,inner_b);
-    			//else cur_epm->overwrite(inner_a.left(),inner_b.left(),'(',0);
+    			cur_epm->add_am(inner_a,inner_b);
 
     			cur_epm->store_am(inner_a,inner_b); //store arcmatch for subsequent traceback
     			// construct map that stores the result of each used
@@ -1798,7 +1716,7 @@ namespace LocARNA {
     					// make sure that the optimal solution is inserted
     					assert(map_am_to_do.find(*arc_pairs)->second.first == cur_epm_list.begin()->get_max_tol_left());
 
-    					cur_epm->insert(*cur_epm_list.begin());
+    					cur_epm->insert_epm(*cur_epm_list.begin());
     				}
     			}
 
@@ -1882,7 +1800,7 @@ namespace LocARNA {
     					// insert the parts for the missing arc matches, not needed if just counting EPMs
     					for(vector<const EPM*>::const_iterator epm_to_insert = epms_to_insert.begin();
     							epm_to_insert!=epms_to_insert.end();++epm_to_insert){
-    						found_epms.back().insert(**epm_to_insert);
+    						found_epms.back().insert_epm(**epm_to_insert);
     					}
     				}
 

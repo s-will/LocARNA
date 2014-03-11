@@ -1,9 +1,9 @@
 /**********************************************************************
  *
- * LocARNA X: LOCal Alignment of RNA eXact:
+ * Exparna-P: Exact Pattern Matching for RNA Structure Ensembles
  * fast structure local exact matching
  *
- * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
+ * Copyright (C) Christina Otto <schmiedc(@)informatik.uni-freiburg.de>
  *
  **********************************************************************/
 
@@ -124,7 +124,7 @@ bool opt_help;
 bool opt_version;
 bool opt_verbose;
 bool opt_postscript_output;
-bool opt_heuristic;
+bool opt_subopt;
 bool add_filter;
 bool no_stacking;
 
@@ -134,26 +134,26 @@ option_def my_options[] = {
 		{"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.01","prob","Minimal probability"},
 		{"out-min-prob",'p',0,O_ARG_DOUBLE,&out_min_prob,"0.0005","prob",
     	 "Minimal probability for output (min-prob overrides if smaller)"},
-		{"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
+		{"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"30","diff","Maximal difference for sizes of matched arcs"},
 		{"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
 
 		{"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
 		{"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
 		{"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
-		{"no-stacking",0,&no_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","Use stacking terms (needs stack-probs by RNAfold -p2)"},
+		{"no-stacking",0,&no_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","do not use stacking terms (needs stack-probs by RNAfold -p2)"},
 		{"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"2","min_size","User-defined minimum size for Exact Pattern Matches (chaining only)"},
 		{"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_unpaired_in_loop_threshold,"0.01","threshold","Threshold for prob_unpaired_in_loop"},
 		{"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_basepair_in_loop_threshold,"0.01","threshold","Threshold for prob_basepair_in_loop"},
 		{"alpha_1",0,0,O_ARG_INT,&alpha_1,"1","alpha_1","Multiplier for sequential score"},
 		{"alpha_2",0,0,O_ARG_INT,&alpha_2,"5","alpha_2","Multiplier for structural score"},
 		{"alpha_3",0,0,O_ARG_INT,&alpha_3,"5","alpha_3","Multiplier for stacking score, 0 means no stacking contribution"},
-		{"heuristic",0,&opt_heuristic,O_NO_ARG,0,O_NODEFAULT,"heuristic_traceback","Use the heuristic traceback"},
+		{"subopt",0,&opt_subopt,O_NO_ARG,0,O_NODEFAULT,"subopt_traceback","Use the suboptimal traceback"},
 		{"diff-to-opt-score",0,0,O_ARG_INT,&difference_to_opt_score,"-1","threshold","Threshold for suboptimal traceback"},
 		{"min-score",0,0,O_ARG_INT,&min_score,"90","min","Minimal score of a traced EPM"},
 		{"number-of-EPMs",0,0,O_ARG_INT,&number_of_EPMs,"100","threshold","Maximal number of EPMs for the suboptimal traceback"},
-		{"no-inexact-struct-match",0,&exact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool","inexact structure matches possible"},
-		{"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-9","structural mismatch score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
+		{"no-inexact-struct-match",0,&exact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool","do not allow inexact structure matches"},
+		{"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-10","structural mismatch score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
 		{"add-filter",0,&add_filter,O_NO_ARG,0,O_NODEFAULT,"bool","Apply an additional filter to enumerate only EPMs that are maximally extended (only inexact)"},
 		{"noLP",0,&no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
 
@@ -169,7 +169,7 @@ option_def my_options[] = {
 		{"output-clustal",0,0,O_ARG_STRING,&clustal_output,"","filename","Write file with chain as alignment in clustalw format"},
 		{"output-epm-list",0,0,O_ARG_STRING,&epm_list_output,"","epm list","A list of all found epms"},
 		{"output-chained-epm-list",0,0,O_ARG_STRING,&chained_epm_list_output,"","chained epm list","A list of all EPMs that are present in the chain"},
-		{"no-chaining",0,&no_chaining,O_NO_ARG,0,O_NODEFAULT,"chaining","use the chaining algorithm to find best overall chain"},
+		{"no-chaining",0,&no_chaining,O_NO_ARG,0,O_NODEFAULT,"chaining","do not use the chaining algorithm to find best overall chain"},
 		{"",0,0,0,0,O_NODEFAULT,"",""}
 
 
@@ -191,13 +191,13 @@ main(int argc, char **argv) {
 	if (opt_help) {
 		cout << VERSION_STRING<<endl;
 
-		cout << "(C) Sebastian Will"<<endl<<endl;
+		cout << "(C) Christina Otto"<<endl<<endl;
 
-		cout << "A tool for pairwise Local (and global) Alignment of RNA: Exact Local Matchings."<<endl<<endl;
+		cout << "A tool for fast structure local exact matchings."<<endl<<endl;
 
 		print_help(argv[0],my_options);
 
-		cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
+		cout << "Report bugs to <schmiedc (at) informatik.uni-freiburg.de>."<<endl<<endl;
 		return 0;
 	}
 
@@ -402,11 +402,11 @@ main(int argc, char **argv) {
 	if (DO_TRACE) {
 
 		if (opt_verbose) {
-			if(!opt_heuristic)  cout << endl << "start suboptimal traceback..." << endl;
+			if(opt_subopt)  cout << endl << "start suboptimal traceback..." << endl;
 			else cout << endl << "start heuristic traceback..." << endl;
 		}
 
-		em.trace_EPMs(!opt_heuristic);
+		em.trace_EPMs(opt_subopt);
 
 		stopwatch.stop("EPMcomp");
 
@@ -488,7 +488,7 @@ main(int argc, char **argv) {
 	if (rna_dataA) delete rna_dataA;
 	if (rna_dataB) delete rna_dataB;
 
-	if (opt_verbose) { cout << "... locarna_X finished!" << endl << endl;}
+	if (opt_verbose) { cout << "... Exparna-P finished!" << endl << endl;}
 	stopwatch.stop("total");
 
 	return 0;

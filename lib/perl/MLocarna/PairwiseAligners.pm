@@ -106,7 +106,7 @@ sub exparna_compute_pairwise_alignments {
         for (my $j = $i + 1; $j < $numSequences; ++$j) {
             ++$counter;
             *STDERR->print("\r".(' 'x80));
-            *STDERR->print("\r".'Calculate pairwise alignment with exparna '.
+            *STDERR->print("\r".'Calculate pairwise alignment with Exparna-P '.
                          $counter.'/'.$number.' (Seq '.($i + 1).' <-> Seq '.
                          ($j + 1).')...');
             # path to the dot plot of the other sequence
@@ -116,13 +116,13 @@ sub exparna_compute_pairwise_alignments {
             my $output_file = $results_path.'/pair/S'.($i + 1).'_S'.($j + 1).'.aln';
 
             # assemble the call to exparna
-            my $call = $bindir ."/locarna_X $first $second " .
+            my $call = $bindir ."/exparna_p $first $second " .
                 $parameter . " --output-epm-list=" .
                 $output_file . " 1>/dev/null 2>/dev/null";
 
             my $code = system($call);
             if ($code) {
-                print('Can\'t perform Exparna calculation'.
+                print('Can\'t perform Exparna-P calculation'.
                                 " (developed under locarna 1.7.8, call:\n".$call.")\n");
             }
 
