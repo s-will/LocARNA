@@ -1462,7 +1462,7 @@ sub read_aln_wo_anno {
     my ($aln_filename) = @_;
     local *ALN_IN;
     
-    open(ALN_IN,$aln_filename) || die "MLocarna::read_aln: Cannot read aln file $aln_filename\n";
+    open(ALN_IN,$aln_filename) || die "MLocarna::read_aln_wo_anno: Cannot read aln file $aln_filename\n";
     
     my %aln;
     
@@ -1917,7 +1917,7 @@ sub extract_score_matrix_from_alignments($$) {
 ## compute reliability of an alignment as reliability for the best structure
 sub aln_reliability_beststruct_fromfile($$$) {
     my ($file,$bmprobs,$amprobs)=@_;
-    my $aln=read_aln($file);
+    my $aln=read_aln_wo_anno($file);
     
     my ($score,$rel_str) = evaluate_alignment($aln,$bmprobs,$amprobs,0);
     
@@ -1931,7 +1931,7 @@ sub aln_reliability_beststruct_fromfile($$$) {
 ##
 sub aln_reliability_fromfile($$$) {
     my ($file,$bmprobs,$amprobs)=@_;
-    my $aln=read_aln($file);
+    my $aln=read_aln_wo_anno($file);
     
     return aln_reliability($aln,$bmprobs,$amprobs);
 }
