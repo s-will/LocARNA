@@ -89,7 +89,7 @@ int difference_to_opt_score;
 int min_score;
 int am_threshold;
 long int number_of_EPMs;
-bool exact_struct_match;
+bool inexact_struct_match;
 int struct_mismatch_score;
 
 std::string seq_constraints_A;
@@ -152,7 +152,7 @@ option_def my_options[] = {
 		{"diff-to-opt-score",0,0,O_ARG_INT,&difference_to_opt_score,"-1","threshold","Threshold for suboptimal traceback"},
 		{"min-score",0,0,O_ARG_INT,&min_score,"90","min","Minimal score of a traced EPM"},
 		{"number-of-EPMs",0,0,O_ARG_INT,&number_of_EPMs,"100","threshold","Maximal number of EPMs for the suboptimal traceback"},
-		{"no-inexact-struct-match",0,&exact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool","do not allow inexact structure matches"},
+		{"inexact-struct-match",0,&inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool","do not allow inexact structure matches"},
 		{"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-10","structural mismatch score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
 		{"add-filter",0,&add_filter,O_NO_ARG,0,O_NODEFAULT,"bool","Apply an additional filter to enumerate only EPMs that are maximally extended (only inexact)"},
 		{"noLP",0,&no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
@@ -237,7 +237,7 @@ main(int argc, char **argv) {
 	}
 
 	// no filtering needed if we do exact matching
-	if(exact_struct_match){
+	if(!inexact_struct_match){
 		if(add_filter) cout << "Disable filtering as only exact matches are considered " << endl;
 		add_filter = false;
 	}
@@ -377,7 +377,7 @@ main(int argc, char **argv) {
 			difference_to_opt_score,
 			min_score,
 			number_of_EPMs,
-			!exact_struct_match,
+			inexact_struct_match,
 			struct_mismatch_score,
 			add_filter,
 			opt_verbose

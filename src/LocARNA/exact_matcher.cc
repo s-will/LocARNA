@@ -2200,7 +2200,6 @@ namespace LocARNA {
 	//cout << endl << " execute destructor..." << endl;
 
 	EPM_Table2.clear();
-	// todo: delete pointers in EPM_table
 	holeOrdering2.clear();
     }
 
