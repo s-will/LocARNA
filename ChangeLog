@@ -430,3 +430,7 @@ Nov 2013
 	pairwise similarities for guide tree construction; 2) clear
 	consensus anchor strings with duplicate names
 	(Release 1.7.14)
+	Fix bug concerning iterative alignment and alignment evaluation
+	Rename locarna_X to exparna_p
+	ExpaRNA-P code "publication ready"
+	(Release 1.7.15)
