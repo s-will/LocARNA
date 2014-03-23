@@ -6,26 +6,55 @@ exploc-p
 
 =head1 SYNOPSIS
 
-exploc-p [--exparnap-params <parameters> --locarna-params <parameters> --output <outputFolder> --output-time --verbose] <inputFile1> <inputFile2>
-    
-    Implementation of the exploc-p pipeline
+exploc-p [options] <inputFile1> <inputFile2>
 
-AUTHOR: Christina Otto <schmiedc@informatik.uni-freiburg.de
+Options:
 
-OPTIONS
+	--help			brief help message
+	--man			full documentation
+	--verbose		verbose
+	--exparnap-params	parameters for ExpaRNA-P
+	--locarna-params	parameters for LocARNA
+	--output		path to output folder
+	--output-time		output individual runtimes
 
+=head1 OPTIONS
 
-        --exparnap-params	parameters for Exparna-P
+=over 20
 
-        --locarna-params		parameters for LocARNA
+=item  B<--help>
 
-        --output            	path to output folder
+prints brief help message and exits.
+
+=item  B<--man>                         
+
+prints full documentation and exits.
+
+=item B<--verbose>
+
+shows in addition the output of ExpaRNA-P and LocARNA.
+
+=item B<--exparnap-params>
+
+parameters for ExpaRNA-P (def="").
+
+=item B<--locarna-params>
+
+parameters for LocARNA (def="").
+
+=item B<--output>
+
+path to output folder where intermediate results are stored.
+
+=item B<--output-time>
+
+print individual times for Preprocessing, ExpaRNA-P and LocARNA.		
+
+=back
         
-        --output-time		output time for Preprocessing, ExpaRNA-P and LocARNA
-                
-        --verbose			show the output of ExpaRNA-P and LocARNA
-        
-        --help  			display this help message and exit
+=head1 DESCRIPTION
+
+ Implementation of the exploc-p pipeline
 
 =cut
 
@@ -43,29 +72,34 @@ use Getopt::Long;
 my $exparnap_params = "";
 my $locarna_params = "";
 my $output_folder = "";
-my ($output_time,$verbose,$help);
+my ($output_time,$verbose,$help,$man);
 
 GetOptions("exparnap-params=s" => \$exparnap_params,
            "locarna-params=s" => \$locarna_params,
            "output=s" => \$output_folder,
            "output-time" => \$output_time,
            "verbose" => \$verbose,
-		 "help" => \$help
-           );
+		 "help" => \$help,
+		 "man" => \$man
+           ) || pod2usage(2);
            
-pod2usage() if $help;
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 1, -verbose => 2) if $man;
+
+if(scalar(@ARGV)<2){
+	print STDERR "Not enough arguments provided! \n";
+	pod2usage(2);
+}
 
 if($output_folder ne ""){
 	## change to output directory -> output will be written there
 	chdir $output_folder or die "Couldn't change to directory $output_folder: $!";
 }
 
-if(scalar(@ARGV)<2){print STDERR "not enough arguments provided! \n"; pod2usage();}
-
 my $input_file1 = $ARGV[0];
 my $input_file2 = $ARGV[1]; 
 
-## check Exparna-P params (output-anchor-pp)
+## check ExpaRNA-P params (output-anchor-pp)
 my @exparnap_params_arr = split(/ /,$exparnap_params);
 my $name_anchor_pp="";
 for my $i (0 .. scalar(@exparnap_params_arr)-1) {
