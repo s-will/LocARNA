@@ -189,11 +189,10 @@ main(int argc, char **argv) {
 	bool process_success=process_options(argc,argv,my_options);
 
 	if (opt_help) {
+
+		cout << "exparna_p: A tool for fast structure local exact matchings."<<endl<<endl;
+
 		cout << VERSION_STRING<<endl;
-
-		cout << "(C) Christina Otto"<<endl<<endl;
-
-		cout << "A tool for fast structure local exact matchings."<<endl<<endl;
 
 		print_help(argv[0],my_options);
 
@@ -202,7 +201,7 @@ main(int argc, char **argv) {
 	}
 
 	if (opt_version || opt_verbose) {
-		cout << VERSION_STRING<<endl;
+		cout << "exparna_p (" << VERSION_STRING << ")" <<endl;
 		if (opt_version) return 0; else cout <<endl;
 	}
 
