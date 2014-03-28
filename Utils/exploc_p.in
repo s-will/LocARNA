@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-exploc-p
+exploc_p
 
 =head1 SYNOPSIS
 
-exploc-p [options] <inputFile1> <inputFile2>
+exploc_p [options] <inputFile1> <inputFile2>
 
 Options:
 
@@ -54,7 +54,7 @@ print individual times for Preprocessing, ExpaRNA-P and LocARNA.
         
 =head1 DESCRIPTION
 
- Implementation of the exploc-p pipeline
+ Implementation of the ExpLoc-P pipeline
 
 =cut
 
