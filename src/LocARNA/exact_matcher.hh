@@ -347,19 +347,18 @@ public:
 	 * @param seqB_ second sequence
 	 * @param myPatterns input PatternPairMap
 	 * @param myLCSEPM output PatternPairMap
-	 * @param EPM_min_size_ minimum size of an EPM
 	 */
 	LCSEPM(const	Sequence& 		seqA_,
 			const	Sequence& 		seqB_,
 			const 	PatternPairMap& myPatterns,
-			PatternPairMap& myLCSEPM,
-			const	int&		EPM_min_size_ )
+			PatternPairMap& myLCSEPM
+			)
 
 	:seqA(seqA_),
 	 seqB(seqB_),
 	 matchedEPMs(myLCSEPM),
-	 patterns(myPatterns),
-	 EPM_min_size(EPM_min_size_){};
+	 patterns(myPatterns)
+	{};
 
 	//! Destructor
 	virtual		~LCSEPM();
@@ -446,7 +445,6 @@ private:
 	const 	Sequence& 				seqB;
 	PatternPairMap&				matchedEPMs;
 	const 	PatternPairMap&         		patterns;
-	const int& 					EPM_min_size;
 };
 
 

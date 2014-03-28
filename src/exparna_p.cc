@@ -78,7 +78,6 @@ int max_diff_am; //maximal difference between two arc ends, -1 is off
 // except when there is no additional computation of M matrices necessary,
 // this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
 
-int EPM_min_size; //minimum size for Exact Pattern Matches
 double prob_unpaired_in_loop_threshold; // threshold for prob_unpaired_in_loop
 double prob_basepair_in_loop_threshold; // threshold for prob_basepair_in_loop
 
@@ -142,32 +141,31 @@ option_def my_options[] = {
 		{"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
 		{"no-stacking",0,&no_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","do not use stacking terms (needs stack-probs by RNAfold -p2)"},
-		{"EPM_minimum_size",'s',0,O_ARG_INT,&EPM_min_size,"2","min_size","User-defined minimum size for Exact Pattern Matches (chaining only)"},
-		{"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_unpaired_in_loop_threshold,"0.01","threshold","Threshold for prob_unpaired_in_loop"},
-		{"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_basepair_in_loop_threshold,"0.01","threshold","Threshold for prob_basepair_in_loop"},
-		{"alpha_1",0,0,O_ARG_INT,&alpha_1,"1","alpha_1","Multiplier for sequential score"},
-		{"alpha_2",0,0,O_ARG_INT,&alpha_2,"5","alpha_2","Multiplier for structural score"},
-		{"alpha_3",0,0,O_ARG_INT,&alpha_3,"5","alpha_3","Multiplier for stacking score, 0 means no stacking contribution"},
+		{"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_unpaired_in_loop_threshold,"0.01","prob","Threshold for prob_unpaired_in_loop"},
+		{"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_basepair_in_loop_threshold,"0.01","prob","Threshold for prob_basepair_in_loop"},
+		{"alpha_1",0,0,O_ARG_INT,&alpha_1,"1","factor","Multiplier for sequential score"},
+		{"alpha_2",0,0,O_ARG_INT,&alpha_2,"5","factor","Multiplier for structural score"},
+		{"alpha_3",0,0,O_ARG_INT,&alpha_3,"5","factor","Multiplier for stacking score, 0 means no stacking contribution"},
 		{"subopt",0,&opt_subopt,O_NO_ARG,0,O_NODEFAULT,"subopt_traceback","Use the suboptimal traceback"},
 		{"diff-to-opt-score",0,0,O_ARG_INT,&difference_to_opt_score,"-1","threshold","Threshold for suboptimal traceback"},
-		{"min-score",0,0,O_ARG_INT,&min_score,"90","min","Minimal score of a traced EPM"},
+		{"min-score",0,0,O_ARG_INT,&min_score,"90","score","Minimal score of a traced EPM"},
 		{"number-of-EPMs",0,0,O_ARG_INT,&number_of_EPMs,"100","threshold","Maximal number of EPMs for the suboptimal traceback"},
-		{"inexact-struct-match",0,&inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool","do not allow inexact structure matches"},
-		{"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-10","structural mismatch score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
+		{"inexact-struct-match",0,&inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool","allow inexact structure matches"},
+		{"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-10","score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
 		{"add-filter",0,&add_filter,O_NO_ARG,0,O_NODEFAULT,"bool","Apply an additional filter to enumerate only EPMs that are maximally extended (only inexact)"},
 		{"noLP",0,&no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
-		{"no-chaining",0,&no_chaining,O_NO_ARG,0,O_NODEFAULT,"chaining","do not use the chaining algorithm to find best overall chain"},
+		{"no-chaining",0,&no_chaining,O_NO_ARG,0,O_NODEFAULT,"bool","do not use the chaining algorithm to find best overall chain"},
 
 		{"stopwatch",0,&opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
 		{"output-ps", 0,&opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"","Output best EPM chain as colored postscript"},
-		{"PS_fileA",'a',0,O_ARG_STRING,&psFileA,"","psFileA","Postscript output file for sequence A"},
-		{"PS_fileB",'b',0,O_ARG_STRING,&psFileB,"","psFileB","Postscript output file for sequence B"},
-		{"output-locarna",'o',0,O_ARG_STRING,&locarna_output,"","constraintsFile","Fasta file with anchor constraints for locarna"},
+		{"PS_fileA",'a',0,O_ARG_STRING,&psFileA,"","file","Postscript output file for sequence A"},
+		{"PS_fileB",'b',0,O_ARG_STRING,&psFileB,"","file","Postscript output file for sequence B"},
+		{"output-locarna",'o',0,O_ARG_STRING,&locarna_output,"","file","Fasta file with anchor constraints for locarna"},
 		{"output-anchor-pp",0,0,O_ARG_STRING,&output_anchor_pp,"","fileroot","PP files <fileroot>_A.pp and <fileroot>_B.pp, merging input PPs and anchor constraints from chaining"},
-		{"output-clustal",0,0,O_ARG_STRING,&clustal_output,"","filename","Write file with chain as alignment in clustalw format"},
-		{"output-epm-list",0,0,O_ARG_STRING,&epm_list_output,"","epm list","A list of all found epms"},
-		{"output-chained-epm-list",0,0,O_ARG_STRING,&chained_epm_list_output,"","chained epm list","A list of all EPMs that are present in the chain"},
+		{"output-clustal",0,0,O_ARG_STRING,&clustal_output,"","file","Write file with chain as alignment in clustalw format"},
+		{"output-epm-list",0,0,O_ARG_STRING,&epm_list_output,"","file","A list of all found epms"},
+		{"output-chained-epm-list",0,0,O_ARG_STRING,&chained_epm_list_output,"","file","A list of all EPMs that are present in the chain"},
 
 		{"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"file A","input file A"},
 		{"",0,0,O_ARG_STRING,&fileB,O_NODEFAULT,"file B","input file B"},
@@ -427,7 +425,7 @@ main(int argc, char **argv) {
 		stopwatch.start("chaining");
 
 		PatternPairMap myLCSEPM;
-		LCSEPM myChaining(seqA, seqB, myEPMs, myLCSEPM, EPM_min_size);
+		LCSEPM myChaining(seqA, seqB, myEPMs, myLCSEPM);
 
 		//begin chaining algorithm
 		myChaining.calculateLCSEPM();
