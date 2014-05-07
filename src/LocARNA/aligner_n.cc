@@ -518,7 +518,7 @@ void AlignerN::fill_D_entries(pos_type al, pos_type bl)
 
     UnmodifiedScoringViewN sv = def_scoring_view; //toask: where should we care about non_default scoring views
 
-    //iterate through arcs begining at al,bl
+    //iterate through arcs beginning at al,bl
     for(ArcMatchIdxVec::const_iterator it=arc_matches.common_left_end_list(al,bl).begin();  //tocheck:toask:todo: IMPORTANT! can we use arc_matches to get the common endlist?? arcA,arcB may not be matched!
 	    arc_matches.common_left_end_list(al,bl).end() != it; ++it ) {
 

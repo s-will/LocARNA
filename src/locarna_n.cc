@@ -291,7 +291,7 @@ option_def my_options[] = {
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
-//    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
+    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
 //    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
 
@@ -369,10 +369,11 @@ main(int argc, char **argv) {
     }
    
 
+    //noLP is not supported by sparse recursion but yet useful for calculating probablities with RNAfold
     if( clp.no_lonely_pairs )
     {
-	std::cerr << "No lonely pairs option is not supported" << std::endl;
-	return -1;
+    	std::cerr << "WARNING: No lonely pairs option is not supported by sparse algortihm" << std::endl;
+//	return -1;
     }
     if( clp.sequ_local )
     {
@@ -768,7 +769,7 @@ main(int argc, char **argv) {
     //
 
     // parameter for the alignment
-    AlignerParams aligner_params(clp.no_lonely_pairs,
+    AlignerParams aligner_params(false, //clp.no_lonely_pairs, //todo: noLP is disabled for laigner_n
 				 clp.struct_local,
 				 clp.sequ_local,
 				 clp.free_endgaps,
