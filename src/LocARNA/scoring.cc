@@ -255,18 +255,28 @@ namespace LocARNA {
 				std::vector<score_t> &stack_weights) {
 	size_type s   = bps.num_bps();
 	weights.resize(s);
-	if (params->stacking) stack_weights.resize(s);
+	if (params->stacking || params->new_stacking) stack_weights.resize(s);
 	for (size_type i=0; i<s; i++) {
 	    const Arc &a=bps.arc(i);
 
 	    double p = rna_data.arc_prob(a.left(),a.right());
 	    weights[i] = probToWeight(p,exp_prob);
-
+	    
 	    if (params->stacking) {
 		if (rna_data.arc_prob(a.left()+1,a.right()-1)>0) {
 		    double stack_p = rna_data.stacked_arc_prob(a.left(),a.right());
 		    stack_weights[i] = probToWeight(stack_p,exp_prob);
 		    // std::cout << i << " " << stack_p << " " << stack_weights[i] << std::endl;
+		}
+	    }
+	    if (params->new_stacking) {
+		if (!params->stacking) {
+		    // if the old stacking is not used together with new one
+		    stack_weights[i] = weights[i];
+		}
+		if (rna_data.arc_prob(a.left()+1,a.right()-1)>0) {
+		    double joint_arc_p = rna_data.joint_arc_prob(a.left(),a.right());
+		    stack_weights[i] += probToWeight(joint_arc_p,exp_prob);
 		}
 	    }
 	}
@@ -488,10 +498,16 @@ namespace LocARNA {
 	// this method is disallowed with explicit arcmatch scores
 	assert(!arc_matches->explicit_scores());
 
-	// assert: if stacking score requested, inner arcs must have probability > 0,
-	// and there must be a non-zero joint probability of the arc and the inner arc in each RNA 
-	assert(!stacked || (rna_dataA.arc_prob(arcA.left()+1,arcA.right()-1)>0 && rna_dataB.arc_prob(arcB.left()+1,arcB.right()-1)>0));
-	assert(!stacked || (rna_dataA.joint_arc_prob(arcA.left(),arcA.right())>0 && rna_dataB.joint_arc_prob(arcB.left(),arcB.right())>0));
+	// assert: if stacking score requested, inner arcs must have
+	// probability > 0; moreover, there must be a non-zero joint
+	// probability of the arc and the inner arc in each RNA
+	assert(!stacked || 
+	       (rna_dataA.arc_prob(arcA.left()+1,arcA.right()-1)>0
+		&& rna_dataB.arc_prob(arcB.left()+1,arcB.right()-1)>0));
+	
+	assert(!stacked ||
+	       (rna_dataA.joint_arc_prob(arcA.left(),arcA.right())>0 
+		&& rna_dataB.joint_arc_prob(arcB.left(),arcB.right())>0));
 
 	score_t sequence_contribution=0;
 
@@ -652,8 +668,24 @@ namespace LocARNA {
 	    }
     }
 
+    
+    bool
+    Scoring::is_stackable_arcA(const Arc &a) const {
+	return
+	    rna_dataA.joint_arc_prob(a.left(),a.right()) > 0;
+    } 
+    
+    bool
+    Scoring::is_stackable_arcB(const Arc &a) const {
+	return
+	    rna_dataB.joint_arc_prob(a.left(),a.right()) > 0;
+    }
 
-
-
-
+    bool
+    Scoring::is_stackable_am(const ArcMatch &am) const {
+	return
+	    is_stackable_arcA(am.arcA())
+	    &&
+	    is_stackable_arcB(am.arcB());
+    }
 }

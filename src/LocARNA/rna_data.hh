@@ -53,6 +53,7 @@ namespace LocARNA {
 	 * @param rna_ensemble RNA ensemble data
 	 * @param p_bpcut cutoff probability
 	 * @param pfoldparams folding parameters (controls stacking)
+	 * @param pfoldparams folding parameters (controls stacking)
 	 *
 	 * @note RnaData copies all required data from rna_ensemble
 	 * and does not keep a reference; if pfoldparams.stacking is true,
@@ -68,6 +69,10 @@ namespace LocARNA {
 	 * @param filename input file name
 	 * @param p_bpcut cutoff probability
 	 * @param pfoldparams folding parameters
+	 * @param max_bps_length_ratio maximal ratio of number of base
+	 * pairs divided by sequence length. This serves as a second
+	 * filter on the "significant" base pairs. Value 0 turns this
+	 * filter off.
 	 *
 	 * @note autodetect format of input; 
 	 * for fa or aln input formats, predict base pair probabilities 
@@ -79,7 +84,8 @@ namespace LocARNA {
 	 */
 	RnaData(const std::string &filename,
 		double p_bpcut,
-		const PFoldParams &pfoldparams);
+		const PFoldParams &pfoldparams,
+		double max_bps_length_ratio=0.0);
 	
 	/** 
 	 * @brief Construct as consensus of two aligned RNAs

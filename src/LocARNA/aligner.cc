@@ -623,12 +623,15 @@ namespace LocARNA {
 	    //std::cout <<"["<< am.arcA() << "," <<am.arcB() <<"]:" << D(am) << std::endl;
 
 	    if (scoring_->stacking()) {
-		if (arc_matches_.is_stackable(am)) {
+		if (arc_matches_.exists_inner_arc_match(am)
+		    &&
+		    scoring_->is_stackable_am(am)
+		    ) {
 		    const ArcMatch &inner_am = arc_matches_.inner_arc_match(am);
 		
 		    D(am) =
 			std::max(D(am),
-				 D(inner_am) + scoring_->arcmatch_stacked(am));
+				 D(inner_am) + scoring_->arcmatch(am,true));
 		}
 	    }
 	}
@@ -647,11 +650,13 @@ namespace LocARNA {
 	    pos_type br = am.arcB().right()-1;
 
 	    // only for arc matches which can occur paired with an inner arc match (no lonely pairs) 
-	    //
-	    // when using stacking scores, the am has to be stackable to the inner arc,
-	    // without using stacking scores, it suffices that an inner arc exists!
-	    if ((scoring_->stacking() && arc_matches_.is_stackable(am))
-		|| (!scoring_->stacking() && arc_matches_.exists_inner_arc_match(am))) { 
+	    // therefore check whether inner arc exists
+	    // if stacking scores are used, the am has to be stackable to the inner arc,
+	    // i.e. the joint probabilities have to be greater than 0
+	    if (arc_matches_.exists_inner_arc_match(am)
+		&&
+		( ! scoring_->stacking() || scoring_->is_stackable_am(am) )
+		) { 
 		const ArcMatch& inner_am = arc_matches_.inner_arc_match(am);
 	    
 		infty_score_t m=Ms_[0](ar-1,br-1);
@@ -973,8 +978,8 @@ namespace LocARNA {
 	    if (arc_matches_.exists_inner_arc_match(am)) { 
 		const ArcMatch &inner_am = arc_matches_.inner_arc_match(am);
 	    
-		if (D(am) == D(inner_am) + scoring_->arcmatch_stacked(am)) {
-		
+		if (D(am) == D(inner_am) + scoring_->arcmatch(am,true)) {
+		    
 		    const Arc & arcAI = inner_am.arcA();
 		    const Arc & arcBI = inner_am.arcB();
 		

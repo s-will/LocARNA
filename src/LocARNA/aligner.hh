@@ -177,7 +177,7 @@ namespace LocARNA {
 	 * 
 	 * @return score of the alignment 
 	 */
-	score_t 
+	score_t
 	evaluate();
 
 	/** 

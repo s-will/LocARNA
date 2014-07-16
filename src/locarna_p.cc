@@ -416,6 +416,7 @@ main(int argc, char **argv) {
 				 my_exp_probB,
 				 l_temperature,
 				 false,//opt_stacking,
+				 false,//opt_new_stacking,
 				 false,//opt_mea_alignment,
 				 0,//mea_alpha,
 				 0,//mea_beta,

@@ -67,6 +67,11 @@ struct command_line_parameters {
     //! only pairs with a probability of at least min_prob are taken into account
     double min_prob; 
     
+    //! maximal ratio of number of base pairs divided by sequence
+    //! length. This serves as a second filter on the "significant"
+    //! base pairs.
+    double max_bps_length_ratio;
+
     int match_score; //!< match score
     
     int mismatch_score; //!< mismatch score
@@ -162,7 +167,9 @@ struct command_line_parameters {
 
     bool opt_stopwatch; //!< whether to print verbose output
     
-    bool opt_stacking; //!< whether to stacking
+    bool opt_stacking; //!< whether to use special stacking arcmatch score
+
+    bool opt_new_stacking; //!< whether to use new stacking contributions
 
     std::string ribosum_file; //!< ribosum_file
     bool use_ribosum; //!< use_ribosum
@@ -235,7 +242,8 @@ option_def my_options[] = {
     {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
     {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
-    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},   
+    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},
+    {"new-stacking",0,&clp.opt_new_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use new stacking terms (needs stack-probs by RNAfold -p2)"},   
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
 
@@ -264,6 +272,7 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
+    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
     {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
@@ -456,11 +465,11 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
+    PFoldParams pfparams(clp.no_lonely_pairs, clp.opt_stacking || clp.opt_new_stacking);
     
     RnaData *rna_dataA=0;
     try {
-	rna_dataA = new RnaData(clp.fileA,clp.min_prob,pfparams);
+	rna_dataA = new RnaData(clp.fileA,clp.min_prob,pfparams,clp.max_bps_length_ratio);
     } catch (failure &f) {
 	std::cerr << "ERROR:\tfailed to read from file "<<clp.fileA <<std::endl
 		  << "\t"<< f.what() <<std::endl;
@@ -469,7 +478,7 @@ main(int argc, char **argv) {
     
     RnaData *rna_dataB=0;
     try {
-	rna_dataB = new RnaData(clp.fileB,clp.min_prob,pfparams);
+	rna_dataB = new RnaData(clp.fileB,clp.min_prob,pfparams,clp.max_bps_length_ratio);
     } catch (failure &f) {
 	std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
 		  << "       "<< f.what() <<std::endl;
@@ -699,6 +708,7 @@ main(int argc, char **argv) {
 				 my_exp_probB,
 				 clp.temperature,
 				 clp.opt_stacking,
+				 clp.opt_new_stacking,
 				 clp.opt_mea_alignment,
 				 clp.mea_alpha,
 				 clp.mea_beta,
@@ -739,7 +749,7 @@ main(int argc, char **argv) {
 				 clp.max_diff_am,
 				 clp.min_am_prob,
 				 clp.min_bm_prob,
-				 clp.opt_stacking,
+				 clp.opt_stacking || clp.opt_new_stacking,
 				 seq_constraints
 				 );
     

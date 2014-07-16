@@ -434,25 +434,7 @@ namespace LocARNA {
 	exists_inner_arc_match(const ArcMatch &am) const {
 	    return inner_arcmatch_idxs[am.idx()] < num_arc_matches();
 	}
-
-	/**
-	 * tests, whether there is an inner arc match (then its arcs have non-zero probability)
-	 */
-	bool
-	is_stackable(const ArcMatch &am) const {
-	    return 
-		exists_inner_arc_match(am);
-	    
-	    // previously there was an additional condition: 
-	    // * and the arcs of the match have non-zero joint probability to occur simultaneously with the inner arc!
-	    // WHY?
-	    // 	&&
-	    // 	bpsA->get_arc_2_prob(am.arcA().left(),am.arcA().right())>0 
-	    // 	&& 
-	    // 	bpsB->get_arc_2_prob(am.arcB().left(),am.arcB().right())>0;
-	}
-
-        
+	
 	/**
 	 * index of inner arc match for the
 	 * arc with the given index.
@@ -462,7 +444,7 @@ namespace LocARNA {
 	inner_arc_match(const ArcMatch &am) const {
 	    return arcmatch(inner_arcmatch_idxs[am.idx()]);
 	}
-    
+	
 	/**
 	 * sort the lists of arc matches with common right ends in "common_right_end_list"
 	 * by their left ends in lexicographically descending order.

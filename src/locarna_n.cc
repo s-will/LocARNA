@@ -152,7 +152,8 @@ struct command_line_parameters {
 
     bool opt_stopwatch; //!< whether to print verbose output
 
-    bool opt_stacking; //!< whether to stacking
+    bool opt_stacking; //!< whether to use stacking scores
+    bool opt_new_stacking; //!< whether to use new stacking scores
 
     std::string ribosum_file; //!< ribosum_file
     bool use_ribosum; //!< use_ribosum
@@ -229,6 +230,7 @@ option_def my_options[] = {
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
 //    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
 //    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},
+//    {"new-stacking",0,&clp.opt_newstacking,O_NO_ARG,0,O_NODEFAULT,"","Use new stacking terms (needs stack-probs by RNAfold -p2)"},
 
 /*    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
 
@@ -326,6 +328,9 @@ main(int argc, char **argv) {
     // Process options
     bool process_success=process_options(argc,argv,my_options);
 
+    assert(clp.opt_stacking == false);
+    assert(clp.opt_new_stacking == false);
+    
     if (clp.opt_help) {
 	cout << "locarna - a tool for pairwise (global and local) alignment of RNA!"<<endl<<endl;
 	
@@ -458,7 +463,7 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
+    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking||clp.opt_new_stacking);
     
     ExtRnaData *rna_dataA=0;
     try {
@@ -735,6 +740,7 @@ main(int argc, char **argv) {
 				 my_exp_probB,
 				 clp.temperature,
 				 clp.opt_stacking,
+				 clp.opt_new_stacking,
 				 clp.opt_mea_alignment,
 				 clp.mea_alpha,
 				 clp.mea_beta,
@@ -776,7 +782,7 @@ main(int argc, char **argv) {
 				 clp.max_diff_am,
 				 clp.min_am_prob,
 				 clp.min_bm_prob,
-				 clp.opt_stacking,
+				 clp.opt_stacking || clp.opt_new_stacking,
 				 seq_constraints
 				 );
     
