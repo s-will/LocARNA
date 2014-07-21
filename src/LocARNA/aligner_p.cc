@@ -62,22 +62,16 @@ namespace LocARNA {
 
 
     //===========================================================================
-    AlignerP::AlignerP(const Sequence &seqA_,
-		       const Sequence &seqB_,
-		       const ArcMatches &arc_matches_,
-		       const AlignerParams *ap_, 
-		       const Scoring *s_,
-		       const pf_score_t pf_scale_
-		       ) :
-	scoring(s_),
-	params(ap_),
-	seqA(seqA_),
-	bpsA(arc_matches_.get_base_pairsA()),
-	seqB(seqB_),
-	bpsB(arc_matches_.get_base_pairsB()),
-	arc_matches(arc_matches_), 
-	r(1, 1, seqA_.length(), seqB_.length()),
-	pf_scale(pf_scale_),
+    AlignerP::AlignerP(const AlignerParams &ap_) :
+	params(dynamic_cast<const AlignerPParams *>(&ap_)),
+	scoring(params->scoring_),
+	seqA(*params->seqA_),
+	bpsA(params->arc_matches_->get_base_pairsA()),
+	seqB(*params->seqB_),
+	bpsB(params->arc_matches_->get_base_pairsB()),
+	arc_matches(*params->arc_matches_), 
+	r(1, 1, seqA.length(), seqB.length()),
+	pf_scale(params->pf_scale_),
 	//Dmat((pf_score_t )0),
 	//Dmatprime((pf_score_t )0),
 	am_prob(0.0),
@@ -90,11 +84,11 @@ namespace LocARNA {
 
 
 
-    // ====================================================================================================
-    // ====================================================================================================
+    // ================================================================================
+    // ================================================================================
     // INSIDE ALGORITHM
-    // ====================================================================================================
-    // ====================================================================================================
+    // ================================================================================
+    // ================================================================================
 
 
     //! returns lvalue of matrix D
@@ -130,7 +124,7 @@ namespace LocARNA {
 	indel_score = scoring->exp_indel_opening()/pf_scale;
 	size_type i;
 	for (i=al+1; i<ar; i++) {
-	    if (params->trace_controller.min_col(i)>bl) break; // fill only as long as column bl is accessible
+	    if (params->trace_controller_->min_col(i)>bl) break; // fill only as long as column bl is accessible
 
 	    indel_score *= scoring->exp_gapA(i);
 	    M(i, bl) = indel_score;
@@ -138,12 +132,12 @@ namespace LocARNA {
 
 	// fill entries left of valid entries 
 	for ( ; i<ar; i++) {
-	    assert(params->trace_controller.min_col(i)>bl);
-	    M(i,params->trace_controller.min_col(i)-1) = 0;
+	    assert(params->trace_controller_->min_col(i)>bl);
+	    M(i,params->trace_controller_->min_col(i)-1) = 0;
 	}
     
 	// initialize row al of M
-	size_type max_col = std::min(br-1,params->trace_controller.max_col(al));
+	size_type max_col = std::min(br-1,params->trace_controller_->max_col(al));
 	indel_score = scoring->exp_indel_opening()/pf_scale;
 	size_type j;
 	for (j=bl+1; j<=max_col; j++) {
@@ -153,7 +147,7 @@ namespace LocARNA {
 	// fill entries above valid entries 
 	// here j points to one position right of the last initialized entry in row al
 	for (size_type i=al+1; i<ar; i++) {
-	    for (; j<std::min(br,params->trace_controller.max_col(i)+1); ++j) {
+	    for (; j<std::min(br,params->trace_controller_->max_col(i)+1); ++j) {
 		M(i-1,j)=0;
 	    }
 	}
@@ -257,8 +251,8 @@ namespace LocARNA {
 	    F = (pf_score_t)0; // init F
     
 	    // limit entries due to trace controller
-	    size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
-	    size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
+	    size_type min_col = std::max(bl+1,params->trace_controller_->min_col(i));
+	    size_type max_col = std::min(br-1,params->trace_controller_->max_col(i));
     
 	    for (size_type j=min_col; j<=max_col; j++) {
 		E[j]   = comp_E_entry(al,bl,i,j);
@@ -327,8 +321,8 @@ namespace LocARNA {
 	    size_type max_bl=r.get_endB();
 	
 	    // restrict range for left ends of bl due to trace controller
-	    min_bl = std::max(min_bl,params->trace_controller.min_col(al));
-	    max_bl = std::min(max_bl,params->trace_controller.max_col(al));
+	    min_bl = std::max(min_bl,params->trace_controller_->min_col(al));
+	    max_bl = std::min(max_bl,params->trace_controller_->max_col(al));
     
 	
 	    for (size_type bl=max_bl; bl>=min_bl; bl--) {
@@ -413,7 +407,7 @@ namespace LocARNA {
 	indel_score = scoring->exp_indel_opening()/pf_scale;
 	size_type i;
 	for (i=ar; i>=al; ) { i--;
-	    if (params->trace_controller.max_col(i)<br) {
+	    if (params->trace_controller_->max_col(i)<br) {
 		++i;
 		break; // fill only as long as column bl is accessible
 	    }
@@ -423,14 +417,14 @@ namespace LocARNA {
 	}
 	// fill entries right of valid entries
 	for ( ; i>=al; ) { i--;
-	    Mrev(i,params->trace_controller.max_col(i)+1) = 0;
-	    // printMrev(3,i,params->trace_controller.max_col(i)+1);
+	    Mrev(i,params->trace_controller_->max_col(i)+1) = 0;
+	    // printMrev(3,i,params->trace_controller_->max_col(i)+1);
 	}
     
 	// initialize row ar, subsequence A empty
 	indel_score = scoring->exp_indel_opening()/pf_scale;
     
-	size_type min_col = std::max( bl-1, params->trace_controller.min_col(ar) );
+	size_type min_col = std::max( bl-1, params->trace_controller_->min_col(ar) );
 	size_type j;
 	for (j=br; j>min_col; ) { j--;
 	    indel_score *= scoring->exp_gapB(j+1);
@@ -439,7 +433,7 @@ namespace LocARNA {
 	}
 	// fill entries below valid entries
 	for (size_type i=ar; i>=al; ) { i--;
-	    for (; j>std::max(bl-1,params->trace_controller.min_col(i)); ) { --j;
+	    for (; j>std::max(bl-1,params->trace_controller_->min_col(i)); ) { --j;
 		Mrev(i+1,j)=0;
 		// printMrev(5,i+1,j);
 	    }
@@ -530,8 +524,8 @@ namespace LocARNA {
 	    Frev = (pf_score_t)0;
 	
 	    // limit entries due to trace controller
-	    size_type min_col = std::max(bl,params->trace_controller.min_col(i)+1)-1;
-	    size_type max_col = std::min(br,params->trace_controller.max_col(i)+1)-1;
+	    size_type min_col = std::max(bl,params->trace_controller_->min_col(i)+1)-1;
+	    size_type max_col = std::min(br,params->trace_controller_->max_col(i)+1)-1;
 	
 	    for(size_type j=max_col+1; j>min_col; ) { --j;  //j from max_col downto min_col
 		Erev[j]   = comp_Erev_entry(i,j);
@@ -556,11 +550,11 @@ namespace LocARNA {
     }
 
 
-    // ====================================================================================================
-    // ====================================================================================================
+    // ================================================================================
+    // ================================================================================
     // OUTSIDE ALGORITHM
-    // ====================================================================================================
-    // ====================================================================================================
+    // ================================================================================
+    // ================================================================================
 
     //! returns lvalue of matrix D'
     pf_score_t &//SparsePFScoreMatrix::element
@@ -707,14 +701,14 @@ namespace LocARNA {
     pf_score_t 
     AlignerP::comp_Mprime_entry(size_type al, size_type bl, size_type i, size_type j, size_type max_ar, size_type max_br) {
     
-	//assert(params->trace_controller.is_valid(i,j));
+	//assert(params->trace_controller_->is_valid(i,j));
     
 	pf_score_t pf;
     
 	// check proper intialization
-	//assert(params->trace_controller.is_valid(i+1,j+1) || Mprime(i+1,j+1)==0 );
-	//assert(params->trace_controller.is_valid(i+1,j  ) || Eprime[j]==0 );
-	//assert(params->trace_controller.is_valid(i  ,j+1) || Fprime==0 );
+	//assert(params->trace_controller_->is_valid(i+1,j+1) || Mprime(i+1,j+1)==0 );
+	//assert(params->trace_controller_->is_valid(i+1,j  ) || Eprime[j]==0 );
+	//assert(params->trace_controller_->is_valid(i  ,j+1) || Fprime==0 );
     
 	pf =
 	    // base match
@@ -805,15 +799,15 @@ namespace LocARNA {
     
 	// initialize the valid entries in column max_br and row max_ar
 	// note that max_ar,max_br is not necessarily valid!
-	if (params->trace_controller.is_valid(max_ar,max_br)) {
+	if (params->trace_controller_->is_valid(max_ar,max_br)) {
 	    Mprime(max_ar,max_br) = M(al-1,bl-1)*Mrev(max_ar,max_br)*pf_scale;
 	}
         
 	// fill column max_br
 	size_type i;
 	for(i=max_ar; i>ar; ) { i--;
-	    if (params->trace_controller.max_col(i) < max_br) { i++; break; }
-	    if (params->trace_controller.is_valid(i,max_br)) {
+	    if (params->trace_controller_->max_col(i) < max_br) { i++; break; }
+	    if (params->trace_controller_->is_valid(i,max_br)) {
 		Mprime(i,max_br) = M(al-1,bl-1)*Mrev(i,max_br)*pf_scale;
 	    }
 	}
@@ -821,22 +815,22 @@ namespace LocARNA {
 	// fill invalid entries right of valid entries 
 	for ( ; i>ar; ) {
 	    i--;
-	    if (params->trace_controller.max_col(i)+1 <= max_br) {
-		Mprime(i,params->trace_controller.max_col(i)+1) = 0;
+	    if (params->trace_controller_->max_col(i)+1 <= max_br) {
+		Mprime(i,params->trace_controller_->max_col(i)+1) = 0;
 	    }
 	}
     
 	// fill row max_ar ( Mprime and Eprime )
 	size_type j;
-	size_type min_col = std::max(br,params->trace_controller.min_col(max_ar));
-	size_type max_col = std::min(max_br-1,params->trace_controller.max_col(max_ar));
+	size_type min_col = std::max(br,params->trace_controller_->min_col(max_ar));
+	size_type max_col = std::min(max_br-1,params->trace_controller_->max_col(max_ar));
 	for(j=max_col+1; j>min_col;) { j--;
 	    Eprime[j]        = M(al-1,bl-1)*Erev_mat(max_ar,j)*pf_scale;
 	    Mprime(max_ar,j) = M(al-1,bl-1)*Mrev(max_ar,j)*pf_scale;
 	}
 	// fill invalid entries below valid entries 
 	for (size_type i=max_ar; i>ar; ) { i--;
-	    for (; j>std::max(bl,params->trace_controller.min_col(i)); ) {
+	    for (; j>std::max(bl,params->trace_controller_->min_col(i)); ) {
 		--j;
 		Mprime(i+1,j)=0;
 		Eprime[j]=0;
@@ -846,14 +840,14 @@ namespace LocARNA {
 	for(size_type i=max_ar; i>ar; ) {
 	    i--;
 	
-	    if (params->trace_controller.is_valid(i,max_br)) {
+	    if (params->trace_controller_->is_valid(i,max_br)) {
 		Fprime = M(al-1,bl-1)*Frev_mat(i,max_br)*pf_scale;
 	    } else {
 		Fprime=0;
 	    }
 
-	    size_type min_col = std::max(br,params->trace_controller.min_col(i));
-	    size_type max_col = std::min(max_br-1,params->trace_controller.max_col(i));
+	    size_type min_col = std::max(br,params->trace_controller_->min_col(i));
+	    size_type max_col = std::min(max_br-1,params->trace_controller_->max_col(i));
     	
 	    for(size_type j=max_col+1; j>min_col;) {
 		j--;
@@ -929,8 +923,8 @@ namespace LocARNA {
 	for (size_type al=r.get_startA(); al<=r.get_endA(); al++) {
 	
 	    // restrict range for left ends of bl due to trace controller
-	    size_type min_bl = std::max(r.get_startB(), params->trace_controller.min_col(al));
-	    size_type max_bl = std::min(r.get_endB(),   params->trace_controller.max_col(al));
+	    size_type min_bl = std::max(r.get_startB(), params->trace_controller_->min_col(al));
+	    size_type max_bl = std::min(r.get_endB(),   params->trace_controller_->max_col(al));
     
 	    for (size_type bl=min_bl; bl<=max_bl; bl++) {
 	    
@@ -995,11 +989,11 @@ namespace LocARNA {
 
 
 
-    // ====================================================================================================
-    // ====================================================================================================
+    // ================================================================================
+    // ================================================================================
     // COMPUTING PROBABILITIES
-    // ====================================================================================================
-    // ====================================================================================================
+    // ================================================================================
+    // ================================================================================
 
 
     //===========================================================================
@@ -1024,8 +1018,8 @@ namespace LocARNA {
 	    const Arc &arcB=it->arcB();
 	
 	    // trace_controller validity due to ArcMatches class
-	    assert(params->trace_controller.is_valid_match(arcA.left(),arcB.left()));
-	    assert(params->trace_controller.is_valid_match(arcA.right(),arcB.right()));
+	    assert(params->trace_controller_->is_valid_match(arcA.left(),arcB.left()));
+	    assert(params->trace_controller_->is_valid_match(arcA.right(),arcB.right()));
 	
 	    am_prob(arcA.idx(),arcB.idx()) =
 		(D(arcA,arcB)/(long double)partFunc) //!@todo check: why is that long double? do we need it? should we rather use  pf_t?
@@ -1056,7 +1050,7 @@ namespace LocARNA {
 	// sum the conditional partition functions for all distinct cases
     
 	// consider only arc matchs with a probability of at more than am_prob_threshold
-	double am_prob_threshold=sqrt(params->min_am_prob); // use something quite conservative as threshold, such that user can still control this 
+	double am_prob_threshold=sqrt(params->min_am_prob_); // use something quite conservative as threshold, such that user can still control this 
 	
 	// --------------------------------------------------
 	// cases, where edge is enclosed by arc match
@@ -1065,13 +1059,13 @@ namespace LocARNA {
 	for(size_type al=r.get_startA();al<=r.get_endA();al++){
 
 	    // limit entries due to trace controller
-	    size_type min_col = std::max(r.get_startB(),params->trace_controller.min_col(al));
-	    size_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(al));
+	    size_type min_col = std::max(r.get_startB(),params->trace_controller_->min_col(al));
+	    size_type max_col = std::min(r.get_endB(),params->trace_controller_->max_col(al));
 	    for(size_type bl=min_col; bl<=max_col; bl++){
 	    
 		// trace controller allows trace through (al,bl), but not
 		// necessarily match of al and bl
-		if (! params->trace_controller.is_valid_match(al,bl)) continue;
+		if (! params->trace_controller_->is_valid_match(al,bl)) continue;
 	    
 		const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
 		const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
@@ -1136,12 +1130,12 @@ namespace LocARNA {
 				    for(size_type i=al+1;i<ar;i++){
 				    
 					// limit entries due to trace controller
-					size_type min_col = std::max(bl+1,params->trace_controller.min_col(i));
-					size_type max_col = std::min(br-1,params->trace_controller.max_col(i));
+					size_type min_col = std::max(bl+1,params->trace_controller_->min_col(i));
+					size_type max_col = std::min(br-1,params->trace_controller_->max_col(i));
 				    
 					for(size_type j=min_col;j<=max_col;j++){
 					
-					    if ( ! params->trace_controller.is_valid_match(i,j) ) continue;
+					    if ( ! params->trace_controller_->is_valid_match(i,j) ) continue;
 										
 					    bm_prob(i,j) += 
 						M(i-1,j-1)
@@ -1168,11 +1162,11 @@ namespace LocARNA {
   
 	for(size_type i=r.get_startA();i<=r.get_endA();i++){
 	    // limit entries due to trace controller
-	    size_type min_col = std::max(r.get_startB(),params->trace_controller.min_col(i));
-	    size_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(i));
+	    size_type min_col = std::max(r.get_startB(),params->trace_controller_->min_col(i));
+	    size_type max_col = std::min(r.get_endB(),params->trace_controller_->max_col(i));
 	    for(size_type j=min_col;j<=max_col;j++){
 	    
-		if ( ! params->trace_controller.is_valid_match(i,j) ) continue;
+		if ( ! params->trace_controller_->is_valid_match(i,j) ) continue;
 	    
 		bm_prob(i,j) += M(i-1,j-1) * scoring->exp_basematch(i,j) * Mrev(i,j) * pf_scale;
 	    }
@@ -1184,11 +1178,11 @@ namespace LocARNA {
 	
 	for(size_type i=r.get_startA();i<=r.get_endA();i++){
 	    // limit entries due to trace controller
-	    size_type min_col = std::max(r.get_startB(),params->trace_controller.min_col(i));
-	    size_type max_col = std::min(r.get_endB(),params->trace_controller.max_col(i));
+	    size_type min_col = std::max(r.get_startB(),params->trace_controller_->min_col(i));
+	    size_type max_col = std::min(r.get_endB(),params->trace_controller_->max_col(i));
 	    for(size_type j=min_col;j<=max_col;j++){
 	    
-		if ( ! params->trace_controller.is_valid_match(i,j) ) continue;
+		if ( ! params->trace_controller_->is_valid_match(i,j) ) continue;
 	    
 		bm_prob(i,j)=bm_prob(i,j)/partFunc;
 	    
@@ -1232,7 +1226,7 @@ namespace LocARNA {
     {
 	for(size_type i=1;i<=r.get_endA();i++){
 	    for(size_type j=1;j<=r.get_endB();j++){
-		if (bm_prob(i,j)>=params->min_bm_prob) {
+		if (bm_prob(i,j)>=params->min_bm_prob_) {
 		    out<<i<<" "<<j<<" "<<bm_prob(i,j);
 		    out<<std::endl;
 		}
@@ -1251,7 +1245,7 @@ namespace LocARNA {
 	    const Arc &arcA=it->arcA();
 	    const Arc &arcB=it->arcB();
 	
-	    if (am_prob(arcA.idx(),arcB.idx())>=params->min_am_prob) {
+	    if (am_prob(arcA.idx(),arcB.idx())>=params->min_am_prob_) {
 		out <<arcA.left()<<" "<<arcA.right()<<" "
 		    <<arcB.left()<<" "<<arcB.right()<<" "
 		    <<am_prob(arcA.idx(),arcB.idx())

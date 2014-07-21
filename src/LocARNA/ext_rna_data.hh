@@ -70,6 +70,7 @@ namespace LocARNA {
 		   double p_bpcut,
 		   double p_bpilcut,
 		   double p_uilcut,
+		   double max_bps_length_ratio,
 		   const PFoldParams &pfoldparams);
 
     private:

@@ -122,6 +122,9 @@ namespace LocARNA {
 	//! turn on/off stacking terms
 	bool stacking;
 
+	//! turn on/off new stacking terms
+	bool new_stacking;
+
 	//! turn on/off mea scoring
 	bool mea_scoring;
 
@@ -178,6 +181,7 @@ namespace LocARNA {
 	 * @param exp_probB_ 
 	 * @param temp_ 
 	 * @param stacking_ 
+	 * @param new_stacking_ 
 	 * @param mea_scoring_ 
 	 * @param alpha_factor_ 
 	 * @param beta_factor_ 
@@ -199,6 +203,7 @@ namespace LocARNA {
 		      double exp_probB_,
 		      double temp_,
 		      bool stacking_,
+		      bool new_stacking_,
 		      bool mea_scoring_,
 		      score_t alpha_factor_,
 		      score_t beta_factor_,
@@ -220,6 +225,7 @@ namespace LocARNA {
 	      exp_probB(exp_probB_),
 	      temperature(temp_),
 	      stacking(stacking_),
+	      new_stacking(new_stacking_),
 	      mea_scoring(mea_scoring_),
 	      alpha_factor(alpha_factor_),
 	      beta_factor(beta_factor_),
@@ -253,6 +259,14 @@ namespace LocARNA {
      * for ribosum scoring, sequences have to be upper case and Ts should be
      * converted to Us!!!
      * 
+     * @note The class implements two versions of the stacking score
+     * (controlled by ScoringParams flags stacking and
+     * new_stacking. The first flag lets the class derive the arc
+     * weights for stacked arcs from the conditional probability of
+     * the base pair (i,j) if (i+1,j-1) exists. The new_stacking flag
+     * adds a log odd contribution derived from the joint probability
+     * of (i,j) and (i+1,j-1) to the weight of (i,j).
+     *
      */
     class Scoring {
     public:
@@ -682,11 +696,42 @@ namespace LocARNA {
 	/** 
 	 * @brief Query stacking flag
 	 *
-	 * @return flag, whether stacking probabilities are used
+	 * @return flag, whether stacking is used (old or new stacking terms) 
 	 */
-	bool stacking() const {return params->stacking;}
+	bool stacking() const {return params->stacking || params->new_stacking;}
 
-    };
+
+	/** 
+	 * @brief Is arc of A stackable
+	 * 
+	 * @param a Arc
+	 * 
+	 * @return whether stackable
+	 */
+	bool
+	is_stackable_arcA(const Arc &a) const;
+
+	/** 
+	 * @brief Is arc of B stackable
+	 * 
+	 * @param a Arc
+	 * 
+	 * @return whether stackable
+	 */
+	bool
+	is_stackable_arcB(const Arc &a) const;
+
+	/** 
+	 * @brief Is arc match stackable
+	 * 
+	 * @param am Arc match
+	 * 
+	 * @return whether stackable
+	 */
+	bool
+	is_stackable_am(const ArcMatch &am) const;
+
+    }; // end class Scoring
 
 } // end namespace LocARNA
 

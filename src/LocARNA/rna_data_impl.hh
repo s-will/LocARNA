@@ -199,6 +199,24 @@ namespace LocARNA {
 			      double p_expA,
 			      double p_expB) const;
 
+	
+	typedef std::pair<arc_prob_matrix_t::key_t,arc_prob_matrix_t::value_t> kv_t;
+	typedef std::vector<kv_t> kv_vec_t;
+	
+	// compare for min heap
+	static
+	bool kv_comp(const kv_t &x, const kv_t &y) {
+	    return x.second>y.second;
+	}
+	
+	/** 
+	 * @brief Drop n base pairs with lowest probability
+	 * 
+	 * @param keep the maximum number of base pairs to keep 
+	 */
+	void
+	drop_worst_bps(size_t keep);
+	
     }; // end class RnaDataImpl
     
 

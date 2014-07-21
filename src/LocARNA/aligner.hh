@@ -9,6 +9,8 @@
 #include "scoring_fwd.hh"
 #include "rna_structure.hh"
 
+#include "params.hh"
+
 
 namespace LocARNA {
 
@@ -66,7 +68,6 @@ namespace LocARNA {
 	AlignerImpl *pimpl_;
 
     public:
-    
 
 	/** 
 	 * @brief copy constructor
@@ -84,20 +85,17 @@ namespace LocARNA {
 		
 	/** 
 	 * @brief Construct from parameters
-	 * 
-	 * @param seqA sequence A
-	 * @param seqB sequence B
-	 * @param arc_matches arc matches
 	 * @param ap parameter for aligner
-	 * @param s scoring object
 	 */
-	Aligner(const Sequence &seqA,
-		const Sequence &seqB,
-		const ArcMatches &arc_matches,
-		const AlignerParams *ap,
-		const Scoring *s
-		);
-    
+	Aligner(const AlignerParams &ap);
+	
+	/**
+	 * @brief create with named parameters
+	 * @return parameter object
+	 */
+	static 
+	AlignerParams create() {return AlignerParams();} 
+	
 	//! destructor
 	~Aligner();
 
@@ -177,7 +175,7 @@ namespace LocARNA {
 	 * 
 	 * @return score of the alignment 
 	 */
-	score_t 
+	score_t
 	evaluate();
 
 	/** 

@@ -56,10 +56,10 @@ namespace LocARNA {
     
 	typedef BasePairs__Arc Arc; //!< arc
     protected:
+	const AlignerPParams *params; //!< the parameter for the alignment
+	
 	const Scoring *scoring; //!< the scores
     
-	const AlignerParams *params; //!< the parameter for the alignment
-	
 	const Sequence &seqA; //!< sequence A
 	const BasePairs &bpsA; //!< base pairs A
 	const Sequence &seqB; //!< sequence B
@@ -420,15 +420,19 @@ namespace LocARNA {
 
     public:  
     
-	//! construct with sequences and corresponding sets of basepairs
-	AlignerP(const Sequence &seqA,
-		 const Sequence &seqB,
-		 const ArcMatches &arc_matches, 
-		 const AlignerParams *ap,
-		 const Scoring *s,
-		 const pf_score_t pf_scale=(pf_score_t)1
-		 );
+	/** 
+	 * @brief Construct from parameters
+	 * @param ap parameter for aligner
+	 */
+	AlignerP(const AlignerParams &ap);
     
+	/**
+	 * @brief create with named parameters
+	 * @return parameter object
+	 */
+	static 
+	AlignerPParams create() {return AlignerPParams();} 
+
 	/**
 	 * compute the partition function by the inside algorithm
 	 * and fill the D matrix

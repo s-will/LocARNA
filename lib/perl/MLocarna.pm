@@ -618,6 +618,10 @@ sub convert_dp_to_pp_with_constraints($$$$$$) {
 
     print PP_OUT "\n#SECTION BASEPAIRS\n\n"; 
     
+    if ($read_condprobs) {
+	print PP_OUT "\n#STACK\n";
+    }
+    
     my %pp;
     
     while (my $line=<DP_IN>) {

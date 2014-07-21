@@ -88,36 +88,32 @@ namespace LocARNA {
     
 
     AlignerImpl::AlignerImpl(const AlignerImpl &a)
-	:scoring_(a.scoring_),
-	 mod_scoring_(0),
-	 params_(a.params_),
-	 seqA_(a.seqA_),
-	 seqB_(a.seqB_),
-	 arc_matches_(a.arc_matches_),
-	 bpsA_(a.bpsA_),
-	 bpsB_(a.bpsB_),
-	 r_(a.r_),
-	 Dmat_(a.Dmat_),
-	 Ms_(a.Ms_),
-	 Es_(a.Es_),
-	 Fs_(a.Fs_),
-	 min_i_(a.min_i_),
-	 min_j_(a.min_j_),
-	 max_i_(a.max_i_),
-	 max_j_(a.max_j_),
-	 D_created_(a.D_created_),
-	 alignment_(a.alignment_),
-	 def_scoring_view_(this),
-	 mod_scoring_view_(this)
+	: params_(a.params_),
+	  scoring_(a.scoring_),
+	  mod_scoring_(0),
+	  seqA_(a.seqA_),
+	  seqB_(a.seqB_),
+	  arc_matches_(a.arc_matches_),
+	  bpsA_(a.bpsA_),
+	  bpsB_(a.bpsB_),
+	  r_(a.r_),
+	  Dmat_(a.Dmat_),
+	  Ms_(a.Ms_),
+	  Es_(a.Es_),
+	  Fs_(a.Fs_),
+	  min_i_(a.min_i_),
+	  min_j_(a.min_j_),
+	  max_i_(a.max_i_),
+	  max_j_(a.max_j_),
+	  D_created_(a.D_created_),
+	  alignment_(a.alignment_),
+	  def_scoring_view_(this),
+	  mod_scoring_view_(this),
+	  free_endgaps_(a.free_endgaps_)
     {}
-
-    Aligner::Aligner(const Sequence &seqA, 
-		     const Sequence &seqB,
-		     const ArcMatches &arc_matches,
-		     const AlignerParams *ap,
-		     const Scoring *s
-		     ) 
-	: pimpl_(new AlignerImpl(seqA,seqB,arc_matches,ap,s))
+    
+    Aligner::Aligner(const AlignerParams &ap) 
+	: pimpl_(new AlignerImpl(*(ap.seqA_),*(ap.seqB_),*(ap.arc_matches_),&ap,ap.scoring_))
     {} 
  
 
@@ -127,9 +123,9 @@ namespace LocARNA {
 			     const AlignerParams *ap,
 			     const Scoring *s
 			     )
-	: scoring_(s),
+	: params_(ap),
+	  scoring_(s),
 	  mod_scoring_(0),
-	  params_(ap),
 	  seqA_(seqA), seqB_(seqB),
 	  arc_matches_(arc_matches),
 	  bpsA_(arc_matches_.get_base_pairsA()),
@@ -141,20 +137,21 @@ namespace LocARNA {
 	  max_j_(seqB.length()),
 	  D_created_(false),
 	  alignment_(seqA,seqB),
-	  def_scoring_view_(this),
-	  mod_scoring_view_(this)
+	def_scoring_view_(this),
+	mod_scoring_view_(this),
+	free_endgaps_(params_->free_endgaps_)
     {
-	Ms_.resize(params_->STRUCT_LOCAL?8:1);
-	Es_.resize(params_->STRUCT_LOCAL?4:1);
-	Fs_.resize(params_->STRUCT_LOCAL?4:1);
+	Ms_.resize(params_->struct_local_?8:1);
+	Es_.resize(params_->struct_local_?4:1);
+	Fs_.resize(params_->struct_local_?4:1);
     
 	Dmat_.resize(bpsA_.num_bps(),bpsB_.num_bps());
 	Dmat_.fill(infty_score_t::neg_infty);
     
-	for (size_t k=0; k<(params_->STRUCT_LOCAL?8:1); k++) {
+	for (size_t k=0; k<(params_->struct_local_?8:1); k++) {
 	    Ms_[k].resize(seqA_.length()+1,seqB_.length()+1);
 	}
-	for (size_t k=0; k<(params_->STRUCT_LOCAL?4:1); k++) {
+	for (size_t k=0; k<(params_->struct_local_?4:1); k++) {
 	    Es_[k].resize(seqB_.length()+1);
 	}
     }
@@ -190,14 +187,14 @@ namespace LocARNA {
     
 	assert(0<=state && state<4);
     
-	assert(params_->trace_controller.is_valid(i,j));
+	assert(params_->trace_controller_->is_valid(i,j));
     
 	M_matrix_t &M = Ms_[state];
 	ScoreVector &E = Es_[state];
 	infty_score_t &F = Fs_[state];
     
 	// compute E entry
-	if ( (! params_->constraints.aligned_in_a(i)) ) {
+	if ( (! params_->constraints_->aligned_in_a(i)) ) {
 	    // due to constraints, i can be deleted
 	    E[j] = 
 		std::max( E[j] + sv.scoring()->gapA(i),
@@ -208,7 +205,7 @@ namespace LocARNA {
 	}
     
 	// compute F entry
-	if ( (! params_->constraints.aligned_in_b(j)) ) {
+	if ( (! params_->constraints_->aligned_in_b(j)) ) {
 	    // due to constraints, j can be inserted
 	    F=std::max( F + sv.scoring()->gapB(j),
 			M(i,j-1) + sv.scoring()->gapB(j) + sv.scoring()->indel_opening() );
@@ -222,7 +219,7 @@ namespace LocARNA {
 	tainted_infty_score_t max_score = infty_score_t::neg_infty;
     
 	// base match
-	if (params_->constraints.allowed_edge(i,j)) {
+	if (params_->constraints_->allowed_edge(i,j)) {
 	    max_score = M(i-1,j-1) + sv.scoring()->basematch(i,j);
 	}
     
@@ -237,7 +234,7 @@ namespace LocARNA {
 	// standard case for arc match (without restriction to lonely pairs)
 	//    
     
-	if ( params_->constraints.allowed_edge(i,j) ) {
+	if ( params_->constraints_->allowed_edge(i,j) ) {
 	    const BasePairs::RightAdjList &adjlA = bpsA_.right_adjlist(i);
 	    const BasePairs::RightAdjList &adjlB = bpsB_.right_adjlist(j);
 	
@@ -248,7 +245,7 @@ namespace LocARNA {
 		for (BasePairs::RightAdjList::const_iterator arcB=adjlB.begin();
 		     arcB!=adjlB.end() && arcB->left() > bl ; ++arcB) {
 		
-		    // no need to check (params_->constraints.allowed_edge(arcA->left(),arcB->left()))
+		    // no need to check (params_->constraints_->allowed_edge(arcA->left(),arcB->left()))
 		    // or other "constraints"
 		    // because for these arc matches holds that sv.D(*arcA,*arcB)==neg_infty
 		
@@ -375,10 +372,10 @@ namespace LocARNA {
 	pos_type i;
 	for (i=al+1; i<ar; i++) {
 
-	    if (params_->trace_controller.min_col(i)>bl) break; // fill only as long as column bl is accessible
+	    if (params_->trace_controller_->min_col(i)>bl) break; // fill only as long as column bl is accessible
 
 	    if (!indel_score.is_neg_infty()) {
-		if (params_->constraints.aligned_in_a(i)) {
+		if (params_->constraints_->aligned_in_a(i)) {
 		    indel_score=infty_score_t::neg_infty;
 		}
 		else if (!exclA && globalA) {
@@ -390,8 +387,8 @@ namespace LocARNA {
 
 	// fill entries left of valid entries 
 	for ( ; i<ar; i++) {
-	    assert(params_->trace_controller.min_col(i)>bl);
-	    M(i,params_->trace_controller.min_col(i)-1) = infty_score_t::neg_infty; 
+	    assert(params_->trace_controller_->min_col(i)>bl);
+	    M(i,params_->trace_controller_->min_col(i)-1) = infty_score_t::neg_infty; 
 	}
     
 	// init first row al
@@ -404,9 +401,9 @@ namespace LocARNA {
 	}
     
 	pos_type j;
-	for (j=bl+1 ; j < std::min(br, params_->trace_controller.max_col(al)+1) ; j++) {
+	for (j=bl+1 ; j < std::min(br, params_->trace_controller_->max_col(al)+1) ; j++) {
 	    if (!indel_score.is_neg_infty()) {
-		if (params_->constraints.aligned_in_b(j)) {
+		if (params_->constraints_->aligned_in_b(j)) {
 		    indel_score=infty_score_t::neg_infty;
 		}
 		else if (!exclB && globalB && !indel_score.is_neg_infty()) {
@@ -420,7 +417,7 @@ namespace LocARNA {
 	// here j points to one position right of the last initialized entry in row al
 	for (i=al+1; i<ar; i++) {
 	    for (;
-		 j<std::min(br,params_->trace_controller.max_col(i)+1); ++j) {
+		 j<std::min(br,params_->trace_controller_->max_col(i)+1); ++j) {
 		M(i-1,j)=infty_score_t::neg_infty;
 	    }
 	}
@@ -472,8 +469,8 @@ namespace LocARNA {
 	    Fs_[E_NO_NO]=infty_score_t::neg_infty;
 	
 	    // limit entries due to trace controller
-	    pos_type min_col = std::max(bl+1,params_->trace_controller.min_col(i));
-	    pos_type max_col = std::min(br-1,params_->trace_controller.max_col(i));
+	    pos_type min_col = std::max(bl+1,params_->trace_controller_->min_col(i));
+	    pos_type max_col = std::min(br-1,params_->trace_controller_->max_col(i));
 	
 	    for (pos_type j=min_col; j<=max_col; j++) {
 		Ms_[E_NO_NO](i,j)=align_noex(E_NO_NO,al,bl,i,j,def_scoring_view_);
@@ -491,12 +488,12 @@ namespace LocARNA {
 	    for (pos_type i=al+1; i<ar; i++) { 
 	
 		// limit entries due to trace controller
-		pos_type min_col = std::max(bl+1,params_->trace_controller.min_col(i));
-		pos_type max_col = std::min(br-1,params_->trace_controller.max_col(i));
+		pos_type min_col = std::max(bl+1,params_->trace_controller_->min_col(i));
+		pos_type max_col = std::min(br-1,params_->trace_controller_->max_col(i));
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(
-					      params_->constraints.aligned_in_a(i)?infty_score_t::neg_infty:Ms_[state](i-1,j),
+					      params_->constraints_->aligned_in_a(i)?infty_score_t::neg_infty:Ms_[state](i-1,j),
 					      Ms_[E_NO_NO](i,j)
 					      );
 		}
@@ -505,12 +502,12 @@ namespace LocARNA {
 	    state=E_NO_OP;
 	    for (pos_type i=al+1; i<ar; i++) {
 		// limit entries due to trace controller
-		pos_type min_col = std::max(bl+1,params_->trace_controller.min_col(i));
-		pos_type max_col = std::min(br-1,params_->trace_controller.max_col(i));
+		pos_type min_col = std::max(bl+1,params_->trace_controller_->min_col(i));
+		pos_type max_col = std::min(br-1,params_->trace_controller_->max_col(i));
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(
-					      params_->constraints.aligned_in_b(j)?infty_score_t::neg_infty:Ms_[state](i,j-1),
+					      params_->constraints_->aligned_in_b(j)?infty_score_t::neg_infty:Ms_[state](i,j-1),
 					      Ms_[E_NO_NO](i,j)
 					      );
 		}
@@ -520,8 +517,8 @@ namespace LocARNA {
 	    for (pos_type i=al+1; i<ar; i++) {
 		Fs_[state]=infty_score_t::neg_infty;
 		// limit entries due to trace controller
-		pos_type min_col = std::max(bl+1,params_->trace_controller.min_col(i));
-		pos_type max_col = std::min(br-1,params_->trace_controller.max_col(i));
+		pos_type min_col = std::max(bl+1,params_->trace_controller_->min_col(i));
+		pos_type max_col = std::min(br-1,params_->trace_controller_->max_col(i));
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(align_noex(state,al,bl,i,j,def_scoring_view_),
@@ -532,12 +529,12 @@ namespace LocARNA {
 	    state=E_OP_X;
 	    for (pos_type i=al+1; i<ar; i++) {
 		// limit entries due to trace controller
-		pos_type min_col = std::max(bl+1,params_->trace_controller.min_col(i));
-		pos_type max_col = std::min(br-1,params_->trace_controller.max_col(i));
+		pos_type min_col = std::max(bl+1,params_->trace_controller_->min_col(i));
+		pos_type max_col = std::min(br-1,params_->trace_controller_->max_col(i));
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(
-					      params_->constraints.aligned_in_a(i)?infty_score_t::neg_infty:Ms_[state](i-1,j),
+					      params_->constraints_->aligned_in_a(i)?infty_score_t::neg_infty:Ms_[state](i-1,j),
 					      Ms_[E_NO_X](i,j)
 					      );
 		}
@@ -547,8 +544,8 @@ namespace LocARNA {
 	    for (pos_type i=al+1; i<ar; i++) {
 		Fs_[state]=infty_score_t::neg_infty;
 		// limit entries due to trace controller
-		pos_type min_col = std::max(bl+1,params_->trace_controller.min_col(i));
-		pos_type max_col = std::min(br-1,params_->trace_controller.max_col(i));
+		pos_type min_col = std::max(bl+1,params_->trace_controller_->min_col(i));
+		pos_type max_col = std::min(br-1,params_->trace_controller_->max_col(i));
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(align_noex(state,al,bl,i,j,def_scoring_view_),
@@ -559,12 +556,12 @@ namespace LocARNA {
 	    state=E_X_OP;
 	    for (pos_type i=al+1; i<ar; i++) {
 		// limit entries due to trace controller
-		pos_type min_col = std::max(bl+1,params_->trace_controller.min_col(i));
-		pos_type max_col = std::min(br-1,params_->trace_controller.max_col(i));
+		pos_type min_col = std::max(bl+1,params_->trace_controller_->min_col(i));
+		pos_type max_col = std::min(br-1,params_->trace_controller_->max_col(i));
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(
-					      params_->constraints.aligned_in_b(j)?infty_score_t::neg_infty:Ms_[state](i,j-1),
+					      params_->constraints_->aligned_in_b(j)?infty_score_t::neg_infty:Ms_[state](i,j-1),
 					      Ms_[E_X_NO](i,j)
 					      );
 		}
@@ -574,8 +571,8 @@ namespace LocARNA {
 	    for (pos_type i=al+1; i<ar; i++) {
 		Fs_[state]=infty_score_t::neg_infty;
 		// limit entries due to trace controller
-		pos_type min_col = std::max(bl+1,params_->trace_controller.min_col(i));
-		pos_type max_col = std::min(br-1,params_->trace_controller.max_col(i));
+		pos_type min_col = std::max(bl+1,params_->trace_controller_->min_col(i));
+		pos_type max_col = std::min(br-1,params_->trace_controller_->max_col(i));
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = 
@@ -591,7 +588,7 @@ namespace LocARNA {
     // for the subproblem al,bl,max_ar,max_br
     //
     // pre: M matrices are computed by a call to 
-    //      align_in_arcmatch(al,max_ar,bl,max_br,params_->STRUCT_LOCAL)
+    //      align_in_arcmatch(al,max_ar,bl,max_br,params_->struct_local_)
     //
     void 
     AlignerImpl::fill_D_entries(pos_type al, pos_type bl)
@@ -609,7 +606,7 @@ namespace LocARNA {
 	    pos_type br = arcB.right();
 	
 	    infty_score_t m=Ms_[0](ar-1,br-1);
-	    if (params_->STRUCT_LOCAL) {
+	    if (params_->struct_local_) {
 		// if we align structure local
 		// we need to determine the maximum of entries in Ms_[k],
 		// where k is a non-open state
@@ -623,12 +620,15 @@ namespace LocARNA {
 	    //std::cout <<"["<< am.arcA() << "," <<am.arcB() <<"]:" << D(am) << std::endl;
 
 	    if (scoring_->stacking()) {
-		if (arc_matches_.is_stackable(am)) {
+		if (arc_matches_.exists_inner_arc_match(am)
+		    &&
+		    scoring_->is_stackable_am(am)
+		    ) {
 		    const ArcMatch &inner_am = arc_matches_.inner_arc_match(am);
 		
 		    D(am) =
 			std::max(D(am),
-				 D(inner_am) + scoring_->arcmatch_stacked(am));
+				 D(inner_am) + scoring_->arcmatch(am,true));
 		}
 	    }
 	}
@@ -647,15 +647,17 @@ namespace LocARNA {
 	    pos_type br = am.arcB().right()-1;
 
 	    // only for arc matches which can occur paired with an inner arc match (no lonely pairs) 
-	    //
-	    // when using stacking scores, the am has to be stackable to the inner arc,
-	    // without using stacking scores, it suffices that an inner arc exists!
-	    if ((scoring_->stacking() && arc_matches_.is_stackable(am))
-		|| (!scoring_->stacking() && arc_matches_.exists_inner_arc_match(am))) { 
+	    // therefore check whether inner arc exists
+	    // if stacking scores are used, the am has to be stackable to the inner arc,
+	    // i.e. the joint probabilities have to be greater than 0
+	    if (arc_matches_.exists_inner_arc_match(am)
+		&&
+		( ! scoring_->stacking() || scoring_->is_stackable_am(am) )
+		) { 
 		const ArcMatch& inner_am = arc_matches_.inner_arc_match(am);
 	    
 		infty_score_t m=Ms_[0](ar-1,br-1);
-		if (params_->STRUCT_LOCAL) {
+		if (params_->struct_local_) {
 		    // if we align structure local
 		    // we need to determine the maximum of entries in Ms_[k],
 		    // where k is a non-open state
@@ -699,14 +701,14 @@ namespace LocARNA {
 	// for al in r_.get_endA() .. r_.get_startA
 	for (pos_type al=r_.get_endA()+1; al>r_.get_startA(); ) { al--; 
 	
-	    pos_type max_bl = std::min(r_.get_endB(),params_->trace_controller.max_col(al));
-	    pos_type min_bl = std::max(r_.get_startB(),params_->trace_controller.min_col(al));
+	    pos_type max_bl = std::min(r_.get_endB(),params_->trace_controller_->max_col(al));
+	    pos_type min_bl = std::max(r_.get_startB(),params_->trace_controller_->min_col(al));
 	
 	    // for bl in max_bl .. min_bl
 	    for (pos_type bl=max_bl+1; bl > min_bl;) { bl--; 
 	    
-		if (! ( params_->constraints.allowed_edge(al,bl)
-			&& params_->trace_controller.is_valid_match(al,bl) )
+		if (! ( params_->constraints_->allowed_edge(al,bl)
+			&& params_->trace_controller_->is_valid_match(al,bl) )
 		    ) continue;
 	    
 		// ------------------------------------------------------------
@@ -720,7 +722,8 @@ namespace LocARNA {
 	    
 		// get the maximal right ends of any arc match with left ends (al,bl)
 		// in noLP mode, we don't consider cases without immediately enclosing arc match
-		arc_matches_.get_max_right_ends(al,bl,&max_ar,&max_br,params_->no_lonely_pairs);
+		arc_matches_.get_max_right_ends(al,bl,
+						&max_ar,&max_br,params_->no_lonely_pairs_);
 	    
 		// check whether there is an arc match at all
 		if (al==max_ar || bl == max_br) continue;
@@ -728,7 +731,7 @@ namespace LocARNA {
 		// ------------------------------------------------------------
 		// align under the maximal pair of arcs
 		//
-		align_in_arcmatch(al,max_ar,bl,max_br,params_->STRUCT_LOCAL);
+		align_in_arcmatch(al,max_ar,bl,max_br,params_->struct_local_);
 	    
 		//std::cout << al << ","<<bl<<":"<<std::endl
 		//	      << Ms_[E_NO_NO] << std::endl;
@@ -736,7 +739,7 @@ namespace LocARNA {
 		// ------------------------------------------------------------
 		// fill D matrix entries
 		//
-		if (params_->no_lonely_pairs) {
+		if (params_->no_lonely_pairs_) {
 		    fill_D_entries_noLP(al,bl);
 		} else {
 		    fill_D_entries(al,bl);
@@ -759,22 +762,22 @@ namespace LocARNA {
 	init_state(E_NO_NO,
 		   r_.get_startA()-1,r_.get_endA()+1,
 		   r_.get_startB()-1,r_.get_endB()+1,
-		   !params_->free_endgaps.allow_left_2(),false,
-		   !params_->free_endgaps.allow_left_1(),false,
+		   !free_endgaps_.allow_left_2(),false,
+		   !free_endgaps_.allow_left_1(),false,
 		   def_scoring_view_);
     
 	// need to handle anchor constraints:
 	// search maximum to the right of (or at) rightmost anchor constraint
 	//
-	AnchorConstraints::size_pair_t right_anchor = params_->constraints.rightmost_anchor();
-	//AnchorConstraints::size_pair_t left_anchor  = params_->constraints.leftmost_anchor();
+	AnchorConstraints::size_pair_t right_anchor = params_->constraints_->rightmost_anchor();
+	//AnchorConstraints::size_pair_t left_anchor  = params_->constraints_->leftmost_anchor();
     
 	for (pos_type i=r_.get_startA(); i<=r_.get_endA(); i++) {
 	    Fs_[E_NO_NO]=infty_score_t::neg_infty;
 	
 	    // limit entries due to trace controller
-	    pos_type min_col = std::max(r_.get_startB(),params_->trace_controller.min_col(i));
-	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller.max_col(i));
+	    pos_type min_col = std::max(r_.get_startB(),params_->trace_controller_->min_col(i));
+	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller_->max_col(i));
 
 	    for (pos_type j=min_col; j<=max_col; j++) {
 		M(i,j) = align_noex( E_NO_NO, r_.get_startA()-1, r_.get_startB()-1, i, j,def_scoring_view_ );	      
@@ -788,12 +791,12 @@ namespace LocARNA {
 	max_j_=r_.get_endB();
     
     
-	if (params_->free_endgaps.allow_right_2()) {
+	if (free_endgaps_.allow_right_2()) {
 	    // search maximum in the rightmost row r_.get_endB()
 	    // pay attention for anchor constraints AND trace controller
 	
 	    for (pos_type i=std::max(right_anchor.first+1,r_.get_startA()); i<=r_.get_endA(); i++) {
-		if ( params_->trace_controller.max_col(i)>=r_.get_endB() && M(i,r_.get_endB()) > max_score ) {
+		if ( params_->trace_controller_->max_col(i)>=r_.get_endB() && M(i,r_.get_endB()) > max_score ) {
 		    max_score = M(i,r_.get_endB());
 		    max_i_=i; 
 		    max_j_=r_.get_endB();
@@ -801,13 +804,13 @@ namespace LocARNA {
 	    }
 	}
     
-	if (params_->free_endgaps.allow_right_1()) {
+	if (free_endgaps_.allow_right_1()) {
 	    // search maximum in the last column r_.get_endA()
 	    // pay attention for anchor constraints AND trace controller
 	
 	    // limit entries due to trace controller
-	    pos_type min_col = std::max(std::max(right_anchor.second+1,r_.get_startB()),params_->trace_controller.min_col(r_.get_endA()));
-	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller.max_col(r_.get_endA()));
+	    pos_type min_col = std::max(std::max(right_anchor.second+1,r_.get_startB()),params_->trace_controller_->min_col(r_.get_endA()));
+	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller_->max_col(r_.get_endA()));
 
 	
 	    for (pos_type j=min_col; j<=max_col; j++) {
@@ -839,9 +842,9 @@ namespace LocARNA {
 	// need to handle anchor constraints:
 	// search maximum to the right of (or at) rightmost anchor constraint
 	//
-	AnchorConstraints::size_pair_t right_anchor = params_->constraints.rightmost_anchor();
+	AnchorConstraints::size_pair_t right_anchor = params_->constraints_->rightmost_anchor();
     
-	AnchorConstraints::size_pair_t left_anchor = params_->constraints.leftmost_anchor();
+	AnchorConstraints::size_pair_t left_anchor = params_->constraints_->leftmost_anchor();
 
 	//AnchorConstraints::size_pair_t right_anchor = AnchorConstraints::size_pair_t(r_.get_startA(),r_.get_startB());//dummy
     
@@ -851,8 +854,8 @@ namespace LocARNA {
 	    Fs_[E_NO_NO]=infty_score_t::neg_infty;
 
 	    // limit entries due to trace controller
-	    pos_type min_col = std::max(r_.get_startB(),params_->trace_controller.min_col(i));
-	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller.max_col(i));
+	    pos_type min_col = std::max(r_.get_startB(),params_->trace_controller_->min_col(i));
+	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller_->max_col(i));
 
 	    for (pos_type j=min_col; j<=max_col; j++) {
 	    
@@ -893,8 +896,8 @@ namespace LocARNA {
 	for (pos_type i=r_.get_startA(); i<=r_.get_endA(); i++) {
 
 	    // limit entries due to trace controller
-	    pos_type min_col = std::max(r_.get_startB(),params_->trace_controller.min_col(i));
-	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller.max_col(i));
+	    pos_type min_col = std::max(r_.get_startB(),params_->trace_controller_->min_col(i));
+	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller_->max_col(i));
 
 	    for (pos_type j=min_col; j<=max_col; j++) {
 		M(i,j) = 
@@ -921,7 +924,7 @@ namespace LocARNA {
     
 	if (!D_created_) align_D();
 
-	if (params_->SEQU_LOCAL) {
+	if (params_->sequ_local_) {
 	    return align_top_level_locally(def_scoring_view_);
 	} else { // sequence global alignment
 	
@@ -955,8 +958,8 @@ namespace LocARNA {
 
 	// std::cout << "trace_arcmatch " << am.arcA() << " " << am.arcB() <<std::endl;
 
-	assert(params_->trace_controller.is_valid_match(am.arcA().left(),am.arcB().left()));
-	assert(params_->trace_controller.is_valid_match(am.arcA().right(),am.arcB().right()));
+	assert(params_->trace_controller_->is_valid_match(am.arcA().left(),am.arcB().left()));
+	assert(params_->trace_controller_->is_valid_match(am.arcA().right(),am.arcB().right()));
     
 	const Arc &arcA=am.arcA();
 	const Arc &arcB=am.arcB();
@@ -973,8 +976,8 @@ namespace LocARNA {
 	    if (arc_matches_.exists_inner_arc_match(am)) { 
 		const ArcMatch &inner_am = arc_matches_.inner_arc_match(am);
 	    
-		if (D(am) == D(inner_am) + scoring_->arcmatch_stacked(am)) {
-		
+		if (D(am) == D(inner_am) + scoring_->arcmatch(am,true)) {
+		    
 		    const Arc & arcAI = inner_am.arcA();
 		    const Arc & arcBI = inner_am.arcB();
 		
@@ -996,10 +999,10 @@ namespace LocARNA {
     
 	// first recompute M
 	align_in_arcmatch(al,ar, bl,br,
-			  params_->STRUCT_LOCAL);
+			  params_->struct_local_);
     
 	// then, trace in new M
-	if (!params_->STRUCT_LOCAL) {
+	if (!params_->struct_local_) {
 	    trace_in_arcmatch(0,al,ar-1,bl,br-1,false,def_scoring_view_);
 	} else {
 	    for (pos_type k=0; k<4; k++) {
@@ -1016,8 +1019,8 @@ namespace LocARNA {
     
 	//std::cout << "trace_arcmatch_noLP " << am.arcA() << " " << am.arcB() <<std::endl;
     
-	assert(params_->trace_controller.is_valid_match(am.arcA().left(),am.arcB().left()));
-	assert(params_->trace_controller.is_valid_match(am.arcA().right(),am.arcB().right()));
+	assert(params_->trace_controller_->is_valid_match(am.arcA().left(),am.arcB().left()));
+	assert(params_->trace_controller_->is_valid_match(am.arcA().right(),am.arcB().right()));
     
     
 	assert(arc_matches_.exists_inner_arc_match(am));
@@ -1036,10 +1039,10 @@ namespace LocARNA {
 	} else {
 	    // first recompute M
 	    align_in_arcmatch(arcAI.left(),arcAI.right(), arcBI.left(),arcBI.right(),
-			      params_->STRUCT_LOCAL);
+			      params_->struct_local_);
 	
 	    // then, trace in new M
-	    if (!params_->STRUCT_LOCAL) {
+	    if (!params_->struct_local_) {
 		trace_in_arcmatch(0,arcAI.left(),arcAI.right()-1,arcBI.left(),arcBI.right()-1,false,def_scoring_view_);
 	    } else {
 		for (pos_type k=0; k<4; k++) {
@@ -1070,8 +1073,8 @@ namespace LocARNA {
 	// std::cout << i << " " << j << " " << sv.scoring()->basematch(i,j)<<std::endl;
     
 	// match
-	if ( params_->constraints.allowed_edge(i,j)
-	     && params_->trace_controller.is_valid(i-1,j-1)
+	if ( params_->constraints_->allowed_edge(i,j)
+	     && params_->trace_controller_->is_valid(i-1,j-1)
 	     && M(i,j) ==  M(i-1,j-1)+sv.scoring()->basematch(i,j) ) {
 	    trace_in_arcmatch(state,oal,i-1,obl,j-1,tl,sv);
 	    alignment_.append(i,j);
@@ -1080,16 +1083,16 @@ namespace LocARNA {
 
 	if ( sv.scoring()->indel_opening() == 0 ) { // base del and ins, linear cost
 	    // del
-	    if ( (!params_->constraints.aligned_in_a(i))
-		 && params_->trace_controller.is_valid(i-1,j)
+	    if ( (!params_->constraints_->aligned_in_a(i))
+		 && params_->trace_controller_->is_valid(i-1,j)
 		 && M(i,j) == M(i-1,j)+sv.scoring()->gapA(i)) {
 		trace_in_arcmatch(state,oal,i-1,obl,j,tl,sv);
 		alignment_.append(i,-1);
 		return;
 	    }
 	    // ins
-	    if ( (!params_->constraints.aligned_in_b(j))
-		 && params_->trace_controller.is_valid(i,j-1)
+	    if ( (!params_->constraints_->aligned_in_b(j))
+		 && params_->trace_controller_->is_valid(i,j-1)
 		 && M(i,j) == M(i,j-1)+sv.scoring()->gapB(j)) {
 		trace_in_arcmatch(state,oal,i,obl,j-1,tl,sv);
 		alignment_.append(-1,j);
@@ -1102,12 +1105,12 @@ namespace LocARNA {
 	    score_t gap_cost=sv.scoring()->indel_opening();
 	    for (pos_type k=1;
 		 (i >= oal+k)
-		     && (! params_->constraints.aligned_in_a(i-k+1));
+		     && (! params_->constraints_->aligned_in_a(i-k+1));
 		 k++)
 		{
 		    // break if gap becomes invalid due to trace controller
 		    // (it is safe to break, because of trace controller's monotonicity)
-		    if (! params_->trace_controller.is_valid(i-k,j)) break;
+		    if (! params_->trace_controller_->is_valid(i-k,j)) break;
 
 		    gap_cost += sv.scoring()->gapA(i-k+1);
 	    
@@ -1125,12 +1128,12 @@ namespace LocARNA {
 	    gap_cost=sv.scoring()->indel_opening();
 	    for (pos_type k=1; 
 		 (j >= obl+k)
-		     && (! params_->constraints.aligned_in_b(j-k+1));
+		     && (! params_->constraints_->aligned_in_b(j-k+1));
 		 k++)
 		{
 		    // break if gap becomes invalid due to trace controller
 		    // (it is safe to break, because of trace controller's monotonicity)
-		    if (! params_->trace_controller.is_valid(i,j-k)) break;
+		    if (! params_->trace_controller_->is_valid(i,j-k)) break;
 
 		    gap_cost += sv.scoring()->gapB(j-k+1);
 		    if (M(i,j) == M(i,j-k) + gap_cost) {
@@ -1146,8 +1149,8 @@ namespace LocARNA {
 	}
 
 	// only consider arc match cases if edge (i,j) is allowed and valid!
-	if ( ! (params_->constraints.allowed_edge(i,j) 
-		&& params_->trace_controller.is_valid(i-1,j-1))
+	if ( ! (params_->constraints_->allowed_edge(i,j) 
+		&& params_->trace_controller_->is_valid(i-1,j-1))
 	     ) return;
     
     
@@ -1188,7 +1191,7 @@ namespace LocARNA {
 	    
 		// do the trace below the arc match
 	    
-		if (params_->no_lonely_pairs) {
+		if (params_->no_lonely_pairs_) {
 		    trace_arcmatch_noLP(am);
 		} else {
 		    trace_arcmatch(am);
@@ -1216,14 +1219,14 @@ namespace LocARNA {
 	// 	 <<" bl:"<<bl<<" j:"<<j<<" :: "<< M(i,j) <<endl;
     
     
-	assert(params_->trace_controller.is_valid(i,j));
+	assert(params_->trace_controller_->is_valid(i,j));
     
     
 	// terminate traceback if
 	// * trace on toplevel
 	// * sequence local, and
 	// * entry == 0
-	if (tl && params_->SEQU_LOCAL && M(i,j)==(infty_score_t)0) {
+	if (tl && params_->sequ_local_ && M(i,j)==(infty_score_t)0) {
 	    min_i_=i;
 	    min_j_=j;
 	    return;
@@ -1235,7 +1238,8 @@ namespace LocARNA {
 		|| state==E_X_NO) {
 	    	    
 		// pad with gap edges, unless in special cases (local/semi-local alignment)
-		if (!(tl && (params_->SEQU_LOCAL || params_->free_endgaps.allow_left_1()))) {
+		if (!(tl && 
+		      (params_->sequ_local_ || free_endgaps_.allow_left_1()))) {
 		    for (int k=bl+1;k<=j;k++) {
 			alignment_.append(-1,k);
 		    }
@@ -1252,7 +1256,8 @@ namespace LocARNA {
 		|| state==E_NO_X) {
 	    
 		// pad with gap edges, unless in special cases (local/semi-local alignment)
-		if (!(tl && ( params_->SEQU_LOCAL || params_->free_endgaps.allow_left_2()))) {
+		if (!(tl && 
+		      ( params_->sequ_local_ || free_endgaps_.allow_left_2()))) {
 		    for (int k=al+1;k<=i;k++) {
 			alignment_.append(k,-1);
 		    }
@@ -1324,7 +1329,7 @@ namespace LocARNA {
     void
     AlignerImpl::trace(ScoringView sv) {
 	// pre: last call align_in_arcmatch(r_.get_startA()-1,r_.get_endA()+1,r_.get_startB()-1,r_.get_endB()+1);
-	//      or align_top_level_locally for SEQU_LOCAL alignent
+	//      or align_top_level_locally for sequ_local_ alignent
     
 	// reset the alignment strings (to empty strings)
 	// such that they can be written again during the trace

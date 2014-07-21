@@ -6,6 +6,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 #include "aux.hh"
 #include "pfold_params.hh"
@@ -38,11 +39,15 @@ namespace LocARNA {
 
     RnaData::RnaData(const std::string &filename,
 		     double p_bpcut,
-		     const PFoldParams &pfoldparams)
+		     double max_bps_length_ratio,
+		     const PFoldParams &pfoldparams
+		     )
 	: pimpl_(new RnaDataImpl(this,
-				 p_bpcut)) {
+				 p_bpcut
+				 )) {
 	bool complete=
-	    read_autodetect(filename,pfoldparams.stacking());
+	    read_autodetect(filename,
+			    pfoldparams.stacking());
     	
 	if (!complete) {
 	    // recompute all probabilities
@@ -51,7 +56,12 @@ namespace LocARNA {
 			     pfoldparams,false,true); // use given parameters, no in loop, use alifold
 	    
 	    // initialize from RnaEnsemble; note: method is virtual
-	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	    init_from_rna_ensemble(rna_ensemble,
+				   pfoldparams.stacking());
+	}
+	
+	if (max_bps_length_ratio > 0) {
+	    pimpl_->drop_worst_bps(max_bps_length_ratio*pimpl_->sequence_.length());
 	}
     }
     
@@ -131,6 +141,7 @@ namespace LocARNA {
 			   double p_bpcut,
 			   double p_bpilcut,
 			   double p_uilcut,
+			   double max_bps_length_ratio,
 			   const PFoldParams &pfoldparams)
 	: 
 	RnaData(p_bpcut),
@@ -149,6 +160,10 @@ namespace LocARNA {
 	    
 	    // initialize
 	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	}
+	
+	if (max_bps_length_ratio > 0) {
+	    pimpl_->drop_worst_bps(max_bps_length_ratio*length());
 	}
 
     }
@@ -1265,7 +1280,7 @@ namespace LocARNA {
 	    << "#BPCUT "<<format_prob(std::max(p_bpcut_,p_outbpcut)) << std::endl;
 	
 	if (stacking) {
-	    out << "#STACKS"<<std::endl;
+	    out << "#STACK"<<std::endl;
 	}
 	out <<std::endl;
 	
@@ -1509,5 +1524,37 @@ namespace LocARNA {
 	*/
     }
     
+    void
+    RnaDataImpl::drop_worst_bps(size_t keep) {
+	
+	kv_vec_t vec;
+	
+	//std::copy(arc_probs_.begin(),arc_probs_.end(),vec.begin());
+	for (arc_prob_matrix_t::const_iterator it=arc_probs_.begin();
+	     arc_probs_.end() != it;
+	     ++it ) {
+	    vec.push_back(*it);
+	}
+
+	std::make_heap(vec.begin(),vec.end(),kv_comp);
+	
+	while(vec.size()>keep) {
+	    const arc_prob_matrix_t::key_t &key = vec.front().first;
+	    
+	    arc_probs_(key.first,key.second) = 0.0;
+	    arc_2_probs_(key.first,key.second) = 0.0;
+	    std::pop_heap(vec.begin(),vec.end(),kv_comp);
+	    vec.pop_back();
+	}
+    }
+
+    void
+    ExtRnaDataImpl::drop_worst_bps(size_t keep) {
+	
+	std::cerr << "ERROR: ExtRnaDataImpl::drop_worst_bps(size_t) not implemented yet."<<std::endl;
+	exit(-1);
+
+    }
+
 
 } // end namespace LocARNA

@@ -11,6 +11,7 @@
 #include "scoring.hh"
 #include "alignment.hh"
 #include "arc_matches.hh"
+#include "params.hh"
 
 namespace LocARNA {
 
@@ -31,11 +32,10 @@ namespace LocARNA {
 	//! an arc
 	typedef BasePairs__Arc Arc;
 	
+	const AlignerParams *params_; //!< the parameter for the alignment
 	
 	const Scoring *scoring_; //!< the scores
 	Scoring *mod_scoring_; //!< used in normalized scoring, when we need to modify the scoring
-    
-	const AlignerParams *params_; //!< the parameter for the alignment
 	
 	const Sequence &seqA_; //!< sequence A
 	const Sequence &seqB_; //!< sequence B
@@ -245,7 +245,8 @@ namespace LocARNA {
 
 	const UnmodifiedScoringView def_scoring_view_; //!< Default scoring view
 	ModifiedScoringView mod_scoring_view_; //!< Modified scoring view for normalized alignment
-    
+	FreeEndgapsDescription free_endgaps_;
+
 	// ============================================================
 	
 	/** 

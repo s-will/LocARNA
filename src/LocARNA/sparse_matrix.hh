@@ -22,7 +22,7 @@ namespace LocARNA {
      *
      * @see Matrix
      */
-
+    
     
     template <typename T>
     class SparseMatrix {

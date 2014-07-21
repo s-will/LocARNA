@@ -1,4 +1,4 @@
- /**
+/**
  * \file locarna.cc
  *
  * \brief Defines main function of locarna
@@ -67,6 +67,11 @@ struct command_line_parameters {
     //! only pairs with a probability of at least min_prob are taken into account
     double min_prob; 
     
+    //! maximal ratio of number of base pairs divided by sequence
+    //! length. This serves as a second filter on the "significant"
+    //! base pairs.
+    double max_bps_length_ratio;
+
     int match_score; //!< match score
     
     int mismatch_score; //!< mismatch score
@@ -104,9 +109,13 @@ struct command_line_parameters {
     //! maximal difference for positions of alignment
     //! traces (only used for ends of arcs)
     int max_diff; 
-    
+
     //! maximal difference between two arc ends, -1 is off
     int max_diff_am;
+
+    //! maximal difference for alignment traces, at arc match
+    //! positions
+    int max_diff_at_am;
 
     //! pairwise reference alignment for max-diff heuristic,
     //!separator &
@@ -162,7 +171,9 @@ struct command_line_parameters {
 
     bool opt_stopwatch; //!< whether to print verbose output
     
-    bool opt_stacking; //!< whether to stacking
+    bool opt_stacking; //!< whether to use special stacking arcmatch score
+
+    bool opt_new_stacking; //!< whether to use new stacking contributions
 
     std::string ribosum_file; //!< ribosum_file
     bool use_ribosum; //!< use_ribosum
@@ -235,7 +246,8 @@ option_def my_options[] = {
     {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
     {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
-    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},   
+    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},
+    {"new-stacking",0,&clp.opt_new_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use new stacking terms (needs stack-probs by RNAfold -p2)"},   
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
 
@@ -264,8 +276,10 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
+    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
     {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff","Maximal difference for alignment traces"},
+    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff","Maximal difference for alignment traces, only at arc match positions"},
     {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
     {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
     {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
@@ -456,11 +470,14 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
+    PFoldParams pfparams(clp.no_lonely_pairs, clp.opt_stacking || clp.opt_new_stacking);
     
     RnaData *rna_dataA=0;
     try {
-	rna_dataA = new RnaData(clp.fileA,clp.min_prob,pfparams);
+	rna_dataA = new RnaData(clp.fileA,
+				clp.min_prob,
+				clp.max_bps_length_ratio,
+				pfparams);
     } catch (failure &f) {
 	std::cerr << "ERROR:\tfailed to read from file "<<clp.fileA <<std::endl
 		  << "\t"<< f.what() <<std::endl;
@@ -469,7 +486,10 @@ main(int argc, char **argv) {
     
     RnaData *rna_dataB=0;
     try {
-	rna_dataB = new RnaData(clp.fileB,clp.min_prob,pfparams);
+	rna_dataB = new RnaData(clp.fileB,
+				clp.min_prob,
+				clp.max_bps_length_ratio,
+				pfparams);
     } catch (failure &f) {
 	std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
 		  << "       "<< f.what() <<std::endl;
@@ -563,12 +583,15 @@ main(int argc, char **argv) {
 	arc_matches = new ArcMatches(seqA,
 				     seqB,
 				     clp.arcmatch_scores_file,
-				     (clp.opt_read_arcmatch_probs
-				      ?((clp.mea_beta*clp.probability_scale)/100)
-				      :-1),
-				     ((clp.max_diff_am!=-1)
-				      ?(size_type)clp.max_diff_am
-				      :std::max(lenA,lenB)),
+				     clp.opt_read_arcmatch_probs
+				     ? ((clp.mea_beta*clp.probability_scale)/100)
+				     : -1,
+				     clp.max_diff_am!=-1
+				     ? (size_type)clp.max_diff_am
+				     : std::max(lenA,lenB),
+				     clp.max_diff_at_am!=-1
+				     ? (size_type)clp.max_diff_at_am
+				     : std::max(lenA,lenB),
 				     trace_controller,
 				     seq_constraints
 				     );
@@ -577,7 +600,12 @@ main(int argc, char **argv) {
 	arc_matches = new ArcMatches(*rna_dataA,
 				     *rna_dataB,
 				     clp.min_prob,
-				     (clp.max_diff_am!=-1)?(size_type)clp.max_diff_am:std::max(lenA,lenB),
+				     clp.max_diff_am!=-1
+				     ? (size_type)clp.max_diff_am
+				     : std::max(lenA,lenB),
+				     clp.max_diff_at_am!=-1
+				     ? (size_type)clp.max_diff_at_am
+				     : std::max(lenA,lenB),
 				     trace_controller,
 				     seq_constraints
 				     );
@@ -699,6 +727,7 @@ main(int argc, char **argv) {
 				 my_exp_probB,
 				 clp.temperature,
 				 clp.opt_stacking,
+				 clp.opt_new_stacking,
 				 clp.opt_mea_alignment,
 				 clp.mea_alpha,
 				 clp.mea_beta,
@@ -729,24 +758,25 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Computation of the alignment score
     //
-
-    // parameter for the alignment
-    AlignerParams aligner_params(clp.no_lonely_pairs,
-				 clp.struct_local,
-				 clp.sequ_local,
-				 clp.free_endgaps,
-				 trace_controller,
-				 clp.max_diff_am,
-				 clp.min_am_prob,
-				 clp.min_bm_prob,
-				 clp.opt_stacking,
-				 seq_constraints
-				 );
     
     // initialize aligner object, which does the alignment computation
-    Aligner aligner(seqA,seqB,*arc_matches,&aligner_params,&scoring);
+    Aligner aligner = Aligner::create()
+	. seqA(seqA)
+	. seqB(seqB)
+	. arc_matches(*arc_matches)
+	. scoring(scoring)
+	. no_lonely_pairs(clp.no_lonely_pairs)
+	. struct_local(clp.struct_local)
+	. sequ_local(clp.sequ_local)
+	. free_endgaps(clp.free_endgaps)
+	. max_diff_am(clp.max_diff_am)
+	. max_diff_at_am(clp.max_diff_at_am)
+	. trace_controller(trace_controller)
+	. min_am_prob(clp.min_am_prob)
+	. min_bm_prob(clp.min_bm_prob)
+	. stacking(clp.opt_stacking || clp.opt_new_stacking)
+	. constraints(seq_constraints);
 
-    
     // enumerate suboptimal alignments (using interval splitting)
     if (clp.opt_subopt) {
 	aligner.suboptimal(clp.kbest_k,
@@ -815,11 +845,6 @@ main(int argc, char **argv) {
 	    score_t gap_cost=0; // count linear component of gap cost
 	    score_t gap_numA=0; // count number of gap openings in A
 	    score_t gap_numB=0; // count number of gap openings in B
-	    
-	    // implement support for free end-gaps later
-	    // FreeEndgapsDescription feg=aligner_params.free_endgaps;
-	    // bool freeA = feg.allow_left_1();
-	    // bool freeB = feg.allow_left_2();
 	    
 	    bool openA=false; // is a gap open in A
 	    bool openB=false; // is a gap open in B

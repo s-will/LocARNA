@@ -28,7 +28,18 @@ namespace LocARNA {
 	    &&
 	    constraints.allowed_edge(arcA.left(),arcB.left())
 	    &&
-	    constraints.allowed_edge(arcA.right(),arcB.right());	
+	    constraints.allowed_edge(arcA.right(),arcB.right())
+	    &&
+	    // |i-j|<=delta constraints for left and right ends,
+	    // transformed to work for unsigned int
+	    arcA.left()<=arcB.left()+max_diff_at_am
+	    &&
+	    arcB.left()<=arcA.left()+max_diff_at_am
+	    &&
+	    arcA.right()<=arcB.right()+max_diff_at_am
+	    &&
+	    arcB.right()<=arcA.right()+max_diff_at_am
+	    ;
   
 	// std::cout << "ArcMatches::is_valid_arcmatch" << " " 
 	// 	    << arcA << " "
@@ -111,13 +122,15 @@ namespace LocARNA {
 			   const Sequence &seqB_,
 			   const std::string &arcmatch_scores_file,
 			   int probability_scale,
-			   size_type max_length_diff_, 
+			   size_type max_length_diff_,
+			   size_type max_diff_at_am_,
 			   const MatchController &match_controller_,
 			   const AnchorConstraints &constraints_
 			   )
 	: lenA(seqA_.length()),
 	  lenB(seqB_.length()),
 	  max_length_diff(max_length_diff_),
+	  max_diff_at_am(max_diff_at_am_),
 	  match_controller(match_controller_),
 	  constraints(constraints_),
 	  maintain_explicit_scores(true)
@@ -129,6 +142,7 @@ namespace LocARNA {
 			   const RnaData &rna_dataB,
 			   double min_prob,
 			   size_type max_length_diff_, 
+			   size_type max_diff_at_am_,
 			   const MatchController &match_controller_,
 			   const AnchorConstraints &constraints_
 			   )
@@ -137,6 +151,7 @@ namespace LocARNA {
 	  bpsA(new BasePairs(&rna_dataA,min_prob)),
 	  bpsB(new BasePairs(&rna_dataB,min_prob)),
 	  max_length_diff(max_length_diff_),
+	  max_diff_at_am(max_diff_at_am_),
 	  match_controller(match_controller_),
 	  constraints(constraints_),
 	  maintain_explicit_scores(false)

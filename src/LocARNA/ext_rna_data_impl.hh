@@ -205,6 +205,15 @@ namespace LocARNA {
 	write_pp_unpaired_in_loop_probabilities(std::ostream &out,
 						const arc_prob_vector_t &probs,
 						double p_cut) const;
+
+	/** 
+	 * @brief Drop n base pairs with lowest probability
+	 * 
+	 * @param keep the maximum number of base pairs to keep 
+	 */
+	void
+	drop_worst_bps(size_t keep);
+
     }; // end ExtRnaDataImpl
 
 
