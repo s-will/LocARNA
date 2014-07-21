@@ -830,6 +830,7 @@ my @autopass_arg_options =
 
      "max-diff-am=i",
      "max-diff=i",
+     "max-diff-at-am=i",
      
      "struct-local=s",
      "sequ-local=s",
@@ -838,8 +839,9 @@ my @autopass_arg_options =
      "match-prob-method=i",
     
      "temperature=i",
-     "pf-struct-weight=i"
+     "pf-struct-weight=i",
      
+     "max-bps-length-ratio=f"
     );
 
 my @autopass_noarg_options = ( "max-diff-relax", "alifold-consensus-dp" );

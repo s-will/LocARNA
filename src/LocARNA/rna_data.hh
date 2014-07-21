@@ -84,8 +84,9 @@ namespace LocARNA {
 	 */
 	RnaData(const std::string &filename,
 		double p_bpcut,
-		const PFoldParams &pfoldparams,
-		double max_bps_length_ratio=0.0);
+		double max_bps_length_ratio,
+		const PFoldParams &pfoldparams
+		);
 	
 	/** 
 	 * @brief Construct as consensus of two aligned RNAs

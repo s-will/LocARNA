@@ -46,6 +46,11 @@ VERSION_STRING = (std::string)PACKAGE_STRING;
 
 double min_prob; //!< only pairs with a probability of at least min_prob are taken into account
 
+//! maximal ratio of number of base pairs divided by sequence
+//! length. This serves as a second filter on the "significant"
+//! base pairs.
+double max_bps_length_ratio;
+
 int mismatch_score; //!< mismatch_score
 int indel_score; //!< indel_score
 int indel_opening_score=0; //!< indel_opening_score=0
@@ -63,6 +68,8 @@ const bool DO_TRACE=true; //!< DO_TRACE=true
 
 int max_diff; //!< maximal difference for positions of alignment traces (only used for ends of arcs)
 int max_diff_am; //!<maximal difference between two arc ends, -1 is off
+
+int max_diff_at_am; //!<maximal difference at arc match ends, -1 is off
 
 std::string max_diff_pw_alignment; //!< pairwise reference alignment for max-diff heuristic, separator &
 std::string max_diff_alignment_file; //!< reference alignment for max-diff heuristic, name of clustalw format file
@@ -136,7 +143,7 @@ std::string fragment_match_probs; //!< fragment_match_probs
 //! parser cannot interpret pf_score_t, when using long double later
 //! this will be converted to pf_score_t
 //! @note renamed to avoid conflict with vrna
-double l_pf_scale; 
+double locarna_pf_scale; 
 
 //! defines command line parameters
 option_def my_options[] = {
@@ -157,11 +164,12 @@ option_def my_options[] = {
     {"tau",'t',0,O_ARG_INT,&tau_factor,"0","factor","Tau factor in percent"},
     {"temperature",0,0,O_ARG_INT,&l_temperature,"150","int","Temperature for PF-computation"},
     
-    {"pf-scale",0,0,O_ARG_DOUBLE,&l_pf_scale,"1.0","scale","Scaling of the partition function. Use in order to avoid overflow."},
+    {"pf-scale",0,0,O_ARG_DOUBLE,&locarna_pf_scale,"1.0","scale","Scaling of the partition function. Use in order to avoid overflow."},
     
     {"stopwatch",0,&opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.0005","prob","Minimal probability"},
+    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
 
@@ -178,6 +186,8 @@ option_def my_options[] = {
 
     {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
+
+    {"max-diff-at-am",0,0,O_ARG_INT,&max_diff_at_am,"-1","diff","Maximal difference for alignment traces, only at arc match positions"},
     
     {"max-diff-aln",0,0,O_ARG_STRING,&max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
     {"max-diff-pw-aln",0,0,O_ARG_STRING,&max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
@@ -265,7 +275,7 @@ main(int argc, char **argv) {
     
     RnaData *rna_dataA=0;
     try {
-	rna_dataA = new RnaData(fileA,min_prob,pfparams);
+	rna_dataA = new RnaData(fileA,min_prob,max_bps_length_ratio,pfparams);
     } catch (failure &f) {
 	std::cerr << "ERROR: failed to read from file "<<fileA <<std::endl
 		  << "       "<<f.what() <<std::endl;
@@ -274,7 +284,7 @@ main(int argc, char **argv) {
     
     RnaData *rna_dataB=0;
     try {
-	rna_dataB = new RnaData(fileB,min_prob,pfparams);
+	rna_dataB = new RnaData(fileB,min_prob,max_bps_length_ratio,pfparams);
     } catch (failure &f) {
 	std::cerr << "ERROR: failed to read from file "<<fileB <<std::endl
 		  << "       "<<f.what() <<std::endl;
@@ -357,7 +367,12 @@ main(int argc, char **argv) {
     arc_matches = new ArcMatches(*rna_dataA,
 				 *rna_dataB,
 				 min_prob,
-				 (max_diff_am!=-1)?(size_type)max_diff_am:std::max(lenA,lenB),
+				 max_diff_am!=-1
+				 ? (size_type)max_diff_am
+				 : std::max(lenA,lenB),
+				 max_diff_at_am!=-1
+				 ? (size_type)max_diff_at_am
+				 : std::max(lenA,lenB),
 				 trace_controller,
 				 seq_constraints
 				 );
@@ -435,23 +450,26 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Computation of the alignment score
     //
-    // parameter for the alignment
-    AlignerParams aligner_params(false,//no_lonely_pairs,
-				 false,//struct_local,
-				 false,//sequ_local,
-				 "",
-				 trace_controller,
-				 max_diff_am,
-				 min_am_prob,
-				 min_bm_prob,
-				 false,//opt_stacking,
-				 seq_constraints
-				 );
-    
-    
-    // initialize aligner object, which does the alignment computation
-    AlignerP aligner(seqA,seqB,*arc_matches,&aligner_params,&scoring,l_pf_scale);
 
+    // initialize aligner-p object, which does the alignment computation
+    AlignerP aligner = AlignerP::create()
+	. pf_scale((pf_score_t)locarna_pf_scale)
+	. seqA(seqA)
+	. seqB(seqB)
+	. arc_matches(*arc_matches)
+	. scoring(scoring)
+	. no_lonely_pairs(false)
+	. struct_local(false)
+	. sequ_local(false)
+	. free_endgaps("")
+	. max_diff_am(max_diff_am)
+	. max_diff_at_am(max_diff_at_am)
+	. trace_controller(trace_controller)
+	. min_am_prob(min_am_prob)
+	. min_bm_prob(min_bm_prob)
+	. stacking(false)
+	. constraints(seq_constraints);
+    
     if (opt_verbose) {
 	std::cout << "Run inside algorithm."<<std::endl;
 #       ifdef VERY_LARGE_PF

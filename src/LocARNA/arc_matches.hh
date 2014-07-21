@@ -126,6 +126,8 @@ namespace LocARNA {
     
 	size_type max_length_diff; //!< for max-diff-am heuristics
     
+	size_type max_diff_at_am; //!< for max diff at arc matches heuristics
+    
 	const MatchController &match_controller; //!< allowed alignment traces by max-diff heuristics
     
 	const AnchorConstraints &constraints; //!< for constraints
@@ -140,6 +142,7 @@ namespace LocARNA {
 	 * An arc match is valid, if and only if:
 	 * 1.) matches i~k and j~l are valid due to trace_controller (max-diff-match heuristic) and constraints (anchor constraints)
 	 * 2.) length difference of arcs <= max_length_diff
+	 * 3.) max diff at am ends ok
 	 */
 	bool is_valid_arcmatch(const Arc &arcA,const Arc &arcB) const;
     
@@ -265,6 +268,7 @@ namespace LocARNA {
 		   const std::string &arcmatch_scores_file,
 		   int probability_scale,
 		   size_type max_length_diff,
+		   size_type max_diff_at_am,
 		   const MatchController &trace_controller,
 		   const AnchorConstraints &constraints);
 	
@@ -293,7 +297,8 @@ namespace LocARNA {
 	ArcMatches(const RnaData &rnadataA, 
 		   const RnaData &rnadataB,
 		   double min_prob,
-		   size_type max_length_diff, 
+		   size_type max_length_diff,
+		   size_type max_diff_at_am,
 		   const MatchController &trace_controller,
 		   const AnchorConstraints &constraints);
     
@@ -500,9 +505,16 @@ namespace LocARNA {
 			  const std::string &arcmatch_scores_file,
 			  int probability_scale,
 			  size_type max_length_diff,
+			  size_type max_diff_at_am,
 			  const MatchController &trace_controller,
 			  const AnchorConstraints &constraints)
-	    :ArcMatches(seqA_,seqB_,arcmatch_scores_file,probability_scale,max_length_diff,trace_controller,constraints),
+	    :ArcMatches(seqA_,seqB_,
+			arcmatch_scores_file,
+			probability_scale,
+			max_length_diff,
+			max_diff_at_am,
+			trace_controller,
+			constraints),
 	     am_index_()
 	{
 	    build_arcmatch_index();
@@ -532,9 +544,16 @@ namespace LocARNA {
 			  const RnaData &rnadataB,
 			  double min_prob,
 			  size_type max_length_diff,
+			  size_type max_diff_at_am,
 			  const MatchController &trace_controller,
 			  const AnchorConstraints &constraints)
-	    :ArcMatches(rnadataA,rnadataB,min_prob,max_length_diff,trace_controller,constraints),
+	    :ArcMatches(rnadataA,
+			rnadataB,
+			min_prob,
+			max_length_diff,
+			max_diff_at_am,
+			trace_controller,
+			constraints),
 	     am_index_()
 	{
 	    build_arcmatch_index();

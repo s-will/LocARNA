@@ -49,11 +49,10 @@ namespace LocARNA {
     private:
 
     protected:
+	const AlignerNParams *params; //!< the parameter for the alignment
+
 	const Scoring *scoring; //!< the scores
 	Scoring *mod_scoring; //!< used in normalized scoring, when we need to modify the scoring
-
-	const AlignerParams *params; //!< the parameter for the alignment
-
 	const Sequence &seqA; //!< sequence A
 	const Sequence &seqB; //!< sequence B
 
@@ -633,15 +632,18 @@ namespace LocARNA {
 	//! copy constructor
 	AlignerN(const AlignerN &a);
 
-	//! construct with sequences and corresponding arc matches
-	AlignerN(const Sequence &seqA,
-		 const Sequence &seqB,
-		 const SparsificationMapper &mapperA,
-		 const SparsificationMapper &mapperB,
-		 const ArcMatches &arc_matches,
-		 const AlignerParams *ap,
-		 const Scoring *s
-		 );
+	/** 
+	 * @brief Construct from parameters
+	 * @param ap parameter for aligner
+	 */
+	AlignerN(const AlignerParams &ap);
+    
+	/**
+	 * @brief create with named parameters
+	 * @return parameter object
+	 */
+	static 
+	AlignerNParams create() {return AlignerNParams();} 
 
 	//! destructor
 	~AlignerN();

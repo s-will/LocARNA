@@ -66,11 +66,20 @@ const bool DO_TRACE=true;
 double min_prob; // only pairs with a probability of at least min_prob are taken into account
 double out_min_prob; // minimal probability for output
 
+//! maximal ratio of number of base pairs divided by sequence
+//! length. This serves as a second filter on the "significant"
+//! base pairs.
+double max_bps_length_ratio;
+
 bool no_lonely_pairs=false;
 
 int max_diff; // maximal difference for positions of alignment traces
 // (only used for ends of arcs)
 int max_diff_am; //maximal difference between two arc ends, -1 is off
+
+//! maximal difference for alignment traces, at arc match
+//! positions
+int max_diff_at_am;
 
 // only consider arc matchs where
 //   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0)
@@ -133,9 +142,11 @@ option_def my_options[] = {
 		{"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.01","prob","Minimal probability"},
 		{"out-min-prob",'p',0,O_ARG_DOUBLE,&out_min_prob,"0.0005","prob",
     	 "Minimal probability for output (min-prob overrides if smaller)"},
+		{"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
+
 		{"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"30","diff","Maximal difference for sizes of matched arcs"},
 		{"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
-
+		{"max-diff-at-am",0,0,O_ARG_INT,&max_diff_at_am,"-1","diff","Maximal difference for alignment traces, only at arc match positions"},
 		{"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
 		{"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
 		{"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
@@ -252,6 +263,7 @@ main(int argc, char **argv) {
 				   std::min(min_prob,out_min_prob),
 				   prob_basepair_in_loop_threshold,
 				   prob_unpaired_in_loop_threshold,
+				   max_bps_length_ratio,
 				   pfparams);
     } catch (failure &f) {
 	std::cerr << "ERROR: failed to read from file "<<fileA <<std::endl
@@ -265,6 +277,7 @@ main(int argc, char **argv) {
 				   std::min(min_prob,out_min_prob),
 				   prob_basepair_in_loop_threshold,
 				   prob_unpaired_in_loop_threshold,
+				   max_bps_length_ratio,
 				   pfparams);
     } catch (failure &f) {
 	std::cerr << "ERROR: failed to read from file "<<fileB <<std::endl
@@ -311,10 +324,14 @@ main(int argc, char **argv) {
 
 	// initialize from RnaData
 	arc_matches = new ArcMatches(*rna_dataA,
-			*rna_dataB,
-			min_prob,
-			(max_diff_am!=-1)?
-			(size_type)max_diff_am:std::max(seqA.length(),seqB.length()),
+				     *rna_dataB,
+				     min_prob,
+				     (max_diff_am!=-1)
+				     ? (size_type)max_diff_am
+				     : std::max(seqA.length(),seqB.length()),
+				     (max_diff_at_am!=-1)
+				     ? (size_type)max_diff_at_am
+				     : std::max(seqA.length(),seqB.length()),
 			trace_controller,
 			seq_constraints
 	);

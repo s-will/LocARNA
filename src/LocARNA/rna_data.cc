@@ -39,8 +39,8 @@ namespace LocARNA {
 
     RnaData::RnaData(const std::string &filename,
 		     double p_bpcut,
-		     const PFoldParams &pfoldparams,
-		     double max_bps_length_ratio
+		     double max_bps_length_ratio,
+		     const PFoldParams &pfoldparams
 		     )
 	: pimpl_(new RnaDataImpl(this,
 				 p_bpcut
@@ -60,7 +60,7 @@ namespace LocARNA {
 				   pfoldparams.stacking());
 	}
 	
-	if (max_bps_length_ratio >0) {
+	if (max_bps_length_ratio > 0) {
 	    pimpl_->drop_worst_bps(max_bps_length_ratio*pimpl_->sequence_.length());
 	}
     }
@@ -141,6 +141,7 @@ namespace LocARNA {
 			   double p_bpcut,
 			   double p_bpilcut,
 			   double p_uilcut,
+			   double max_bps_length_ratio,
 			   const PFoldParams &pfoldparams)
 	: 
 	RnaData(p_bpcut),
@@ -159,6 +160,10 @@ namespace LocARNA {
 	    
 	    // initialize
 	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	}
+	
+	if (max_bps_length_ratio > 0) {
+	    pimpl_->drop_worst_bps(max_bps_length_ratio*length());
 	}
 
     }
@@ -1541,6 +1546,14 @@ namespace LocARNA {
 	    std::pop_heap(vec.begin(),vec.end(),kv_comp);
 	    vec.pop_back();
 	}
+    }
+
+    void
+    ExtRnaDataImpl::drop_worst_bps(size_t keep) {
+	
+	std::cerr << "ERROR: ExtRnaDataImpl::drop_worst_bps(size_t) not implemented yet."<<std::endl;
+	exit(-1);
+
     }
 
 
