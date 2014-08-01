@@ -206,7 +206,7 @@ struct command_line_parameters {
     std::string seq_anchors_A; //!< seq_anchors_A
     std::string seq_anchors_B; //!< seq_anchors_B
 
-    bool opt_ignore_constraints; //!< whether to ignore_constraints
+    //bool opt_ignore_constraints; //!< whether to ignore_constraints
 
     int pf_struct_weight; //!< pf_struct_weight
 
@@ -317,7 +317,7 @@ option_def my_options[] = {
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
     // {"anchorA",0,0,O_ARG_STRING,&clp.seq_anchors_A,"","string","Anchor constraints sequence A"},
     // {"anchorB",0,0,O_ARG_STRING,&clp.seq_anchors_B,"","string","Anchor constraints sequence B"},
-    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints input files"},
+    //{"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints input files"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
