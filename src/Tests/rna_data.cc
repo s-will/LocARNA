@@ -25,7 +25,7 @@ main(int argc, char **argv) {
     std::ostringstream sizeinfo2;
     
     try {
-	RnaData rna_data("Tests/archaea.aln",0.1,pfparams);
+	RnaData rna_data("Tests/archaea.aln",0.1,2,pfparams);
 	rna_data.write_size_info(sizeinfo1);
 
 	std::ofstream out("Tests/archaea.pp");
@@ -42,7 +42,7 @@ main(int argc, char **argv) {
     }
     
     try {
-	RnaData rna_data("Tests/archaea.pp",0.1,pfparams);
+	RnaData rna_data("Tests/archaea.pp",0.1,2,pfparams);
 	
 	rna_data.write_size_info(sizeinfo2);
 	
@@ -96,7 +96,7 @@ main(int argc, char **argv) {
 	consensus.write_pp(out);
 	out.close();
 	
-	RnaData consensus2(filename,0.1,pfparams);
+	RnaData consensus2(filename,0.1,2,pfparams);
 	std::remove(filename.c_str());
 
 	// missing: compare consensus and consensus2
@@ -124,7 +124,7 @@ main(int argc, char **argv) {
 	ali_consensus.write_pp(out);
 	out.close();
 	
-	RnaData ali_consensus2(filename,0.1,pfparams);
+	RnaData ali_consensus2(filename,0.1,2,pfparams);
 	std::remove(filename.c_str());
 
 	// missing: compare ali_consensus and ali_consensus2
