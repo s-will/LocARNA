@@ -163,7 +163,7 @@ namespace LocARNA {
 	}
 	
 	if (max_bps_length_ratio > 0) {
-	    pimpl_->drop_worst_bps(max_bps_length_ratio*length());
+	    	RnaData::pimpl_->drop_worst_bps(max_bps_length_ratio*length());
 	}
 
     }

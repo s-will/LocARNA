@@ -36,7 +36,7 @@ namespace LocARNA {
      * e.g. from file or stream
      */
     class RnaData {
-    private:
+    protected:
 	friend class RnaDataImpl;
 	RnaDataImpl *pimpl_;  //!<- pointer to corresponding implementation object
 
