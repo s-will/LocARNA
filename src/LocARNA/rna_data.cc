@@ -1599,6 +1599,16 @@ namespace LocARNA {
 	    if ( rdimpl->arc_probs_(key.first,key.second) == 0.0 ) {
 		if (key.first==0) continue;
 		arc_in_loop_probs_.reset(key.first,key.second);
+	    } else {
+		for (arc_prob_matrix_t::const_iterator it2 = it->second.begin();
+		     it->second.end() != it2;
+		     ++it2) {
+		    arc_prob_matrix_matrix_t::key_t key2 = it2->first; 
+		    if ( rdimpl->arc_probs_(key2.first,key2.second) == 0.0 ) {
+			arc_in_loop_probs_.ref(key.first,key.second)
+			    .reset(key2.first,key2.second);
+		    }	
+		}
 	    }
 	}
 
