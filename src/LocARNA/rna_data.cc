@@ -30,10 +30,15 @@ namespace LocARNA {
 
     RnaData::RnaData(const RnaEnsemble &rna_ensemble,
 		     double p_bpcut,
+		     double max_bps_length_ratio,
 		     const PFoldParams &pfoldparams)
 	: pimpl_(new RnaDataImpl(this,
 				 p_bpcut)) {
 	init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+
+	if (max_bps_length_ratio > 0) {
+	    pimpl_->drop_worst_bps(max_bps_length_ratio*pimpl_->sequence_.length());
+	}
     }
 
 
@@ -142,6 +147,8 @@ namespace LocARNA {
 			   double p_bpilcut,
 			   double p_uilcut,
 			   double max_bps_length_ratio,
+			   double max_uil_length_ratio,
+			   double max_bpil_length_ratio,
 			   const PFoldParams &pfoldparams)
 	: 
 	RnaData(p_bpcut),
@@ -163,7 +170,13 @@ namespace LocARNA {
 	}
 	
 	if (max_bps_length_ratio > 0) {
-	    	RnaData::pimpl_->drop_worst_bps(max_bps_length_ratio*length());
+	    pimpl_->drop_worst_bps(max_bps_length_ratio*length());
+	}
+	if (max_uil_length_ratio > 0) {
+	    	pimpl_->drop_worst_uil(max_uil_length_ratio*length());
+	}
+	if (max_bpil_length_ratio > 0) {
+	    	pimpl_->drop_worst_bpil(max_bps_length_ratio*length());
 	}
 
     }
@@ -184,15 +197,27 @@ namespace LocARNA {
 			   double p_bpcut,
 			   double p_bpilcut,
 			   double p_uilcut,
+			   double max_bps_length_ratio,
+			   double max_uil_length_ratio,
+			   double max_bpil_length_ratio,
 			   const PFoldParams &pfoldparams)
 	:
 	RnaData(rna_ensemble,
 		p_bpcut,
+		max_bps_length_ratio,
 		pfoldparams),
 	pimpl_(new ExtRnaDataImpl(this,
 				  p_bpilcut,
 				  p_uilcut)) {
 	init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+
+	if (max_uil_length_ratio > 0) {
+	    	pimpl_->drop_worst_uil(max_uil_length_ratio*length());
+	}
+	if (max_bpil_length_ratio > 0) {
+	    	pimpl_->drop_worst_bpil(max_bps_length_ratio*length());
+	}
+	
     }
 
     ExtRnaData::~ExtRnaData() {
@@ -1526,8 +1551,9 @@ namespace LocARNA {
     
     void
     RnaDataImpl::drop_worst_bps(size_t keep) {
-	
-	kv_vec_t vec;
+	typedef keyvec<arc_prob_matrix_t::key_t> kv_t;
+
+	kv_t::vec_t vec;
 	
 	//std::copy(arc_probs_.begin(),arc_probs_.end(),vec.begin());
 	for (arc_prob_matrix_t::const_iterator it=arc_probs_.begin();
@@ -1536,14 +1562,14 @@ namespace LocARNA {
 	    vec.push_back(*it);
 	}
 
-	std::make_heap(vec.begin(),vec.end(),kv_comp);
+	std::make_heap(vec.begin(),vec.end(),kv_t::comp);
 	
 	while(vec.size()>keep) {
 	    const arc_prob_matrix_t::key_t &key = vec.front().first;
 	    
 	    arc_probs_(key.first,key.second) = 0.0;
 	    arc_2_probs_(key.first,key.second) = 0.0;
-	    std::pop_heap(vec.begin(),vec.end(),kv_comp);
+	    std::pop_heap(vec.begin(),vec.end(),kv_t::comp);
 	    vec.pop_back();
 	}
     }
@@ -1551,8 +1577,100 @@ namespace LocARNA {
     void
     ExtRnaDataImpl::drop_worst_bps(size_t keep) {
 	
-	std::cerr << "ERROR: ExtRnaDataImpl::drop_worst_bps(size_t) not implemented yet."<<std::endl;
-	exit(-1);
+	RnaDataImpl *rdimpl = static_cast<RnaData *>(self_)->pimpl_;
+	rdimpl->drop_worst_bps(keep);
+	
+	// free unpaired in loop where arc prob is 0
+	for (arc_prob_vector_matrix_t::const_iterator it = unpaired_in_loop_probs_.begin();
+	     unpaired_in_loop_probs_.end() != it;
+	     ++it) {
+	    arc_prob_vector_matrix_t::key_t key = it->first;
+	    if ( rdimpl->arc_probs_(key.first,key.second) == 0.0 ) {
+		if (key.first==0) continue;
+		unpaired_in_loop_probs_.reset(key.first,key.second);
+	    }
+	}
+	
+	// free base pairs in loop where arc prob is 0
+	for (arc_prob_matrix_matrix_t::const_iterator it = arc_in_loop_probs_.begin();
+	     arc_in_loop_probs_.end() != it;
+	     ++it) {
+	    arc_prob_matrix_matrix_t::key_t key = it->first; 
+	    if ( rdimpl->arc_probs_(key.first,key.second) == 0.0 ) {
+		if (key.first==0) continue;
+		arc_in_loop_probs_.reset(key.first,key.second);
+	    }
+	}
+
+    }
+
+    void
+    ExtRnaDataImpl::drop_worst_uil(size_t keep) {
+	
+	typedef std::pair< arc_prob_vector_matrix_t::key_t, arc_prob_vector_t::key_t > key_t;
+
+	typedef RnaDataImpl::keyvec<key_t> kv_t;
+
+	kv_t::vec_t vec;
+	
+	// push all uil probs with their key to vector vec
+	for (arc_prob_vector_matrix_t::const_iterator it=unpaired_in_loop_probs_.begin();
+	     unpaired_in_loop_probs_.end() != it;
+	     ++it ) {
+	    
+	    for (arc_prob_vector_t::const_iterator it2=it->second.begin();
+		 it->second.end() != it2;
+		 ++it2 ) {
+		
+		vec.push_back(kv_t::kvpair_t(key_t(it->first,it2->first), it2->second));
+	    }
+	}
+
+	std::make_heap(vec.begin(),vec.end(),kv_t::comp);
+	
+	while(vec.size()>keep) {
+	    const key_t &key = vec.front().first;
+	    
+	    unpaired_in_loop_probs_.ref(key.first.first,key.first.second).reset(key.second);
+	    
+	    std::pop_heap(vec.begin(),vec.end(),kv_t::comp);
+	    vec.pop_back();
+	}
+
+    }
+
+    void
+    ExtRnaDataImpl::drop_worst_bpil(size_t keep) {
+	
+	typedef std::pair< arc_prob_matrix_matrix_t::key_t, arc_prob_matrix_t::key_t > key_t;
+	
+	typedef RnaDataImpl::keyvec<key_t> kv_t;
+
+	kv_t::vec_t vec;
+	
+	// push all uil probs with their key to vector vec
+	for (arc_prob_matrix_matrix_t::const_iterator it=arc_in_loop_probs_.begin();
+	     arc_in_loop_probs_.end() != it;
+	     ++it ) {
+	    
+	    for (arc_prob_matrix_t::const_iterator it2=it->second.begin();
+		 it->second.end() != it2;
+		 ++it2 ) {
+		
+		vec.push_back(kv_t::kvpair_t(key_t(it->first,it2->first), it2->second));
+	    }
+	}
+
+	std::make_heap(vec.begin(),vec.end(),kv_t::comp);
+	
+	while(vec.size()>keep) {
+	    const key_t &key = vec.front().first;
+	    
+	    arc_in_loop_probs_.ref(key.first.first,key.first.second).reset(key.second.first,key.second.second);
+	    
+	    std::pop_heap(vec.begin(),vec.end(),kv_t::comp);
+	    vec.pop_back();
+	}
 
     }
 

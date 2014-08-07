@@ -305,13 +305,25 @@ main(int argc, char **argv) {
 
     if (clp.opt_in_loop)
     {
-	ExtRnaData ext_rna_data(rna_ensemble, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold,pfoldparams);
-	ext_rna_data.write_pp(out_stream, clp.min_prob, clp.prob_basepair_in_loop_threshold, clp.prob_unpaired_in_loop_threshold);//toask: why should give the theresholds again
+	ExtRnaData ext_rna_data(rna_ensemble, 
+				clp.min_prob, 
+				clp.prob_basepair_in_loop_threshold,
+				clp.prob_unpaired_in_loop_threshold,
+				0, // don't filter output by max_bps_length_ratio
+				0, // don't filter output by max_uil_length_ratio
+				0, // don't filter output by max_bpil_length_ratio
+				pfoldparams);
+
+	ext_rna_data.write_pp(out_stream); // (no need to filter again => don't specify output cutoff)
     }
     else
     {
-	RnaData rna_data(rna_ensemble, clp.min_prob, pfoldparams);
-	rna_data.write_pp(out_stream,clp.min_prob);
+	RnaData rna_data(rna_ensemble,
+			 clp.min_prob,
+			 0, // don't filter output by max_bps_length_ratio
+			 pfoldparams);
+
+	rna_data.write_pp(out_stream); // (no need to filter again => don't specify output cutoff)
     }
 
     return 0;

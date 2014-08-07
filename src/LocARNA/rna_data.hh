@@ -38,6 +38,7 @@ namespace LocARNA {
     class RnaData {
     protected:
 	friend class RnaDataImpl;
+	friend class ExtRnaDataImpl;
 	RnaDataImpl *pimpl_;  //!<- pointer to corresponding implementation object
 
     public:
@@ -61,6 +62,7 @@ namespace LocARNA {
 	 */
 	RnaData(const RnaEnsemble &rna_ensemble,
 		double p_bpcut,
+		double max_bps_length_ratio,
 		const PFoldParams &pfoldparams);
 
 	/** 

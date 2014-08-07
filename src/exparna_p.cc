@@ -71,6 +71,9 @@ double out_min_prob; // minimal probability for output
 //! base pairs.
 double max_bps_length_ratio;
 
+double max_uil_length_ratio; // max unpaired in loop length ratio
+double max_bpil_length_ratio; // max base pairs in loop length ratio
+
 bool no_lonely_pairs=false;
 
 int max_diff; // maximal difference for positions of alignment traces
@@ -143,6 +146,8 @@ option_def my_options[] = {
 		{"out-min-prob",'p',0,O_ARG_DOUBLE,&out_min_prob,"0.0005","prob",
     	 "Minimal probability for output (min-prob overrides if smaller)"},
 		{"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
+		{"max-uil-length-ratio",0,0,O_ARG_DOUBLE,&max_uil_length_ratio,"0.0","factor","Maximal ratio of #unpaired bases in loops divided by sequence length (default: no effect)"},
+		{"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&max_bpil_length_ratio,"0.0","factor","Maximal ratio of #base pairs in loops divided by sequence length (default: no effect)"},
 
 		{"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"30","diff","Maximal difference for sizes of matched arcs"},
 		{"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
@@ -264,6 +269,8 @@ main(int argc, char **argv) {
 				   prob_basepair_in_loop_threshold,
 				   prob_unpaired_in_loop_threshold,
 				   max_bps_length_ratio,
+				   max_uil_length_ratio,
+				   max_bpil_length_ratio,
 				   pfparams);
     } catch (failure &f) {
 	std::cerr << "ERROR: failed to read from file "<<fileA <<std::endl
@@ -278,6 +285,8 @@ main(int argc, char **argv) {
 				   prob_basepair_in_loop_threshold,
 				   prob_unpaired_in_loop_threshold,
 				   max_bps_length_ratio,
+				   max_uil_length_ratio,
+				   max_bpil_length_ratio,
 				   pfparams);
     } catch (failure &f) {
 	std::cerr << "ERROR: failed to read from file "<<fileB <<std::endl

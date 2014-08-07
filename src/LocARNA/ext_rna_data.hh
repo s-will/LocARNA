@@ -52,6 +52,9 @@ namespace LocARNA {
 		   double p_bpcut,
 		   double p_bpilcut,
 		   double p_uilcut,
+		   double max_bps_length_ratio,
+		   double max_uil_length_ratio,
+		   double max_bpil_length_ratio,
 		   const PFoldParams &pfoldparams);
 	
 	/** 
@@ -71,6 +74,8 @@ namespace LocARNA {
 		   double p_bpilcut,
 		   double p_uilcut,
 		   double max_bps_length_ratio,
+		   double max_uil_length_ratio,
+		   double max_bpil_length_ratio,
 		   const PFoldParams &pfoldparams);
 
     private:

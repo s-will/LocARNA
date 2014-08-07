@@ -200,17 +200,22 @@ namespace LocARNA {
 			      double p_expB) const;
 
 	
-	typedef std::pair<arc_prob_matrix_t::key_t,arc_prob_matrix_t::value_t> kv_t;
-	typedef std::vector<kv_t> kv_vec_t;
-	
-	// compare for min heap
-	static
-	bool kv_comp(const kv_t &x, const kv_t &y) {
-	    return x.second>y.second;
-	}
+	template<class KEY>
+	class keyvec {
+	public:
+	    typedef std::pair<KEY,arc_prob_matrix_t::value_t> kvpair_t;
+	    
+	    typedef std::vector<kvpair_t> vec_t;
+	    
+	    // compare for min heap
+	    static
+	    bool comp(const kvpair_t &x, const kvpair_t &y) {
+		return x.second>y.second;
+	    }
+	};
 	
 	/** 
-	 * @brief Drop n base pairs with lowest probability
+	 * @brief Drop base pairs with lowest probability
 	 * 
 	 * @param keep the maximum number of base pairs to keep 
 	 */

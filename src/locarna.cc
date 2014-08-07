@@ -989,7 +989,10 @@ main(int argc, char **argv) {
 		if (clp.opt_alifold_consensus_dp) {
 		    MultipleAlignment ma(alignment, clp.opt_local_file_output);
 		    RnaEnsemble ens(ma,pfparams,false,true); // alifold the alignment
-		    RnaData consensus(ens,clp.min_prob,pfparams); // construct rna data from ensemble
+		    RnaData consensus(ens,
+				      clp.min_prob,
+				      0, //don't filter by max_bps_length_ratio
+				      pfparams); // construct rna data from ensemble
 		    consensus.write_pp(out); // write alifold dot plot
 		} else {
 		    // compute averaged consensus base pair probabilities

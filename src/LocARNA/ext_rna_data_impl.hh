@@ -207,12 +207,28 @@ namespace LocARNA {
 						double p_cut) const;
 
 	/** 
-	 * @brief Drop n base pairs with lowest probability
+	 * @brief Drop in loop bases and base pairs without base pairs
 	 * 
 	 * @param keep the maximum number of base pairs to keep 
 	 */
 	void
 	drop_worst_bps(size_t keep);
+
+	/** 
+	 * @brief Drop unpaired bases in loops with lowest probability
+	 * 
+	 * @param keep the maximum total number of unpaired bases in loops to keep 
+	 */
+	void
+	drop_worst_uil(size_t keep);
+
+	/** 
+	 * @brief Drop base pairs in loops with lowest probability
+	 * 
+	 * @param keep the maximum total number of base pairs in loops to keep 
+	 */
+	void
+	drop_worst_bpil(size_t keep);
 
     }; // end ExtRnaDataImpl
 

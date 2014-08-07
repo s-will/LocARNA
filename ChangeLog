@@ -442,5 +442,7 @@ Nov 2013
 	Add max-diff restriction at arc match ends: --max-diff-at-am
 	Restructure parameter passing to Aligner* classes: use "named
 	argument" idiom
-	max-bps-length-ratio still unsupported for SPARSE/ExparnaP
 	(Release 1.7.17pre)
+	max-bps/uil/bpil-length-ratio for SPARSE/ExparnaP
+	(Release 1.7.17pre2)
+	
