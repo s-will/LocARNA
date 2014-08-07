@@ -81,9 +81,9 @@ main(int argc, char **argv) {
     
     // compute the averaged consensus
     RnaEnsemble ensA(seqA,pfparams,false,true);
-    RnaData rna_dataA(ensA,0.05,pfparams);
+    RnaData rna_dataA(ensA,0.05,3,pfparams);
     RnaEnsemble ensB(seqB,pfparams,false,true);
-    RnaData rna_dataB(ensB,0.05,pfparams);
+    RnaData rna_dataB(ensB,0.05,3,pfparams);
     
     RnaData consensus(rna_dataA,rna_dataB,alignment,0.01,0.01);
 
@@ -113,7 +113,7 @@ main(int argc, char **argv) {
     
     RnaEnsemble ens_ma(ma,pfparams,false,true);
 
-    RnaData ali_consensus(ens_ma,0.1,pfparams);
+    RnaData ali_consensus(ens_ma,0.1,0,pfparams);
 
     {
 	std::string filename="Tests/test.pp";

@@ -26,7 +26,7 @@ main(int argc, char **argv) {
     std::string outfilename="Tests/archaea.pp";
     try {
 	
-	ExtRnaData rna_data("Tests/archaea.aln",0.01,0.0001,0.0001,0,pfparams);
+	ExtRnaData rna_data("Tests/archaea.aln",0.01,0.0001,0.0001,5,10,10,pfparams);
 	rna_data.write_size_info(sizeinfo1);
 
 	std::ofstream out(outfilename.c_str());
@@ -37,7 +37,7 @@ main(int argc, char **argv) {
 	
 	out.close();
 
-	ExtRnaData rna_data2(outfilename,0.01,0.0001,0.0001,0,pfparams);
+	ExtRnaData rna_data2(outfilename,0.01,0.0001,0.0001,5,10,10,pfparams);
 
 	rna_data.write_size_info(sizeinfo2);
 	
