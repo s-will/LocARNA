@@ -173,10 +173,10 @@ namespace LocARNA {
 	    pimpl_->drop_worst_bps(max_bps_length_ratio*length());
 	}
 	if (max_uil_length_ratio > 0) {
-	    	pimpl_->drop_worst_uil(max_uil_length_ratio*length());
+	    pimpl_->drop_worst_uil(max_uil_length_ratio*length());
 	}
 	if (max_bpil_length_ratio > 0) {
-	    	pimpl_->drop_worst_bpil(max_bps_length_ratio*length());
+	    pimpl_->drop_worst_bpil(max_bpil_length_ratio*length());
 	}
 
     }
@@ -215,7 +215,7 @@ namespace LocARNA {
 	    	pimpl_->drop_worst_uil(max_uil_length_ratio*length());
 	}
 	if (max_bpil_length_ratio > 0) {
-	    	pimpl_->drop_worst_bpil(max_bps_length_ratio*length());
+	    	pimpl_->drop_worst_bpil(max_bpil_length_ratio*length());
 	}
 	
     }
