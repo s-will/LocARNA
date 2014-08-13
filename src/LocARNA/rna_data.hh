@@ -333,7 +333,7 @@ namespace LocARNA {
 	virtual
 	void
 	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
-			       bool stacking);
+			       const PFoldParams &pfoldparams);
 	
 
 	/** 

@@ -95,11 +95,12 @@ namespace LocARNA {
 	 * @brief initialize from rna ensemble 
 	 * 
 	 * @param rna_ensemble rna ensemble
-	 * @param stacking whether to initialize stacking terms
+	 * @param pfoldparams folding parameters. if stacking,
+	 * initialize stacking terms; if noLP, drop lonely pairs
 	 */
 	void
 	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
-			       bool stacking);
+			       const PFoldParams &pfoldparams);
 
 	/**
 	 * @brief read sequence section of pp-format

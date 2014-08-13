@@ -229,7 +229,9 @@ namespace LocARNA {
 	// ----------------------------------------
 	// call fold for setting the pf_scale
 	min_free_energy_ = fold(c_sequence,c_structure);
-	min_free_energy_structure_ = c_structure;
+	min_free_energy_structure_ = static_cast<std::string>(c_structure);
+	
+	// std::cout << "MFE: "<<min_free_energy_<<std::endl;
 	// std::cout << c_structure << std::endl;
 	free_arrays();
 	

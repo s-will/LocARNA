@@ -34,7 +34,7 @@ namespace LocARNA {
 		     const PFoldParams &pfoldparams)
 	: pimpl_(new RnaDataImpl(this,
 				 p_bpcut)) {
-	init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	init_from_rna_ensemble(rna_ensemble,pfoldparams);
 
 	if (max_bps_length_ratio > 0) {
 	    pimpl_->drop_worst_bps(max_bps_length_ratio*pimpl_->sequence_.length());
@@ -62,12 +62,13 @@ namespace LocARNA {
 	    
 	    // initialize from RnaEnsemble; note: method is virtual
 	    init_from_rna_ensemble(rna_ensemble,
-				   pfoldparams.stacking());
+				   pfoldparams);
 	}
 	
 	if (max_bps_length_ratio > 0) {
 	    pimpl_->drop_worst_bps(max_bps_length_ratio*pimpl_->sequence_.length());
 	}
+
     }
     
     // do almost nothing
@@ -166,7 +167,7 @@ namespace LocARNA {
 			     pfoldparams,true,true); // use given parameters, in-loop, use alifold
 	    
 	    // initialize
-	    init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	    init_from_rna_ensemble(rna_ensemble,pfoldparams);
 	}
 	
 	if (max_bps_length_ratio > 0) {
@@ -209,7 +210,7 @@ namespace LocARNA {
 	pimpl_(new ExtRnaDataImpl(this,
 				  p_bpilcut,
 				  p_uilcut)) {
-	init_from_rna_ensemble(rna_ensemble,pfoldparams.stacking());
+	init_from_rna_ensemble(rna_ensemble,pfoldparams);
 
 	if (max_uil_length_ratio > 0) {
 	    	pimpl_->drop_worst_uil(max_uil_length_ratio*length());
@@ -480,9 +481,9 @@ namespace LocARNA {
 
     void
     RnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
-				    bool stacking) {
+				    const PFoldParams &pfoldparams) {
 #     ifdef HAVE_LIBRNA
-	pimpl_->init_from_rna_ensemble(rna_ensemble,stacking);
+	pimpl_->init_from_rna_ensemble(rna_ensemble,pfoldparams);
 #     else
 	error_rnalib_unavailable(); 
 #     endif
@@ -490,9 +491,9 @@ namespace LocARNA {
 
     void
     ExtRnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
-				       bool stacking) {
+				       const PFoldParams &pfoldparams) {
 #     ifdef HAVE_LIBRNA
-	RnaData::init_from_rna_ensemble(rna_ensemble,stacking);
+	RnaData::init_from_rna_ensemble(rna_ensemble,pfoldparams);
 	pimpl_->init_from_ext_rna_ensemble(rna_ensemble);
 #     else
 	error_rnalib_unavailable();
@@ -502,7 +503,7 @@ namespace LocARNA {
 #ifdef HAVE_LIBRNA
     void
     RnaDataImpl::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
-					bool stacking) {
+					const PFoldParams &pfoldparams) {
 	assert(rna_ensemble.has_base_pair_probs());
 	
 	// ----------------------------------------
@@ -517,8 +518,23 @@ namespace LocARNA {
 	    for( size_t j=i+TURN+1; j <= len; j++ ) {
 		
 		double p = rna_ensemble.arc_prob(i,j);
-		if (p > p_bpcut_) { // apply filter
+		
+		// commented out: drop lonely base pairs
+		// double p_out = 
+		//     (i>1 && j<len)
+		//     ? rna_ensemble.arc_prob(i-1,j+1)
+		//     : 0.0;
+		// double p_in = rna_ensemble.arc_prob(i+1,j-1);
+		
+		if ( p > p_bpcut_ ) { // apply filter
+		    
+		    // if (!pfoldparams.noLP() 
+		    // 	|| p_in>p_bpcut_ 
+		    // 	|| p_out>p_bpcut_ ) {
 		    arc_probs_(i,j)=p;
+		    // }  else {
+		    //std::cout << "Drop "<< i<<" " <<j << " "<<p<<" "<<p_in<<" " <<p_out<<std::endl;
+		    //}
 		}
 	    }
 	}
@@ -526,7 +542,7 @@ namespace LocARNA {
 	// ----------------------------------------
 	// init stacking probabilities
 	arc_2_probs_.clear();
-	has_stacking_ = stacking;	
+	has_stacking_ = pfoldparams.stacking();	
 	if (has_stacking_) {
 	    for( size_t i=1; i <= len; i++ ) {
 		for( size_t j=i+TURN+3; j <= len; j++ ) {
