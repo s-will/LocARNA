@@ -87,12 +87,11 @@ namespace LocARNA {
 	ScoreMatrix Fmat;
 
 	/**
-	 * M matrices
-	 * @note in the case of structure local alignment, 
-	 * the algo uses eight M matrices
-	 * right now for the locarna_n only one M matrix is used (no exclusions)
+	 * @brief M matrix
+	 *
+	 * use only one M matrix (unlike in Aligner), since we don't handle structure locality
 	 */
-	std::vector<M_matrix_t> Ms;
+	M_matrix_t M;
 
 	ScoreMatrix gapCostAmat; //!< a matrix to store cost of deleting/inserting a subsequence of sequence A, indexed by neighboring positions of the range
 	ScoreMatrix gapCostBmat; //!< a matrix to store cost of deleting/inserting a subsequence of sequence B, indexed by neighboring positions of the range
@@ -107,16 +106,6 @@ namespace LocARNA {
 	bool D_created; //!< flag, is D already created?
 
 	Alignment alignment; //!< resulting alignment
-
-	/**
-	 * \brief different states for computation of structure-local alignment.
-	 *
-	 * \note The idea of the names is E=exclusion, NO=no exclusion, X=one exclusion,
-	 * OP=open exclusion. In E_1_2, 1 refers to sequence A and 2 to sequence B.
-	 * currently in locarna_n only no exclusion is provided
-	 */
-	enum {E_NO_NO};
-
 
 	// ============================================================
 	/**
@@ -283,7 +272,6 @@ namespace LocARNA {
 	 * the alignment below of arc match (a,b).
 	 * First row/column means the row al and column bl.
 	 *
-	 * @param state the state, selects the matrix M (currently one possible state)
 	 * @param al left end of arc a
 	 * @param ar right end of arc a
 	 * @param bl left end of arc b
@@ -292,7 +280,7 @@ namespace LocARNA {
 	 * 
 	 */
 	template <class ScoringView>
-	void init_M_E_F(int state, pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
+	void init_M_E_F(pos_type al, pos_type ar, pos_type bl, pos_type br,ScoringView sv);
 
 	/**
 	 * \brief compute and stores score of aligning subsequences to the gap
@@ -352,7 +340,6 @@ namespace LocARNA {
 	/**
 	* \brief compute E matrix value of single matrix element
 	*
-	* @param state the state, selects the matrix M (currently one possible state=noEx)
 	* @param al
 	* @param i_index position in sequence A:
 	* @param j_index position in sequence B:
@@ -362,12 +349,11 @@ namespace LocARNA {
 	* @returns score of E(i,j)
 	*/
 		template<class ScoringView>
-	infty_score_t compute_E_entry(int state, index_t al, matidx_t i_index, matidx_t j_index, seq_pos_t i_seq_pos, seq_pos_t i_prev_seq_pos, ScoringView sv);
+	infty_score_t compute_E_entry(index_t al, matidx_t i_index, matidx_t j_index, seq_pos_t i_seq_pos, seq_pos_t i_prev_seq_pos, ScoringView sv);
 
 	/**
 	* \brief compute F matrix value of single matrix element
 	*
-	* @param state the state, selects the matrix M (currently one possible state=noEx)
 	* @param bl
 	* @param i_index position in sequence A:
 	* @param j_index position in sequence B:
@@ -377,7 +363,7 @@ namespace LocARNA {
 	* @returns score of E(i,j)
 	*/
 		template<class ScoringView>
-	infty_score_t compute_F_entry(int state, index_t bl, matidx_t i_index, matidx_t j_index, seq_pos_t i_seq_pos, seq_pos_t i_prev_seq_pos, ScoringView sv);
+	infty_score_t compute_F_entry(index_t bl, matidx_t i_index, matidx_t j_index, seq_pos_t i_seq_pos, seq_pos_t i_prev_seq_pos, ScoringView sv);
 	/**
 	 * \brief compute M value of single matrix element
 	 *
@@ -385,13 +371,12 @@ namespace LocARNA {
 	 * @param bl position in sequence B: left end of current arc match
 	 * @param index_i index position in sequence A, for which score is computed
 	 * @param index_j index position in sequence B, for which score is computed
-	 * @param state the state, selects the matrix M (currently one possible state=noEx)
 	 * @param sv the scoring view to be used
 	 * @returns score of M(i,j) for the arcs left ended by al, bl
 	 *
 	 */
 	template<class ScoringView>
-	infty_score_t compute_M_entry(int state, index_t al, index_t bl, matidx_t index_i, matidx_t index_j,ScoringView sv);
+	infty_score_t compute_M_entry(index_t al, index_t bl, matidx_t index_i, matidx_t index_j,ScoringView sv);
 //---------------------------------------------------------------------------------
 
 	/**
@@ -406,13 +391,11 @@ namespace LocARNA {
 	 * 
 	 * @pre arc-match (al,ar)~(bl,br) valid due to constraints and heuristics
 	 */
-	void fill_M_entries(pos_type al,pos_type ar,pos_type bl,pos_type br,
-		     bool allow_exclusion);
+	void fill_M_entries(pos_type al,pos_type ar,pos_type bl,pos_type br);
 
 	/** 
 	 * \brief trace back base deletion within a match of arcs
 	 * 
-	 * @param state the state selects E matrices (currently one possible state=noEx)
 	 * @param al left end of arc in A
 	 * @param i  right end of subsequence in A
 	 * @param bl left end of arc in B
@@ -421,12 +404,11 @@ namespace LocARNA {
 	 * @param sv scoring view
 	 */
 	template<class ScoringView>
-	void trace_E(int state,pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool top_level, ScoringView sv);
+	void trace_E(pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool top_level, ScoringView sv);
 
 	/**
 	 * \brief trace back base insertion within a match of arcs
 	 *
-	 * @param state the state selects F matrices (currently one possible state=noEx)
 	 * @param al left end of arc in A
 	 * @param i  right end of subsequence in A
 	 * @param bl left end of arc in B
@@ -435,13 +417,12 @@ namespace LocARNA {
 	 * @param sv scoring view
 	 */
 	template<class ScoringView>
-	void trace_F(int state,pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool top_level, ScoringView sv);
+	void trace_F(pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool top_level, ScoringView sv);
 
 
 	/** 
 	 * \brief trace back within an arc match
 	 * 
-	 * @param state the state selects Mmatrices (currently one possible state=noEx)
 	 * @param al left end of arc in A
 	 * @param i_index  index for right end of subsequence in A
 	 * @param bl index for left end of arc in B
@@ -450,12 +431,11 @@ namespace LocARNA {
 	 * @param sv scoring view 
 	 */
 	template<class ScoringView>
-	void trace_M(int state,pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool tl, ScoringView sv);
+	void trace_M(pos_type al, matidx_t i_index, pos_type bl, matidx_t j_index, bool tl, ScoringView sv);
 
 	/** 
 	 * \brief standard cases in trace back (without handling of exclusions)
 	 * 
-	 * @param state the state selects M/ matrices (currently one possible state=noEx)
 	 * @param al left end of arc in A
 	 * @param i  right end of subsequence in A
 	 * @param bl left end of arc in B
@@ -464,11 +444,10 @@ namespace LocARNA {
 	 * @param sv scoring view 
 	 */
 	template <class ScoringView>
-	void trace_M_noex(int state,
-			pos_type al, pos_type i,
-			pos_type bl,pos_type j,
-			bool top_level,
-			ScoringView sv);
+	void trace_M_noex(pos_type al, pos_type i,
+			  pos_type bl,pos_type j,
+			  bool top_level,
+			  ScoringView sv);
 
 
 	/**
