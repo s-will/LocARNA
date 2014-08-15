@@ -314,10 +314,10 @@ namespace LocARNA {
 	// ------------------------------------------------------------
 	// traverse the left ends al,bl of arcs in descending order
 	//
-	for (size_type al=r.get_endA(); al>=r.get_startA(); al--) {
+	for (size_type al=r.endA(); al>=r.startA(); al--) {
 	
-	    size_type min_bl=r.get_startB();
-	    size_type max_bl=r.get_endB();
+	    size_type min_bl=r.startB();
+	    size_type max_bl=r.endB();
 	
 	    // restrict range for left ends of bl due to trace controller
 	    min_bl = std::max(min_bl,params->trace_controller_->min_col(al));
@@ -369,12 +369,12 @@ namespace LocARNA {
 	    align_D();
 	}
 
-	assert(r.get_startA()>0);
-	assert(r.get_startB()>0);
+	assert(r.startA()>0);
+	assert(r.startB()>0);
 
-	align_inside_arcmatch(r.get_startA()-1, r.get_endA()+1, r.get_startB()-1,r.get_endB()+1);
+	align_inside_arcmatch(r.startA()-1, r.endA()+1, r.startB()-1,r.endB()+1);
 
-	partFunc = M(r.get_endA(), r.get_endB());
+	partFunc = M(r.endA(), r.endB());
 
 	//assert(partFunc>0);
 
@@ -587,8 +587,8 @@ namespace LocARNA {
     AlignerP::leftmost_covering_arcmatch(size_type al,size_type bl,size_type ar,size_type br) const {
 	// implement in a fast but possibly under-estimating way
     
-	size_pair sp(leftmost_covering_arc(r.get_startA(),bpsA,al,ar),
-		     leftmost_covering_arc(r.get_startB(),bpsB,bl,br)
+	size_pair sp(leftmost_covering_arc(r.startA(),bpsA,al,ar),
+		     leftmost_covering_arc(r.startB(),bpsB,bl,br)
 		     );
 	return sp;
     }
@@ -612,8 +612,8 @@ namespace LocARNA {
     AlignerP::size_pair
     AlignerP::rightmost_covering_arcmatch(size_type al,size_type bl,size_type ar,size_type br) const {
 	// implement in a fast but possibly under-estimating way
-	size_pair sp(rightmost_covering_arc(bpsA,al,ar,r.get_endA()),
-		     rightmost_covering_arc(bpsB,bl,br,r.get_endB())
+	size_pair sp(rightmost_covering_arc(bpsA,al,ar,r.endA()),
+		     rightmost_covering_arc(bpsB,bl,br,r.endB())
 		     );    
 	return sp;
     }
@@ -632,28 +632,28 @@ namespace LocARNA {
     // AlignerP::init_Mprime(size_type al, size_type ar, size_type bl, size_type br) {   
     //     assert(al>0 && bl>0);
     
-    //     Mprime(r.get_endA(),r.get_endB()) = M(al-1,bl-1);
+    //     Mprime(r.endA(),r.endB()) = M(al-1,bl-1);
     //     //std::cout<<"in init_Mprime :  with al,ar,bl,br "<<al<<" "<<ar<< " : "<<bl<<" "<<br<<endl;
     
     //     pf_score_t pf;
     
     //     pf = M(al-1,bl-1) * scoring->exp_indel_opening();
-    //     for (int i=(int)r.get_endA()-1;i>=(int)ar; i--) {
+    //     for (int i=(int)r.endA()-1;i>=(int)ar; i--) {
     // 	pf *= scoring->exp_gapA(i+1);
-    // 	Mprime(i,r.get_endB()) = pf;
+    // 	Mprime(i,r.endB()) = pf;
     //     }
     
     //     pf = M(al-1,bl-1) * scoring->exp_indel_opening();
-    //     for (int j=(int)r.get_endB()-1; j>=(int)br; j--) {
-    // 	pf *= scoring->exp_gapB(r.get_endA(),j+1);
-    // 	Mprime(r.get_endA(),j) = pf; 
+    //     for (int j=(int)r.endB()-1; j>=(int)br; j--) {
+    // 	pf *= scoring->exp_gapB(r.endA(),j+1);
+    // 	Mprime(r.endA(),j) = pf; 
     //     }
     // }
 
     // inline
     // void
     // AlignerP::init_Eprime(size_type al, size_type ar, size_type bl, size_type br) {
-    //     for (int j=(int)r.get_endB()-1; j>=(int)br; j--) {
+    //     for (int j=(int)r.endB()-1; j>=(int)br; j--) {
     // 	Eprime[j] = 0;
     //     }
     // }
@@ -919,25 +919,25 @@ namespace LocARNA {
 	// ------------------------------------------------------------
 	// traverse the left ends al,bl of arcs in ascending order
 	//
-	for (size_type al=r.get_startA(); al<=r.get_endA(); al++) {
+	for (size_type al=r.startA(); al<=r.endA(); al++) {
 	
 	    // restrict range for left ends of bl due to trace controller
-	    size_type min_bl = std::max(r.get_startB(), params->trace_controller_->min_col(al));
-	    size_type max_bl = std::min(r.get_endB(),   params->trace_controller_->max_col(al));
+	    size_type min_bl = std::max(r.startB(), params->trace_controller_->min_col(al));
+	    size_type max_bl = std::min(r.endB(),   params->trace_controller_->max_col(al));
     
 	    for (size_type bl=min_bl; bl<=max_bl; bl++) {
 	    
 		// ------------------------------------------------------------
 		// get minimal right ends of arc matchs with left ends al,bl 
 		//
-		size_type min_ar=r.get_endA()+1;
-		size_type min_br=r.get_endB()+1;
+		size_type min_ar=r.endA()+1;
+		size_type min_br=r.endB()+1;
 	    
 		arc_matches.get_min_right_ends(al,bl,&min_ar,&min_br); 
 	    
 		// continue, when there is no arc match with left ends al,bl
 		// this is only a small optimization and not needed for correctness
-		if (min_ar > r.get_endA() || min_br > r.get_endB()) continue;
+		if (min_ar > r.endA() || min_br > r.endB()) continue;
 	    
 		// ------------------------------------------------------------
 		// get rightmost end of covering arc match.
@@ -980,7 +980,7 @@ namespace LocARNA {
 
 	    alloc_outside_matrices();
 
-	    align_reverse(r.get_startA(),r.get_endA(),r.get_startB(),r.get_endB(),true);
+	    align_reverse(r.startA(),r.endA(),r.startB(),r.endB(),true);
 
 	    align_Dprime();
 	}
@@ -1055,11 +1055,11 @@ namespace LocARNA {
 	// cases, where edge is enclosed by arc match
 	//
     
-	for(size_type al=r.get_startA();al<=r.get_endA();al++){
+	for(size_type al=r.startA();al<=r.endA();al++){
 
 	    // limit entries due to trace controller
-	    size_type min_col = std::max(r.get_startB(),params->trace_controller_->min_col(al));
-	    size_type max_col = std::min(r.get_endB(),params->trace_controller_->max_col(al));
+	    size_type min_col = std::max(r.startB(),params->trace_controller_->min_col(al));
+	    size_type max_col = std::min(r.endB(),params->trace_controller_->max_col(al));
 	    for(size_type bl=min_col; bl<=max_col; bl++){
 	    
 		// trace controller allows trace through (al,bl), but not
@@ -1156,13 +1156,13 @@ namespace LocARNA {
 	// --------------------------------------------------
 	// extra case, where there is no enclosing arc match of alignment edge (i,j)
   
-	align_inside_arcmatch(0,r.get_endA()+1,0,r.get_endB()+1);
-	align_reverse(r.get_startA(),r.get_endA(),r.get_startB(),r.get_endB());
+	align_inside_arcmatch(0,r.endA()+1,0,r.endB()+1);
+	align_reverse(r.startA(),r.endA(),r.startB(),r.endB());
   
-	for(size_type i=r.get_startA();i<=r.get_endA();i++){
+	for(size_type i=r.startA();i<=r.endA();i++){
 	    // limit entries due to trace controller
-	    size_type min_col = std::max(r.get_startB(),params->trace_controller_->min_col(i));
-	    size_type max_col = std::min(r.get_endB(),params->trace_controller_->max_col(i));
+	    size_type min_col = std::max(r.startB(),params->trace_controller_->min_col(i));
+	    size_type max_col = std::min(r.endB(),params->trace_controller_->max_col(i));
 	    for(size_type j=min_col;j<=max_col;j++){
 	    
 		if ( ! params->trace_controller_->is_valid_match(i,j) ) continue;
@@ -1175,10 +1175,10 @@ namespace LocARNA {
 	// --------------------------------------------------
 	// divide the conditional partition functions by total partition function  
 	
-	for(size_type i=r.get_startA();i<=r.get_endA();i++){
+	for(size_type i=r.startA();i<=r.endA();i++){
 	    // limit entries due to trace controller
-	    size_type min_col = std::max(r.get_startB(),params->trace_controller_->min_col(i));
-	    size_type max_col = std::min(r.get_endB(),params->trace_controller_->max_col(i));
+	    size_type min_col = std::max(r.startB(),params->trace_controller_->min_col(i));
+	    size_type max_col = std::min(r.endB(),params->trace_controller_->max_col(i));
 	    for(size_type j=min_col;j<=max_col;j++){
 	    
 		if ( ! params->trace_controller_->is_valid_match(i,j) ) continue;
@@ -1223,8 +1223,8 @@ namespace LocARNA {
     void 
     AlignerP::write_basematch_probabilities(std::ostream &out)
     {
-	for(size_type i=1;i<=r.get_endA();i++){
-	    for(size_type j=1;j<=r.get_endB();j++){
+	for(size_type i=1;i<=r.endA();i++){
+	    for(size_type j=1;j<=r.endB();j++){
 		if (bm_prob(i,j)>=params->min_bm_prob_) {
 		    out<<i<<" "<<j<<" "<<bm_prob(i,j);
 		    out<<std::endl;
@@ -1276,8 +1276,8 @@ namespace LocARNA {
 	in = M(j,l);
     
 	// ensure that pre-conditions are met for align_outside_arcmatch 
-	align_inside_arcmatch(r.get_startA()-1, r.get_endA()+1, r.get_startB()-1,r.get_endB()+1);
-	align_reverse(r.get_startA(),r.get_endA(),r.get_startB(),r.get_endB(),true);
+	align_inside_arcmatch(r.startA()-1, r.endA()+1, r.startB()-1,r.endB()+1);
+	align_reverse(r.startA(),r.endA(),r.startB(),r.endB(),true);
     
     
 	size_pair max_r = rightmost_covering_arcmatch(i,k,j,l);

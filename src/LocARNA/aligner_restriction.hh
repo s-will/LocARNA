@@ -25,22 +25,22 @@ namespace LocARNA {
     */
     class AlignerRestriction {
     private:
-	int startA; //!< start position in A
-	int startB; //!< start position in B
-	int endA; //!< end position in A
-	int endB; //! end position in B
+	int startA_; //!< start position in A
+	int startB_; //!< start position in B
+	int endA_; //!< end position in A
+	int endB_; //! end position in B
     public:
 	
 	/** 
 	 * Constructs with start and end positions of subsequences
 	 * 
-	 * @param startA_ start position in A
-	 * @param startB_ start position in B
-	 * @param endA_ end position in A
-	 * @param endB_ end position in B
+	 * @param startA start position in A
+	 * @param startB start position in B
+	 * @param endA end position in A
+	 * @param endB end position in B
 	 */
-	AlignerRestriction(int startA_, int startB_, int endA_, int endB_)
-	    : startA(startA_), startB(startB_), endA(endA_), endB(endB_)
+	AlignerRestriction(int startA, int startB, int endA, int endB)
+	    : startA_(startA), startB_(startB), endA_(endA), endB_(endB)
 	{}
 	
 	/** 
@@ -48,56 +48,56 @@ namespace LocARNA {
 	 * 
 	 * @return start position in A
 	 */
-	size_t get_startA() const {return startA;}
+	size_t startA() const {return startA_;}
 	
 	/** 
 	 * Read access to member
 	 * 
 	 * @return end position in A
 	 */
-	size_t get_endA() const {return endA;}
+	size_t endA() const {return endA_;}
 	
 	/** 
 	 * Read access to member
 	 * 
 	 * @return start position in B
 	 */
-	size_t get_startB() const {return startB;}
+	size_t startB() const {return startB_;}
 
 	/** 
 	 * Read access to member
 	 * 
 	 * @return end position in B
 	 */
-	size_t get_endB() const {return endB;}
+	size_t endB() const {return endB_;}
 	
 	/** 
 	 * Write access to member
 	 * 
 	 * @param p start position in A
 	 */
-	void set_startA(size_t p) {startA=p;}
+	void set_startA(size_t p) {startA_=p;}
 
 	/** 
 	 * Write access to member
 	 * 
 	 * @param p end position in A
 	 */
-	void set_endA(size_t p)  {endA=p;}
+	void set_endA(size_t p)  {endA_=p;}
 	
 		/** 
 	 * Write access to member
 	 * 
 	 * @param p start position in B
 	 */
-	void set_startB(size_t p)  {startB=p;}
+	void set_startB(size_t p)  {startB_=p;}
 	
 	/** 
 	 * Write access to member
 	 * 
 	 * @param p end position in B
 	 */
-	void set_endB(size_t p)  {endB=p;}
+	void set_endB(size_t p)  {endB_=p;}
     };
 
     /** 
@@ -112,10 +112,10 @@ namespace LocARNA {
     inline
     std::ostream & operator<<(std::ostream &out, AlignerRestriction r) {
 	return
-	    out << r.get_startA() << " "
-		<< r.get_startB() << " "
-		<< r.get_endA() << " "
-		<< r.get_endB();
+	    out << r.startA() << " "
+		<< r.startB() << " "
+		<< r.endA() << " "
+		<< r.endB();
     }
 
 }

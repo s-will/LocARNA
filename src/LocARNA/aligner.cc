@@ -696,11 +696,11 @@ namespace LocARNA {
 	// traverse the left ends al,bl of arcs in descending order
 	// (restrict by trace controller and r)
 	//
-	// for al in r_.get_endA() .. r_.get_startA
-	for (pos_type al=r_.get_endA()+1; al>r_.get_startA(); ) { al--; 
+	// for al in r_.endA() .. r_.startA
+	for (pos_type al=r_.endA()+1; al>r_.startA(); ) { al--; 
 	
-	    pos_type max_bl = std::min(r_.get_endB(),params_->trace_controller_->max_col(al));
-	    pos_type min_bl = std::max(r_.get_startB(),params_->trace_controller_->min_col(al));
+	    pos_type max_bl = std::min(r_.endB(),params_->trace_controller_->max_col(al));
+	    pos_type min_bl = std::max(r_.startB(),params_->trace_controller_->min_col(al));
 	
 	    // for bl in max_bl .. min_bl
 	    for (pos_type bl=max_bl+1; bl > min_bl;) { bl--; 
@@ -758,8 +758,8 @@ namespace LocARNA {
 	infty_score_t max_score;
     
 	init_state(E_NO_NO,
-		   r_.get_startA()-1,r_.get_endA()+1,
-		   r_.get_startB()-1,r_.get_endB()+1,
+		   r_.startA()-1,r_.endA()+1,
+		   r_.startB()-1,r_.endB()+1,
 		   !free_endgaps_.allow_left_2(),false,
 		   !free_endgaps_.allow_left_1(),false,
 		   def_scoring_view_);
@@ -770,51 +770,51 @@ namespace LocARNA {
 	AnchorConstraints::size_pair_t right_anchor = params_->constraints_->rightmost_anchor();
 	//AnchorConstraints::size_pair_t left_anchor  = params_->constraints_->leftmost_anchor();
     
-	for (pos_type i=r_.get_startA(); i<=r_.get_endA(); i++) {
+	for (pos_type i=r_.startA(); i<=r_.endA(); i++) {
 	    Fs_[E_NO_NO]=infty_score_t::neg_infty;
 	
 	    // limit entries due to trace controller
-	    pos_type min_col = std::max(r_.get_startB(),params_->trace_controller_->min_col(i));
-	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller_->max_col(i));
+	    pos_type min_col = std::max(r_.startB(),params_->trace_controller_->min_col(i));
+	    pos_type max_col = std::min(r_.endB(),params_->trace_controller_->max_col(i));
 
 	    for (pos_type j=min_col; j<=max_col; j++) {
-		M(i,j) = align_noex( E_NO_NO, r_.get_startA()-1, r_.get_startB()-1, i, j,def_scoring_view_ );	      
+		M(i,j) = align_noex( E_NO_NO, r_.startA()-1, r_.startB()-1, i, j,def_scoring_view_ );	      
 	    }
 	}
     
 	//std::cout << "M-matrix:" <<std::endl << M << std::endl;
 
-	max_score=M(r_.get_endA(),r_.get_endB());
-	max_i_=r_.get_endA();
-	max_j_=r_.get_endB();
+	max_score=M(r_.endA(),r_.endB());
+	max_i_=r_.endA();
+	max_j_=r_.endB();
     
     
 	if (free_endgaps_.allow_right_2()) {
-	    // search maximum in the rightmost row r_.get_endB()
+	    // search maximum in the rightmost row r_.endB()
 	    // pay attention for anchor constraints AND trace controller
 	
-	    for (pos_type i=std::max(right_anchor.first+1,r_.get_startA()); i<=r_.get_endA(); i++) {
-		if ( params_->trace_controller_->max_col(i)>=r_.get_endB() && M(i,r_.get_endB()) > max_score ) {
-		    max_score = M(i,r_.get_endB());
+	    for (pos_type i=std::max(right_anchor.first+1,r_.startA()); i<=r_.endA(); i++) {
+		if ( params_->trace_controller_->max_col(i)>=r_.endB() && M(i,r_.endB()) > max_score ) {
+		    max_score = M(i,r_.endB());
 		    max_i_=i; 
-		    max_j_=r_.get_endB();
+		    max_j_=r_.endB();
 		}
 	    }
 	}
     
 	if (free_endgaps_.allow_right_1()) {
-	    // search maximum in the last column r_.get_endA()
+	    // search maximum in the last column r_.endA()
 	    // pay attention for anchor constraints AND trace controller
 	
 	    // limit entries due to trace controller
-	    pos_type min_col = std::max(std::max(right_anchor.second+1,r_.get_startB()),params_->trace_controller_->min_col(r_.get_endA()));
-	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller_->max_col(r_.get_endA()));
+	    pos_type min_col = std::max(std::max(right_anchor.second+1,r_.startB()),params_->trace_controller_->min_col(r_.endA()));
+	    pos_type max_col = std::min(r_.endB(),params_->trace_controller_->max_col(r_.endA()));
 
 	
 	    for (pos_type j=min_col; j<=max_col; j++) {
-		if ( M(r_.get_endA(),j) > max_score ) {
-		    max_score = M(r_.get_endA(),j);
-		    max_i_=r_.get_endA();
+		if ( M(r_.endA(),j) > max_score ) {
+		    max_score = M(r_.endA(),j);
+		    max_i_=r_.endA();
 		    max_j_=j;
 		}
 	    }
@@ -835,7 +835,7 @@ namespace LocARNA {
     
 	M_matrix_t &M=Ms_[E_NO_NO];
 	infty_score_t max_score=infty_score_t::neg_infty;
-	init_state(E_NO_NO,r_.get_startA()-1,r_.get_endA()+1,r_.get_startB()-1,r_.get_endB()+1,false,false,false,false,sv);
+	init_state(E_NO_NO,r_.startA()-1,r_.endA()+1,r_.startB()-1,r_.endB()+1,false,false,false,false,sv);
     
 	// need to handle anchor constraints:
 	// search maximum to the right of (or at) rightmost anchor constraint
@@ -844,20 +844,20 @@ namespace LocARNA {
     
 	AnchorConstraints::size_pair_t left_anchor = params_->constraints_->leftmost_anchor();
 
-	//AnchorConstraints::size_pair_t right_anchor = AnchorConstraints::size_pair_t(r_.get_startA(),r_.get_startB());//dummy
+	//AnchorConstraints::size_pair_t right_anchor = AnchorConstraints::size_pair_t(r_.startA(),r_.startB());//dummy
     
 	//std::cout << "right_anchor: "<<(right_anchor.first)<<","<<(right_anchor.second)<<std::endl;
     
-	for (pos_type i=r_.get_startA(); i<=r_.get_endA(); i++) {
+	for (pos_type i=r_.startA(); i<=r_.endA(); i++) {
 	    Fs_[E_NO_NO]=infty_score_t::neg_infty;
 
 	    // limit entries due to trace controller
-	    pos_type min_col = std::max(r_.get_startB(),params_->trace_controller_->min_col(i));
-	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller_->max_col(i));
+	    pos_type min_col = std::max(r_.startB(),params_->trace_controller_->min_col(i));
+	    pos_type max_col = std::min(r_.endB(),params_->trace_controller_->max_col(i));
 
 	    for (pos_type j=min_col; j<=max_col; j++) {
 	    
-		M(i,j) = align_noex( E_NO_NO,r_.get_startA()-1,r_.get_startB()-1,i,j, sv);	      
+		M(i,j) = align_noex( E_NO_NO,r_.startA()-1,r_.startB()-1,i,j, sv);	      
 		//
 		// score can be 0 (= drop prefix alignment) only if this is allowed due to constraints
 		if ( i<left_anchor.first && j<left_anchor.second ) {
@@ -884,25 +884,25 @@ namespace LocARNA {
     // ATTENTION: no special anchor constraint handling done here (seems not very useful anyway)
     infty_score_t
     AlignerImpl::align_top_level_localB() {
-	// std::cout <<"align local B " << r_.get_startA() << " " << r_.get_startB() << " "
-	//           << r_.get_endA() << " " << r_.get_endB() << std::endl;
+	// std::cout <<"align local B " << r_.startA() << " " << r_.startB() << " "
+	//           << r_.endA() << " " << r_.endB() << std::endl;
     
 	M_matrix_t &M=Ms_[E_NO_NO];
 	infty_score_t max_score=infty_score_t::neg_infty;
-	init_state(E_NO_NO,r_.get_startA()-1,r_.get_endA()+1,r_.get_startB()-1,r_.get_endB()+1,true,false,false,false,def_scoring_view_);
+	init_state(E_NO_NO,r_.startA()-1,r_.endA()+1,r_.startB()-1,r_.endB()+1,true,false,false,false,def_scoring_view_);
     
-	for (pos_type i=r_.get_startA(); i<=r_.get_endA(); i++) {
+	for (pos_type i=r_.startA(); i<=r_.endA(); i++) {
 
 	    // limit entries due to trace controller
-	    pos_type min_col = std::max(r_.get_startB(),params_->trace_controller_->min_col(i));
-	    pos_type max_col = std::min(r_.get_endB(),params_->trace_controller_->max_col(i));
+	    pos_type min_col = std::max(r_.startB(),params_->trace_controller_->min_col(i));
+	    pos_type max_col = std::min(r_.endB(),params_->trace_controller_->max_col(i));
 
 	    for (pos_type j=min_col; j<=max_col; j++) {
 		M(i,j) = 
 		    std::max( (infty_score_t)0,
 			      align_noex( E_NO_NO, 
-					  r_.get_startA()-1,r_.get_startB()-1,i,j,def_scoring_view_ ) );
-		if (i==r_.get_endA() && max_score < M(i,j)) {
+					  r_.startA()-1,r_.startB()-1,i,j,def_scoring_view_ ) );
+		if (i==r_.endA() && max_score < M(i,j)) {
 		    max_score=M(i,j);
 		    max_i_ = i;
 		    max_j_ = j;
@@ -934,9 +934,9 @@ namespace LocARNA {
 	    //
 	    // align the subsequences that are specified by the restriction object
 	    /*
-	      align_in_arcmatch(r_.get_startA()-1,r_.get_endA()+1,r_.get_startB()-1,r_.get_endB()+1,false);
-	      max_i=r_.get_endA();
-	      max_j=r_.get_endB();
+	      align_in_arcmatch(r_.startA()-1,r_.endA()+1,r_.startB()-1,r_.endB()+1,false);
+	      max_i=r_.endA();
+	      max_j=r_.endB();
 		
 	      return Ms_[E_NO_NO](max_i,max_j);
 	    */
@@ -1326,14 +1326,14 @@ namespace LocARNA {
     template<class ScoringView>
     void
     AlignerImpl::trace(ScoringView sv) {
-	// pre: last call align_in_arcmatch(r_.get_startA()-1,r_.get_endA()+1,r_.get_startB()-1,r_.get_endB()+1);
+	// pre: last call align_in_arcmatch(r_.startA()-1,r_.endA()+1,r_.startB()-1,r_.endB()+1);
 	//      or align_top_level_locally for sequ_local_ alignent
     
 	// reset the alignment strings (to empty strings)
 	// such that they can be written again during the trace
 	alignment_.clear();
     
-	trace_in_arcmatch(E_NO_NO,r_.get_startA()-1,max_i_,r_.get_startB()-1,max_j_,true,sv);
+	trace_in_arcmatch(E_NO_NO,r_.startA()-1,max_i_,r_.startB()-1,max_j_,true,sv);
     }
 
     void
@@ -1433,8 +1433,8 @@ namespace LocARNA {
 	    if (i==k) break; // break if enough solutions generated
 	
 	    // split the longer sequence according to local alignment
-	    pos_type lenA=task_r.get_endA()-task_r.get_startA();
-	    pos_type lenB=task_r.get_endB()-task_r.get_startB();
+	    pos_type lenA=task_r.endA()-task_r.startA();
+	    pos_type lenB=task_r.endB()-task_r.startB();
 	
 	    // make two clones of AlignerRestriction task_r
 	    AlignerRestriction r1(task_r);

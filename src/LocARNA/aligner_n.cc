@@ -612,9 +612,9 @@ namespace LocARNA {
 	computeGapCosts(true, def_scoring_view);//gap costs A //tocheck:always def_score view!
 	computeGapCosts(false, def_scoring_view);//gap costs B //tocheck:always def_score view!
 
-	// for al in r.get_endA() .. r.get_startA
+	// for al in r.endA() .. r.startA
 
-	for (pos_type al=r.get_endA()+1; al>r.get_startA(); ) {
+	for (pos_type al=r.endA()+1; al>r.startA(); ) {
 	    al--;
 	    if (trace_debugging_output) std::cout << "align_D al: " << al << std::endl;
 
@@ -624,11 +624,11 @@ namespace LocARNA {
 		    if (trace_debugging_output)	std::cout << "empty left_adjlist(al=)" << al << std::endl;
 		    continue;
 		}
-	    //	pos_type max_bl = std::min(r.get_endB(),params->trace_controller.max_col(al)); //tomark: trace_controller
-	    //	pos_type min_bl = std::max(r.get_startB(),params->trace_controller.min_col(al));
+	    //	pos_type max_bl = std::min(r.endB(),params->trace_controller.max_col(al)); //tomark: trace_controller
+	    //	pos_type min_bl = std::max(r.startB(),params->trace_controller.min_col(al));
 
-	    pos_type max_bl = r.get_endB();
-	    pos_type min_bl = r.get_startB();
+	    pos_type max_bl = r.endB();
+	    pos_type min_bl = r.startB();
 
 	    // for bl in max_bl .. min_bl
 	    for (pos_type bl=max_bl+1; bl > min_bl;) {
@@ -731,12 +731,15 @@ namespace LocARNA {
 	    throw failure("sequ_local is not supported by locarna_n");
 	} else { // sequence global alignment
 
-	    // align toplevel globally with potentially free endgaps (as given by description params->free_endgaps)
-	    //return align_top_level_free_endgaps(); //tomark: implement align_top_level_free_endgaps()
-	    seq_pos_t ps_al = r.get_startA()-1; //ends of pseudo-arc match
-	    seq_pos_t ps_ar = r.get_endA()+1;
-	    seq_pos_t ps_bl = r.get_startB()-1;
-	    seq_pos_t ps_br = r.get_endB()+1;
+	    // align toplevel globally with potentially free endgaps
+	    //(as given by description params->free_endgaps) return
+	    //align_top_level_free_endgaps(); 
+	    //tomark: implement align_top_level_free_endgaps()
+	    
+	    seq_pos_t ps_al = r.startA()-1; //ends of pseudo-arc match
+	    seq_pos_t ps_ar = r.endA()+1;
+	    seq_pos_t ps_bl = r.startB()-1;
+	    seq_pos_t ps_br = r.endB()+1;
 	    matidx_t last_index_A = mapperA.number_of_valid_mat_pos(ps_al)-1;
 	    seq_pos_t last_valid_seq_pos_A = mapperA.get_pos_in_seq_new(ps_al, last_index_A);
 	    matidx_t last_index_B = mapperB.number_of_valid_mat_pos(ps_bl)-1;
@@ -765,7 +768,8 @@ namespace LocARNA {
     // ------------------------------------------------------------
 
     template <class ScoringView>
-    void AlignerN::trace_IX (pos_type xl, matidx_t i_index, const Arc &arcY, bool isA, ScoringView sv)
+    void AlignerN::trace_IX (pos_type xl, matidx_t i_index, 
+			     const Arc &arcY, bool isA, ScoringView sv)
     {
 	const BasePairs &bpsX = isA? bpsA : bpsB;
 	const SparsificationMapper &mapperX = isA ? mapperA : mapperB;
@@ -1410,8 +1414,8 @@ namespace LocARNA {
 	//    if ( i_seq_pos <= al ) {
 	//	for (int k = bl+1; k <= j_seq_pos; k++) { //TODO: end gaps cost is not free
 	//
-	//	    if ( ((al == r.get_startA()-1) && mapperB.is_valid_pos_external(k))
-	//		    || ( (al != r.get_startA()-1) && mapperB.is_valid_pos((k)) )
+	//	    if ( ((al == r.startA()-1) && mapperB.is_valid_pos_external(k))
+	//		    || ( (al != r.startA()-1) && mapperB.is_valid_pos((k)) )
 	//		alignment.append(-1,k);
 	//
 	//
@@ -1421,8 +1425,8 @@ namespace LocARNA {
 	//    if (j_seq_pos <= bl) {
 	//	for (int k = al+1;k <= i_seq_pos; k++) {
 	//
-	//	    if ( ((bl == r.get_startB()-1) && mapperA.is_valid_pos_external(k))
-	//		    || ( (bl != r.get_startB()-1) && mapperA.is_valid_pos(k)) )
+	//	    if ( ((bl == r.startB()-1) && mapperA.is_valid_pos_external(k))
+	//		    || ( (bl != r.startB()-1) && mapperA.is_valid_pos(k)) )
 	//		alignment.append(k,-1);
 	//
 	//	}
@@ -1440,28 +1444,28 @@ namespace LocARNA {
     template<class ScoringView>
     void
     AlignerN::trace(ScoringView sv) {
-	// pre: last call align_in_arcmatch(r.get_startA()-1,r.get_endA()+1,r.get_startB()-1,r.get_endB()+1);
+	// pre: last call align_in_arcmatch(r.startA()-1,r.endA()+1,r.startB()-1,r.endB()+1);
 	//      or align_top_level_locally for sequ_local alignent
 
 	// reset the alignment strings (to empty strings)
 	// such that they can be written again during the trace
 	alignment.clear();
 
-	// free end gap version: trace_M(E_NO_NO,r.get_startA()-1,max_i,r.get_startB()-1,max_j,true,sv);
-	seq_pos_t ps_al = r.get_startA() - 1;
+	// free end gap version: trace_M(E_NO_NO,r.startA()-1,max_i,r.startB()-1,max_j,true,sv);
+	seq_pos_t ps_al = r.startA() - 1;
 	matidx_t last_mat_idx_pos_A = mapperA.number_of_valid_mat_pos(ps_al) -1;//tocheck: check the correctness
 	//seq_pos_t last_seq_pos_A = mapperA.get_pos_in_seq_new(ps_al, last_mat_idx_pos_A);
 
-	seq_pos_t ps_bl = r.get_startB() - 1;
+	seq_pos_t ps_bl = r.startB() - 1;
 	matidx_t last_mat_idx_pos_B = mapperB.number_of_valid_mat_pos(ps_bl) -1;//tocheck: check the correctness
 	//seq_pos_t last_seq_pos_B = mapperB.get_pos_in_seq_new(ps_bl, last_mat_idx_pos_B);
 
 	trace_M(E_NO_NO, ps_al, last_mat_idx_pos_A, ps_bl, last_mat_idx_pos_B, true, sv); //TODO: right side for trace_M differs with align_M
-	/*    for ( size_type k = last_seq_pos_A + 1; k <= r.get_endA(); k++)//tocheck: check the correctness
+	/*    for ( size_type k = last_seq_pos_A + 1; k <= r.endA(); k++)//tocheck: check the correctness
 	      {
 	      alignment.append(k, -1);
 	      }
-	      for ( size_type k = last_seq_pos_B + 1; k <= r.get_endB(); k++)//tocheck: check the correctness
+	      for ( size_type k = last_seq_pos_B + 1; k <= r.endB(); k++)//tocheck: check the correctness
 	      {
 	      alignment.append(-1, k);
 	      }

@@ -344,9 +344,6 @@ main(int argc, char **argv) {
     // Process options
     bool process_success=process_options(argc,argv,my_options);
 
-    assert(clp.opt_stacking == false);
-    assert(clp.opt_new_stacking == false);
-    
     if (clp.opt_help) {
 	cout << "locarna - a tool for pairwise (global and local) alignment of RNA!"<<endl<<endl;
 	
@@ -401,7 +398,7 @@ main(int argc, char **argv) {
 	std::cerr << "Local sequence alignment is not supported" << std::endl;
 	return -1;
     }
-    if( clp.opt_stacking )
+    if( clp.opt_stacking || clp.opt_new_stacking)
     {
 	std::cerr << "Stacking is not supported" << std::endl;
 	return -1;
@@ -812,7 +809,7 @@ main(int argc, char **argv) {
 	. seqB(seqB)
 	. arc_matches(*arc_matches)
 	. scoring(scoring)
-	. no_lonely_pairs(false) //clp.no_lonely_pairs, //todo: noLP is disabled for aligner_n
+	. no_lonely_pairs(clp.no_lonely_pairs)
 	. struct_local(clp.struct_local)
 	. sequ_local(clp.sequ_local)
 	. free_endgaps(clp.free_endgaps)
