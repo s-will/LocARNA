@@ -238,69 +238,98 @@ namespace LocARNA {
     //Compute an entry of matrix F
     template<class ScoringView>
     infty_score_t
-    AlignerN::compute_F_entry(index_t bl, matidx_t i_index, matidx_t j_index, seq_pos_t j_seq_pos, seq_pos_t j_prev_seq_pos, ScoringView sv)
+    AlignerN::compute_F_entry(index_t bl, 
+			      matidx_t i_index, matidx_t j_index,
+			      seq_pos_t j_seq_pos, seq_pos_t j_prev_seq_pos, ScoringView sv)
     {
-	bool constraints_aligned_pos_B = false; // TOcheck: Probably unnecessary, constraints are not considered
+	bool constraints_aligned_pos_B = false;
+	// TOcheck: Probably unnecessary, constraints are not considered
 	if (j_seq_pos <= bl || constraints_aligned_pos_B) //check possibility of base deletion
 	    return infty_score_t::neg_infty;
 
 	// base ins
-	infty_score_t gap_cost = getGapCostBetween(j_prev_seq_pos, j_seq_pos, false) + sv.scoring()->gapB(j_seq_pos);
+	infty_score_t gap_cost =
+	    getGapCostBetween(j_prev_seq_pos, j_seq_pos, false) + sv.scoring()->gapB(j_seq_pos);
 	infty_score_t extend_score = Fmat(i_index,j_index-1) + gap_cost;
-	infty_score_t open_score = 	M(i_index, j_index-1) + gap_cost  + sv.scoring()->indel_opening();
+	infty_score_t open_score = 
+	    M(i_index, j_index-1) + gap_cost + sv.scoring()->indel_opening();
 	return  (std::max(extend_score, open_score ));
     }
 
     //Compute an entry of matrix M
     template<class ScoringView>
     infty_score_t
-    AlignerN::compute_M_entry(index_t al, index_t bl, matidx_t i_index, matidx_t j_index, ScoringView sv) {
+    AlignerN::compute_M_entry(index_t al, index_t bl,
+			      matidx_t i_index, matidx_t j_index, ScoringView sv) {
 
-	bool constraints_alowed_edge = true;// constraints are ignored,  params->constraints_->allowed_edge(i_seq_pos, j_seq_pos)
-	infty_score_t max_score = infty_score_t::neg_infty;
+	bool constraints_alowed_edge = true;
+	// constraints are ignored,  params->constraints_->allowed_edge(i_seq_pos, j_seq_pos)
+	tainted_infty_score_t max_score = infty_score_t::neg_infty;
 
 	//define variables for sequence positions
 	seq_pos_t i_seq_pos = mapperA.get_pos_in_seq_new(al, i_index);
 	seq_pos_t j_seq_pos = mapperB.get_pos_in_seq_new(bl, j_index);
-	seq_pos_t i_prev_seq_pos = mapperA.get_pos_in_seq_new(al, i_index-1); //TODO: Check border i_index==1,0
-	seq_pos_t j_prev_seq_pos = mapperB.get_pos_in_seq_new(bl, j_index-1); //TODO: Check border j_index==1,0
+	seq_pos_t i_prev_seq_pos = mapperA.get_pos_in_seq_new(al, i_index-1);
+	//TODO: Check border i_index==1,0
+	seq_pos_t j_prev_seq_pos = mapperB.get_pos_in_seq_new(bl, j_index-1); 
+	//TODO: Check border j_index==1,0
 
-	//    if (trace_debugging_output)	std::cout << "compute_M_entry al: " << al << " bl: " << bl << "i:" << i_seq_pos << "/i_index: " << i_index << " j: " << j_seq_pos << "/j_index:"<< j_index << std::endl;
+	// if (trace_debugging_output) {
+	//     std::cout << "compute_M_entry al: " << al << " bl: " << bl 
+	// 	      << "i:" << i_seq_pos << "/i_index: " << i_index 
+	// 	      << " j: " << j_seq_pos << "/j_index:"<< j_index << std::endl;
+	// }
 
-
-	infty_score_t opening_cost_A;
-	if (i_prev_seq_pos < (i_seq_pos - 1)) //implicit base deletion because of sparsification
-	    opening_cost_A = (infty_score_t)(sv.scoring()->indel_opening());
+	score_t opening_cost_A;
+	if (i_prev_seq_pos < (i_seq_pos - 1))
+	    //implicit base deletion because of sparsification
+	    opening_cost_A = sv.scoring()->indel_opening();
 	else
-	    opening_cost_A = (infty_score_t)0;
+	    opening_cost_A = 0;
 
-	infty_score_t opening_cost_B;
-	if (j_prev_seq_pos < (j_seq_pos - 1)) //implicit base insertion because of sparsification
-	    opening_cost_B = (infty_score_t)(sv.scoring()->indel_opening());
+	score_t opening_cost_B;
+	if (j_prev_seq_pos < (j_seq_pos - 1))
+	    //implicit base insertion because of sparsification
+	    opening_cost_B = sv.scoring()->indel_opening();
 	else
-	    opening_cost_B  = (infty_score_t)0;
+	    opening_cost_B  = 0;
 
 
 	// base match
-	if ( constraints_alowed_edge &&
-	     mapperA.pos_unpaired(al, i_index) && mapperB.pos_unpaired(bl, j_index) ) {
-	    infty_score_t gap_match_score = getGapCostBetween(i_prev_seq_pos, i_seq_pos, true) + getGapCostBetween(j_prev_seq_pos, j_seq_pos, false) + (sv.scoring()->basematch(i_seq_pos, j_seq_pos));
-	    max_score = std::max( max_score,
-				  (infty_score_t)(gap_match_score + opening_cost_B + Emat(i_index-1, j_index-1)) );
-	    max_score = std::max( max_score,
-				  (infty_score_t)(gap_match_score + opening_cost_A + Fmat(i_index-1, j_index-1)) );
-	    max_score = std::max( max_score,
-				  (infty_score_t)(gap_match_score + opening_cost_A + opening_cost_B + M(i_index-1, j_index-1)) );
+	if ( constraints_alowed_edge
+	     && mapperA.pos_unpaired(al, i_index) 
+	     && mapperB.pos_unpaired(bl, j_index) ) {
+	    
+	    infty_score_t gap_match_score =
+		getGapCostBetween(i_prev_seq_pos, i_seq_pos, true)
+		+ getGapCostBetween(j_prev_seq_pos, j_seq_pos, false) 
+		+ (sv.scoring()->basematch(i_seq_pos, j_seq_pos));
+	    
+	    max_score = 
+		std::max( max_score,
+			  gap_match_score + opening_cost_B 
+			  + Emat(i_index-1, j_index-1) );
+	    max_score = 
+		std::max( max_score,
+			  gap_match_score + opening_cost_A 
+			  + Fmat(i_index-1, j_index-1) );
+	    max_score = 
+		std::max( max_score,
+			  gap_match_score
+			  + opening_cost_A + opening_cost_B 
+			  + M(i_index-1, j_index-1) );
 
 	}
 
 	// base del, for efficiency compute_E/F entry invoked within compute_M_entry
-	Emat(i_index, j_index) = compute_E_entry(al, i_index, j_index, i_seq_pos, i_prev_seq_pos, sv);
-	max_score = std::max(max_score,  Emat(i_index, j_index));
+	Emat(i_index, j_index) = 
+	    compute_E_entry(al, i_index, j_index, i_seq_pos, i_prev_seq_pos, sv);
+	max_score = std::max(max_score,  (tainted_infty_score_t)Emat(i_index, j_index));
 
 	// base ins
-	Fmat(i_index, j_index) = compute_F_entry(bl, i_index, j_index, j_seq_pos, j_prev_seq_pos, sv);
-	max_score = std::max(max_score,  Fmat(i_index, j_index));
+	Fmat(i_index, j_index) =
+	    compute_F_entry(bl, i_index, j_index, j_seq_pos, j_prev_seq_pos, sv);
+	max_score = std::max(max_score,  (tainted_infty_score_t)Fmat(i_index, j_index));
 
 	//list of valid arcs ending at i/j
 	const ArcIdxVec& arcsA = mapperA.valid_arcs_right_adj(al, i_index);
@@ -320,9 +349,9 @@ namespace LocARNA {
 	    
 	    if (arcA_left_seq_pos_before < (arcA.left() - 1))
 		// implicit base deletion because of sparsification
-		opening_cost_A = (infty_score_t)(sv.scoring()->indel_opening());
+		opening_cost_A = sv.scoring()->indel_opening();
 	    else
-		opening_cost_A = (infty_score_t)0;
+		opening_cost_A = 0;
 	    
 	    for (ArcIdxVec::const_iterator arcBIdx = arcsB.begin(); 
 		 arcBIdx != arcsB.end(); 
@@ -337,9 +366,9 @@ namespace LocARNA {
 		
 		if (arcB_left_seq_pos_before < (arcB.left() - 1))
 		    //implicit base insertion because of sparsification
-		    opening_cost_B = (infty_score_t)(sv.scoring()->indel_opening());
+		    opening_cost_B = sv.scoring()->indel_opening();
 		else
-		    opening_cost_B = (infty_score_t)0;
+		    opening_cost_B = 0;
 		
 		if (trace_debugging_output) {	
 		    std::cout << "\tmatching arcs: arcA" << arcA << "arcB:" << arcB 
@@ -356,7 +385,9 @@ namespace LocARNA {
 		    getGapCostBetween( arcA_left_seq_pos_before, arcA.left(), true)
 		    + getGapCostBetween( arcB_left_seq_pos_before, arcB.left(), false)
 		    + sv.D( arcA, arcB ) + sv.scoring()->arcmatch(arcA, arcB);
-		infty_score_t arc_match_score =  gap_match_score
+		
+		tainted_infty_score_t arc_match_score =  
+		    gap_match_score
 		    + opening_cost_A + opening_cost_B
 		    + M(arcA_left_index_before, arcB_left_index_before);
 
@@ -367,16 +398,17 @@ namespace LocARNA {
 
 		arc_match_score = 
 		    std::max( arc_match_score,
-			      (infty_score_t)(gap_match_score 
-					      + opening_cost_B 
-					      + Emat(arcA_left_index_before,
-						     arcB_left_index_before)) );
+			      (gap_match_score 
+			       + opening_cost_B 
+			       + Emat(arcA_left_index_before,
+				      arcB_left_index_before)) );
 		arc_match_score = 
 		    std::max( arc_match_score,
-			      (infty_score_t)(gap_match_score 
-					      + opening_cost_A
-					      + Fmat(arcA_left_index_before, 
-						     arcB_left_index_before)) );
+			      (gap_match_score 
+			       + opening_cost_A
+			       + Fmat(arcA_left_index_before, 
+				      arcB_left_index_before)) );
+
 		if (arc_match_score > max_score) {
 		    max_score = arc_match_score;
 			    
@@ -837,9 +869,12 @@ namespace LocARNA {
 			  << std::endl;
 	    }
 	    
-	    //stopwatch.start("align top level");
-	    fill_M_entries(ps_al, last_index_A, ps_bl, last_index_B); //tocheck: always use get_startA-1 (not zero) in sparsification_mapper and other parts
-	    //stopwatch.stop("align top level");
+	    // stopwatch.start("align top level");
+	    fill_M_entries(ps_al, last_index_A, ps_bl, last_index_B);
+	    // tocheck: always use get_startA-1 (not zero) in
+	    // sparsification_mapper and other parts
+	    // stopwatch.stop("align top level");
+	    
 	    if (trace_debugging_output) std::cout << "M matrix:" << std::endl
 						  << M << std::endl;
 	    if (trace_debugging_output) {

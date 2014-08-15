@@ -156,10 +156,15 @@ public:
 	 * gives the first valid matrix position before or equal to a sequence position
 	 * @param index index
 	 * @param pos sequence position
-	 * @param left_end the index left end; if not set, it is set to the index (for example when indexing by the left end is used)
-	 * @return the first valid matrix position before or equal to the position pos at the index left_end
+	 * @param left_end the index left end; if not set, it is set to the index
+	 *        (for example when indexing by the left end is used)
+	 * @return the first valid matrix position before or equal 
+	 *         to the position pos at the index left_end
 	 */
-    matidx_t first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos, index_t left_end = std::numeric_limits<index_t>::max())const{
+         matidx_t 
+	 first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos,
+				       index_t left_end = 
+				       std::numeric_limits<index_t>::max()) const {
 	    if (left_end == std::numeric_limits<index_t>::max())
 		left_end = index;
 	    assert (pos >= left_end); //tocheck
@@ -170,12 +175,16 @@ public:
 	 * gives the first valid matrix position before a sequence position
 	 * @param index index
 	 * @param pos sequence position
-	 * @param left_end the index left end;if not set, it is set to the index (for example when indexing by the left end is used)
-	 * @return the first valid matrix position before the position pos at the index left_end
+	 * @param left_end the index left end;if not set, it is set to the index
+	 *        (for example when indexing by the left end is used)
+	 * @return the first valid matrix position before the position pos
+	 *         at the index left_end
 	 */
 	inline
-	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = std::numeric_limits<index_t>::max())const{
-//	    if (left_end == std::numeric_limits<index_t>::max())		assert (pos > index);
+	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos,
+					    index_t left_end =
+					    std::numeric_limits<index_t>::max()) const {
+	    // if (left_end == std::numeric_limits<index_t>::max()) assert (pos > index);
 	    return first_valid_mat_pos_before_eq(index, pos-1, left_end);
 	}
 
@@ -217,8 +226,9 @@ public:
 	 * @param pos sequence position
 	 * @return true, if matching without a gap is possible from pos for the arc index \n
 	 * 		   false, otherwise \n
-	 *  matching without a gap is possible from pos if the sequence position that corresponds to
-	 *  the first valid matrix position before pos is directly adjacent to pos
+	 *  matching without a gap is possible from pos if the
+	 *  sequence position that corresponds to the first valid
+	 *  matrix position before pos is directly adjacent to pos
 	 */
 
 	bool matching_without_gap_possible(const Arc &arc, seq_pos_t pos)const{

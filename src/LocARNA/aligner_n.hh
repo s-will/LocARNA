@@ -93,8 +93,15 @@ namespace LocARNA {
 	 */
 	M_matrix_t M;
 
-	ScoreMatrix gapCostAmat; //!< a matrix to store cost of deleting/inserting a subsequence of sequence A, indexed by neighboring positions of the range
-	ScoreMatrix gapCostBmat; //!< a matrix to store cost of deleting/inserting a subsequence of sequence B, indexed by neighboring positions of the range
+	//! matrix to store cost of deleting/inserting a subsequence
+	//! of sequence A, indexed by neighboring positions of the
+	//! range
+	ScoreMatrix gapCostAmat;
+	
+	//! matrix to store cost of deleting/inserting a subsequence
+	//! of sequence B, indexed by neighboring positions of the
+	//! range
+	ScoreMatrix gapCostBmat; 
 
 
 	int min_i; //!< subsequence of A left end, not used in locarna_n
