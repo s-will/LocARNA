@@ -16,8 +16,6 @@
 // #include "type_wrapper.hh"
 
 
-using namespace std;
-
 namespace LocARNA {
 
 /**
@@ -31,7 +29,7 @@ class SparsificationMapper{
 public:
     typedef BasePairs__Arc Arc; //!< type of arc
 	typedef size_t ArcIdx; //!< type of arc index
-	typedef vector<ArcIdx> ArcIdxVec; //!< vector of arc indices
+	typedef std::vector<ArcIdx> ArcIdxVec; //!< vector of arc indices
 	typedef pos_type matidx_t; //!< type for a matrix position
 	typedef pos_type seq_pos_t; //!< type for a sequence position
     
@@ -57,7 +55,7 @@ public:
 		}
 	};
 
-	typedef vector<info_for_pos> InfoForPosVec;//!< vector of struct info_for_pos that is assigned to the index (either common left end or arc index)
+	typedef std::vector<info_for_pos> InfoForPosVec;//!< vector of struct info_for_pos that is assigned to the index (either common left end or arc index)
 
 private:
 
@@ -68,15 +66,15 @@ private:
 	size_type max_info_vec_size; //! the maximal size of the info vectors
 	//! for each index all valid sequence positions with additional information is stored \n
 	//! index_t->matidx_t->info_for_pos
-	vector<InfoForPosVec> info_valid_seq_pos_vecs;
+	std::vector<InfoForPosVec> info_valid_seq_pos_vecs;
 
 	//! for each index and each sequence position the first valid position in the matrix before the sequence position is stored \n
 	//! index_t->seq_pos_t->matidx_t
-	vector<vector<matidx_t> > valid_mat_pos_vecs_before_eq;
+	std::vector<std::vector<matidx_t> > valid_mat_pos_vecs_before_eq;
 
 	//! for each index and each sequence position all valid arcs that have the sequence position as common left end are stored \n
 	//! index_t->seq_pos_t->ArcIdxVec
-	vector<vector<ArcIdxVec > > left_adj_vec;
+	std::vector<std::vector<ArcIdxVec > > left_adj_vec;
 
 	//! computes the datastructures for sparsification mapping based on indexing the arcs
 	void compute_mapping_idx_arcs();
@@ -161,8 +159,8 @@ public:
 	 * @param left_end the index left end; if not set, it is set to the index (for example when indexing by the left end is used)
 	 * @return the first valid matrix position before or equal to the position pos at the index left_end
 	 */
-	matidx_t first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
-	    if (left_end == numeric_limits<index_t>::max())
+    matidx_t first_valid_mat_pos_before_eq(index_t index, seq_pos_t pos, index_t left_end = std::numeric_limits<index_t>::max())const{
+	    if (left_end == std::numeric_limits<index_t>::max())
 		left_end = index;
 	    assert (pos >= left_end); //tocheck
 	    return valid_mat_pos_vecs_before_eq.at(index).at(pos-left_end);
@@ -176,8 +174,8 @@ public:
 	 * @return the first valid matrix position before the position pos at the index left_end
 	 */
 	inline
-	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = numeric_limits<index_t>::max())const{
-//	    if (left_end == numeric_limits<index_t>::max())		assert (pos > index);
+	matidx_t first_valid_mat_pos_before(index_t index, seq_pos_t pos, index_t left_end = std::numeric_limits<index_t>::max())const{
+//	    if (left_end == std::numeric_limits<index_t>::max())		assert (pos > index);
 	    return first_valid_mat_pos_before_eq(index, pos-1, left_end);
 	}
 
@@ -362,8 +360,8 @@ public:
  * @return output stream object
  */
 template <class T>
-std::ostream& operator<<(std::ostream& out, const vector<T>& vec){
-	for(typename vector<T>::const_iterator it = vec.begin();it!=vec.end();it++){
+std::ostream& operator<<(std::ostream& out, const std::vector<T>& vec){
+	for(typename std::vector<T>::const_iterator it = vec.begin();it!=vec.end();it++){
 		out << *it << " ";
 	}
 	return out;
@@ -375,7 +373,7 @@ std::ostream& operator<<(std::ostream& out, const vector<T>& vec){
  * @param pos_vecs_ input vector
  * @return output stream object
  */
-std::ostream &operator << (std::ostream &out, const vector<SparsificationMapper::InfoForPosVec> &pos_vecs_);
+std::ostream &operator << (std::ostream &out, const std::vector<SparsificationMapper::InfoForPosVec> &pos_vecs_);
 
 /**
  * prints all valid sequence positions with additional information for one index

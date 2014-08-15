@@ -134,11 +134,11 @@ void SparsificationMapper::iterate_left_adj_list(pos_type cur_left_end, pos_type
 	}
 }
 
-std::ostream &operator << (std::ostream &out, const vector<SparsificationMapper::InfoForPosVec> &pos_vecs_) {
+std::ostream &operator << (std::ostream &out, const std::vector<SparsificationMapper::InfoForPosVec> &pos_vecs_) {
 	size_type idx = 0;
-	for (vector<SparsificationMapper::InfoForPosVec>::const_iterator it = pos_vecs_.begin();it!=pos_vecs_.end();++it){
-		out << "Idx " << idx << endl;
-		out << (*it) << endl;
+	for (std::vector<SparsificationMapper::InfoForPosVec>::const_iterator it = pos_vecs_.begin();it!=pos_vecs_.end();++it){
+		out << "Idx " << idx << std::endl;
+		out << (*it) << std::endl;
 		idx++;
 	}
 	return out;
@@ -152,7 +152,7 @@ std::ostream &operator << (std::ostream &out, const SparsificationMapper::InfoFo
 		bool unpaired = it_bp->unpaired;
 		if(unpaired) out << " unpaired" ;
 		if(!it_bp->valid_arcs.empty()) out << " ArcIdxVec ";
-		cout << it_bp->valid_arcs << endl;
+		out << it_bp->valid_arcs << std::endl;
 	}
 	return out;
 }

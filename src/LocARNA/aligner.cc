@@ -14,8 +14,6 @@
 #include <iostream>
 
 
-using namespace std;
-
 namespace LocARNA {
 
     /*
@@ -1375,7 +1373,7 @@ namespace LocARNA {
 	infty_score_t a_score = (!opt_normalized)?a.align():a.normalized_align(normalized_L,false);
     
 	// make priority queue tasks
-	std::priority_queue<task_t, vector<task_t>, greater_second<task_t> > tasks;
+	std::priority_queue<task_t, std::vector<task_t>, greater_second<task_t> > tasks;
 	
 	// put a into tasks
 	tasks.push(task_t(a.get_restriction(),a_score));
@@ -1537,7 +1535,7 @@ namespace LocARNA {
 		    ma.write(std::cout,120);
 		}
 		
-		if (opt_verbose) std::cout<<endl;
+		if (opt_verbose) std::cout<<std::endl;
 	    }
 	return (infty_score_t)new_lambda;
     }

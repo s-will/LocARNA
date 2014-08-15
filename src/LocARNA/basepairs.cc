@@ -14,8 +14,6 @@
 #include "basepairs.hh"
 #include "rna_data.hh"
 
-using namespace std;
-
 namespace LocARNA {
 
 

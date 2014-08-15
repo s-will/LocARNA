@@ -11,7 +11,6 @@
 // #include <queue>
 
 
-using namespace std;
 namespace LocARNA {
 
     // ------------------------------------------------------------

@@ -377,7 +377,7 @@ public:
 	void		calculateLCSEPM();
     
         //! get anchor annotation
-        pair<SequenceAnnotation,SequenceAnnotation>
+        std::pair<SequenceAnnotation,SequenceAnnotation>
 	anchor_annotation();
     
 	//! outputs anchor constraints to be used as input for locarna
@@ -547,7 +547,7 @@ public:
 
 		bool debug_valid_mat_pos = false;
 
-		if(debug_valid_mat_pos) cout << "first valid mat pos before with tc " << endl;
+		if(debug_valid_mat_pos) std::cout << "first valid mat pos before with tc " << std::endl;
 
 		seqpos_t i = cur_pos_seq.first;
 		seqpos_t j = cur_pos_seq.second;
@@ -567,7 +567,7 @@ public:
 			min_col = min_col_idx(indexA,indexB,cur_row,left_endB);
 			idx_after_max_col = idx_after_max_col_idx(indexA,indexB,cur_row,left_endB);
 
-			if(debug_valid_mat_pos) cout << "interval " << min_col << "," << idx_after_max_col << endl;
+			if(debug_valid_mat_pos) std::cout << "interval " << min_col << "," << idx_after_max_col << std::endl;
 
 			// valid interval found
 			if(min_col<idx_after_max_col && min_col<=col_before){

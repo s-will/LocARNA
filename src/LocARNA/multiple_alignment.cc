@@ -15,8 +15,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-using namespace std;
-
 namespace LocARNA {
     
     // allowed tags are part of the extended aln and pp file format definitions
@@ -65,7 +63,7 @@ namespace LocARNA {
 	  name2idx_() {
 	
 	try {
-	    ifstream in(filename.c_str());
+	    std::ifstream in(filename.c_str());
     
 	    if (!in.is_open()) {
 		throw(std::ifstream::failure("Cannot open file "+filename+" for reading."));
@@ -508,7 +506,7 @@ namespace LocARNA {
     }
 
     bool
-    MultipleAlignment::contains(string name) const {
+    MultipleAlignment::contains(std::string name) const {
 	for (std::vector<SeqEntry>::const_iterator it = begin(); it != end(); ++it) {
 	    if (name == it->name()) { return true; }
 	}
@@ -531,7 +529,7 @@ namespace LocARNA {
 	size_type j1=0;
 	for (size_type c1=0; c1<=a1.length(); c1++) {
 	
-	    size_type dprime=numeric_limits<size_type>::max();
+	    size_type dprime=std::numeric_limits<size_type>::max();
 	
 	    if (c1>0) {
 		if (!is_gap_symbol(a1[c1])) i1++;
@@ -871,7 +869,7 @@ namespace LocARNA {
     }
     
     void
-    MultipleAlignment::write_debug(ostream &out) const {
+    MultipleAlignment::write_debug(std::ostream &out) const {
 	for (size_type i=0; i<alig_.size(); ++i) {
 	    out << alig_[i].name() << " \t" << alig_[i].seq().str()<<std::endl;
 	} 
@@ -884,7 +882,7 @@ namespace LocARNA {
 	//iterate over columns and built up consensus sequence 
 	for (size_type i=1; i<=length(); ++i) {
 	    
-	    map<char,size_t> tab;
+	    std::map<char,size_t> tab;
 	    
 	    // iterate over sequences and count character
 	    for (std::vector<SeqEntry>::const_iterator it=alig_.begin(); alig_.end()!=it; ++it) {
@@ -895,7 +893,7 @@ namespace LocARNA {
 	    
 	    size_type cur_max=0;
 	    char max_char='N';
-	    for(map<char,size_t>::const_iterator it=tab.begin(); tab.end()!=it; ++it) {
+	    for(std::map<char,size_t>::const_iterator it=tab.begin(); tab.end()!=it; ++it) {
 		if (it->second > cur_max) {
 		    cur_max=it->second;
 		    max_char=it->first;

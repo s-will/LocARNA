@@ -4,8 +4,6 @@
 #include <iostream>
 #include <fstream>
 
-using namespace std;
-
 namespace LocARNA {
 
 	// Constructor
@@ -54,9 +52,9 @@ namespace LocARNA {
 
     	if(difference_to_opt_score<0) difference_to_opt_score=-1; // difference_to_opt_score is not used
 
-    	if(verbose) cout << "do " << (inexact_struct_match? "inexact" : "exact") << " structure matching ";
-    	if(verbose) if(inexact_struct_match) cout << "with mismatch score " << struct_mismatch_score;
-    	if(verbose) cout << endl;
+    	if(verbose) std::cout << "do " << (inexact_struct_match? "inexact" : "exact") << " structure matching ";
+    	if(verbose) if(inexact_struct_match) std::cout << "with mismatch score " << struct_mismatch_score;
+    	if(verbose) std::cout << std::endl;
 
 
     	L.resize(sparse_mapperA.get_max_info_vec_size(),sparse_mapperB.get_max_info_vec_size());
@@ -292,7 +290,7 @@ namespace LocARNA {
        	size_type num_posA = sparse_mapperA.number_of_valid_mat_pos(idxA);
        	size_type num_posB = sparse_mapperB.number_of_valid_mat_pos(idxB);
        	matpos_t idx_pos_diag, idx_pos_top, idx_pos_left;
-       	pair<matpos_t,matpos_t> idx_pos_diag_new;
+	std::pair<matpos_t,matpos_t> idx_pos_diag_new;
 
        	matidx_t max_j = sparse_trace_controller.idx_after_max_col_idx(idxA,idxB,0,b.left());
        	assert(max_j>0);
@@ -508,12 +506,12 @@ namespace LocARNA {
     	if(!suboptimal) find_start_pos_for_tb(suboptimal);
 
     	else if(!interval_method){ // use given difference_to_opt_score
-    		if(verbose) cout << "difference to opt score " << difference_to_opt_score << " is given " << endl;
+    		if(verbose) std::cout << "difference to opt score " << difference_to_opt_score << " is given " << std::endl;
     		initialize_gap_matrices(); //initialize gap matrices for suboptimal traceback
     		find_start_pos_for_tb(suboptimal,difference_to_opt_score,false);}
 
     	else{ // do interval search
-    		if(verbose) cout << "do interval search " << endl;
+    		if(verbose) std::cout << "do interval search " << std::endl;
     		initialize_gap_matrices(); //initialize gap matrices for suboptimal traceback
 
     		score_t max_in_F = F(pos_of_max.first,pos_of_max.second).finite_value();
@@ -582,7 +580,7 @@ namespace LocARNA {
     		difference_to_opt_score = result_value*100;
     		find_start_pos_for_tb(suboptimal,difference_to_opt_score, false);
     	}
-    	if(verbose) cout << "found #EPMs " << cur_number_of_EPMs << endl;
+    	if(verbose) std::cout << "found #EPMs " << cur_number_of_EPMs << std::endl;
     }
 
     void ExactMatcher::find_start_pos_for_tb(bool suboptimal, score_t difference_to_opt_score, bool count_EPMs){
@@ -590,7 +588,7 @@ namespace LocARNA {
     	// reset EPM counter
     	cur_number_of_EPMs=0;
 
-    	if(verbose) cout << "compute EPMs " << (suboptimal? "suboptimal " :
+    	if(verbose) std::cout << "compute EPMs " << (suboptimal? "suboptimal " :
     			"heuristic ") << (inexact_struct_match? "inexact," : "exact,") << " with min score "
     			<< min_score  << (count_EPMs? ", count EPMs, " : ", enumerate EPMs, ")
     			<< (add_filter? "use additional filter": "no additional filter")<< " with ";
@@ -604,7 +602,7 @@ namespace LocARNA {
     		if (min_score_tb < min_score) min_score_tb = min_score;
     	}
     	//score_t min_score_tb = suboptimal? subopt_score : min_score;
-    	if(verbose) cout << "score for traceback " << min_score_tb << ": ";
+    	if(verbose) std::cout << "score for traceback " << min_score_tb << ": ";
 
     	//compute traceback in F matrix
     	for(size_type i=1;i<F.sizes().first;++i){
@@ -628,7 +626,7 @@ namespace LocARNA {
     						trace_F_suboptimal(i,j,max_tol_left,true,count_EPMs); // compute traceback from position (i,j)
 
     						if(!check_PPM()){ // cancel traceback as maximal number of EPMs is reached
-    							if(verbose && count_EPMs) cout << "more than " << cur_number_of_EPMs << " EPMs " << endl;
+    							if(verbose && count_EPMs) std::cout << "more than " << cur_number_of_EPMs << " EPMs " << std::endl;
     							return;}
     					}
     					else{
@@ -640,7 +638,7 @@ namespace LocARNA {
     			}
     		}
     	}
-    	if(verbose && check_PPM() && count_EPMs) cout << cur_number_of_EPMs << " EPMs " << endl;
+    	if(verbose && check_PPM() && count_EPMs) std::cout << cur_number_of_EPMs << " EPMs " << std::endl;
     }
 
 
@@ -700,8 +698,8 @@ namespace LocARNA {
 
     	if(count_EPMs) return; //do not add EPM to patternPairMap, just count the EPMs
 
-    	static string seq1_id = seqA.seqentry(0).name();
-    	static string seq2_id = seqB.seqentry(0).name();
+    	static std::string seq1_id = seqA.seqentry(0).name();
+    	static std::string seq2_id = seqB.seqentry(0).name();
 
     	// sort the pattern vector of the current epm according
     	// to increasing positions
@@ -710,14 +708,14 @@ namespace LocARNA {
     	// make sure that the current epm is valid
     	assert(validate_epm(cur_epm));
 
-    	stringstream ss;
+    	std::stringstream ss;
     	ss << "pat_" << cur_number_of_EPMs;
-    	string patId= ss.str();
+    	std::string patId= ss.str();
 
     	// rewrite information for use in the chaining algorithm
     	intVec pat1Vec;
     	intVec pat2Vec;
-    	string structure;
+    	std::string structure;
 
     	for(EPM::pat_vec_t::const_iterator it= cur_epm.begin();it!=cur_epm.end();++it){
     		pat1Vec.push_back(it->first);
@@ -892,7 +890,7 @@ namespace LocARNA {
     			}
 
     			else{
-    				cerr << "no valid traceback found " << endl;
+			        std::cerr << "no valid traceback found " << std::endl;
     				return;
     			}
     		}break;
@@ -1394,7 +1392,7 @@ namespace LocARNA {
     			const el_map_am_to_do_t &new_mapped_el = el_map_am_to_do_t(max_tol,epm_cont_t());
 
     			// try to insert the new element in the map
-    			pair<map_am_to_do_t::iterator,bool> result=map_am_to_do.insert(map_am_to_do_t::value_type(pair_arc_idx,new_mapped_el));
+			std::pair<map_am_to_do_t::iterator,bool> result=map_am_to_do.insert(map_am_to_do_t::value_type(pair_arc_idx,new_mapped_el));
 
     			const bool &el_inserted=result.second; // whether element was successfully inserted
     			score_t &max_tol_stored = result.first->second.first;
@@ -1425,7 +1423,7 @@ namespace LocARNA {
 		ArcIdx idxA = a.idx();
 		ArcIdx idxB = b.idx();
 
-		list<poss_in_G> poss_G;
+		std::list<poss_in_G> poss_G;
 		poss_G.push_back(poss_in_G(pot_new_poss.first,pot_new_poss.second,pot_new_poss.third)); // initialization
 
 		while(!poss_G.empty()){
@@ -1499,7 +1497,7 @@ namespace LocARNA {
 
 			default:
 			{
-				cerr << "no gap state - something went wrong! " << endl;
+			    std::cerr << "no gap state - something went wrong! " << std::endl;
 			}break;
 
 			}
@@ -1687,7 +1685,7 @@ namespace LocARNA {
 
     			if(!check_PPM()){return;}
 
-    			vector<const EPM*> epms_to_insert;
+			std::vector<const EPM*> epms_to_insert;
 
     			assert(cur_epm->number_of_am()>0);
 
@@ -1695,7 +1693,7 @@ namespace LocARNA {
     			epms_to_insert.resize(number_of_am);
 
     			//max_tol_left_up_to_pos(vec_idx) gives the maximal tolerance that is left up to arc match vec_idx-1
-    			vector<score_t> max_tol_left_up_to_pos;
+    			std::vector<score_t> max_tol_left_up_to_pos;
     			max_tol_left_up_to_pos.resize(number_of_am+1);
 
     			// initialize the first entry in max_tol_left_up_to_pos with the tolerance left for the current epm
@@ -1738,7 +1736,7 @@ namespace LocARNA {
 
     // fills the missing parts of the arc matches of the epm
     void ExactMatcher::fill_epm(const map_am_to_do_t &map_am_to_do, size_type vec_idx,
-    		vector<score_t> &max_tol_left_up_to_pos, vector<const EPM*> &epms_to_insert,
+    		std::vector<score_t> &max_tol_left_up_to_pos, std::vector<const EPM*> &epms_to_insert,
     		score_t min_score, epm_it_t cur_epm, epm_cont_t &found_epms,bool count_EPMs){
 
     	assert(cur_epm->number_of_am()>0);
@@ -1798,7 +1796,7 @@ namespace LocARNA {
 
     				if(!count_EPMs){
     					// insert the parts for the missing arc matches, not needed if just counting EPMs
-    					for(vector<const EPM*>::const_iterator epm_to_insert = epms_to_insert.begin();
+    					for(std::vector<const EPM*>::const_iterator epm_to_insert = epms_to_insert.begin();
     							epm_to_insert!=epms_to_insert.end();++epm_to_insert){
     						found_epms.back().insert_epm(**epm_to_insert);
     					}
@@ -1825,77 +1823,77 @@ namespace LocARNA {
     	size_type num_posB = sparse_mapperB.number_of_valid_mat_pos(b.idx());
     	if(offsetA>num_posA){offsetA=num_posA;}
     	if(offsetB>num_posB){offsetB=num_posB;}
-    	cout << endl;
-    	cout << "am " << a << "," << b << endl;
-    	cout << "number of pos A " << num_posA << endl;
-    	cout << "number of pos B " << num_posB << endl;
-    	cout << "L" << endl;
+    	std::cout << std::endl;
+    	std::cout << "am " << a << "," << b << std::endl;
+    	std::cout << "number of pos A " << num_posA << std::endl;
+    	std::cout << "number of pos B " << num_posB << std::endl;
+    	std::cout << "L" << std::endl;
     	assert(num_posA>=offsetA && num_posB>=offsetB);
     	for(size_type i=0;i<offsetA;++i){
     		for(size_type j=0;j<offsetB;++j){
-    			cout << L(i,j) << " ";
+    			std::cout << L(i,j) << " ";
     		}
-    		cout << endl;
+    		std::cout << std::endl;
     	}
-    	cout << endl;
-    	cout << "G_A" << endl;
+    	std::cout << std::endl;
+    	std::cout << "G_A" << std::endl;
     	for(size_type i=0;i<offsetA;++i){
     		for(size_type j=0;j<offsetB;++j){
-    			cout << G_A(i,j) << " ";
+    			std::cout << G_A(i,j) << " ";
     		}
-    		cout << endl;
+    		std::cout << std::endl;
     	}
-    	cout << endl;
+    	std::cout << std::endl;
     	if(suboptimal){
-    		cout << "G_AB" << endl;
+    		std::cout << "G_AB" << std::endl;
     		for(size_type i=0;i<offsetA;++i){
     			for(size_type j=0;j<offsetB;++j){
-    				cout << G_AB(i,j) << " ";
+    				std::cout << G_AB(i,j) << " ";
     			}
-    			cout << endl;
+    			std::cout << std::endl;
     		}
-    		cout << endl;
+    		std::cout << std::endl;
     	}
-    	cout << "LR" << endl;
+    	std::cout << "LR" << std::endl;
     	for(size_type i=0;i<offsetA;++i){
     		for(size_type j=0;j<offsetB;++j){
-    			cout << LR(i,j) << " ";
+    			std::cout << LR(i,j) << " ";
     		}
-    		cout << endl;
+    		std::cout << std::endl;
     	}
-    	cout << endl;
+    	std::cout << std::endl;
 
     	if(add_info){
     		seqpos_t seq_pos;
     		for(size_type k=0;k<4;++k){
     			if(k==0 || k==1){
-    				cout << "A: ";
+    				std::cout << "A: ";
     				for(size_type i=0;i<offsetA;++i){
     					seq_pos = sparse_mapperA.get_pos_in_seq_new(a.idx(),i);
-    					if(k==0) cout << seq_pos << " ";
-    					if(k==1) cout << seqA[seq_pos][0] << " ";
+    					if(k==0) std::cout << seq_pos << " ";
+    					if(k==1) std::cout << seqA[seq_pos][0] << " ";
     				}
-    				cout << endl;
+    				std::cout << std::endl;
     			}
     			else if(k==2 || k==3){
-    				cout << "B: ";
+    				std::cout << "B: ";
     				for(size_type i=0;i<offsetB;++i){
     					seq_pos = sparse_mapperB.get_pos_in_seq_new(b.idx(),i);
-    					if(k==2) cout << seq_pos << " ";
-    					if(k==3) cout << seqB[seq_pos][0] << " ";
+    					if(k==2) std::cout << seq_pos << " ";
+    					if(k==3) std::cout << seqB[seq_pos][0] << " ";
     				}
-    				cout << endl;
+    				std::cout << std::endl;
     			}
     		}
-    		cout << "valid pos: " << endl;
+    		std::cout << "valid pos: " << std::endl;
     		//print info on valid positions
     		for(size_type i=0;i<offsetA;++i){
     			for(size_type j=0;j<offsetB;++j){
-    				cout << ((sparse_trace_controller.is_valid_idx_pos(a.idx(),b.idx(),matpos_t(i,j))) ? "o " : "x ");
+    				std::cout << ((sparse_trace_controller.is_valid_idx_pos(a.idx(),b.idx(),matpos_t(i,j))) ? "o " : "x ");
     			}
-    			cout << endl;
+    			std::cout << std::endl;
     		}
-    		cout << endl;
+    		std::cout << std::endl;
 
     	}
     }
@@ -1906,7 +1904,7 @@ namespace LocARNA {
     	EPM::pat_vec_t::size_type pat_vec_size = epm_to_test.pat_vec_size();
 
     	if(pat_vec_size==0){
-    		cout << "empty epm " << endl;
+    		std::cout << "empty epm " << std::endl;
     		return true;
     	}
 
@@ -1916,20 +1914,20 @@ namespace LocARNA {
 
     		//two matched positions in the EPMs have the same nucleotide
     		if((!inexact_struct_match || cur_el.third=='.') && !nucleotide_match(cur_el.first,cur_el.second)){
-    			cerr << "two matched positions have different nucleotides " << endl;
+		        std::cerr << "two matched positions have different nucleotides " << std::endl;
     			return false;
     		}
 
     		//check whether all matched positions are valid due to the TraceController
     		if(!sparse_trace_controller.is_valid(cur_el.first,cur_el.second)){
-    			cerr << "not all positions are valid (TraceController) " << endl;
+    			std::cerr << "not all positions are valid (TraceController) " << std::endl;
     			return false;
     		}
 
     		//check whether both patVecs are ascending
     		if(i<pat_vec_size-1 && (cur_el.first>=epm_to_test.pat_vec_at(i+1).first
     				|| cur_el.second>=epm_to_test.pat_vec_at(i+1).second)){
-    			cerr << "pattern Vecs are not ascending " << endl;
+    			std::cerr << "pattern Vecs are not ascending " << std::endl;
     			return false;
     		}
 
@@ -1938,15 +1936,15 @@ namespace LocARNA {
     	//validate connectivity of the epm
     	for(int k=0;k<2;++k){
 
-    		std::vector<pair<pos_type,pos_type> > arcmatches_to_validate;
+	        std::vector<std::pair<pos_type,pos_type> > arcmatches_to_validate;
     		bool gap = true;
-    		arcmatches_to_validate.push_back(pair<pos_type,pos_type>(0,pat_vec_size-1));
+    		arcmatches_to_validate.push_back(std::pair<pos_type,pos_type>(0,pat_vec_size-1));
 
     		while(arcmatches_to_validate.size()!=0){
 
-    			pair<pos_type,pos_type> part_under_am = arcmatches_to_validate.back();
+    			std::pair<pos_type,pos_type> part_under_am = arcmatches_to_validate.back();
     			arcmatches_to_validate.pop_back();
-    			if(part_under_am != pair<pos_type,pos_type>(0,pat_vec_size-1)) gap=false; //in the F matrix no gap is allowed
+    			if(part_under_am != std::pair<pos_type,pos_type>(0,pat_vec_size-1)) gap=false; //in the F matrix no gap is allowed
 
     			//go over the part under the am (including the right end!)
     			for(pos_type i=part_under_am.first;i<=part_under_am.second;++i){
@@ -1960,7 +1958,7 @@ namespace LocARNA {
     				if(cur_pat_vec.third=='.' || cur_pat_vec.third==')'){
 
     					if(i>0 && (el_before+1!=cur_el)){
-    						if(gap){ cerr << "more than one gap in EPM (1) " << endl; return false;}
+    						if(gap){ std::cerr << "more than one gap in EPM (1) " << std::endl; return false;}
     						gap=true;
     					}
 
@@ -1971,7 +1969,7 @@ namespace LocARNA {
 
     					//check validity for '('
     					if(i>0 && (el_before+1!=cur_el)){
-    						if(gap){cerr << "more than one gap in EPM (2) " << endl; return false;}
+    						if(gap){std::cerr << "more than one gap in EPM (2) " << std::endl; return false;}
     						gap=true;
     					}
 
@@ -1987,7 +1985,7 @@ namespace LocARNA {
 
     					//if there are positions to check in the inner arcmatch, we store the inner arcmatch to check later,
     					//including the position of the ')'
-    					if(i>=pos_after_left_end) arcmatches_to_validate.push_back(pair<pos_type,pos_type>(pos_after_left_end,i));
+    					if(i>=pos_after_left_end) arcmatches_to_validate.push_back(std::pair<pos_type,pos_type>(pos_after_left_end,i));
 
     					//after incrementation of the for-loop, the next position to be checked is the one after the ')'
     				}
@@ -2000,7 +1998,7 @@ namespace LocARNA {
     // checks the validity of the epm list, i.e. that no epm is contained multiple times
     bool ExactMatcher::validate_epm_list(epm_cont_t &found_epms){
 
-    	if(found_epms.size()>10000) cout << "validate epm list " << found_epms.size() << endl;
+    	if(found_epms.size()>10000) std::cout << "validate epm list " << found_epms.size() << std::endl;
 
     	//int counter=0;
 
@@ -2054,7 +2052,7 @@ namespace LocARNA {
 	score = myScore;
     };
 
-    //const string& PatternPair::get_struct() const
+    //const std::string& PatternPair::get_struct() const
    // {
 	//return structure;
     //};
@@ -2083,10 +2081,10 @@ namespace LocARNA {
 	patternOrderedMap.clear();
     }
 
-    void PatternPairMap::add(const string& id,
+    void PatternPairMap::add(const std::string& id,
 			     const SinglePattern& first,
 			     const SinglePattern& second,
-			     const string& structure,
+			     const std::string& structure,
 			     int score
 			     )
     {
@@ -2110,7 +2108,7 @@ namespace LocARNA {
 	patternOrderedMap.clear();
 	for(patListITER i = patternList.begin();i!=patternList.end();++i)
 	    {
-		patternOrderedMap.insert(make_pair((*i)->getSize(),*i));
+		patternOrderedMap.insert(std::make_pair((*i)->getSize(),*i));
 	    }
     }
 
@@ -2126,12 +2124,12 @@ namespace LocARNA {
 		    }
 	    }
     }
-    const PatternPair& PatternPairMap::getPatternPair(const string& id)const
+    const PatternPair& PatternPairMap::getPatternPair(const std::string& id)const
     {
 	return *(idMap.find(id)->second);
     }
 
-    const    PatternPairMap::SelfValuePTR  PatternPairMap::getPatternPairPTR(const string& id)const
+    const    PatternPairMap::SelfValuePTR  PatternPairMap::getPatternPairPTR(const std::string& id)const
     {
 	return (idMap.find(id)->second);
     }
@@ -2177,7 +2175,7 @@ namespace LocARNA {
 
     std::ostream &operator << (std::ostream &out, const PatternPairMap::patListTYPE &pat_pair_list){
     	size_type i=0;
-    	out << "epm_id\t score\t structure\t positions" << endl;
+    	out << "epm_id\t score\t structure\t positions" << std::endl;
     	for(PatternPairMap::patListCITER it = pat_pair_list.begin(); it != pat_pair_list.end();++it,++i){
     		const PatternPair &pat_pair = **it;
     		out << i << "\t" << pat_pair.getScore() << "\t" << pat_pair.get_struct() <<  "\t";
@@ -2197,7 +2195,7 @@ namespace LocARNA {
 
     LCSEPM::~LCSEPM()
     {
-	//cout << endl << " execute destructor..." << endl;
+	//std::cout << std::endl << " execute destructor..." << std::endl;
 
 	EPM_Table2.clear();
 	holeOrdering2.clear();
@@ -2205,29 +2203,29 @@ namespace LocARNA {
 
     void    LCSEPM::calculateLCSEPM()
     {
-	cout << " LCSEPM preprocessing..."  <<endl;
-	cout << "     found #EPMs = " << patterns.size() << endl;
-	cout << "    min EPM size = "<< patterns.getMinPatternSize()<< endl;
+	std::cout << " LCSEPM preprocessing..."  <<std::endl;
+	std::cout << "     found #EPMs = " << patterns.size() << std::endl;
+	std::cout << "    min EPM size = "<< patterns.getMinPatternSize()<< std::endl;
  	preProcessing();
-	cout << " LCSEPM calculate holes..."  <<endl;
-	cout << "   holes to calculate = " << holeOrdering2.size() << endl;
+	std::cout << " LCSEPM calculate holes..."  <<std::endl;
+	std::cout << "   holes to calculate = " << holeOrdering2.size() << std::endl;
 	calculateHoles3();
-	cout << " LCSEPM calculate outmost D_rec..."  <<endl;
+	std::cout << " LCSEPM calculate outmost D_rec..."  <<std::endl;
 	int i = 1;
 	int k = 1;
-	vector < vector<int> > last_vec;
+	std::vector < std::vector<int> > last_vec;
 	int LCSEPMscore = D_rec2(i,seqA.length(),k,seqB.length(),last_vec,false);
-	cout << "    Score LCS-EPM: "<< LCSEPMscore <<endl;
-	cout << " LCSEPM calculate traceback..."  <<endl;
+	std::cout << "    Score LCS-EPM: "<< LCSEPMscore <<std::endl;
+	std::cout << " LCSEPM calculate traceback..."  <<std::endl;
 	calculateTraceback2(i,seqA.length(),k,seqB.length(),last_vec);
 	int LCSEPMsize = matchedEPMs.getMapBases();
-	cout << "    #EPMs: "<< matchedEPMs.size() << " / matched Bases: "<< LCSEPMsize <<endl;
+	std::cout << "    #EPMs: "<< matchedEPMs.size() << " / matched Bases: "<< LCSEPMsize <<std::endl;
     }
 
     void    LCSEPM::calculatePatternBoundaries(PatternPair*   myPair)
     {
-	const vector<unsigned int>& myPatStr1 = myPair->getFirstPat().getPat();
-	const vector<unsigned int>& myPatStr2 = myPair->getSecPat().getPat();
+	const std::vector<unsigned int>& myPatStr1 = myPair->getFirstPat().getPat();
+	const std::vector<unsigned int>& myPatStr2 = myPair->getSecPat().getPat();
 
 	myPair->resetBounds();
 
@@ -2235,12 +2233,12 @@ namespace LocARNA {
 	    {
 		if ( (myPatStr1[k]-patterns.getMinPatternSize() > myPatStr1[k-1])  &&
 		     (myPatStr2[k]-patterns.getMinPatternSize() > myPatStr2[k-1]) ) {
-		    myPair->addInsideBounds(std::make_pair(make_pair(myPatStr1[k-1],myPatStr1[k]),make_pair(myPatStr2[k-1],myPatStr2[k])));
+		    myPair->addInsideBounds(std::make_pair(std::make_pair(myPatStr1[k-1],myPatStr1[k]),std::make_pair(myPatStr2[k-1],myPatStr2[k])));
 		}
 	    }
 
 	// insert global min/max of the pattern
-	myPair->setOutsideBounds(make_pair(make_pair(myPatStr1.front(),myPatStr1.back()),make_pair(myPatStr2.front(),myPatStr2.back())));
+	myPair->setOutsideBounds(std::make_pair(std::make_pair(myPatStr1.front(),myPatStr1.back()),std::make_pair(myPatStr2.front(),myPatStr2.back())));
     }
 
     void LCSEPM::preProcessing()
@@ -2262,13 +2260,13 @@ namespace LocARNA {
 		    {
 			// insert hole in multimap
 			intPPairPTR myH = &(*h);
-			holeOrdering2.insert(make_pair(myH,*myPair));
+			holeOrdering2.insert(std::make_pair(myH,*myPair));
 		    }
 	    }
     }
 
 
-    int LCSEPM::D_rec2(const int& i,const  int& j,const int& k,const int& l,vector < vector<int> >& D_h,const bool debug)
+    int LCSEPM::D_rec2(const int& i,const  int& j,const int& k,const int& l,std::vector < std::vector<int> >& D_h,const bool debug)
     {
 
 	// initialize D_h matrix with 0
@@ -2284,7 +2282,7 @@ namespace LocARNA {
 	    for (unsigned int l_2 = 1; l_2 < size_t(l-k+2); ++l_2)
 		{
 		    if (debug==true){
-			//	cout << "debug " << j_1 << "," << l_2 << endl;
+			//	std::cout << "debug " << j_1 << "," << l_2 << std::endl;
 		    }
 		    // check if EPMs ending at current position
 		    if (EPM_Table2[i + j_1-1][k + l_2-1].size() == 0)
@@ -2296,13 +2294,13 @@ namespace LocARNA {
 		    else
 			{
 			    // get list of all EPMS ending at current pos
-			    vector<PatternPairMap::SelfValuePTR> EPM_list = EPM_Table2[i + j_1-1][k + l_2-1];
+			    std::vector<PatternPairMap::SelfValuePTR> EPM_list = EPM_Table2[i + j_1-1][k + l_2-1];
 			    int maxScore = 0;
 
 			    // iterate over all EPMS to get best score
-			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); ++myIter){
+			    for (std::vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); ++myIter){
 
-				//cout << i+j_1-1 << "," << k+l_2-1 << " patid: " <<  (*myIter)->getId() << endl;
+				//std::cout << i+j_1-1 << "," << k+l_2-1 << " patid: " <<  (*myIter)->getId() << std::endl;
 
 				int pos_before_EPM_Str1 = (*myIter)->getOutsideBounds().first.first  - i;
 				int pos_before_EPM_Str2 = (*myIter)->getOutsideBounds().second.first - k;
@@ -2312,14 +2310,14 @@ namespace LocARNA {
 				// check if EPM fits into cuurent hole
 				if ((pos_before_EPM_Str1 >= 0) && (pos_before_EPM_Str2 >= 0)){
 				    score_EPM = D_h[pos_before_EPM_Str1][pos_before_EPM_Str2] + (*myIter)->getScore();
-				    //cout << (*myIter)->getId() << " FITS - EPM max score "<< score_EPM << " before " << pos_before_EPM_Str1+i <<","<< pos_before_EPM_Str2+k << " " << D_h[pos_before_EPM_Str1][pos_before_EPM_Str2] <<  endl;
+				    //std::cout << (*myIter)->getId() << " FITS - EPM max score "<< score_EPM << " before " << pos_before_EPM_Str1+i <<","<< pos_before_EPM_Str2+k << " " << D_h[pos_before_EPM_Str1][pos_before_EPM_Str2] <<  std::endl;
 				}
 
 
 				if (score_EPM > maxScore) { maxScore = score_EPM; }
-				//cout << (*myIter)->getId() << " EPM max score "<< score_EPM << " before " << pos_before_EPM_Str1+i <<","<< pos_before_EPM_Str2+k <<  endl;
+				//std::cout << (*myIter)->getId() << " EPM max score "<< score_EPM << " before " << pos_before_EPM_Str1+i <<","<< pos_before_EPM_Str2+k <<  std::endl;
 			    }
-			    //cout << "score hole max "<< maxScore << endl;
+			    //std::cout << "score hole max "<< maxScore << std::endl;
 			    D_h[j_1][l_2] = max3(maxScore,D_h[j_1-1][l_2],D_h[j_1][l_2-1]);
 			}
 
@@ -2344,17 +2342,17 @@ namespace LocARNA {
 		    (lastHole->second.first  != (*t).first->second.first) ||
 		    (lastHole->second.second != (*t).first->second.second) ) {
 
-		    //cout << endl << (*t).second->getId() << endl <<  " new current hole " << (*t).first->first.first << "," << (*t).first->first.second;
-		    //cout << " - " << (*t).first->second.first << "," << (*t).first->second.second << endl;
-		    //cout << "score old " << (*t).second->getScore() << " " << (*t).second->get_struct() << endl;
+		    //std::cout << std::endl << (*t).second->getId() << std::endl <<  " new current hole " << (*t).first->first.first << "," << (*t).first->first.second;
+		    //std::cout << " - " << (*t).first->second.first << "," << (*t).first->second.second << std::endl;
+		    //std::cout << "score old " << (*t).second->getScore() << " " << (*t).second->get_struct() << std::endl;
 
 		    // calculate best score of hole
 		    bool deb=false;
-		    vector < vector<int> > vec;
+		    std::vector < std::vector<int> > vec;
 		    int holeScore = D_rec2((*t).first->first.first+1,(*t).first->first.second-1,(*t).first->second.first+1,(*t).first->second.second-1,vec,deb);
 		    (*t).second->setEPMScore(	(*t).second->getScore() + holeScore );
 
-		    //cout << "score new " << (*t).second->getScore() << endl;
+		    //std::cout << "score new " << (*t).second->getScore() << std::endl;
 		    
 		    lastHole = (*t).first;
 		    //lastEPM = (*t).second;
@@ -2363,23 +2361,23 @@ namespace LocARNA {
 		    // add score of last hole to current EPM
 		    (*t).second->setEPMScore((*t).second->getScore() + lastHoleScore);
 		    skippedHoles++;
-		    //cout << endl << (*t).second->getId() << endl <<  " new current hole " << (*t).first->first.first << "," << (*t).first->first.second;
-		    //cout << " - " << (*t).first->second.first << "," << (*t).first->second.second <<  " " << (*t).second->get_struct() << endl;
-		    //cout << "score:"<< lastHoleScore << "-"<< (*t).second->getEPMScore() << "-" << (*t).second->getScore() << " - current hole is same as last hole. skip!" << endl;
+		    //std::cout << std::endl << (*t).second->getId() << std::endl <<  " new current hole " << (*t).first->first.first << "," << (*t).first->first.second;
+		    //std::cout << " - " << (*t).first->second.first << "," << (*t).first->second.second <<  " " << (*t).second->get_struct() << std::endl;
+		    //std::cout << "score:"<< lastHoleScore << "-"<< (*t).second->getEPMScore() << "-" << (*t).second->getScore() << " - current hole is same as last hole. skip!" << std::endl;
 		}
 	    }
-	cout << "   skipped holes = " << skippedHoles << endl;
+	std::cout << "   skipped holes = " << skippedHoles << std::endl;
     }
 
 
-    void LCSEPM::calculateTraceback2(const int i,const  int j,const int k,const int l,vector < vector<int> > holeVec)
+    void LCSEPM::calculateTraceback2(const int i,const  int j,const int k,const int l,std::vector < std::vector<int> > holeVec)
     {
 	int j_1 = holeVec.size()-1;
 	int l_2 = holeVec[0].size()-1;
 
 	while ((j_1 >= 1)&&(l_2 >= 1) && (holeVec[j_1][l_2]>0) )
 	    {
-		//cout << "traceback " << i+j_1-1 <<","<< k+l_2-1 << " score: "<<holeVec[j_1][l_2] << endl;
+		//std::cout << "traceback " << i+j_1-1 <<","<< k+l_2-1 << " score: "<<holeVec[j_1][l_2] << std::endl;
 		if (holeVec[j_1][l_2-1] == holeVec[j_1][l_2])
 		    --l_2;
 		else
@@ -2388,12 +2386,12 @@ namespace LocARNA {
 		    else
 			{
 			    // get all EPMs which end at (i + j_1-1,k + l_2-1)
-			    vector<PatternPairMap::SelfValuePTR> EPM_list = EPM_Table2[i + j_1-1][k + l_2-1];
+			    std::vector<PatternPairMap::SelfValuePTR> EPM_list = EPM_Table2[i + j_1-1][k + l_2-1];
 
 
 			    // over all EPMs which end at (i+j_1-1,k+l_2-1)
-			    for (vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); ++myIter){
-				//cout << "here " << (*myIter)->getId() << endl;
+			    for (std::vector<PatternPairMap::SelfValuePTR>::iterator myIter = EPM_list.begin(); myIter < EPM_list.end(); ++myIter){
+				//std::cout << "here " << (*myIter)->getId() << std::endl;
 
 				// check if current EPM fits inside current hole
 				int x1 = (*myIter)->getOutsideBounds().first.first - i;
@@ -2401,25 +2399,25 @@ namespace LocARNA {
 				if  ( ( x1 >= 0 ) && ( x2 >= 0)){
 				    // check score
 
-				    //cout << "(j_1,l_2)=(" << j_1<< "," << l_2 <<")  "<< i <<","<< j << "-" << k << "," << l << "  outsidebounds first " <<  (*myIter)->getOutsideBounds().first.first << "," << (*myIter)->getOutsideBounds().second.first << endl;
-				    //cout << "score (j1,l2)="<< holeVec[j_1][l_2] << " score=" << (*myIter)->getScore() << "  EPM_score=" << (*myIter)->getEPMScore() << " before="<<holeVec[(*myIter)->getOutsideBounds().first.first-1][(*myIter)->getOutsideBounds().second.first-1];
-				    //cout << " " << (*myIter)->getOutsideBounds().first.first-1 << "," << (*myIter)->getOutsideBounds().second.first-1<< endl;
+				    //std::cout << "(j_1,l_2)=(" << j_1<< "," << l_2 <<")  "<< i <<","<< j << "-" << k << "," << l << "  outsidebounds first " <<  (*myIter)->getOutsideBounds().first.first << "," << (*myIter)->getOutsideBounds().second.first << std::endl;
+				    //std::cout << "score (j1,l2)="<< holeVec[j_1][l_2] << " score=" << (*myIter)->getScore() << "  EPM_score=" << (*myIter)->getEPMScore() << " before="<<holeVec[(*myIter)->getOutsideBounds().first.first-1][(*myIter)->getOutsideBounds().second.first-1];
+				    //std::cout << " " << (*myIter)->getOutsideBounds().first.first-1 << "," << (*myIter)->getOutsideBounds().second.first-1<< std::endl;
 				    int check = (*myIter)->getScore() + holeVec[x1][x2];
 				    if (holeVec[j_1][l_2] == check){
 
 					// add current EPM to traceback
-					//cout << "added traceback EPM "<< (*myIter)->getId() << endl;
+					//std::cout << "added traceback EPM "<< (*myIter)->getId() << std::endl;
 					matchedEPMs.add( *myIter );
 
 					// recurse with traceback into all holes of best EPM
 					for(IntPPairCITER h = (*myIter)->getInsideBounds().begin(); h != (*myIter)->getInsideBounds().end(); ++h)
 					    {
-						vector < vector<int> > tmpHoleVec;
+						std::vector < std::vector<int> > tmpHoleVec;
 						tmpHoleVec.clear();
-						//cout << (*myIter)->getId() << " D_rec2 hole " << (*h).first.first+1 << "," << (*h).first.second-1 << "-" << (*h).second.first+1 << "," << (*h).second.second-1 << endl;
+						//std::cout << (*myIter)->getId() << " D_rec2 hole " << (*h).first.first+1 << "," << (*h).first.second-1 << "-" << (*h).second.first+1 << "," << (*h).second.second-1 << std::endl;
 						int sc = D_rec2((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec,true);
 						// call traceback only if there is an EPM within hole
-						//cout << (*myIter)->getId() << "score "<< sc << " " << (*h).first.first+1 << "," << (*h).first.second-1 << "-" << (*h).second.first+1 << "," << (*h).second.second-1 << " hole traceback..." << endl;
+						//std::cout << (*myIter)->getId() << "score "<< sc << " " << (*h).first.first+1 << "," << (*h).first.second-1 << "-" << (*h).second.first+1 << "," << (*h).second.second-1 << " hole traceback..." << std::endl;
 						if (sc > 0) {
 						    calculateTraceback2((*h).first.first+1,(*h).first.second-1,(*h).second.first+1,(*h).second.second-1,tmpHoleVec);
 						}
@@ -2442,7 +2440,7 @@ namespace LocARNA {
 	for(int i= 0; i<length; i++)
 	    s[i]='.';
 	intVec patternVec;
-	string structure;
+	std::string structure;
 	char x;
 	for (PatternPairMap::patListCITER i=myMap.getList().begin();i != myMap.getList().end();++i)
 	    {
@@ -2464,9 +2462,9 @@ namespace LocARNA {
 	    }
 	return s;
     }
-    void LCSEPM::MapToPS(const string& sequenceA, const string& sequenceB, PatternPairMap& myMap, const string& file1, const string& file2)
+    void LCSEPM::MapToPS(const std::string& sequenceA, const std::string& sequenceB, PatternPairMap& myMap, const std::string& file1, const std::string& file2)
     {
-	string func_str="\
+	std::string func_str="\
    /drawpattern {\n\
       /Panz pattern length def\n\
       0 1 pattern length 1 sub {\n\
@@ -2482,11 +2480,11 @@ namespace LocARNA {
    } bind def\n\
    \n\
    /pattern [\n";
-	string clus1_str,clus2_str;
+	std::string clus1_str,clus2_str;
 
 
 
-	stringstream label1Str, label2Str;
+	std::stringstream label1Str, label2Str;
 
 	for (unsigned int i=1;i<=sequenceA.length();++i)
 	    {
@@ -2516,8 +2514,8 @@ namespace LocARNA {
 	clus2_str=func_str+clus2_str;
 
    
-	string psfilename = file1;
-	string pos1= "drawpattern\ndrawbases\n";
+	std::string psfilename = file1;
+	std::string pos1= "drawpattern\ndrawbases\n";
 	pos1+=label1Str.str();
    
 	fold_constrained= 1;
@@ -2552,10 +2550,10 @@ namespace LocARNA {
 	//free_arrays();
     }
 
-    pair<SequenceAnnotation,SequenceAnnotation>
+    std::pair<SequenceAnnotation,SequenceAnnotation>
     LCSEPM::anchor_annotation() {
 	// extract matching edges (pairs of positions) from LCS-EPM
-	vector<intPair> matchingsLCSEPM;
+	std::vector<intPair> matchingsLCSEPM;
 	intVec positionsSeq1LCSEPM;
 	intVec positionsSeq2LCSEPM;
 
@@ -2574,9 +2572,9 @@ namespace LocARNA {
 
 	for (unsigned int i=0;i<positionsSeq1LCSEPM.size();++i)
 	    {
-		matchingsLCSEPM.push_back(make_pair(positionsSeq1LCSEPM[i],positionsSeq2LCSEPM[i]));
+		matchingsLCSEPM.push_back(std::make_pair(positionsSeq1LCSEPM[i],positionsSeq2LCSEPM[i]));
 	    }
-	//string outname = "locarna_constraints_input.txt"; //"/home/radwan/Exparna_P/LocARNA/src/locarna_constraints_input.txt";
+	//std::string outname = "locarna_constraints_input.txt"; //"/home/radwan/Exparna_P/LocARNA/src/locarna_constraints_input.txt";
 
 	int last_edge_seq1,last_edge_seq2;
 	last_edge_seq1=0;
@@ -2587,12 +2585,12 @@ namespace LocARNA {
 	
 	int edge = 100;
 
-	for (vector<intPair>::iterator i_edge = matchingsLCSEPM.begin();
+	for (std::vector<intPair>::iterator i_edge = matchingsLCSEPM.begin();
 	     (i_edge != matchingsLCSEPM.end()
 	      && annoA.length()<seqA.length() && annoB.length()<seqB.length());
 	     ++i_edge)
 	    {
-		//cout << "first: " << (*i_edge).first << " second: " << (*i_edge).second << endl;
+		//std::cout << "first: " << (*i_edge).first << " second: " << (*i_edge).second << std::endl;
 
 		for (size_type i=last_edge_seq1+1;
 		     (i<i_edge->first && annoA.length()<seqA.length());++i)
@@ -2606,9 +2604,9 @@ namespace LocARNA {
 			annoB.push_back_name("...");
 		    }
 
-		ostringstream edge_st_;
+		std::ostringstream edge_st_;
 		edge_st_ << edge;
-		string edge_st;
+		std::string edge_st;
 		edge_st = edge_st_.str();
 		const char *c_str_edge = edge_st.c_str();
 
@@ -2635,37 +2633,37 @@ namespace LocARNA {
 		annoB.push_back_name("...");
 	    }
 	
-	return pair<SequenceAnnotation,SequenceAnnotation>(annoA,annoB);
+	return std::pair<SequenceAnnotation,SequenceAnnotation>(annoA,annoB);
     }
 
-    void LCSEPM::output_locarna(const string& sequenceA, const string& sequenceB, const string& outfile){
+    void LCSEPM::output_locarna(const std::string& sequenceA, const std::string& sequenceB, const std::string& outfile){
 
-	pair<SequenceAnnotation,SequenceAnnotation> anchors = anchor_annotation();
+	std::pair<SequenceAnnotation,SequenceAnnotation> anchors = anchor_annotation();
 	
-	ofstream outLocARNAfile (outfile.c_str());
+	std::ofstream outLocARNAfile (outfile.c_str());
 
-	outLocARNAfile << ">"<< seqA.seqentry(0).name() << endl 
-		       << upperCase(sequenceA) << endl;
+	outLocARNAfile << ">"<< seqA.seqentry(0).name() << std::endl 
+		       << upperCase(sequenceA) << std::endl;
 	for (size_type i=0; i<3; i++) {
-	    outLocARNAfile << anchors.first.annotation_string(i) << "#" <<(i+1) << endl; 
+	    outLocARNAfile << anchors.first.annotation_string(i) << "#" <<(i+1) << std::endl; 
 	}
 
-	outLocARNAfile << ">"<<seqB.seqentry(0).name() << endl 
-		       << upperCase(sequenceB) << endl;
+	outLocARNAfile << ">"<<seqB.seqentry(0).name() << std::endl 
+		       << upperCase(sequenceB) << std::endl;
 	for (size_type i=0; i<3; i++) {
-	    outLocARNAfile << anchors.first.annotation_string(i) << "#" <<(i+1) << endl; 
+	    outLocARNAfile << anchors.first.annotation_string(i) << "#" <<(i+1) << std::endl; 
 	}
-	outLocARNAfile << endl;
+	outLocARNAfile << std::endl;
 
 	outLocARNAfile.close();
     }
 
 
     void
-    LCSEPM::output_clustal(const string& outfile_name)
+    LCSEPM::output_clustal(const std::string& outfile_name)
     {
 	// extract matching edges (pairs of positions) from LCS-EPM
-	vector<intPair> matchingsLCSEPM;
+	std::vector<intPair> matchingsLCSEPM;
 	intVec positionsSeq1LCSEPM;
 	intVec positionsSeq2LCSEPM;
 
@@ -2680,19 +2678,19 @@ namespace LocARNA {
 
 	for (unsigned int i=0;i<positionsSeq1LCSEPM.size();++i)
 	    {
-		matchingsLCSEPM.push_back(make_pair(positionsSeq1LCSEPM[i],positionsSeq2LCSEPM[i]));
+		matchingsLCSEPM.push_back(std::make_pair(positionsSeq1LCSEPM[i],positionsSeq2LCSEPM[i]));
 	    }
 
-	//string outname = ensOptions.out_dir + "/" + ensOptions.align_file;
-	ofstream outfile (outfile_name.c_str());
+	//std::string outname = ensOptions.out_dir + "/" + ensOptions.align_file;
+	std::ofstream outfile (outfile_name.c_str());
 
-	string seq1_aln,seq2_aln; //,seq1_aln_str,seq2_aln_str;
+	std::string seq1_aln,seq2_aln; //,seq1_aln_str,seq2_aln_str;
 
 	int last_edge_seq1,last_edge_seq2;
 	last_edge_seq1=0;
 	last_edge_seq2=0;
 
-	for (vector<intPair>::iterator i_edge = matchingsLCSEPM.begin(); i_edge != matchingsLCSEPM.end();++i_edge)
+	for (std::vector<intPair>::iterator i_edge = matchingsLCSEPM.begin(); i_edge != matchingsLCSEPM.end();++i_edge)
 	    {
 		for (size_type i=last_edge_seq1+1;i<(*i_edge).first;++i)
 		    {
@@ -2735,22 +2733,22 @@ namespace LocARNA {
 		//seq2_aln_str.push_back(myMol2.getStructure(j));
 	    }
 
-	outfile << "CLUSTAL W (1.83) multiple sequence alignment --- expaRNA 0.7.2 - exact pattern Alignment of RNA --- Score: "<< matchingsLCSEPM.size() << endl <<endl;
+	outfile << "CLUSTAL W (1.83) multiple sequence alignment --- expaRNA 0.7.2 - exact pattern Alignment of RNA --- Score: "<< matchingsLCSEPM.size() << std::endl <<std::endl;
 
-	string tmp1 = seqA.seqentry(0).name() +"      ";
-	string tmp2 = seqB.seqentry(0).name() +"      ";
+	std::string tmp1 = seqA.seqentry(0).name() +"      ";
+	std::string tmp2 = seqB.seqentry(0).name() +"      ";
 	if (tmp1.length() < tmp2.length())
 	    tmp1.resize(tmp2.length(),' ');
 	else
 	    if (tmp2.length() < tmp1.length())
 		tmp2.resize(tmp1.length(),' ');
-	string tmp3;
+	std::string tmp3;
 	tmp3.resize(tmp1.length(),' ');
-	//outfile << tmp3 << seq1_aln_str <<endl;
-	outfile << endl;
-	outfile << tmp1 << seq1_aln << endl;
-	outfile << tmp2 << seq2_aln << endl;
-	//outfile << tmp3 << seq2_aln_str << endl << endl;
+	//outfile << tmp3 << seq1_aln_str <<std::endl;
+	outfile << std::endl;
+	outfile << tmp1 << seq1_aln << std::endl;
+	outfile << tmp2 << seq2_aln << std::endl;
+	//outfile << tmp3 << seq2_aln_str << std::endl << std::endl;
 	outfile.close();
     }
 } //end namespace

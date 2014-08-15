@@ -490,13 +490,13 @@ namespace LocARNA {
 	template <class ScoringView>
 	void trace_D(const Arc &arcA, const Arc &arcB, ScoringView sv);
 
-	/**
-	 * trace D matrix
-	 * @param am the corresponding arcs which defines the D element
-	 * @param sv scoring view
-	 */
-	template <class ScoringView>
-	void trace_D(const ArcMatch &am, ScoringView sv);
+	// /**
+	//  * trace D matrix
+	//  * @param am the corresponding arcs which defines the D element
+	//  * @param sv scoring view
+	//  */
+	// template <class ScoringView>
+	// void trace_D(const ArcMatch &am, ScoringView sv);
 
 	/**
 	 * trace IA/IB matrix
@@ -522,8 +522,7 @@ namespace LocARNA {
 	 */
 	void 
 	fill_D_entries(pos_type al, pos_type bl);
-
-
+	
 	/** 
 	 * Read/Write access to D matrix
 	 * 
