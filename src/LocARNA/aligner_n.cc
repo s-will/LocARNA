@@ -156,7 +156,9 @@ namespace LocARNA {
 
     // Compute an element of the matrix IA/IB
     template<class ScoringView>
-    infty_score_t AlignerN::compute_IX(index_t xl, const Arc& arcY, matidx_t i_index, bool isA, ScoringView sv) {
+    infty_score_t
+    AlignerN::compute_IX(index_t xl, const Arc& arcY, 
+			 matidx_t i_index, bool isA, ScoringView sv) {
 
 	//constraints are ignored,
 	//params->constraints_->aligned_in_a(i_seq_pos);
@@ -280,20 +282,17 @@ namespace LocARNA {
 	// 	      << " j: " << j_seq_pos << "/j_index:"<< j_index << std::endl;
 	// }
 
-	score_t opening_cost_A;
-	if (i_prev_seq_pos < (i_seq_pos - 1))
+	score_t opening_cost_A=0;
+	if (i_prev_seq_pos < (i_seq_pos - 1)) {
 	    //implicit base deletion because of sparsification
 	    opening_cost_A = sv.scoring()->indel_opening();
-	else
-	    opening_cost_A = 0;
-
-	score_t opening_cost_B;
-	if (j_prev_seq_pos < (j_seq_pos - 1))
+	}
+	
+	score_t opening_cost_B=0;
+	if (j_prev_seq_pos < (j_seq_pos - 1)) {
 	    //implicit base insertion because of sparsification
 	    opening_cost_B = sv.scoring()->indel_opening();
-	else
-	    opening_cost_B  = 0;
-
+	}
 
 	// base match
 	if ( constraints_alowed_edge
@@ -629,9 +628,9 @@ namespace LocARNA {
 	    seq_pos_t ar_seq_pos = arcA.right();
 	    seq_pos_t br_seq_pos = arcB.right();
 
-	    if (trace_debugging_output)
+	    if (trace_debugging_output) {
 		std::cout << "arcA:" << arcA << " arcB:" << arcB  << std::endl;
-
+	    }
 
 	    matidx_t ar_prev_mat_idx_pos = mapperA.first_valid_mat_pos_before(al, ar_seq_pos);
 	    matidx_t br_prev_mat_idx_pos = mapperB.first_valid_mat_pos_before(bl, br_seq_pos);
@@ -656,19 +655,17 @@ namespace LocARNA {
 
 	    //-----three cases for gap extension/initiation ---
 
-	    infty_score_t opening_cost_A;
-	    if (ar_prev_seq_pos < (ar_seq_pos - 1))
+	    score_t opening_cost_A=0;
+	    if (ar_prev_seq_pos < (ar_seq_pos - 1)) {
 		//implicit base deletion because of sparsification
-		opening_cost_A = (infty_score_t)(sv.scoring()->indel_opening());
-	    else
-		opening_cost_A = (infty_score_t)0;
+		opening_cost_A = sv.scoring()->indel_opening();
+	    }
 
-	    infty_score_t opening_cost_B;
-	    if (br_prev_seq_pos < (br_seq_pos - 1))
+	    score_t opening_cost_B=0;
+	    if (br_prev_seq_pos < (br_seq_pos - 1)) {
 		//implicit base insertion because of sparsification
-		opening_cost_B = (infty_score_t)(sv.scoring()->indel_opening());
-	    else
-		opening_cost_B  = (infty_score_t)0;
+		opening_cost_B = sv.scoring()->indel_opening();
+	    }
 
 	    infty_score_t gap_score = jumpGapCostA + jumpGapCostB;
 	    infty_score_t mdel =
@@ -682,8 +679,11 @@ namespace LocARNA {
 				+ opening_cost_B
 				+  M(ar_prev_mat_idx_pos, br_prev_mat_idx_pos) );
 
-	    if (trace_debugging_output)	std::cout << "mdel=" << mdel << " mins=" << mins << " mm=" << mm << std::endl;
-
+	    if (trace_debugging_output)	{
+		std::cout << "mdel=" << mdel 
+			  << " mins=" << mins
+			  << " mm=" << mm << std::endl;
+	    }
 
 	    infty_score_t m = std::max( mm, std::max(mdel, mins));
 
@@ -694,13 +694,16 @@ namespace LocARNA {
 	    infty_score_t ia= IAmat(ar_prev_mat_idx_pos,arcB.idx()) + jumpGapCostA;
 	    infty_score_t ib= IBmat(arcA.idx(),br_prev_mat_idx_pos) + jumpGapCostB;
 
-	    assert(IADmat(arcA.idx(),arcB.idx()) == infty_score_t::neg_infty || IADmat(arcA.idx(),arcB.idx()) == ia);
-	    assert(IBDmat(arcA.idx(),arcB.idx()) == infty_score_t::neg_infty || IBDmat(arcA.idx(), arcB.idx()) == ib);
+	    assert(IADmat(arcA.idx(),arcB.idx()) 
+		   == infty_score_t::neg_infty || IADmat(arcA.idx(),arcB.idx()) == ia);
+	    assert(IBDmat(arcA.idx(),arcB.idx())
+		   == infty_score_t::neg_infty || IBDmat(arcA.idx(), arcB.idx()) == ib);
 
 	    IADmat(arcA.idx(),arcB.idx()) = ia; //TODO: avoid recomputation
 	    IBDmat(arcA.idx(),arcB.idx()) = ib; //TODO: avoid recomputation
-	    if (trace_debugging_output)	std::cout << "m=" << m << " ia=" << ia << " ib=" << ib << std::endl;
-
+	    if (trace_debugging_output) {
+		std::cout << "m=" << m << " ia=" << ia << " ib=" << ib << std::endl;
+	    }
 
 	    //	assert(ia == iad);
 
@@ -714,7 +717,7 @@ namespace LocARNA {
 	    D(am) = std::max(m, ia);
 	    D(am) = std::max(D(am), ib );
 
-	    //			std::cout <<"D["<< am.arcA() << "," <<am.arcB() <<"]:" << D(am) << std::endl;
+	    // std::cout <<"D["<< am.arcA() << "," <<am.arcB() <<"]:" << D(am) << std::endl;
 
 	    assert(! scoring->stacking());
 	}
@@ -1151,17 +1154,16 @@ namespace LocARNA {
 
 	//-----three cases for gap extension/initiation ---
 
-	infty_score_t opening_cost_A;
-	if (ar_prev_seq_pos < (ar_seq_pos - 1)) //implicit base deletion because of sparsification
-	    opening_cost_A = (infty_score_t)(sv.scoring()->indel_opening());
-	else
-	    opening_cost_A = (infty_score_t)0;
+	score_t opening_cost_A=0;
+	if (ar_prev_seq_pos < (ar_seq_pos - 1)) {
+	    //implicit base deletion because of sparsification
+	    opening_cost_A = sv.scoring()->indel_opening();
+	}
 
-	infty_score_t opening_cost_B;
-	if (br_prev_seq_pos < (br_seq_pos - 1)) //implicit base insertion because of sparsification
-	    opening_cost_B = (infty_score_t)(sv.scoring()->indel_opening());
-	else
-	    opening_cost_B  = (infty_score_t)0;
+	score_t opening_cost_B=0;
+	if (br_prev_seq_pos < (br_seq_pos - 1)) { //implicit base insertion because of sparsification
+	    opening_cost_B = sv.scoring()->indel_opening();
+	}
 
 	infty_score_t gap_score = jumpGapCostA + jumpGapCostB;
 
@@ -1411,32 +1413,42 @@ namespace LocARNA {
 
 	const ArcIdxVec& arcsA = mapperA.valid_arcs_right_adj(al, i_index);
 	const ArcIdxVec& arcsB = mapperB.valid_arcs_right_adj(bl, j_index);
-	for (ArcIdxVec::const_iterator arcAIdx = arcsA.begin(); arcAIdx != arcsA.end(); ++arcAIdx)
-	    {
+	
+	for (ArcIdxVec::const_iterator arcAIdx = arcsA.begin(); 
+	     arcAIdx != arcsA.end(); ++arcAIdx) {
 
 		const Arc& arcA = bpsA.arc(*arcAIdx);
 
-		matidx_t arcA_left_index_before = mapperA.first_valid_mat_pos_before(al, arcA.left());
-		seq_pos_t arcA_left_seq_pos_before = mapperA.get_pos_in_seq_new(al, arcA_left_index_before);
-		infty_score_t opening_cost_A;
-		if (arcA_left_seq_pos_before < (arcA.left() - 1)) //implicit base deletion because of sparsification
-		    opening_cost_A = (infty_score_t)(sv.scoring()->indel_opening());
-		else
-		    opening_cost_A = (infty_score_t)0;
+		matidx_t arcA_left_index_before =
+		    mapperA.first_valid_mat_pos_before(al, arcA.left());
 
-		for (ArcIdxVec::const_iterator arcBIdx = arcsB.begin(); arcBIdx != arcsB.end(); ++arcBIdx)
+		seq_pos_t arcA_left_seq_pos_before =
+		    mapperA.get_pos_in_seq_new(al, arcA_left_index_before);
+		
+		score_t opening_cost_A=0;
+		if (arcA_left_seq_pos_before < (arcA.left() - 1)) {
+		    //implicit base deletion because of sparsification
+		    opening_cost_A = sv.scoring()->indel_opening();
+		}
+		
+		for (ArcIdxVec::const_iterator arcBIdx = arcsB.begin(); 
+		     arcBIdx != arcsB.end(); ++arcBIdx)
 		    {
 			const Arc& arcB = bpsB.arc(*arcBIdx);
-			matidx_t arcB_left_index_before = mapperB.first_valid_mat_pos_before(bl, arcB.left());
-			seq_pos_t arcB_left_seq_pos_before = mapperB.get_pos_in_seq_new(bl, arcB_left_index_before);
+			matidx_t arcB_left_index_before =
+			    mapperB.first_valid_mat_pos_before(bl, arcB.left());
+			seq_pos_t arcB_left_seq_pos_before =
+			    mapperB.get_pos_in_seq_new(bl, arcB_left_index_before);
 
-			infty_score_t opening_cost_B;
-			if (arcB_left_seq_pos_before < (arcB.left() - 1)) //implicit base insertion because of sparsification
-			    opening_cost_B = (infty_score_t)(sv.scoring()->indel_opening());
-			else
-			    opening_cost_B = (infty_score_t)0;
+			score_t opening_cost_B=0;
+			if (arcB_left_seq_pos_before < (arcB.left() - 1)) {
+			    //implicit base insertion because of sparsification
+			    opening_cost_B = sv.scoring()->indel_opening();
+			}
 
-			infty_score_t gap_match_score = getGapCostBetween( arcA_left_seq_pos_before, arcA.left(), true) + getGapCostBetween( arcB_left_seq_pos_before, arcB.left(), false)
+			infty_score_t gap_match_score =
+			    getGapCostBetween( arcA_left_seq_pos_before, arcA.left(), true)
+			    + getGapCostBetween( arcB_left_seq_pos_before, arcB.left(), false)
 			    + sv.D( arcA, arcB ) + sv.scoring()->arcmatch(arcA, arcB);
 
 
