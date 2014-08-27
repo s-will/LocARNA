@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -36,7 +36,7 @@ and the alignment in clustalw aln format.
 
 =cut
 
-
+use warnings;
 use strict;
 
 ##------------------------------------------------------------
@@ -79,9 +79,17 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 # $| = 1;				# flush after every write
 
 
+if (! -e "$align_file") {
+    print STDERR "ERROR: File $align_file does not exist.\n";
+    exit -1;
+}
+
 ### call RNAalifold
 my @alires = readpipe("RNAalifold -p $align_file 2>/dev/null");
+
 my $seq=$alires[0];    
+die "Cannot alifold $align_file\n" if !defined($seq);
+
 chomp $seq;
 
 open(PF,$pair_file) ||

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -28,7 +28,7 @@ For each row in the stdin, add the columns with weights
 
 =cut
 
-
+use warnings;
 use strict;
 
 ##------------------------------------------------------------

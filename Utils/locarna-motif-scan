@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 ############################################################
 ##
@@ -14,6 +14,7 @@
 
 ## TODO: aktualisiere Man-page
 
+use warnings;
 use strict;
 use MLocarna;
 

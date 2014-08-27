@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -66,9 +66,10 @@ of the fit, and the background and hit reliability.
 
 =cut
 
-
+use warnings;
 use strict;
 use FindBin;
+my $bindir = "$FindBin::Bin";
 
 ## ------------------------------------------------------------
 ## parameter
@@ -190,7 +191,7 @@ while(<>) {
     
     my $outfile="$output_dir/$locus_name".($revcompl?"-rc":"");
     
-    my $command="$BinDir::Bin/reliability-profile.pl ".
+    my $command="$bindir/reliability-profile.pl ".
 	"--seqname $seqname ".
 	"--structure-weight=$str_weight ".
 	($show_sw?"--show-sw ":"").

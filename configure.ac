@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.7.17pre2], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.7.17-relpath], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
@@ -27,10 +27,10 @@ AC_PROG_CPP
 
 AC_LANG_CPLUSPLUS
 
-AC_PATH_PROGS([PERL],[perl perl5])
+AC_CHECK_PROGS([PERL],[perl perl5])
 
-AC_PATH_PROG([HELP2MAN],[help2man],false)
-AC_PATH_PROG([POD2MAN],[pod2man],false)
+AC_CHECK_PROG([HELP2MAN],[help2man],[help2man],[false])
+AC_CHECK_PROG([POD2MAN],[pod2man],[pod2man],[false])
 
 # for Vienna RNA
 AC_CHECK_FUNCS([strdup]) #defines HAVE_STRDUP if strdup is available
@@ -67,13 +67,13 @@ AC_ARG_VAR([RNAalifold],[RNAalifold name (def=RNAalifold)])
 
 # check for required Vienna programs
 if test "$with_vrna" = "" ; then
-   AC_PATH_PROG([RNAfold],[RNAfold],[false])
-   AC_PATH_PROG([RNAplfold],[RNAplfold],[false])
-   AC_PATH_PROG([RNAalifold],[RNAalifold],[false])
+   AC_CHECK_PROG([RNAfold],[RNAfold],[RNAfold],[false])
+   AC_CHECK_PROG([RNAplfold],[RNAplfold],[RNAplfold],[false])
+   AC_CHECK_PROG([RNAalifold],[RNAalifold],[RNAalifold],[false])
 else
-   AC_PATH_PROG([RNAfold],[RNAfold],[false],[$with_vrna/bin])
-   AC_PATH_PROG([RNAplfold],[RNAplfold],[false],[$with_vrna/bin])
-   AC_PATH_PROG([RNAalifold],[RNAalifold],[false],[$with_vrna/bin])  
+   AC_CHECK_PROG([RNAfold],[RNAfold],[RNAfold],[false],[$with_vrna/bin])
+   AC_CHECK_PROG([RNAplfold],[RNAplfold],[RNAplfold],[false],[$with_vrna/bin])
+   AC_CHECK_PROG([RNAalifold],[RNAalifold],[RNAalifold],[false],[$with_vrna/bin])
 fi
 
 # trigger error if ViennaRNA programs not found
@@ -181,7 +181,7 @@ fi
 AC_ARG_VAR(TCOFFEE,[tcoffee location or name (def=t_coffee)])
 AC_MSG_RESULT([$TCOFFEE])
 
-AC_PATH_PROG([TCOFFEE],[$TCOFFEE],false)
+AC_CHECK_PROG([TCOFFEE],[$TCOFFEE],[$TCOFFEE],false)
 
 
 
@@ -268,7 +268,7 @@ if test "$VRNA_OK" = "false" ; then
    if test "$with_vrna" != "" ; then
       AC_MSG_NOTICE([Cannot find Vienna RNA package in given path '$with_vrna'.])
    else
-      AC_MSG_NOTICE([Cannot find Vienna RNA package in standard path. For using a])
+      AC_MSG_NOTICE([Cannot find Vienna RNA package in current path. For using a])
       AC_MSG_NOTICE([non-standard path, please specify with --with-vrna=PREFIX.])
    fi
 fi
@@ -292,7 +292,7 @@ if test "$VRNA_OK" = "false" -o "$VRNALIB_OK" = "false" ; then
    AC_MSG_NOTICE()
    AC_MSG_NOTICE([The Vienna RNA package (>=1.8) is required for compiling;])
    AC_MSG_NOTICE([linking (--enable-librna) requires version >= 2.1.1.])
-   AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/~ivo/RNA/.])
+   AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/RNA/.])
    AC_MSG_NOTICE()
     
    exit -1;

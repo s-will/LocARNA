@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # call it: 
 #      gen-dot.pl [-s seq] [-f pairfile]
@@ -6,6 +6,9 @@
 # num [ red green blue ]
 # where the nums are ordered (small to big).
 
+
+use strict;
+use warnings;
 
 ############################################################
 ### Options

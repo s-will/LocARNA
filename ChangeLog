@@ -445,4 +445,7 @@ Nov 2013
 	(Release 1.7.17pre)
 	max-bps/uil/bpil-length-ratio for SPARSE/ExparnaP
 	(Release 1.7.17pre2)
-	
+	Remove absolute path dependencies in scripts. This changes the
+	behavior slightly, since paths are not fixed at compile time. For
+	example, the Vienna RNA programs are located via PATH environment
+	variable

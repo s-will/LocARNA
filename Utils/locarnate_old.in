@@ -1,8 +1,10 @@
-#!@PERL@ -I@prefix@/lib/perl
+#!/usr/bin/env @PERL@
 
-my $prefix = "@prefix@";
-my $exec_prefix = "@exec_prefix@";
-my $bindir = "@bindir@";
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
+my $prefix = "$FindBin::Bin/..";
+my $bindir = "$FindBin::Bin";
 
 ## the tcoffe version to use
 my $t_coffee = "@TCOFFEE@";

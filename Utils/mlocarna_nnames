@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # -*- perl -*-
 
 =head1 mlocarna_nnames
@@ -29,6 +29,7 @@ Full documentation
 
 =cut
 
+use warnings;
 use strict;
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -29,7 +29,7 @@ Reads dotplot from stdin and write pp file to stdout.
 
 =cut
 
-
+use warnings;
 use strict;
 
 ##------------------------------------------------------------

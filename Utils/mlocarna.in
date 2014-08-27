@@ -1,4 +1,4 @@
-#!@PERL@ -I@prefix@/lib/perl
+#!/usr/bin/env @PERL@
 # -*- perl -*-
 
 ### ============================================================================
@@ -364,14 +364,20 @@ Sebastian Will
 
 =cut
 
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+my $prefix = "$FindBin::Bin/..";
+my $bindir = "$FindBin::Bin";
+
+
 use MLocarna;
 use MLocarna::SparseMatrix;
 use MLocarna::Trees;
 use MLocarna::MatchProbs;
 use MLocarna::Aux;
-
-use strict;
-use warnings;
 
 use Cwd 'abs_path';
 
@@ -398,9 +404,6 @@ if ($THREADS_ENABLED) {
 
 $MLocarna::PACKAGE_STRING="@PACKAGE_STRING@";
 
-my $prefix = "@prefix@";
-my $exec_prefix = "@exec_prefix@";
-my $bindir = "@bindir@";
 
 ## vienna package programs
 my $RNAfold = "@RNAfold@";

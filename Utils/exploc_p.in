@@ -1,4 +1,4 @@
-#!@PERL@ -I@prefix@/lib/perl
+#!/usr/bin/env @PERL@
 
 =head1 NAME
 
@@ -58,8 +58,10 @@ print individual times for Preprocessing, ExpaRNA-P and LocARNA.
 
 =cut
 
+use FindBin;
+# use lib "$FindBin::Bin/../lib/perl";
+my $prefix = "$FindBin::Bin/..";
 
-my $prefix = "@prefix@";
 my $exec_prefix = "@exec_prefix@";
 my $bindir = "@bindir@";
 

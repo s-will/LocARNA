@@ -1,6 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
-use strict;
+## ATTENTION: absolute path
+my $nupackPath = "/usr/local/user/nupack3.0";
+
 
 #####################################################################
 ##
@@ -12,6 +14,8 @@ use strict;
 ##
 ####################################################################
 
+use warnings;
+use strict;
 
 # read sequence parameter
 my $seqID = $ARGV[0];
@@ -21,7 +25,6 @@ my $seq = $ARGV[1];
 my $temperature = 37;
 
 
-my $nupackPath = "/usr/local/user/nupack3.0";
 my $nupack = "$nupackPath/bin/pairs";
 
 my $verbose = 0;

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -55,6 +55,7 @@ where we assume that the script is run on a submission host!
 =cut
 
 
+use warnings;
 use strict;
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 ## enumerate the relevant sub sequences for a crossing RNA (dp format)
 

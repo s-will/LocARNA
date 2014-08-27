@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -30,7 +30,7 @@ Compare two dot plots by average divergence/similarity of column probability dis
 
 =cut
 
-
+use warnings;
 use strict;
 
 ##------------------------------------------------------------

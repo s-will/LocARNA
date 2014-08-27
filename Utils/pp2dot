@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -73,12 +73,6 @@ use Cwd 'abs_path';
 
 ## ------------------------------------------------------------
 ## global constants
-
-
-#$MLocarna::PACKAGE_STRING="@PACKAGE_STRING@";
-#my $prefix = "@prefix@";
-#my $exec_prefix = "@exec_prefix@";
-#my $bindir = "@bindir@";
 
 
 ##------------------------------------------------------------

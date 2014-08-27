@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -41,7 +41,7 @@ names.
 
 =cut
 
-
+use warnings;
 use strict;
 
 

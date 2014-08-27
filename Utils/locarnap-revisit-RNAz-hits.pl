@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -56,6 +56,7 @@ ncRNA. Compare to the flybase annotation and RNAz boundaries.
 =cut
 
 
+use warnings;
 use strict;
 use FindBin;
 use lib $FindBin::Bin;

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -33,7 +33,7 @@ sort output by number of sequences
 
 =cut
 
-
+use warnings;
 use strict;
 
 ##------------------------------------------------------------
