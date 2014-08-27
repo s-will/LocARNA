@@ -346,11 +346,11 @@ namespace LocARNA {
 		mapperA.get_pos_in_seq_new(al, arcA_left_index_before);
 	    
 	    
-	    if (arcA_left_seq_pos_before < (arcA.left() - 1))
+	    opening_cost_A = 0;
+	    if (arcA_left_seq_pos_before < (arcA.left() - 1)) {
 		// implicit base deletion because of sparsification
 		opening_cost_A = sv.scoring()->indel_opening();
-	    else
-		opening_cost_A = 0;
+	    }
 	    
 	    for (ArcIdxVec::const_iterator arcBIdx = arcsB.begin(); 
 		 arcBIdx != arcsB.end(); 
@@ -363,11 +363,11 @@ namespace LocARNA {
 		seq_pos_t arcB_left_seq_pos_before = 
 		    mapperB.get_pos_in_seq_new(bl, arcB_left_index_before);
 		
-		if (arcB_left_seq_pos_before < (arcB.left() - 1))
+		opening_cost_B = 0;
+		if (arcB_left_seq_pos_before < (arcB.left() - 1)) {
 		    //implicit base insertion because of sparsification
 		    opening_cost_B = sv.scoring()->indel_opening();
-		else
-		    opening_cost_B = 0;
+		}
 		
 		if (trace_debugging_output) {	
 		    std::cout << "\tmatching arcs: arcA" << arcA << "arcB:" << arcB 
