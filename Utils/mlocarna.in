@@ -2604,7 +2604,7 @@ sub compute_dotplot($$) {
 	# assume that the file is in dp2 format. Therefore, convert to pp.
 	print "Skip $name, convert from $ppname\_dp2.ps\n"  if $moreverbose;
         convert_dp_to_pp_with_constraints("$ppname\_dp2.ps",$ppname,$name,$seq_str,$constraints,1);
-    } elsif ( $skip_pp && (-e "$ppname\_dp2.ps") ) {
+    } elsif ( $skip_pp && (-e "$ppname\_dp.ps") ) {
         # assume that the file is in dp format. Therefore, convert to pp.
 	print "Skip $name, convert from $ppname\_dp.ps\n"  if $moreverbose;
 	convert_dp_to_pp_with_constraints("$ppname\_dp.ps",$ppname,$name,$seq_str,$constraints,0);
