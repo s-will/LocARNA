@@ -1,9 +1,9 @@
 /**
- * \file locarna_n.cc
+ * \file sparse.cc
  *
- * \brief Defines main function of locarna_n / SPARSE
+ * \brief Defines main function of SPARSE
  *
- * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
+ * Copyright (C) Milad Miladi <miladim(@)informatik.uni-freiburg.de>
  */
 
 
@@ -345,13 +345,13 @@ main(int argc, char **argv) {
     bool process_success=process_options(argc,argv,my_options);
 
     if (clp.opt_help) {
-	cout << "locarna - a tool for pairwise (global and local) alignment of RNA!"<<endl<<endl;
+	cout << "sparse - a tool for pairwise fast alignment of RNAs"<<endl<<endl;
 	
 	cout << VERSION_STRING<<endl<<endl;
 
 	print_help(argv[0],my_options);
 
-	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
+	cout << "Report bugs to <miladim (at) informatik.uni-freiburg.de>."<<endl<<endl;
 	return 0;
     }
 
@@ -379,7 +379,7 @@ main(int argc, char **argv) {
     
 
     // --------------------
-    //Forbid unsupported option of LocARNA_N
+    //Forbid unsupported option of SPARSE
     if ( clp.struct_local )
     {
 	std::cerr << "Exclusions is not supported" << std::endl;
@@ -520,7 +520,7 @@ main(int argc, char **argv) {
 
 
     //---------------------------------------------------------------
-    //Anchor constraint alignment is not supported by locarna_n yet, todo: support it!
+    //Anchor constraint alignment is not supported by sparse yet
     if ( ! (seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ||
 	    ! (seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ) {
 	std::cout << "WARNING sequence constraints found in the input but will be ignored."<<std::endl;

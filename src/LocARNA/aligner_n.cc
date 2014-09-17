@@ -846,7 +846,7 @@ namespace LocARNA {
 	    }
 
 	if (params->sequ_local_) {
-	    throw failure("sequ_local is not supported by locarna_n");
+	    throw failure("sequ_local is not supported by sparse");
 	} else { // sequence global alignment
 
 	    // align toplevel globally with potentially free endgaps
