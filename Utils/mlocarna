@@ -1,4 +1,4 @@
-#!/usr/bin/env @PERL@
+#!/usr/bin/env perl
 # -*- perl -*-
 
 ### ============================================================================
@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-MLocarna - multiple alignment of RNA (@PACKAGE_STRING@)
+MLocarna - multiple alignment of RNA
 
 =head1 SYNOPSIS
 
@@ -172,6 +172,11 @@ alignment is turned on. (Opposite of B<--local-progressive>)
 Restrict maximal difference to the alignment in <file> in clustalw
 format (difference given by --max-diff). Use this option for
 constrained re-aligning.
+
+=item B<--sparse> 
+
+Apply the sparsified alignment algorithm SPARSE (instead of the
+default pairwise aligner locarna).
 
 =item B<--probabilistic> 
 
@@ -402,13 +407,13 @@ if ($THREADS_ENABLED) {
 ## global constants
 
 
-$MLocarna::PACKAGE_STRING="@PACKAGE_STRING@";
+$MLocarna::PACKAGE_STRING=readpipe "$bindir/locarna --version";
 
 
 ## vienna package programs
-my $RNAfold = "@RNAfold@";
-my $RNAplfold = "@RNAplfold@";
-$MLocarna::RNAalifold = "@RNAalifold@";
+my $RNAfold = "RNAfold";
+my $RNAplfold = "RNAplfold";
+$MLocarna::RNAalifold = "RNAalifold";
 
 my $input_dir="input";
 my $probs_dir="probs";
@@ -521,6 +526,8 @@ my $opt_write_am_probs;  ## get info about alignment structural edge probabiliti
 
 my $probabilistic;
 
+my $sparse;
+
 my $pf_scale;
 
 my $only_basematch_probs; # use only basematch probabilities, no base pair match probabilities
@@ -617,6 +624,8 @@ my %options_hash=
      # controlling the mode of operation
      
      "probabilistic" => \$probabilistic, ## turn on mea alignment, default: pf for arc and base match
+
+     "sparse" => \$sparse, ## use alignment tool sparse for pairwise alignments
      
      "pf-scale" => \$pf_scale,
      
@@ -768,6 +777,7 @@ my @options = #options that are not or not automatically passed to locarna
      "mea-gapcost",
 
      "probabilistic",
+     "sparse",
      "pf-scale=f",
      "only-basematch-probs",
      "fast-mea",
@@ -945,6 +955,12 @@ if (defined($no_lonely_pair)) {
 
 if (exists $options_hash{"exp-prob"}) {
     $exp_prob=$options_hash{"exp-prob"};
+}
+
+
+## if option sparse is given, then use sparse as pairwise aligner
+if ($sparse) {
+    $pw_aligner = "$bindir/sparse";
 }
 
 ## construct parameter string for locarna

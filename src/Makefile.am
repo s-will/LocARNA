@@ -24,7 +24,9 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
 	LocARNA/trace_controller.cc LocARNA/multiple_alignment.cc	\
 	LocARNA/rna_structure.cc LocARNA/confusion_matrix.cc		\
-	LocARNA/global_stopwatch.cc LocARNA/mcc_matrices.cc
+	LocARNA/global_stopwatch.cc LocARNA/mcc_matrices.cc		\
+	LocARNA/aligner_n.cc LocARNA/sparsification_mapper.cc		\
+	LocARNA/exact_matcher.cc
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -54,29 +56,16 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/confusion_matrix.hh LocARNA/discrete_distribution.hh	\
 	LocARNA/string1.hh LocARNA/type_wrapper.hh			\
 	LocARNA/global_stopwatch.hh LocARNA/tuples.hh			\
-	LocARNA/mcc_matrices.hh
+	LocARNA/mcc_matrices.hh LocARNA/aligner_n.hh			\
+	LocARNA/sparsification_mapper.hh LocARNA/exact_matcher.hh
 
 ## binary programs
 ##
 ##   use extension .bin for binary locarna to avoid name collission in src dir
 ##
 bin_PROGRAMS = locarna.bin ribosum2cc locarna_p locarnap_fit	\
-               locarna_deviation locarna_rnafold_pp ribosum2cc
-
-## whether to build components that depend on strong 
-## probabilistic sparsification via the sparsification mapper
-## requiring direct access to the McCaskill matrices
-if BUILD_SPARSE
-    libLocARNA_@API_VERSION@_la_SOURCES += \
-	LocARNA/aligner_n.cc LocARNA/sparsification_mapper.cc \
-	LocARNA/exact_matcher.cc
-
-    nobase_library_include_HEADERS += \
-	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh \
-        LocARNA/exact_matcher.hh
-
-    bin_PROGRAMS += exparna_p sparse
-endif
+               locarna_deviation locarna_rnafold_pp ribosum2cc	\
+               exparna_p sparse
 
 #remove the extension .bin for installation
 transform = s/\.bin$$//

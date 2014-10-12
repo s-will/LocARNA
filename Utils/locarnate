@@ -1,4 +1,4 @@
-#!/usr/bin/env @PERL@
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -53,11 +53,11 @@ my $prefix = "$FindBin::Bin/..";
 my $bindir = "$FindBin::Bin";
 
 ## the tcoffe version to use
-my $t_coffee = "@TCOFFEE@";
+my $t_coffee = "t_coffee";
 
 ## vienna package programs
-my $RNAfold = "@RNAfold@";
-my $RNAalifold = "@RNAalifold@";
+my $RNAfold = "RNAfold";
+my $RNAalifold = "RNAalifold";
 
 
 use strict;

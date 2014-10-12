@@ -360,7 +360,7 @@ main(int argc, char **argv) {
     }
 
     if (clp.opt_version || clp.opt_verbose) {
-	std::cout << "locarna ("<< VERSION_STRING<<")"<<std::endl;
+	std::cout << VERSION_STRING<<std::endl;
 	if (clp.opt_version) return 0; else std::cout <<std::endl;
     }
 

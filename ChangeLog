@@ -435,7 +435,7 @@ Nov 2013
 	ExpaRNA-P code "publication ready"
 	(Release 1.7.15)
 	ExpaRNA-P rename of tools
-	(Release 1.7.16) 
+	(Release 1.7.16)
         Second type of stacking terms: new-stacking
 	Add heuristic to restrict maximum number of "significant" base
 	pairs: max-bps-length-ratio
@@ -449,3 +449,10 @@ Nov 2013
 	behavior slightly, since paths are not fixed at compile time. For
 	example, the Vienna RNA programs are located via PATH environment
 	variable
+
+	Require linking to VRNA. Remove configure options. Disallow
+	renaming of Vienna RNA tools RNAfold, etc.; expect them in path.
+	Always compile SPARSE/ExpaRNA-P. Don't pass mlocarna script
+	through configure anymore.
+	Add option --sparse to mlocarna
+	(Release 1.7.18)

@@ -1,4 +1,4 @@
-#!/usr/bin/env @PERL@
+#!/usr/bin/env perl
 
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
@@ -10,8 +10,8 @@ my $bindir = "$FindBin::Bin";
 my $t_coffee = "@TCOFFEE@";
 
 ## vienna package programs
-my $RNAfold = "@RNAfold@";
-my $RNAalifold = "@RNAalifold@";
+my $RNAfold = "RNAfold";
+my $RNAalifold = "RNAalifold";
 
 
 use strict;

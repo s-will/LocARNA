@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.7.17-relpath], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.7.18], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
@@ -27,10 +27,10 @@ AC_PROG_CPP
 
 AC_LANG_CPLUSPLUS
 
-AC_CHECK_PROGS([PERL],[perl perl5])
-
+AC_CHECK_PROGS([PERL],[perl])
 AC_CHECK_PROG([HELP2MAN],[help2man],[help2man],[false])
 AC_CHECK_PROG([POD2MAN],[pod2man],[pod2man],[false])
+
 
 # for Vienna RNA
 AC_CHECK_FUNCS([strdup]) #defines HAVE_STRDUP if strdup is available
@@ -46,26 +46,7 @@ AC_ARG_WITH([vrna],
       )
 )
 
-# register Vienna programs as configuration variables
-AC_ARG_VAR([RNAfold],[RNAfold name (def=RNAfold)])
-AC_ARG_VAR([RNAplfold],[RNAplfold name (def=RNAplfold)])
-AC_ARG_VAR([RNAalifold],[RNAalifold name (def=RNAalifold)])
-
-# check for required Vienna programs
-if test "$with_vrna" = "" ; then
-   AC_CHECK_PROG([RNAfold],[RNAfold],[RNAfold],[false])
-   AC_CHECK_PROG([RNAplfold],[RNAplfold],[RNAplfold],[false])
-   AC_CHECK_PROG([RNAalifold],[RNAalifold],[RNAalifold],[false])
-else
-   AC_CHECK_PROG([RNAfold],[RNAfold],[RNAfold],[false],[$with_vrna/bin])
-   AC_CHECK_PROG([RNAplfold],[RNAplfold],[RNAplfold],[false],[$with_vrna/bin])
-   AC_CHECK_PROG([RNAalifold],[RNAalifold],[RNAalifold],[false],[$with_vrna/bin])
-fi
-
-# trigger error if ViennaRNA programs not found
-if test "$RNAfold" = "false" -o "$RNAplfold" = "false" -o "$RNAalifold" = "false" ; then
-    VRNA_OK=false
-fi
+ENABLE_LIBRNA=yes ## require rna lib linking
 
 AC_SUBST(LDFLAGS,[""])
 AC_SUBST(CPPFLAGS,[""])
@@ -110,26 +91,9 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" == "true"],[
 LDFLAGS="$VRNA_LIBS $LDFLAGS"
 CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 
-
-####################
-## whether to build locarna_X / ExpARNA-P functionality
-
-AC_MSG_CHECKING([whether to build components for ExpARNA-P and SPARSE functionality])
-AC_ARG_WITH([sparse],
-    AC_HELP_STRING(
-        [--with-sparse],
-        [Build components relying on extra sparsification.]
-    ),
-    [with_sparse="yes"],
-    [with_sparse="no"]
-)
-AC_MSG_RESULT([$with_sparse])
-
-AM_CONDITIONAL([BUILD_SPARSE],[test "$with_sparse" = "yes"])
-
 # ------------------------------
 # handle open mp support
-#  this is necessary for linking against the vienna lib 2.0
+#  this is necessary for linking against the vienna lib 2.1.x
 AC_OPENMP
 AC_SUBST(OPENMP_CXXFLAGS)
 
@@ -138,18 +102,6 @@ LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
 
 # Checks for header files.
 AC_HEADER_STDC
-
-# which T-Coffee to use
-AC_MSG_CHECKING([where to find t-coffee])
-if test "$TCOFFEE" = "" ; then
-  TCOFFEE=t_coffee
-fi
-AC_ARG_VAR(TCOFFEE,[tcoffee location or name (def=t_coffee)])
-AC_MSG_RESULT([$TCOFFEE])
-
-AC_CHECK_PROG([TCOFFEE],[$TCOFFEE],[$TCOFFEE],false)
-
-
 
 ##################
 # Debug option
@@ -226,18 +178,6 @@ AC_CONFIG_FILES([Makefile LocARNA-${API_VERSION}.pc:LocARNA.pc.in])
 ### Test if Vienna lib available and ok
 ## don't allow compiling otherwise 
 #
-if test "$VRNA_OK" = "false" ; then
-   AC_MSG_NOTICE([=================================================================])
-   AC_MSG_NOTICE([ERROR:])
-   AC_MSG_NOTICE()
-   
-   if test "$with_vrna" != "" ; then
-      AC_MSG_NOTICE([Cannot find Vienna RNA package in given path '$with_vrna'.])
-   else
-      AC_MSG_NOTICE([Cannot find Vienna RNA package in current path. For using a])
-      AC_MSG_NOTICE([non-standard path, please specify with --with-vrna=PREFIX.])
-   fi
-fi
 
 if test "$VRNALIB_OK" = "false" ; then
    AC_MSG_NOTICE([=================================================================])
@@ -254,14 +194,13 @@ if test "$VRNALIB_OK" = "false" ; then
    fi
 fi
    
-if test "$VRNA_OK" = "false" -o "$VRNALIB_OK" = "false" ; then
+if test "$VRNALIB_OK" = "false" ; then
    AC_MSG_NOTICE()
-   AC_MSG_NOTICE([LocARNA requires the Vienna RNA package (at least version 2.1.1.)])
-   AC_MSG_NOTICE([The package is freely available at http://www.tbi.univie.ac.at/RNA/.])
+   AC_MSG_NOTICE([The Vienna RNA package (>=2.1.1) is required;])
+   AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/RNA/.])
    AC_MSG_NOTICE()
     
    exit -1;
 fi
 
-
-AC_OUTPUT([src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/mlocarna Utils/locarnate Utils/exploc_p])
+AC_OUTPUT([src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/exploc_p])
