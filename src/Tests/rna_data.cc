@@ -18,7 +18,6 @@ using namespace LocARNA;
 int
 main(int argc, char **argv) {
 
-#ifdef HAVE_LIBRNA
     PFoldParams pfparams(true,true);
 
     std::ostringstream sizeinfo1;
@@ -130,7 +129,5 @@ main(int argc, char **argv) {
 	// missing: compare ali_consensus and ali_consensus2
     }
     
-#endif
-
     return 0;
 }

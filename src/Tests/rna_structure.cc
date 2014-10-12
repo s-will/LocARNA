@@ -4,11 +4,9 @@
 using namespace LocARNA;
 
 
-#ifdef HAVE_LIBRNA
 extern "C" {
 #  include <ViennaRNA/energy_const.h> // import TURN
 }
-#endif
     
 int
 main(int argc,char **argv) {

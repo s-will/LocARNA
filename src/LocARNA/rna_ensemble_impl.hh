@@ -9,9 +9,7 @@
 #include "multiple_alignment.hh"
 #include "sparse_matrix.hh"
 
-#ifdef HAVE_LIBRNA	
-#  include "mcc_matrices.hh"
-#endif
+#include "mcc_matrices.hh"
 
 namespace LocARNA {
 
@@ -20,9 +18,6 @@ namespace LocARNA {
      */
     struct RnaEnsembleImpl {
 
-	// we don't use the entire rna ensemble implementation if lib rna is not available
-#ifdef HAVE_LIBRNA	
-	
 	//RnaEnsemble *self_; //!<- pointer to corresponding RnaEnsemble object
     
 	MultipleAlignment sequence_; //!< the sequence
@@ -261,9 +256,6 @@ namespace LocARNA {
 	compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy=true);
 
 
-
-#endif // HAVE_LIBRNA
-	
     };
 
 } // end namespace LocARNA

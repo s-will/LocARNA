@@ -137,16 +137,6 @@ namespace LocARNA {
 	line="";
 	return false;
     }
-
-
-    void
-    error_rnalib_unavailable() {
-	std::ostringstream err;
-	err << "The requested functionality is not available," << std::endl
-	    << "       since LocARNA was compiled without libRNA support." << std::endl
-	    << "       Activation requires recompilation with configure option --enable-librna." <<std::endl; 
-	throw(failure(err.str()));
-    }
     
 }
 

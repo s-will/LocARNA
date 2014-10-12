@@ -410,9 +410,6 @@ my $RNAfold = "@RNAfold@";
 my $RNAplfold = "@RNAplfold@";
 $MLocarna::RNAalifold = "@RNAalifold@";
 
-## test whether rnafold_pp is working
-my $HAVE_RNAFOLD_PP = readpipe("$bindir/locarna_rnafold_pp --TEST");
-
 my $input_dir="input";
 my $probs_dir="probs";
 my $intermediate_dir="intermediates";
@@ -2563,7 +2560,7 @@ sub compute_dotplot($$) {
     ## produce a the pp file in the input sub-directory. Since no dp file is produced,
     ## caching of dp files does not work.
     ##
-    if ($HAVE_RNAFOLD_PP && ($RNAfold_args eq "") && (!defined($plfold_span)) 
+    if (($RNAfold_args eq "") && (!defined($plfold_span)) 
 	&& (!$stacking) && (!$new_stacking) && ((! defined($constraints)) || ($constraints eq ""))) {
 	$RNAfoldp = "$bindir/locarna_rnafold_pp -p $min_prob ";
 	if ($opt_in_loop_probabilities) {

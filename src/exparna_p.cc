@@ -7,14 +7,9 @@
  *
  **********************************************************************/
 
-// need to include config.h already here
-// because of following #ifdef HAVE_LIBRNA
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
-
-// compile only when libRNA is available for linking
-#ifdef HAVE_LIBRNA
 
 
 #include <iostream>
@@ -517,13 +512,3 @@ main(int argc, char **argv) {
 
 	return 0;
 }
-
-#else // HAVE_LIBRNA
-#include <LocARNA/aux.hh>
-int
-main() {
-	write_errormsg_rnalib_unvailable();
-	return -1;
-}
-
-#endif // HAVE_LIBRNA

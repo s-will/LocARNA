@@ -24,7 +24,7 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\
 	LocARNA/trace_controller.cc LocARNA/multiple_alignment.cc	\
 	LocARNA/rna_structure.cc LocARNA/confusion_matrix.cc		\
-	LocARNA/global_stopwatch.cc
+	LocARNA/global_stopwatch.cc LocARNA/mcc_matrices.cc
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -45,7 +45,7 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/scoring_fwd.hh LocARNA/infty_int.hh			\
 	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
 	LocARNA/alphabet.icc LocARNA/ribosum.hh				\
-	LocARNA/ribosum85_60.icc LocARNA/sequence_annotation.hh	\
+	LocARNA/ribosum85_60.icc LocARNA/sequence_annotation.hh		\
 	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
 	LocARNA/aligner_restriction.hh LocARNA/aligner.hh		\
 	LocARNA/aligner_impl.hh LocARNA/aligner_p.hh			\
@@ -53,7 +53,8 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 	LocARNA/multiple_alignment.hh LocARNA/rna_structure.hh		\
 	LocARNA/confusion_matrix.hh LocARNA/discrete_distribution.hh	\
 	LocARNA/string1.hh LocARNA/type_wrapper.hh			\
-	LocARNA/global_stopwatch.hh LocARNA/tuples.hh
+	LocARNA/global_stopwatch.hh LocARNA/tuples.hh			\
+	LocARNA/mcc_matrices.hh
 
 ## binary programs
 ##
@@ -61,15 +62,6 @@ nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
 ##
 bin_PROGRAMS = locarna.bin ribosum2cc locarna_p locarnap_fit	\
                locarna_deviation locarna_rnafold_pp ribosum2cc
-
-
-if HAVE_LIBRNA
-    libLocARNA_@API_VERSION@_la_SOURCES += \
-        LocARNA/mcc_matrices.cc
-    nobase_library_include_HEADERS += \
-        LocARNA/mcc_matrices.hh
-endif
-
 
 ## whether to build components that depend on strong 
 ## probabilistic sparsification via the sparsification mapper

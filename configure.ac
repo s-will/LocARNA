@@ -46,20 +46,6 @@ AC_ARG_WITH([vrna],
       )
 )
 
-####################
-## whether to link to RNAlib and offer corresponding features
-AC_MSG_CHECKING([whether to link Vienna RNA library])
-ENABLE_LIBRNA=no
-AC_ARG_ENABLE([librna],
-    AC_HELP_STRING(
-        [--enable-librna],
-        [enable linking to librna and corresponding features (def=disabled)]
-    ),
-    ENABLE_LIBRNA="$enableval"
-)
-AC_MSG_RESULT([$ENABLE_LIBRNA])
-
-
 # register Vienna programs as configuration variables
 AC_ARG_VAR([RNAfold],[RNAfold name (def=RNAfold)])
 AC_ARG_VAR([RNAplfold],[RNAplfold name (def=RNAplfold)])
@@ -93,25 +79,21 @@ AC_SUBST(LIBDEFS,[""]) # defines that have to be set when using the LocARNA libr
 ## check whether pkg-config is available 
 AC_CHECK_PROG([PKG_CONFIG_AVAILABLE],pkg-config,[true],[false])
 ##
-## if available, use pkg-config to configure the Vienna RNA library
-## 
+## if pkg-config is available, use it to configure the Vienna RNA library
 AS_IF([test "$PKG_CONFIG_AVAILABLE" == "true"],[
-# set PKG_CONFIG_PATH
-if test "$with_vrna" != "" ; then
-   export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
-fi
-##
-AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
+    # set PKG_CONFIG_PATH
+    if test "$with_vrna" != "" ; then
+        export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
+    fi
+    #
     PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.1],[],[VRNALIB_OK=false])
     if test "$with_vrna" != "" ; then
         VRNA_CFLAGS="$VRNA_CFLAGS -I$with_vrna/include"
     fi
-])
 ],
-## if not available, guess the configuration
+## if pkg-config is not available, guess the configuration
 ##
 [
-  AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
   AC_MSG_NOTICE([Guessing the library configuration, since pkg-config unavailable.])
   if test "$with_vrna" == "" ; then
     vrna_prefix="/usr/local"
@@ -122,18 +104,11 @@ AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
   VRNA_CFLAGS="-I$vrna_prefix/include"
   AC_MSG_NOTICE([LIBS=$VRNA_LIBS; CFLAGS=$VRNA_CFLAGS])
   AC_MSG_NOTICE([To avoid guessing, please install pkg-config.])
-  ])
 ])
 ##
 ## finally, set LDFLAGS and CPPFLAGS
-AS_IF([test "$ENABLE_LIBRNA" = "yes"],[
-    AC_DEFINE([HAVE_LIBRNA],1,[Signal linking to Vienna RNA library])
-    LDFLAGS="$VRNA_LIBS $LDFLAGS"
-
-    CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
-])
-AM_CONDITIONAL([HAVE_LIBRNA],[test "$ENABLE_LIBRNA" = "yes"])
-
+LDFLAGS="$VRNA_LIBS $LDFLAGS"
+CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 
 
 ####################
@@ -150,16 +125,7 @@ AC_ARG_WITH([sparse],
 )
 AC_MSG_RESULT([$with_sparse])
 
-if test "$with_sparse $ENABLE_LIBRNA" = "yes no" ; then
-   AC_MSG_NOTICE([=================================================================])
-   AC_MSG_NOTICE([ERROR: Building 'with-sparse' requires linking to VRNA (enable-librna)])
-   AC_MSG_NOTICE()
-   exit -1;
-fi
-
 AM_CONDITIONAL([BUILD_SPARSE],[test "$with_sparse" = "yes"])
-
-
 
 # ------------------------------
 # handle open mp support
@@ -290,9 +256,8 @@ fi
    
 if test "$VRNA_OK" = "false" -o "$VRNALIB_OK" = "false" ; then
    AC_MSG_NOTICE()
-   AC_MSG_NOTICE([The Vienna RNA package (>=1.8) is required for compiling;])
-   AC_MSG_NOTICE([linking (--enable-librna) requires version >= 2.1.1.])
-   AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/RNA/.])
+   AC_MSG_NOTICE([LocARNA requires the Vienna RNA package (at least version 2.1.1.)])
+   AC_MSG_NOTICE([The package is freely available at http://www.tbi.univie.ac.at/RNA/.])
    AC_MSG_NOTICE()
     
    exit -1;

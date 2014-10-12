@@ -101,7 +101,6 @@ $(distdir).tar.gz: .hgtags Makefile.am
 	  false ;\
 	fi
 
-
 # ## install release in local $GLOBAL_INSTALL_DIR
 # install-release-local: $(distdir).tar.gz
 # 	@if [ ! -d tmp ] ; then mkdir tmp ; fi
@@ -110,8 +109,7 @@ $(distdir).tar.gz: .hgtags Makefile.am
 # 	cd $(distdir); \
 # 	./configure --prefix=$(GLOBAL_INSTALL_DIR)/$(distdir) \
 # 	  --enable-static \
-# 	  --enable-rnalib \
-#           --with-vrna=$(GLOBAL_VRNA) \
+#         --with-vrna=$(GLOBAL_VRNA) \
 # 	  TCOFFEE=$(GLOBAL_TCOFFEE) ; \
 # 	make; make install
 
@@ -122,7 +120,7 @@ install-release-remote: $(distdir).tar.gz
 	  if test -d $(distdir) ; then rm -rf $(distdir) ; fi ;\
 	  tar xzf $(distdir).tar.gz ;\
 	  cd $(distdir); \
-	  ./configure --prefix=$(GLOBAL_INSTALL_DIR)/$(distdir) --enable-link-static --enable-large-pf --enable-librna --with-vrna=$(GLOBAL_VRNA) TCOFFEE=$(GLOBAL_TCOFFEE) ;\
+	  ./configure --prefix=$(GLOBAL_INSTALL_DIR)/$(distdir) --enable-link-static --enable-large-pf --with-vrna=$(GLOBAL_VRNA) TCOFFEE=$(GLOBAL_TCOFFEE) ;\
 	  make -j8; make install ;\
 	  cd .. ;\
 	  cp $(distdir)/config.log $(distdir).config.log ;\

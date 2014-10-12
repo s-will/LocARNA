@@ -17,7 +17,6 @@ using namespace LocARNA;
 int
 main(int argc, char **argv) {
  
-#ifdef HAVE_LIBRNA
     PFoldParams pfparams(true,true);
 
     std::ostringstream sizeinfo1;
@@ -51,8 +50,6 @@ main(int argc, char **argv) {
 
     assert(sizeinfo1.str() == sizeinfo2.str());
     
-
-#endif
 
     return 0;
 }

@@ -11,40 +11,25 @@
 #include "pfold_params.hh"
 
 
-#ifdef HAVE_LIBRNA
 extern "C" {
-    //#include <ViennaRNA/fold_vars.h>
-#include <ViennaRNA/data_structures.h>
-#include <ViennaRNA/part_func.h>
-#include <ViennaRNA/fold.h>
-#include <ViennaRNA/utils.h>
-#include <ViennaRNA/energy_const.h>
-#include <ViennaRNA/loop_energies.h>
-#include <ViennaRNA/params.h>
-#include <ViennaRNA/pair_mat.h>
-#include <ViennaRNA/alifold.h>
+
+#   include <ViennaRNA/data_structures.h>
+#   include <ViennaRNA/part_func.h>
+#   include <ViennaRNA/fold.h>
+#   include <ViennaRNA/utils.h>
+#   include <ViennaRNA/energy_const.h>
+#   include <ViennaRNA/loop_energies.h>
+#   include <ViennaRNA/params.h>
+#   include <ViennaRNA/pair_mat.h>
+#   include <ViennaRNA/alifold.h>
 
     FLT_OR_DBL *alipf_export_bppm(void);
 }
 
-
-
-
 #include "mcc_matrices.hh"
-
-#endif // HAVE_LIBRNA
-
+    
 namespace LocARNA {
-
-    // some macros to handle rna lib dependency more conveniently
-#   ifdef HAVE_LIBRNA
-#     define IF_HAVE_LIBRNA(X) X
-#     define IFELSE_HAVE_LIBRNA(X,Y) X
-#   else    
-#     define IF_HAVE_LIBRNA(X) error_rnalib_unavailable()
-#     define IFELSE_HAVE_LIBRNA(X,Y) error_rnalib_unavailable();Y
-#   endif
-
+    
     // ------------------------------------------------------------
     // implementation of class RnaEnsemble
     //
@@ -53,20 +38,13 @@ namespace LocARNA {
 			     const PFoldParams &params,
 			     bool inLoopProbs, 
 			     bool use_alifold)
-#ifdef HAVE_LIBRNA
 	: pimpl_(new RnaEnsembleImpl(//this,
 				     sequence,
 				     params,
 				     inLoopProbs,
 				     use_alifold)) {
     }
-#else
-    :pimpl_(0L) {
-	error_rnalib_unavailable();
-    }
-#endif // HAVE_LIBRNA
-
-
+    
     RnaEnsemble::~RnaEnsemble() {
 	if (pimpl_) delete pimpl_;
     }
@@ -74,67 +52,55 @@ namespace LocARNA {
 
     bool
     RnaEnsemble::has_base_pair_probs() const {
-	IFELSE_HAVE_LIBRNA(return pimpl_->pair_probs_available_,
-			   return false);
+	return pimpl_->pair_probs_available_;
     }
     
     bool
     RnaEnsemble::has_stacking_probs() const {
-	IFELSE_HAVE_LIBRNA(return pimpl_->stacking_probs_available_,
-			   return bool());
+	return pimpl_->stacking_probs_available_;
     }
 
     bool
     RnaEnsemble::has_in_loop_probs() const {
-	IFELSE_HAVE_LIBRNA(return pimpl_->in_loop_probs_available_,
-			   return bool());
+	return pimpl_->in_loop_probs_available_;
     }
 
     const MultipleAlignment &
     RnaEnsemble::multiple_alignment() const {
-	IFELSE_HAVE_LIBRNA(return pimpl_->sequence_,
-			   static MultipleAlignment s;return s);
+	return pimpl_->sequence_;
     }
 
     double
     RnaEnsemble::min_free_energy() const {
-	IFELSE_HAVE_LIBRNA(return pimpl_->min_free_energy_,
-			   return double());
+	return pimpl_->min_free_energy_;
     }
 
     std::string
     RnaEnsemble::min_free_energy_structure() const {
-	IFELSE_HAVE_LIBRNA(return pimpl_->min_free_energy_structure_,
-			   return std::string());
+	return pimpl_->min_free_energy_structure_;
     }
     
     //! \brief get length of sequence
     //! \return sequence length
     size_type
     RnaEnsemble::length() const {
-	IFELSE_HAVE_LIBRNA(return pimpl_->sequence_.length(),
-			   return size_type());
+	return pimpl_->sequence_.length();
     }
 
     double 
     RnaEnsemble::arc_prob(size_type i, size_type j) const {
-	IFELSE_HAVE_LIBRNA(return pimpl_->McCmat_->bppm(i,j),
-			   return double());
+	return pimpl_->McCmat_->bppm(i,j);
     }
     
     double
     RnaEnsemble::arc_2_prob(size_type i, size_type j) const {
-	IFELSE_HAVE_LIBRNA(
-			   if (pimpl_->used_alifold_) {
-			       return pimpl_->arc_2_prob_ali(i,j);
-			   } else {
-			       return pimpl_->arc_2_prob_noali(i,j);
-			   },
-			   return double();
-			   );
+	if (pimpl_->used_alifold_) {
+	    return pimpl_->arc_2_prob_ali(i,j);
+	} else {
+	    return pimpl_->arc_2_prob_noali(i,j);
+	};
     }
 
-#ifdef HAVE_LIBRNA    
     RnaEnsembleImpl::RnaEnsembleImpl(//RnaEnsemble *self,
 				     const MultipleAlignment &sequence,
 				     const PFoldParams &params,
@@ -1233,8 +1199,5 @@ namespace LocARNA {
 	    / pimpl_->McCmat_->qln_[1];
 
     }
-    
-
-#endif // HAVE_LIBRNA
     
 } // end namespace LocARNA 

@@ -12,14 +12,12 @@
 #include "string1.hh"
 #include "plusvector.hh"
 
-#ifdef HAVE_LIBRNA
 extern "C" {
 #  include <string.h>
 #  include <ViennaRNA/data_structures.h>
 #  include <ViennaRNA/fold_vars.h>
 #  include <ViennaRNA/alifold.h>
 }
-#endif
 
 namespace LocARNA {
 

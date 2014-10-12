@@ -19,11 +19,9 @@
 
 #include "LocARNA/global_stopwatch.hh"
 
-#ifdef HAVE_LIBRNA
 extern "C" {
 #  include <ViennaRNA/energy_const.h> // import TURN
 }
-#endif
 
 
 namespace LocARNA {
@@ -482,25 +480,16 @@ namespace LocARNA {
     void
     RnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
 				    const PFoldParams &pfoldparams) {
-#     ifdef HAVE_LIBRNA
 	pimpl_->init_from_rna_ensemble(rna_ensemble,pfoldparams);
-#     else
-	error_rnalib_unavailable(); 
-#     endif
     }
 
     void
     ExtRnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
 				       const PFoldParams &pfoldparams) {
-#     ifdef HAVE_LIBRNA
 	RnaData::init_from_rna_ensemble(rna_ensemble,pfoldparams);
 	pimpl_->init_from_ext_rna_ensemble(rna_ensemble);
-#     else
-	error_rnalib_unavailable();
-#     endif
     }
 
-#ifdef HAVE_LIBRNA
     void
     RnaDataImpl::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
 					const PFoldParams &pfoldparams) {
@@ -682,8 +671,6 @@ namespace LocARNA {
 	// all set
 	return;
     } // end method init_from_ext_rna_ensemble
-
-#endif // HAVE_LIBRNA
 
     bool
     ExtRnaData::inloopprobs_ok() const {

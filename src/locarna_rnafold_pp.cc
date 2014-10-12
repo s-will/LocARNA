@@ -118,7 +118,6 @@ struct command_line_parameters {
     std::string output_file; 	//!< output file name
     bool force_alifold; 	//!< use alifold even for single sequences.
     uint width; 	//!< Output width
-    bool test; 		//!< Test the binary and return 1 if it the functionality is available
 };
 //! \brief holds command line parameters of locarna
 command_line_parameters clp;
@@ -138,7 +137,6 @@ option_def my_options[] = {
     {"output",'o',0,O_ARG_STRING,&clp.output_file,"","f","Output file"},
     {"force-alifold",0,&clp.force_alifold,O_NO_ARG,0,O_NODEFAULT,"","Force alifold for single sequnces"},
     {"width",'w',0,O_ARG_INT,&clp.width,"120","size","Output width"},
-    {"TEST",0,&clp.test,O_NO_ARG,0,O_NODEFAULT,"","Test avialability"},
 //    {"input",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
     {"",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
@@ -147,8 +145,6 @@ option_def my_options[] = {
 
 
 
-
-#ifdef HAVE_LIBRNA
 
 
 /** 
@@ -172,11 +168,6 @@ main(int argc, char **argv) {
     if (clp.opt_version || clp.opt_verbose) {
 	std::cout << "locarna_rnafold_pp "/*<< VERSION_STRING<<")"*/<<std::endl;
 	if (clp.opt_version) return 0; else std::cout <<std::endl;
-    }
-    //test whether vrna is available
-    if ( clp.test ) {
-	std::cout << "1";
-	return 0;
     }
 
     if (!process_success) {
@@ -328,23 +319,3 @@ main(int argc, char **argv) {
 
     return 0;
 }
-
-#else
-/** 
- * \brief Main in case the programs are not linked to the Vienna RNA
- */
-int
-main(int argc, char **argv) {
-
-    bool process_success=process_options(argc,argv,my_options);
-    
-    if ( process_success && clp.test ) {
-	std::cout << "0";
-	return -1;
-    }
-    std::cerr << "ERROR: locarna_rnafold_pp requires linking against Vienna librna.\n";
-    std::cerr << "This program was compiled without configure option --enable-librna."<<std::endl;
-    std::cerr << "Please reconfigure and recompile to activate this program. \n";
-    return -1;
-}
-#endif // HAVE_LIBRNA
