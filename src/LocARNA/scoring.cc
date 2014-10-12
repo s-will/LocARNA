@@ -644,7 +644,7 @@ namespace LocARNA {
     Scoring::arcDel(const Arc &arcX, bool isA, bool stacked) const { //TODO Important Scoring scheme for aligning an arc to a gap is not defined and implemented!
 
 	if (arc_matches->explicit_scores()) { // will not take stacking into account!!!
-	    std::cerr << "ERROR locarna_n explicit scores is not supported!" << std::endl; //TODO: Supporting explicit scores for arcgap
+	    std::cerr << "ERROR sparse explicit scores is not supported!" << std::endl; //TODO: Supporting explicit scores for arcgap
 	    assert( ! arc_matches->explicit_scores());
 	}
 
@@ -662,7 +662,7 @@ namespace LocARNA {
 	}
 	else
 	    {
-		std::cerr << "ERROR locarna_n mea_scoring is not supported!" << std::endl; //TODO: Supporting mea_scoring for arcgap
+		std::cerr << "ERROR sparse mea_scoring is not supported!" << std::endl; //TODO: Supporting mea_scoring for arcgap
 		assert( ! params->mea_scoring);
 		return 0;
 	    }

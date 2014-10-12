@@ -142,7 +142,7 @@ option_def my_options[] = {
     	 "Minimal probability for output (min-prob overrides if smaller)"},
 		{"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
 		{"max-uil-length-ratio",0,0,O_ARG_DOUBLE,&max_uil_length_ratio,"0.0","factor","Maximal ratio of #unpaired bases in loops divided by sequence length (default: no effect)"},
-		{"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&max_bpil_length_ratio,"0.0","factor","Maximal ratio of #base pairs in loops divided by sequence length (default: no effect)"},
+		{"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&max_bpil_length_ratio,"0.0","factor","Maximal ratio of #base pairs in loops divided by loop length (default: no effect)"},
 
 		{"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"30","diff","Maximal difference for sizes of matched arcs"},
 		{"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},

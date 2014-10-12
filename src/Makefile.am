@@ -75,7 +75,7 @@ if BUILD_SPARSE
 	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh \
         LocARNA/exact_matcher.hh
 
-    bin_PROGRAMS += exparna_p locarna_n
+    bin_PROGRAMS += exparna_p sparse
 endif
 
 #remove the extension .bin for installation
@@ -106,7 +106,7 @@ locarna_p_SOURCES = locarna_p.cc
 
 exparna_p_SOURCES = exparna_p.cc 
 
-locarna_n_SOURCES = locarna_n.cc
+sparse_SOURCES = sparse.cc
 
 ribosum2cc_SOURCES = ribosum2cc.cc
 

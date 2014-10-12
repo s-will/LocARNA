@@ -1,9 +1,9 @@
 /**
- * \file locarna_n.cc
+ * \file sparse.cc
  *
- * \brief Defines main function of locarna_n / SPARSE
+ * \brief Defines main function of SPARSE
  *
- * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
+ * Copyright (C) Milad Miladi <miladim(@)informatik.uni-freiburg.de>
  */
 
 
@@ -235,11 +235,11 @@ option_def my_options[] = {
     {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,"true","bool","Use ribosum scores"},
     {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
     {"indel-loop",'i',0,O_ARG_INT,&clp.indel_score_loop,"-350","score","Indel score for loops"},
-    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-500","score","Indel opening score"},
-    {"indel-opening-loop",0,0,O_ARG_INT,&clp.indel_opening_loop_score,"-500","score","Indel opening score for loops"},
+    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-600","score","Indel opening score"},
+    {"indel-opening-loop",0,0,O_ARG_INT,&clp.indel_opening_loop_score,"-900","score","Indel opening score for loops"},
     {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score","Maximal weight of 1/2 arc match"},
     {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
-    {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
+    {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"100","factor","Tau factor in percent"},
 //    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
 //    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},
 //    {"new-stacking",0,&clp.opt_newstacking,O_NO_ARG,0,O_NODEFAULT,"","Use new stacking terms (needs stack-probs by RNAfold -p2)"},
@@ -267,10 +267,10 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
-    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
+    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"1.3","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
     {"max-uil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_uil_length_ratio,"0.0","factor","Maximal ratio of #unpaired bases in loops divided by sequence length (default: no effect)"},
-    {"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bpil_length_ratio,"0.0","factor","Maximal ratio of #base pairs in loops divided by sequence length (default: no effect)"},
-    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
+    {"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bpil_length_ratio,"0.0","factor","Maximal ratio of #base pairs in loops divided by loop length (default: no effect)"},
+    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"30","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff","Maximal difference for alignment traces, only at arc match positions"},
     {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
@@ -278,8 +278,8 @@ option_def my_options[] = {
     {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
-    {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.001","threshold","Threshold for prob_unpaired_in_loop"},
-    {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
+    {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.00005","threshold","Threshold for prob_unpaired_in_loop"},
+    {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
 //    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
@@ -345,13 +345,13 @@ main(int argc, char **argv) {
     bool process_success=process_options(argc,argv,my_options);
 
     if (clp.opt_help) {
-	cout << "locarna - a tool for pairwise (global and local) alignment of RNA!"<<endl<<endl;
+	cout << "sparse - a tool for pairwise fast alignment of RNAs"<<endl<<endl;
 	
 	cout << VERSION_STRING<<endl<<endl;
 
 	print_help(argv[0],my_options);
 
-	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
+	cout << "Report bugs to <miladim (at) informatik.uni-freiburg.de>."<<endl<<endl;
 	return 0;
     }
 
@@ -379,7 +379,7 @@ main(int argc, char **argv) {
     
 
     // --------------------
-    //Forbid unsupported option of LocARNA_N
+    //Forbid unsupported option of SPARSE
     if ( clp.struct_local )
     {
 	std::cerr << "Exclusions is not supported" << std::endl;
@@ -520,7 +520,7 @@ main(int argc, char **argv) {
 
 
     //---------------------------------------------------------------
-    //Anchor constraint alignment is not supported by locarna_n yet, todo: support it!
+    //Anchor constraint alignment is not supported by sparse yet
     if ( ! (seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ||
 	    ! (seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ) {
 	std::cout << "WARNING sequence constraints found in the input but will be ignored."<<std::endl;

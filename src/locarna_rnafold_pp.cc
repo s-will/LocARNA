@@ -75,7 +75,7 @@ using namespace LocARNA;
 
     --prob_basepair_in_loop_threshold    Threshold for prob_basepair_in_loop
 
-    ( the cutoffs like in locarna_n/_X )
+    ( the cutoffs like in sparse/locarna_X )
 
     -o,--output=<file>                       PP output [default: output to
     std::cout; if file is give output only to file]

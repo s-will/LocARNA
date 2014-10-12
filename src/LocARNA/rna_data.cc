@@ -175,7 +175,7 @@ namespace LocARNA {
 	    pimpl_->drop_worst_uil(max_uil_length_ratio*length());
 	}
 	if (max_bpil_length_ratio > 0) {
-	    pimpl_->drop_worst_bpil(max_bpil_length_ratio*length());
+	    pimpl_->drop_worst_bpil_precise(max_bpil_length_ratio);
 	}
 
     }
@@ -1687,5 +1687,43 @@ namespace LocARNA {
 
     }
 
+
+    void
+    ExtRnaDataImpl::drop_worst_bpil_precise(double_t ratio) {
+
+	typedef std::pair< arc_prob_matrix_matrix_t::key_t, arc_prob_matrix_t::key_t > key_t;
+
+	typedef RnaDataImpl::keyvec<key_t> kv_t;
+
+
+	// push all uil probs with their key to vector vec
+	for (arc_prob_matrix_matrix_t::const_iterator it=arc_in_loop_probs_.begin();
+	     arc_in_loop_probs_.end() != it;
+	     ++it ) {
+		kv_t::vec_t vec;
+		vec.clear();
+	    for (arc_prob_matrix_t::const_iterator it2=it->second.begin();
+		 it->second.end() != it2;
+		 ++it2 ) {
+
+		vec.push_back(kv_t::kvpair_t(key_t(it->first,it2->first), it2->second));
+	    }
+		double keep =  ratio * ((double)(it->first.second)- (double)(it->first.first) + 1) ;
+		if (vec.size()> keep)
+		{
+			std::make_heap(vec.begin(),vec.end(),kv_t::comp);
+			while(vec.size()> keep ) {
+				const key_t &key = vec.front().first;
+				arc_in_loop_probs_.ref(key.first.first,key.first.second).reset(key.second.first,key.second.second);
+
+				std::pop_heap(vec.begin(),vec.end(),kv_t::comp);
+				vec.pop_back();
+			}
+		}
+
+	}
+
+
+    }
 
 } // end namespace LocARNA

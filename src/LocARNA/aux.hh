@@ -59,7 +59,7 @@ namespace LocARNA {
 	
 	 //! regular gap
 	static const Gap regular;
-	//! gap from inserting/deleting a loop (in locarna_n)
+	//! gap from inserting/deleting a loop (in sparse)
 	static const Gap loop;
 	 //! gap outside of the locally aligned region (sequence and structure local alignment)
 	static const Gap locality;
