@@ -22,7 +22,7 @@
 namespace LocARNA {
 
     /**
-     * \brief Implements locarna next generation alignment algorithm
+     * \brief Implements SPARSE, next generation alignment algorithm for locarna
 
      * Performs the alignment of two sequences and their associated
      * sets of weighted basepairs
@@ -104,11 +104,10 @@ namespace LocARNA {
 	ScoreMatrix gapCostBmat; 
 
 
-	int min_i; //!< subsequence of A left end, not used in locarna_n
-	int min_j; //!< subsequence of B left end, not used in locarna_n
-
-	int max_i; //!< subsequence of A right end, not used in locarna_n
-	int max_j; //!< subsequence of B right end, not used in locarna_n
+	int min_i; //!< subsequence of A left end, not used in sparse
+	int min_j; //!< subsequence of B left end, not used in sparse
+	int max_i; //!< subsequence of A right end, not used in sparse
+	int max_j; //!< subsequence of B right end, not used in sparse
 
 	bool D_created; //!< flag, is D already created?
 
@@ -394,7 +393,7 @@ namespace LocARNA {
 	 * @param ar right end of arc a
 	 * @param bl left end of arc b
 	 * @param br right end of arc b
-	 * @param allow_exclusion whether to allow exclusions, not supported by locarna_n
+	 * @param allow_exclusion whether to allow exclusions, not supported by sparse
 	 * 
 	 * @pre arc-match (al,ar)~(bl,br) valid due to constraints and heuristics
 	 */

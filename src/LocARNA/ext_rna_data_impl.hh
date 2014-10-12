@@ -230,6 +230,17 @@ namespace LocARNA {
 	void
 	drop_worst_bpil(size_t keep);
 
+
+
+	/**
+	 * @brief Drop base pairs in loops with lowest probability based on 
+	 *  loop length
+	 *
+	 * @param ratio limit on number of base pairs closed by a loop divided by loop length
+	 */
+	void
+	drop_worst_bpil_precise(double ratio);
+
     }; // end ExtRnaDataImpl
 
 

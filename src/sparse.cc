@@ -1,9 +1,9 @@
 /**
- * \file locarna_n.cc
+ * \file sparse.cc
  *
- * \brief Defines main function of locarna_n / SPARSE
+ * \brief Defines main function of SPARSE
  *
- * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
+ * Copyright (C) Milad Miladi <miladim(@)informatik.uni-freiburg.de>
  */
 
 
@@ -235,8 +235,8 @@ option_def my_options[] = {
     {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,"true","bool","Use ribosum scores"},
     {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
     {"indel-loop",'i',0,O_ARG_INT,&clp.indel_score_loop,"-350","score","Indel score for loops"},
-    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-500","score","Indel opening score"},
-    {"indel-opening-loop",0,0,O_ARG_INT,&clp.indel_opening_loop_score,"-500","score","Indel opening score for loops"},
+    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"0","score","Indel opening score"},
+    {"indel-opening-loop",0,0,O_ARG_INT,&clp.indel_opening_loop_score,"0","score","Indel opening score for loops"},
     {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score","Maximal weight of 1/2 arc match"},
     {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
@@ -269,7 +269,7 @@ option_def my_options[] = {
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
     {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
     {"max-uil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_uil_length_ratio,"0.0","factor","Maximal ratio of #unpaired bases in loops divided by sequence length (default: no effect)"},
-    {"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bpil_length_ratio,"0.0","factor","Maximal ratio of #base pairs in loops divided by sequence length (default: no effect)"},
+    {"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bpil_length_ratio,"0.0","factor","Maximal ratio of #base pairs in loops divided by loop length (default: no effect)"},
     {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff","Maximal difference for alignment traces, only at arc match positions"},
@@ -345,13 +345,13 @@ main(int argc, char **argv) {
     bool process_success=process_options(argc,argv,my_options);
 
     if (clp.opt_help) {
-	cout << "locarna - a tool for pairwise (global and local) alignment of RNA!"<<endl<<endl;
+	cout << "sparse - a tool for pairwise fast alignment of RNAs"<<endl<<endl;
 	
 	cout << VERSION_STRING<<endl<<endl;
 
 	print_help(argv[0],my_options);
 
-	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
+	cout << "Report bugs to <miladim (at) informatik.uni-freiburg.de>."<<endl<<endl;
 	return 0;
     }
 
@@ -379,7 +379,7 @@ main(int argc, char **argv) {
     
 
     // --------------------
-    //Forbid unsupported option of LocARNA_N
+    //Forbid unsupported option of SPARSE
     if ( clp.struct_local )
     {
 	std::cerr << "Exclusions is not supported" << std::endl;
@@ -520,7 +520,7 @@ main(int argc, char **argv) {
 
 
     //---------------------------------------------------------------
-    //Anchor constraint alignment is not supported by locarna_n yet, todo: support it!
+    //Anchor constraint alignment is not supported by sparse yet
     if ( ! (seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ||
 	    ! (seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ) {
 	std::cout << "WARNING sequence constraints found in the input but will be ignored."<<std::endl;
