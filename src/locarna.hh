@@ -7,6 +7,7 @@
 
 // include all headers of the locarna library
 
+#include "LocARNA/aux.hh"
 #include "LocARNA/sequence.hh"
 #include "LocARNA/basepairs.hh"
 #include "LocARNA/alignment.hh"
