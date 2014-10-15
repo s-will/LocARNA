@@ -34,7 +34,7 @@ read_pp_file_pairprobs
 read_pp_file_pairprob_info
 convert_dp_to_pp_with_constraints
 convert_alifold_dp_to_pp
-compute_alifold_structure
+alifold_structure
 constrain_sequences
 
 
@@ -100,8 +100,6 @@ $PACKAGE_STRING
 parse_mfasta
 parse_mfasta_constraints
 );
-
-our $RNAalifold_params="-r";
 
 our $RNAalifold = "RNAalifold";
 
@@ -991,7 +989,7 @@ sub clone_hash {
 
 
 ########################################
-## compute_alifold_structure($filename)
+## alifold_structure($filename,$RNAfold_args)
 ##
 ## Run RNAalifold on file
 ##
@@ -1001,10 +999,10 @@ sub clone_hash {
 ## as side effect write alirna.ps to current dir
 ##
 ########################################
-sub compute_alifold_structure {
-    my ($filename)=@_;
+sub alifold_structure {
+    my ($filename,$RNAfold_args)=@_;
     
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_params $filename 2>/dev/null");
+    my @aliout =  readpipe("$RNAalifold -r $RNAfold_args $filename 2>/dev/null");
     
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /([().]+) /) {
@@ -1024,9 +1022,9 @@ sub compute_alifold_structure {
 ##
 ########################################+
 sub alifold_mfe {
-    my ($file) = @_;
+    my ($file,$RNAfold_args) = @_;
     
-    my @aliout =  readpipe("RNAalifold $RNAalifold_params $file 2>/dev/null");
+    my @aliout =  readpipe("RNAalifold -r $RNAfold_args $file 2>/dev/null");
 
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /[().]+\s+\(\s*([\d.-]+)\s*=\s*([\d.-]+)\s*\+\s*([\d.-]+)\)/) {

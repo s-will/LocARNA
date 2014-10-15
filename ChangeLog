@@ -455,4 +455,7 @@ Nov 2013
 	Always compile SPARSE/ExpaRNA-P. Don't pass mlocarna script
 	through configure anymore.
 	Add option --sparse to mlocarna
+	Add rnafold-temperature option to mlocarna
+	Use rnafold temperature and parameter files for alifold
+	Warn if used with alifold-consensus-dp
 	(Release 1.7.18)

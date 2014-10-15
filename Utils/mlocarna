@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-MLocarna - multiple alignment of RNA
+MLocARNA - multiple alignment of RNA
 
 =head1 SYNOPSIS
 
@@ -15,7 +15,7 @@ mlocarna [options] <fasta file>
 
 =head1 DESCRIPTION
 
-B<MLocarna> computes a multiple sequence-structure alignment of RNA
+B<MLocARNA> computes a multiple sequence-structure alignment of RNA
 sequences.  
 
 =head1 OPTIONS
@@ -309,6 +309,10 @@ Use RNAplfold with window of size ws (default=2*span)
 
 Parameter file for RNAfold (RNAfold's -P option)
 
+=item  B<--rnafold-temperature=<file>>
+
+Temperature for RNAfold (RNAfold's -T option)
+
 =item  B<--skip-pp>                     
 
 Skip computation of pair probs if the probabilities are already
@@ -536,6 +540,8 @@ my $fast_mea;
 
 my $rnafold_parameter_file;
 
+my $rnafold_temperature;
+
 my $plfold_span;
 my $plfold_winsize;
 
@@ -592,9 +598,7 @@ my %options_hash=
      "skip-pp" => \$skip_pp,
 
      ## consensus dot plot computation
-     ## This functionality is moved to locarna binary.
-     ## (see autopass options)
-     # "alifold-consensus-dp" => \$alifold_consensus_dp,
+     "alifold-consensus-dp" => \$alifold_consensus_dp,
      
      ## realigning
      
@@ -662,6 +666,8 @@ my %options_hash=
      ## energy parameter for RNA fold
      "rnafold-parameter" => \$rnafold_parameter_file,
 
+     ## temperature for RNA fold
+     "rnafold-temperature" => \$rnafold_temperature,
 
      ## plfold
      "plfold-span" => \$plfold_span,
@@ -738,7 +744,7 @@ my @options = #options that are not or not automatically passed to locarna
      
      "skip-pp",
 
-#     "alifold-consensus-dp",
+     "alifold-consensus-dp",
      
      "max-diff-aln=s",
 
@@ -786,6 +792,7 @@ my @options = #options that are not or not automatically passed to locarna
      "only-dps",
 
      "rnafold-parameter=s",
+     "rnafold-temperature=f",
 
      ## plfold
      "plfold-span=i",
@@ -854,7 +861,7 @@ my @autopass_arg_options =
      "max-bps-length-ratio=f"
     );
 
-my @autopass_noarg_options = ( "max-diff-relax", "alifold-consensus-dp" );
+my @autopass_noarg_options = ( "max-diff-relax" );
 
 # -----------------------------------
 # some default values
@@ -1115,6 +1122,11 @@ $locarna_params_tree .= " --stacking" if ($stacking);
 $locarna_params .= " --new-stacking" if ($new_stacking);
 $locarna_params_tree .= " --new-stacking" if ($new_stacking);
 
+## pass alifold-consensus-dp
+$locarna_params .= " --alifold-consensus-dp" if ($alifold_consensus_dp);
+$locarna_p_params .= " --alifold-consensus-dp" if ($alifold_consensus_dp);
+$locarna_params_tree .= " --alifold-consensus-dp" if ($alifold_consensus_dp);
+
 
 ######## ------------------------------------------------------------
 #### do some consistency checks on the parameters
@@ -1136,6 +1148,16 @@ if (($fast_mea || $only_basematch_probs) && $opt_write_am_probs) {
     printerr "Writing of arc match probabilities requested, but their computation is disabled. Exit.\n";
     exit -1;
 }
+
+if (defined($rnafold_temperature) && $rnafold_temperature!=37 && defined($alifold_consensus_dp)) {
+    printerr "WARNING: alifold consensus dotplots are computed at 37°C\n";
+    printerr "         (different to initial folding temperature T=$rnafold_temperature)\n\n";
+}
+
+if (defined($rnafold_parameter_file) && defined($alifold_consensus_dp)) {
+    printerr "WARNING: alifold consensus dotplots are computed with standard parameters\n\n";
+}
+
 
 
 ##### ------------------------------------------------------------
@@ -1176,6 +1198,30 @@ if (defined($rnafold_parameter_file)) {
     $rnafold_parameter_file = abs_path($rnafold_parameter_file);
 }
 
+####
+## parameters for RNAfold and RNAalifold (parameter file and
+## temperature)
+my $RNAfold_args="";
+if (defined($rnafold_parameter_file)) {
+    $RNAfold_args.=" -P $rnafold_parameter_file";
+}
+
+if (defined($rnafold_temperature)) {
+    $RNAfold_args.=" -T $rnafold_temperature";
+}
+
+
+####
+## get full, absolute path for pairwise aligner
+if (defined($pw_aligner)) {
+    $pw_aligner = abs_path($pw_aligner);
+}
+
+####
+## get full, absolute path for pairwise aligner p
+if (defined($pw_aligner_p)) {
+    $pw_aligner_p = abs_path($pw_aligner_p);
+}
 
 
 #### ------------------------------------------------------------
@@ -1859,14 +1905,14 @@ sub perform_multiple_alignment($) {
     ## ----------------------------------------
     ## compute and show alifold prediction
     
-    my $alistr = compute_alifold_structure("$results_dir/result.aln");
+    my $alistr = alifold_structure("$results_dir/result.aln",$RNAfold_args);
     chomp $alistr;
 
     printmsg 3, "alifold            "."$alistr\n";
     
     # in probabilistic mode compute and store alifold dotplot
     if ($probabilistic) {
-	system "$MLocarna::RNAalifold -r -p $results_dir/result.aln >/dev/null 2>&1";
+	system "$MLocarna::RNAalifold $RNAfold_args -r -p $results_dir/result.aln >/dev/null 2>&1";
 	rename "alidot.ps", "$results_dir/alidot.ps";
     }
     
@@ -2066,7 +2112,7 @@ sub call_locarna( $$$ ) {
     
     my $cmd="$pw_aligner $inA $inB $locarna_params --clustal=$tgt.aln";
     
-    $cmd .= " --pp=$tgt.pp";# unless $alifold_consensus_dp;
+    $cmd .= " --pp=$tgt.pp";
     
     $cmd .= " ".reference_alignment_option($refaln_filename);
    
@@ -2082,40 +2128,6 @@ sub call_locarna( $$$ ) {
     }
     
     system "cat $tgt.aln | grep -v '^CLUSTAL --- LocARNA'" if $verbose;
-
-    
-    ## alifold consensus dp is now handled by locarna binary!!!
-    # ## optionally, recompute the consensus dot plot using alifold
-    # if ($alifold_consensus_dp) {
-
-    # 	## determine version of alifold
-    # 	my $alifold_version=readpipe("$MLocarna::RNAalifold --version");
-	
-    # 	if (grep /RNAalifold 2/, $alifold_version) {
-    # 	    $alifold_version=2;
-    # 	} else {
-    # 	    $alifold_version=1;
-    # 	}
-	
-    # 	$cmd="$MLocarna::RNAalifold -r -p";
-    # 	if ($noLP) {
-    # 	    if ($alifold_version==2) {
-    # 		$cmd .=" --noLP";
-    # 	    } else {
-    # 		$cmd .=" -noLP";
-    # 	    }
-    # 	}
-    # 	$cmd .= " $tgt.aln";
-	
-    # 	if (! $moreverbose) { $cmd.=" >/dev/null 2>&1"; }
-	
-    # 	printmsg 1, "CALL: $cmd\n";
-    # 	printmsg 1, "\n";
-    # 	system($cmd)==0
-    # 	    || die "Cannot execute RNAalifold\n";
-	
-    # 	convert_alifold_dp_to_pp("alidot.ps","$tgt.aln","$tgt.pp");
-    # }
 }
 
 
@@ -2487,6 +2499,7 @@ sub compute_alignment_from_dps_probs( $$$$$$ ) {
 ##             where the corresponding file already exists in
 ##             the current directory
 ## $rnafold_parameter_file
+## $rnafold_temperature
 ##
 ## $verbose
 ## $plfold_span
@@ -2548,12 +2561,6 @@ sub generate_input_files_without_bpps( $ ) {
 sub compute_dotplot($$) {
     my ($i,$seqs)=@_;
     
-    my $RNAfold_args="";
-    
-    if (defined($rnafold_parameter_file)) {
-	$RNAfold_args.=" -P $rnafold_parameter_file";
-    }
-
     my $tmpname = threadsafe_name("$global_tmpname");
 
     my $constraints;
@@ -2589,13 +2596,13 @@ sub compute_dotplot($$) {
 	if ($opt_in_loop_probabilities) {
 	    print STDERR "Warning: cannot precompute in-loop probabilities.\n";
 	}
-	$RNAfold_args.=" >/dev/null" unless $verbose;
 	$seqname=$tmpname;
 	if (! defined($plfold_span)) {
 	    $RNAfoldp = "$RNAfold -p2 $RNAfold_args";
 	} else {
 	    $RNAfoldp = "$RNAplfold -L $plfold_span -W $plfold_winsize $RNAfold_args";
 	}
+	$RNAfoldp .= " >/dev/null" unless $verbose;
     }
 
     my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
@@ -2892,13 +2899,13 @@ sub perform_progressive_steps($$$) {
 sub perform_iterative_refinement {
     my ($current_alignment_name,$tree_postorder_ref,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
     
-    ## my $current_aliquality = alifold_mfe("$current_alignment_name.aln"); ## optimize SCI
+    ## my $current_aliquality = alifold_mfe("$current_alignment_name.aln",$RNAfold_args); ## optimize SCI
     
     my $current_aliquality;
     if ($probabilistic) {
 	$current_aliquality = aln_reliability_fromfile("$current_alignment_name.aln",\%bmprobs,\%amprobs); ## optimize RELIABILITY
     } else {
-	$current_aliquality = - alifold_mfe("$current_alignment_name.aln"); ## optimize SCI
+	$current_aliquality = - alifold_mfe("$current_alignment_name.aln",$RNAfold_args); ## optimize SCI
     }
 
     for (my $i=1; $i<=$iterations; $i++) {
@@ -2958,11 +2965,11 @@ sub perform_iterative_refinement_one_round($$$$$) {
 	## ----------------------------------------
 	# test, whether new alignment is better than former
 	# 
-	my $new_aliquality;# = alifold_mfe("$intermediate_name.aln");
+	my $new_aliquality;# = alifold_mfe("$intermediate_name.aln",$RNAfold_args);
 	if ($probabilistic) {
 	    $new_aliquality = aln_reliability_fromfile("$intermediate_name.aln",\%bmprobs,\%amprobs); ## optimize RELIABILITY
 	} else {
-	    $new_aliquality = - alifold_mfe("$intermediate_name.aln"); ## optimize SCI
+	    $new_aliquality = - alifold_mfe("$intermediate_name.aln",$RNAfold_args); ## optimize SCI
 	}
 	printmsg 2, sprintf "Quality: %5.2f / %5.2f\n",$new_aliquality,$current_aliquality;
 
