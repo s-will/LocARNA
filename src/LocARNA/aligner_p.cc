@@ -61,8 +61,8 @@ namespace LocARNA {
 
 
     //===========================================================================
-    AlignerP::AlignerP(const AlignerParams &ap_) :
-	params(dynamic_cast<const AlignerPParams *>(&ap_)),
+    AlignerP::AlignerP(const AlignerParams &ap) :
+	params(dynamic_cast<const AlignerPParams *>(&ap)),
 	scoring(params->scoring_),
 	seqA(*params->seqA_),
 	bpsA(params->arc_matches_->get_base_pairsA()),

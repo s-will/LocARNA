@@ -26,7 +26,7 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/rna_structure.cc LocARNA/confusion_matrix.cc		\
 	LocARNA/global_stopwatch.cc LocARNA/mcc_matrices.cc		\
 	LocARNA/aligner_n.cc LocARNA/sparsification_mapper.cc		\
-	LocARNA/exact_matcher.cc
+	LocARNA/exact_matcher.cc LocARNA/params.cc
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 

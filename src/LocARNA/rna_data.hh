@@ -53,7 +53,7 @@ namespace LocARNA {
 	 * 
 	 * @param rna_ensemble RNA ensemble data
 	 * @param p_bpcut cutoff probability
-	 * @param pfoldparams folding parameters (controls stacking)
+	 * @param max_bps_length_ratio max ratio of bps to length (0=no effect)
 	 * @param pfoldparams folding parameters (controls stacking)
 	 *
 	 * @note RnaData copies all required data from rna_ensemble
