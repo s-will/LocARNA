@@ -6,8 +6,8 @@ AC_INIT([LocARNA], [1.7.18], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
-AC_SUBST([SO_VERSION], [2:0:0])
-AC_SUBST([API_VERSION], [1.2])
+AC_SUBST([SO_VERSION], [1:0:0])
+AC_SUBST([API_VERSION], [1.3])
 
 AC_CONFIG_MACRO_DIR([m4])
 
