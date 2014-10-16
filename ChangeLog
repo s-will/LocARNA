@@ -458,4 +458,5 @@ Nov 2013
 	Add rnafold-temperature option to mlocarna
 	Use rnafold temperature and parameter files for alifold
 	Warn if used with alifold-consensus-dp
+	Add unit tests for mlocarna calls (standard, prob, sparse)
 	(Release 1.7.18)

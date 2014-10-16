@@ -36,7 +36,7 @@ rm -rf test.out
 calltest $bin/mlocarna $topdir/Examples/haca.snoRNA.fa --tgtdir test.out -p 0.05 --max-diff 20
 rm -rf test.out
 
-calltest $bin/mlocarna $topdir/Examples/archaea.fa --tgtdir test.out --pw-aligner bin/sparse -p 0.05  --max-diff 10
+calltest $bin/mlocarna $topdir/Examples/archaea.fa --tgtdir test.out --sparse -p 0.05  --max-diff 10
 rm -rf test.out
 
 calltest $bin/mlocarna $topdir/Examples/archaea.fa --tgtdir test.out --probabilistic --consistency-transformation -p 0.05  --max-diff 10
