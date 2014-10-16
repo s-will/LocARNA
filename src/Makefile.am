@@ -73,14 +73,19 @@ transform = s/\.bin$$//
 # all binaries should be linked to libLocARNA
 LDADD=libLocARNA-$(API_VERSION).la
 
-TESTS = Tests/multiple_alignment Tests/rna_data Tests/ext_rna_data	\
-        Tests/trace_controller Tests/rna_ensemble Tests/rna_structure
-check_PROGRAMS = $(TESTS)
+BINTESTS = Tests/multiple_alignment Tests/rna_data Tests/ext_rna_data	\
+           Tests/trace_controller Tests/rna_ensemble Tests/rna_structure
+SCRIPTTESTS = Tests/mlocarna-calls.sh
+
+TESTS= $(BINTESTS) $(SCRIPTTESTS)
+
+check_PROGRAMS = $(BINTESTS)
+
 AM_DEFAULT_SOURCE_EXT = .cc
 
 MYTESTDATA = Tests/archaea.aln Tests/archaea.fa Tests/archaea-wrong.fa
 BUILT_SOURCES = $(MYTESTDATA)
-EXTRA_DIST=$(MYTESTDATA:%=%.data)
+EXTRA_DIST=$(MYTESTDATA:%=%.data) $(SCRIPTTESTS)
 Tests/archaea.aln: Tests/archaea.aln.data
 	cp $< $@
 Tests/archaea.fa: Tests/archaea.fa.data
