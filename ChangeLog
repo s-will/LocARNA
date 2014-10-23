@@ -446,10 +446,9 @@ Nov 2013
 	max-bps/uil/bpil-length-ratio for SPARSE/ExparnaP
 	(Release 1.7.17pre2)
 	Remove absolute path dependencies in scripts. This changes the
-	behavior slightly, since paths are not fixed at compile time. For
+	behavior, since paths are not fixed at compile time. For
 	example, the Vienna RNA programs are located via PATH environment
-	variable
-
+	variable.
 	Require linking to VRNA. Remove configure options. Disallow
 	renaming of Vienna RNA tools RNAfold, etc.; expect them in path.
 	Always compile SPARSE/ExpaRNA-P. Don't pass mlocarna script
@@ -459,4 +458,4 @@ Nov 2013
 	Use rnafold temperature and parameter files for alifold
 	Warn if used with alifold-consensus-dp
 	Add unit tests for mlocarna calls (standard, prob, sparse)
-	(Release 1.7.18)
+	(Release 1.8)
