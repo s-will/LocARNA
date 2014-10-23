@@ -1893,7 +1893,7 @@ sub perform_multiple_alignment($) {
     }
     
     open(ALNOUT,">$results_dir/result.aln") || die "Cannot write $results_dir/result.aln";
-    write_clustalw_alnloh(*ALNOUT,$aln,$width);
+    my $namewidth=write_clustalw_alnloh(*ALNOUT,$aln,$width);
     close ALNOUT;
     
 
@@ -1908,7 +1908,7 @@ sub perform_multiple_alignment($) {
     my $alistr = alifold_structure("$results_dir/result.aln",$RNAfold_args);
     chomp $alistr;
 
-    printmsg 3, "alifold            "."$alistr\n";
+    printmsg 3, sprintf("%-".$namewidth."s %s\n","alifold",$alistr);
     
     # in probabilistic mode compute and store alifold dotplot
     if ($probabilistic) {

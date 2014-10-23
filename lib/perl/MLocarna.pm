@@ -1251,6 +1251,7 @@ sub read_clustalw_aln {
 ## $seqs loh representation of alignment
 ## $width line width
 ##
+## @return $namewidth width of sequence names
 ########################################
 sub write_clustalw_alnloh {
     my $fh    = shift;
@@ -1297,6 +1298,7 @@ sub write_clustalw_alnloh {
 	print $fh "\n";
 	$offset+=$width;
     }
+    return $maxlen;
 }
 
 ########################################
