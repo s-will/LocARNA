@@ -57,6 +57,6 @@ Matrices/RIBOSUM95_85 Matrices/RIBOSUM95_90 Matrices/RIBOSUM95_95
 
 matricesdir=$(prefix)/share/locarna/Matrices
 
-EXTRA_DIST=Examples/archaea.fa Examples/ferritin.fa Examples/haca.snoRNA.fa Examples/hammerhead_3.fa \
+EXTRA_DIST=Examples/archaea.fa Examples/ferritin.fa Examples/haca.snoRNA.fa Examples/hammerhead_3.fa Examples/gcvT.fa \
 	   $(matrices_DATA) $(params_DATA)
 
