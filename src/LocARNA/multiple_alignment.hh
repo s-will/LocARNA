@@ -426,6 +426,7 @@ public:
      * @brief Construct from Alignment object
      * @param alignment object of type Alignment
      * @param only_local if true, construct only local alignment
+     * @param special_gap_symbols if true, use special distinct gap symbols for gaps due to loop deletion '_' or sparsification '~'
      *
      * Automatically computes a consensus anchor string if anchors are
      * available. Consensus anchors containing duplicate names are cleared.
@@ -433,7 +434,7 @@ public:
      * even if structure annotation of sequences A and B in Alignment
      * is available.
      */
-    MultipleAlignment(const Alignment &alignment, bool only_local=false);
+    MultipleAlignment(const Alignment &alignment, bool only_local=false, bool special_gap_symbols=false);
     
     /**
      * @brief Construct from alignment edges and sequences
@@ -456,11 +457,14 @@ protected:
      * @param edges alignment edges
      * @param seqA sequence A
      * @param seqB sequence B
+     * @param special_gap_symbols if true, use special distinct gap symbols for gaps due to loop deletion '_' or sparsification '~'
+     *
      */
     void
     init(const AlignmentEdges &edges,
 	 const Sequence &seqA,
-	 const Sequence &seqB);
+	 const Sequence &seqB,
+	 bool special_gap_symbols);
 public:
 
     /**

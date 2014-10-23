@@ -19,6 +19,9 @@ namespace LocARNA {
 
     // gap symbols
     const std::string the_gap_symbols = "-_~.";
+    // simplified gap symbols
+    const std::string simplified_gap_symbols = "---.";
+
 
     size_t Gap::size=0;
     const Gap Gap::regular  = Gap(Gap::size++);
@@ -33,7 +36,12 @@ namespace LocARNA {
     
     char
     gap_symbol(Gap gap) {
-	return the_gap_symbols[gap.idx()];
+	return simplified_gap_symbols[gap.idx()];
+    }
+
+    char
+    special_gap_symbol(Gap gap) {
+    	return the_gap_symbols[gap.idx()];
     }
 
     Gap gap_code(char symbol) {

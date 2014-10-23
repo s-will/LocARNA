@@ -115,11 +115,11 @@ namespace LocARNA {
     	create_name2idx_map();
     }
 
-    MultipleAlignment::MultipleAlignment(const Alignment &alignment, bool only_local)
+    MultipleAlignment::MultipleAlignment(const Alignment &alignment,
+    									bool only_local, bool special_gap_symbols)
 	:alig_(),
 	 annotations_(),
 	 name2idx_() {
-	
 	SequenceAnnotation
 	    anchors(alignment.alignment_edges(only_local),
 		 alignment.seqA().annotation(AnnoType::anchors),
@@ -128,10 +128,12 @@ namespace LocARNA {
 	if (! anchors.duplicate_names() ) {
 	    set_annotation(AnnoType::anchors, anchors);
 	}
-			
+
 	init(alignment.alignment_edges(only_local),
 	     alignment.seqA(),
-	     alignment.seqB());
+	     alignment.seqB(),
+	     special_gap_symbols);
+
     }
     
     MultipleAlignment::MultipleAlignment(const AlignmentEdges &edges,
@@ -151,13 +153,14 @@ namespace LocARNA {
 			   anchors);
 	}
 	
-	init(edges,seqA,seqB);
+	init(edges,seqA,seqB, false);
     }
     
     void
     MultipleAlignment::init(const AlignmentEdges &edges,
 			    const Sequence &seqA,
-			    const Sequence &seqB) {
+			    const Sequence &seqB,
+			    bool special_gap_symbols) {
 	
 	std::vector<std::string> aliA(seqA.num_of_rows(),"");
 	std::vector<std::string> aliB(seqB.num_of_rows(),"");
@@ -167,7 +170,10 @@ namespace LocARNA {
 	for (size_type i=0; i<alisize; i++) {
 	    if ( edges.first[i].is_gap() ) {
 		for (size_type k=0; k<seqA.num_of_rows(); k++) {
-		    aliA[k] += gap_symbol(edges.first[i].gap());
+		    if(special_gap_symbols)
+		    	aliA[k] += special_gap_symbol(edges.first[i].gap());
+		    else
+		    	aliA[k] += gap_symbol(edges.first[i].gap());
 		}
 	    } else {
 		for (size_type k=0; k<seqA.num_of_rows(); k++) {
@@ -176,7 +182,10 @@ namespace LocARNA {
 	    }
 	    if ( edges.second[i].is_gap() ) {
 		for (size_type k=0; k<seqB.num_of_rows(); k++) {
-		    aliB[k] += gap_symbol(edges.second[i].gap());
+		    if(special_gap_symbols)
+		    	aliB[k] += special_gap_symbol(edges.second[i].gap());
+		    else
+		    	aliB[k] += gap_symbol(edges.second[i].gap());
 		}
 	    } else {
 		for (size_type k=0; k<seqB.num_of_rows(); k++) {

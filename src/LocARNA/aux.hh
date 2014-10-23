@@ -101,10 +101,14 @@ namespace LocARNA {
     //! according to global constant gap_symbols
     bool is_gap_symbol(char c);
     
-    //! @brief symbols of gaps
+    //! @brief simplified symbols of gaps
     char
     gap_symbol(Gap gap);
     
+    //! @brief special symbols of gaps
+    char
+    special_gap_symbol(Gap gap);
+
     //! code of a gap symbol
     Gap gap_code(char symbol);
     // ------------------------------------------------------------

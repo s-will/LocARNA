@@ -161,7 +161,7 @@ struct command_line_parameters {
     bool opt_pos_output; //!< whether to output positions
 
     bool opt_write_structure; //!< whether to write structure
-
+    bool opt_special_gap_symbols; //!< whether to use special gap symbols in the alignment result
     bool opt_stopwatch; //!< whether to print verbose output
 
     bool opt_stacking; //!< whether to use stacking scores
@@ -261,6 +261,7 @@ option_def my_options[] = {
 //    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
 //    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
+    {"special-gap-symbols",0,&clp.opt_special_gap_symbols,O_NO_ARG,0,O_NODEFAULT,"","Special distinct gap symbols for loop gaps or gaps caused by sparsofocation"},
 
     {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
@@ -310,6 +311,7 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
+
 //    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
 
@@ -914,8 +916,8 @@ main(int argc, char **argv) {
 		      <<std::endl;
 	} 
 	if (!clp.opt_pos_output && !clp.opt_local_output) {
-	    MultipleAlignment ma(alignment,clp.opt_local_output);
-	    
+	    MultipleAlignment ma(alignment,clp.opt_local_output,clp.opt_special_gap_symbols);
+
 	    if (clp.opt_write_structure) {
 		// annotate multiple alignment with structures
 		ma.prepend(MultipleAlignment::SeqEntry("",
@@ -958,10 +960,10 @@ main(int argc, char **argv) {
 	// optionally write output formats
 	//
 	if (clp.opt_clustal_out) {
-	    ofstream out(clp.clustal_out.c_str());
+		ofstream out(clp.clustal_out.c_str());
 	    if (out.good()) {
 
-		MultipleAlignment ma(alignment);
+		MultipleAlignment ma(alignment, false,clp.opt_special_gap_symbols);
 		
 		out << "CLUSTAL W --- "<<PACKAGE_STRING;
 		
