@@ -458,6 +458,7 @@ Nov 2013
 	Use rnafold temperature and parameter files for alifold
 	Warn if used with alifold-consensus-dp
 	Add unit tests for mlocarna calls (standard, prob, sparse)
-	(Release 1.8)
 	Align alifold structure to alignment in mlocarna output
 	Add Example gcvT.fa for SPARSE
+	sparse: --special-gap-symbols option added (default is false)
+	(Release 1.8.0)
