@@ -261,7 +261,7 @@ option_def my_options[] = {
 //    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
 //    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
-    {"special-gap-symbols",0,&clp.opt_special_gap_symbols,O_NO_ARG,0,O_NODEFAULT,"","Special distinct gap symbols for loop gaps or gaps caused by sparsofocation"},
+    {"special-gap-symbols",0,&clp.opt_special_gap_symbols,O_NO_ARG,0,O_NODEFAULT,"","Special distinct gap symbols for loop gaps or gaps caused by sparsification"},
 
     {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
