@@ -479,7 +479,8 @@ namespace LocARNA {
 				( ribosum->basepair_prob(seqA[arcA.left()][i],seqA[arcA.right()][i])
 				  *
 				  ribosum->basepair_prob(seqB[arcB.left()][j],seqB[arcB.right()][j]))
-				);
+				)
+			    / log(2);
 		    } else {
 			// score += 0.0; // undetermined nucleotides
 		    }

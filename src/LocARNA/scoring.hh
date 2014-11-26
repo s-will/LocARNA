@@ -462,8 +462,6 @@ namespace LocARNA {
 	/**
 	 * returns score of matching the concrete bases in an arcmatch
 	 * based on ribosum data (only ribosum contribution)
-	 *
-	 * @todo: check, this should use log2 (i.e. base 2 logarithms) as other logs in RIBOSUM scores
 	 */
 	score_t
 	ribosum_arcmatch_score(const Arc &arcA, const Arc &arcB) const;
