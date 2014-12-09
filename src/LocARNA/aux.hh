@@ -21,6 +21,8 @@
 
 
 namespace LocARNA {
+
+    class string1;
     
     /** 
      * @brief Function class definining hash function for pairs of size_t
@@ -312,6 +314,10 @@ namespace LocARNA {
     bool
     get_nonempty_line(std::istream &in,
 		      std::string &line);
+
+    
+    double
+    sequence_identity(const string1 &seqA, const string1 &seqB);
 
 }
 

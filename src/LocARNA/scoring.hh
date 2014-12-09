@@ -24,6 +24,7 @@ namespace LocARNA {
 
     
     class RibosumFreq;
+    class Ribofit;
     class Scoring;
     class Sequence;
     class BasePairs;
@@ -68,7 +69,7 @@ namespace LocARNA {
 	 * constant bonus for a base match.
 	 * together with basemismatch yields the simplest form
 	 * of base match/mismatch scoring.
-	 * Can be replaced by RIBOSUM scores (planned).
+	 * Can be replaced by RIBOSUM scores.
 	 */
 	score_t basematch;
     
@@ -88,11 +89,19 @@ namespace LocARNA {
 	score_t indel_opening_loop;
         
 	/**
-	 * the ribosum matrix, if non-null it is used
+	 * the ribosum matrix, if non-null (and ribofit==null) it is used
 	 * for base match/mismatch instead of constant values
 	 * and as contribution for arc-matchs (tau_factor)
 	 */
 	RibosumFreq *ribosum;
+
+	/**
+	 * the ribofit matrix, if non-null it is used
+	 * for base match/mismatch instead of constant values
+	 * and as contribution for arc-matchs (tau_factor).
+	 * Overrides ribosum
+	 */
+	Ribofit *ribofit;
 
 	//! penalty/cost for unpaired bases matched/mismatched/gapped
 	score_t unpaired_penalty;
@@ -172,7 +181,8 @@ namespace LocARNA {
 	 * @param indel_loop_
 	 * @param indel_opening_ 
 	 * @param indel_opening_loop_
-	 * @param ribosum_ 
+	 * @param ribosum_
+	 * @param ribofit_
 	 * @param unpaired_penalty_
 	 * @param struct_weight_ 
 	 * @param tau_factor_ 
@@ -195,6 +205,7 @@ namespace LocARNA {
 		      score_t indel_opening_,
 		      score_t indel_opening_loop_,
 		      RibosumFreq *ribosum_,
+		      Ribofit *ribofit_,
 		      score_t unpaired_penalty_,
 		      score_t struct_weight_,
 		      score_t tau_factor_,
@@ -217,6 +228,7 @@ namespace LocARNA {
 	      indel_opening(indel_opening_),
 	      indel_opening_loop(indel_opening_loop_),
 	      ribosum(ribosum_),
+	      ribofit(ribofit_),
 	      unpaired_penalty(unpaired_penalty_),
 	      struct_weight(struct_weight_),
 	      tau_factor(tau_factor_),
@@ -266,6 +278,9 @@ namespace LocARNA {
      * the base pair (i,j) if (i+1,j-1) exists. The new_stacking flag
      * adds a log odd contribution derived from the joint probability
      * of (i,j) and (i+1,j-1) to the weight of (i,j).
+     *
+     * @todo check proper use of unpaired penalty; e.g. is correction
+     * needed for arc match (like for lambda)??
      *
      */
     class Scoring {
@@ -371,6 +386,11 @@ namespace LocARNA {
 	std::vector<pf_score_t> exp_gapcost_tabA; //!< table for exp gapcost in A
 	std::vector<pf_score_t> exp_gapcost_tabB; //!< table for exp gapcost in B
 
+	
+	Matrix<size_t> identity; //!< sequence identities in percent
+
+	void
+	precompute_sequence_identities();
 
 	/**
 	 * \brief Round a double to score_t.
@@ -459,12 +479,21 @@ namespace LocARNA {
 	double
 	ribosum_arcmatch_prob(const Arc &arcA, const Arc &arcB) const;    
     
-	/**
-	 * returns score of matching the concrete bases in an arcmatch
-	 * based on ribosum data (only ribosum contribution)
+	/** 
+	 * @brief ribofit or ribosum arcmatch score contribution
+	 *
+	 * Sequence-based score contribution to match of the arcs due
+	 * to ribofit matrix (if ribofit enabled) or ribosum matrix.
+	 * The score contribution is calculated as sum-of-pairs; gaps
+	 * and non-standard symbols (different from ACGU) are ignored!
+	 *
+	 * @param arcA arc A
+	 * @param arcB arc B
+	 *
+	 * @return score contribution
 	 */
 	score_t
-	ribosum_arcmatch_score(const Arc &arcA, const Arc &arcB) const;
+	riboX_arcmatch_score(const Arc &arcA, const Arc &arcB) const;
     
     
 	pf_score_t

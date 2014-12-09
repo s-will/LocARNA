@@ -5,10 +5,12 @@
 #include "arc_matches.hh"
 #include "match_probs.hh"
 #include "ribosum.hh"
+#include "ribofit.hh"
 
 
 #include <math.h>
 #include <fstream>
+
 
 namespace LocARNA {
 
@@ -41,7 +43,7 @@ namespace LocARNA {
     {
 
 #ifndef NDEBUG
-	if (params->ribosum) {
+	if (params->ribofit || params->ribosum) {
 	    // check sequences
 	    if (!seqA.checkAlphabet(Alphabet<char>((char*)"ACGUN-",6))
 		||
@@ -51,6 +53,10 @@ namespace LocARNA {
 	    }
 	}
 #endif
+	
+	if (params->ribofit) {
+	    precompute_sequence_identities();
+	}
 
 
 	precompute_sigma();
@@ -66,33 +72,6 @@ namespace LocARNA {
 	}
     }
 
-
-    /*
-      not need: copy constructor is implicit
-      Scoring(const Scoring &s):
-      params(s.params),
-      arc_matches(s.arc_matches),
-      match_probs(s.match_probs),
-      rna_dataA(s.rna_dataA),
-      rna_dataB(s.rna_dataB),
-      seqA(s.seqA),
-      seqB(s.seqB),
-      lambda_(s.lambda_),
-      // precomputed tables:
-      sigma_tab(s.sigma_tab),
-      gapcost_tabA(s.gapcost_tabA),
-      gapcost_tabB(s.gapcost_tabB),
-      weightsA(s.weightsA),
-      weightsB(s.weightsB),
-      stack_weightsA(s.stack_weightsA),
-      stack_weightsB(s.stack_weightsB),
-      exp_sigma_tab(s.exp_sigma_tab),
-      exp_indel_opening_score(s.exp_indel_opening_score),
-      exp_gapcost_tabA(s.exp_gapcost_tabA),
-      exp_gapcost_tabB(s.exp_gapcost_tabB)
-      {
-      }
-    */
 
 
     void
@@ -111,7 +90,7 @@ namespace LocARNA {
 
 
 	// subtract unpaired_penalty from precomputed tables
-	// * simga_tab
+	// * sigma_tab
 	// * gapcost_tabA
 	// * gapcost_tabB
 
@@ -130,7 +109,7 @@ namespace LocARNA {
 	lambda_ = lambda;
 
 	// subtract delta_lambda from precomputed tables
-	// * simga_tab
+	// * sigma_tab
 	// * gapcost_tabA
 	// * gapcost_tabB
 
@@ -140,7 +119,27 @@ namespace LocARNA {
 
     }
 
-    void Scoring::precompute_sigma() {
+
+    void
+    Scoring::precompute_sequence_identities() {
+	identity.resize(seqA.num_of_rows(),seqB.num_of_rows());
+	for (size_t i=0; i<seqA.num_of_rows(); i++) {
+	    for (size_t j=0; j<seqB.num_of_rows(); j++) {
+		identity(i,j) = sequence_identity(seqA.seqentry(i).seq(),
+						  seqB.seqentry(j).seq());
+		
+		//std::cout << "    "<<i<<" "<<j<<" SI="<<identity(i,j)<<std::endl;
+		
+		// don't use extreme identities!
+		identity(i,j) = std::max( identity(i,j), (size_t)20 );
+		identity(i,j) = std::min( identity(i,j), (size_t)95 );
+	    }
+	}
+    }
+
+    
+    void
+    Scoring::precompute_sigma() {
 	size_type lenA = seqA.length();
 	size_type lenB = seqB.length();
 
@@ -226,7 +225,13 @@ namespace LocARNA {
 		    // we fall back to match/mismatch scoring !!!
 
 		    //
-		    if (params->ribosum
+		    if (params->ribofit
+			&& params->ribofit->alphabet().in(colA[i])
+			&& params->ribofit->alphabet().in(colB[j])) {
+
+			score +=
+			    round2score(100.0 * params->ribofit->basematch_score(colA[i],colB[j],identity(i,j)));
+		    } else if (params->ribosum
 			&& params->ribosum->alphabet().in(colA[i])
 			&& params->ribosum->alphabet().in(colB[j])) {
 
@@ -389,7 +394,7 @@ namespace LocARNA {
 	assert(params->ribosum != 0);
 	// compute average ribosum score
 
-	RibosumFreq *ribosum = static_cast<RibosumFreq *>(params->ribosum);
+	RibosumFreq *ribosum = params->ribosum;
 
 
 	const size_type rowsA = seqA.num_of_rows();
@@ -439,12 +444,13 @@ namespace LocARNA {
     }
 
     score_t
-    Scoring::ribosum_arcmatch_score(const Arc &arcA, const Arc &arcB) const {
+    Scoring::riboX_arcmatch_score(const Arc &arcA, const Arc &arcB) const {
 	assert(params->ribosum != 0);
 
 	// compute average ribosum score
 
-	RibosumFreq *ribosum = static_cast<RibosumFreq *>(params->ribosum);
+	RibosumFreq *ribosum = params->ribosum;
+	Ribofit *ribofit = params->ribofit;
 
 	const size_type rowsA = seqA.num_of_rows();
 	const size_type rowsB = seqB.num_of_rows();
@@ -452,8 +458,10 @@ namespace LocARNA {
 	double score=0;
 	int considered_combinations=0;
 
+	// for simplicity: assume that the ribofit alphabet and the
+	// ribosum alphabet contain the same characters
 	const Alphabet<char> &alphabet = ribosum->alphabet();
-
+	
 	for(size_type i=0; i<rowsA; i++) { // run through all combinations of rows in A and B
 	    for(size_type j=0; j<rowsB; j++) {
 		// how to handle gaps?
@@ -471,16 +479,27 @@ namespace LocARNA {
 			
 			considered_combinations++;
 			
-			score+=
-			    log(
-				ribosum->arcmatch_prob( seqA[arcA.left()][i],seqA[arcA.right()][i],
-							seqB[arcB.left()][j],seqB[arcB.right()][j] )
-				/
-				( ribosum->basepair_prob(seqA[arcA.left()][i],seqA[arcA.right()][i])
-				  *
-				  ribosum->basepair_prob(seqB[arcB.left()][j],seqB[arcB.right()][j]))
-				)
-			    / log(2);
+			if (ribofit) {
+			    score += 
+				ribofit->arcmatch_score( seqA[arcA.left()][i],
+							 seqA[arcA.right()][i],
+							 seqB[arcB.left()][j],
+							 seqB[arcB.right()][j],
+							 identity(i,j) );
+			} else {
+			    score+=
+				log(
+				    ribosum->arcmatch_prob( seqA[arcA.left()][i],
+							    seqA[arcA.right()][i],
+							    seqB[arcB.left()][j],
+							    seqB[arcB.right()][j] )
+				    /
+				    ( ribosum->basepair_prob(seqA[arcA.left()][i],
+							     seqA[arcA.right()][i])
+				      * ribosum->basepair_prob(seqB[arcB.left()][j],
+							       seqB[arcB.right()][j]) ) )
+				/ log(2);
+			}
 		    } else {
 			// score += 0.0; // undetermined nucleotides
 		    }
@@ -515,11 +534,11 @@ namespace LocARNA {
 
 	// if tau is non-zero
 	// we add a sequence contribution
-	// for mea or if we don't have a ribosum matrix, we use sigma
+	// for mea or if we don't have a ribofit/ribosum matrix, we use sigma
 	// otherwise we use a ribosum-like score 
 	if ( params->tau_factor != 0 ) {
-	    if (!params->mea_scoring && params->ribosum) {
-		sequence_contribution = ribosum_arcmatch_score(arcA,arcB);
+	    if (!params->mea_scoring && (params->ribofit || params->ribosum)) {
+		sequence_contribution = riboX_arcmatch_score(arcA,arcB);
 	    } else {
 		sequence_contribution =
 		    sigma_tab(arcA.left(),arcB.left())
@@ -536,7 +555,7 @@ namespace LocARNA {
 	    return
 		// base match contribution
 		// (also for arc-match add terms for the base match on both ends, weighted by tau_factor)
-		(params->tau_factor * sequence_contribution / 100)
+		( (params->tau_factor * sequence_contribution) / 100 )
 		+
 		// base pair weights
 		(
@@ -630,7 +649,7 @@ namespace LocARNA {
 	score_t score;
 	if (arc_matches->explicit_scores()) { // does not take stacking into account!!!
 	    score = arc_matches->get_score(am)  - 4*lambda_;
-	} else {	
+	} else {
 	    const  Arc &arcA = am.arcA();
 	    const  Arc &arcB = am.arcB();
 

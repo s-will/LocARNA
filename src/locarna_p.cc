@@ -6,7 +6,7 @@
  * LocARNA-P: global and LOCal Alignment of RNA - Partitition function variant
  *
  * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
- *               2005-2011
+ *               2005-
  *
  *  
  * @todo wrap command line parameter in a structure (like in locarna.cc)
@@ -28,6 +28,7 @@
 #include "LocARNA/arc_matches.hh"
 #include "LocARNA/match_probs.hh"
 #include "LocARNA/ribosum.hh"
+#include "LocARNA/ribofit.hh"
 #include "LocARNA/anchor_constraints.hh"
 #include "LocARNA/trace_controller.hh"
 #include "LocARNA/multiple_alignment.hh"
@@ -129,6 +130,8 @@ bool opt_no_lonely_pairs=false; //!< no lonely pairs, not supported
 std::string ribosum_file; //!< ribosum_file
 bool use_ribosum; //!< use_ribosum
 
+bool opt_ribofit; //!< ribofit
+
 bool basematch_probs_include_arcmatch; //!< basematch_probs_include_arcmatch
 
 std::string fragment_match_probs; //!< fragment_match_probs
@@ -196,6 +199,9 @@ option_def my_options[] = {
     {"fragment-match-probs",0,0,O_ARG_STRING,&fragment_match_probs,"","\"i j k l\"",
      "Requests probabilities for the match of fragments [i..j] and [k..l]. Accepts a ';' separated list of ranges."},
     
+    {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
+    {"ribofit",0,0,O_ARG_BOOL,&opt_ribofit,"false","bool","Use Ribofit base and arc match scores (overrides ribosum)"},
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
     {"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"bps-file 1","Basepairs input file 1"},
@@ -398,6 +404,11 @@ main(int argc, char **argv) {
     // Ribosum matrix
     //
     RibosumFreq *ribosum=NULL;
+    Ribofit *ribofit=NULL;
+    
+    if (opt_ribofit) {
+	ribofit = new Ribofit_will2014;
+    }
 
     if (use_ribosum) {
 	if (ribosum_file == "RIBOSUM85_60") {
@@ -423,6 +434,7 @@ main(int argc, char **argv) {
 				 indel_opening_score,
 				 0, 
 				 ribosum,
+				 ribofit,
 				 0, //unpaired_weight
 				 struct_weight,
 				 tau_factor,
@@ -586,6 +598,7 @@ main(int argc, char **argv) {
     // clean up
     if(arc_matches) delete arc_matches;
     if (ribosum) delete ribosum;
+    if (ribofit) delete ribofit;
 
     if (rna_dataA) delete rna_dataA;
     if (rna_dataB) delete rna_dataB;

@@ -23,6 +23,7 @@
 #include "LocARNA/arc_matches.hh"
 #include "LocARNA/match_probs.hh"
 #include "LocARNA/ribosum.hh"
+#include "LocARNA/ribofit.hh"
 #include "LocARNA/anchor_constraints.hh"
 #include "LocARNA/sequence_annotation.hh"
 #include "LocARNA/trace_controller.hh"
@@ -170,6 +171,8 @@ struct command_line_parameters {
     std::string ribosum_file; //!< ribosum_file
     bool use_ribosum; //!< use_ribosum
 
+    bool opt_ribofit; //!< ribofit
+
     bool opt_probcons_file; //!< whether to probcons_file
     std::string probcons_file; //!< probcons_file
 
@@ -315,6 +318,9 @@ option_def my_options[] = {
 //    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
 
+    {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
+    {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool","Use Ribofit base and arc match scores (overrides ribosum)"},
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
     {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"file 1","Basepairs input file 1"},
@@ -453,7 +459,12 @@ main(int argc, char **argv) {
     // Ribosum matrix
     //
     std::auto_ptr<RibosumFreq> ribosum(NULL);
-	
+    Ribofit *ribofit=NULL;
+    
+    if (clp.opt_ribofit) {
+	ribofit = new Ribofit_will2014;
+    }
+
     if (clp.use_ribosum) {
 	if (clp.ribosum_file == "RIBOSUM85_60") {
 	    if (clp.opt_verbose) {
@@ -761,7 +772,8 @@ main(int argc, char **argv) {
 				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
 				 ?0
 				 :clp.indel_opening_loop_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				ribosum.get(),
+				 ribosum.get(),
+				 ribofit,
 				 0, //unpaired_weight
 				 clp.struct_weight,
 				 clp.tau_factor,
@@ -1008,6 +1020,7 @@ main(int argc, char **argv) {
     if (arc_matches) delete arc_matches;
     if (multiple_ref_alignment) delete multiple_ref_alignment;
     //if (ribosum) delete ribosum;
+    if (ribofit) delete ribofit;
     
     if (rna_dataA) delete rna_dataA;
     if (rna_dataB) delete rna_dataB;

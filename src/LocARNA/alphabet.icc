@@ -14,7 +14,7 @@ namespace LocARNA {
     }
 
     template<class T>
-    Alphabet<T>::Alphabet(elem_type *s,int len)
+    Alphabet<T>::Alphabet(const elem_type *s,int len)
 	: alph_vec(),alph_hash()
     {
 	vec_t a(s,s+len);

@@ -1,8 +1,10 @@
 #include "aux.hh"
+#include "string1.hh"
+#include "matrix.hh"
+
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
-
 #include <iostream>
 
 namespace LocARNA {
@@ -145,6 +147,22 @@ namespace LocARNA {
 	line="";
 	return false;
     }
-    
+
+    double
+    sequence_identity(const string1 &seqA, const string1 &seqB) {
+	size_t n=seqA.length();
+	size_t m=seqB.length();
+	
+	Matrix<size_t> D(n+1,m+1,0);
+	for (size_t i=1; i<=n;i++) {
+	    for (size_t j=1; j<=m;j++) {
+		D(i,j) = std::max(D(i-1,j),D(i,j-1));
+		D(i,j) = std::max(D(i,j),
+				  D(i-1,j-1) + ((seqA[i]==seqB[j])?1:0)
+				  );
+	    }
+	}
+	return 100 * D(n,m) / (double)std::min(n,m);
+    }
 }
 

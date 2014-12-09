@@ -28,6 +28,7 @@
 #include "LocARNA/arc_matches.hh"
 #include "LocARNA/match_probs.hh"
 #include "LocARNA/ribosum.hh"
+#include "LocARNA/ribofit.hh"
 #include "LocARNA/anchor_constraints.hh"
 //#include "LocARNA/sequence_annotation.hh"
 #include "LocARNA/trace_controller.hh"
@@ -177,10 +178,14 @@ struct command_line_parameters {
 
     std::string ribosum_file; //!< ribosum_file
     bool use_ribosum; //!< use_ribosum
-
+    
+    //! use estimated ribosum-like base and arc match scores adapted
+    //! to sequence indentity; overrides use_ribosum and ribosum_file
+    bool opt_ribofit; 
+    
     bool opt_probcons_file; //!< whether to probcons_file
     std::string probcons_file; //!< probcons_file
-
+    
     bool opt_mea_alignment; //!< whether to mea_alignment
 
     bool opt_write_matchprobs; //!< whether to write_matchprobs
@@ -315,6 +320,9 @@ option_def my_options[] = {
     // {"anchorB",0,0,O_ARG_STRING,&clp.seq_anchors_B,"","string","Anchor constraints sequence B"},
     //{"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints input files"},
 
+    {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
+    {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool","Use Ribofit base and arc match scores (overrides ribosum)"},
+    
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
 
     {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"file 1","Basepairs input file 1"},
@@ -439,7 +447,12 @@ main(int argc, char **argv) {
     // Ribosum matrix
     //
     RibosumFreq *ribosum=NULL;
-	
+    Ribofit *ribofit=NULL;
+    
+    if (clp.opt_ribofit) {
+	ribofit = new Ribofit_will2014;
+    }
+    
     if (clp.use_ribosum) {
 	if (clp.ribosum_file == "RIBOSUM85_60") {
 	    if (clp.opt_verbose) {
@@ -449,19 +462,8 @@ main(int argc, char **argv) {
 	} else {
 	    ribosum = new RibosumFreq(clp.ribosum_file);
 	}
-	
-	// if (clp.opt_verbose) {
-	//   std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
-	//   <<" C: "<< ribosum->base_nonstruct_prob('C')
-	//   <<" G: "<< ribosum->base_nonstruct_prob('G')
-	//   <<" U: "<< ribosum->base_nonstruct_prob('U')
-	//   << std::endl;
-	
-	//   ribosum->print_basematch_scores_corrected();
-	// }
     }
-
-        
+    
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
@@ -639,8 +641,9 @@ main(int argc, char **argv) {
     if (clp.opt_write_matchprobs || clp.opt_mea_alignment) {
 	match_probs = new MatchProbs;
 
-	if (!clp.use_ribosum) {
-	    std::cerr << "WARNING: Ribosum scoring used for mea_alignment and computing matchprobs."<<std::endl;
+	if (ribosum==NULL) {
+	    std::cerr << "ERROR: Ribosum required for mea_alignment and computing matchprobs."<<std::endl;
+	    exit(-1);
 	}
 
 	if (clp.opt_read_matchprobs) {
@@ -715,6 +718,7 @@ main(int argc, char **argv) {
 				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
 				 0, // this is indel_opening_loop_score, for consistency and least modification to locarna.cc has been set to zero
 				 ribosum,
+				 ribofit,
 				 clp.unpaired_penalty,
 				 clp.struct_weight,
 				 clp.tau_factor,
@@ -1008,6 +1012,7 @@ main(int argc, char **argv) {
     if (match_probs) delete match_probs;
     if (arc_matches) delete arc_matches;
     if (multiple_ref_alignment) delete multiple_ref_alignment;
+    if (ribofit) delete ribofit;
     if (ribosum) delete ribosum;
 
     if (rna_dataA) delete rna_dataA;

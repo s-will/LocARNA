@@ -840,6 +840,7 @@ my @autopass_arg_options =
      "indel-opening=i",
      "ribosum-file=s",
      "use-ribosum=s",
+     "ribofit=s",
      "struct-weight|s=i",
      "tau|t=i",
      "exclusion|E=i",

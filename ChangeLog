@@ -460,3 +460,5 @@ Nov 2013
 	Add Example gcvT.fa for SPARSE
 	sparse: --special-gap-symbols option added (default is false)
 	(Release 1.8.0)
+	Implement ribofit
+	

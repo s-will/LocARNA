@@ -1,0 +1,16 @@
+/* RIBOFIT */
+
+static const char will2014_nucleotides[4];
+
+static const double
+will2014_bmscore_coefficients[11][3];
+
+static const double
+will2014_amscore_coefficients[137][3];
+
+static const double
+will2014_bmscore(size_t i, size_t j,double identity);
+
+static const double
+will2014_amscore(size_t i, size_t j,size_t k, size_t l,double identity);
+
