@@ -318,10 +318,17 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// call fold for setting the pf_scale
-	min_free_energy_ = alifold(c_sequences,c_structure);
-	min_free_energy_structure_ = c_structure;
-	// std::cout << c_structure << std::endl;
-	free_alifold_arrays();
+	if (length>0) { // don't call alifold for 0 length (necessary
+			// workaround, since alifold cannot handle
+			// empty sequences)
+	    min_free_energy_ = alifold(c_sequences,c_structure);
+	    min_free_energy_structure_ = c_structure;
+	    // std::cout << c_structure << std::endl;
+	    free_alifold_arrays();
+	} else {
+	    min_free_energy_ = 0;
+	    min_free_energy_structure_ = c_structure;
+	}
 	
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
@@ -337,7 +344,11 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// call alipf_fold
-	alipf_fold(c_sequences,c_structure,NULL);
+	if (length>0) { // don't call alifold for 0 length (necessary
+			// workaround, since alifold cannot handle
+			// empty sequences)
+	    alipf_fold(c_sequences,c_structure,NULL);
+	}
 	
 	// ----------------------------------------
 	// get McC data structures and copy
@@ -346,8 +357,9 @@ namespace LocARNA {
 	// overwritten by the next call to pf_fold, we have to copy
 	// the data structures if we want to keep them.
 	//
+	// optionally makes local copy (only if length>0: alifold workaround!)
 	McCmat_ =
-	    new McC_ali_matrices_t(n_seq,length,local_copy); // optionally makes local copy
+	    new McC_ali_matrices_t(n_seq,length,local_copy && (length>0));
 	
 	
 	// precompute further tables expMLbase and scale for computations

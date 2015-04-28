@@ -461,4 +461,7 @@ Nov 2013
 	sparse: --special-gap-symbols option added (default is false)
 	(Release 1.8.0)
 	Implement ribofit
-	
+	Bugfix in OMatrix: incorrect address calculation
+	Bugfix: LocARNA crashed while writing the result pp file if
+	alignments of zero length are computed with options local file
+	output and alifold consensus dp (alifold workaround)
