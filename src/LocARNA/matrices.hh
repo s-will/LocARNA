@@ -204,7 +204,7 @@ namespace LocARNA {
 	size_t addr(size_t i, size_t j) const {
 	    assert(xoff_<=i && i<xoff_+this->xdim_);
 	    assert(yoff_<=j && j<yoff_+this->ydim_);
-	    return i*this->xdim_ + j - off_;
+	    return i*this->ydim_ + j - off_;
 	}
     
     public:
@@ -214,7 +214,10 @@ namespace LocARNA {
 	 * 
 	 * @return 
 	 */
-	OMatrix() : Matrix<elem_t>(0) {
+	OMatrix()
+	    : Matrix<elem_t>(),
+	      off_(0), 
+	      xoff_(0),yoff_(0) {
 	}
         
 	/** 
@@ -229,7 +232,7 @@ namespace LocARNA {
 	resize(size_t xdim, size_t ydim, size_t xoff=0, size_t yoff=0) {
 	    xoff_=xoff;
 	    yoff_=yoff;
-	    off_=xoff*xdim+yoff;
+	    off_=xoff*ydim+yoff;
 	    this->xdim_=xdim;
 	    this->ydim_=ydim;
 	    this->mat_.resize(xdim*ydim);

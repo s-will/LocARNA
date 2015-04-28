@@ -139,7 +139,12 @@ namespace LocARNA {
 	    }
 	};
     
-    
+
+	/** 
+	 * @brief Empty constructor (with default default value)
+	 */
+	SparseMatrix() : the_map_(),def_() {}
+	
 	/** 
 	 * @brief Construct with default value
 	 * 
@@ -266,7 +271,8 @@ namespace LocARNA {
 	 *
 	 * @see end()
 	 */
-	const_iterator begin() const {
+	const_iterator
+	begin() const {
 	    return the_map_.begin();
 	}
 	
@@ -276,10 +282,21 @@ namespace LocARNA {
 	 * @return const iterator pointing after end of entry hash
 	 * @see begin()
 	 */
-	const_iterator end() const {
+	const_iterator 
+	end() const {
 	    return the_map_.end();
 	}
-	
+
+
+	/**
+	 * @brief Default value
+	 *
+	 * @returns default value
+	 */
+	const value_t &
+	def() const {
+	    return def_;
+	}
     };
 
     /** 

@@ -76,7 +76,8 @@ transform = s/\.bin$$//
 LDADD=libLocARNA-$(API_VERSION).la
 
 BINTESTS = Tests/multiple_alignment Tests/rna_data Tests/ext_rna_data	\
-           Tests/trace_controller Tests/rna_ensemble Tests/rna_structure
+           Tests/trace_controller Tests/rna_ensemble			\
+           Tests/rna_structure Tests/matrices
 SCRIPTTESTS = Tests/mlocarna-calls.sh
 
 TESTS= $(BINTESTS) $(SCRIPTTESTS)
