@@ -16,11 +16,18 @@ namespace LocARNA {
      * @brief Compare RNA secondary structure by their confusion matrix
      *
      * Computes confusion matrix and Matthews' correlation coefficient
-     * @todo implement slide rule
      *
      * Base pair filters provide a generic way to count only a subset
      * of potential base pairs, e.g. only canonical base pairs, or
      * base pairs in a certain range l..u
+     *
+     * Implements slide rule and conflict rule; see Paul special
+     *
+     * Slide rule: tolerate shift of one base pair end by 1 position
+     * (affects true positives and false negatives)
+     *
+     * Conflict rule: predicted base pairs are false only if they conflict with reference;
+     * two base pair conflict iff they share one end (affects "false positives")
      */
     class ConfusionMatrix {
     public:
@@ -145,17 +152,22 @@ namespace LocARNA {
 		return fa_(i,j) && fb_(i,j);
 	    }
 	};
-	
+
 	
 	/** 
 	 * Construct with reference and predicted structure (given as dot-bracket strings) 
 	 * 
 	 * @param ref  reference structure
 	 * @param pred predicted structure
+	 * @param slide use slide rule [default off]
+	 * @param conflict use conflict rule [default off]
+	 * @param filter base pair filter
 	 */
 	ConfusionMatrix(const std::string &ref,
 			const std::string &pred,
-			const BPFilter &filter=BPFilter()
+			const bool slide,
+			const bool conflict,
+			const BPFilter &filter=BPMinLoopSizeFilter(3)
 			);
 	
 	/** 
@@ -163,25 +175,32 @@ namespace LocARNA {
 	 * 
 	 * @param ref  reference structure
 	 * @param pred predicted structure
+	 * @param slide use slide rule [default off]
+	 * @param conflict use conflict rule [default off]
+	 * @param filter base pair filter
 	 */	
 	ConfusionMatrix(const RnaStructure &ref,
 			const RnaStructure &pred,
-			const BPFilter &filter=BPFilter()
+			const bool slide,
+			const bool conflict,
+			const BPFilter &filter=BPMinLoopSizeFilter(3)
 			);
 
 	/** 
-	 * True positives
+	 * @brief True positives
 	 * 
 	 * @return number of true positive base pairs 
 
-	 * @note A true positive is a pair which is basepaired in
-	 * both prediction and annotation (slide not implemented yet).
+	 * @note A true positive is a pair that is basepaired in both
+	 * prediction and annotation; this is softened with slide
+	 * rule, see @count_common_bps().
+	 *
 	 */
 	size_t
 	tp() const { return tp_; }
     
 	/** 
-	 * True negatives
+	 * @brief True negatives
 	 * 
 	 * @return number of true negative base pairs 
 	 *
@@ -192,31 +211,15 @@ namespace LocARNA {
 	tn() const { return tn_; }
 
 	/** 
-	 * False positives
-	 * 
+	 * @brief False positives
+	 *
 	 * @return number of false positive base pairs
 	 *
 	 * @note A false positive is a pair predicted to basepair but
 	 * not annotated.
 	 */
 	size_t
-	fp() const {	
-	    return fp_;
-	}
-
-	/** 
-	 * False positives in conflict with reference
-	 * 
-	 * @return number of false positive base pairs, where only conflicting base pairs
-	 * are counted as false
-	 *
-	 * @note A false positive in conflict is a predicted pair that
-	 * conflicts with reference
-	 */
-	size_t
-	cfp() const {	
-	    return cfp_;
-	}
+	fp( ) const { return fp_; }
 
 	/** 
 	 * False negatives
@@ -269,16 +272,6 @@ namespace LocARNA {
 	double
 	f1_score() const;
 
- 	/** 
-	 * F1 score (aka F-score, F-measure), considering only conflicting false positives
-	 * 
-	 * harmonic mean of CPPV and SENS
-	 *
-	 * @return F1 = CPPV*SENS / (CPPV+SENS), if CPPV+SENS!=0; 0, otherwise 
-	 */
-	double
-	cf1_score() const;
-
 	/** 
 	 * Matthews' correlation coefficient
 	 * 
@@ -286,7 +279,7 @@ namespace LocARNA {
 	 */
 	double
 	mcc() const;
-
+	
     protected:
 	
 	/** 
@@ -294,17 +287,15 @@ namespace LocARNA {
 	 * 
 	 * @param s1   first structure 
 	 * @param s2  second structure
-	 * 
+	 *
 	 * @return number of base pairs common to both structures  
 	 */
-	static
 	size_t
 	count_common_bps(const RnaStructure &s1,
-			 const RnaStructure &s2,
-			 const BPFilter &filter);
+			 const RnaStructure &s2);
 
 	/** 
-	 * @brief Count conflicting base pairs
+	 * @brief Count conflicting base pairs (including common bps)
 	 * 
 	 * @param s1   first structure 
 	 * @param s2  second structure
@@ -314,21 +305,17 @@ namespace LocARNA {
 	 * 
 	 * @return number of base pairs in s1 that conflict with s2
 	 */
-	static
 	size_t
 	count_conflicting_base_pairs(const RnaStructure &s1,
-				     const RnaStructure &s2,
-				     const BPFilter &filter);
+				     const RnaStructure &s2);
 	/**
 	 * @brief Count potential base pairs
 	 * 
 	 * @param length length of RNA
 	 * @return number of potential base pairs
 	 */
-	static
 	size_t
-	count_potential_base_pairs(size_t length,
-				   const BPFilter &filter);
+	count_potential_base_pairs(size_t length);
 	
 
 	/**
@@ -337,10 +324,8 @@ namespace LocARNA {
 	 * @param structure RNA structure
 	 * @return number of base pairs
 	 */
-	static
 	size_t
-	count_base_pairs(const RnaStructure &s,
-			 const BPFilter &filter);
+	count_base_pairs(const RnaStructure &s);
 	
     private:
 	/** 
@@ -354,13 +339,15 @@ namespace LocARNA {
 	 */
 	void
 	compute_confusion_matrix(const RnaStructure &ref, 
-				 const RnaStructure &pred,
-				 const BPFilter &filter);
+				 const RnaStructure &pred);
+	
+	bool slide_;
+	bool conflict_;
+	const BPFilter &filter_;
 	
 	size_t tp_;  //!< num of true positives
 	size_t tn_;  //!< num of true negatives
 	size_t fp_;  //!< num of false positives
-	size_t cfp_; //!< num of conflicting false positives
 	size_t fn_;  //!< num of false negatives
     };
 

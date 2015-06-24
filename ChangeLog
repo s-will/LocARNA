@@ -465,3 +465,10 @@ Nov 2013
 	Bugfix: LocARNA crashed while writing the result pp file if
 	alignments of zero length are computed with options local file
 	output and alifold consensus dp (alifold workaround)
+
+2015
+	bugfixes (OMatrix, alifold len 0 bug)
+	implement slide rule and conflict rule for f1 and mcc calculation;
+	also use default minimal base pair length 3 in class
+	ConfusionMatrix; class interface changes slightly
+	

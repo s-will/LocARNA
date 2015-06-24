@@ -20,6 +20,8 @@ namespace LocARNA {
      *
      * Generally, base pairs (i,j) have to be oriented, i.e. i<j;
      * compare private method assert_valid_bp()
+     *
+     * @todo read structure in ct format from stream
      */
     class RnaStructure {
     public:
