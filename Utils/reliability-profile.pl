@@ -426,10 +426,9 @@ if ($fit_once_on) {
 my $sequence = $sequence_alistr;
 $sequence =~ s/-//g;
 
-if ($write_subseq) {
-    
-    print "SEQ ".">".$title." fit=".$fitlist[0]." ".$fitlist[1]."\n";
-    print "SEQ ".substr($sequence,$fitlist[0],$fitlist[1])."\n";
+if ($write_subseq) {    
+    print "SEQ ".">".$title." fit=".($fitlist[0]+$offset-1)."-".($fitlist[1]+$offset-1)."\n";
+    print "SEQ ".substr($sequence,$fitlist[0]-1,$fitlist[1]-$fitlist[0]+1)."\n";
 }
 
 
