@@ -288,12 +288,27 @@ namespace LocARNA {
 	 * @param s1   first structure 
 	 * @param s2  second structure
 	 *
-	 * @return number of base pairs common to both structures  
+	 * @return number of base pairs in the first structure that
+	 * are as well in the second (optionally according to slide rule)
+	 *
+	 * @note due to slide rule this is not symmetric
 	 */
 	size_t
 	count_common_bps(const RnaStructure &s1,
 			 const RnaStructure &s2);
-
+	
+	/** 
+	 * @brief Count true positive base pairs
+	 * 
+	 * @param pred predicted structure
+	 * @param ref  reference structure
+	 *
+	 * @return number of true positive base pairs
+	 */
+	size_t
+	count_tps(const RnaStructure &pred,
+		  const RnaStructure &ref);
+	
 	/** 
 	 * @brief Count conflicting base pairs (including common bps)
 	 * 

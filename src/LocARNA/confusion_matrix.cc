@@ -34,6 +34,45 @@ namespace LocARNA {
     }
 
     size_t
+    ConfusionMatrix::count_tps(const RnaStructure &pred,
+			       const RnaStructure &ref) {
+	size_t count=0;
+
+	std::vector<bool> ref_free(ref.length(),true);
+	
+	for (RnaStructure::const_iterator it=ref.begin();ref.end()!=it; ++it) {
+	    if (filter_(*it)) {
+		ref_free[it->first]=false;
+		ref_free[it->second]=false;
+	    }
+	}
+
+	for (RnaStructure::const_iterator it=pred.begin();pred.end()!=it; ++it) {
+	    const RnaStructure::bp_t &bp = *it;
+	    size_t i=bp.first;
+	    size_t j=bp.second;
+	    if (filter_(bp)) {
+		if ( ref.contains(bp)
+		     ||
+		     ( slide_ && ( ref.contains( RnaStructure::bp_t(i-1,j) ) ||
+				   ref.contains( RnaStructure::bp_t(i+1,j) ) ||
+				   ref.contains( RnaStructure::bp_t(i,j-1) ) ||
+				   ref.contains( RnaStructure::bp_t(i,j+1) ) )
+		       )
+		     ||
+		     ( conflict_ && ( ref_free[i] && ref_free[j] )
+		       )
+		     ) {
+		    
+		    count++;
+
+		}
+	    }
+	}
+	return count;
+    }
+    
+    size_t
     ConfusionMatrix
     ::count_conflicting_base_pairs(const RnaStructure &s1,
 				   const RnaStructure &s2) {
@@ -61,7 +100,7 @@ namespace LocARNA {
     size_t
     ConfusionMatrix::count_potential_base_pairs(size_t length) {
 	size_t count=0;
-	for (size_t i=0; i<=length; i++) {
+	for (size_t i=1; i<=length; i++) {
 	    for (size_t j=i+1; j<=length; j++) {
 		if (filter_(i,j)) {
 		    count++;
@@ -86,31 +125,22 @@ namespace LocARNA {
     ConfusionMatrix::compute_confusion_matrix(const RnaStructure &ref, 
 					      const RnaStructure &pred) {
 	// compute confusion matrix
-    
-	size_t common = count_common_bps(ref,pred);
 
 	size_t positives = count_base_pairs(pred);
 	size_t negatives = count_base_pairs(ref);
 
-	// conflicting base pairs are present in prediction but
-	// conflict with reference
-	size_t conflicting =
-	    conflict_
-	    ? count_conflicting_base_pairs(pred,ref)
-	    : positives;
-	
-
-	std::cerr << "com: "<<common
-		  <<" confl: "<<conflicting
-		  <<" pos: "<<positives
-		  <<" neg: "<<negatives
-		  << std::endl;
-	
+	// // conflicting base pairs are present in prediction but
+	// // conflict with reference
+	// size_t conflicting =
+	//     conflict_
+	//     ? count_conflicting_base_pairs(pred,ref)
+	//     : positives;
+		
 	// true positives base pairs are present in prediction and
 	// reference (optionally due to slide rule) or
 	// non-conflicting; note: common base pairs are always
 	// conflicting
-	tp_ = common + (positives - conflicting); 
+	tp_ = count_tps(pred,ref);
 	
 	// false positives base pairs are present in prediction but
 	// not in reference
@@ -118,7 +148,7 @@ namespace LocARNA {
 	
 	// false negative base pairs are present in reference but not
 	// in prediction
-	fn_ = negatives - common;
+	fn_ = negatives - count_common_bps(ref,pred);
     
 	// true negative base pairs are hypothetical base pairs that
 	// are neither present in reference nor in prediction
@@ -183,18 +213,20 @@ namespace LocARNA {
     double
     ConfusionMatrix::f1_score() const {
 	if (ppv()==0 || sens()==0) return 0.0;
-	return 2.0 * ppv()*sens() / (ppv()+sens());
+	return 2.0 * ppv()*sens() / ((double)ppv()+sens());
     }
     
     double
     ConfusionMatrix::mcc() const {
-	size_t denominator_sq = (tp()+fp())*(tp()+fn())*(tn()+fp())*(tn()+fn());
-    
+	double denominator_sq =
+	    ((double)tp()+(double)fp())*((double)tp()+(double)fn())
+	    * ((double)tn()+(double)fp())*((double)tn()+(double)fn());
+	
 	if (denominator_sq==0) return 0;
 	
 	return
-	  ((double)((long int)(tp()*tn()) - (long int)(fp()*fn())))
-	  / sqrt((double)denominator_sq);
+	    ((double)tp()*tn() - (double)fp()*fn())
+	    / sqrt(denominator_sq);
     }
 
 } // end namespace LocARNA
