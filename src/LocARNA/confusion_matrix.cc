@@ -38,7 +38,7 @@ namespace LocARNA {
 			       const RnaStructure &ref) {
 	size_t count=0;
 
-	std::vector<bool> ref_free(ref.length(),true);
+	std::vector<bool> ref_free(ref.length()+1,true);
 	
 	for (RnaStructure::const_iterator it=ref.begin();ref.end()!=it; ++it) {
 	    if (filter_(*it)) {
@@ -78,7 +78,7 @@ namespace LocARNA {
 				   const RnaStructure &s2) {
 	size_t count=0;
 
-	std::vector<bool> s2free(s2.length(),true);
+	std::vector<bool> s2free(s2.length()+1,true);
 	
 	for (RnaStructure::const_iterator it=s2.begin();s2.end()!=it; ++it) {
 	    if (filter_(*it)) {
