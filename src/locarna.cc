@@ -414,6 +414,11 @@ main(int argc, char **argv) {
 	return -1;
     }
 
+    if (clp.opt_normalized && clp.opt_penalized) {
+    	std::cerr << "One cannot specify penalized and normalized simultaneously."<<std::endl;
+    	return -1;
+    }
+
     // ----------------------------------------
     // temporarily turn off stacking unless background prob is set
     //
@@ -429,7 +434,7 @@ main(int argc, char **argv) {
     // sequ_local unless sequ_local mode was explicitly specified
     //
     // important: in the Aligner class, we rely on sequ_local==true in normalized alignment mode
-    if (clp.opt_normalized || clp.opt_penalized!= 0) {
+    if (clp.opt_normalized || clp.opt_penalized) {
 	if(!clp.sequ_local_given) {
 	    clp.sequ_local = true;
 	} else {
@@ -807,8 +812,8 @@ main(int argc, char **argv) {
 		
 	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
 	
-    } else if (clp.opt_penalized != 0) {
-    	score = aligner.penalized_align(clp.position_penalty,clp.opt_verbose);
+    } else if (clp.opt_penalized) {
+    	score = aligner.penalized_align(clp.position_penalty);
     }
 
     else {

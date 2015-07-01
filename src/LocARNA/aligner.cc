@@ -1546,7 +1546,7 @@ namespace LocARNA {
     //
 
     infty_score_t
-    Aligner::penalized_align(score_t position_penalty, bool opt_verbose) {
+    Aligner::penalized_align(score_t position_penalty) {
 
     	// The D matrix is filled
     	if (!pimpl_->D_created_) pimpl_->align_D();
@@ -1561,8 +1561,6 @@ namespace LocARNA {
 
 		infty_score_t score = pimpl_->align_top_level_locally(pimpl_->mod_scoring_view_);
 
-		pimpl_->alignment_.clear();
-
 		// perform a traceback for normalized alignment
 		pimpl_->trace(pimpl_->mod_scoring_view_);
 
@@ -1570,22 +1568,8 @@ namespace LocARNA {
 		// aligned subsequences from the trace
 		pos_type length=pimpl_->max_i_-pimpl_->min_i_+1+pimpl_->max_j_-pimpl_->min_j_+1;
 
-		// get score for the best alignment in the modified problem
-		// but for unmodified scoring. Because for each position,
-		// lambda was subtracted, we can just add length*lambda!
-		infty_score_t unmod_score = score + length*position_penalty;
 
-//		new_lambda = score.finite_value()/(length+L);
 
-		if (opt_verbose) std::cout << "Unmodified Score: "<<unmod_score<<" Length: "<<length<<" Penalized Score: "<<score<<std::endl;
-
-		if (opt_verbose) {
-			MultipleAlignment ma(pimpl_->alignment_,true);
-			std::cout << "Penalized Score: "<<score<<std::endl;
-			ma.write(std::cout,120);
-		}
-
-		if (opt_verbose) std::cout<<std::endl;
 	    return score;
 
     }

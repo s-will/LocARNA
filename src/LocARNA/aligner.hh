@@ -172,7 +172,7 @@ namespace LocARNA {
 
 	//! perform local alignment by subtracting a penalty for each alignment position
 	infty_score_t
-    penalized_align(score_t position_penalty, bool opt_verbose);
+    penalized_align(score_t position_penalty);
 
 	/** 
 	 * \brief evaluate the alignment according to scoring and scoring parameters

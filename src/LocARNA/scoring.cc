@@ -543,7 +543,7 @@ namespace LocARNA {
 		sequence_contribution =
 		    sigma_tab(arcA.left(),arcB.left())
 		    + sigma_tab(arcA.right(),arcB.right())
-		    + 2*lambda_; // when a scoring is modified by parameter
+		    + 4*lambda_; // when a scoring is modified by parameter
 		// lambda, we undo the change of the
 		// sequence contribution due to modified
 		// sigma tabs.
