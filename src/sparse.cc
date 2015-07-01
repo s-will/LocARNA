@@ -156,6 +156,8 @@ struct command_line_parameters {
     bool opt_pp_out; //!< whether to write pp output to file
     
     bool opt_help; //!< whether to print help
+    bool opt_galaxy_xml; //!< whether to print a galaxy xml wrapper for the parameters
+
     bool opt_version; //!< whether to print version
     bool opt_verbose; //!< whether to print verbose output
     bool opt_local_output; //!< whether to use local output
@@ -227,6 +229,7 @@ command_line_parameters clp;
 //! defines command line parameters
 option_def my_options[] = {
     {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
+    {"galaxy-xml",0,&clp.opt_galaxy_xml,O_NO_ARG,0,O_NODEFAULT,"","Galaxy xml wrapper"},
     {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
@@ -361,6 +364,12 @@ main(int argc, char **argv) {
 
 	cout << "Report bugs to <miladim (at) informatik.uni-freiburg.de>."<<endl<<endl;
 	return 0;
+    }
+
+    if (clp.opt_galaxy_xml) {
+    	print_galaxy_xml(argv[0],my_options);
+    	return 0;
+
     }
 
     if (clp.opt_version || clp.opt_verbose) {
