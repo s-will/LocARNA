@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.8.1-alpha2], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.8.2rc1], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
@@ -31,7 +31,25 @@ AC_CHECK_PROGS([PERL],[perl])
 AC_CHECK_PROG([HELP2MAN],[help2man],[help2man],[false])
 AC_CHECK_PROG([POD2MAN],[pod2man],[pod2man],[false])
 
+## ----------------------------------------
+# doxygen documentation
+#
 
+DX_HTML_FEATURE(ON)
+DX_CHM_FEATURE(OFF)
+DX_CHI_FEATURE(OFF)
+DX_MAN_FEATURE(OFF)
+DX_RTF_FEATURE(OFF)
+DX_XML_FEATURE(OFF)
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
+
+DX_INIT_DOXYGEN($PACKAGE_NAME, ["doxygen.cfg"], ["Doc"])
+## ----------------------------------------
+
+
+
+## ----------------------------------------
 # for Vienna RNA
 AC_CHECK_FUNCS([strdup]) #defines HAVE_STRDUP if strdup is available
 
@@ -61,7 +79,7 @@ AC_SUBST(LIBDEFS,[""]) # defines that have to be set when using the LocARNA libr
 AC_CHECK_PROG([PKG_CONFIG_AVAILABLE],pkg-config,[true],[false])
 ##
 ## if pkg-config is available, use it to configure the Vienna RNA library
-AS_IF([test "$PKG_CONFIG_AVAILABLE" == "true"],[
+AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
     # set PKG_CONFIG_PATH
     if test "$with_vrna" != "" ; then
         export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
@@ -76,7 +94,7 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" == "true"],[
 ##
 [
   AC_MSG_NOTICE([Guessing the library configuration, since pkg-config unavailable.])
-  if test "$with_vrna" == "" ; then
+  if test "$with_vrna" = "" ; then
     vrna_prefix="/usr/local"
   else
     vrna_prefix="$with_vrna"
@@ -116,7 +134,7 @@ AC_ARG_ENABLE([debug],
     debug_it="$enableval"
 )
 AC_MSG_RESULT([$debug_it])
-if test x"$debug_it" = x"yes"; then
+if test "$debug_it" = "yes"; then
     AC_DEFINE([DEBUG],1,[Turn on debugging])
     CPPFLAGS="$CPPFLAGS -g -Wall"
 else
@@ -141,7 +159,7 @@ AC_ARG_ENABLE([link-static],
 )
 
 AC_MSG_RESULT([$link_statically])
-if test x"$link_statically" = x"yes"; then
+if test "$link_statically" = "yes"; then
    LDFLAGS="$LDFLAGS -all-static"
 fi
 
@@ -158,12 +176,10 @@ AC_ARG_ENABLE([large-pf],
     use_large_pf="$enableval"
 )
 AC_MSG_RESULT([$use_large_pf])
-if test x"$use_large_pf" = x"yes"; then
+if test "$use_large_pf" = "yes"; then
     LIBDEFS="$LIBDEFS -DVERY_LARGE_PF"
     AC_DEFINE([VERY_LARGE_PF],1,[Use long double type for partition functions])
 fi
-
-
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
