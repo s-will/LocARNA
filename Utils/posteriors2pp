@@ -1,0 +1,89 @@
+#!/usr/bin/env perl
+
+=head1 NAME
+
+posteriors2pp
+
+=head1 SYNOPSIS
+
+posteriors2pp <infile >outfile.pp
+
+=head1 DESCRIPTION
+
+Convert a CONTRAfold posteriors file to a pp2.0 file,
+which is an locarna proprietary format for representing dot plots.
+Reads dotplot from stdin and write pp file to stdout.
+
+=head1 OPTIONS
+
+=over 1
+
+=item  B<--help>                        Brief help message
+
+=item  B<--man>                         Full documentation
+
+=item  B<--name=s>                      Sequence name
+
+=back
+
+
+=cut
+
+use warnings;
+use strict;
+
+##------------------------------------------------------------
+## options
+use Getopt::Long;
+use Pod::Usage;
+
+my $help;
+my $man;
+
+my $name="seq";
+
+## Getopt::Long::Configure("no_ignore_case");
+
+GetOptions(	   
+    "help"=> \$help,
+    "man" => \$man,
+    "name=s" => \$name
+    ) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+## ------------------------------------------------------------
+## main part
+
+
+## convert a CONTRAfold posteriors file to a pp file
+
+my %p;
+my $sequence="";
+
+while (my $line=<STDIN>) {
+    if( $line =~ /^(\d+)\s+(.)\s*(.*)$/ ) {
+	my $i=$1;
+	my $c=$2;
+	$sequence .= $c;
+	for my $jp (split /\s+/,$3) {
+	    if ($jp =~ /^(\d+):([\d\.]+)$/) {
+		$p{$i}{$1} = $2;
+	    }
+	}
+    }
+}
+
+
+## print pp 2.0 file
+print "#PP 2.0\n\n$name $sequence\n\n#END\n\n#SECTION BASEPAIRS\n\n";
+
+for my $i ( keys %p ) {
+    for my $j ( keys %{ $p{$i} } ) {
+	my $pij=$p{$i}{$j};
+	print "$i $j $pij\n";
+    }
+}
+
+print "\n#END\n";

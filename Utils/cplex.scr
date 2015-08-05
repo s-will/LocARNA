@@ -1,0 +1,4 @@
+read t lp
+set mip cuts gomory -1
+optimize
+display solution variables S*
