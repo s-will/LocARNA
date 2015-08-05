@@ -1540,4 +1540,38 @@ namespace LocARNA {
 	return (infty_score_t)new_lambda;
     }
 
+    // ------------------------------------------------------------
+    // Penalize predicted local alignment columns by a constant
+    // Returns penalized score
+    //
+
+    infty_score_t
+    Aligner::penalized_align(score_t position_penalty) {
+
+    	// The D matrix is filled
+    	if (!pimpl_->D_created_) pimpl_->align_D();
+
+    	if (pimpl_->mod_scoring_) delete pimpl_->mod_scoring_;
+    	pimpl_->mod_scoring_=new Scoring(*pimpl_->scoring_); // make mod_scoring point to a copy of scoring
+
+
+		// modify the scoring by lambda
+		pimpl_->mod_scoring_->modify_by_parameter(position_penalty);
+		pimpl_->mod_scoring_view_.set_lambda(position_penalty);
+
+		infty_score_t score = pimpl_->align_top_level_locally(pimpl_->mod_scoring_view_);
+
+		// perform a traceback for normalized alignment
+		pimpl_->trace(pimpl_->mod_scoring_view_);
+
+		// compute length (of alignment) as sum of lengths of
+		// aligned subsequences from the trace
+		pos_type length=pimpl_->max_i_-pimpl_->min_i_+1+pimpl_->max_j_-pimpl_->min_j_+1;
+
+
+
+	    return score;
+
+    }
+
 } //end namespace LocARNA

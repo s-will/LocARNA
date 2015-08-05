@@ -116,6 +116,10 @@ namespace LocARNA {
     /* print a longer help */
     void print_help(char *progname, option_def options[]);
 
+    char* convert_arg_type(int arg_type);
+
+    void print_galaxy_xml(char *progname, option_def options[]);
+
     /** 
      * Print all options and their settings to standard out
      * 

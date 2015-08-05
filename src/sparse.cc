@@ -156,6 +156,8 @@ struct command_line_parameters {
     bool opt_pp_out; //!< whether to write pp output to file
     
     bool opt_help; //!< whether to print help
+    bool opt_galaxy_xml; //!< whether to print a galaxy xml wrapper for the parameters
+
     bool opt_version; //!< whether to print version
     bool opt_verbose; //!< whether to print verbose output
     bool opt_local_output; //!< whether to use local output
@@ -227,6 +229,7 @@ command_line_parameters clp;
 //! defines command line parameters
 option_def my_options[] = {
     {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
+    {"galaxy-xml",0,&clp.opt_galaxy_xml,O_NO_ARG,0,O_NODEFAULT,"","Galaxy xml wrapper"},
     {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
@@ -282,8 +285,8 @@ option_def my_options[] = {
     {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
-    {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.00005","threshold","Threshold for prob_unpaired_in_loop"},
-    {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
+    {"prob-unpaired-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.00005","threshold","Threshold for prob_unpaired_in_loop"},
+    {"prob-basepair-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
 //    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
@@ -361,6 +364,12 @@ main(int argc, char **argv) {
 
 	cout << "Report bugs to <miladim (at) informatik.uni-freiburg.de>."<<endl<<endl;
 	return 0;
+    }
+
+    if (clp.opt_galaxy_xml) {
+    	print_galaxy_xml(argv[0],my_options);
+    	return 0;
+
     }
 
     if (clp.opt_version || clp.opt_verbose) {

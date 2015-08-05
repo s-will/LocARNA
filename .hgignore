@@ -1,4 +1,7 @@
 syntax: glob
+Bugs/
+External/
+MatchprobsVsTrace/
 _inst/*
 _build/*
 *~

@@ -85,6 +85,8 @@ struct command_line_parameters {
     
     int unpaired_penalty; //!< penalty for unpaired bases
 
+    int position_penalty; //!< penalty for each position in predicted alignment
+
     int struct_weight; //!< structure weight
 
     //! contribution of sequence similarity in an arc match (in percent)
@@ -222,7 +224,11 @@ struct command_line_parameters {
     int probability_scale; //!< probability scale
 
     bool opt_normalized; //!< whether to do normalized alignment
+
+    bool opt_penalized; //!< whether to penalize alignment positions
+
     int normalized_L; //!< normalized_L
+
 
     bool opt_score_components; //!< whether to report score components
 };
@@ -247,6 +253,7 @@ option_def my_options[] = {
     {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
     {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-500","score","Indel opening score"},
     {"unpaired_penalty",0,0,O_ARG_INT,&clp.unpaired_penalty,"0","score","Penalty for unpaired bases"},
+//    {"position_penalty",0,0,O_ARG_INT,&clp.position_penalty,"0","score","Penalty for each alignment position"},
     {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score","Maximal weight of 1/2 arc match"},
     {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
@@ -260,7 +267,8 @@ option_def my_options[] = {
     {"sequ-local",0,&clp.sequ_local_given,O_ARG_BOOL,&clp.sequ_local,"false","bool","Sequence local"},
     {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,"----","spec","Whether and which end gaps are free. order: L1,R1,L2,R2"},
     {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L","Normalized local alignment with parameter L"},
-    
+    {"penalized",0,&clp.opt_penalized,O_ARG_INT,&clp.position_penalty,"0","PP","Penalized local alignment with penalty PP"},
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling output"},
 
     {"width",'w',0,O_ARG_INT,&clp.output_width,"120","columns","Output width"},
@@ -406,6 +414,11 @@ main(int argc, char **argv) {
 	return -1;
     }
 
+    if (clp.opt_normalized && clp.opt_penalized) {
+    	std::cerr << "One cannot specify penalized and normalized simultaneously."<<std::endl;
+    	return -1;
+    }
+
     // ----------------------------------------
     // temporarily turn off stacking unless background prob is set
     //
@@ -417,11 +430,11 @@ main(int argc, char **argv) {
     }
     
     // ------------------------------------------------------------
-    // if normalized alignment shall be computed, automatically turn on 
-    // sequ_local unless sequ_local mode was explicitely specified
+    // if normalized or penalized alignment shall be computed, automatically turn on
+    // sequ_local unless sequ_local mode was explicitly specified
     //
     // important: in the Aligner class, we rely on sequ_local==true in normalized alignment mode
-    if (clp.opt_normalized) {
+    if (clp.opt_normalized || clp.opt_penalized) {
 	if(!clp.sequ_local_given) {
 	    clp.sequ_local = true;
 	} else {
@@ -799,7 +812,11 @@ main(int argc, char **argv) {
 		
 	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
 	
-    } else {
+    } else if (clp.opt_penalized) {
+    	score = aligner.penalized_align(clp.position_penalty);
+    }
+
+    else {
 	
 	// ========== STANDARD CASE ==========
 	
@@ -817,7 +834,7 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Traceback
     //
-    if ((!clp.opt_normalized) && DO_TRACE) {
+    if ((!clp.opt_normalized && !clp.opt_penalized) && DO_TRACE) {
 	    
 	if (clp.opt_verbose) {
 	    std::cout << "Traceback."<<std::endl;
@@ -888,7 +905,7 @@ main(int argc, char **argv) {
     
     bool return_code=0;
 
-    if (clp.opt_normalized || DO_TRACE) { 
+    if (clp.opt_normalized || clp.opt_penalized || DO_TRACE) {
 	// if we did a trace (one way or the other)
 	
 	const Alignment &alignment = aligner.get_alignment();
