@@ -164,6 +164,7 @@ struct command_line_parameters {
     bool opt_alifold_consensus_dp; //!< whether to compute consensus dp by alifold
 
     bool opt_help; //!< whether to print help
+    bool opt_galaxy_xml; //!< whether to print a galaxy xml wrapper for the parameters
     bool opt_version; //!< whether to print version
     bool opt_verbose; //!< whether to print verbose output
     bool opt_local_output; //!< whether to write local output
@@ -240,11 +241,14 @@ command_line_parameters clp;
 
 //! defines command line parameters
 option_def my_options[] = {
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","cmd_only"},
+
     {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
+    {"galaxy-xml",0,&clp.opt_galaxy_xml,O_NO_ARG,0,O_NODEFAULT,"","Galaxy xml wrapper"},
     {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring_parameters"},
 
     {"match",'m',0,O_ARG_INT,&clp.match_score,"50","score","Match score"},
     {"mismatch",'M',0,O_ARG_INT,&clp.mismatch_score,"0","score","Mismatch score"},
@@ -261,7 +265,7 @@ option_def my_options[] = {
     {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},
     {"new-stacking",0,&clp.opt_new_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use new stacking terms (needs stack-probs by RNAfold -p2)"},   
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Locality_type"},
 
     {"struct-local",0,&clp.struct_local_given,O_ARG_BOOL,&clp.struct_local,"false","bool","Structure local"},
     {"sequ-local",0,&clp.sequ_local_given,O_ARG_BOOL,&clp.sequ_local,"false","bool","Sequence local"},
@@ -269,7 +273,7 @@ option_def my_options[] = {
     {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L","Normalized local alignment with parameter L"},
     {"penalized",0,&clp.opt_penalized,O_ARG_INT,&clp.position_penalty,"0","PP","Penalized local alignment with penalty PP"},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling output"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling_output"},
 
     {"width",'w',0,O_ARG_INT,&clp.output_width,"120","columns","Output width"},
     {"clustal",0,&clp.opt_clustal_out,O_ARG_STRING,&clp.clustal_out,O_NODEFAULT,"file","Clustal output"},
@@ -299,7 +303,7 @@ option_def my_options[] = {
     {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
     {"better",0,&clp.opt_subopt,O_ARG_INT,&clp.subopt_threshold,"-1000000","t","Enumerate alignments better threshold t"},
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Options for controlling MEA score"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","MEA_score controlling options"},
 
     {"mea-alignment",0,&clp.opt_mea_alignment,O_NO_ARG,0,O_NODEFAULT,"","Do MEA alignment"},
     {"probcons-file",0,&clp.opt_probcons_file,O_ARG_STRING,&clp.probcons_file,O_NODEFAULT,"file","Probcons parameter file"},
@@ -331,10 +335,10 @@ option_def my_options[] = {
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
     {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool","Use Ribofit base and arc match scores (overrides ribosum)"},
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
 
-    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"file 1","Basepairs input file 1"},
-    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"file 2","Basepairs input file 2"},
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"input1","Basepairs input file 1"},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"input2","Basepairs input file 2"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -373,6 +377,11 @@ main(int argc, char **argv) {
 
 	std::cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<std::endl<<std::endl;
 	return 0;
+    }
+
+    if (clp.opt_galaxy_xml) {
+    	print_galaxy_xml(argv[0],my_options);
+    	return 0;
     }
 
     if (clp.opt_version || clp.opt_verbose) {

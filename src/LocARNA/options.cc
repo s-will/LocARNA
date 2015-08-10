@@ -83,7 +83,7 @@ namespace LocARNA {
     char *sprint_option_name(char *buf,option_def *options,int i);
 
     /**
-     * Print option name as xml to string buffer
+     * Print an option as xml in Galaxy Wrapper format to string buffer
      *
      * @param buf String buffer
      * @param options options array
@@ -415,21 +415,153 @@ namespace LocARNA {
     print_galaxy_xml(char *progname, option_def options[]) {
     	int i;        /* counter */
     	int num_opts; /* number of options in options[] */
-
+    	bool is_if_open = false;
+    	bool ignore_category = false;
     	num_opts=count_opts(options);
+    	std::string category;
 
-    	printf("%s ", progname);
-// <param name="temperature" size="6" type="float" value="37.0" label="Temperature [°C]" help="-T"/>
+    	printf(
+    	"<tool id=\"%s\" name=\"%s\" version=\"1.8.1\">\n"
+    	"    <requirements>\n"
+    	"        <requirement type=\"package\" version=\"1.8.1\">%s</requirement>\n"
+    	"    </requirements>\n"
+    	"    <stdio>\n"
+    	"        <exit_code range=\"1:\" />\n"
+    	"    </stdio>\n",
+    	progname, progname, progname  //TODO simple progname should be passed or extracted
+    	);
+
+
+    	//======================================================================
+    	// print commands
+    	printf("    <command><![CDATA[\n");
+    	printf("%s \n", progname);
+    	printf ("        '$input1'\n"
+    			"        '$input2'\n"
+    			"        --clustal '$clustal_output'\n"
+    			);
 
     	for (i=0; i < num_opts; ++i) {
     		/* options and no options*/
-    		if (options[i].arg_type>O_SECTION) {
-    			printf("  %s ",sprint_option_xml(buf,options,i));
+    		if (options[i].arg_type==O_SECTION) {
+    			if (is_if_open) {
+    				printf("        #end if\n");
+    				is_if_open = false;
+    			}
+    			if (options[i].description == "cmd_only" ||
+    					options[i].description.substr(0, 11) == "Input_files")
+    			{
+    				ignore_category = true;
+    			}
+    			else  // Valid parameter category
+    			{
+    				ignore_category = false;
+    				// Category name is the first token of description with space delim
+    				std::string description = options[i].description;
+    				int split_pos = description.find(' ');
+    				if (split_pos == std::string::npos) split_pos = description.length();
+    				category = description.substr(0, split_pos);
+    				assert (category.length() > 0);
 
+    				printf("        #if $%s_selector\n", category.c_str());
+    				is_if_open = true;
+    			}
 
+    		}
+    		else if (options[i].arg_type>O_SECTION && !ignore_category &&
+    				options[i].longname != "clustal") {
+    			assert (category.length() > 0);
+    			assert (is_condition_open);
+				std::string longname (options[i].longname);
+				// replace all "-" in name with "_"
+				while ((longname.find("-")) != std::string::npos )
+					longname.replace(longname.find("-"), 1, "_");
+
+    			printf("            --%s    $%s.%s", options[i].longname.c_str(),
+    					category.c_str(), longname.c_str());
     			printf("\n");
     		}
     	}
+		if (is_if_open) {
+			printf("        #end if\n");
+		}
+    	printf ("]]></command>\n");
+
+    	//======================================================================
+    	// print parameters
+    	ignore_category = false;
+    	bool is_conditional_open = false;
+
+        printf ("<inputs>\n");
+    	for (i=0; i < num_opts; ++i) {
+    		/* options and no options*/
+    		if (options[i].arg_type==O_SECTION) {
+    			if (is_conditional_open) {
+    				printf("        </when>\n");
+    				printf("    </conditional>\n");
+    				is_conditional_open = false;
+    			}
+				// Input files and cmd_only not needed condition
+    			if (options[i].description == "cmd_only" ||
+    					options[i].description.substr(0, 11) == "Input_files")
+    			{
+    				ignore_category = true;
+    			}
+    			else if (options[i].description != "")  // Valid parameter category
+    			{
+    				ignore_category = false;
+    				// Category name is the first token of description with space delim
+    				std::string description = options[i].description;
+    				int split_pos = description.find(' ');
+    				if (split_pos == std::string::npos) split_pos = description.length();
+    				std::string category = description.substr(0, split_pos);
+    				assert (category.length() > 0);
+
+    				printf("    <conditional name=\"%s\">\n", category.c_str());
+    				printf("        <param name=\"%s_selector\" " \
+    						"type=\"select\" checked=\"False\" label=\"%s\"/>\n",
+    						category.c_str(), description.c_str());
+    				printf("        <when value=\"true\">\n");
+    				is_conditional_open = true;
+    			}
+
+    		}
+    		else if (options[i].arg_type>O_SECTION && !ignore_category &&
+    				options[i].longname != "clustal") {
+    			printf("            %s ",sprint_option_xml(buf,options,i));
+    			printf("\n");
+    		}
+    	}
+
+		if (is_conditional_open) {
+			printf("        </when>\n");
+			printf("    </conditional>\n");
+		}
+		printf(
+	    "    </inputs>\n"
+	    "    <outputs>\n"
+	    "        <data format=\"clustal\" name=\"clustal_output\" label=\"CLUSTAL outfile \"/>\n"
+	    "    </outputs>\n"
+	    );
+
+		//======================================================================
+    	// print tests
+
+	    printf ("    <tests>\n"
+	    		"    *******PUT TESTS HERE********\n"
+	    		"    </tests>");
+
+	    //======================================================================
+	    // print help
+       	printf("    <help><![CDATA[\n");
+
+       	printf("    ]]></help>");
+
+       	printf("    <citations>\n"
+	    	"    *******PUT CITATIONS HERE********\n"
+	        "        <citation type=\"doi\">10.1093/bioinformatics/btv185</citation>\n"
+	        "    </citations>\n"
+	        "</tool>\n");
 
     }
 
@@ -498,31 +630,44 @@ namespace LocARNA {
     	// <param name="temperature" size="6" type="float" value="37.0" label="Temperature [°C]" help="-T"/>
 
     	char *start=buf;
+
+
     	buf += sprintf(buf,"%s ","<param ");
     	//    	if (options[i].shortname) buf += sprintf(buf,"-%c",options[i].shortname);
     	//    	if (options[i].shortname && (options[i].longname!="")) buf += sprintf(buf,",");
-    	if (options[i].longname!="")
-    		buf += sprintf(buf,"name=\"%s\" ",options[i].longname.c_str());
 
-    	if (options[i].argument) {
-    		//    	    buf += sprintf(buf,"type=\"%s\" ", (options[i].argname!="")?options[i].argname.c_str():"param");
-    		buf += sprintf(buf,"type=\"%s\" ", convert_arg_type(options[i].arg_type));
-
-    		if (options[i].deflt==O_NODEFAULT) {
-    			buf += sprintf(buf,"optional=\"True\" ");
-    		}
-    		else {
-    			buf += sprintf(buf,"value=\"%s\" ", options[i].deflt.c_str());
-
-    		}
+    	if (options[i].longname=="" && options[i].argname.substr(0, 5)=="input")  // Input files
+    	{
+    		buf += sprintf(buf,"name=\"%s\" ",options[i].argname.c_str());
+    		buf += sprintf(buf,"format=\"fasta\" "); //TODO: support pp 2.0
     	}
-    	else {  // O_NO_ARG
-    		buf += sprintf(buf,"type=\"boolean\" checked=\"false\" truevalue=\"--%s\" falsevalue=\"\" ", options[i].longname.c_str());
+    	else {  // Other params
+			if (options[i].longname!="")
+			{
+				std::string longname (options[i].longname);
 
+				// replace all "-" in name with "_"
+				while ((longname.find("-")) != std::string::npos )
+					longname.replace(longname.find("-"), 1, "_");
+				buf += sprintf(buf,"name=\"%s\" ", longname.c_str());
+			}
+			if (options[i].argument) {
+				//    	    buf += sprintf(buf,"type=\"%s\" ", (options[i].argname!="")?options[i].argname.c_str():"param");
+				buf += sprintf(buf,"type=\"%s\" ", convert_arg_type(options[i].arg_type));
+
+				if (options[i].deflt==O_NODEFAULT) {
+					buf += sprintf(buf,"optional=\"True\" ");
+				}
+				else {
+					buf += sprintf(buf,"value=\"%s\" ", options[i].deflt.c_str());
+
+				}
+			}
+			else {  // O_NO_ARG
+				buf += sprintf(buf,"type=\"boolean\" checked=\"false\" truevalue=\"--%s\" falsevalue=\"\" ", options[i].longname.c_str());
+
+			}
     	}
-
-
-
 
 		if (options[i].description!="")
 			buf += sprintf(buf, "label=\"%s\" ",options[i].description.c_str());

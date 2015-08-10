@@ -157,7 +157,6 @@ struct command_line_parameters {
     
     bool opt_help; //!< whether to print help
     bool opt_galaxy_xml; //!< whether to print a galaxy xml wrapper for the parameters
-
     bool opt_version; //!< whether to print version
     bool opt_verbose; //!< whether to print verbose output
     bool opt_local_output; //!< whether to use local output
@@ -228,12 +227,14 @@ command_line_parameters clp;
 
 //! defines command line parameters
 option_def my_options[] = {
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","cmd_only"},
+
     {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
     {"galaxy-xml",0,&clp.opt_galaxy_xml,O_NO_ARG,0,O_NODEFAULT,"","Galaxy xml wrapper"},
     {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring_parameters"},
 
     {"match",'m',0,O_ARG_INT,&clp.match_score,"50","score","Match score"},
     {"mismatch",'M',0,O_ARG_INT,&clp.mismatch_score,"0","score","Mismatch score"},
@@ -258,7 +259,7 @@ option_def my_options[] = {
     {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L","Normalized local alignment with parameter L"},
 */
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling output"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling_output"},
 
     {"width",'w',0,O_ARG_INT,&clp.output_width,"120","columns","Output width"},
     {"clustal",0,&clp.opt_clustal_out,O_ARG_STRING,&clp.clustal_out,O_NODEFAULT,"file","Clustal output"},
@@ -288,11 +289,11 @@ option_def my_options[] = {
     {"prob-unpaired-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.00005","threshold","Threshold for prob_unpaired_in_loop"},
     {"prob-basepair-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
+//    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
 //    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
 //    {"better",0,&clp.opt_subopt,O_ARG_INT,&clp.subopt_threshold,"-1000000","t","Enumerate alignments better threshold t"},
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Options for controlling MEA score"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","MEA_score controlling options"},
 
     {"mea-alignment",0,&clp.opt_mea_alignment,O_NO_ARG,0,O_NODEFAULT,"","Do MEA alignment"},
     {"probcons-file",0,&clp.opt_probcons_file,O_ARG_STRING,&clp.probcons_file,O_NODEFAULT,"file","Probcons parameter file"},
@@ -322,12 +323,13 @@ option_def my_options[] = {
     
 
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
+    // TODO: relocate ribofit
     {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool","Use Ribofit base and arc match scores (overrides ribosum)"},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
 
-    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"file 1","Basepairs input file 1"},
-    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"file 2","Basepairs input file 2"},
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"input1","Input file 1"},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"input2","Input file 2"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -369,7 +371,6 @@ main(int argc, char **argv) {
     if (clp.opt_galaxy_xml) {
     	print_galaxy_xml(argv[0],my_options);
     	return 0;
-
     }
 
     if (clp.opt_version || clp.opt_verbose) {
