@@ -554,8 +554,8 @@ namespace LocARNA {
 	    //======================================================================
 	    // print help
        	printf("    <help><![CDATA[\n");
-
-       	printf("    ]]></help>");
+       	print_help(progname, options);
+       	printf("    ]]></help>\n\n");
 
        	printf("    <citations>\n"
 	    	"    *******PUT CITATIONS HERE********\n"
