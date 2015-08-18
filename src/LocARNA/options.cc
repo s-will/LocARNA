@@ -419,16 +419,26 @@ namespace LocARNA {
     	bool ignore_category = false;
     	num_opts=count_opts(options);
     	std::string category;
+    	std::string version("X.X.X");
+    	std::string package("XXX");
 
+#ifdef HAVE_CONFIG_H
+    	#ifdef VERSION
+    		version = VERSION;
+		#endif
+		#ifdef PACKAGE
+    		package = PACKAGE;
+		#endif
+#endif
     	printf(
-    	"<tool id=\"%s\" name=\"%s\" version=\"1.8.1\">\n"
+    	"<tool id=\"%s\" name=\"%s\" version=\"%s\">\n"
     	"    <requirements>\n"
-    	"        <requirement type=\"package\" version=\"1.8.1\">%s</requirement>\n"
+    	"        <requirement type=\"package\" version=\"%s\">%s</requirement>\n"
     	"    </requirements>\n"
     	"    <stdio>\n"
     	"        <exit_code range=\"1:\" />\n"
     	"    </stdio>\n",
-    	progname, progname, progname  //TODO simple progname should be passed or extracted
+    	package.c_str(), package.c_str(), version.c_str(), version.c_str(), package.c_str()  //TODO simple progname should be passed or extracted
     	);
 
 
