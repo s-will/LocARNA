@@ -296,7 +296,7 @@ namespace LocARNA {
     }
 
 
-    char* convert_arg_type(int arg_type) {
+    const char* convert_arg_type(int arg_type) {
 
     	switch (arg_type) {
 
@@ -471,7 +471,6 @@ namespace LocARNA {
     		else if (options[i].arg_type>O_SECTION && !ignore_category &&
     				options[i].longname != "clustal") {
     			assert (category.length() > 0);
-    			assert (is_condition_open);
 				std::string longname (options[i].longname);
 				// replace all "-" in name with "_"
 				while ((longname.find("-")) != std::string::npos )
