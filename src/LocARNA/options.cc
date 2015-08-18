@@ -494,15 +494,17 @@ namespace LocARNA {
         printf ("<inputs>\n");
     	for (i=0; i < num_opts; ++i) {
     		/* options and no options*/
-    		if (options[i].arg_type==O_SECTION) {
+    		if (options[i].arg_type==O_SECTION ||
+    				options[i].arg_type==O_SECTION_HIDE) {
     			if (is_conditional_open) {
     				printf("        </when>\n");
     				printf("    </conditional>\n");
     				is_conditional_open = false;
     			}
-				// Input files and cmd_only not needed condition
-    			if (options[i].description == "cmd_only" ||
-    					options[i].description.substr(0, 11) == "Input_files")
+				// Hidden section, Input files and cmd_only not needed condition
+    			if (options[i].arg_type==O_SECTION_HIDE ||
+    					options[i].description == "cmd_only" ||
+    					options[i].description.substr(0, 11) == "Input_files" )
     			{
     				ignore_category = true;
     			}
