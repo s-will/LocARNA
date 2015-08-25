@@ -43,17 +43,6 @@ autom4te.cache/
 LocARNA.pc
 LocARNA-*.pc
 src/libLocARNA-*.la
-man/locarna.1
-man/locarna_p.1
-man/locarnate.1
-man/mlocarna.1
-man/locarna_deviation.1
-man/locarnap-predict-and-plot.pl.1
-man/locarnap-realign-all.pl.1
-man/locarnap-revcomp.pl.1
-man/locarnap-revisit-RNAz-hits.pl.1
-man/locarnap_fit.1
-man/reliability-profile.pl.1
 
 src/fit
 src/deviation
