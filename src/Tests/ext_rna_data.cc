@@ -22,7 +22,7 @@ main(int argc, char **argv) {
     std::ostringstream sizeinfo1;
     std::ostringstream sizeinfo2;
 
-    std::string outfilename="Tests/archaea.pp";
+    std::string outfilename="Tests/ext-archaea.pp";
     try {
 	
 	ExtRnaData rna_data("Tests/archaea.aln",0.01,0.0001,0.0001,5,10,10,pfparams);
