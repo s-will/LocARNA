@@ -468,7 +468,7 @@ namespace LocARNA {
     				ignore_category = false;
     				// Category name is the first token of description with space delim
     				std::string description = options[i].description;
-    				int split_pos = description.find(' ');
+    				size_type split_pos = description.find(' ');
     				if (split_pos == std::string::npos) split_pos = description.length();
     				category = description.substr(0, split_pos);
     				assert (category.length() > 0);
@@ -523,7 +523,7 @@ namespace LocARNA {
     				ignore_category = false;
     				// Category name is the first token of description with space delim
     				std::string description = options[i].description;
-    				int split_pos = description.find(' ');
+    				size_type split_pos = description.find(' ');
     				if (split_pos == std::string::npos) split_pos = description.length();
     				std::string category = description.substr(0, split_pos);
     				assert (category.length() > 0);
