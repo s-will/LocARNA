@@ -2,8 +2,11 @@
 === 2015
 
 1.8.2
+        change semantics w.r.t. constraints + local folding:
+	    constraints turn off local folding
         reformat change log
-	support generating doxygen documentation from distribution by make doxygen-doc
+	support generating doxygen documentation from
+	    distribution by make doxygen-doc
         penalized alignment
         experimental galaxy wrapper generation
 1.8.1
