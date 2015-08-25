@@ -1012,8 +1012,6 @@ if (defined($plfold_span)) {
     if (!defined($plfold_winsize)) {
 	$plfold_winsize = 2*$plfold_span;
     }
-    $ignore_constraints=1;
-    #printerr "Warning: can't use constraints with plfold\n";
     if (defined($stacking) || defined($new_stacking)) {
 	printerr "Can't use stacking with plfold.\n";
 	exit -1;
@@ -2649,19 +2647,40 @@ sub compute_dotplot($$) {
 	    ## handle cases where structure constraints are specified
 	    ## fixed structure #FS overrides structure #S
 	    ##
-	    if ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#FS"}) {
-		my $structure = $seqs->[$i]->{"ANNO\#FS"};
-		convert_fix_structure_to_pp($ppname,$name,$seq_str,$structure,$constraints);
-		$convert_to_pp_this=0;
+	    if ((!$ignore_constraints)
+                && exists $seqs->[$i]->{"ANNO\#FS"}) {
+                if ($verbose) {
+                  print "Fixed structure given for sequence "
+                    .$seqs->[$i]->{'name'};
+                    print " (ignore local folding)" if ($plfold_span);
+                    print ".\n";
+                }
+                my $structure = $seqs->[$i]->{"ANNO\#FS"};
+                convert_fix_structure_to_pp($ppname,$name,$seq_str,
+                                            $structure,$constraints);
+                $convert_to_pp_this=0;
 	    }
-	    elsif ((!$ignore_constraints) && exists $seqs->[$i]->{"ANNO\#S"}) {
-		# if a structure constraint is defined do constraint folding
+	    elsif ((!$ignore_constraints)
+                   && exists $seqs->[$i]->{"ANNO\#S"}) {
+                if ($verbose) {
+                    print "Structure constraints given for sequence "
+                      .$seqs->[$i]->{'name'}."\n";
+                }
+                ## if verbose, check whether local folding is active;
+                ## warn about override
+                if ($verbose and defined($plfold_span)) {
+                    printerr "WARNING: constraints override local folding.\n"
+                }
+
+                # if a structure constraint is defined do constraint folding
 		my $constraint_string = $seqs->[$i]->{"ANNO\#S"};
-		
-		if ( $RNAfoldp =~ /locarna_rnafold_pp/ ) { ## which input format? for RNAfold or locarna_rnafold_pp?
+
+                ## select call for either RNAfold or
+                ## locarna_rnafold_pp
+		if ( $RNAfoldp =~ /locarna_rnafold_pp/ ) {
 		    systemverb_withinput("$seqname $seq_str\n\#S $constraint_string\n",
 					 "$RNAfoldp -C $RNAfoldp_redirect");
-		} else { 
+		} else {
 		    systemverb_withinput(">$seqname\n$seq_str\n$constraint_string\n",
 					 "$RNAfoldp -C $RNAfoldp_redirect");
 		}
