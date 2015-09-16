@@ -1,7 +1,8 @@
 ============================================================
 === 2015
 
-1.8.3pre2
+1.8.3pre3
+	compile without openmp; handle VRNA w/o pkgconf file
 	fix c++11 warnings; fix incompatibility with libc++
 	fix incompatibility with clang (now used by MacOSX); fix warnings of clang
 	remove g++ warnings

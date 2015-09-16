@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.8.3pre2], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.8.3pre3], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
@@ -55,7 +55,6 @@ AC_CHECK_FUNCS([strdup]) #defines HAVE_STRDUP if strdup is available
 
 # Vienna RNA package library path support, if not installed in standard directory/path
 VRNA_OK=true
-VRNALIB_OK=true
 
 AC_ARG_WITH([vrna],
     AC_HELP_STRING(
@@ -77,23 +76,35 @@ AC_SUBST(LIBDEFS,[""]) # defines that have to be set when using the LocARNA libr
 ##
 ## check whether pkg-config is available 
 AC_CHECK_PROG([PKG_CONFIG_AVAILABLE],pkg-config,[true],[false])
+
+VRNALIB_OK=false
+
 ##
 ## if pkg-config is available, use it to configure the Vienna RNA library
 AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
     # set PKG_CONFIG_PATH
     if test "$with_vrna" != "" ; then
         export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
+        if test ! -e "$with_vrna/lib/pkgconfig/RNAlib2.pc" ; then
+            AC_MSG_NOTICE([Pkg-config of Vienna RNA cannot be found.])
+            AC_MSG_NOTICE([Fall back to guessing.])
+            VRNA_GUESS_FALLBACK="true"
+        fi
     fi
     #
-    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.1],[],[VRNALIB_OK=false])
-    if test "$with_vrna" != "" ; then
-        VRNA_CFLAGS="$VRNA_CFLAGS -I$with_vrna/include"
-    fi
-],
-## if pkg-config is not available, guess the configuration
+    AS_IF([test "$VRNA_GUESS_FALLBACK" != "true"],[
+        PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.1],[VRNALIB_OK=true],[VRNALIB_OK=false])
+        if test "$with_vrna" != "" ; then
+            VRNA_CFLAGS="$VRNA_CFLAGS -I$with_vrna/include"
+        fi
+    ])
+])
+## if pkg-config is not available or something else went wrong with pkg-config,
+## then guess the configuration
 ##
+AS_IF([test "$VRNALIB_OK" != "true"], 
 [
-  AC_MSG_NOTICE([Guessing the library configuration, since pkg-config unavailable.])
+  AC_MSG_NOTICE([Guessing the library configuration.])
   if test "$with_vrna" = "" ; then
     vrna_prefix="/usr/local"
   else
@@ -102,7 +113,8 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
   VRNA_LIBS="-L$vrna_prefix/lib -lRNA"
   VRNA_CFLAGS="-I$vrna_prefix/include"
   AC_MSG_NOTICE([LIBS=$VRNA_LIBS; CFLAGS=$VRNA_CFLAGS])
-  AC_MSG_NOTICE([To avoid guessing, please install pkg-config.])
+  AC_MSG_NOTICE([Guessing may be avoided by installing pkg-config.])
+  VRNALIB_OK=true
 ])
 ##
 ## finally, set LDFLAGS and CPPFLAGS
@@ -112,11 +124,11 @@ CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 # ------------------------------
 # handle open mp support
 #  this is necessary for linking against the vienna lib 2.1.x
-AC_OPENMP
-AC_SUBST(OPENMP_CXXFLAGS)
-
-CPPFLAGS="$OPENMP_CXXFLAGS $CPPFLAGS"
-LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
+#AC_OPENMP
+#AC_SUBST(OPENMP_CXXFLAGS)
+#
+#CPPFLAGS="$OPENMP_CXXFLAGS $CPPFLAGS"
+#LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
 
 # Checks for header files.
 AC_HEADER_STDC
