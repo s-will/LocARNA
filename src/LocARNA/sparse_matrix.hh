@@ -6,7 +6,6 @@
 #endif
 
 #include <iostream>
-#include <tr1/unordered_map>
 
 #include "aux.hh"
 
@@ -36,7 +35,7 @@ namespace LocARNA {
 
     protected:
 		
-	typedef std::tr1::unordered_map<key_t,value_t,pair_of_size_t_hash > map_t; //!<map type 
+	typedef typename unordered_map<key_t,value_t,pair_of_size_t_hash>::type map_t; //!<map type 
 	map_t the_map_; //!< internal representation of sparse matrix
 	value_t def_; //!< default value of matrix entries
     

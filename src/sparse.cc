@@ -11,8 +11,6 @@
 #include <fstream>
 #include <vector>
 
-#include <memory> // for auto_ptr
-
 //#include <math.h>
 
 #include "LocARNA/sequence.hh"
@@ -196,8 +194,8 @@ struct command_line_parameters {
 
     bool opt_subopt; //!< find suboptimal solution (either k-best or all solutions better than a threshold)
 
-//    int kbest_k; //!< kbest_k
-//    int subopt_threshold; //!< subopt_threshold
+    //    int kbest_k; //!< kbest_k
+    //    int subopt_threshold; //!< subopt_threshold
 
     std::string seq_anchors_A; //!< sequence anchors A
     std::string seq_anchors_B; //!< sequence anchors B
@@ -247,17 +245,17 @@ option_def my_options[] = {
     {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score","Maximal weight of 1/2 arc match"},
     {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"100","factor","Tau factor in percent"},
-//    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
-//    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},
-//    {"new-stacking",0,&clp.opt_newstacking,O_NO_ARG,0,O_NODEFAULT,"","Use new stacking terms (needs stack-probs by RNAfold -p2)"},
+    //    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
+    //    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},
+    //    {"new-stacking",0,&clp.opt_newstacking,O_NO_ARG,0,O_NODEFAULT,"","Use new stacking terms (needs stack-probs by RNAfold -p2)"},
 
-/*    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
+    /*    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
 
-    {"struct-local",0,0,O_ARG_BOOL,&clp.struct_local,"false","bool","Structure local"},
-    {"sequ-local",0,0,O_ARG_BOOL,&clp.sequ_local,"false","bool","Sequence local"},
-    {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,"----","spec","Whether and which end gaps are free. order: L1,R1,L2,R2"},
-    {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L","Normalized local alignment with parameter L"},
-*/
+          {"struct-local",0,0,O_ARG_BOOL,&clp.struct_local,"false","bool","Structure local"},
+          {"sequ-local",0,0,O_ARG_BOOL,&clp.sequ_local,"false","bool","Sequence local"},
+          {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,"----","spec","Whether and which end gaps are free. order: L1,R1,L2,R2"},
+          {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L","Normalized local alignment with parameter L"},
+    */
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling_output"},
 
@@ -265,8 +263,8 @@ option_def my_options[] = {
     {"clustal",0,&clp.opt_clustal_out,O_ARG_STRING,&clp.clustal_out,O_NODEFAULT,"file","Clustal output"},
     {"pp",0,&clp.opt_pp_out,O_ARG_STRING,&clp.pp_out,O_NODEFAULT,"file","PP output"},
     
-//    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
-//    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
+    //    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
+    //    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
     {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
     {"special-gap-symbols",0,&clp.opt_special_gap_symbols,O_NO_ARG,0,O_NODEFAULT,"","Special distinct gap symbols for loop gaps or gaps caused by sparsification"},
 
@@ -289,9 +287,9 @@ option_def my_options[] = {
     {"prob-unpaired-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.00005","threshold","Threshold for prob_unpaired_in_loop"},
     {"prob-basepair-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
     
-//    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
-//    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
-//    {"better",0,&clp.opt_subopt,O_ARG_INT,&clp.subopt_threshold,"-1000000","t","Enumerate alignments better threshold t"},
+    //    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
+    //    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
+    //    {"better",0,&clp.opt_subopt,O_ARG_INT,&clp.subopt_threshold,"-1000000","t","Enumerate alignments better threshold t"},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","MEA_score controlling options"},
 
@@ -319,7 +317,7 @@ option_def my_options[] = {
 
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
 
-//    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
+    //    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
     
 
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
@@ -399,38 +397,38 @@ main(int argc, char **argv) {
     // --------------------
     //Forbid unsupported option of SPARSE
     if ( clp.struct_local )
-    {
-	std::cerr << "Exclusions is not supported" << std::endl;
-	return -1;
-    }
+        {
+            std::cerr << "Exclusions is not supported" << std::endl;
+            return -1;
+        }
    
 
     //noLP is not supported by sparse recursion but yet useful for calculating probablities with RNAfold
     if( clp.no_lonely_pairs )
-    {
-    	std::cerr << "WARNING: No lonely pairs option is not supported by sparse algortihm" << std::endl;
-//	return -1;
-    }
+        {
+            std::cerr << "WARNING: No lonely pairs option is not supported by sparse algortihm" << std::endl;
+            //	return -1;
+        }
     if( clp.sequ_local )
-    {
-	std::cerr << "Local sequence alignment is not supported" << std::endl;
-	return -1;
-    }
+        {
+            std::cerr << "Local sequence alignment is not supported" << std::endl;
+            return -1;
+        }
     if( clp.opt_stacking || clp.opt_new_stacking)
-    {
-	std::cerr << "Stacking is not supported" << std::endl;
-	return -1;
-    }
-  /*  if(clp.free_endgaps.compare("----") != 0 )
-    {
+        {
+            std::cerr << "Stacking is not supported" << std::endl;
+            return -1;
+        }
+    /*  if(clp.free_endgaps.compare("----") != 0 )
+        {
 	std::cerr << "Free end gaps is not supported" << std::endl;
 	return -1;
-    }
+        }
     */
     if (clp.opt_subopt) {
     	std::cerr
-      			<< "ERROR: suboptimal alignment not supported."
-      			<<std::endl;
+            << "ERROR: suboptimal alignment not supported."
+            <<std::endl;
         return -1;
     }
 
@@ -468,7 +466,7 @@ main(int argc, char **argv) {
     // ----------------------------------------  
     // Ribosum matrix
     //
-    std::auto_ptr<RibosumFreq> ribosum(NULL);
+    RibosumFreq *ribosum=NULL;
     Ribofit *ribofit=NULL;
     
     if (clp.opt_ribofit) {
@@ -480,10 +478,10 @@ main(int argc, char **argv) {
 	    if (clp.opt_verbose) {
 		std::cout <<"Use built-in ribosum."<<std::endl;
 	    }
-	  	    ribosum = auto_ptr<RibosumFreq>(new Ribosum85_60);
+            ribosum = new Ribosum85_60;
 	} else {
-	    ribosum = auto_ptr<RibosumFreq>(new RibosumFreq(clp.ribosum_file));
-	}	
+	    ribosum = new RibosumFreq(clp.ribosum_file);
+	}
 	/*
 	  std::cout <<" A: "<< ribosum->base_nonstruct_prob('A')
 	  <<" C: "<< ribosum->base_nonstruct_prob('C')
@@ -545,7 +543,7 @@ main(int argc, char **argv) {
     //---------------------------------------------------------------
     //Anchor constraint alignment is not supported by sparse yet
     if ( ! (seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ||
-	    ! (seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ) {
+         ! (seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string()=="") ) {
 	std::cout << "WARNING sequence constraints found in the input but will be ignored."<<std::endl;
 
     }
@@ -555,7 +553,7 @@ main(int argc, char **argv) {
     //---------------------------------------------------------------
 
 
-        // --------------------
+    // --------------------
     // handle max_diff restriction  
     
     // missing: proper error handling in case that lenA, lenB, and max_diff_pw_alignment/max_diff_alignment_file are incompatible 
@@ -782,7 +780,7 @@ main(int argc, char **argv) {
 				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
 				 ?0
 				 :clp.indel_opening_loop_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 ribosum.get(),
+				 ribosum,
 				 ribofit,
 				 0, //unpaired_weight
 				 clp.struct_weight,
@@ -853,16 +851,16 @@ main(int argc, char **argv) {
     	std::cerr << "ERROR: suboptimal alignment not supported." << std::endl;
 
 	/*aligner.suboptimal(clp.kbest_k,
-			   clp.subopt_threshold,
-			   clp.opt_normalized,
-			   clp.normalized_L,
-			   clp.output_width,
-			   clp.opt_verbose,
-			   clp.opt_local_output,
-			   clp.opt_pos_output,
-			   clp.opt_write_structure
-			   );
-	return 0;
+          clp.subopt_threshold,
+          clp.opt_normalized,
+          clp.normalized_L,
+          clp.output_width,
+          clp.opt_verbose,
+          clp.opt_local_output,
+          clp.opt_pos_output,
+          clp.opt_write_structure
+          );
+          return 0;
 	*/
     }
     
@@ -870,26 +868,26 @@ main(int argc, char **argv) {
 
     // if option --normalized <L> is given, then do normalized local alignemnt
     if (clp.opt_normalized) {
-    	  std::cerr
-    			<< "ERROR: Normalized alignment not supported."
-    			<<std::endl;
-	  return -1;
+        std::cerr
+            << "ERROR: Normalized alignment not supported."
+            <<std::endl;
+        return -1;
 
 
-// 	// do some option consistency checks and output errors
-// 	if (clp.struct_local) {
-// 	    std::cerr 
-// 		<< "ERROR: Normalized structure local alignment not supported."
-// 		<<std::endl
-// 		<< "LocARNA ignores struct_local option."<<std::endl;
-// 	    return -1;
-// 	}
-// 	if (!clp.sequ_local) { // important: in the Aligner class, we rely on this
-// 	    std::cerr 
-// 		<< "ERROR: Normalized alignment requires option --sequ_local."<<std::endl;
-// 	    return -1;
-// 	}
-// //	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
+        // 	// do some option consistency checks and output errors
+        // 	if (clp.struct_local) {
+        // 	    std::cerr 
+        // 		<< "ERROR: Normalized structure local alignment not supported."
+        // 		<<std::endl
+        // 		<< "LocARNA ignores struct_local option."<<std::endl;
+        // 	    return -1;
+        // 	}
+        // 	if (!clp.sequ_local) { // important: in the Aligner class, we rely on this
+        // 	    std::cerr 
+        // 		<< "ERROR: Normalized alignment requires option --sequ_local."<<std::endl;
+        // 	    return -1;
+        // 	}
+        // //	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
 	
     } else {
 	
@@ -925,7 +923,7 @@ main(int argc, char **argv) {
     bool return_code=0;
     
     if (clp.opt_normalized || DO_TRACE) { // if we did a trace (one way or
-				      // the other)
+        // the other)
 
 	const Alignment &alignment = aligner.get_alignment();
 	
@@ -982,7 +980,7 @@ main(int argc, char **argv) {
 	// optionally write output formats
 	//
 	if (clp.opt_clustal_out) {
-		ofstream out(clp.clustal_out.c_str());
+            ofstream out(clp.clustal_out.c_str());
 	    if (out.good()) {
 
 		MultipleAlignment ma(alignment, false,clp.opt_special_gap_symbols);
@@ -1029,7 +1027,7 @@ main(int argc, char **argv) {
     if (match_probs) delete match_probs;
     if (arc_matches) delete arc_matches;
     if (multiple_ref_alignment) delete multiple_ref_alignment;
-    //if (ribosum) delete ribosum;
+    if (ribosum) delete ribosum;
     if (ribofit) delete ribofit;
     
     if (rna_dataA) delete rna_dataA;
