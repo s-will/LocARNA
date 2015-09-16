@@ -30,7 +30,7 @@ fold_sequence(const Sequence &seq, bool use_alifold) {
 bool
 test_in_loop_probs(const Sequence &seq, const RnaEnsemble &rna_ensemble) {     
 
-    bool fails=0;
+    size_t fails=0;
 
     // ------------------------------------------------------------
     // Accumulate probabilities of disjoint events

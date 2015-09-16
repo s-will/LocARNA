@@ -1357,7 +1357,7 @@ namespace LocARNA {
     typedef std::pair<AlignerRestriction,infty_score_t> task_t;
 
     
-    void Aligner::suboptimal(size_t k,
+    void Aligner::suboptimal(int k,
                              score_t threshold,
                              bool opt_normalized,
                              score_t normalized_L,
@@ -1380,7 +1380,7 @@ namespace LocARNA {
 	
 	size_t i=1;
     
-	while ( ( k<0 || i<=k ) ) {
+	while ( ( k<0 || i<=(size_t)k ) ) {
 	    //std::cout << "queue size: "<<tasks.size()<<std::endl;
 	
 	    // get best task from tasks
@@ -1430,7 +1430,7 @@ namespace LocARNA {
 	    if (!opt_pos_output) std::cout << std::endl
 					   << std::endl;
 	
-	    if (i==k) break; // break if enough solutions generated
+	    if (k>=0 && i==(size_t)k) break; // break if enough solutions generated
 	
 	    // split the longer sequence according to local alignment
 	    pos_type lenA=task_r.endA()-task_r.startA();

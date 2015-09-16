@@ -143,7 +143,7 @@ namespace LocARNA {
 	 * special operation mode for computing the k best alignments.
 	 * Used in place of calls to align() and trace()
 	 *
-	 * @param k 
+	 * @param k number of suboptimals to be generated (k==-1 means unlimited)
 	 * @param threshold 
 	 * @param opt_normalized 
 	 * @param normalized_L 
@@ -154,7 +154,7 @@ namespace LocARNA {
 	 * @param opt_write_structure 
 	 */
 	void 
-	suboptimal(size_t k,
+	suboptimal(int k,
 		   score_t threshold,
 		   bool opt_normalized,
 		   score_t normalized_L,

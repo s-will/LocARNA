@@ -198,7 +198,7 @@ namespace LocARNA {
 	    c1+=d1;
 	
 	
-	    converged=fabs(last2_c0-c0)<stepwidth/2 && fabs(last2_c1-c1)<stepwidth/2;
+	    converged=fabsl(last2_c0-c0)<stepwidth/2 && fabsl(last2_c1-c1)<stepwidth/2;
 	    last2_c0=last_c0;
 	    last2_c1=last_c1;
 	    last_c0=c0;

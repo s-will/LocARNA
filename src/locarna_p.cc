@@ -64,7 +64,6 @@ int tau_factor; //!< contribution of sequence similarity in an arc match (in per
 bool struct_local; //!< allow exclusions for maximizing alignment of connected substructures 
 bool sequ_local; //!< maximize alignment of subsequences
 
-const bool DO_TRACE=true; //!< DO_TRACE=true
 
 
 int max_diff; //!< maximal difference for positions of alignment traces (only used for ends of arcs)

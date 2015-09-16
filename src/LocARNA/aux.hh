@@ -9,7 +9,7 @@
 #include <exception>
 #include <string>
 #include <vector>
-#include <assert.h>
+#include <cassert>
 #include <tr1/unordered_map>
 
 
@@ -319,6 +319,7 @@ namespace LocARNA {
     double
     sequence_identity(const string1 &seqA, const string1 &seqB);
 
+    
 }
 
 

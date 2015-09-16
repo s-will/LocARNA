@@ -19,8 +19,8 @@ namespace LocARNA {
     /**
      * @brief Implementation of ExtRnaData
      */
-    struct ExtRnaDataImpl {
-
+    class ExtRnaDataImpl {
+    public:
 	// ----------------------------------------
 	// TYPES
 	

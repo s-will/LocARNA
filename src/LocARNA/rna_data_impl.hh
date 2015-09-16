@@ -19,8 +19,8 @@ namespace LocARNA {
     /**
      * @brief Implementation of RnaData
      */
-    struct RnaDataImpl {
-    
+    class RnaDataImpl {
+    public:
 	//! type for matrix of arc probabilities
 	typedef RnaData::arc_prob_matrix_t arc_prob_matrix_t;
 	

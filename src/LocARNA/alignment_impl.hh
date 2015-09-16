@@ -19,8 +19,8 @@ namespace LocARNA {
     /**
      * @brief Implementation of Alignment
      */
-    struct AlignmentImpl {
-	
+    class AlignmentImpl {
+    public:
 	Alignment *self_; //!< self pointer
     
 	const Sequence &seqA_; //!< sequence A

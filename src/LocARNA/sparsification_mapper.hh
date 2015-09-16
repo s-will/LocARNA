@@ -18,6 +18,13 @@
 
 namespace LocARNA {
 
+    // print a pair
+    template <class T1, class T2>
+    std::ostream& operator << (std::ostream& out, const std::pair<T1,T2>& pair) {
+	return out << "(" << pair.first << "," << pair.second << ") ";
+    }
+    
+
 /**
  *  @brief Represents the mapping for sparsification
  *

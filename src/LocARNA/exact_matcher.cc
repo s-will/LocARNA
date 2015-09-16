@@ -2185,7 +2185,7 @@ namespace LocARNA {
     		assert(pat1.size()==pat2.size());
     		intVec::const_iterator it_pat1 = pat1.begin();
     		intVec::const_iterator it_pat2 = pat2.begin();
-    		for(; it_pat1 != pat1.end(), it_pat2 != pat2.end(); ++it_pat1, ++it_pat2){
+    		for(; it_pat1 != pat1.end() && it_pat2 != pat2.end(); ++it_pat1, ++it_pat2){
     			out << *it_pat1 <<  ":" << *it_pat2 << " ";
     		}
     		out << std::endl;

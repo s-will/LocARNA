@@ -555,8 +555,8 @@ namespace LocARNA {
 		}
 
 		size_type dc =
-		    abs((long int)i1-(long int)i2)
-		    +abs((long int)j1-(long int)j2);
+		    labs((long int)i1-(long int)i2)
+		    +labs((long int)j1-(long int)j2);
 
 		dprime = std::min(dprime,dc);
 	    }
