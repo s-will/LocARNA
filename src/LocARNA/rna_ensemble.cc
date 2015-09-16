@@ -173,7 +173,8 @@ namespace LocARNA {
 	//
 	size_t length = sequence_.length();
 	
-	char c_sequence[length+1];
+        char *c_sequence = new char[length+1];
+        
 	std::string seqstring = 
 	    sequence_.seqentry(0).seq().str();
 	
@@ -182,7 +183,7 @@ namespace LocARNA {
 	const std::string &structure_anno = sequence_.annotation(MultipleAlignment::AnnoType::structure).single_string();
 	assert(!sequence_.has_annotation(MultipleAlignment::AnnoType::structure) || structure_anno.length()==length);
 	
-	char c_structure[length+1];
+	char *c_structure = new char[length+1];
 	
 	// copy structure annotation to c_structure to use as
 	// constraint for fold
@@ -274,6 +275,9 @@ namespace LocARNA {
 	    // compute the Qm2 matrix
 	    compute_Qm2();
 	}
+
+        delete [] c_structure;
+        delete [] c_sequence;
     }
 
     //! @todo resolve code duplication in
@@ -306,7 +310,7 @@ namespace LocARNA {
 	assert(!sequence_.has_annotation(MultipleAlignment::AnnoType::structure) || structure_anno.length()==length);
 	
 	// reserve space for structure
-	char c_structure[length+1];
+	char *c_structure = new char [length+1];
 	
 	// copy structure annotation to c_structure to use as
 	// constraint for alifold
@@ -406,6 +410,7 @@ namespace LocARNA {
 	    compute_Qm2_ali();
 	}
 
+	delete [] c_structure;
 	//free c_sequences and c_structure
 	for (size_t i=0; i<n_seq; i++) {
 	    delete [] c_sequences[i];

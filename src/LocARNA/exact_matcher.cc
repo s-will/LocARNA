@@ -2040,17 +2040,17 @@ namespace LocARNA {
     void PatternPair::setOutsideBounds(intPPair myPPair)
     {
 	outsideBounds = myPPair;
-    };
+    }
 
     void PatternPair::addInsideBounds(intPPair myPPair)
     {
 	insideBounds.push_back(myPPair);
-    };
+    }
 
     void PatternPair::setEPMScore(int myScore)
     {
 	score = myScore;
-    };
+    }
 
     //const std::string& PatternPair::get_struct() const
    // {
