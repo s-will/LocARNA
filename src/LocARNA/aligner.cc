@@ -135,9 +135,9 @@ namespace LocARNA {
 	  max_j_(seqB.length()),
 	  D_created_(false),
 	  alignment_(seqA,seqB),
-	def_scoring_view_(this),
-	mod_scoring_view_(this),
-	free_endgaps_(params_->free_endgaps_)
+          def_scoring_view_(this),
+          mod_scoring_view_(this),
+          free_endgaps_(params_->free_endgaps_)
     {
 	Ms_.resize(params_->struct_local_?8:1);
 	Es_.resize(params_->struct_local_?4:1);
@@ -491,9 +491,9 @@ namespace LocARNA {
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(
-					      params_->constraints_->aligned_in_a(i)?infty_score_t::neg_infty:Ms_[state](i-1,j),
-					      Ms_[E_NO_NO](i,j)
-					      );
+                                               params_->constraints_->aligned_in_a(i)?infty_score_t::neg_infty:Ms_[state](i-1,j),
+                                               Ms_[E_NO_NO](i,j)
+                                               );
 		}
 	    }
 	    
@@ -505,9 +505,9 @@ namespace LocARNA {
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(
-					      params_->constraints_->aligned_in_b(j)?infty_score_t::neg_infty:Ms_[state](i,j-1),
-					      Ms_[E_NO_NO](i,j)
-					      );
+                                               params_->constraints_->aligned_in_b(j)?infty_score_t::neg_infty:Ms_[state](i,j-1),
+                                               Ms_[E_NO_NO](i,j)
+                                               );
 		}
 	    }
 
@@ -520,7 +520,7 @@ namespace LocARNA {
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(align_noex(state,al,bl,i,j,def_scoring_view_),
-					      Ms_[E_NO_OP](i,j)+scoring_->exclusion());
+                                               Ms_[E_NO_OP](i,j)+scoring_->exclusion());
 		}
 	    }
 	
@@ -532,9 +532,9 @@ namespace LocARNA {
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(
-					      params_->constraints_->aligned_in_a(i)?infty_score_t::neg_infty:Ms_[state](i-1,j),
-					      Ms_[E_NO_X](i,j)
-					      );
+                                               params_->constraints_->aligned_in_a(i)?infty_score_t::neg_infty:Ms_[state](i-1,j),
+                                               Ms_[E_NO_X](i,j)
+                                               );
 		}
 	    }
 	
@@ -547,7 +547,7 @@ namespace LocARNA {
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(align_noex(state,al,bl,i,j,def_scoring_view_),
-					      Ms_[E_OP_NO](i,j)+scoring_->exclusion());
+                                               Ms_[E_OP_NO](i,j)+scoring_->exclusion());
 		}
 	    }
 
@@ -559,9 +559,9 @@ namespace LocARNA {
 	    
 		for (pos_type j=min_col; j<=max_col; j++) {
 		    Ms_[state](i,j) = std::max(
-					      params_->constraints_->aligned_in_b(j)?infty_score_t::neg_infty:Ms_[state](i,j-1),
-					      Ms_[E_X_NO](i,j)
-					      );
+                                               params_->constraints_->aligned_in_b(j)?infty_score_t::neg_infty:Ms_[state](i,j-1),
+                                               Ms_[E_X_NO](i,j)
+                                               );
 		}
 	    }
 
@@ -1358,15 +1358,15 @@ namespace LocARNA {
 
     
     void Aligner::suboptimal(size_t k,
-				 score_t threshold,
-				 bool opt_normalized,
-				 score_t normalized_L,
-				 size_t output_width,
-				 bool opt_verbose,
-				 bool opt_local_output,
-				 bool opt_pos_output,
-				 bool opt_write_structure
-				 ) {
+                             score_t threshold,
+                             bool opt_normalized,
+                             score_t normalized_L,
+                             size_t output_width,
+                             bool opt_verbose,
+                             bool opt_local_output,
+                             bool opt_pos_output,
+                             bool opt_write_structure
+                             ) {
 	Aligner &a=*this;
 	
 	// compute alignment score for a
@@ -1551,27 +1551,20 @@ namespace LocARNA {
     	// The D matrix is filled
     	if (!pimpl_->D_created_) pimpl_->align_D();
 
-    	if (pimpl_->mod_scoring_) delete pimpl_->mod_scoring_;
-    	pimpl_->mod_scoring_=new Scoring(*pimpl_->scoring_); // make mod_scoring point to a copy of scoring
+        if (pimpl_->mod_scoring_) delete pimpl_->mod_scoring_;
+        pimpl_->mod_scoring_=new Scoring(*pimpl_->scoring_); // make mod_scoring point to a copy of scoring
 
 
-		// modify the scoring by lambda
-		pimpl_->mod_scoring_->modify_by_parameter(position_penalty);
-		pimpl_->mod_scoring_view_.set_lambda(position_penalty);
+        // modify the scoring by lambda
+        pimpl_->mod_scoring_->modify_by_parameter(position_penalty);
+        pimpl_->mod_scoring_view_.set_lambda(position_penalty);
 
-		infty_score_t score = pimpl_->align_top_level_locally(pimpl_->mod_scoring_view_);
+        infty_score_t score = pimpl_->align_top_level_locally(pimpl_->mod_scoring_view_);
 
-		// perform a traceback for normalized alignment
-		pimpl_->trace(pimpl_->mod_scoring_view_);
+        // perform a traceback for normalized alignment
+        pimpl_->trace(pimpl_->mod_scoring_view_);
 
-		// compute length (of alignment) as sum of lengths of
-		// aligned subsequences from the trace
-		pos_type length=pimpl_->max_i_-pimpl_->min_i_+1+pimpl_->max_j_-pimpl_->min_j_+1;
-
-
-
-	    return score;
-
+        return score;
     }
 
 } //end namespace LocARNA

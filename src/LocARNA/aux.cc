@@ -8,7 +8,7 @@
 #include <iostream>
 
 namespace LocARNA {
-    failure::~failure() throw() {};
+    failure::~failure() throw() {}
     
     const char *
     failure::what() const throw() {

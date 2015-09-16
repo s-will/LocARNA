@@ -1007,7 +1007,7 @@ inline bool operator< (const EPM &epm1, const EPM &epm2) {
 inline std::ostream & operator << (std::ostream &out, const EPM &epm){
 	epm.print_epm(out,false);
 	return out;
-};
+}
 
 // prints pair
 template <class T1, class T2>
