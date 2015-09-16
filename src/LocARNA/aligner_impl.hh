@@ -21,8 +21,8 @@ namespace LocARNA {
     /**
      * @brief Implementation of Aligner
      */
-    struct AlignerImpl {
-
+    class AlignerImpl {
+    public:
 	/**
 	 * type of matrix M
 	 * @note 'typedef RMtrix<infty_score_t> M_matrix_t;' didn't improve performance

@@ -216,11 +216,11 @@ namespace LocARNA {
 	    for (size_type i2=0; i2<=it->rows(); i2++) {
 		size_type dprime2;
 		if (j < it->min_col(i2)) {
-		    dprime2 = (size_type)(abs((long int)i-(long int)i2)+(it->min_col(i2)-j));
+		    dprime2 = (size_type)(labs((long int)i-(long int)i2)+(it->min_col(i2)-j));
 		} else if (j > it->max_col(i2)) {
-		    dprime2 = std::min(dprime,(size_type)(abs((long int)i-(long int)i2)+(j-it->max_col(i2))));
+		    dprime2 = std::min(dprime,(size_type)(labs((long int)i-(long int)i2)+(j-it->max_col(i2))));
 		} else {
-		    dprime2 = abs((long int)i-(long int)i2);
+		    dprime2 = labs((long int)i-(long int)i2);
 		}
 	    
 		dprime = std::min(dprime,dprime2);
@@ -232,9 +232,9 @@ namespace LocARNA {
     }
 
     TraceRange::TraceRange(size_type lenA,
-					    size_type lenB, 
-					    const std::vector<TraceRange> &trs,
-					    size_type delta) {
+                           size_type lenB, 
+                           const std::vector<TraceRange> &trs,
+                           size_type delta) {
 
 	Matrix<size_type> C(lenA+1,lenB+1);
 	Matrix<size_type> T(lenA+1,lenB+1);

@@ -16,8 +16,8 @@ namespace LocARNA {
     /**
      * @brief Implementation of RnaEnsemble
      */
-    struct RnaEnsembleImpl {
-
+    class RnaEnsembleImpl {
+    public:
 	//RnaEnsemble *self_; //!<- pointer to corresponding RnaEnsemble object
     
 	MultipleAlignment sequence_; //!< the sequence
