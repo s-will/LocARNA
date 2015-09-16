@@ -3,7 +3,6 @@
 #include <set>
 #include <string>
 #include <iostream>
-#include <tr1/unordered_set>
 
 #include "aux.hh"
 #include "rna_structure.hh"
@@ -148,7 +147,7 @@ namespace LocARNA {
     
     bool
     RnaStructure::crossing(const bps_t &bps) {
-	std::tr1::unordered_set<size_t> seen_position;
+	unordered_set<size_t>::type seen_position;
 	
 	for (bps_t::const_iterator it=bps.begin(); bps.end()!=it; ++it) {
 	    if (! seen_position.insert(it->first).second) return false;

@@ -7,7 +7,7 @@
 
 #include <iosfwd>
 
-#include <tr1/unordered_map>
+#include "aux.hh"
 
 namespace LocARNA {
     
@@ -33,7 +33,7 @@ namespace LocARNA {
 	
     protected:
 		
-	typedef std::tr1::unordered_map<key_t,value_t> map_t; //!< map type  
+	typedef typename unordered_map<key_t,value_t>::type map_t; //!< map type  
 	map_t the_map_; //!< internal representation of sparse vector
 	value_t def_; //!< default value of vector entries
     

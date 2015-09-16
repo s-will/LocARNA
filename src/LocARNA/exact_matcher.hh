@@ -11,12 +11,12 @@
 #include <algorithm>
 #include <limits>
 #include <iterator>
-#include <tr1/unordered_map>
 #include "trace_controller.hh"
 #include "sparsification_mapper.hh"
 #include "tuples.hh"
 #include "scoring.hh"
 #include "ext_rna_data.hh"
+#include "aux.hh"
 
 extern "C"
 {
@@ -219,7 +219,7 @@ namespace LocARNA {
 	typedef  std::list<SelfValuePTR>                           patListTYPE; //!< list of patternPairs
 	typedef  patListTYPE::iterator                        patListITER; //!< iterator for the list of PatternPairs
 	typedef  patListTYPE::const_iterator                  patListCITER; //!< const iterator for the list of PatternPairs
-	typedef  std::tr1::unordered_map<std::string,SelfValuePTR> PatternIdMapTYPE; //!< map type patternId -> pointer to PatternPair
+	typedef unordered_map<std::string,SelfValuePTR>::type PatternIdMapTYPE; //!< map type patternId -> pointer to PatternPair
 
 
 	//! Contructor
@@ -1065,7 +1065,7 @@ namespace LocARNA {
 	
         //! a map that stores for pairs of arc indices the tolerance
         //! that is used for backtracing and the found EPMs
-        typedef std::tr1::unordered_map <PairArcIdx,el_map_am_to_do_t,pair_of_size_t_hash > map_am_to_do_t;
+        typedef unordered_map<PairArcIdx,el_map_am_to_do_t,pair_of_size_t_hash>::type map_am_to_do_t;
     private:
 
         //! a quintuple for storing the state, max tolerance left, current matrix position, potential pair of arc indices

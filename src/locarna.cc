@@ -15,8 +15,6 @@
 #include <fstream>
 #include <vector>
 
-#include <memory> // for auto_ptr
-
 //#include <math.h>
 
 #include "LocARNA/sequence.hh"

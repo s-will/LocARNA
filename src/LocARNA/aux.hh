@@ -10,9 +10,57 @@
 #include <string>
 #include <vector>
 #include <cassert>
-#include <tr1/unordered_map>
 
+// import and define types for unordered_map/set
+// in a way that is compatible with stdc++ and libc++
+#ifdef _LIBCPP_VERSION
+#  include <unordered_map>
+#  include <unordered_set>
+namespace LocARNA {
+    template < class Key,                                    // unordered_map::key_type
+               class T,                                      // unordered_map::mapped_type
+               class Hash = std::hash<Key>,                       // unordered_map::hasher
+               class Pred = std::equal_to<Key>,                   // unordered_map::key_equal
+               class Alloc = std::allocator< std::pair<const Key,T> >  // unordered_map::allocator_type
+               >
+    struct unordered_map {
+        typedef std::unordered_map<Key,T,Hash,Pred,Alloc> type;
+    };
+    
+    template < class Key,                        // unordered_set::key_type/value_type
+               class Hash = std::hash<Key>,           // unordered_set::hasher
+               class Pred = std::equal_to<Key>,       // unordered_set::key_equal
+               class Alloc = std::allocator<Key>      // unordered_set::allocator_type
+               >
+    struct unordered_set {
+        typedef std::unordered_set<Key,Hash,Pred,Alloc> type;
+    };
+}
+//typedef std::unordered_set LocARNA::unordered_set;
+#else
+#  include <tr1/unordered_map>
+#  include <tr1/unordered_set>
+namespace LocARNA {
+    template < class Key,                                    // unordered_map::key_type
+               class T,                                      // unordered_map::mapped_type
+               class Hash = std::tr1::hash<Key>,                       // unordered_map::hasher
+               class Pred = std::equal_to<Key>,                   // unordered_map::key_equal
+               class Alloc = std::allocator< std::pair<const Key,T> >  // unordered_map::allocator_type
+               >
+    struct unordered_map {
+        typedef std::tr1::unordered_map<Key,T,Hash,Pred,Alloc> type;
+    };
 
+    template < class Key,                        // unordered_set::key_type/value_type
+               class Hash = std::tr1::hash<Key>,           // unordered_set::hasher
+               class Pred = std::equal_to<Key>,       // unordered_set::key_equal
+               class Alloc = std::allocator<Key>      // unordered_set::allocator_type
+               >
+    struct unordered_set {
+        typedef std::tr1::unordered_set<Key,Hash,Pred,Alloc> type;
+    };
+}
+#endif
 
 
 //!
