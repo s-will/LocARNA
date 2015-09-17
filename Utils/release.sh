@@ -74,35 +74,79 @@ fi
 #
 if [ "`hg -q status | wc -l`" != 0 ] ; then
     hg -q status
-    echo "ERROR: work directory differs from repository. Please checkin."
-    exit -1
+    if [ "$LOCAL" != true ] ; then
+        echo "ERROR: work directory differs from repository. Please checkin."
+        exit -1
+    else
+        echo "WARNING: work directory differs from repository. Please checkin."
+    fi
 fi
 
 ########################################
 ## check distribution and run tests
 #
-if !  make -j -C $BUILDDIR distcheck ; then
-    echo "ERROR: Make dist check failed."
+if [ "$CHECK" = "true" ] ; then
+    echo "**************************************************"
+    echo "**                                              **"
+    echo "** Run make distcheck with g++/stdlibc++        **"
+    echo "**                                              **"
+    echo "**************************************************"
+    if ! make -j -C $BUILDDIR distcheck ; then
+        echo "ERROR: Make dist check failed (g++/libstdc++)."
+        exit -1
+    fi
+
+    if [ "$CHECK_CLANG" = "true" ] ; then
+        ##repeat dist check with clang / libc++
+        echo "**************************************************"
+        echo "**                                              **"
+        echo "** Run make distcheck with clang++/libc++       **"
+        echo "**                                              **"
+        echo "**************************************************"
+        if ! make -j -C $BUILDDIR distcheck \
+             CC=/usr/bin/clang \
+             CXX=/usr/bin/clang++ \
+             CXXFLAGS="-g -O2 --stdlib=libc++" ; then
+            echo "ERROR: Make dist check failed (only clang/libc++)."
+            exit -1
+        fi
+    fi
+else
+    if ! make -j -C $BUILDDIR dist-gzip ; then
+        echo "ERROR: Make dist-gzip failed."
+        exit -1
+    fi
+fi
+
+echo "Extract tar-ball."
+if ! ( cd $BUILDDIR && tar xzf $PACKAGE-$RELEASE.tar.gz ) ; then
+    echo "ERROR: Tar-ball $PACKAGE-$RELEASE.tar.gz cannot be extracted."
     exit -1
 fi
 
 ########################################
 ## check documentation
 #
-if cd $BUILDDIR && tar xzf $PACKAGE-$RELEASE.tar.gz && cd $PACKAGE-$RELEASE &&\
-	./configure && make doxygen-doc
-then
-    echo "Doxygen documentation successfully created."
-else
-    echo "ERROR: Doxygen documentation cannot be created."
-    exit -1
+if [ "$DOXYGEN" = "true" ] ; then
+    if cd $BUILDDIR/$PACKAGE-$RELEASE &&\
+	    ./configure && make doxygen-doc
+    then
+        echo "Doxygen documentation successfully created."
+    else
+        echo "ERROR: Doxygen documentation cannot be created."
+        exit -1
+    fi
 fi
 
 ########################################
 ## tag and publish to central repository
 #
-runcmd hg tag -f "$PACKAGE-$RELEASE"
-runcmd hg push
+if [ "$LOCAL" != "true" ] ; then
+    runcmd hg tag -f "$PACKAGE-$RELEASE"
+    runcmd hg push
+else
+    echo "Local mode: don't tag and push"
+fi
 
 ########################################
 ## copy to web directory, modify web page, checkin
@@ -110,7 +154,11 @@ runcmd hg push
 
 runcmd cp $BUILDDIR/$PACKAGE-$RELEASE.tar.gz $WEBWORKDIR/Releases
 if cd $WEBWORKDIR/Releases ; then
-    runcmd  cvs add $PACKAGE-$RELEASE.tar.gz
+    if [ "$LOCAL" != "true" ] ; then
+        runcmd  cvs add $PACKAGE-$RELEASE.tar.gz
+    else
+        echo "Local mode: don't cvs add released tar.gz"
+    fi
     cd ..
 else
     print "ERROR: could not copy the release to the web directory."
@@ -123,12 +171,48 @@ if cd $WEBWORKDIR ; then
     runcmdto index.html.new perl $BINDIR/update_index.pl $RELEASE index.html
     runcmd \cp index.html index.html.bkp
     runcmd \mv index.html.new index.html 
-    runcmd cvs commit -m \"Release $PACKAGE-$RELEASE\"
+    if [ "$LOCAL" != "true" ] ; then
+        runcmd cvs commit -m \"Release $PACKAGE-$RELEASE\"
+    else
+        echo "Local mode: don't cvs commit web page"
+    fi
+else
+    echo "ERROR: cannot change to web working directory $WEBWORKDIR"
+    exit -1;
 fi
-       
-## copy documentation to webserver
-runcmd rsync -av $BUILDDIR/$PACKAGE-$RELEASE/Doc/ $WEBSERVER:$WEBSERVER_BASEDIR/$WEB_LOCARNA_HOME/Doc
 
-runcmd ssh $WEBSERVER cd $WEBSERVER_BASEDIR/$WEB_LOCARNA_HOME \; cvs update
+if [ "$DOXYGEN" = "true" ] ; then
+    if [ "$LOCAL" != "true" ] ; then
+        ## copy documentation to webserver
+        runcmd rsync -av $BUILDDIR/$PACKAGE-$RELEASE/Doc/ $WEBSERVER:$WEBSERVER_BASEDIR/$WEB_LOCARNA_HOME/Doc
+    
+    else
+        echo "Local mode: rsync to local webdir"
+        runcmd rsync -av $BUILDDIR/$PACKAGE-$RELEASE/Doc/ $WEBWORKDIR/Doc
+    fi
+fi
 
-runcmd ssh $WEBSERVER chmod -R g+w $WEBSERVER_BASEDIR/$WEB_LOCARNA_HOME
+if [ "$LOCAL" != "true" ] ; then
+    runcmd ssh $WEBSERVER cd $WEBSERVER_BASEDIR/$WEB_LOCARNA_HOME \; cvs update
+    runcmd ssh $WEBSERVER chmod -R g+w $WEBSERVER_BASEDIR/$WEB_LOCARNA_HOME
+else
+    echo "Local mode: no cvs update on web server"
+fi
+
+
+echo "--------------------------------------------------"
+echo "SUMMARY:"
+echo "--------------------------------------------------"
+if [ "$TEST" = "true" ] ; then
+    echo "Dry run: nothing (outside of builddir) was changed."
+else
+    if [ "$DOXYGEN" != "true" ] ; then
+        echo "Doxygen documentation was neither checked nor installed."
+    fi
+    if [ "$LOCAL" = "true" ] ; then
+        echo "The release was published locally. NO web release; no commits to vc"
+    else
+        echo "The new release is published."
+    fi
+fi
+echo
