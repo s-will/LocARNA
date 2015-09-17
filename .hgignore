@@ -2,8 +2,8 @@ syntax: glob
 Bugs/
 External/
 MatchprobsVsTrace/
-_inst/*
-_build/*
+_inst*/*
+_build*/*
 *~
 *.o
 *.lo
