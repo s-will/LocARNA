@@ -1,10 +1,11 @@
 ============================================================
 === 2015
 
-1.8.3pre3
+1.8.3
+	improve portability for easier installation on recent MacOS X:
 	compile without openmp; handle VRNA w/o pkgconf file
 	fix c++11 warnings; fix incompatibility with libc++
-	fix incompatibility with clang (now used by MacOSX); fix warnings of clang
+	fix incompatibility with clang (now used by MacOS X); fix warnings of clang
 	remove g++ warnings
 1.8.2
         change semantics w.r.t. constraints + local folding:
