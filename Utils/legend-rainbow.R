@@ -1,0 +1,6 @@
+#pdf("legend-rainbow.pdf",width=10,height=2)
+png("legend-rainbow640.png",width=640,height=60)
+par(mar=c(2,0,0,0),ps=18)
+r<-rainbow(32,start=0.3,end=1)
+barplot(rep(1,32),col=r,axes=F,width=1,space=0,border=F)
+axis(1,at=0:8*4,labels=0:8/8)
