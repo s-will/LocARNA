@@ -29,30 +29,6 @@
 ============================================================
 === 2014
 
-1.7.14
-	Handle inconsistencies due to anchor constraints in conflict
-	with other constraints/heuristics, e.g. max-diff: 1) accept -inf
-	pairwise similarities for guide tree construction; 2) clear
-	consensus anchor strings with duplicate names
-	
-1.7.15
-	Fix bug concerning iterative alignment and alignment evaluation
-	Rename locarna_X to exparna_p
-	ExpaRNA-P code "publication ready"
-	
-1.7.16
-        ExpaRNA-P rename of tools
-	
-1.7.17pre
-        Second type of stacking terms: new-stacking
-	Add heuristic to restrict maximum number of "significant" base
-	pairs: max-bps-length-ratio
-	Add max-diff restriction at arc match ends: --max-diff-at-am
-	Restructure parameter passing to Aligner* classes: use "named
-	argument" idiom
-	
-1.7.17pre2
-	max-bps/uil/bpil-length-ratio for SPARSE/ExparnaP
 1.8.0
 	Remove absolute path dependencies in scripts. This changes the
 	behavior, since paths are not fixed at compile time. For
@@ -71,6 +47,26 @@
 	Add Example gcvT.fa for SPARSE
 	sparse: --special-gap-symbols option added (default is false)
 
+1.7.17
+	max-bps/uil/bpil-length-ratio for SPARSE/ExparnaP
+        Second type of stacking terms: new-stacking
+	Add heuristic to restrict maximum number of "significant" base
+	pairs: max-bps-length-ratio
+	Add max-diff restriction at arc match ends: --max-diff-at-am
+	Restructure parameter passing to Aligner* classes: use "named
+	argument" idiom
+1.7.16
+        ExpaRNA-P rename of tools
+1.7.15
+	Fix bug concerning iterative alignment and alignment evaluation
+	Rename locarna_X to exparna_p
+	ExpaRNA-P code "publication ready"
+
+1.7.14
+	Handle inconsistencies due to anchor constraints in conflict
+	with other constraints/heuristics, e.g. max-diff: 1) accept -inf
+	pairwise similarities for guide tree construction; 2) clear
+	consensus anchor strings with duplicate names
 
 
 ============================================================
