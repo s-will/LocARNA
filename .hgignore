@@ -9,6 +9,7 @@ _build/*
 *.lo
 TAGS
 aclocal.m4
+compile
 configure
 depcomp
 missing
