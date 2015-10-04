@@ -339,7 +339,8 @@ namespace LocARNA {
 			    if (options[i].argument)
 				switch (options[i].arg_type) {
 				case O_ARG_STRING:
-				    printf ("\"%s\"",*((char **)options[i].argument));
+				    printf ("\"%s\"",
+                                            ((std::string *)options[i].argument)->c_str());
 				    break;
 				case O_ARG_INT:
 				    printf ("%d",*((int*)(options[i].argument)));
