@@ -423,9 +423,15 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct from parameters
 	 * @param ap parameter for aligner
+         * @note ap is copied to allow reference to a temporary
 	 */
 	AlignerP(const AlignerParams &ap);
-    
+
+        /** 
+	 * @brief Destructor
+	 */
+	~AlignerP();
+
 	/**
 	 * @brief create with named parameters
 	 * @return parameter object

@@ -4,8 +4,8 @@
 #include "arc_matches.hh"
 #include "trace_controller.hh"
 
-#include <math.h>
-#include <assert.h>
+#include <cmath>
+#include <cassert>
 #include <iomanip>
 #include <sstream>
 // #include <queue>
@@ -62,7 +62,7 @@ namespace LocARNA {
 
     //===========================================================================
     AlignerP::AlignerP(const AlignerParams &ap) :
-	params(dynamic_cast<const AlignerPParams *>(&ap)),
+	params(new AlignerPParams(dynamic_cast<const AlignerPParams &>(ap))),
 	scoring(params->scoring_),
 	seqA(*params->seqA_),
 	bpsA(params->arc_matches_->get_base_pairsA()),
@@ -81,6 +81,10 @@ namespace LocARNA {
     
     }
 
+    AlignerP::~AlignerP() {
+        assert(params!=0);
+        delete params;
+    }
 
 
     // ================================================================================

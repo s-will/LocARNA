@@ -6,8 +6,8 @@
 #include "basepairs.hh"
 #include "sequence.hh"
 
-#include <math.h>
-#include <assert.h>
+#include <cmath>
+#include <cassert>
 
 #include <queue>
 
@@ -121,7 +121,7 @@ namespace LocARNA {
 			     const AlignerParams *ap,
 			     const Scoring *s
 			     )
-	: params_(ap),
+	: params_(new AlignerParams(*ap)),
 	  scoring_(s),
 	  mod_scoring_(0),
 	  seqA_(seqA), seqB_(seqB),
@@ -156,7 +156,12 @@ namespace LocARNA {
 
 
     AlignerImpl::~AlignerImpl() {
-    	if (mod_scoring_!=0) delete mod_scoring_;
+        assert(params_!=0);
+        delete params_;
+        
+    	if (mod_scoring_!=0) {
+            delete mod_scoring_;
+        }
     }
 
     Aligner::~Aligner() {

@@ -619,6 +619,7 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct from parameters
 	 * @param ap parameter for aligner
+         * @note ap is copied to allow reference to a temporary
 	 */
 	AlignerN(const AlignerParams &ap);
     

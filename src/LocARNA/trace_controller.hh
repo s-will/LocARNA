@@ -46,9 +46,12 @@ namespace LocARNA {
 			   const SeqEntry &aliB);
 
     protected:		
-	std::vector<size_t> min_col_vector; //!< minimal column in row
-	std::vector<size_t> max_col_vector; //!< maximal column in row
-    
+	std::vector<size_t> min_col_vector_; //!< minimal column in row
+	std::vector<size_t> max_col_vector_; //!< maximal column in row
+	//! \brief Construct empty
+	TraceRange() {
+	}
+        
     public:
 	/**
 	 * \brief Construct from pair of alignment strings
@@ -94,10 +97,6 @@ namespace LocARNA {
 	 */
 	TraceRange(size_type lenA, size_type lenB, const std::vector<TraceRange> &trs, size_type delta);
 
-	//! \brief Construct empty
-	TraceRange() {
-	}
-    
 	/**
 	 * \brief Computes cost of a cut in the consensus trace of a trace range set
 	 * @param i cut.first  
@@ -115,7 +114,7 @@ namespace LocARNA {
 	 * @return length of seqA, i.e. the maximal row of the trace
 	 */
 	size_t
-	rows() const {return min_col_vector.size()-1;}
+	rows() const {return min_col_vector_.size()-1;}
 	
 	/**
 	 * \brief Minimal column of trace in a row
@@ -123,7 +122,7 @@ namespace LocARNA {
 	 * @returns minimal valid trace cell in the row i
 	 */
 	size_t
-	min_col(size_t i) const {return min_col_vector[i];}
+	min_col(size_t i) const {return min_col_vector_[i];}
 	
 	/**
 	 * \brief Maximal column of trace in a row
@@ -131,7 +130,7 @@ namespace LocARNA {
 	 * @returns maximal valid trace cell in the row i
 	 */
 	size_t 
-	max_col(size_t i) const {return max_col_vector[i];}
+	max_col(size_t i) const {return max_col_vector_[i];}
 
 	/** 
 	 * Print object to ouptut stream for debugging
@@ -180,24 +179,22 @@ namespace LocARNA {
     private:
 	// The delimiter character separating the two sequences in the alignment string
 	static const char delimiter = '&';
-	    
-	TraceRange trace_range;
     
 	/**
 	 * merge in the given trace with delta into current trace range
-	 * @param trace the new trace
+	 * @param tr the trace range to be merged in
 	 */
 	void
 	merge_in_trace_range(const TraceRange &tr);
 
 	//! The allowed distance in computing the min and max positions.
-	const size_type delta;
+	const size_type delta_;
 
-	/**
-	 * switch between strict and relaxed merging of pairwise trace
-	 * ranges
-	 */
-	const bool relaxed_merging; 
+	// /**
+	//  * switch between strict and relaxed merging of pairwise trace
+	//  * ranges
+	//  */
+	// const bool relaxed_merging_; 
     
     public:
     
@@ -247,7 +244,7 @@ namespace LocARNA {
 	 * \brief Read deviation
 	 * @return deviation Delta
 	 */
-	size_type get_delta() const {return delta;}
+	size_type get_delta() const {return delta_;}
 
 	/**
 	 * print debugging information to stream

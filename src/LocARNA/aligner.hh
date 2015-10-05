@@ -86,7 +86,10 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct from parameters
 	 * @param ap parameter for aligner
-	 */
+         * 
+         * @note ap is copied to new AlignerParams object (by impl
+         * class) to allow reference to a temporary
+         */
 	Aligner(const AlignerParams &ap);
 	
 	/**

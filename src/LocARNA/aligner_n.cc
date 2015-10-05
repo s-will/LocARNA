@@ -6,8 +6,8 @@
 #include "trace_controller.hh"
 // #include "d_matrix.hh"
 
-#include <math.h>
-#include <assert.h>
+#include <cmath>
+#include <cassert>
 
 #include <queue>
 
@@ -57,7 +57,7 @@ namespace LocARNA {
     {}
 
     AlignerN::AlignerN(const AlignerParams &ap_)
-	: params(dynamic_cast<const AlignerNParams *>(&ap_)),
+	: params(new AlignerNParams(dynamic_cast<const AlignerNParams &>(ap_))),
 	  scoring(params->scoring_),
 	  mod_scoring(0),
 	  seqA(*params->seqA_), seqB(*params->seqB_),
@@ -99,6 +99,8 @@ namespace LocARNA {
 
     //destructor
     AlignerN::~AlignerN() {
+        assert(params != 0);
+        delete params;
 	if (mod_scoring!=0) delete mod_scoring;
     }
 

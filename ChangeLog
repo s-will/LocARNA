@@ -1,6 +1,10 @@
 ============================================================
 === 2015
 
+1.8.4
+	fix potential overwriting of parameters in classes Aligner*, which
+	was observed only with gcc-5.2
+	fix bug that crashed printing string options in verbose mode
 1.8.3
 	improve portability for easier installation on recent MacOS X:
 	compile without openmp; handle VRNA w/o pkgconf file
