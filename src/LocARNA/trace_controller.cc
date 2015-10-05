@@ -57,8 +57,8 @@ namespace LocARNA {
 	size_t plenA = pseqA.seq().length();
 	size_t plenB = pseqB.seq().length();
     
-	min_col_vector.resize(plenA+1);
-	max_col_vector.resize(plenA+1);
+	min_col_vector_.resize(plenA+1);
+	max_col_vector_.resize(plenA+1);
     
 	seqentry_pair_t ali =
 	    remove_common_gaps(paliA,paliB);
@@ -108,8 +108,8 @@ namespace LocARNA {
 	    size_t right_pj = pseqB.pos_to_col(right_j);
 	
 	
-	    min_col_vector[pi] = left_pj;
-	    max_col_vector[pi] = right_pj-1;
+	    min_col_vector_[pi] = left_pj;
+	    max_col_vector_[pi] = right_pj-1;
 
 	}
 #else // POSITION_CUT_DISTANCE
@@ -118,8 +118,8 @@ namespace LocARNA {
     
 	// initialize col vectors
 	for (size_t pi=0; pi <= plenA; pi++) {
-	    min_col_vector[pi] = plenB;
-	    max_col_vector[pi] = 0;
+	    min_col_vector_[pi] = plenB;
+	    max_col_vector_[pi] = 0;
 	}
     
 	// iterate over columns of the alignment aliA/aliB
@@ -176,18 +176,18 @@ namespace LocARNA {
 	    // 	  << std::endl;
 
 
-	    // for all cuts in C, potentially update min_col_vector and max_col_vector
+	    // for all cuts in C, potentially update min_col_vector_ and max_col_vector_
 	    for (size_t pi=pi_min; pi<=pi_max; pi++) {
-		min_col_vector[pi] = std::min(min_col_vector[pi],pj_minus);
-		max_col_vector[pi] = std::max(max_col_vector[pi],pj_plus);
+		min_col_vector_[pi] = std::min(min_col_vector_[pi],pj_minus);
+		max_col_vector_[pi] = std::max(max_col_vector_[pi],pj_plus);
 	    }
 	
 	    for (size_t pi=pi_minus; pi<pi_min; pi++) {
-		max_col_vector[pi] = std::max(max_col_vector[pi],pj_max);
+		max_col_vector_[pi] = std::max(max_col_vector_[pi],pj_max);
 	    }
 	
 	    for (size_t pi=pi_max+1; pi<=pi_plus; pi++) {
-		min_col_vector[pi] = std::min(min_col_vector[pi],pj_min);
+		min_col_vector_[pi] = std::min(min_col_vector_[pi],pj_min);
 	    }
 	    
 	}
@@ -196,11 +196,11 @@ namespace LocARNA {
     
 	//assert monotony, consistency and connectivity
 #ifndef NDEBGUG
-	for (size_type i=1; i < min_col_vector.size(); ++i) {
-	    assert(min_col_vector[i-1]<=min_col_vector[i]); // monotony
-	    assert(max_col_vector[i-1]<=max_col_vector[i]); // monotony
-	    assert(min_col_vector[i]<=max_col_vector[i]); // otherwise trace range inconsistent
-	    assert(max_col_vector[i-1]+1>=min_col_vector[i]); // ranges connected/overlap, otherwise trace is inconsistent
+	for (size_type i=1; i < min_col_vector_.size(); ++i) {
+	    assert(min_col_vector_[i-1]<=min_col_vector_[i]); // monotony
+	    assert(max_col_vector_[i-1]<=max_col_vector_[i]); // monotony
+	    assert(min_col_vector_[i]<=max_col_vector_[i]); // otherwise trace range inconsistent
+	    assert(max_col_vector_[i-1]+1>=min_col_vector_[i]); // ranges connected/overlap, otherwise trace is inconsistent
 	}
 #endif
 
@@ -270,11 +270,11 @@ namespace LocARNA {
 	}
     
     
-	min_col_vector.resize(lenA+1);
-	max_col_vector.resize(lenA+1);
+	min_col_vector_.resize(lenA+1);
+	max_col_vector_.resize(lenA+1);
 	for (size_type i=0; i<=lenA; i++) {
-	    min_col_vector[i]=lenB;
-	    max_col_vector[i]=0;
+	    min_col_vector_[i]=lenB;
+	    max_col_vector_[i]=0;
 	}
     
 	size_type i=lenA;
@@ -282,8 +282,8 @@ namespace LocARNA {
     
 	while(1) {
 	    // define trace range
-	    min_col_vector[i] = std::min(min_col_vector[i],j);
-	    max_col_vector[i] = std::max(max_col_vector[i],j);
+	    min_col_vector_[i] = std::min(min_col_vector_[i],j);
+	    max_col_vector_[i] = std::max(max_col_vector_[i],j);
 	
 	    if (T(i,j)==3) break;
 	
@@ -307,13 +307,13 @@ namespace LocARNA {
     void
     TraceRange::print_debug(std::ostream & out) const {
 	out << "min_col_vector: ";
-	for (std::vector<size_type>::const_iterator it=min_col_vector.begin(); it!=min_col_vector.end(); ++it) {
+	for (std::vector<size_type>::const_iterator it=min_col_vector_.begin(); it!=min_col_vector_.end(); ++it) {
 	    out.width(3);
 	    out << *it<<" ";
 	}
 	out << std::endl;
 	out << "max_col_vector: ";
-	for (std::vector<size_type>::const_iterator it=max_col_vector.begin(); it!=max_col_vector.end(); ++it) {
+	for (std::vector<size_type>::const_iterator it=max_col_vector_.begin(); it!=max_col_vector_.end(); ++it) {
 	    out.width(3);
 	    out << *it<<" ";
 	}
@@ -339,8 +339,8 @@ namespace LocARNA {
 		y = std::max(y, (lenA+lenB)*lenB/2);
 	    }
 
-	    min_col_vector[i] = x>y ? size_type((x-y+z-1)/z) : 0;
-	    max_col_vector[i] = std::min( size_type((x+y)/z), lenB );
+	    min_col_vector_[i] = x>y ? size_type((x-y+z-1)/z) : 0;
+	    max_col_vector_[i] = std::min( size_type((x+y)/z), lenB );
 
 	}
     }
@@ -349,8 +349,8 @@ namespace LocARNA {
     // TraceController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delta) {
     // 	// fill vectors for min_j and max_j
     // 	for (size_type i=0; i<=lenA; i++) {
-    // 	    min_col_vector[i] = std::max(delta, (size_type)(ceil(i*lenB/lenA)))-delta;
-    // 	    max_col_vector[i] = std::min(lenB, (size_type)(floor(i*lenB/lenA+delta)));
+    // 	    min_col_vector_[i] = std::max(delta, (size_type)(ceil(i*lenB/lenA)))-delta;
+    // 	    max_col_vector_[i] = std::min(lenB, (size_type)(floor(i*lenB/lenA+delta)));
     // 	}
     // }
 
@@ -360,28 +360,29 @@ namespace LocARNA {
     TraceController::TraceController(const Sequence &seqA,
 				     const Sequence &seqB,
 				     const MultipleAlignment *ma, 
-				     int delta_,
-				     bool relaxed_merging_)
-	: delta(delta_),
-	  relaxed_merging(relaxed_merging_)
+				     int delta,
+				     bool relaxed_merging)
+	: TraceRange(),
+          delta_(delta)
+	  //,relaxed_merging_(relaxed_merging)
     {
     
 	size_type lenA = seqA.length();
 	size_type lenB = seqB.length();
     
-	min_col_vector.resize(lenA+1);
-	max_col_vector.resize(lenA+1);
+	min_col_vector_.resize(lenA+1);
+	max_col_vector_.resize(lenA+1);
     
 	// initialize vectors least constrained
-	fill(min_col_vector.begin(), min_col_vector.end(),0);
-	fill(max_col_vector.begin(), max_col_vector.end(),lenB);
+	fill(min_col_vector_.begin(), min_col_vector_.end(),0);
+	fill(max_col_vector_.begin(), max_col_vector_.end(),lenB);
     
-	if ( delta_ == -1 ) { // no constraints!	
+	if ( delta == -1 ) { // no constraints!	
 	    // do nothing
 	}
 	else if ( ma == NULL ) { 
 	    // constraints due to delta but no reference alignment
-	    constrain_wo_ref(lenA, lenB, (size_type)delta);
+	    constrain_wo_ref(lenA, lenB, (size_type)delta_);
 	} else {
 	
 	    // HERE: delta >= 0 and reference alignment ma is given
@@ -427,7 +428,7 @@ namespace LocARNA {
 			// strict merging
 		    
 			// construct trace for current sequences A and B with delta deviation
-			TraceRange tr(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB,delta);
+			TraceRange tr(seqentryA,seqentryB,ref_seqentryA,ref_seqentryB,delta_);
 		    
 			//std::cout << nameA << " " << nameB << std::endl;
 			//tr.print_debug(std::cout);
@@ -440,24 +441,24 @@ namespace LocARNA {
 
 	
 	    if (relaxed_merging) {
-		TraceRange tr(lenA, lenB, trs, delta);
+		TraceRange tr(lenA, lenB, trs, delta_);
 	    
 		//tr.print_debug(std::cout);
 	    
 		// initialize vectors most constrained
-		fill(min_col_vector.begin(), min_col_vector.end(),lenB);
-		fill(max_col_vector.begin(), max_col_vector.end(),0);
+		fill(min_col_vector_.begin(), min_col_vector_.end(),lenB);
+		fill(max_col_vector_.begin(), max_col_vector_.end(),0);
 
 		// blow up by delta
 		for (size_type i=0; i<=lenA; i++) {
-		    min_col_vector[i] = std::min(std::max(tr.min_col(i),delta)-delta,min_col_vector[i]);
-		    max_col_vector[i] = std::max(std::min(tr.max_col(i)+delta,lenB), max_col_vector[i]);
+		    min_col_vector_[i] = std::min(std::max(tr.min_col(i),delta_)-delta_,min_col_vector_[i]);
+		    max_col_vector_[i] = std::max(std::min(tr.max_col(i)+delta_,lenB), max_col_vector_[i]);
 		
-		    size_type i_minus = std::max(delta,i)-delta;
-		    size_type i_plus  = std::min(i+delta,lenA);
+		    size_type i_minus = std::max(delta_,i)-delta_;
+		    size_type i_plus  = std::min(i+delta_,lenA);
 		
-		    min_col_vector[i] = std::min(tr.min_col(i_minus),min_col_vector[i]);
-		    max_col_vector[i] = std::max(tr.max_col(i_plus), max_col_vector[i]);
+		    min_col_vector_[i] = std::min(tr.min_col(i_minus),min_col_vector_[i]);
+		    max_col_vector_[i] = std::max(tr.max_col(i_plus), max_col_vector_[i]);
 		}
 	    
 	    }
@@ -469,18 +470,18 @@ namespace LocARNA {
 	// size_type micv[]={0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27};
 	// size_type macv[]={10,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,28,29,30,31,32,33,34,35,37,48,48,48,48,48,48,48,48,48,48,48};
 	// for (size_type i=0; i<=lenA; i++) {
-	// 	min_col_vector[i] = micv[i];
-	// 	max_col_vector[i] = macv[i];
+	// 	min_col_vector_[i] = micv[i];
+	// 	max_col_vector_[i] = macv[i];
 	// };
 
 #ifndef NDEBGUG
 	//TraceRange::print_debug(std::cout);
     
-	for (size_type i=1; i < min_col_vector.size(); ++i) {
-	    assert(min_col_vector[i-1]<=min_col_vector[i]); // monotony
-	    assert(max_col_vector[i-1]<=max_col_vector[i]); // monotony
-	    assert(min_col_vector[i]<=max_col_vector[i]); // otherwise trace range inconsistent
-	    assert(max_col_vector[i-1]+1>=min_col_vector[i]); // ranges connected/overlap, otherwise trace is inconsistent
+	for (size_type i=1; i < min_col_vector_.size(); ++i) {
+	    assert(min_col_vector_[i-1]<=min_col_vector_[i]); // monotony
+	    assert(max_col_vector_[i-1]<=max_col_vector_[i]); // monotony
+	    assert(min_col_vector_[i]<=max_col_vector_[i]); // otherwise trace range inconsistent
+	    assert(max_col_vector_[i-1]+1>=min_col_vector_[i]); // ranges connected/overlap, otherwise trace is inconsistent
 	}
 #endif
 	//TraceRange::print_debug(std::cout);
@@ -492,16 +493,16 @@ namespace LocARNA {
 	// intersect trace range of *this with trace
 	for (size_type i=0; i<=tr.rows(); i++) {
 	
-	    min_col_vector[i] = std::max( min_col_vector[i], tr.min_col(i) );
-	    max_col_vector[i] = std::min( max_col_vector[i], tr.max_col(i) );
+	    min_col_vector_[i] = std::max( min_col_vector_[i], tr.min_col(i) );
+	    max_col_vector_[i] = std::min( max_col_vector_[i], tr.max_col(i) );
 	
 	
 	    // intersecting may lead to inconsistency, check this here.
 	    // probably it will be necessary to replace the intersection idea
 	    // by a more relaxed merging strategy
-	    if ( min_col_vector[i] > max_col_vector[i] 
+	    if ( min_col_vector_[i] > max_col_vector_[i] 
 		 || 
-		 ((i>0) &&  (max_col_vector[i-1]+1<min_col_vector[i]))) {
+		 ((i>0) &&  (max_col_vector_[i-1]+1<min_col_vector_[i]))) {
 		
 		std::ostringstream err;
 		err << "Inconsistent trace range due to max-diff heuristic";
