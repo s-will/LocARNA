@@ -760,8 +760,7 @@ namespace LocARNA {
     AlignerImpl::align_top_level_free_endgaps() {
     
 	M_matrix_t &M=Ms_[E_NO_NO];
-	infty_score_t max_score;
-    
+	    
 	init_state(E_NO_NO,
 		   r_.startA()-1,r_.endA()+1,
 		   r_.startB()-1,r_.endB()+1,
@@ -789,7 +788,7 @@ namespace LocARNA {
     
 	//std::cout << "M-matrix:" <<std::endl << M << std::endl;
 
-	max_score=M(r_.endA(),r_.endB());
+	infty_score_t max_score=M(r_.endA(),r_.endB());
 	max_i_=r_.endA();
 	max_j_=r_.endB();
     
@@ -839,8 +838,11 @@ namespace LocARNA {
 	//std::cout << r << std::endl;
     
 	M_matrix_t &M=Ms_[E_NO_NO];
-	infty_score_t max_score=infty_score_t::neg_infty;
-	init_state(E_NO_NO,r_.startA()-1,r_.endA()+1,r_.startB()-1,r_.endB()+1,false,false,false,false,sv);
+	infty_score_t max_score=(infty_score_t)0; // 0 is the worst possible score of any local alignment
+        max_i_ = r_.startA()-1;
+        max_j_ = r_.startB()-1;
+        
+        init_state(E_NO_NO,r_.startA()-1,r_.endA()+1,r_.startB()-1,r_.endB()+1,false,false,false,false,sv);
     
 	// need to handle anchor constraints:
 	// search maximum to the right of (or at) rightmost anchor constraint
@@ -885,8 +887,11 @@ namespace LocARNA {
     }
 
 
+    /*
     // special top level alignment for the scanning version
     // ATTENTION: no special anchor constraint handling done here (seems not very useful anyway)
+    // NOTE: does not handle empty input sequences correctly
+    
     infty_score_t
     AlignerImpl::align_top_level_localB() {
 	// std::cout <<"align local B " << r_.startA() << " " << r_.startB() << " "
@@ -916,7 +921,7 @@ namespace LocARNA {
 	}
 	return max_score;
     }
-
+    */
 
     // compute the alignment score
     infty_score_t
