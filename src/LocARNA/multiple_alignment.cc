@@ -299,11 +299,16 @@ namespace LocARNA {
 		}
 	    } else {
 	    	std::istringstream in(line);
-		in >> name >> seqstr;
-		if ( in.fail() || name.empty() || seqstr.empty()) {
+		in >> name;
+		if ( in.fail() || name.empty()) {
 		    throw syntax_error_failure("Unexpected line while reading clustal format");
 		}
-		
+                
+		in >> seqstr;
+                if ( in.fail() ) {
+                    seqstr="";
+                }
+                
 		if (seq_map.find(name)==seq_map.end()) {
 		    seq_map[name] = "";
 		    names.push_back(name);

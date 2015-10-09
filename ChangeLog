@@ -1,6 +1,10 @@
 ============================================================
 === 2015
 
+1.8.5pre
+	allow empty input sequences/alignments
+	fix score of local alignment w/ empty input sequences
+
 1.8.4   (2015-10-6)
 	fix potential overwriting of parameters in classes Aligner*,
 	which was observed only with gcc-5.2

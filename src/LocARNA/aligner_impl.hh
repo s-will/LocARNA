@@ -363,7 +363,7 @@ namespace LocARNA {
 	infty_score_t align_top_level_locally(ScoringView sv);
     
 	//! align top level in the scanning version
-	infty_score_t align_top_level_localB();
+	// infty_score_t align_top_level_localB();
   
 	/** 
 	 * \brief trace back within an match of arcs
