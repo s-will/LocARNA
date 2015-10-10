@@ -195,12 +195,18 @@ namespace LocARNA {
 	
 	// ----------------------------------------
 	// call fold for setting the pf_scale
-	min_free_energy_ = fold(c_sequence,c_structure);
-	min_free_energy_structure_ = static_cast<std::string>(c_structure);
-	
+	if (length>0) { // workaround, since fold(char*,char*) fails on empty input
+            min_free_energy_ = fold(c_sequence,c_structure);
+	} else {
+            min_free_energy_=0;
+        }
+        min_free_energy_structure_ = static_cast<std::string>(c_structure);
+        
 	// std::cout << "MFE: "<<min_free_energy_<<std::endl;
 	// std::cout << c_structure << std::endl;
-	free_arrays();
+	if (length>0) { // free arrays only if we called fold()
+            free_arrays();
+        } 
 	
 	// set pf_scale
 	double kT = (temperature+273.15)*1.98717/1000.;  /* kT in kcal/mol */
@@ -215,8 +221,10 @@ namespace LocARNA {
 
 	// ----------------------------------------
 	// call pf_fold
-	pf_fold(c_sequence,c_structure);
-	
+        if (length>0) { // workaround for pf_fold() on empty input
+            pf_fold(c_sequence,c_structure);
+        }
+ 
 	// ----------------------------------------
 	// get McC data structures and copy
 	// 
@@ -225,7 +233,7 @@ namespace LocARNA {
 	// the data structures if we want to keep them.
 	//
 	McCmat_ = 
-	    new McC_matrices_t(c_sequence,local_copy); // optionally makes local copy
+	    new McC_matrices_t(c_sequence,local_copy && (length>0)); // optionally makes local copy
 	
 	// precompute further tables expMLbase and scale for computations
 	// of probabilities 
@@ -248,15 +256,18 @@ namespace LocARNA {
 	}
 	
 	scale_[0] = 1.;
-	scale_[1] = 1./pf_scale;
-
+        if (length>0) { // avoid write to invalid entry
+            scale_[1] = 1./pf_scale;
+        }
 
 	expMLbase_.resize(length+1);
 
 	expMLbase_[0] = 1;
-	expMLbase_[1] = 
-	    McCmat_->pf_params_->expMLbase * scale_[1];
-	
+	if (length>0) {
+            expMLbase_[1] = 
+                McCmat_->pf_params_->expMLbase * scale_[1];
+	}
+        
 	for (size_t i=2; i<=sequence_.length(); i++) {
 	    
 	    // due to the folowing: scale_[i] = pow(scale_[1],(double)i)
@@ -345,7 +356,7 @@ namespace LocARNA {
 	    strncpy(c_structure,structure_anno.c_str(),length);
 	    c_structure[length]=0;
 	}
-	
+
 	// ----------------------------------------
 	// call alipf_fold
 	if (length>0) { // don't call alifold for 0 length (necessary
@@ -353,7 +364,7 @@ namespace LocARNA {
 			// empty sequences)
 	    alipf_fold(c_sequences,c_structure,NULL);
 	}
-	
+        
 	// ----------------------------------------
 	// get McC data structures and copy
 	// 
@@ -387,15 +398,18 @@ namespace LocARNA {
 	    McCmat_->pf_params_->pf_scale=scaling_factor;
 	}
 	scale_[0] = 1.;
-	scale_[1] = 1./scaling_factor;
-
+	if (length>0) {
+            scale_[1] = 1./scaling_factor;
+        }
 
 	expMLbase_.resize(length+1);
 	
 	expMLbase_[0] = 1;
-	expMLbase_[1] = 
-	    McCmat_->pf_params_->expMLbase/scaling_factor;
-	for (size_t i=2; i<=sequence_.length(); i++) {
+        if (length>0) {
+            expMLbase_[1] = 
+                McCmat_->pf_params_->expMLbase/scaling_factor;
+        }
+	for (size_t i=2; i<=length; i++) {
 	    scale_[i] = 
 		scale_[i/2]*scale_[i-(i/2)];
 	    expMLbase_[i] = 

@@ -1,8 +1,8 @@
 ============================================================
 === 2015
 
-1.8.5pre
-	allow empty input sequences/alignments
+1.8.5   (2015-10-10)
+	allow empty input sequences/alignments and fix related problems
 	fix score of local alignment w/ empty input sequences
 
 1.8.4   (2015-10-6)
