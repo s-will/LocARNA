@@ -1157,7 +1157,9 @@ sub read_clustalw_alignment {
     }
     
     do {
-	if ($line =~ /^([^\s]+)\s+(.+)/) {
+        ## regognize lines "name[whitespace]sequence", but allow empty
+        ## sequence (even without whitespace after name)!
+	if ($line =~ /^(\S+)\s*(\S*)/) {
 	    my $name=$1;
 	    my $seq=$2;
 	    
