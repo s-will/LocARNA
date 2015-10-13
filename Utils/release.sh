@@ -162,6 +162,7 @@ if cd $WEBWORKDIR/Releases ; then
     cd ..
 else
     print "ERROR: could not copy the release to the web directory."
+    exit -1
 fi
 
 ## copy ChangeLog

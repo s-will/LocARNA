@@ -2571,6 +2571,7 @@ sub compute_dotplot($$) {
     
     my $ppname="$input_dir/".get_normalized_seqname($name);
     
+    my $RNAfoldpNonLocal="";
     
     ## decide whether we can use locarna_rnafold_pp as a short cut for
     ## generating pp files by setting these variables:
@@ -2596,12 +2597,14 @@ sub compute_dotplot($$) {
 	    print STDERR "Warning: cannot precompute in-loop probabilities.\n";
 	}
 	$seqname=$tmpname;
+        $RNAfoldpNonLocal="$RNAfold -p2 $RNAfold_args";
 	if (! defined($plfold_span)) {
-	    $RNAfoldp = "$RNAfold -p2 $RNAfold_args";
+	    $RNAfoldp = $RNAfoldpNonLocal
 	} else {
 	    $RNAfoldp = "$RNAplfold -L $plfold_span -W $plfold_winsize $RNAfold_args";
 	}
 	$RNAfoldp .= " >/dev/null" unless $verbose;
+        $RNAfoldpNonLocal .= " >/dev/null" unless $verbose;
     }
 
     my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
@@ -2680,11 +2683,11 @@ sub compute_dotplot($$) {
 		if ( $RNAfoldp =~ /locarna_rnafold_pp/ ) {
 		    systemverb_withinput("$seqname $seq_str\n\#S $constraint_string\n",
 					 "$RNAfoldp -C $RNAfoldp_redirect");
-		} else {
+		} else { ## some non-standard case, but we cannot apply local folding
 		    systemverb_withinput(">$seqname\n$seq_str\n$constraint_string\n",
-					 "$RNAfoldp -C $RNAfoldp_redirect");
+					 "$RNAfoldpNonLocal -C $RNAfoldp_redirect");
 		}
-	    } else {
+	    } else { ## no constraints given; we could apply local folding
 		systemverb_withinput(">$seqname\n$seq_str\n",
 				     "$RNAfoldp $RNAfoldp_redirect");
 	    }

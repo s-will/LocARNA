@@ -1,6 +1,13 @@
 ============================================================
 === 2015
 
+1.8.5b
+	Improve libRNA config, in cases where pkg-config does not work:
+	allow compiling without libgomp, if libgomp is unavailable and
+	is not used by libRNA
+1.8.5a
+	Fix behavior in case structure constraints + local folding (see 1.8.2)
+
 1.8.5   (2015-10-10)
 	allow empty input sequences/alignments and fix related problems
 	fix score of local alignment w/ empty input sequences

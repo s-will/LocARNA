@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.8.5], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.8.5b], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 # Define here to keep all version information in one place.
@@ -104,15 +104,20 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
 ##
 AS_IF([test "$VRNALIB_OK" != "true"], 
 [
-  AC_MSG_NOTICE([Guessing the library configuration.])
+  AC_MSG_NOTICE([Guess the Vienna RNA library configuration:])
   if test "$with_vrna" = "" ; then
     vrna_prefix="/usr/local"
   else
     vrna_prefix="$with_vrna"
   fi
   VRNA_LIBS="-L$vrna_prefix/lib -lRNA"
+
+  ## if libgomp is available, then add it to VRNA_LIBS; otherwise,
+  ## assume (optimistically) that libRNA works without libgomp 
+  AC_CHECK_LIB([gomp],[main],[VRNA_LIBS="$VRNA_LIBS -lgomp"])
+  
   VRNA_CFLAGS="-I$vrna_prefix/include"
-  AC_MSG_NOTICE([LIBS=$VRNA_LIBS; CFLAGS=$VRNA_CFLAGS])
+  AC_MSG_NOTICE([VRNA_LIBS=$VRNA_LIBS; VRNA_CFLAGS=$VRNA_CFLAGS])
   AC_MSG_NOTICE([Guessing may be avoided by installing pkg-config.])
   VRNALIB_OK=true
 ])
