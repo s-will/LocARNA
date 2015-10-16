@@ -56,6 +56,8 @@ namespace LocARNA {
  * class could guarantee that its sequences are normalized RNA
  * sequences. Consequently, we could enforce by the type system that
  * RnaEnsemble is generated only from RNAMultipleAlignment etc.
+ *
+ * @todo automatically adapt output width for sequence names to longest name 
  */
 class MultipleAlignment {
 
@@ -802,7 +804,8 @@ public:
     std::ostream &
     write_name_sequence_line(std::ostream &out,
 			     const std::string &name,
-			     const std::string &sequence) const;
+			     const std::string &sequence,
+                             size_t namewidth) const;
     
     /**
      * @brief Write sub-alignment to stream 

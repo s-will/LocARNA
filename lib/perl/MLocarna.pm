@@ -1260,6 +1260,10 @@ sub write_clustalw_alnloh {
     my $aln   = shift;
     my $width = shift;
     my $write_header = shift;
+
+    if ($width<=0) {
+        $width=undef;
+    }
     
     if (!defined($write_header) || $write_header==1 ) { 
 	print $fh "CLUSTAL W --- $PACKAGE_STRING\n\n\n"; #  - Local Alignment of RNA
@@ -1271,7 +1275,6 @@ sub write_clustalw_alnloh {
 	my $len = length($seq->{name});
 	if ($len>$maxlen) {$maxlen=$len;}
     }
-    $maxlen+=1;
     if ($maxlen < 18) {
 	$maxlen = 18;
     }

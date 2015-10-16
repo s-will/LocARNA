@@ -116,7 +116,7 @@ namespace LocARNA {
     }
 
     MultipleAlignment::MultipleAlignment(const Alignment &alignment,
-    									bool only_local, bool special_gap_symbols)
+                                         bool only_local, bool special_gap_symbols)
 	:alig_(),
 	 annotations_(),
 	 name2idx_() {
@@ -923,8 +923,9 @@ namespace LocARNA {
     std::ostream &
     MultipleAlignment::write_name_sequence_line(std::ostream &out,
 						const std::string &name,
-						const std::string &sequence) const{
-	std::streamsize ow=out.width(26);
+						const std::string &sequence,
+                                                size_t namewidth) const{
+	std::streamsize ow=out.width(namewidth);
 	out << std::left << name << " ";
 	out.width(ow);
 	out << sequence << std::endl;
@@ -939,7 +940,14 @@ namespace LocARNA {
     {
 	assert(1<=start);
 	assert(end+1>=start);
-	    	
+
+        size_t max_name_length=0;
+        for( std::vector<SeqEntry>::const_iterator it=alig_.begin();
+             alig_.end()!=it; ++it) {
+            max_name_length = std::max(max_name_length,it->name().length());
+        }
+        size_t namewidth = std::max((size_t)18,max_name_length);
+        
 	std::string structure_string = 
 	    annotation(AnnoType::structure).single_string();
 	
@@ -951,7 +959,8 @@ namespace LocARNA {
 	    assert(end <= seq.length()); 
 	    
 	    write_name_sequence_line(out,alig_[i].name(),
-				     seq.substr(start-1,end+1-start));
+				     seq.substr(start-1,end+1-start),
+                                     namewidth);
 	}
 
 	// write sequence anchors
@@ -966,7 +975,8 @@ namespace LocARNA {
 		
 		write_name_sequence_line(out,
 					 name.str(),
-					 anchor_string.substr(start-1,end-start+1));
+					 anchor_string.substr(start-1,end-start+1),
+                                         namewidth);
 	    }
 	}
 	
@@ -974,14 +984,16 @@ namespace LocARNA {
 	    const std::string structure_tag   = "#"+annotation_tags[AnnoType::structure];
 	    write_name_sequence_line(out,
 				     structure_tag,
-				     structure_string.substr(start-1,end-start+1));
+				     structure_string.substr(start-1,end-start+1),
+                                     namewidth);
 	}
 
 	if (has_annotation(AnnoType::fixed_structure)) {
 	    const std::string structure_tag   = "#"+annotation_tags[AnnoType::fixed_structure];
 	    write_name_sequence_line(out,
 				     structure_tag,
-				     fixed_structure_string.substr(start-1,end-start+1));
+				     fixed_structure_string.substr(start-1,end-start+1),
+                                     namewidth);
 	}
 	
 	return out;
