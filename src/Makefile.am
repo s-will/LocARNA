@@ -34,11 +34,11 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ../LocARNA-$(API_VERSION).pc
 
 library_includedir=$(includedir)/LocARNA-$(API_VERSION)
-nobase_library_include_HEADERS = locarna.hh LocARNA/aux.hh		\
-	LocARNA/plusvector.hh LocARNA/stopwatch.hh LocARNA/options.hh	\
-	LocARNA/matrix.hh LocARNA/matrices.hh				\
-	LocARNA/sparse_matrix.hh LocARNA/sparse_vector.hh		\
-	LocARNA/sequence.hh LocARNA/basepairs.hh LocARNA/alignment.hh	\
+nobase_library_include_HEADERS = LocARNA/aux.hh LocARNA/plusvector.hh	\
+	LocARNA/stopwatch.hh LocARNA/options.hh LocARNA/matrix.hh	\
+	LocARNA/matrices.hh LocARNA/sparse_matrix.hh			\
+	LocARNA/sparse_vector.hh LocARNA/sequence.hh			\
+	LocARNA/basepairs.hh LocARNA/alignment.hh			\
 	LocARNA/alignment_impl.hh LocARNA/rna_ensemble.hh		\
 	LocARNA/rna_ensemble_impl.hh LocARNA/rna_data.hh		\
 	LocARNA/ext_rna_data.hh LocARNA/rna_data_impl.hh		\
