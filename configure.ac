@@ -1,25 +1,26 @@
-#                                               -*- Autoconf -*-
-# Process this file with autoconf to produce a configure script.
+dnl                                               -*- Autoconf -*-
+dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.8.5b], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.8.6], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
-# Define here to keep all version information in one place.
+dnl Define here to keep all version information in one place.
 AC_SUBST([SO_VERSION], [1:0:0])
-AC_SUBST([API_VERSION], [1.3])
+AC_SUBST([API_VERSION], [1.4])
 
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_CONFIG_HEADERS([src/config.h:config.h.in])
 
-LT_INIT                     # for libtool
-AC_PROG_LIBTOOL             # deprecated; left for backward compatibility
-# AC_SUBST(LIBTOOL_DEPS)
+dnl for libtool
+LT_INIT
+dnl deprecated; left for backward compatibility
+AC_PROG_LIBTOOL
 
 AM_INIT_AUTOMAKE
 
-# Checks for programs.
+dnl Checks for programs.
 AC_PROG_CXX
 AC_PROG_CXXCPP
 AC_PROG_CC
@@ -31,9 +32,9 @@ AC_CHECK_PROGS([PERL],[perl])
 AC_CHECK_PROG([HELP2MAN],[help2man],[help2man],[false])
 AC_CHECK_PROG([POD2MAN],[pod2man],[pod2man],[false])
 
-## ----------------------------------------
-# doxygen documentation
-#
+dnl ----------------------------------------
+dnl doxygen documentation
+dnl
 
 DX_HTML_FEATURE(ON)
 DX_CHM_FEATURE(OFF)
@@ -45,15 +46,16 @@ DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
 
 DX_INIT_DOXYGEN($PACKAGE_NAME, ["doxygen.cfg"], ["Doc"])
-## ----------------------------------------
+dnl ----------------------------------------
 
 
 
-## ----------------------------------------
-# for Vienna RNA
-AC_CHECK_FUNCS([strdup]) #defines HAVE_STRDUP if strdup is available
+dnl ----------------------------------------
+dnl for Vienna RNA
+dnl     defines HAVE_STRDUP if strdup is available
+AC_CHECK_FUNCS([strdup]) 
 
-# Vienna RNA package library path support, if not installed in standard directory/path
+dnl Vienna RNA package library path support, if not installed in standard directory/path
 VRNA_OK=true
 
 AC_ARG_WITH([vrna],
@@ -63,26 +65,27 @@ AC_ARG_WITH([vrna],
       )
 )
 
-ENABLE_LIBRNA=yes ## require rna lib linking
+dnl require rna lib linking
+ENABLE_LIBRNA=yes
 
 AC_SUBST(LDFLAGS,[""])
 AC_SUBST(CPPFLAGS,[""])
 AC_SUBST(LIBS,[""])
-AC_SUBST(LIBDEFS,[""]) # defines that have to be set when using the LocARNA library
+dnl defines that have to be set when using the LocARNA library
+AC_SUBST(LIBDEFS,[""]) 
 
 
-## ------------------------------
-## Vienna RNA lib configuration
-##
-## check whether pkg-config is available 
+dnl ------------------------------
+dnl Vienna RNA lib configuration
+dnl
+dnl check whether pkg-config is available 
 AC_CHECK_PROG([PKG_CONFIG_AVAILABLE],pkg-config,[true],[false])
 
 VRNALIB_OK=false
 
-##
-## if pkg-config is available, use it to configure the Vienna RNA library
+dnl if pkg-config is available, use it to configure the Vienna RNA library
+
 AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
-    # set PKG_CONFIG_PATH
     if test "$with_vrna" != "" ; then
         export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
         if test ! -e "$with_vrna/lib/pkgconfig/RNAlib2.pc" ; then
@@ -91,7 +94,6 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
             VRNA_GUESS_FALLBACK="true"
         fi
     fi
-    #
     AS_IF([test "$VRNA_GUESS_FALLBACK" != "true"],[
         PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.1],[VRNALIB_OK=true],[VRNALIB_OK=false])
         if test "$with_vrna" != "" ; then
@@ -99,9 +101,9 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
         fi
     ])
 ])
-## if pkg-config is not available or something else went wrong with pkg-config,
-## then guess the configuration
-##
+dnl if pkg-config is not available or something else went wrong with pkg-config,
+dnl then guess the configuration
+dnl 
 AS_IF([test "$VRNALIB_OK" != "true"], 
 [
   AC_MSG_NOTICE([Guess the Vienna RNA library configuration:])
@@ -112,8 +114,8 @@ AS_IF([test "$VRNALIB_OK" != "true"],
   fi
   VRNA_LIBS="-L$vrna_prefix/lib -lRNA"
 
-  ## if libgomp is available, then add it to VRNA_LIBS; otherwise,
-  ## assume (optimistically) that libRNA works without libgomp 
+  dnl if libgomp is available, then add it to VRNA_LIBS; otherwise,
+  dnl assume (optimistically) that libRNA works without libgomp 
   AC_CHECK_LIB([gomp],[main],[VRNA_LIBS="$VRNA_LIBS -lgomp"])
   
   VRNA_CFLAGS="-I$vrna_prefix/include"
@@ -121,26 +123,17 @@ AS_IF([test "$VRNALIB_OK" != "true"],
   AC_MSG_NOTICE([Guessing may be avoided by installing pkg-config.])
   VRNALIB_OK=true
 ])
-##
-## finally, set LDFLAGS and CPPFLAGS
+
+dnl finally, set LDFLAGS and CPPFLAGS
 LDFLAGS="$VRNA_LIBS $LDFLAGS"
 CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 
-# ------------------------------
-# handle open mp support
-#  this is necessary for linking against the vienna lib 2.1.x
-#AC_OPENMP
-#AC_SUBST(OPENMP_CXXFLAGS)
-#
-#CPPFLAGS="$OPENMP_CXXFLAGS $CPPFLAGS"
-#LDFLAGS="$OPENMP_CXXFLAGS $LDFLAGS"
-
-# Checks for header files.
+dnl Checks for header files.
 AC_HEADER_STDC
 
-##################
-# Debug option
-#
+dnl --------------------
+dnl Debug option
+dnl
 AC_MSG_CHECKING([whether to build with debug information])
 debug_it=no
 AC_ARG_ENABLE([debug],
@@ -158,13 +151,13 @@ else
     AC_DEFINE([NDEBUG],1,[Turn off debugging])
 fi
 
-## CPPFLAGS="$CPPFLAGS -Wno-deprecated"
+dnl  CPPFLAGS="$CPPFLAGS -Wno-deprecated"
 
 
 
-####################
-# Static linking
-#
+dnl ----------------------------------------
+dnl Static linking
+dnl
 AC_MSG_CHECKING([whether to link statically])
 link_statically=no
 AC_ARG_ENABLE([link-static],
@@ -181,8 +174,8 @@ if test "$link_statically" = "yes"; then
 fi
 
 
-## flag for use of long double partition function type
-## attention: name clash with Vienna package macro LARGE_PF ==> define VERY_LARGE_PF
+dnl flag for use of long double partition function type
+dnl attention: name clash with Vienna package macro LARGE_PF ==> define VERY_LARGE_PF
 AC_MSG_CHECKING([whether to support large partition function])
 use_large_pf=no
 AC_ARG_ENABLE([large-pf],
@@ -198,7 +191,7 @@ if test "$use_large_pf" = "yes"; then
     AC_DEFINE([VERY_LARGE_PF],1,[Use long double type for partition functions])
 fi
 
-# Checks for typedefs, structures, and compiler characteristics.
+dnl Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_CONST
 AC_TYPE_SIZE_T
@@ -207,10 +200,9 @@ AC_TYPE_SIZE_T
 AC_CONFIG_FILES([Makefile src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/exploc_p LocARNA-${API_VERSION}.pc:LocARNA.pc.in])
 
 
-### ----------------------------------------
-### Test if Vienna lib available and ok
-## don't allow compiling otherwise 
-#
+dnl ----------------------------------------
+dnl Test if Vienna lib available and ok
+dnl don't allow compiling otherwise 
 
 if test "$VRNALIB_OK" = "false" ; then
    AC_MSG_NOTICE([=================================================================])
