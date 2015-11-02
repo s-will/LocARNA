@@ -85,9 +85,6 @@ using namespace LocARNA;
     behavior could be to use alifold unless the input contains only a single
     sequence.]
 
-    -w,--width=<columns>(120)         Output width
-
-
     We need mechanisms to catch wrong input; some of these things are
     already handled in the lib classes, which raise exceptions on errors.
     catch such exceptions and print errors on wrong input.
@@ -117,7 +114,6 @@ struct command_line_parameters {
     double prob_basepair_in_loop_threshold; //!< threshold for prob_basepait_in_loop
     std::string output_file; 	//!< output file name
     bool force_alifold; 	//!< use alifold even for single sequences.
-    uint width; 	//!< Output width
 };
 //! \brief holds command line parameters of locarna
 command_line_parameters clp;
@@ -134,17 +130,11 @@ option_def my_options[] = {
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
     {"p_unpaired_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.0005","threshold","Threshold for prob_unpaired_in_loop"},
     {"p_basepair_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0005","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
-    {"output",'o',0,O_ARG_STRING,&clp.output_file,"","f","Output file"},
+    {"output",'o',0,O_ARG_STRING,&clp.output_file,"","filename","Output file"},
     {"force-alifold",0,&clp.force_alifold,O_NO_ARG,0,O_NODEFAULT,"","Force alifold for single sequnces"},
-    {"width",'w',0,O_ARG_INT,&clp.width,"120","size","Output width"},
-//    {"input",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
-    {"",0,0,O_ARG_STRING,&clp.input_file,"-","f","Input file"},
+    {"",0,0,O_ARG_STRING,&clp.input_file,"-","filename","Input file"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
-
 };
-
-
-
 
 
 /** 
