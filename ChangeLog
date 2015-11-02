@@ -1,6 +1,7 @@
 ============================================================
 === 2015
 
+	remove unused parameter "width" from locarna_rnafold_pp
 1.8.6   (2015-10-30)
 	Increase API version to 1.4
 	Get rid of locarna.hh
