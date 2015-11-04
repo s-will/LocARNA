@@ -7,7 +7,7 @@
 #include <LocARNA/pfold_params.hh>
 #include <LocARNA/ext_rna_data.hh>
 
-#undef NDEBUG
+#include "check.hh" 
 
 using namespace LocARNA;
 
@@ -48,7 +48,7 @@ main(int argc, char **argv) {
 
     std::remove(outfilename.c_str());
 
-    assert(sizeinfo1.str() == sizeinfo2.str());
+    CHECK(sizeinfo1.str() == sizeinfo2.str());
     
 
     return 0;

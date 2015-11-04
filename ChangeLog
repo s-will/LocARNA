@@ -1,8 +1,10 @@
 ============================================================
 === 2015
 
+	fix problems in tests (make check) w/o enable-debug
+	remove wrong MultipleAlignment format check
+1.8.6   (2015-10-31)
 	remove unused parameter "width" from locarna_rnafold_pp
-1.8.6   (2015-10-30)
 	Increase API version to 1.4
 	Get rid of locarna.hh
 	In clustal(-like) alignment output, adapt formatting to long names

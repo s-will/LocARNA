@@ -88,7 +88,7 @@ AM_DEFAULT_SOURCE_EXT = .cc
 
 MYTESTDATA = Tests/archaea.aln Tests/archaea.fa Tests/archaea-wrong.fa
 BUILT_SOURCES = $(MYTESTDATA)
-EXTRA_DIST=$(MYTESTDATA:%=%.data) $(SCRIPTTESTS)
+EXTRA_DIST=$(MYTESTDATA:%=%.data) $(SCRIPTTESTS) Tests/check.hh
 Tests/archaea.aln: Tests/archaea.aln.data
 	cp $< $@
 Tests/archaea.fa: Tests/archaea.fa.data
