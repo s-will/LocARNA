@@ -8,11 +8,11 @@ dist_man_MANS=locarna.1 locarna_p.1 mlocarna.1 locarnate.1		\
          exparna_p.1
 
 
-locarna.1: $(top_srcdir)/src/locarna.cc
-	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ ../src/locarna.bin
+locarna.1: $(top_srcdir)/src/locarna.cc | $(top_builddir)/src/locarna.bin
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ $(top_builddir)/src/locarna.bin
 
-locarna_p.1: $(top_srcdir)/src/locarna_p.cc
-	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ ../src/locarna_p
+locarna_p.1: $(top_srcdir)/src/locarna_p.cc | $(top_builddir)/src/locarna_p
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ $(top_builddir)/src/locarna_p
 
 
 mlocarna.1: $(top_srcdir)/Utils/mlocarna
@@ -37,12 +37,15 @@ locarnate.1: $(top_srcdir)/Utils/locarnate
 	chmod +x $(top_srcdir)/Utils/locarnate
 	-$(HELP2MAN) $(HELP2MANOPTS) --no-discard-stderr --output=$@ $(top_srcdir)/Utils/locarnate
 
-locarna_deviation.1: $(top_srcdir)/src/deviation.cc
-	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ ../src/locarna_deviation
+locarna_deviation.1: $(top_srcdir)/src/deviation.cc | $(top_builddir)/src/locarna_deviation
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ $(top_builddir)/src/locarna_deviation
 
-locarnap_fit.1: $(top_srcdir)/src/fit.cc
-	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ ../src/locarnap_fit
+locarnap_fit.1: $(top_srcdir)/src/fit.cc | $(top_builddir)/src/locarnap_fit
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ $(top_builddir)/src/locarnap_fit
 
-exparna_p.1: $(top_srcdir)/src/exparna_p.cc
-	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ ../src/exparna_p
+exparna_p.1: $(top_srcdir)/src/exparna_p.cc | $(top_builddir)/src/exparna_p
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ $(top_builddir)/src/exparna_p
+
+sparse.1: $(top_srcdir)/src/exparna_p.cc | $(top_builddir)/src/sparse
+	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ $(top_builddir)/src/sparse
 
