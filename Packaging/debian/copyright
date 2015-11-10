@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: locarna
+Upstream-Contact: Sebastian Will <swill@csail.mit.edu>
+Source: http://http://www.bioinf.uni-freiburg.de/Software/LocARNA/
+
+Files: *
+Copyright: 2007-2015 Sebastian Will <swill@csail.mit.edu>
+        2012-2015 Milad Miladi <miladim@informatik.uni-freiburg.de>
+        2011-2015 Christina Otto <schmiedc@informatik.uni-freiburg.de>
+License: GPL-3

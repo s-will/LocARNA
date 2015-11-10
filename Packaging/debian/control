@@ -1,0 +1,22 @@
+Source: locarna
+Section: science
+Priority: optional
+Maintainer: Sebastian Will <swill@csail.mit.edu>
+Build-Depends: debhelper (>= 9), autotools-dev, vienna-rna (>= 2.1.9), help2man, pkg-config, perl        
+Standards-Version: 3.9.6
+Vcs-Hg: https://people.csail.mit.edu/swill/PubHg/index.cgi/LocARNA/
+Vcs-Browser: https://people.csail.mit.edu/swill/PubHg/index.cgi/LocARNA/
+Homepage: http://www.bioinf.uni-freiburg.de/Software/LocARNA/
+
+Package: locarna
+Architecture: any
+Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}
+Recommends: vienna-rna (>=2.1.9)
+Suggests:
+Description: LocARNA -- alignment of RNAs
+        The LocARNA package comprises several tools for producing fast
+        and high-quality pairwise and multiple alignment of RNA
+        sequences of unknown structure. These tools build on the
+        Turner free energy model of RNAs to simultaneously fold and
+        align (or match) RNAs based on their sequence and structure
+        features.
