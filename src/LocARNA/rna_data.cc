@@ -1689,7 +1689,7 @@ namespace LocARNA {
 
 
     void
-    ExtRnaDataImpl::drop_worst_bpil_precise(double_t ratio) {
+    ExtRnaDataImpl::drop_worst_bpil_precise(double ratio) {
 
 	typedef std::pair< arc_prob_matrix_matrix_t::key_t, arc_prob_matrix_t::key_t > key_t;
 
