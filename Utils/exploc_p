@@ -1,4 +1,5 @@
-#!/usr/bin/env @PERL@
+#!/usr/bin/env perl
+# -*- perl -*-
 
 =head1 NAME
 
@@ -58,15 +59,13 @@ print individual times for Preprocessing, ExpaRNA-P and LocARNA.
 
 =cut
 
-use FindBin;
-# use lib "$FindBin::Bin/../lib/perl";
-my $prefix = "$FindBin::Bin/..";
-
-my $exec_prefix = "@exec_prefix@";
-my $bindir = "@bindir@";
-
 use strict;
 use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+my $prefix = "$FindBin::Bin/..";
+my $bindir = "$FindBin::Bin";
 
 use Pod::Usage;
 use Getopt::Long;
