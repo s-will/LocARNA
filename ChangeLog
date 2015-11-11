@@ -1,6 +1,11 @@
 ============================================================
 === 2015
 
+1.8.7~alpha
+	fix program names in man pages
+	prepare Ubuntu packaging
+	add missing man pages; fix help/man of locarnate
+	clean exploc_p (get rid of "in"-mechanism)
 	fix problems in tests (make check) w/o enable-debug
 	remove wrong MultipleAlignment format check
 1.8.6   (2015-10-31)

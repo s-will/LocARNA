@@ -12,5 +12,5 @@ EXTRA_DIST = locarna.pl mlocarna locarnate locarna-motif-scan		\
               locarnap-revisit-RNAz-hits.pl				\
               locarnap-predict-and-plot.pl locarnap-revcomp.pl		\
               RNAz.pm LocARNA_RNAz.pm dot2pp pp2dot mlocarna_nnames	\
-              locarna-mea.pl average-dot.pl aln-seqs.pl exploc_p.in
+              locarna-mea.pl average-dot.pl aln-seqs.pl exploc_p
 

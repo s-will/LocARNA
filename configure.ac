@@ -2,7 +2,7 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.8.6], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.8.7~alpha], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 dnl Define here to keep all version information in one place.
@@ -197,7 +197,7 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 
-AC_CONFIG_FILES([Makefile src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile Utils/exploc_p LocARNA-${API_VERSION}.pc:LocARNA.pc.in])
+AC_CONFIG_FILES([Makefile src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile LocARNA-${API_VERSION}.pc:LocARNA.pc.in])
 
 
 dnl ----------------------------------------
