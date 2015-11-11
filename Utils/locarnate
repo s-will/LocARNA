@@ -10,39 +10,62 @@ locarnate [--parwise_params <parameters> --tcoffee_params <parameters>
            --pp_calculater_params <parameters> --help --pairwise_aligner <locarna or exparnap>
            --output <outputFolder> --library-only <lib-file> --library-name <name>
            --additional-libraries <list_of_libraries>] <inputFile>
-    
-    Creates MSAs using different pairwise aligners and TCoffee as
-    a multiple alignment tool
 
-AUTHOR: Niklas Meinzer <meinzern@informatik.uni-freiburg.de
+Creates MSAs using different pairwise aligners and TCoffee as
+a multiple alignment tool
 
-OPTIONS
+=head1 AUTHORS
 
+Niklas Meinzer <meinzern@informatik.uni-freiburg.de
 
-        --pairwise_parameters    parameters for the pairwise alignment step
+=head1 OPTIONS
 
-        --tcoffee_params    parameters for tcoffee
+=over 4
 
-        --pp_calculator_params  parameters for locarna_rnafold_pp
+=item B<--pairwise_parameters>
 
-        --output            path to output folder
+parameters for the pairwise alignment step
 
-        --library-only      if given only a t-coffee library will be written
-                            without actual computation
+=item B<--tcoffee_params>
 
-        --library-name      the file name of the produced t-coffee library
+parameters for tcoffee
+
+=item B<--pp_calculator_params>
+
+parameters for locarna_rnafold_pp
+
+=item B<--output>
+
+path to output folder
+
+=item B<--library-only>
+
+if given only a t-coffee library will be written without actual
+computation
+
+=item B<--library-name>
+
+the file name of the produced t-coffee library
                             (default: "input.lib")
 
-        --additional-libraries  a comma separated list of paths to t-coffee
-                                library files that should be given to t-coffee
-                                in addition to the one generated during this run
+=item B<--additional-libraries>
 
-        --pairwise_aligner  which pairwise aligner to use (default: locarna)
-        
-        --scaling_factor each edge from each EPM gets the same weight (exparnap only!)
-        
-        --help  display this help message and exit
+a comma separated list of paths to t-coffee library files that should
+be given to t-coffee in addition to the one generated during this run
 
+=item B<--pairwise_aligner>
+
+which pairwise aligner to use (default: locarna)
+        
+=item B<--scaling_factor>
+
+each edge from each EPM gets the same weight (exparnap only!)
+        
+=item B<--help>
+
+display this help message and exit
+
+=back
 
 =cut
 
@@ -107,7 +130,8 @@ $options{library_name} = "input.lib";
 $options{additional_libraries} = "";
 $options{scaling_factor} = "-1";
 
-GetOptions("help!" => \$options{help},
+GetOptions("help" => \$options{help},
+           "man" => \$options{man},
            "pairwise_parameters=s" => \$options{pairwise_aligner_params},
            "tcoffee_parameters=s" => \$options{tcoffee_params},
            "pp_preprocessing_parameters=s" => \$options{pp_calculator_params},
@@ -119,8 +143,8 @@ GetOptions("help!" => \$options{help},
             "scaling_factor=i" => \$options{scaling_factor}
            );
 
-
-pod2usage() if ($options{help});
+pod2usage(1) if ($options{help});
+pod2usage(-exitstatus => 0, -verbose => 2) if $options{man};
 
 if ( ($options{pairwise_aligner} ne "locarna") && ($options{pairwise_aligner} ne "exparnap")){
     print "Unsupported pairwise aligner: " . $options{pairwise_aligner} . "\n";
