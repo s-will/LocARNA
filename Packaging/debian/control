@@ -10,8 +10,8 @@ Homepage: http://www.bioinf.uni-freiburg.de/Software/LocARNA/
 
 Package: locarna
 Architecture: any
-Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}
-Recommends: vienna-rna (>=2.1.9)
+Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, vienna-rna (>=2.1.9)
+Recommends:
 Suggests:
 Description: LocARNA -- alignment of RNAs
         The LocARNA package comprises several tools for producing fast

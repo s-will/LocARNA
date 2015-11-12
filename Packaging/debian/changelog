@@ -1,5 +1,5 @@
-locarna (1.8.6-0ubuntu1) unstable; urgency=low
+locarna (1.8.7~alpha-1) unstable; urgency=low
 
   * Initial release
 
- -- Sebastian Will <swill@csail.mit.edu>  Tue, 10 Nov 2015 18:33:25 +0100
+ -- Sebastian Will <swill@csail.mit.edu>  Wed, 12 Nov 2015 18:17:00 +0100
