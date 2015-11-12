@@ -29,7 +29,25 @@ AC_PROG_CPP
 AC_LANG_CPLUSPLUS
 
 AC_CHECK_PROGS([PERL],[perl])
-AC_CHECK_PROG([HELP2MAN],[help2man],[help2man],[false])
+
+dnl Are we building from vc checked-out sources, or a tarball ?
+dnl This is used in "Makefile.am" to avoid re-generating the manpage
+dnl when building from tarballs.
+AM_CONDITIONAL([BUILD_FROM_VC], [test -d "$srcdir/.hg"])
+AM_CONDITIONAL([VC_CROSS_COMPILING],
+               [test -d "$srcdir/.hg" && test $cross_compiling = yes])
+
+dnl GNU help2man creates man pages from --help output; in many cases, this
+dnl is sufficient, and obviates the need to maintain man pages separately.
+dnl However, this means invoking executables, which we generally cannot do
+dnl when cross-compiling, so we test to avoid that (the variable
+dnl "cross_compiling" is set by AC_PROG_CC).
+AS_IF([test $cross_compiling = no], [
+  AM_MISSING_PROG([HELP2MAN], [help2man])
+], [
+  HELP2MAN=:
+])
+
 AC_CHECK_PROG([POD2MAN],[pod2man],[pod2man],[false])
 
 dnl ----------------------------------------
