@@ -202,7 +202,7 @@ main(int argc, char **argv) {
 
 		cout << "exparna_p: A tool for fast structure local exact matchings."<<endl<<endl;
 
-		cout << VERSION_STRING<<endl;
+		//cout << VERSION_STRING<<endl;
 
 		print_help(argv[0],my_options);
 

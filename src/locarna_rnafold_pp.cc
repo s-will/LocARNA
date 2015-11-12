@@ -156,7 +156,7 @@ main(int argc, char **argv) {
     }
 
     if (clp.opt_version || clp.opt_verbose) {
-	std::cout << "locarna_rnafold_pp "/*<< VERSION_STRING<<")"*/<<std::endl;
+	std::cout << "locarna_rnafold_pp ("<< PACKAGE_STRING<<")"<<std::endl;
 	if (clp.opt_version) return 0; else std::cout <<std::endl;
     }
 

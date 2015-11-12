@@ -358,7 +358,7 @@ main(int argc, char **argv) {
     if (clp.opt_help) {
 	cout << "sparse - a tool for pairwise fast alignment of RNAs"<<endl<<endl;
 	
-	cout << VERSION_STRING<<endl<<endl;
+	//cout << VERSION_STRING<<endl<<endl;
 
 	print_help(argv[0],my_options);
 
@@ -372,7 +372,7 @@ main(int argc, char **argv) {
     }
 
     if (clp.opt_version || clp.opt_verbose) {
-	cout << "locarna ("<< VERSION_STRING<<")"<<endl;
+	cout << "sparse ("<< VERSION_STRING<<")"<<endl;
 	if (clp.opt_version) return 0; else cout <<endl;
     }
 

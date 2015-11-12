@@ -369,7 +369,7 @@ main(int argc, char **argv) {
     if (clp.opt_help) {
 	std::cout << "locarna - a tool for pairwise (global and local) alignment of RNA."<<std::endl<<std::endl;
 	
-	std::cout << VERSION_STRING<<std::endl<<std::endl;
+	//std::cout << VERSION_STRING<<std::endl<<std::endl;
 
 	print_help(argv[0],my_options);
 

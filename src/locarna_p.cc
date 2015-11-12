@@ -242,7 +242,7 @@ main(int argc, char **argv) {
 	cout << "Computes the partitition function and sequence and structure "
 	     << "match probabilities."<<endl<<endl;
 	
-	cout << VERSION_STRING<<endl;
+	//cout << VERSION_STRING<<endl;
 
 		
 	print_help(argv[0],my_options);
