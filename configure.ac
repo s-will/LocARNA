@@ -2,7 +2,7 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.8.7~alpha], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.8.7], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 dnl Define here to keep all version information in one place.
@@ -30,13 +30,16 @@ AC_LANG_CPLUSPLUS
 
 AC_CHECK_PROGS([PERL],[perl])
 
+dnl Variable settings for generation of man pages via help2man --
+dnl adapted from gnu hello example
+dnl 
 dnl Are we building from vc checked-out sources, or a tarball ?
 dnl This is used in "Makefile.am" to avoid re-generating the manpage
 dnl when building from tarballs.
 AM_CONDITIONAL([BUILD_FROM_VC], [test -d "$srcdir/.hg"])
 AM_CONDITIONAL([VC_CROSS_COMPILING],
                [test -d "$srcdir/.hg" && test $cross_compiling = yes])
-
+dnl
 dnl GNU help2man creates man pages from --help output; in many cases, this
 dnl is sufficient, and obviates the need to maintain man pages separately.
 dnl However, this means invoking executables, which we generally cannot do
