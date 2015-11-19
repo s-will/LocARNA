@@ -116,7 +116,7 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
         fi
     fi
     AS_IF([test "$VRNA_GUESS_FALLBACK" != "true"],[
-        PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.1],[VRNALIB_OK=true],[VRNALIB_OK=false])
+        PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.9],[VRNALIB_OK=true],[VRNALIB_OK=false])
         if test "$with_vrna" != "" ; then
             VRNA_CFLAGS="$VRNA_CFLAGS -I$with_vrna/include"
         fi
@@ -125,7 +125,7 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
 dnl if pkg-config is not available or something else went wrong with pkg-config,
 dnl then guess the configuration
 dnl 
-AS_IF([test "$VRNALIB_OK" != "true"], 
+AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true"], 
 [
   AC_MSG_NOTICE([Guess the Vienna RNA library configuration:])
   if test "$with_vrna" = "" ; then
@@ -225,28 +225,27 @@ dnl ----------------------------------------
 dnl Test if Vienna lib available and ok
 dnl don't allow compiling otherwise 
 
+MESSAGE=""
 if test "$VRNALIB_OK" = "false" ; then
-   AC_MSG_NOTICE([=================================================================])
-   AC_MSG_NOTICE([ERROR:])
-   AC_MSG_NOTICE()
-   
+   MESSAGE+="=======================================================
+ "
    if test "$with_vrna" != "" ; then
-      AC_MSG_NOTICE([Cannot find Vienna RNA package pkgconfig file RNAlib2.pc in '$with_vrna/lib/pkgconfig'.])
+      MESSAGE+="Cannot find Vienna RNA package pkgconfig file RNAlib2.pc
+      in \'$with_vrna/lib/pkgconfig\'.
+ "
    else
-      AC_MSG_NOTICE([Cannot find Vienna RNA package pkgconfig file RNAlib2.pc in default path.])
-      AC_MSG_NOTICE([If the package is not installed, please install it first; otherwise note])
-      AC_MSG_NOTICE([that, in particular, /usr/local/lib/pkgconfig is often not in this path.])
-      AC_MSG_NOTICE([Set PKG_CONFIG_PATH appropriately or use option --with-vrna=PREFIX for easy remedy.])
+      MESSAGE+="Cannot find Vienna RNA package pkgconfig file RNAlib2.pc
+ in the default path. Make sure that the Vienna RNA package is installed.
+ If the RNA package is installed, but the pkgconfig file is still not found,
+ please set PKG_CONFIG_PATH appropriately or provide --with-vrna=PREFIX.
+
+ "
    fi
-fi
-   
-if test "$VRNALIB_OK" = "false" ; then
-   AC_MSG_NOTICE()
-   AC_MSG_NOTICE([The Vienna RNA package (>=2.1.1) is required;])
-   AC_MSG_NOTICE([It is freely available at http://www.tbi.univie.ac.at/RNA/.])
-   AC_MSG_NOTICE()
-    
-   exit -1;
+
+  MESSAGE+="The Vienna RNA package (>=2.1.9) is REQUIRED by LocARNA;
+ It is freely available at http://www.tbi.univie.ac.at/RNA/.
+"
+   AC_MSG_ERROR([$MESSAGE],[-1])
 fi
 
 AC_OUTPUT
