@@ -783,10 +783,9 @@ namespace LocARNA {
 	size_t matches=0;
 	
 	size_t len_a=a1.seq().length();
-	size_t len_ref=ref1.seq().length();
 	
 	assert(len_a == a2.seq().length());
-	assert(len_ref == ref2.seq().length());
+	assert(ref1.seq().length() == ref2.seq().length());
 	
 	const std::vector<int> matchvecA = match_vector(a1.seq(),a2.seq());
 	const std::vector<int> matchvecRef = match_vector(ref1.seq(),ref2.seq());
@@ -820,10 +819,9 @@ namespace LocARNA {
 	size_t s=0;
 	
 	size_t len_a=a1.seq().length();
-	size_t len_ref=ref1.seq().length();
 	
 	assert(len_a == a2.seq().length());
-	assert(len_ref == ref2.seq().length());
+	assert(ref1.seq().length() == ref2.seq().length());
 	
 	const std::vector<int> matchvecA = match_vector(a1.seq(),a2.seq());
 	const std::vector<int> matchvecRef = match_vector(ref1.seq(),ref2.seq());
@@ -857,10 +855,9 @@ namespace LocARNA {
 	double s=0.0;
 	
 	size_t len_a=a1.seq().length();
-	size_t len_ref=ref1.seq().length();
 	
 	assert(len_a == a2.seq().length());
-	assert(len_ref == ref2.seq().length());
+	assert(ref1.seq().length() == ref2.seq().length());
 	
 	const std::vector<int> matchvecA = match_vector2(a1.seq(),a2.seq());
 	const std::vector<int> matchvecRef = match_vector2(ref1.seq(),ref2.seq());
