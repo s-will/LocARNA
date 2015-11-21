@@ -9,12 +9,41 @@ dnl Define here to keep all version information in one place.
 AC_SUBST([SO_VERSION], [1:0:0])
 AC_SUBST([API_VERSION], [1.4])
 
+
+dnl Package meta information
+dnl
+dnl package homepage
+AC_SUBST([PACKAGE_URL], ["http://www.bioinf.uni-freiburg.de/Software/LocARNA/"])
+dnl
+dnl package vcs repository
+AC_SUBST([PACKAGE_VCS], ["https://people.csail.mit.edu/swill/PubHg/index.cgi/LocARNA/"])
+dnl
+dnl package vcs repository for browsing
+AC_SUBST([PACKAGE_VCS_BROWSER], ["https://people.csail.mit.edu/swill/PubHg/index.cgi/LocARNA/"])
+dnl
+dnl main author of the package
+AC_SUBST([PACKAGE_MAIN_AUTHOR], ["Sebastian Will <swill@csail.mit.edu>"])
+dnl
+dnl short description of the package
+AC_SUBST([PACKAGE_SHORT_DESCRIPTION], ["Alignment of RNAs"])
+dnl
+dnl long description of the package
+AC_SUBST([PACKAGE_LONG_DESCRIPTION], ["The LocARNA package consists of several \
+tools for producing fast and high-quality pairwise and multiple \
+alignment of RNA sequences of unknown structure. These tools build on \
+the Turner free energy model of RNAs to simultaneously fold and align \
+(or match) RNAs based on their sequence and structure features."])
+dnl
+dnl (prefix of) url of released sources (tar.gz); releases are called %{name}-%{version}.tar.gz
+AC_SUBST([PACKAGE_SOURCES_URL], ["http://www.bioinf.uni-freiburg.de/Software/LocARNA/Releases"])
+
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_CONFIG_HEADERS([src/config.h:config.h.in])
 
-dnl for libtool
+dnl include libtool
 LT_INIT
+
 dnl deprecated; left for backward compatibility
 AC_PROG_LIBTOOL
 
@@ -107,6 +136,7 @@ VRNALIB_OK=false
 dnl if pkg-config is available, use it to configure the Vienna RNA library
 
 AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
+    dnl if with_vrna is set, then use it to set the path for pkg_config
     if test "$with_vrna" != "" ; then
         export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
         if test ! -e "$with_vrna/lib/pkgconfig/RNAlib2.pc" ; then
@@ -115,11 +145,12 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
             VRNA_GUESS_FALLBACK="true"
         fi
     fi
+    dnl call pkg-config (macro PKG_CHECK_MODULES) to set VRNA_LIBS and VRNA_CFLAGS
     AS_IF([test "$VRNA_GUESS_FALLBACK" != "true"],[
         PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.9],[VRNALIB_OK=true],[VRNALIB_OK=false])
-        if test "$with_vrna" != "" ; then
-            VRNA_CFLAGS="$VRNA_CFLAGS -I$with_vrna/include"
-        fi
+        dnl replace ViennaRNA add end of include path -- use perl, since we require it anyway
+        dnl This fixes a legacy problem in ViennaRNA <2.2.x pkg-config files
+        VRNA_CFLAGS=$(echo $VRNA_CFLAGS | perl -ne 's/(-I.*)\/ViennaRNA(\/\s|\s|$)/\1\2/g;print')
     ])
 ])
 dnl if pkg-config is not available or something else went wrong with pkg-config,
@@ -218,7 +249,10 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 
-AC_CONFIG_FILES([Makefile src/Makefile Utils/Makefile man/Makefile lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile LocARNA-${API_VERSION}.pc:LocARNA.pc.in])
+AC_CONFIG_FILES([Makefile src/Makefile Utils/Makefile man/Makefile
+lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile
+LocARNA-${API_VERSION}.pc:LocARNA.pc.in Packaging/debian/control
+Packaging/rpm/locarna.spec])
 
 
 dnl ----------------------------------------
