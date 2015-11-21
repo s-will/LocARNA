@@ -1,0 +1,65 @@
+# LocARNA.spec
+# Copyright (c) 2015 Sebastian Will <swill@csail.mit.edu>
+#
+Name:           @PACKAGE_NAME@
+Version:        @PACKAGE_VERSION@
+Release:        1%{?dist}
+Summary:        @PACKAGE_SHORT_DESCRIPTION@
+
+Group:          Applications/Engineering
+License:        GPL3
+URL:            @PACKAGE_URL@
+Source:         @PACKAGE_SOURCES_URL@/@PACKAGE_TARNAME@-%{version}.tar.gz
+BuildRoot:      %(mktemp -ud %{_tmppath}/@PACKAGE_TARNAME@-%{version}-%{release}-XXXXXX)
+
+BuildRequires:  perl, gcc-c++, libstdc++, vienna-rna
+Requires:       perl, libstdc++, vienna-rna
+Provides:       libLocARNA = %{version}-%{release}
+Provides:       libLocARNA-dev = %{version}-%{release}
+
+## %define manifest %{_builddir}/@PACKAGE_TARNAME@-%{version}-%{release}.manifest
+
+%description
+@PACKAGE_LONG_DESCRIPTION@
+
+# Do not check the script locarnap-revisit-RNAz-hits.pl This script
+# depends on Bioperl, but since it is rarely used it makes little
+# sense to introduce this dependency for the entire package.
+%global __requires_exclude_from /usr/bin/locarnap-revisit-RNAz-hits.pl
+
+
+%prep
+%autosetup -n @PACKAGE_TARNAME@-%{version}
+
+%configure
+
+%build
+make %{?_smp_mflags}
+
+%install
+rm -rf %{buildroot} # redundant except for RHEL 5
+%make_install
+
+%check
+make check
+
+%clean
+rm -rf %{buildroot}
+
+%files
+## PROBABLY STILL INCOMPLETE
+# %defattr(-,root,root,-)
+%doc README INSTALL TODO ChangeLog
+%license COPYING
+%{_bindir}/*
+%{_datadir}/@PACKAGE_TARNAME@/
+/usr/lib/perl/*
+%{_libdir}/lib@PACKAGE_NAME@*
+%{_libdir}/pkgconfig/*
+%{_includedir}/@PACKAGE_NAME@-@API_VERSION@/
+%{_mandir}/man1/*
+
+
+%changelog
+* Fri Nov 20 2015 Sebastian Will <swill@csail.mit.edu>
+- Initial package release.

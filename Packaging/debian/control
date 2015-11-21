@@ -14,7 +14,7 @@ Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, vienna-rna (>=2.1.
 Recommends:
 Suggests:
 Description: LocARNA -- alignment of RNAs
-        The LocARNA package comprises several tools for producing fast
+        The LocARNA package consists of several tools for producing fast
         and high-quality pairwise and multiple alignment of RNA
         sequences of unknown structure. These tools build on the
         Turner free energy model of RNAs to simultaneously fold and

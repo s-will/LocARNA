@@ -1,0 +1,22 @@
+make
+make dist-gzip
+dh_make -p locarna_1.8.6 -f locarna-1.8.6.tar.gz
+cd debian
+rm *.ex *.EX
+dpkg-depcheck -d ./configure
+
+dpkg-buildpackage -us -uc
+
+cp locarna-1.8.7~alpha.tar.gz locarna_1.8.7~alpha.orig.tar.gz
+dpkg-buildpackage -S -us -uc
+
+## add vienna ppa and trusted.gpg keyring in .pbuilderrc
+# surprisingly, we still need (in addtion to adding trusted.gpg??)
+pbuilder-dist wily login --save-after-login
+apt-key adv --keyserver pgp.mit.edu --recv-keys FA78C1BB17DBAADB
+exit
+
+        
+pbuilder-dist wily amd64 update --release-only
+pbuilder-dist wily amd64 build locarna_1.8.7~alpha-1.dsc
+

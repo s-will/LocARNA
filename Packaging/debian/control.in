@@ -1,0 +1,17 @@
+Source: @PACKAGE_NAME@
+Section: science
+Priority: optional
+Maintainer: @PACKAGE_MAIN_AUTHOR@
+Build-Depends: debhelper (>= 9), autotools-dev, vienna-rna (>= 2.1.9), help2man, pkg-config, perl        
+Standards-Version: 3.9.6
+Vcs-Hg: @PACKAGE_VCS@
+Vcs-Browser: @PACKAGE_VCS_BROWSER@
+Homepage: @PACKAGE_URL@
+
+Package: @PACKAGE_NAME@
+Architecture: any
+Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, vienna-rna (>=2.1.9)
+Recommends:
+Suggests:
+Description: @PACKAGE_NAME@ - @PACKAGE_SHORT_DESCRIPTION@
+@PACKAGE_LONG_DESCRIPTION@
