@@ -1,0 +1,2 @@
+Example call of locarnate with locarna_n:
+locarnate Examples/archaea.fa --locarna=$HOME/bin/locarna_n --no-stacking --no-struc --no-seq

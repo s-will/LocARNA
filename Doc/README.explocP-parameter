@@ -1,0 +1,7 @@
+
+suboptimal:
+-S -v -P 0.01 --suboptimal --coverage-cutoff 0.5 --min_subopt_score 90 --difference_to_optimal_score 20 --prob_unpaired_in_loop_threshold 0.01 --prob_basepair_in_loop 0.001  --alpha_1 1 --alpha_2 5 --alpha_3 5 --am-threshold 20 --chaining --max-diff-am 30
+
+
+heuristic:
+-S -v -P 0.01 --min_subopt_score 90 --prob_unpaired_in_loop_threshold 0.01 --prob_basepair_in_loop 0.001 --alpha_1 1 --alpha_2 5 --alpha_3 5 --am-threshold 20 --chaining  --max-diff-am 30 --max-diff 60

@@ -1,0 +1,21 @@
+Evaluation of alignments should be done by the aligner object. This
+object does already know about all necessary information and
+parameters to score alignments. It does also know how alignments are
+scored. Evaluating alignments in a different class would therefore
+unnecessarily distribute the knowledge about alignment evaluation
+accross different classes.
+
+This does also allow to naturally support different ways to evaluate
+alignments e.g. for locarna and sparse.
+
+For the purpose of evalutating given alignments, we can implement a
+set_alignment method and/or an extra constructor with alignment for
+class Aligner.
+
+Evaluation methods in classes alignment and/or multiplealignment
+should therefore be avoided.
+
+The decomposition into score contributions should be moved to Aligner as well.
+
+(Aligner holds the knowledge about scoring alignments and optimizing
+the score efficiently. Is there a better name for the object???)
