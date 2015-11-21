@@ -23,14 +23,7 @@ src/.deps/
 doc/
 CVS/
 Releases/
-Utils/locarnate
-Utils/mlocarna
-Utils/mlocarna_nnames
-Utils/aln2fa.pl
-Utils/pp2dot
-Utils/locarna-mea
-Utils/reliability-profile.pl
-Utils/alnsel.pl
+Utils/legend-rainbow*
 configure
 config.log
 config.status
@@ -87,6 +80,8 @@ Doc/auto
 Doc/latex
 Doc/html
 
+Packaging/locarna*
+        
 m4
 Examples/*.out
 Doc/*.out
@@ -96,9 +91,49 @@ tmp/*
 Ideas/locarna-ng.aux
 Ideas/locarna-ng.log
 Ideas/locarna-ng.pdf
-
-Examples/453
-Examples/500
+Ideas/new-score.pdf
+Ideas/to_discuss
+        
+## ignored Examples 
+Examples/4672606.tar.gz
+Examples/6S_RNA.fa
+Examples/RF01577.seed.fasta.txt
+Examples/affine_test.fa
+Examples/alirna.ps
+Examples/anchor_ex.fa
+Examples/anchor_ex2.fa
+Examples/archaea-fix.fa
+Examples/archaea.aln
+Examples/archaea.dnd
+Examples/archaea.tree
+Examples/carna-pl-ex.fa
+Examples/dat_209.ext_fasta
+Examples/duplicate_names.fa
+Examples/duplicate_names1.fa
+Examples/empties.fa
+Examples/empty.aln
+Examples/empty.fa
+Examples/haca.snoRNA-fix.fa
+Examples/human.fa
+Examples/inconsistency.fa
+Examples/mouse.fa
+Examples/mouse.posteriors
+Examples/nice2.fa
+Examples/patho.fa
+Examples/patho2.fa
+Examples/rna.ps
+Examples/seq1-str.fa
+Examples/seq2-str.fa
+Examples/stack_test.fa
+Examples/tRNA1.fa
+Examples/tRNA_2.1
+Examples/tRNA_2.1.fa
+Examples/tRNA_2.2
+Examples/tRNA_2.2.fa
+Examples/tRNA_2.fa
+Examples/web.fa
+Examples/web1.fa
+Examples/web2.fa
 
 Obsolete/*
 

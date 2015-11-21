@@ -259,12 +259,12 @@ namespace LocARNA {
     			last_i = last_filled_pos.first;
     			last_j = last_filled_pos.second;
 
+#ifndef NDEBUG
     			// the arc match score is the maximum of the last matrix entry in
     			// matrices LR, L or G_A (as we used the heuristic computation)
     			infty_score_t score_suboptimal =max(max(LR(last_i,last_j),L(last_i,last_j)),max(G_A(last_i,last_j),G_AB(last_i,last_j)));
-
     			assert(score_suboptimal==D(*it));
-
+#endif
     		}
     	}
     }

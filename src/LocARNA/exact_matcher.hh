@@ -557,7 +557,7 @@ namespace LocARNA {
             matidx_t cur_row = sparse_mapperA.first_valid_mat_pos_before(indexA,i,left_endA);
             matidx_t col_before = sparse_mapperB.first_valid_mat_pos_before(indexB,j,left_endB);
 
-            bool valid_pos_found = false;
+            //bool valid_pos_found = false;
 
             // find a valid position that is valid also based on the TraceController
             // go through the rows and find an interval that includes the column col_before or lies
@@ -571,7 +571,7 @@ namespace LocARNA {
 
                 // valid interval found
                 if(min_col<idx_after_max_col && min_col<=col_before){
-                    valid_pos_found=true;
+                    //valid_pos_found=true;
                     break;
                 }
 
@@ -581,7 +581,7 @@ namespace LocARNA {
 
             }
 
-            assert(valid_pos_found);
+            //assert(valid_pos_found);
             assert(idx_after_max_col>0);
 
             matidx_t max_col = idx_after_max_col-1;
