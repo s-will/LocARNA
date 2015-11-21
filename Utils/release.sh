@@ -173,7 +173,7 @@ if cd $WEBWORKDIR ; then
     runcmd \cp index.html index.html.bkp
     runcmd \mv index.html.new index.html 
     if [ "$LOCAL" != "true" ] ; then
-        runcmd cvs commit -m \"Release $PACKAGE-$RELEASE\"
+        runcmd cvs commit -m "\"Release $PACKAGE-$RELEASE\""
     else
         echo "Local mode: don't cvs commit web page"
     fi
