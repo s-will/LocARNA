@@ -12,8 +12,8 @@ URL:            @PACKAGE_URL@
 Source:         @PACKAGE_SOURCES_URL@/@PACKAGE_TARNAME@-%{version}.tar.gz
 BuildRoot:      %(mktemp -ud %{_tmppath}/@PACKAGE_TARNAME@-%{version}-%{release}-XXXXXX)
 
-BuildRequires:  perl, gcc-c++, libstdc++, vienna-rna
-Requires:       perl, libstdc++, vienna-rna
+BuildRequires:  perl, gcc-c++, libstdc++, ViennaRNA
+Requires:       perl, libstdc++, ViennaRNA
 Provides:       libLocARNA = %{version}-%{release}
 Provides:       libLocARNA-dev = %{version}-%{release}
 
