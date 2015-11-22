@@ -417,7 +417,6 @@ namespace LocARNA {
 	void 
 	alloc_outside_matrices();
 
-
     public:  
     
 	/** 
@@ -427,6 +426,11 @@ namespace LocARNA {
 	 */
 	AlignerP(const AlignerParams &ap);
 
+        /** @brief copy constructor
+         * @params p AlignerP object to be copied
+         */
+        AlignerP(const AlignerP &p);
+        
         /** 
 	 * @brief Destructor
 	 */

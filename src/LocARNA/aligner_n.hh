@@ -133,7 +133,8 @@ namespace LocARNA {
 	     *
 	     * @param alignerN The aligner object
 	     */
-	    UnmodifiedScoringViewN(const AlignerN *alignerN): alignerN_(alignerN) {};
+	    explicit
+            UnmodifiedScoringViewN(const AlignerN *alignerN): alignerN_(alignerN) {};
 
 	    /**
 	     * Get scoring object
@@ -217,7 +218,8 @@ namespace LocARNA {
 	     *
 	     * @note scoring object in aligner has to be modified by lambda already
 	     */
-	    ModifiedScoringViewN(const AlignerN *alignerN)
+	    explicit
+            ModifiedScoringViewN(const AlignerN *alignerN)
 		: alignerN_(alignerN),lambda_(0) {}
 
 	    /**
@@ -620,7 +622,8 @@ namespace LocARNA {
 	 * @brief Construct from parameters
 	 * @param ap parameter for aligner
          * @note ap is copied to allow reference to a temporary
-	 */
+         * @note for implicit type cast
+         */
 	AlignerN(const AlignerParams &ap);
     
 	/**

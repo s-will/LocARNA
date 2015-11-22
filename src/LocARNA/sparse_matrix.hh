@@ -149,7 +149,8 @@ namespace LocARNA {
 	 * 
 	 * @param def default value of entries
 	 */
-	SparseMatrix(const value_t &def) : the_map_(),def_(def) {}
+	explicit
+        SparseMatrix(const value_t &def) : the_map_(),def_(def) {}
 
 	/** 
 	 * \brief Access to matrix element

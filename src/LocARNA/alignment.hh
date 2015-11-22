@@ -32,10 +32,12 @@ namespace LocARNA {
 	EdgeEnd(): end_(0) {}
 	    
 	//!@brief construct as position
+        //!@note used for implicit type cast
 	EdgeEnd(pos_type end): end_(int(end)) {}
 	
 	//!@brief construct as gap
-	EdgeEnd(Gap end): end_(-int(end.idx())-1) {}
+        //!@note used for implicit type cast
+        EdgeEnd(Gap end): end_(-int(end.idx())-1) {}
 	    
 	//! @brief gap test
 	//! @return whether end is gap
@@ -105,7 +107,7 @@ namespace LocARNA {
 	 */
 	static 
 	edge_ends_t 
-	alistr_to_edge_ends(const std::string alistr);
+	alistr_to_edge_ends(const std::string &alistr);
 	
 	
 	/**
@@ -133,8 +135,7 @@ namespace LocARNA {
 	/** 
 	 * @brief copy constructor
 	 * @param alignment object to be copied
-	 *
-	 * Copies implementation object (not only pointer) 
+         * Copies implementation object (not only pointer) 
 	 */
 	Alignment(const Alignment &alignment);
 	
@@ -145,7 +146,16 @@ namespace LocARNA {
 	 */
 	Alignment &operator =(const Alignment &alignment);
 
-
+	/** 
+	 * @brief swap two alignments
+	 * @param a1 first alignment
+	 * @param a2 second alignment
+	 * Swaps implementation objects (not only pointer)
+	 */
+        void
+        swap(Alignment &a1,Alignment &a2);
+    
+        
 	/**
 	 * \brief Set consensus structure of the alignment
 	 * @param structure consensus structure

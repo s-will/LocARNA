@@ -109,7 +109,8 @@ namespace LocARNA {
 	 * 
 	 * @param filename name of the input file
 	 */
-	Ribosum(const std::string &filename);
+	explicit
+        Ribosum(const std::string &filename);
     
 	//! @brief virtual destructor
 	virtual
@@ -183,6 +184,7 @@ namespace LocARNA {
 	 * including frequencies.
 	 *
 	 */
+        explicit
 	RibosumFreq(const std::string &filename);
 
     protected:

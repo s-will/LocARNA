@@ -551,7 +551,8 @@ namespace LocARNA {
 
             seqpos_t i = cur_pos_seq.first;
             seqpos_t j = cur_pos_seq.second;
-            matidx_t min_col,idx_after_max_col;
+            
+            matidx_t idx_after_max_col;
 
             // find valid matrix position based on the SparsificationMapper
             matidx_t cur_row = sparse_mapperA.first_valid_mat_pos_before(indexA,i,left_endA);
@@ -564,7 +565,7 @@ namespace LocARNA {
             // before the column col_before
             for(;;--cur_row){
 
-                min_col = min_col_idx(indexA,indexB,cur_row,left_endB);
+                matidx_t min_col = min_col_idx(indexA,indexB,cur_row,left_endB);
                 idx_after_max_col = idx_after_max_col_idx(indexA,indexB,cur_row,left_endB);
 
                 if(debug_valid_mat_pos) std::cout << "interval " << min_col << "," << idx_after_max_col << std::endl;
@@ -1126,7 +1127,19 @@ namespace LocARNA {
         const Arc pseudo_arcB; //!< pseudo Arc for sequence B (0,seqB.length())
 
         /**
-         * View on matrix D
+         * View on matrix D (read only)
+         *
+         * @param am arc match
+         *
+         * @return D matrix entry for arc match am
+         */
+        const
+        infty_score_t &D(const ArcMatch &am) const {
+            return D(am.arcA(),am.arcB());
+        }
+
+        /**
+         * View on matrix D (read/write)
          *
          * @param am arc match
          *
@@ -1137,7 +1150,21 @@ namespace LocARNA {
         }
 
         /**
-         * View on matrix D
+         * View on matrix D (read only)
+         *
+         * @param a arc in A
+         * @param b arc in B
+         *
+         * @return D matrix entry for match of a and b
+         */
+        const
+        infty_score_t &D(const Arc &a, const Arc &b) const {
+            return Dmat(a.idx(),b.idx());
+        }
+
+
+        /**
+         * View on matrix D (read/write)
          *
          * @param a arc in A
          * @param b arc in B
@@ -1148,13 +1175,13 @@ namespace LocARNA {
             return Dmat(a.idx(),b.idx());
         }
 
-        bool nucleotide_match(seqpos_t pos_seqA, seqpos_t pos_seqB){
+        bool nucleotide_match(seqpos_t pos_seqA, seqpos_t pos_seqB) const {
             assert(pos_seqA>=1 && pos_seqA<=seqA.length() &&
     		   pos_seqB>=1 && pos_seqB<=seqB.length()); //seqA and seqB are 1-based
             return (seqA[pos_seqA]==seqB[pos_seqB]);
         }
 
-        bool seq_matching(ArcIdx idxA, ArcIdx idxB, matpos_t cur_mat_pos, pair_seqpos_t cur_seq_pos){
+        bool seq_matching(ArcIdx idxA, ArcIdx idxB, matpos_t cur_mat_pos, pair_seqpos_t cur_seq_pos) const {
             seqpos_t i = cur_seq_pos.first;
             seqpos_t j = cur_seq_pos.second;
 
@@ -1252,7 +1279,7 @@ namespace LocARNA {
          *
          * @return the score for the arcmatch of arcs a and b
          */
-        infty_score_t score_for_am(const Arc &a, const Arc &b);
+        infty_score_t score_for_am(const Arc &a, const Arc &b) const;
 
         /**
          * \brief  computes the stacking score
@@ -1526,11 +1553,11 @@ namespace LocARNA {
         void print_matrices(const Arc &a, const Arc &b, size_type offset_A, size_type offset_B, bool suboptimal,bool add_info);
 
         // checks whether an epm is valid, i.e. only one gap per arc match etc.
-        bool validate_epm(const EPM &epm_to_test);
+        bool validate_epm(const EPM &epm_to_test) const;
 
         // checks the validity of the epm list, i.e. that no epm is contained in another epm (all
         // epms are maximally extended)
-        bool validate_epm_list(epm_cont_t &found_epms);
+        bool validate_epm_list(epm_cont_t &found_epms) const;
 
     public:
 

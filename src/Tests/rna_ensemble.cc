@@ -45,10 +45,8 @@ test_in_loop_probs(const Sequence &seq, const RnaEnsemble &rna_ensemble) {
 
 	    for(size_t j=std::max(k+1,i+TURN+1); j<=seq.length(); ++j) {
 		
-		double p_unp=0.0;
 		// k unpaired in arc
-		
-		p_unp = rna_ensemble.unpaired_in_loop_prob(k,i,j);
+                double p_unp = rna_ensemble.unpaired_in_loop_prob(k,i,j);
 		    
 		// if (p_unp>=theta2) {
 		//     std::cout <<k<<" unpaired in ("<<i<<","<<j<< "): " <<p_unp<<std::endl;
@@ -92,10 +90,9 @@ test_in_loop_probs(const Sequence &seq, const RnaEnsemble &rna_ensemble) {
 
 	// k unpaired in external loop
 
-	double p_unp=0.0;
 	// k unpaired in arc
+	double p_unp = rna_ensemble.unpaired_external_prob(k);
 	
-	p_unp = rna_ensemble.unpaired_external_prob(k);
 	
 	// if (p_unp>=theta2) {
 	//     std::cout <<k<<" unpaired in "<<"external loop"<< ": " <<p_unp<<std::endl;

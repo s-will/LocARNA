@@ -629,6 +629,8 @@ main(int argc, char **argv) {
 				     );
     }
     
+    // note: arcmatches has to be assigned ( unless new failed, which we don't catch )
+    
     const BasePairs &bpsA = arc_matches->get_base_pairsA();
     const BasePairs &bpsB = arc_matches->get_base_pairsB();
     
@@ -1034,13 +1036,13 @@ main(int argc, char **argv) {
     //  clean up
     //
     if (match_probs) delete match_probs;
-    if (arc_matches) delete arc_matches;
+    delete arc_matches;
     if (multiple_ref_alignment) delete multiple_ref_alignment;
     if (ribofit) delete ribofit;
     if (ribosum) delete ribosum;
 
-    if (rna_dataA) delete rna_dataA;
-    if (rna_dataB) delete rna_dataB;
+    delete rna_dataA;
+    delete rna_dataB;
         
     stopwatch.stop("total");
 

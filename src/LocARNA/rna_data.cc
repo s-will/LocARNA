@@ -151,9 +151,9 @@ namespace LocARNA {
 			   const PFoldParams &pfoldparams)
 	: 
 	RnaData(p_bpcut),
-	pimpl_(new ExtRnaDataImpl(this,
-				  p_bpilcut,
-				  p_uilcut)) {
+	ext_pimpl_(new ExtRnaDataImpl(this,
+                                      p_bpilcut,
+                                      p_uilcut)) {
 
 	bool complete=
 	    read_autodetect(filename,pfoldparams.stacking());
@@ -169,13 +169,13 @@ namespace LocARNA {
 	}
 	
 	if (max_bps_length_ratio > 0) {
-	    pimpl_->drop_worst_bps(max_bps_length_ratio*length());
+	    ext_pimpl_->drop_worst_bps(max_bps_length_ratio*length());
 	}
 	if (max_uil_length_ratio > 0) {
-	    pimpl_->drop_worst_uil(max_uil_length_ratio*length());
+	    ext_pimpl_->drop_worst_uil(max_uil_length_ratio*length());
 	}
 	if (max_bpil_length_ratio > 0) {
-	    pimpl_->drop_worst_bpil_precise(max_bpil_length_ratio);
+	    ext_pimpl_->drop_worst_bpil_precise(max_bpil_length_ratio);
 	}
 
     }
@@ -205,22 +205,22 @@ namespace LocARNA {
 		p_bpcut,
 		max_bps_length_ratio,
 		pfoldparams),
-	pimpl_(new ExtRnaDataImpl(this,
+	ext_pimpl_(new ExtRnaDataImpl(this,
 				  p_bpilcut,
 				  p_uilcut)) {
 	init_from_rna_ensemble(rna_ensemble,pfoldparams);
 
 	if (max_uil_length_ratio > 0) {
-	    	pimpl_->drop_worst_uil(max_uil_length_ratio*length());
+	    	ext_pimpl_->drop_worst_uil(max_uil_length_ratio*length());
 	}
 	if (max_bpil_length_ratio > 0) {
-	    	pimpl_->drop_worst_bpil(max_bpil_length_ratio*length());
+	    	ext_pimpl_->drop_worst_bpil(max_bpil_length_ratio*length());
 	}
 	
     }
 
     ExtRnaData::~ExtRnaData() {
-	delete pimpl_;
+	delete ext_pimpl_;
     }
 
 
@@ -383,7 +383,7 @@ namespace LocARNA {
     ExtRnaData::init_from_fixed_structure(const SequenceAnnotation &structure,
 					  bool stacking) {
 	RnaData::init_from_fixed_structure(structure,stacking);
-	pimpl_->init_from_fixed_structure(structure);
+	ext_pimpl_->init_from_fixed_structure(structure);
     }
 
     void
@@ -487,7 +487,7 @@ namespace LocARNA {
     ExtRnaData::init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
 				       const PFoldParams &pfoldparams) {
 	RnaData::init_from_rna_ensemble(rna_ensemble,pfoldparams);
-	pimpl_->init_from_ext_rna_ensemble(rna_ensemble);
+	ext_pimpl_->init_from_ext_rna_ensemble(rna_ensemble);
     }
 
     void
@@ -674,7 +674,7 @@ namespace LocARNA {
 
     bool
     ExtRnaData::inloopprobs_ok() const {
-	return pimpl_->has_in_loop_probs_;
+	return ext_pimpl_->has_in_loop_probs_;
     }
 
     const Sequence &
@@ -760,35 +760,35 @@ namespace LocARNA {
     
     double
     ExtRnaData::arc_in_loop_cutoff_prob() const {
-	return pimpl_->p_bpilcut_;
+	return ext_pimpl_->p_bpilcut_;
     }
 	
     double 
     ExtRnaData::arc_in_loop_prob(pos_type i, pos_type j,pos_type p, pos_type q) const {
-	ExtRnaDataImpl::arc_prob_matrix_t m_pq = pimpl_->arc_in_loop_probs_(p,q);
+	ExtRnaDataImpl::arc_prob_matrix_t m_pq = ext_pimpl_->arc_in_loop_probs_(p,q);
 	return m_pq(i,j);
     }
     
     double 
     ExtRnaData::arc_external_prob(pos_type i, pos_type j) const {
-	ExtRnaDataImpl::arc_prob_matrix_t m_ext = pimpl_->arc_in_loop_probs_(0,length()+1);
+	ExtRnaDataImpl::arc_prob_matrix_t m_ext = ext_pimpl_->arc_in_loop_probs_(0,length()+1);
 	return m_ext(i,j);
     }
     
     double
     ExtRnaData::unpaired_in_loop_cutoff_prob() const {
-	return pimpl_->p_uilcut_;
+	return ext_pimpl_->p_uilcut_;
     }
     
     double 
     ExtRnaData::unpaired_in_loop_prob(pos_type k,pos_type p, pos_type q) const {
-	ExtRnaDataImpl::arc_prob_vector_t v_pq = pimpl_->unpaired_in_loop_probs_(p,q);
+	ExtRnaDataImpl::arc_prob_vector_t v_pq = ext_pimpl_->unpaired_in_loop_probs_(p,q);
 	return v_pq[k];
     }
     
     double 
     ExtRnaData::unpaired_external_prob(pos_type k) const {
-	ExtRnaDataImpl::arc_prob_vector_t v_ext = pimpl_->unpaired_in_loop_probs_(0,length()+1);
+	ExtRnaDataImpl::arc_prob_vector_t v_ext = ext_pimpl_->unpaired_in_loop_probs_(0,length()+1);
 	return v_ext[k];
     }
 
@@ -980,9 +980,6 @@ namespace LocARNA {
     std::istream &
     RnaData::read_pp(std::istream &in) {
 	
-	std::string name;
-	std::string seqstr;
-    
 	std::string line;
 	
 	// check header
@@ -1021,10 +1018,10 @@ namespace LocARNA {
 	get_nonempty_line(in,line);
 	
 	if( line == "#SECTION INLOOP" ) {
-	    pimpl_->read_pp_in_loop_probabilities(in);
-	    pimpl_->has_in_loop_probs_=true;
+	    ext_pimpl_->read_pp_in_loop_probabilities(in);
+	    ext_pimpl_->has_in_loop_probs_=true;
 	} else {
-	    pimpl_->has_in_loop_probs_=false;
+	    ext_pimpl_->has_in_loop_probs_=false;
 	}
 	return in;
     }
@@ -1242,7 +1239,7 @@ namespace LocARNA {
 	
 	RnaData::write_pp(out,p_outbpcut);
 	
-	pimpl_->write_pp_in_loop_probabilities(out,
+	ext_pimpl_->write_pp_in_loop_probabilities(out,
 					       p_outbpcut,
 					       p_outbpilcut,
 					       p_outuilcut);
@@ -1451,9 +1448,9 @@ namespace LocARNA {
 	for( size_t i=1; i <= len; i++ ) {
 	    for( size_t j=i+1; j <= len; j++ ) {
 		num_arcs_in_loop += 
-		    arc_prob_matrix_t(pimpl_->arc_in_loop_probs_(i,j)).size();
+		    arc_prob_matrix_t(ext_pimpl_->arc_in_loop_probs_(i,j)).size();
 		num_unpaired_in_loop += 
-		    ExtRnaDataImpl::arc_prob_vector_t(pimpl_->unpaired_in_loop_probs_(i,j)).size();	
+		    ExtRnaDataImpl::arc_prob_vector_t(ext_pimpl_->unpaired_in_loop_probs_(i,j)).size();	
 	    }
 	}
 	
@@ -1579,7 +1576,8 @@ namespace LocARNA {
 
     void
     ExtRnaDataImpl::drop_worst_bps(size_t keep) {
-	
+
+        // access pimpl_ of parent RnaData object
 	RnaDataImpl *rdimpl = static_cast<RnaData *>(self_)->pimpl_;
 	rdimpl->drop_worst_bps(keep);
 	

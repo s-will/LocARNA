@@ -25,7 +25,7 @@ namespace LocARNA {
     //
 
     AlignerN::AlignerN(const AlignerN &a)
-	: params(a.params),
+	: params(new AlignerNParams(*a.params)),
 	  scoring(a.scoring),
 	  mod_scoring(0),
 	  seqA(a.seqA),
@@ -67,10 +67,14 @@ namespace LocARNA {
 	  bpsA(params->arc_matches_->get_base_pairsA()),
 	  bpsB(params->arc_matches_->get_base_pairsB()),
 	  r(1,1,params->seqA_->length(),params->seqB_->length()),
+	  min_i(0),
+	  min_j(0),
+	  max_i(0),
+          max_j(0),
 	  D_created(false),
 	  alignment(*params->seqA_,*params->seqB_),
-	def_scoring_view(this),
-	mod_scoring_view(this)
+          def_scoring_view(this),
+          mod_scoring_view(this)
     {
 	
 	Dmat.resize(bpsA.num_bps(),bpsB.num_bps());
@@ -805,7 +809,7 @@ namespace LocARNA {
 		//compute IA
 		//	    stopwatch.start("compIA");
 		for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-		     arcB != adjlB.end(); arcB++)
+		     arcB != adjlB.end(); ++arcB)
 		    {
 			fill_IA_entries(al, *arcB, max_ar );
 		    }
@@ -814,7 +818,7 @@ namespace LocARNA {
 		//comput IB
 		//	    stopwatch.start("compIB");
 		for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-		     arcA != adjlA.end(); arcA++)
+		     arcA != adjlA.end(); ++arcA)
 		    {
 			fill_IB_entries(*arcA, bl, max_br );
 		    }

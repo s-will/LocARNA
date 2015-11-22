@@ -39,7 +39,8 @@ namespace LocARNA {
 	 * 
 	 * @param print_on_exit whether to automatically print times on exit  
 	 */
-	StopWatch(bool print_on_exit=false);
+	explicit
+        StopWatch(bool print_on_exit=false);
 	
 
 	/** 

@@ -343,7 +343,10 @@ namespace LocARNA {
 	 *  
 	 * @return 
 	 */
-	RotMatrix() : Matrix<elem_t>(0) {
+	RotMatrix() :
+            Matrix<elem_t>(0),
+            xrot_(0),
+            yrot_(0) {
 	}
         
 	/** 
@@ -371,8 +374,8 @@ namespace LocARNA {
 	 * @post matrix is rotated
 	 */
 	void move(size_t xrot, size_t yrot) {
-	    xrot=xrot_;
-	    yrot=yrot_;
+	    xrot_=xrot;
+	    yrot_=yrot;
 	}
     
 	/** 

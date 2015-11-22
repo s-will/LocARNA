@@ -142,7 +142,8 @@ namespace LocARNA {
 	 * 
 	 * @param def default value of entries
 	 */
-	SparseVector(const value_t &def) : the_map_(),def_(def) {}
+	explicit
+        SparseVector(const value_t &def) : the_map_(),def_(def) {}
 
 	/** 
 	 * \brief Access to vector element

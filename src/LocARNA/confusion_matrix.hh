@@ -31,7 +31,8 @@ namespace LocARNA {
      */
     class ConfusionMatrix {
     public:
-	typedef std::pair<size_t,size_t> bp_t;
+        /** type of a base pair */
+        typedef std::pair<size_t,size_t> bp_t;
 	
 	/**
 	 * @brief basic class for base pair filters (no filtering)
@@ -65,13 +66,25 @@ namespace LocARNA {
 	class BPMinLoopSizeFilter : public BPFilter {
 	    size_t mls_;
 	public:
-	    BPMinLoopSizeFilter(size_t mls)
+
+            /** @brief constructor
+             * @param mls minimum loop size 
+             */
+            explicit
+            BPMinLoopSizeFilter(size_t mls)
 	    : BPFilter(),
 	      mls_(mls)
 	    {}
-
+            
+            /** @brief d'tor 
+             */
 	    ~BPMinLoopSizeFilter() {};
-	    
+
+            /** @brief check for minimum loop size
+             * @param i left end
+             * @param j right end
+             * @return whether bp (i,j) satisfies mls
+             */
 	    bool
 	    operator () (size_t i, size_t j) const {
 		assert(i>=1);
@@ -98,8 +111,15 @@ namespace LocARNA {
 		assert(1<=lo);
 	    }
 
-	    ~SpanRangeBPFilter() {};
+            /** @brief d'tor
+             */
+             ~SpanRangeBPFilter() {};
 	    
+            /** @brief check for span
+             * @param i left end
+             * @param j right end
+             * @return whether span of bp (i,j) is in range
+             */
 	    bool
 	    operator () (size_t i, size_t j) const {
 		assert(i<=j);
@@ -113,13 +133,26 @@ namespace LocARNA {
 	class CanonicalBPFilter: public BPFilter {
 	    const std::string &sequence_;
 	public:
+
+            /** @brief constructor
+             * @param sequence rna sequence
+             */
+            explicit
 	    CanonicalBPFilter(const std::string &sequence)
 		: BPFilter(), 
 		  sequence_(sequence)
 	    {}
 	    
+            /** @brief d'tor
+             */
 	    ~CanonicalBPFilter() {};
 	    
+            /** @brief check for canonical base pair
+             * @param i left end
+             * @param j right end
+             * @return whether (i,j) forms a 
+             *  canonical basepair in the object's sequence
+             */
 	    bool
 	    operator () (size_t i, size_t j) const {
 		return BPFilter::operator ()(i,j) && canonical(sequence_[i],sequence_[j]);

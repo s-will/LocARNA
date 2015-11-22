@@ -366,21 +366,20 @@ main(int argc, char **argv) {
     // ----------------------------------------
     // construct set of relevant arc matches
     //
-    ArcMatches *arc_matches;
     
     // initialize from RnaData
-    arc_matches = new ArcMatches(*rna_dataA,
-				 *rna_dataB,
-				 min_prob,
-				 max_diff_am!=-1
-				 ? (size_type)max_diff_am
-				 : std::max(lenA,lenB),
-				 max_diff_at_am!=-1
-				 ? (size_type)max_diff_at_am
-				 : std::max(lenA,lenB),
-				 trace_controller,
-				 seq_constraints
-				 );
+    ArcMatches *arc_matches = new ArcMatches(*rna_dataA,
+                                             *rna_dataB,
+                                             min_prob,
+                                             max_diff_am!=-1
+                                             ? (size_type)max_diff_am
+                                             : std::max(lenA,lenB),
+                                             max_diff_at_am!=-1
+                                             ? (size_type)max_diff_at_am
+                                             : std::max(lenA,lenB),
+                                             trace_controller,
+                                             seq_constraints
+                                             );
 	
     const BasePairs &bpsA = arc_matches->get_base_pairsA();
     const BasePairs &bpsB = arc_matches->get_base_pairsB();
@@ -595,12 +594,12 @@ main(int argc, char **argv) {
     //}
 
     // clean up
-    if(arc_matches) delete arc_matches;
+    delete arc_matches;
     if (ribosum) delete ribosum;
     if (ribofit) delete ribofit;
 
-    if (rna_dataA) delete rna_dataA;
-    if (rna_dataB) delete rna_dataB;
+    delete rna_dataA;
+    delete rna_dataB;
 
     stopwatch.stop("total");
     

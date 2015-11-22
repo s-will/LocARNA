@@ -60,16 +60,22 @@ namespace LocARNA {
 	: pimpl_(new AlignmentImpl(*alignment.pimpl_))
     {
     }
-    
+
+    void
+    Alignment::swap(Alignment &a1,Alignment &a2) {
+        std::swap(a1.pimpl_,a2.pimpl_);
+    }
+         
     Alignment::~Alignment() { delete pimpl_; }
 
     Alignment &
     Alignment::operator =(const Alignment &alignment)
     {
-	pimpl_ = new AlignmentImpl(*alignment.pimpl_);
+        Alignment temp = Alignment(alignment);
+        swap(temp,*this);
 	return *this;
     }
-    
+
     
     void
     Alignment::set_structures(const RnaStructure &structureA,const RnaStructure &structureB) {
@@ -256,7 +262,7 @@ namespace LocARNA {
     }
 
     Alignment::edge_ends_t 
-    Alignment::alistr_to_edge_ends(const std::string alistr)
+    Alignment::alistr_to_edge_ends(const std::string &alistr)
     {
 	edge_ends_t xs;
 	size_t i=1;

@@ -55,8 +55,7 @@ namespace LocARNA {
 	assert(paliA.seq().length() == paliB.seq().length());
     
 	size_t plenA = pseqA.seq().length();
-	size_t plenB = pseqB.seq().length();
-    
+	
 	min_col_vector_.resize(plenA+1);
 	max_col_vector_.resize(plenA+1);
     
@@ -73,9 +72,7 @@ namespace LocARNA {
 	// 	  << pseqB.seq().to_string() << std::endl;
 	
 	size_t lenAli = aliA.seq().length();
-	size_t lenA = pseqA.length_wogaps();
-	size_t lenB = pseqB.length_wogaps();
-        
+	
 	// std::cout << plenA << " "
 	// 	      << plenB << " "
 	// 	      << lenA << " "
@@ -115,7 +112,11 @@ namespace LocARNA {
 #else // POSITION_CUT_DISTANCE
 	// this code computes the permissible cuts according to a definition
 	// of the alignment deviation that limits the position cut distance to Delta
-    
+
+        size_t plenB = pseqB.seq().length();
+        size_t lenA = pseqA.length_wogaps();
+	size_t lenB = pseqB.length_wogaps();
+        
 	// initialize col vectors
 	for (size_t pi=0; pi <= plenA; pi++) {
 	    min_col_vector_[pi] = plenB;

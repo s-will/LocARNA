@@ -47,6 +47,7 @@ namespace LocARNA {
 	MatchProbs();
 
 	//! construct from file
+        explicit
 	MatchProbs(const std::string &filename);
     
 	/**
@@ -198,6 +199,7 @@ namespace LocARNA {
 	     *
 	     * @throws failure
 	     */
+            explicit
 	    ProbConsParameter(const std::string &filename);
 	};
 

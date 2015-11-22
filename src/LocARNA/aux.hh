@@ -213,7 +213,8 @@ namespace LocARNA {
 	 * 
 	 * @param msg message string
 	 */
-	syntax_error_failure(const std::string msg):failure("Syntax error: "+msg) {}
+        explicit
+	syntax_error_failure(const std::string &msg):failure("Syntax error: "+msg) {}
     };
     
     

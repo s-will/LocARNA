@@ -71,7 +71,7 @@ namespace LocARNA {
     void 
     normalize_rna_sequence(std::string &seq) {
 	transform_toupper(seq);
-	for (size_type i=0; i<=seq.length(); i++) {
+	for (size_type i=0; i<seq.length(); i++) {
 	    if (seq[i]=='T') seq[i]='U';
 	}
     }

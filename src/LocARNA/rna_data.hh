@@ -123,7 +123,8 @@ namespace LocARNA {
 	 * 
 	 * @param p_bpcut cutoff probability
 	 */
-	RnaData(double p_bpcut);
+	explicit
+        RnaData(double p_bpcut);
 	
     private:
 	/**

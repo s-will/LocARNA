@@ -488,7 +488,7 @@ namespace LocARNA {
 	     alig_.end() != it; ++it) {
 	    std::string seq = it->seq().str();
 	    normalize_rna_sequence(seq);
-	    it->set_seq( seq );
+	    it->set_seq( string1(seq) );
 	}
     }
 

@@ -67,6 +67,8 @@ namespace LocARNA {
 	if (exp_scores) {
 	    exp_indel_opening_score =
 		boltzmann_weight(params->indel_opening);
+	    exp_indel_opening_loop_score =
+		boltzmann_weight(params->indel_opening_loop);
 	    precompute_exp_sigma();
 	    precompute_exp_gapcost();
 	}

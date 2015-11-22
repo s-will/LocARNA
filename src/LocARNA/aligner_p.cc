@@ -71,8 +71,12 @@ namespace LocARNA {
 	arc_matches(*params->arc_matches_), 
 	r(1, 1, seqA.length(), seqB.length()),
 	pf_scale(params->pf_scale_),
-	//Dmat((pf_score_t )0),
+        partFunc(0.0),
+        //Dmat((pf_score_t )0),
 	//Dmatprime((pf_score_t )0),
+        F(0.0),
+        Frev(0.0),
+        Fprime(0.0),
 	am_prob(0.0),
 	bm_prob(0.0),
 	D_created(false),
@@ -80,6 +84,40 @@ namespace LocARNA {
     {
     
     }
+
+    AlignerP::AlignerP(const AlignerP &p) :
+	params(new AlignerPParams(*p.params)),
+	scoring(p.scoring),
+	seqA(p.seqA),
+	bpsA(p.bpsA),
+	seqB(p.seqB),
+	bpsB(p.bpsB),
+	arc_matches(p.arc_matches), 
+	r(p.r),
+	pf_scale(p.pf_scale),
+        partFunc(p.partFunc),
+        Dmat(p.Dmat),
+        E(p.E),
+        F(p.F),
+        M(p.M),
+        Mrev(p.Mrev),
+        Erev(p.Erev),
+        Frev(p.Frev),
+        Erev_mat(p.Erev_mat),
+        Frev_mat(p.Frev_mat),
+        Dmatprime(p.Dmatprime),
+	Eprime(p.Eprime),
+        Fprime(p.Fprime),
+        Mprime(p.Mprime),
+        am_prob(p.am_prob),
+	bm_prob(p.bm_prob),
+	D_created(p.D_created),
+	Dprime_created(p.Dprime_created)
+    {
+    }
+
+    
+    
 
     AlignerP::~AlignerP() {
         assert(params!=0);
@@ -600,7 +638,6 @@ namespace LocARNA {
 
     AlignerP::size_type
     AlignerP::rightmost_covering_arc(const BasePairs &bps,size_type l,size_type r,size_type stop) const {
-	assert(r>=0);
   
 	for (size_type i=stop+1; i>r+1; ) { --i;
 	    const BasePairs::RightAdjList &adjl = bps.right_adjlist(i);

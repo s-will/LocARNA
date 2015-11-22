@@ -1025,13 +1025,13 @@ main(int argc, char **argv) {
     }
     
     if (match_probs) delete match_probs;
-    if (arc_matches) delete arc_matches;
+    delete arc_matches;
     if (multiple_ref_alignment) delete multiple_ref_alignment;
     if (ribosum) delete ribosum;
     if (ribofit) delete ribofit;
     
-    if (rna_dataA) delete rna_dataA;
-    if (rna_dataB) delete rna_dataB;
+    delete rna_dataA;
+    delete rna_dataB;
       
     stopwatch.stop("total");
 

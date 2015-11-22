@@ -52,14 +52,16 @@ namespace LocARNA {
 	 * @brief Construct empty
 	 * @param name_length length of names
 	 */
-	SequenceAnnotation(size_type name_length=0):annotation_(name_length) {}
+        explicit
+        SequenceAnnotation(size_type name_length=0):annotation_(name_length) {}
 	
 	/**
 	 * @brief Construct single string
 	 *
 	 * @param annotation_string string of '#'-separated sub-strings
 	 */
-	SequenceAnnotation(const std::string &annotation_string);
+	explicit
+        SequenceAnnotation(const std::string &annotation_string);
 
 	/**
 	 * @brief Construct from vector of strings
@@ -70,7 +72,8 @@ namespace LocARNA {
 	 * position i is the string annotation_strings[0][i]+...+annotation_strings[k-1][i],
 	 * where k=annotation_strings.size()
 	 */
-	SequenceAnnotation(const std::vector<std::string> &annotation_strings);
+	explicit
+        SequenceAnnotation(const std::vector<std::string> &annotation_strings);
 	
 	/**
 	 * @brief Construct as consensus annotation
@@ -141,7 +144,7 @@ namespace LocARNA {
 	 */
 	const std::string &
 	annotation_string(size_t i) const {
-	    assert(0<=i && i<annotation_.size());
+	    assert(i<annotation_.size());
 	    return annotation_[i];
 	}
 	

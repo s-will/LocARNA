@@ -129,7 +129,8 @@ namespace LocARNA {
 	     * 
 	     * @param aligner_impl the aligner implementation object
 	     */
-	    UnmodifiedScoringView(const AlignerImpl *aligner_impl): aligner_impl_(aligner_impl) {};
+            explicit
+            UnmodifiedScoringView(const AlignerImpl *aligner_impl): aligner_impl_(aligner_impl) {};
 	    
 	    /** 
 	     * Get scoring object
@@ -196,7 +197,8 @@ namespace LocARNA {
 	     *
 	     * @note scoring object in aligner has to be modified by lambda already
 	     */
-	    ModifiedScoringView(const AlignerImpl *aligner_impl)
+	    explicit
+            ModifiedScoringView(const AlignerImpl *aligner_impl)
 		: aligner_impl_(aligner_impl),lambda_(0) {}
 	
 	    /** 

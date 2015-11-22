@@ -36,7 +36,8 @@ namespace LocARNA {
 	 *
 	 * @note the string description is suited to specify free end gaps in this way on the command line
 	 */
-	FreeEndgapsDescription(const std::string &d)
+	explicit
+        FreeEndgapsDescription(const std::string &d)
 	    : desc(4)
 	{
 	    if (d.length()>=4) {
@@ -326,7 +327,9 @@ namespace LocARNA {
 	 * Construct with default parameters
 	 */
 	AlignerNParams():
-	    AlignerParams()
+	    AlignerParams(),
+            sparsification_mapperA_(0L),
+            sparsification_mapperB_(0L)
 	{}
 
     public:

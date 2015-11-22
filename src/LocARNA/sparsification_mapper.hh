@@ -203,7 +203,7 @@ public:
 	 */
 	inline
 	seq_pos_t get_pos_in_seq_new(index_t idx, matidx_t pos) const{
-		assert(pos>=0 && pos<number_of_valid_mat_pos(idx));
+		assert(pos<number_of_valid_mat_pos(idx));
 		return (info_valid_seq_pos_vecs.at(idx).at(pos).seq_pos);//+arc.left();
 	}
 

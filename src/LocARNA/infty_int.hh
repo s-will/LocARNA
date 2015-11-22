@@ -383,14 +383,16 @@ namespace LocARNA {
 	 *
 	 * @param x value
 	 */
-	InftyInt(const FiniteInt &x);
+	explicit
+        InftyInt(const FiniteInt &x);
 	
 	/** 
 	 * @brief Construct from potentially tainted
 	 * 
 	 * @param x value
+         * @note used for implicit type cast, untainting
 	 */
-	InftyInt(const TaintedInftyInt &x) :TaintedInftyInt(x) {
+        InftyInt(const TaintedInftyInt &x) :TaintedInftyInt(x) {
 	    normalize();
 	}
 
@@ -471,8 +473,9 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct from base type value
 	 * @param x value
-	 */
-	FiniteInt(base_type x): InftyInt(x) {
+         * @note used for implicit type cast
+         */
+        FiniteInt(base_type x): InftyInt(x) {
 	    assert(is_finite());
 	}
 	

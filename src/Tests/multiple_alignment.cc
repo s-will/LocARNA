@@ -72,6 +72,7 @@ main(int argc, char **argv) {
     } catch(failure &f) {
 	ok=true;
     }
+    if (ma3) delete ma3;
     CHECK(ok);
     
     // // ATTENTION: since we allow empty clustal files, we cannot

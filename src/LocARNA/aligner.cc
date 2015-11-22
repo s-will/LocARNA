@@ -86,7 +86,7 @@ namespace LocARNA {
     
 
     AlignerImpl::AlignerImpl(const AlignerImpl &a)
-	: params_(a.params_),
+	: params_(new AlignerParams(*a.params_)),
 	  scoring_(a.scoring_),
 	  mod_scoring_(0),
 	  seqA_(a.seqA_),

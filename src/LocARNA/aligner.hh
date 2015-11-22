@@ -89,6 +89,7 @@ namespace LocARNA {
          * 
          * @note ap is copied to new AlignerParams object (by impl
          * class) to allow reference to a temporary
+         * @note used with implicit type cast (for cleaner syntax)
          */
 	Aligner(const AlignerParams &ap);
 	

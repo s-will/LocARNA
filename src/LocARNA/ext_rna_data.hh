@@ -34,7 +34,7 @@ namespace LocARNA {
     class ExtRnaData: public RnaData {
     private:
 	friend class ExtRnaDataImpl;
-	ExtRnaDataImpl *pimpl_;  //!<- pointer to corresponding implementation object
+	ExtRnaDataImpl *ext_pimpl_;  //!<- pointer to corresponding implementation object
     public:
 	/** 
 	 * @brief Construct from RnaEnsemble with cutoff probability

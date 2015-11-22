@@ -187,6 +187,7 @@ namespace LocARNA {
 	     * 
 	     * @param arc_matches_ 
 	     */
+            explicit
 	    lex_greater_left_ends(const ArcMatches &arc_matches_)
 		: arc_matches(arc_matches_)
 	    {}

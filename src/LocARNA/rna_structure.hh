@@ -77,7 +77,8 @@ namespace LocARNA {
 	 *
 	 * All such base pairs are recognized.
 	 */
-	RnaStructure(const std::string &structure);
+	explicit
+        RnaStructure(const std::string &structure);
 
 	
 	/** 

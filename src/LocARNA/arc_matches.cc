@@ -239,7 +239,7 @@ namespace LocARNA {
 		score = (score_t) (prob * (double)probability_scale);
 	    }
 	
-	    if ( i<=0 || j<=0 || k<=0 || l<=0 
+	    if ( i==0 || j==0 || k==0 || l==0 
 		 || i>j || j>lenA
 		 || k>l || l>lenB)
 		{

@@ -44,7 +44,8 @@ namespace LocARNA {
 	Alphabet();
 
 	//! construct from vector of alphabet elements
-	Alphabet(const elem_vector_type &a);
+	explicit
+        Alphabet(const elem_vector_type &a);
     
 	//! construct from array of alphabet indices with given length
 	Alphabet(const elem_type *s,int len);

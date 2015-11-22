@@ -31,7 +31,8 @@ namespace LocARNA {
 	/** 
 	 * @brief Construct
 	 */
-	Ribofit(const char *alphabet)
+	explicit
+        Ribofit(const char *alphabet)
 	    : alphabet_(alphabet,4) {
 	}
 

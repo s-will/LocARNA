@@ -134,7 +134,8 @@ namespace LocARNA {
 	     * 
 	     * @param a arc
 	     */
-	    LeftAdjEntry(const Arc &a): Arc(a) {}
+	    explicit
+            LeftAdjEntry(const Arc &a): Arc(a) {}
 	};
 	
 	/**
@@ -148,7 +149,8 @@ namespace LocARNA {
 	     * 
 	     * @param a arc
 	     */
-	    RightAdjEntry(const Arc &a): Arc(a) {}
+	    explicit
+            RightAdjEntry(const Arc &a): Arc(a) {}
 	};
 
 	//! Vector of arcs

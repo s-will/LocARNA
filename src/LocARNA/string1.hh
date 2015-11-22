@@ -28,6 +28,7 @@ namespace LocARNA {
 	 * 
 	 * @param s string
 	 */
+        explicit
 	string1(const std::string &s): s_(s) {}
 	
 	/** 
@@ -105,7 +106,7 @@ namespace LocARNA {
 	 * @return *this
 	 * @post *this equals s
 	 */
-	const string1 &
+        string1 &
 	operator =(const string1 &s) {s_ = s.s_; return *this;}
 
 	/** 
@@ -139,7 +140,7 @@ namespace LocARNA {
 	substr(size_t pos, size_t len) const {
 	    assert(pos>=1);
 	    assert(pos<=s_.length());
-	    return s_.substr(pos-1,len);
+	    return string1(s_.substr(pos-1,len));
 	}
 	
     };
