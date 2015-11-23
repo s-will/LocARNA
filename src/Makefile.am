@@ -69,6 +69,18 @@ bin_PROGRAMS = locarna.bin ribosum2cc locarna_p locarnap_fit	\
                locarna_deviation locarna_rnafold_pp ribosum2cc	\
                exparna_p sparse
 
+if STATIC_LIBLOCARNA
+## link libLocARNA statically to the binaries
+locarna_deviation_LDFLAGS=-static
+exparna_p_LDFLAGS=-static
+locarnap_fit_LDFLAGS=-static
+locarna_bin_LDFLAGS=-static
+locarna_p_LDFLAGS=-static
+locarna_rnafold_pp_LDFLAGS=-static
+ribosum2cc_LDFLAGS=-static
+sparse_LDFLAGS=-static
+endif
+
 #remove the extension .bin for installation
 transform = s/\.bin$$//
 

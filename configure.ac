@@ -180,6 +180,7 @@ dnl finally, set LDFLAGS and CPPFLAGS
 LDFLAGS="$VRNA_LIBS $LDFLAGS"
 CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 
+
 dnl Checks for header files.
 AC_HEADER_STDC
 
@@ -205,7 +206,14 @@ fi
 
 dnl  CPPFLAGS="$CPPFLAGS -Wno-deprecated"
 
-
+dnl --------------------
+dnl add linker options for POSIX threads
+dnl (necessary for linking Gecode) 
+AX_PTHREAD
+AC_MSG_NOTICE([pthread: $PTHREAD_CFLAGS, $PTHREAD_LIBS])
+LIBS="$PTHREAD_LIBS $LIBS"
+dnl CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+LDFLAGS="$PTHREAD_CFLAGS $LDFLAGS"
 
 dnl ----------------------------------------
 dnl Static linking
@@ -224,6 +232,27 @@ AC_MSG_RESULT([$link_statically])
 if test "$link_statically" = "yes"; then
    LDFLAGS="$LDFLAGS -all-static"
 fi
+
+dnl ----------------------------------------
+dnl Static/Dynamic linking to libLocARNA
+dnl
+AC_MSG_CHECKING([whether to link binaries dynamically to libLocARNA])
+AC_ARG_ENABLE([dynamic-liblocarna],
+    AC_HELP_STRING(
+        [--enable-dynamic-liblocarna],
+        [link binaries dynamically to libLocARNA (def=no)]
+    ),
+    [dynamic_liblocarna="$enableval"],
+    [dynamic_liblocarna="no"]
+)
+AC_MSG_RESULT([$dynamic_liblocarna])
+AM_CONDITIONAL([STATIC_LIBLOCARNA],[test "$link_statically" = "no" -a "$dynamic_liblocarna" = "no"])
+
+## for lgomp if all-static
+AS_IF([test "$link_statically" = "yes"],
+[
+LDFLAGS="$LDFLAGS -ldl"
+])
 
 
 dnl flag for use of long double partition function type
