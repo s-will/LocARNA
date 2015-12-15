@@ -5,6 +5,9 @@ AC_PREREQ(2.59)
 AC_INIT([LocARNA], [1.8.8~alpha], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
+# special dir for aux config files 
+AC_CONFIG_AUX_DIR(config)
+
 dnl Define here to keep all version information in one place.
 AC_SUBST([SO_VERSION], [1:0:0])
 AC_SUBST([API_VERSION], [1.4])

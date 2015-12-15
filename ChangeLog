@@ -5,6 +5,7 @@
 	fix all static linking
 	link binaries statically to libLocARNA by default;
 	otherwise use --enable-dynamic-binaries
+	fix & clean up code (after cppcheck static analysis)
 	prepare for rpm packaging
 
 1.8.7	(2015-11-12)

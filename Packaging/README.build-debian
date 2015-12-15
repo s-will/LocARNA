@@ -1,3 +1,17 @@
+# for launchpad the distrib in the changelog must be one of the
+#  supported distribs like xenial, wily, ...
+#
+#for Debian, distribution in changelog is something like unstable or
+#experimental (not a Ubuntu distribution name like wily) For
+#Launchpad, we need to specify the target distribution. See man dput; 
+# see https://help.launchpad.net/Packaging/PPA/Uploading#Using_packages_from_other_distributions
+#  for offering a package for several distribs and naming schemes (like name-version~ppa1~wily1, if the package has to recompiled.
+# Otherwise: copy packages (can be selected on launchpad from detailed package view)
+
+#
+# is there support for automatizing the copying to different distribs?
+#
+
 make
 make dist-gzip
 dh_make -p locarna_1.8.6 -f locarna-1.8.6.tar.gz
@@ -19,4 +33,7 @@ exit
         
 pbuilder-dist wily amd64 update --release-only
 pbuilder-dist wily amd64 build locarna_1.8.7~alpha-1.dsc
+
+# upload to launchpad
+dput ppa:swill/locarna locarna_1.8.7-2_source.changes
 
