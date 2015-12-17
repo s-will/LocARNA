@@ -6,5 +6,7 @@ before_install:
   - sudo apt-add-repository -y ppa:j-4/vienna-rna
   - sudo apt-get update -q -y
   - sudo apt-get install -q -y vienna-rna
+  - sudo apt-get install help2man
 before_script:
   - autoreconf -i
+script: ./configure && make && make check

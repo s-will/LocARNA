@@ -19,10 +19,10 @@ dnl package homepage
 AC_SUBST([PACKAGE_URL], ["http://www.bioinf.uni-freiburg.de/Software/LocARNA/"])
 dnl
 dnl package vcs repository
-AC_SUBST([PACKAGE_VCS], ["https://people.csail.mit.edu/swill/PubHg/index.cgi/LocARNA/"])
+AC_SUBST([PACKAGE_VCS], ["https://github.com/s-will/LocARNA.git"])
 dnl
 dnl package vcs repository for browsing
-AC_SUBST([PACKAGE_VCS_BROWSER], ["https://people.csail.mit.edu/swill/PubHg/index.cgi/LocARNA/"])
+AC_SUBST([PACKAGE_VCS_BROWSER], ["https://github.com/s-will/LocARNA"])
 dnl
 dnl main author of the package
 AC_SUBST([PACKAGE_MAIN_AUTHOR], ["Sebastian Will <swill@csail.mit.edu>"])
@@ -68,9 +68,9 @@ dnl
 dnl Are we building from vc checked-out sources, or a tarball ?
 dnl This is used in "Makefile.am" to avoid re-generating the manpage
 dnl when building from tarballs.
-AM_CONDITIONAL([BUILD_FROM_VC], [test -d "$srcdir/.hg"])
+AM_CONDITIONAL([BUILD_FROM_VC], [test -d "$srcdir/.git"])
 AM_CONDITIONAL([VC_CROSS_COMPILING],
-               [test -d "$srcdir/.hg" && test $cross_compiling = yes])
+               [test -d "$srcdir/.git" && test $cross_compiling = yes])
 dnl
 dnl GNU help2man creates man pages from --help output; in many cases, this
 dnl is sufficient, and obviates the need to maintain man pages separately.
