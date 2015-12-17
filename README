@@ -1,5 +1,8 @@
-LocARNA: global and Local Alignment of RNA
+[![Build Status](https://travis-ci.org/s-will/LocARNA.svg?branch=master)](https://travis-ci.org/s-will/LocARNA)
 
+==========================
+LocARNA: Alignment of RNAs
+==========================
 
 LocARNA is a collection of alignment tools for the structural analysis
 of RNA. Given a set of RNA sequences, LocARNA simultaneously aligns
@@ -48,12 +51,13 @@ accurate multiple alignment, and generates reliability profiles of
 multiple alignments.
 
 
-
+------------
 Installation
 ------------
+
 For installation on GNU/Linux and other Unix-like systems, please see file INSTALL.
 
-
+-----
 Usage
 -----
 
@@ -77,7 +81,7 @@ and the low level tools for pairwise comparison of RNAs
                 probabilities
 
 
-
+-------------------------------------------
 Online information, download and web server
 -------------------------------------------
 
@@ -95,7 +99,7 @@ interface at
    http://rna.informatik.uni-freiburg.de
 
 
-
+-------
 Contact
 -------
 
