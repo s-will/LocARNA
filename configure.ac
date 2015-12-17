@@ -5,7 +5,7 @@ AC_PREREQ(2.59)
 AC_INIT([LocARNA], [1.8.8~alpha], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
-# special dir for aux config files 
+dnl special dir for aux config files 
 AC_CONFIG_AUX_DIR(config)
 
 dnl Define here to keep all version information in one place.
@@ -180,7 +180,7 @@ AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true"],
 ])
 
 dnl finally, set LDFLAGS and CPPFLAGS
-LDFLAGS="$VRNA_LIBS $LDFLAGS"
+LIBS="$VRNA_LIBS $LIBS"
 CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 
 
@@ -251,7 +251,7 @@ AC_ARG_ENABLE([dynamic-liblocarna],
 AC_MSG_RESULT([$dynamic_liblocarna])
 AM_CONDITIONAL([STATIC_LIBLOCARNA],[test "$link_statically" = "no" -a "$dynamic_liblocarna" = "no"])
 
-## for lgomp if all-static
+dnl for lgomp if all-static
 AS_IF([test "$link_statically" = "yes"],
 [
 LDFLAGS="$LDFLAGS -ldl"
