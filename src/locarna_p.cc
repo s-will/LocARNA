@@ -201,10 +201,10 @@ option_def my_options[] = {
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
     {"ribofit",0,0,O_ARG_BOOL,&opt_ribofit,"false","bool","Use Ribofit base and arc match scores (overrides ribosum)"},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","RNA sequences and pair probabilities"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
 
-    {"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"bps-file 1","Basepairs input file 1"},
-    {"",0,0,O_ARG_STRING,&fileB,O_NODEFAULT,"bps-file 2","Basepairs input file 2"},
+    {"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"bps-file 1","Input file 1"},
+    {"",0,0,O_ARG_STRING,&fileB,O_NODEFAULT,"bps-file 2","Input file 2"},
 
 
     {"",0,0,0,0,O_NODEFAULT,"",""}

@@ -292,7 +292,7 @@ option_def my_options[] = {
     {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff","Maximal difference for alignment traces"},
     {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff","Maximal difference for alignment traces, only at arc match positions"},
     {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
-    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
+    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=AMPERSAND)"},
     {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
@@ -335,8 +335,8 @@ option_def my_options[] = {
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
 
-    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"input1","Basepairs input file 1"},
-    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"input2","Basepairs input file 2"},
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"input1","Input file 1"},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"input2","Input file 2"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -378,7 +378,7 @@ main(int argc, char **argv) {
     }
 
     if (clp.opt_galaxy_xml) {
-    	print_galaxy_xml(argv[0],my_options);
+    	print_galaxy_xml((char *)"locarna",my_options);
     	return 0;
     }
 

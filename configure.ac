@@ -15,10 +15,7 @@ AC_SUBST([API_VERSION], [1.4])
 
 dnl Package meta information
 dnl
-dnl package homepage
-AC_SUBST([PACKAGE_URL], ["http://www.bioinf.uni-freiburg.de/Software/LocARNA/"])
-dnl
-dnl package vcs repository
+dnl vcs repository of the package
 AC_SUBST([PACKAGE_VCS], ["https://github.com/s-will/LocARNA.git"])
 dnl
 dnl package vcs repository for browsing
@@ -26,7 +23,6 @@ AC_SUBST([PACKAGE_VCS_BROWSER], ["https://github.com/s-will/LocARNA"])
 dnl
 dnl main author of the package
 AC_SUBST([PACKAGE_MAIN_AUTHOR], ["Sebastian Will <swill@csail.mit.edu>"])
-dnl
 dnl short description of the package
 AC_SUBST([PACKAGE_SHORT_DESCRIPTION], ["Alignment of RNAs"])
 dnl
@@ -283,8 +279,9 @@ AC_TYPE_SIZE_T
 
 AC_CONFIG_FILES([Makefile src/Makefile Utils/Makefile man/Makefile
 lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile
-LocARNA-${API_VERSION}.pc:LocARNA.pc.in Packaging/debian/control
-Packaging/rpm/locarna.spec])
+LocARNA-${API_VERSION}.pc:LocARNA.pc.in
+src/package_constants.hh:src/package_constants.hh.in
+Packaging/debian/control Packaging/rpm/locarna.spec])
 
 
 dnl ----------------------------------------

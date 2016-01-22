@@ -5,6 +5,7 @@
 #  include <config.h>
 #endif
 
+
 /*------------------------------------------------------------
 
   Copyright (C) 1999 by Sebastian Will.
@@ -30,7 +31,6 @@
  ************************************************************/
 
 #include <getopt.h>
-
 #include <string>
 
 namespace LocARNA {
@@ -116,9 +116,17 @@ namespace LocARNA {
     /* print a longer help */
     void print_help(char *progname, option_def options[]);
 
-    const char* convert_arg_type(int arg_type);
+    const char* 
+    convert_arg_type(int arg_type);
 
-    void print_galaxy_xml(char *progname, option_def options[]);
+    /**
+     * @brief prints a galaxy wrapper in xml format
+     *
+     * @param progname Name of program
+     * @param options  Options array
+     */
+    void 
+    print_galaxy_xml(char *progname, option_def options[]);
 
     /** 
      * Print all options and their settings to standard out
