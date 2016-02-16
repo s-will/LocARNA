@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib> // import free()
 
 #include "aux.hh"
 

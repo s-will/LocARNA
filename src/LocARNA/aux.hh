@@ -294,12 +294,12 @@ namespace LocARNA {
      *
      * @note By defining as double, we rely on Vienna package compiled
      * with LARGE_PF (defined in fold_vars.h)
-     *
      * @note By defining this here, we get rid of dependency of header
-     * file ViennaRNA/fold_vars.h
+     * file ViennaRNA/fold_vars.h in pre-2.2.x version of the Vienna package.
+     * In 2.2.x, we simply redeclare the typedef.
      */
-#    define FLT_OR_DBL double
-        
+    typedef double FLT_OR_DBL;
+    
 
     /** 
      * Test for sufficient fragment length
