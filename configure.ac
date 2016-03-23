@@ -146,7 +146,7 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
     fi
     dnl call pkg-config (macro PKG_CHECK_MODULES) to set VRNA_LIBS and VRNA_CFLAGS
     AS_IF([test "$VRNA_GUESS_FALLBACK" != "true"],[
-        PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.1.9],[VRNALIB_OK=true],[VRNALIB_OK=false])
+        PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.2.4],[VRNALIB_OK=true],[VRNALIB_OK=false])
         dnl replace ViennaRNA add end of include path -- use perl, since we require it anyway
         dnl This fixes a legacy problem in ViennaRNA <2.2.x pkg-config files
         VRNA_CFLAGS=$(echo $VRNA_CFLAGS | perl -ne 's/(-I.*)\/ViennaRNA(\/\s|\s|$)/\1\2/g;print')
@@ -305,7 +305,7 @@ if test "$VRNALIB_OK" = "false" ; then
  "
    fi
 
-  MESSAGE+="The Vienna RNA package (>=2.1.9) is REQUIRED by LocARNA;
+  MESSAGE+="The Vienna RNA package (>=2.2.4) is REQUIRED by LocARNA;
  It is freely available at http://www.tbi.univie.ac.at/RNA/.
 "
    AC_MSG_ERROR([$MESSAGE],[-1])
