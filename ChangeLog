@@ -1,7 +1,8 @@
 ============================================================
 === 2015
 
-1.8.8~alpha
+1.8.8   (2016-15-04)
+	adapt to and require ViennaRNA >=2.2.4
 	fix all static linking
 	link binaries statically to libLocARNA by default;
 	otherwise use --enable-dynamic-binaries

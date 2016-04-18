@@ -2,7 +2,7 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.8.8~alpha], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.8.9], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 dnl special dir for aux config files 
@@ -147,19 +147,20 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
     dnl call pkg-config (macro PKG_CHECK_MODULES) to set VRNA_LIBS and VRNA_CFLAGS
     AS_IF([test "$VRNA_GUESS_FALLBACK" != "true"],[
         PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.2.4],[VRNALIB_OK=true],[VRNALIB_OK=false])
-        dnl replace ViennaRNA add end of include path -- use perl, since we require it anyway
-        dnl This fixes a legacy problem in ViennaRNA <2.2.x pkg-config files
-        VRNA_CFLAGS=$(echo $VRNA_CFLAGS | perl -ne 's/(-I.*)\/ViennaRNA(\/\s|\s|$)/\1\2/g;print')
     ])
 ])
 dnl if pkg-config is not available or something else went wrong with pkg-config,
 dnl then guess the configuration
 dnl 
-AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true"], 
+AS_IF([test "$VRNALIB_OK" != "true"], 
 [
   AC_MSG_NOTICE([Guess the Vienna RNA library configuration:])
   if test "$with_vrna" = "" ; then
-    vrna_prefix="/usr/local"
+    if test -e "/usr/local/include/ViennaRNA" ; then
+      vrna_prefix="/usr/local"
+    else
+      vrna_prefix="/usr"
+    fi
   else
     vrna_prefix="$with_vrna"
   fi
@@ -170,10 +171,11 @@ AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true"],
   AC_CHECK_LIB([gomp],[main],[VRNA_LIBS="$VRNA_LIBS -lgomp"])
   
   VRNA_CFLAGS="-I$vrna_prefix/include"
-  AC_MSG_NOTICE([VRNA_LIBS=$VRNA_LIBS; VRNA_CFLAGS=$VRNA_CFLAGS])
-  AC_MSG_NOTICE([Guessing may be avoided by installing pkg-config.])
+  AC_MSG_NOTICE([Guessing of ViennaRNA flags may be avoided by installing pkg-config.])
   VRNALIB_OK=true
 ])
+
+AC_MSG_NOTICE([VRNA_LIBS=$VRNA_LIBS; VRNA_CFLAGS=$VRNA_CFLAGS])
 
 dnl finally, set LDFLAGS and CPPFLAGS
 LIBS="$VRNA_LIBS $LIBS"
