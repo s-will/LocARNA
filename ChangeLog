@@ -1,6 +1,12 @@
 ============================================================
 === 2015
 
+1.8.9   (2016-21-04)
+	improve configuration
+	improve ubuntu packaging
+	fix anchor constraint check in mlocarna fasta input
+	allow ribofit for mea -- e.g. for probabilistic; this used to require ribosum
+
 1.8.8   (2016-15-04)
 	adapt to and require ViennaRNA >=2.2.4
 	fix all static linking

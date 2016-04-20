@@ -12,6 +12,7 @@
 
 #include "sequence.hh"
 #include "alphabet.hh"
+#include "matrix.hh"
 
 namespace LocARNA {
 
@@ -22,6 +23,9 @@ namespace LocARNA {
      * base and arc match scores. Abstract base class.
      */
     class Ribofit {
+    public:
+	typedef Matrix<double> matrix_t; //!< type of a matrix
+    
     protected:
 	//! alphabet of base names as characters 
 	Alphabet<char> alphabet_;
@@ -72,7 +76,15 @@ namespace LocARNA {
 
 	const Alphabet<char> &
 	alphabet() const {return alphabet_;}
-	
+
+        /** 
+	 * @brief Get base match scores
+         * @param identity sequence identity
+         * @param[out] basematch_scores matrix to hold basematch scores
+	 * @return the matrix of base match scores at given identity
+	 */
+	const matrix_t &get_basematch_scores(double identity, matrix_t &basematch_scores) const;
+
     };
     
     class Ribofit_will2014 : public Ribofit  {

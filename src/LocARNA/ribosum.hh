@@ -23,7 +23,7 @@ namespace LocARNA {
     public:
 	typedef Matrix<double> matrix_t; //!< type of a matrix
     protected:
-	typedef Alphabet<std::string> alphabet_type; //!< type of alphabet
+    	typedef Alphabet<std::string> alphabet_type; //!< type of alphabet
 
 	std::string name; //!< name of ribosum
 	matrix_t bm;  //!< scores for base matches, 4x4 matrix
@@ -117,7 +117,7 @@ namespace LocARNA {
 	~Ribosum();
     
 	/** 
-	 * Get base match scores
+	 * @brief Get base match scores
 	 * @return the matrix of base match scores
 	 */
 	const matrix_t &get_basematch_scores() const {return bm;}

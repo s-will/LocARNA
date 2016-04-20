@@ -663,8 +663,8 @@ main(int argc, char **argv) {
     if (clp.opt_write_matchprobs || clp.opt_mea_alignment) {
 	match_probs = new MatchProbs;
 
-	if (ribosum==NULL) {
-	    std::cerr << "ERROR: Ribosum required for mea_alignment and computing matchprobs."<<std::endl;
+	if (ribosum==NULL && ribofit==NULL) {
+	    std::cerr << "ERROR: Ribosum/fit is required for mea_alignment and computing matchprobs."<<std::endl;
 	    exit(-1);
 	}
 
@@ -692,10 +692,33 @@ main(int argc, char **argv) {
 		if (clp.opt_verbose) {
 		    std::cout << "Compute match probabilities using PF sequence alignment."<<std::endl; 
 		}
+                
+                const Alphabet<char> *alphabet;
+                const Matrix<double> *p_basematch_scores;
+                Matrix<double> basematch_scores; 
 
+                if (ribosum!=NULL) {
+                    alphabet = & ribosum->alphabet();
+                    p_basematch_scores = & ribosum->get_basematch_scores();
+                } else if (ribofit!=NULL) {
+                    // determine the average sequence identity
+                    double avg_identity = 0;
+                    for (size_t i=0; i<seqA.num_of_rows(); i++) {
+                        for (size_t j=0; i<seqB.num_of_rows(); j++) {
+                            avg_identity += sequence_identity(seqA.seqentry(i).seq(),
+                                                              seqB.seqentry(j).seq());
+                        }
+                    }
+                    avg_identity /= seqA.num_of_rows()*seqB.num_of_rows();
+                    alphabet = & ribofit->alphabet();
+                    p_basematch_scores = & ribofit->get_basematch_scores(avg_identity,basematch_scores);
+                } else {
+                    assert(false);
+                }
+                
 		match_probs->pf_probs(*rna_dataA,*rna_dataB,
-				      ribosum->get_basematch_scores(),
-				      ribosum->alphabet(),
+				      *p_basematch_scores,
+				      *alphabet,
 				      clp.indel_opening_score/100.0,
 				      clp.indel_score/100.0,
 				      clp.pf_struct_weight/100.0,

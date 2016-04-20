@@ -376,6 +376,12 @@ sub read_fasta {
 ##
 ## $fasta list of hashs representation
 ##
+## require that all anchor constraints have the same number of row (if
+## any anchor constraints are given!)
+##
+## allow mixing of sequences with and without anchor constraint
+## annotation (was forbidden <=1.8.8)
+##
 ## die with error message when constraint annotation is invalid
 ##
 ########################################
@@ -391,7 +397,7 @@ sub check_constraints_in_fasta {
 		    .$seq->{name}.".";
 	    }
 	}
-	
+
 	my $i=1;
 	while (exists $seq->{"ANNO#$i"}) {
 	    if (length($seq->{"ANNO#$i"}) != length($seq->{seq})) {
@@ -400,12 +406,15 @@ sub check_constraints_in_fasta {
 	    }
 	    $i++;
 	}
-	if ($numseqconstraints == -1) {$numseqconstraints=$i-1;}
-	
-	if ($numseqconstraints != $i-1) {
-	    die "Bad sequence constraints for sequence "
-		.$seq->{name}.".";
-	}
+        $i=$i-1; ## set i to number of rows in anchor constraint
+        if ($i>0) { ## ignore sequences without anchor constraints
+            if ($numseqconstraints == -1) {$numseqconstraints=$i;}
+
+            if ($i != $numseqconstraints) {
+                die "Bad sequence constraints for sequence "
+                  .$seq->{name}." -- expected $numseqconstraints anchor constraint row(s)";
+            }
+        }
     }
 }
 
