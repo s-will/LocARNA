@@ -13,8 +13,8 @@ fi
 ## release and package version have to be used consistently
 ## in distribution tar file and debian/changelog
 PACKAGE_NAME=locarna
-RELEASE=1.8.8
-PACKAGE_VERSION=1
+RELEASE=1.8.9
+PACKAGE_VERSION=0
 
 ## distribution and architecture are relevant only for the creation of
 ## the binary package
@@ -73,7 +73,7 @@ fi
 # upload to launchpad
 echo "The package was build successfully."
 echo ""
-dput_cmd=dput ppa:swill/locarna ${PACKAGE_BASENAME}_source.changes
+dput_cmd="dput ppa:swill/locarna ${PACKAGE_BASENAME}_source.changes"
 
 if [ "$INSTALL_IT" = "true" ] ; then
     runIt $dput_cmd
