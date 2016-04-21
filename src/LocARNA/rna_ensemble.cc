@@ -166,6 +166,9 @@ namespace LocARNA {
 	// global settings for Vienna RNA lib
 	fold_constrained=false; // this is potentially changed below
 	if (params.noLP()) {noLonelyPairs=1;}
+
+	assert(params.dangling() >=0 && params.dangling() <=3);
+	dangles = params.dangling();
 	
 
 	// use MultipleAlignment to get pointer to c-string of the
@@ -300,6 +303,9 @@ namespace LocARNA {
 	// global settings for Vienna RNA lib
 	fold_constrained=false; // this is potentially changed below
 	if (params.noLP()) {noLonelyPairs=1;}
+
+	assert(params.dangling() >=0 && params.dangling() <=3);
+	dangles = params.dangling();
 
 	size_t length = sequence_.length();
 	size_t n_seq = sequence_.num_of_rows();

@@ -19,6 +19,7 @@ namespace LocARNA {
     class PFoldParams {
 	bool noLP_;
 	bool stacking_;
+	int dangling_;
     public:
 	/** 
 	 * Construct with all parameters
@@ -27,10 +28,12 @@ namespace LocARNA {
 	 * @param stacking 
 	 */
 	PFoldParams(bool noLP,
-		    bool stacking
+		    bool stacking,
+		    int dangling=2
 		    )
 	    : noLP_(noLP),
-	      stacking_(stacking) 
+	      stacking_(stacking),
+	      dangling_(dangling)
 	{}
 	
 	/** 
@@ -46,6 +49,14 @@ namespace LocARNA {
 	 * @return value of flag 
 	 */
 	bool stacking() const {return stacking_;}
+
+  /**
+	 * @brief Check dangling value
+	 *
+	 * @return value of dangling
+	 */
+	bool dangling() const {return dangling_;}
+
     };
 
 

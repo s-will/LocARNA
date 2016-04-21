@@ -108,6 +108,7 @@ struct command_line_parameters {
     bool use_struct_constraints; 	//!< -C use structural constraints
     bool no_lonely_pairs; 		//!< no lonely pairs option
     bool opt_stacking; 		//!< whether to stacking
+    int opt_dangling; 		//!< dangling option value
     bool opt_in_loop; 		//!< whether to compute in-loop probabilities
     double min_prob; 		//! < only pairs with a probability of at least min_prob are taken into account
     double prob_unpaired_in_loop_threshold; //!< threshold for prob_unpaired_in_loop
@@ -126,6 +127,7 @@ option_def my_options[] = {
     {"use-struct-constraints",'C',&clp.use_struct_constraints, O_NO_ARG, 0, O_NODEFAULT, "","Use structural constraints"},
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
     {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Compute stacking terms"},
+    {"dangling",0,0,O_ARG_INT,&clp.opt_dangling,"2","","Dangling option value"},
     {"in-loop",0,&clp.opt_in_loop,O_NO_ARG,0,O_NODEFAULT,"","Compute in-loop probabilities"},
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
     {"p_unpaired_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.0005","threshold","Threshold for prob_unpaired_in_loop"},
@@ -264,9 +266,9 @@ main(int argc, char **argv) {
 
     }
     
-    PFoldParams pfoldparams(clp.no_lonely_pairs, clp.opt_stacking);
+    PFoldParams pfoldparams(clp.no_lonely_pairs, clp.opt_stacking, clp.opt_dangling);
 
-    RnaEnsemble rna_ensemble(*mseq,pfoldparams, clp.opt_in_loop, use_alifold);
+    RnaEnsemble rna_ensemble(*mseq, pfoldparams, clp.opt_in_loop, use_alifold);
 
     // write pp file
 
