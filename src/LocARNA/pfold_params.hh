@@ -55,7 +55,7 @@ namespace LocARNA {
 	 *
 	 * @return value of dangling
 	 */
-	bool dangling() const {return dangling_;}
+	int dangling() const {return dangling_;}
 
     };
 
