@@ -1,5 +1,6 @@
-DISTRIBUTIONS=wily precise trusty xenial  
+DISTRIBUTIONS="precise trusty xenial"
+#wily 
 
 for distrib in $DISTRIBUTIONS ; do
-  ./build.sh --dput $distrib
-fi
+    ./build.sh --dput $distrib
+done

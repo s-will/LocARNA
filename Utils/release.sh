@@ -69,18 +69,20 @@ if ! grep -w $RELEASE ChangeLog > /dev/null ; then
     exit -1
 fi
 
-########################################
-## check that all files are checked in (clean status)
-#
-if [ "`hg -q status | wc -l`" != 0 ] ; then
-    hg -q status
-    if [ "$LOCAL" != true ] ; then
-        echo "ERROR: work directory differs from repository. Please checkin."
-        exit -1
-    else
-        echo "WARNING: work directory differs from repository. Please checkin."
-    fi
-fi
+# ########################################
+# ## check that all files are checked in (clean status)
+# #
+# if [ "`hg -q status | wc -l`" != 0 ] ; then
+#     hg -q status
+#     if [ "$LOCAL" != true ] ; then
+#         echo "ERROR: work directory differs from repository. Please checkin."
+#         exit -1
+#     else
+#         echo "WARNING: work directory differs from repository. Please checkin."
+#     fi
+# fi
+git status
+
 
 ########################################
 ## check distribution and run tests
@@ -142,8 +144,8 @@ fi
 ## tag and publish to central repository
 #
 if [ "$LOCAL" != "true" ] ; then
-    runcmd hg tag -f "$PACKAGE-$RELEASE"
-    runcmd hg push
+    runcmd git tag -f "v$RELEASE"
+    runcmd git push
 else
     echo "Local mode: don't tag and push"
 fi
