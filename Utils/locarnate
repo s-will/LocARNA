@@ -156,6 +156,34 @@ if($options{pairwise_aligner} eq "locarna" && $options{scaling_factor} ne -1){
 	exit(1);
 }
 
+## require that executable programm exists in search path
+sub require_prog_exists_path {
+    my $prg=shift;
+    my $prgpath = `which $prg`;
+    if ( $prgpath eq ""  ) {
+        print STDERR "ERROR: Programm $prg cannot be found in search path!\n";
+        print STDERR "    Please install and/or set path.\n";
+        exit(0);
+    }
+}
+## require that executable programm exists in dir
+sub require_prog_exists {
+    my $dir=shift;
+    my $prg=shift;
+    my $prgpath = $dir."/".$prg;
+    if ( $prgpath eq ""  ) {
+        print STDERR "ERROR: Programm $prg cannot be found in directory $dir!\n";
+        print STDERR "    Please check your installation or (re)install.\n";
+        exit(0);
+    }
+}
+
+require_prog_exists_path($RNAfold);
+require_prog_exists_path($RNAalifold);
+require_prog_exists($bindir,"locarna");
+require_prog_exists($bindir,"exparna_p");
+require_prog_exists_path($options{TCoffee});
+
 
 ### calculations ###
 
@@ -388,7 +416,7 @@ sub check_locarna_params {
     
     my @output = `$call`;
 
-    if ($output[0] =~ /Mandatory option and\/or argument missing: <file 1>/) {
+    if ($output[0] =~ /ERROR --- Mandatory option and\/or argument missing: <input1>/) {
         return "";
     }
     my $error = $output[0];
