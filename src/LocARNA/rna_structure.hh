@@ -73,9 +73,14 @@ namespace LocARNA {
 	 * letter pairs Aa, Bb, etc ; the structure string can encode
 	 * crossing base pairs like in 
 	 *
-	 * .(((..[[...]]..)))..
+	 * .(((..[[.AA...)))..]]..aa.
 	 *
-	 * All such base pairs are recognized.
+	 * The parser ignores all other symbols ( including _-,:.~ )
+	 * such that e.g. Vienna dot-bracket strings and WUSS notation
+	 * is parsed correctly. Note that the parser is more general
+	 * than the WUSS-specification, which forbids crossing of
+	 * different bracket-symbols like [(...]), so that other
+	 * common pseudoknot specifications are recognized as well.
 	 */
 	explicit
         RnaStructure(const std::string &structure);

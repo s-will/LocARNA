@@ -2579,8 +2579,8 @@ sub compute_dotplot($$) {
     my $RNAfoldp_redirect="";
     my $convert_to_pp=1;
     my $seqname;
-    ## Note: in the case of using locarna_rnafold_pp, we do directly
-    ## produce a the pp file in the input sub-directory. Since no dp file is produced,
+    ## Note: in the case of using locarna_rnafold_pp, we directly
+    ## produce the pp file in the input sub-directory. Since no dp file is produced,
     ## caching of dp files does not work.
     ##
     if (($RNAfold_args eq "") && (!defined($plfold_span)) 

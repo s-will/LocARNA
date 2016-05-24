@@ -1,5 +1,5 @@
-/************************************************************/
-/**
+/************************************************************
+ *
  * \file locarna_rnafold_pp.cc
  * \brief Compute and write base pair probabilities in pp-format.
  *
@@ -10,13 +10,10 @@
  * This program is part of the LocARNA package. It is intended for
  * computing pair probabilities of the input sequences.
  *
- * Reads sequence in fasta from cin and writes pp-files to cout
+ * Reads sequence in fasta or clustalw from cin and writes pp-files to
+ * cout or file
  *
- * command line argument --TEST provides a way to test for linking to
- * the ViennaLib. (This should be eventually replaced by a less
- * idiosyncratic mechanism.)
- */
-/************************************************************/
+ ************************************************************/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
