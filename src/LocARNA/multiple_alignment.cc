@@ -50,7 +50,9 @@ namespace LocARNA {
 	    read_aln_fasta(in);
 	} else if (format==FormatType::CLUSTAL) {
 	    read_aln_clustalw(in);
-	} else {
+	} else if (format==FormatType::STOCKHOLM) {
+            read_aln_stockholm(in);
+        } else {
 	    throw failure("Unknown format.");
 	}
 	
@@ -73,7 +75,9 @@ namespace LocARNA {
 		read_aln_fasta(in);
 	    } else if (format == FormatType::CLUSTAL) {
 		read_aln_clustalw(in);
-	    } else {
+	    } else if (format==FormatType::STOCKHOLM) {
+                read_aln_stockholm(in);
+            } else {
 		throw failure("Unknown format.");
 	    }
 
@@ -219,6 +223,11 @@ namespace LocARNA {
 	     ++i) {
 	    name2idx_[alig_[i].name()]=i;
 	}
+    }
+
+    void
+    MultipleAlignment::read_aln_stockholm(std::istream &in) {
+        assert(false/*NOT IMPLEMENTED*/);
     }
 
     void
@@ -997,14 +1006,20 @@ namespace LocARNA {
     }
 
     std::ostream &
-    MultipleAlignment::write(std::ostream &out) const {
-	return
+    MultipleAlignment::write(std::ostream &out, 
+                             FormatType::type format) const {
+	assert(format==FormatType::CLUSTAL);
+        return
 	    write(out,1,length());
     }
 
     std::ostream &
-    MultipleAlignment::write(std::ostream &out,size_t width) const {
-	size_t start=1;
+    MultipleAlignment::write(std::ostream &out,
+                             size_t width,
+                             FormatType::type format
+                             ) const {
+	assert(format==FormatType::CLUSTAL);
+        size_t start=1;
 	do {
 	    size_t end = std::min(length(),start+width-1);
 	    write(out,start,end);
