@@ -86,6 +86,7 @@ print_normalized_sequence_names_hash
 nnamepair
 
 alifold_mfe
+alifold_pf
 
 );
 
@@ -94,7 +95,6 @@ our %EXPORT_TAGS = ();
 # your exported package globals go here,
 # as well as any optionally exported functions
 our @EXPORT_OK   = qw(
-$RNAalifold
 $PACKAGE_STRING
 
 parse_mfasta
@@ -102,6 +102,10 @@ parse_mfasta_constraints
 );
 
 our $RNAalifold = "RNAalifold";
+
+## alifold specific options
+## turn on ribosum scoring and use "best" factors from the "improved alifold" paper
+our $RNAalifold_options = "--ribosum_scoring --cfactor 0.6 --nfactor 0.5";
 
 our $PACKAGE_STRING = "MLocarna";
 
@@ -1011,7 +1015,7 @@ sub clone_hash {
 sub alifold_structure {
     my ($filename,$RNAfold_args)=@_;
     
-    my @aliout =  readpipe("$RNAalifold -r $RNAfold_args $filename 2>/dev/null");
+    my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args $filename 2>/dev/null");
     
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /([().]+) /) {
@@ -1033,7 +1037,7 @@ sub alifold_structure {
 sub alifold_mfe {
     my ($file,$RNAfold_args) = @_;
     
-    my @aliout =  readpipe("RNAalifold -r $RNAfold_args $file 2>/dev/null");
+    my @aliout =  readpipe("$RNAalifold $RNAalifold_options -r $RNAfold_args $file 2>/dev/null");
 
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /[().]+\s+\(\s*([\d.-]+)\s*=\s*([\d.-]+)\s*\+\s*([\d.-]+)\)/) {
@@ -1044,6 +1048,20 @@ sub alifold_mfe {
 	}
     }
     return 123456789;
+}
+
+########################################
+## alifold_pf($file file name)
+##
+## compute the alifold partition function for an aln file
+##
+## returns alifold mfe of the alignment in $file
+##
+########################################+
+sub alifold_pf {
+    my ($file,$RNAfold_args) = @_;
+    
+    my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args -p $file >/dev/null 2>&1");
 }
 
 

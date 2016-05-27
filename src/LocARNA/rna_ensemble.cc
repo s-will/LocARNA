@@ -337,8 +337,13 @@ namespace LocARNA {
 	    fold_constrained=true;
 	}
 	
+        // set ribosum scoring with "best" parameters
+        ribo = 1;
+        cv_fact = 0.6; // cfactor
+        nc_fact = 0.5; // nfactor
+        
 	// ----------------------------------------
-	// call fold for setting the pf_scale
+	// call alifold for setting the pf_scale
 	if (length>0) { // don't call alifold for 0 length (necessary
 			// workaround, since alifold cannot handle
 			// empty sequences)

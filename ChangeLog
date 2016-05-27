@@ -1,6 +1,7 @@
 ============================================================
 === 2016
 1.8.10alpha
+	Call alifold with /best/ parameters (from perl /and/ c++)
 	Fix locarnate (compatibility to current locarna); add unit test
 
 1.8.9   (2016-21-04)

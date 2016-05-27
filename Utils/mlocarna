@@ -417,7 +417,6 @@ $MLocarna::PACKAGE_STRING=readpipe "$bindir/locarna --version";
 ## vienna package programs
 my $RNAfold = "RNAfold";
 my $RNAplfold = "RNAplfold";
-$MLocarna::RNAalifold = "RNAalifold";
 
 my $input_dir="input";
 my $probs_dir="probs";
@@ -1911,8 +1910,8 @@ sub perform_multiple_alignment($) {
     
     # in probabilistic mode compute and store alifold dotplot
     if ($probabilistic) {
-	system "$MLocarna::RNAalifold $RNAfold_args -r -p $results_dir/result.aln >/dev/null 2>&1";
-	rename "alidot.ps", "$results_dir/alidot.ps";
+        alifold_pf("$results_dir/result.aln",$RNAfold_args);
+        rename "alidot.ps", "$results_dir/alidot.ps";
     }
     
     rename "alirna.ps", "$results_dir/alirna.ps";
