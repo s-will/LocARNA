@@ -70,11 +70,11 @@ public:
     struct FormatType {
 	//! inner type
 	enum type {
-	    CLUSTAL, //!< (extended) clustal file format
-	    FASTA  //!< fasta file format
+            CLUSTAL,  //!< (extended) clustal file format
+            FASTA,    //!< fasta file format
+            STOCKHOLM //!< stockholm file format
 	};
     };
-	
 
     //! @brief type of sequence annotation.
     //! enumerates legal annotation types
@@ -341,6 +341,17 @@ private:
     create_name2idx_map();
 
     /**
+     * @brief Read alignment from input stream, expect stockholm format.
+     *
+     * @param in input stream
+     * @note overwrites/clears existing data
+     *
+     * @todo implement
+     */
+    void
+    read_aln_stockholm(std::istream &in);
+
+    /**
      * @brief Read alignment from input stream, expect clustalw-like format.
      *
      * @param in input stream
@@ -387,7 +398,7 @@ public:
      * @brief Construct from file
      *
      * @param file name of input file
-     * @param format file format (CLUSTAL or FASTA) 
+     * @param format file format (@see FormatType) 
      * @throw failure on read problems
      * @see MultipleAlignment(std::istream &in)
     */
@@ -397,7 +408,7 @@ public:
      * @brief Construct from stream
      *
      * @param in input stream with alignment in clustalW-like format
-     * @param format file format (CLUSTAL or FASTA) 
+     * @param format file format (@see FormatType) 
      * @throw failure on read errors
     */
     MultipleAlignment(std::istream &in, FormatType::type format=FormatType::CLUSTAL);
@@ -771,24 +782,30 @@ public:
      * @brief Write alignment to stream
      *
      * @param out output stream
+     * @param format alignment format (@see FormatType)
      * @return output stream
      *
      * Writes one line "<name> <seq>" for each sequence.
+     * @todo implement other formats than clustal
+     * @note currently, CLUSTAL format is asserted
      */
     std::ostream &
-    write(std::ostream &out) const;
+    write(std::ostream &out, FormatType::type format=FormatType::CLUSTAL) const;
 
     /**
-     * @brief Write alignment to stream
+     * @brief Write alignment to stream (wrapped)
      *
      * @param out output stream
      * @param width output stream
+     * @param format alignment format (@see FormatType)
      * @return output stream
      *
      * Writes lines "<name> <seq>" per sequence, wraps lines at width
+     * @todo implement other formats than clustal
+     * @note currently, CLUSTAL format is asserted
      */
     std::ostream &
-    write(std::ostream &out, size_t width) const;
+    write(std::ostream &out, size_t width, FormatType::type format=FormatType::CLUSTAL) const;
     
     /**
      * @brief Write formatted line of name and sequence
