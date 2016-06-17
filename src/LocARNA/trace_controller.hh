@@ -255,12 +255,16 @@ namespace LocARNA {
 
     private:
 	/**
-	 * constrain the min/max j without reference alignment by
+	 * For n=lenA>0 and m=lenB>0, constrain the min/max j without reference alignment by
 	 * delta only such that match i~j is allowed iff | i/n - j/m |
-	 * <= delta/((n+m)/2), unless delta is too small to connect
+	 * <= 2 delta/(n+m), unless delta is too small to connect
 	 * the matrix entries; in the latter case delta is chosen
 	 * minimally.
-	 */
+         * The inequality is equiv to
+         * (n+m) | i m  - j n | <= 2 n m delta
+         *
+         * The cases lenA==0 or lenB==0 are handled appropriately.
+         */
 	void
 	constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);
 

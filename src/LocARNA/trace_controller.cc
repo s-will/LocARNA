@@ -327,6 +327,16 @@ namespace LocARNA {
     void
     TraceController::constrain_wo_ref(size_type lenA, size_type lenB, size_type delta) {
 	// fill vectors for min_j and max_j
+        
+        // catch special cases (empty sequences)
+        if (lenA==0 || lenB==0) {
+            for (size_type i=0; i<=lenA; i++) {
+                min_col_vector_[i] = 0;
+                max_col_vector_[i] = lenB;
+            }
+            return;
+        }
+        
 	for (size_type i=0; i<=lenA; i++) {
 	    
 	    size_type x = i*lenB*(lenA+lenB);
