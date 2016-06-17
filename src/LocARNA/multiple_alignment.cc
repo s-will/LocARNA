@@ -16,20 +16,34 @@
 #include <stdlib.h>
 
 namespace LocARNA {
+
+
+    /* NOTE / TODO :
+       reading and writing of clustal-like format and stockholm can be done in a very similar way;
+       only the header line and the tags change!
+    */
     
-    // allowed tags are part of the extended aln and pp file format definitions
-    std::vector<std::string>
-    initial_annotation_tags() {
-	std::vector<std::string> as;
-	as.resize(3);
+    // pp tags are part of the extended aln and pp file format definitions
+    void
+    set_pp_annotation_tags() {
+	annotation_tags.resize(4);
 	
-	as[MultipleAlignment::AnnoType::structure]="S";
-	as[MultipleAlignment::AnnoType::fixed_structure]="FS";
-	as[MultipleAlignment::AnnoType::anchors]="A";
-	
-	return as;
+	annotation_tags[MultipleAlignment::AnnoType::structure]="S";
+	annotation_tags[MultipleAlignment::AnnoType::fixed_structure]="FS";
+	annotation_tags[MultipleAlignment::AnnoType::anchors]="A";
+	annotation_tags[MultipleAlignment::AnnoType::consensus_structure]="S";
     }
-    const std::vector<std::string> MultipleAlignment::annotation_tags = initial_annotation_tags();
+
+    // stockholm tags are part of the (extended) stockholm files
+    void
+    set_stockholm_annotation_tags() {
+	annotation_tags.resize(4);
+	
+	annotation_tags[MultipleAlignment::AnnoType::structure]="=GC SS";
+	annotation_tags[MultipleAlignment::AnnoType::fixed_structure]="=GC FS";
+	annotation_tags[MultipleAlignment::AnnoType::anchors]="=GC A";
+	annotation_tags[MultipleAlignment::AnnoType::consensus_structure]="=GC SS_cons";
+    }
     
     MultipleAlignment::MultipleAlignment() 
 	: alig_(),
@@ -227,11 +241,18 @@ namespace LocARNA {
 
     void
     MultipleAlignment::read_aln_stockholm(std::istream &in) {
-        assert(false/*NOT IMPLEMENTED*/);
+        set_stockholm_tags();
+        read_aln(in,"# STOCKHOLM 1");
     }
 
     void
-    MultipleAlignment::read_aln_clustalw(std::istream &in) {
+    MultipleAlignment::read_aln_clustal(std::istream &in) {
+        set_pp_tags();
+        read_aln(in,"CLUSTAL");
+    }
+
+    void
+    MultipleAlignment::read_aln(std::istream &in, std::string format_header) {
 
 	std::string name;
 	std::string seqstr;
@@ -250,8 +271,8 @@ namespace LocARNA {
 	
 	get_nonempty_line(in,line);
 	
-	// accept and ignore a header line starting with CLUSTAL
-	if (has_prefix(line,"CLUSTAL"))  {
+	// accept and ignore a header line starting with format header
+	if (has_prefix(line,format_header))  {
 	    get_nonempty_line(in,line);
 	}
 	
@@ -946,7 +967,7 @@ namespace LocARNA {
     {
 	assert(1<=start);
 	assert(end+1>=start);
-
+        
         size_t max_name_length=0;
         for( std::vector<SeqEntry>::const_iterator it=alig_.begin();
              alig_.end()!=it; ++it) {
@@ -1006,19 +1027,17 @@ namespace LocARNA {
     }
 
     std::ostream &
-    MultipleAlignment::write(std::ostream &out, 
-                             FormatType::type format) const {
-	assert(format==FormatType::CLUSTAL);
-        return
-	    write(out,1,length());
-    }
-
-    std::ostream &
     MultipleAlignment::write(std::ostream &out,
                              size_t width,
                              FormatType::type format
                              ) const {
-	assert(format==FormatType::CLUSTAL);
+	if(format==FormatType::STOCKHOLM) {
+            set_stockholm_tags();
+        }
+	else {
+            set_pp_tags();
+        }
+
         size_t start=1;
 	do {
 	    size_t end = std::min(length(),start+width-1);
@@ -1027,6 +1046,13 @@ namespace LocARNA {
 	} while (start <= length() && out << std::endl);
 	
 	return out;
+    }
+
+    std::ostream &
+    MultipleAlignment::write(std::ostream &out, 
+                             FormatType::type format) const {
+        return
+            write(out,length(),format);
     }
     
     void 
