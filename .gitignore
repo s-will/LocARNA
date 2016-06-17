@@ -18,6 +18,8 @@ autom4te.cache/
 config/
 config.h.in
 
+src/LocARNA/ribosum85_60.icc
+
 External/
 tmp/
 
