@@ -674,11 +674,11 @@ main(int argc, char **argv) {
     // report on input in verbose mode
     if (clp.opt_verbose) {
 	std::cout << "Sequence A: "<<std::endl;
-	seqA.write(cout);
+	seqA.write(cout,MultipleAlignment::FormatType::CLUSTAL);
 	std::cout<<" (Length:"<< seqA.length()<<", Basepairs:"<<bpsA.num_bps() << ")" <<std::endl;
 
 	std::cout << "Sequence B: "<<std::endl;
-	seqB.write(cout);
+	seqB.write(cout,MultipleAlignment::FormatType::CLUSTAL);
 	std::cout<<" (Length:"<< seqB.length()<<", Basepairs:"<<bpsB.num_bps() << ")" <<std::endl;
 
 	cout <<std::endl 
@@ -953,7 +953,7 @@ main(int argc, char **argv) {
 			   << std::endl;
 	    }
 	    
-	    ma.write(std::cout,clp.output_width);
+	    ma.write(std::cout,clp.output_width,MultipleAlignment::FormatType::CLUSTAL);
 
 	    if (clp.opt_local_output) {
 		std::cout  << std::endl 
@@ -998,7 +998,7 @@ main(int argc, char **argv) {
 		    ma.append(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureB(false)));
 		}
 
-		ma.write(out,clp.output_width);
+		ma.write(out,clp.output_width,MultipleAlignment::FormatType::CLUSTAL);
 	    
 	    } else {
 		cerr << "Cannot write to "<<clp.clustal_out<<endl<<"! Exit.";

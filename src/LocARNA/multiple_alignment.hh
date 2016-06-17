@@ -70,10 +70,15 @@ public:
     struct FormatType {
 	//! inner type
 	enum type {
-            CLUSTAL,  //!< (extended) clustal file format
-            FASTA,    //!< fasta file format
-            STOCKHOLM //!< stockholm file format
+            STOCKHOLM, //!< stockholm file format
+            PP,        //!< pp format
+            CLUSTAL,   //!< (extended) clustal file format
+            FASTA      //!< fasta file format
 	};
+        
+        //!@brief size of enum
+        static size_t
+        size() {return 4;}
     };
 
     //! @brief type of sequence annotation.
@@ -86,12 +91,30 @@ public:
 	    fixed_structure,     //!< structure annotation (a single structure; used as fixed structure constraint)
 	    anchors              //!< anchor annotation (anchor constraints)
 	};
+        
+        //!@brief size of enum
+        static size_t
+        size() {return 4;}
     };
     
 private:
     //! prefix strings for annotations (shall be prefix unique)
-    //! (no one outside of MultipleAlignment should have to know about this!)
-    static const std::vector<std::string> annotation_tags;
+    //! (no class outside of MultipleAlignment should have to know about this!)
+    //!
+    //! This is indexed by FormatType and AnnoType.
+    typedef std::vector<
+    std::vector<std::string> 
+    > annotation_tags_t;
+    
+    static 
+    annotation_tags_t annotation_tags;
+    
+    //! initialize annotation tags
+    static
+    void
+    init_annotation_tags();
+
+
 public:
     //! @brief number of annotation types
     //! @return number of annotation types
@@ -234,10 +257,8 @@ public:
 	//! @brief write access to seq
 	void
 	set_seq(const string1 &seq) {seq_=seq;}
-
-
     };
-
+    
     /**
      * @brief read only proxy class representing a column of the alignment 
      *
@@ -341,6 +362,18 @@ private:
     void
     create_name2idx_map();
 
+
+    /**
+     * @brief Read alignment from input stream; helper for uniform
+     * reading of CLUSTALW, PP and STOCKHOLM
+     *
+     * @param in input stream
+     * @param format format type of input (CLUSTAL, PP, or STOCKHOLM)
+     * @note overwrites/clears existing data
+     */
+    void
+    read_clustallike(std::istream &in, FormatType::type format);
+
     /**
      * @brief Read alignment from input stream, expect stockholm format.
      *
@@ -350,7 +383,7 @@ private:
      * @todo implement
      */
     void
-    read_aln_stockholm(std::istream &in);
+    read_stockholm(std::istream &in);
 
     /**
      * @brief Read alignment from input stream, expect clustalw-like format.
@@ -364,7 +397,7 @@ private:
      * @note overwrites/clears existing data     
      */
     void
-    read_aln_clustalw(std::istream &in);
+    read_clustalw(std::istream &in);
 
     /**
      * @brief Read alignment from input stream, expect fasta format.
@@ -380,12 +413,12 @@ private:
      * @note The order of sequences in the stream is preserved.
      * @note overwrites/clears existing data
      *
-     * @todo read_aln_fasta() currently does not read anchor
+     * @todo read_fasta() currently does not read anchor
      * constraints and structure. Should it? If yes, likely using
      * special fa headers >#A, >#S.
      */
     void
-    read_aln_fasta(std::istream &in);
+    read_fasta(std::istream &in);
     
 public:
     
@@ -791,7 +824,7 @@ public:
      * @note currently, CLUSTAL format is asserted
      */
     std::ostream &
-    write(std::ostream &out, FormatType::type format=FormatType::CLUSTAL) const;
+    write(std::ostream &out, FormatType::type format) const;
 
     /**
      * @brief Write alignment to stream (wrapped)
@@ -806,7 +839,7 @@ public:
      * @note currently, CLUSTAL format is asserted
      */
     std::ostream &
-    write(std::ostream &out, size_t width, FormatType::type format=FormatType::CLUSTAL) const;
+    write(std::ostream &out, size_t width, FormatType::type format) const;
     
     /**
      * @brief Write formatted line of name and sequence
@@ -837,7 +870,10 @@ public:
      * @return output stream
      */
     std::ostream &
-    write(std::ostream &out, size_type start, size_type end) const;
+    write(std::ostream &out,
+          size_type start, 
+          size_type end,
+          FormatType::type format) const;
     
     /**
      * @brief check character constraints

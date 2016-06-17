@@ -23,32 +23,39 @@ namespace LocARNA {
        only the header line and the tags change!
     */
     
-    // pp tags are part of the extended aln and pp file format definitions
+    MultipleAlignment::annotation_tags_t
+    MultipleAlignment::annotation_tags;
+    
     void
-    set_pp_annotation_tags() {
-	annotation_tags.resize(4);
+    MultipleAlignment::init_annotation_tags() {
+        annotation_tags.resize(FormatType::size());
 	
-	annotation_tags[MultipleAlignment::AnnoType::structure]="S";
-	annotation_tags[MultipleAlignment::AnnoType::fixed_structure]="FS";
-	annotation_tags[MultipleAlignment::AnnoType::anchors]="A";
-	annotation_tags[MultipleAlignment::AnnoType::consensus_structure]="S";
-    }
+        // pp tags are part of the extended aln and pp file format definitions
+        // init tags for all formats with pp tags
+	for (size_t i=0; i<FormatType::size(); i++) {
+            annotation_tags[i].resize(AnnoType::size());
+            
+            annotation_tags[i][AnnoType::structure]="S";
+            annotation_tags[i][AnnoType::fixed_structure]="FS";
+            annotation_tags[i][AnnoType::anchors]="A";
+            annotation_tags[i][AnnoType::consensus_structure]="S";
+        }
+        
+        // stockholm tags are part of the (extended) stockholm files
+	// ovwerwrite tags for stockholm format
+        annotation_tags[FormatType::STOCKHOLM].resize(AnnoType::size());
 
-    // stockholm tags are part of the (extended) stockholm files
-    void
-    set_stockholm_annotation_tags() {
-	annotation_tags.resize(4);
-	
-	annotation_tags[MultipleAlignment::AnnoType::structure]="=GC SS";
-	annotation_tags[MultipleAlignment::AnnoType::fixed_structure]="=GC FS";
-	annotation_tags[MultipleAlignment::AnnoType::anchors]="=GC A";
-	annotation_tags[MultipleAlignment::AnnoType::consensus_structure]="=GC SS_cons";
+        annotation_tags[FormatType::STOCKHOLM][AnnoType::structure]="=GC SS";
+	annotation_tags[FormatType::STOCKHOLM][AnnoType::fixed_structure]="=GC FS";
+	annotation_tags[FormatType::STOCKHOLM][AnnoType::anchors]="=GC A";
+	annotation_tags[FormatType::STOCKHOLM][AnnoType::consensus_structure]="=GC SS_cons";
     }
     
     MultipleAlignment::MultipleAlignment() 
 	: alig_(),
 	  annotations_(),
 	  name2idx_() {
+        init_annotation_tags();
     }
     
     MultipleAlignment::MultipleAlignment(std::istream &in, FormatType::type format)
@@ -60,12 +67,14 @@ namespace LocARNA {
 	    throw(failure("Cannot read input stream."));
 	}
 
+        init_annotation_tags();
+
 	if (format==FormatType::FASTA) {
-	    read_aln_fasta(in);
+	    read_fasta(in);
 	} else if (format==FormatType::CLUSTAL) {
-	    read_aln_clustalw(in);
+	    read_clustalw(in);
 	} else if (format==FormatType::STOCKHOLM) {
-            read_aln_stockholm(in);
+            read_stockholm(in);
         } else {
 	    throw failure("Unknown format.");
 	}
@@ -84,13 +93,15 @@ namespace LocARNA {
 	    if (!in.is_open()) {
 		throw(std::ifstream::failure("Cannot open file "+filename+" for reading."));
 	    }
+            
+            init_annotation_tags();
 	
 	    if (format==FormatType::FASTA) {
-		read_aln_fasta(in);
+		read_fasta(in);
 	    } else if (format == FormatType::CLUSTAL) {
-		read_aln_clustalw(in);
+		read_clustalw(in);
 	    } else if (format==FormatType::STOCKHOLM) {
-                read_aln_stockholm(in);
+                read_stockholm(in);
             } else {
 		throw failure("Unknown format.");
 	    }
@@ -109,6 +120,8 @@ namespace LocARNA {
 	: alig_(),
 	  annotations_(),
 	  name2idx_() {
+
+        init_annotation_tags();
 	
 	alig_.push_back(SeqEntry(name,sequence));
     	
@@ -126,6 +139,8 @@ namespace LocARNA {
 	if (aliA.length() != aliB.length()) {
     	    throw failure("Alignment strings of unequal length."); 
     	}
+
+        init_annotation_tags();
 	
     	alig_.push_back(SeqEntry(nameA,aliA));
     	alig_.push_back(SeqEntry(nameB,aliB));
@@ -143,10 +158,12 @@ namespace LocARNA {
 		 alignment.seqA().annotation(AnnoType::anchors),
 		 alignment.seqB().annotation(AnnoType::anchors));
 	
+        init_annotation_tags();
+
 	if (! anchors.duplicate_names() ) {
 	    set_annotation(AnnoType::anchors, anchors);
 	}
-
+        
 	init(alignment.alignment_edges(only_local),
 	     alignment.seqA(),
 	     alignment.seqB(),
@@ -160,6 +177,8 @@ namespace LocARNA {
 	:alig_(),
 	 annotations_(),
 	 name2idx_() {
+
+        init_annotation_tags();
 
 	SequenceAnnotation 
 	    anchors(edges,
@@ -240,19 +259,27 @@ namespace LocARNA {
     }
 
     void
-    MultipleAlignment::read_aln_stockholm(std::istream &in) {
-        set_stockholm_tags();
-        read_aln(in,"# STOCKHOLM 1");
+    MultipleAlignment::read_stockholm(std::istream &in) {
+        // require STOCKHOLM header 
+        std::string format_header="# STOCKHOLM 1.";
+        std::string line;
+        get_nonempty_line(in,line);
+        if (!has_prefix(line,format_header))  {
+            // complain
+            throw syntax_error_failure("STOCKHOLM 1.x header expected.");
+        }
+        
+        read_clustallike(in,FormatType::STOCKHOLM);
     }
 
     void
-    MultipleAlignment::read_aln_clustal(std::istream &in) {
-        set_pp_tags();
-        read_aln(in,"CLUSTAL");
+    MultipleAlignment::read_clustalw(std::istream &in) {
+        read_clustallike(in,FormatType::CLUSTAL);
     }
 
     void
-    MultipleAlignment::read_aln(std::istream &in, std::string format_header) {
+    MultipleAlignment::read_clustallike(std::istream &in,
+                            FormatType::type format) {
 
 	std::string name;
 	std::string seqstr;
@@ -271,18 +298,21 @@ namespace LocARNA {
 	
 	get_nonempty_line(in,line);
 	
-	// accept and ignore a header line starting with format header
-	if (has_prefix(line,format_header))  {
-	    get_nonempty_line(in,line);
-	}
+        std::string format_header;
+        if (format == FormatType::CLUSTAL) {
+            // accept and ignore CLUSTAL header line (this is optional!)
+            if (has_prefix(line,"CLUSTAL"))  {
+                get_nonempty_line(in,line);
+            }
+        }
 	
-	const std::string anchors_tag   = "#"+annotation_tags[AnnoType::anchors];
-	const std::string structure_tag = "#"+annotation_tags[AnnoType::structure];
-	const std::string fixed_structure_tag = "#"+annotation_tags[AnnoType::fixed_structure];
+	const std::string anchors_tag   = "#"+annotation_tags[format][AnnoType::anchors];
+	const std::string structure_tag = "#"+annotation_tags[format][AnnoType::structure];
+	const std::string fixed_structure_tag = "#"+annotation_tags[format][AnnoType::fixed_structure];
 	
 	do {
 	    if (line[0]=='#') {
-		if (has_prefix(line,"#END")) { // recognize END for use in pp files
+		if (format==FormatType::PP && has_prefix(line,"#END")) { // recognize END in pp files
 		    // section end
 		    break;
 		}
@@ -323,10 +353,13 @@ namespace LocARNA {
 		    } else if (tag==fixed_structure_tag) {
 		    	fixed_structure_string += str;
 		    } else {
-			throw syntax_error_failure("Unknown tag with structure prefix "
-						   +structure_tag+".");
-		    }
-		}
+                        throw syntax_error_failure("Unknown tag with structure prefix "
+                                                   +structure_tag+".");
+                    }
+		} else {
+                    // ignore unknown tags
+                }
+                
 	    } else {
 	    	std::istringstream in(line);
 		in >> name;
@@ -402,7 +435,7 @@ namespace LocARNA {
     }
     
     void
-    MultipleAlignment::read_aln_fasta(std::istream &in) {
+    MultipleAlignment::read_fasta(std::istream &in) {
 	std::string name;
 	std::string description;
 	
@@ -962,8 +995,9 @@ namespace LocARNA {
 
     std::ostream &
     MultipleAlignment::write(std::ostream &out,
-			     size_type start, 
-			     size_type end) const
+                                 size_type start, 
+                                 size_type end,
+                                 FormatType::type format) const
     {
 	assert(1<=start);
 	assert(end+1>=start);
@@ -994,7 +1028,7 @@ namespace LocARNA {
 	if (has_annotation(AnnoType::anchors)) {
 	    	
 	    for(size_t i=0; i<annotation(AnnoType::anchors).name_length(); i++) {
-		const std::string anchors_tag   = "#"+annotation_tags[AnnoType::anchors];
+		const std::string anchors_tag   = "#"+annotation_tags[format][AnnoType::anchors];
 		std::ostringstream name;
 		name << anchors_tag << (i+1);
 		
@@ -1008,7 +1042,7 @@ namespace LocARNA {
 	}
 	
 	if (has_annotation(AnnoType::structure)) {
-	    const std::string structure_tag   = "#"+annotation_tags[AnnoType::structure];
+	    const std::string structure_tag   = "#"+annotation_tags[format][AnnoType::structure];
 	    write_name_sequence_line(out,
 				     structure_tag,
 				     structure_string.substr(start-1,end-start+1),
@@ -1016,7 +1050,7 @@ namespace LocARNA {
 	}
 
 	if (has_annotation(AnnoType::fixed_structure)) {
-	    const std::string structure_tag   = "#"+annotation_tags[AnnoType::fixed_structure];
+	    const std::string structure_tag   = "#"+annotation_tags[format][AnnoType::fixed_structure];
 	    write_name_sequence_line(out,
 				     structure_tag,
 				     fixed_structure_string.substr(start-1,end-start+1),
@@ -1028,20 +1062,13 @@ namespace LocARNA {
 
     std::ostream &
     MultipleAlignment::write(std::ostream &out,
-                             size_t width,
-                             FormatType::type format
-                             ) const {
-	if(format==FormatType::STOCKHOLM) {
-            set_stockholm_tags();
-        }
-	else {
-            set_pp_tags();
-        }
-
+                                 size_t width,
+                                 FormatType::type format
+                                 ) const {
         size_t start=1;
 	do {
 	    size_t end = std::min(length(),start+width-1);
-	    write(out,start,end);
+	    write(out,start,end,format);
 	    start=end+1;
 	} while (start <= length() && out << std::endl);
 	
@@ -1050,7 +1077,7 @@ namespace LocARNA {
 
     std::ostream &
     MultipleAlignment::write(std::ostream &out, 
-                             FormatType::type format) const {
+                                 FormatType::type format) const {
         return
             write(out,length(),format);
     }
@@ -1103,7 +1130,7 @@ namespace LocARNA {
 
     std::ostream &
     operator << (std::ostream &out, const MultipleAlignment &ma) {
-	ma.write(out);
+	ma.write(out,MultipleAlignment::FormatType::CLUSTAL);
 	return out;
     }
     

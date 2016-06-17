@@ -388,11 +388,11 @@ main(int argc, char **argv) {
     // report on input in verbose mode
     if (opt_verbose) {
 	cout << "Sequence A: "<<endl;
-	seqA.write(cout);
+	seqA.write(cout,MultipleAlignment::FormatType::CLUSTAL);
 	cout<<" (Length:"<< seqA.length()<<", Basepairs:"<<bpsA.num_bps() << ")" <<endl;
 
 	cout << "Sequence B: "<<endl;
-	seqB.write(cout);
+	seqB.write(cout,MultipleAlignment::FormatType::CLUSTAL);
 	cout<<" (Length:"<< seqB.length()<<", Basepairs:"<<bpsB.num_bps() << ")" <<endl;
 
 	// cout << "Base Identity: "<<(seq_identity(seqA,seqB)*100)<<endl; 

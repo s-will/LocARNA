@@ -347,11 +347,11 @@ main(int argc, char **argv) {
     // report on input in verbose mode
     if (opt_verbose) {
         std::cout << "Sequence A: "<<std::endl;
-        seqA.write(cout);
+        seqA.write(cout,MultipleAlignment::FormatType::CLUSTAL);
         std::cout<<" (Length:"<< seqA.length()<<", Basepairs:"<<bpsA.num_bps() << ")" <<std::endl;
 
         std::cout << "Sequence B: "<<std::endl;
-        seqB.write(cout);
+        seqB.write(cout,MultipleAlignment::FormatType::CLUSTAL);
         std::cout<<" (Length:"<< seqB.length()<<", Basepairs:"<<bpsB.num_bps() << ")" <<std::endl;
 
         cout <<std::endl

@@ -1433,7 +1433,7 @@ namespace LocARNA {
 		} else {
 		    MultipleAlignment ma(alignment,true);
 		    std::cout << "Score: "<<task_score<<std::endl;
-		    ma.write(std::cout,120);
+		    ma.write(std::cout,120,MultipleAlignment::FormatType::CLUSTAL);
 		}
 	    }
 	    
@@ -1542,7 +1542,7 @@ namespace LocARNA {
 		if (opt_verbose) {
 		    MultipleAlignment ma(pimpl_->alignment_,true);
 		    std::cout << "Score: "<<(infty_score_t)new_lambda<<std::endl;
-		    ma.write(std::cout,120);
+		    ma.write(std::cout,120,MultipleAlignment::FormatType::CLUSTAL);
 		}
 		
 		if (opt_verbose) std::cout<<std::endl;
