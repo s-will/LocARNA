@@ -1241,5 +1241,5 @@ namespace LocARNA {
 	    / pimpl_->McCmat_->qln_[1];
 
     }
-    
+
 } // end namespace LocARNA 

@@ -46,6 +46,7 @@
 #include "LocARNA/pfold_params.hh"
 #include "LocARNA/global_stopwatch.hh"
 
+#include "LocARNA/main_helper.icc"
 
 using namespace std;
 
@@ -345,19 +346,7 @@ main(int argc, char **argv) {
 
     // ----------------------------------------
     // report on input in verbose mode
-    if (opt_verbose) {
-        std::cout << "Sequence A: "<<std::endl;
-        seqA.write(cout,MultipleAlignment::FormatType::CLUSTAL);
-        std::cout<<" (Length:"<< seqA.length()<<", Basepairs:"<<bpsA.num_bps() << ")" <<std::endl;
-
-        std::cout << "Sequence B: "<<std::endl;
-        seqB.write(cout,MultipleAlignment::FormatType::CLUSTAL);
-        std::cout<<" (Length:"<< seqB.length()<<", Basepairs:"<<bpsB.num_bps() << ")" <<std::endl;
-
-        cout <<std::endl
-             <<"Base Pair Matches: "<<arc_matches->num_arc_matches() << "." <<std::endl;
-        // cout << "Base Identity: "<<(seq_identity(seqA,seqB)*100)<<endl;
-    }
+    if (opt_verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
 
     // ------------------------------------------------------------
     // construct datastructures to handle sparse matrices

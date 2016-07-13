@@ -46,8 +46,7 @@ nobase_library_include_HEADERS = LocARNA/aux.hh LocARNA/plusvector.hh	\
 	LocARNA/pfold_params.hh LocARNA/scoring.hh			\
 	LocARNA/scoring_fwd.hh LocARNA/infty_int.hh			\
 	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
-	LocARNA/alphabet.icc LocARNA/ribosum.hh				\
-	LocARNA/ribosum85_60.icc LocARNA/ribofit.hh			\
+	LocARNA/alphabet.icc LocARNA/ribosum.hh LocARNA/ribofit.hh	\
 	LocARNA/ribofit_will2014.ihh LocARNA/ribofit_will2014.icc	\
 	LocARNA/sequence_annotation.hh LocARNA/anchor_constraints.hh	\
 	LocARNA/arc_matches.hh LocARNA/aligner_restriction.hh		\
@@ -65,9 +64,8 @@ nobase_library_include_HEADERS = LocARNA/aux.hh LocARNA/plusvector.hh	\
 ##
 ##   use extension .bin for binary locarna to avoid name collission in src dir
 ##
-bin_PROGRAMS = locarna.bin ribosum2cc locarna_p locarnap_fit	\
-               locarna_deviation locarna_rnafold_pp ribosum2cc	\
-               exparna_p sparse
+bin_PROGRAMS = locarna.bin locarna_p locarnap_fit locarna_deviation	\
+               locarna_rnafold_pp exparna_p sparse ribosum2cc
 
 if STATIC_LIBLOCARNA
 ## link libLocARNA statically to the binaries
@@ -117,23 +115,18 @@ exparna_p_SOURCES = exparna_p.cc
 
 sparse_SOURCES = sparse.cc
 
-ribosum2cc_SOURCES = ribosum2cc.cc
-
 locarnap_fit_SOURCES = fit.cc LocARNA/fitonoff.cc LocARNA/options.hh LocARNA/fitonoff.hh
 
 locarna_deviation_SOURCES = deviation.cc
 
 locarna_rnafold_pp_SOURCES = locarna_rnafold_pp.cc
 
+BUILT_SOURCES += LocARNA/main_helper.icc LocARNA/ribosum85_60.icc
 
-BUILT_SOURCES += LocARNA/ribosum85_60.icc
+if !VC_CROSS_COMPILING
+LocARNA/ribosum85_60.icc: \
+	ribosum2cc \
+	$(top_srcdir)/Matrices/RIBOSUM85_60
 
-# LocARNA/ribosum85_60.icc, we avoid to define the dependency from
-# ribosum2cc directly, but still require that ribosum2cc is made.
-# This makes it possible to include LocARNA/ribosum85_60.icc in the
-# distribution and compile without executing ribosum2cc, e.g. for
-# cross compiling.
-LocARNA/ribosum85_60.icc: ribosum2cc.cc $(top_srcdir)/Matrices/RIBOSUM85_60
-	make ribosum2cc 
-	./ribosum2cc Ribosum85_60 "$(top_srcdir)/Matrices/RIBOSUM85_60" >$@
-
+	./ribosum2cc Ribosum85_60 "$(top_srcdir)/Matrices/RIBOSUM85_60" $@
+endif

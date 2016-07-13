@@ -1,0 +1,465 @@
+#ifndef LOCARNA_MAIN_HELPER
+#define LOCARNA_MAIN_HELPER
+
+/**
+ * define data structures and code common to
+ * the driver programs of locarna, locarna_p, sparse, and exparna-p  
+ */
+
+#include <string>
+#include "sequence.hh"
+#include "match_probs.hh"
+#include "rna_data.hh"
+#include "ribosum.hh"
+#include "ribofit.hh"
+#include "multiple_alignment.hh"
+#include "alignment.hh"
+#include "rna_ensemble.hh"
+
+#include "LocARNA/ribosum85_60.icc"
+
+
+namespace LocARNA {
+
+    class ArcMatches;
+    class ScoringParams;
+
+    namespace MainHelper {
+
+        // standard command line parameters common to locarna, locarna_p, sparse
+        struct std_command_line_parameters {
+            //! only pairs with a probability of at least min_prob are taken into account
+            double min_prob; 
+        
+            //! maximal ratio of number of base pairs divided by sequence
+            //! length. This serves as a second filter on the "significant"
+            //! base pairs.
+            double max_bps_length_ratio;
+        
+            int match_score; //!< match score
+        
+            int mismatch_score; //!< mismatch score
+        
+            int indel_score; //!< indel extension score
+        
+            int indel_opening_score; //!< indel opening score
+        
+            int temperature; //!< temperature
+        
+            int unpaired_penalty; //!< penalty for unpaired bases
+        
+            int position_penalty; //!< penalty for each position in predicted alignment
+        
+            int struct_weight; //!< structure weight
+
+            int pf_struct_weight; //!< pf_struct_weight
+            
+            //! contribution of sequence similarity in an arc match (in percent)
+            int tau_factor;
+        
+            bool no_lonely_pairs; //!< no lonely pairs option
+        
+            //! allow exclusions for maximizing alignment of connected substructures
+            bool struct_local;
+        
+            bool struct_local_given; //!< is sequ-local mode specified explicitely
+        
+            bool sequ_local; //!< sequence local alignment; maximize alignment of subsequence
+        
+            bool sequ_local_given; //!< is sequ-local mode specified explicitely
+        
+            //! specification of free end gaps, order left end sequence 1,
+            //! right 1, left 2, right 2 e.g. "+---" allows free end gaps at
+            //! the left end of the first alignment string ; "----" forbids
+            //! free end gaps
+            std::string free_endgaps; 
+        
+            //! maximal difference for positions of alignment
+            //! traces (only used for ends of arcs)
+            int max_diff; 
+        
+            //! maximal difference between two arc ends, -1 is off
+            int max_diff_am;
+        
+            //! maximal difference for alignment traces, at arc match
+            //! positions
+            int max_diff_at_am;
+        
+            //! pairwise reference alignment for max-diff heuristic,
+            //!separator &
+            std::string max_diff_pw_alignment;
+        
+            //! reference alignment for max-diff heuristic, name of clustalw
+            //! format file
+            std::string max_diff_alignment_file;
+        
+            //! use relaxed variant of max diff with reference alignment
+            bool opt_max_diff_relax; 
+        
+            //! Score contribution per exclusion
+            //! set to zero for unrestricted structure locality
+            int exclusion_score; 
+        
+            //! expected probability of a base pair (null-model)
+            double exp_prob;
+        
+            //! expected probability given?
+            bool opt_exp_prob;
+        
+            //! width of alignment output
+            int output_width;
+        
+            // ------------------------------------------------------------
+            // File arguments
+    
+            //! first input file 
+            std::string fileA;
+    
+            //! second input file
+            std::string fileB;
+
+            std::string clustal_out; //!< name of clustal output file
+            bool opt_clustal_out; //!< whether to write clustal output to file
+
+            std::string stockholm_out; //!< name of stockholm output file
+            bool opt_stockholm_out; //!< whether to write stockholm output to file
+
+            std::string pp_out; //!< name of pp output file
+            bool opt_pp_out; //!< whether to write pp output to file
+    
+            bool opt_alifold_consensus_dp; //!< whether to compute consensus dp by alifold
+
+            bool opt_help; //!< whether to print help
+            bool opt_galaxy_xml; //!< whether to print a galaxy xml wrapper for the parameters
+            bool opt_version; //!< whether to print version
+            bool opt_verbose; //!< whether to print verbose output
+            bool opt_local_output; //!< whether to write local output
+            bool opt_local_file_output; //!< whether to write local output to files (pp, aln)
+            bool opt_pos_output; //!< whether to output positions
+
+            bool opt_write_structure; //!< whether to write structure
+
+            bool opt_stopwatch; //!< whether to print verbose output
+    
+            bool opt_stacking; //!< whether to use special stacking arcmatch score
+
+            bool opt_new_stacking; //!< whether to use new stacking contributions
+
+            std::string ribosum_file; //!< ribosum_file
+            bool use_ribosum; //!< use_ribosum
+    
+            //! use estimated ribosum-like base and arc match scores adapted
+            //! to sequence indentity; overrides use_ribosum and ribosum_file
+            bool opt_ribofit; 
+    
+            bool opt_probcons_file; //!< whether to probcons_file
+            std::string probcons_file; //!< probcons_file
+    
+            bool opt_write_matchprobs; //!< whether to write_matchprobs
+            bool opt_read_matchprobs; //!< whether to read_matchprobs
+            std::string matchprobs_file; //!< matchprobs_file
+
+            bool opt_write_arcmatch_scores; //!< whether to write_arcmatch_scores
+
+            bool opt_read_arcmatch_scores; //!< whether to read arcmatch scores
+            bool opt_read_arcmatch_probs; //!< whether to read arcmatch probabilities
+            std::string arcmatch_scores_file; //!< arcmatch scores file
+
+            int match_prob_method; //!< method for computing match probabilities
+
+            double min_am_prob; //!< only matched arc-pair with a probability of at least min_am_prob are taken into account
+            double min_bm_prob; //!< only matched base-pair with a probability of at least min_bm_prob are taken into account
+
+            std::string seq_anchors_A; //!< seq_anchors_A
+            std::string seq_anchors_B; //!< seq_anchors_B
+
+            //bool opt_ignore_constraints; //!< whether to ignore_constraints
+    
+        };
+        
+        //! @brief write input summary
+        void
+        report_input(const Sequence &seqA,
+                     const Sequence &seqB, 
+                     const ArcMatches &arc_matches);
+
+
+        //! @brief average sequence identity
+        double
+        average_pairwise_identity(const Sequence &seqA, const Sequence &seqB);
+
+        //! @brief initialize ribosum/ribofit matrices
+        template <class CLP>
+        void
+        init_ribo_matrix(const CLP &clp,
+                         RibosumFreq **ribosum,
+                         Ribofit **ribofit) {
+            *ribosum=NULL;
+            *ribofit=NULL;
+            
+            if (clp.opt_ribofit) {
+                *ribofit = new Ribofit_will2014;
+            }
+            
+            if (clp.use_ribosum) {
+                if (clp.ribosum_file == "RIBOSUM85_60") {
+                    if (clp.opt_verbose) {
+                        std::cout <<"Use built-in ribosum."<<std::endl;
+                    }
+                    *ribosum = new LocARNA::Ribosum85_60;
+                } else {
+                    *ribosum = new LocARNA::RibosumFreq(clp.ribosum_file);
+                }
+            }
+        }
+        
+        template<class CLP>
+        MatchProbs *
+        init_match_probs(CLP &clp,
+                         const RnaData *rna_dataA,
+                         const RnaData *rna_dataB,
+                         const Ribosum *ribosum,
+                         const Ribofit *ribofit) {
+            MatchProbs *match_probs = new MatchProbs;
+            
+            const Sequence &seqA=rna_dataA->sequence();
+            const Sequence &seqB=rna_dataB->sequence();
+            
+            if (clp.opt_read_matchprobs) {
+                match_probs->read_sparse(clp.matchprobs_file,seqA.length(),seqB.length());
+            } else {
+                if (clp.match_prob_method==1) {
+                    if (!clp.opt_probcons_file) {
+                        std::cerr << "Probcons parameter file required for pairHMM-style computation"
+                                  <<" of basematch probabilities."<<std::endl;
+                        std::cerr << std::endl;
+                        std::exit(-1);
+                    }
+                    if (clp.opt_verbose) {
+                        std::cout << "Compute match probabilities using pairHMM."<<std::endl; 
+                    }
+
+                    match_probs->pairHMM_probs(seqA,seqB,clp.probcons_file);
+                } else {
+                    bool sl=clp.sequ_local;
+                    if (clp.match_prob_method==2) sl=true;
+                    if (clp.match_prob_method==3) sl=false;
+
+                    if (clp.opt_verbose) {
+                        std::cout << "Compute match probabilities using PF sequence alignment."<<std::endl; 
+                    }
+                
+                    const Alphabet<char> *alphabet;
+                    const Matrix<double> *p_basematch_scores;
+                    Matrix<double> basematch_scores; 
+
+                    if (ribosum!=NULL) {
+                        alphabet = & ribosum->alphabet();
+                        p_basematch_scores = & ribosum->get_basematch_scores();
+                    } else if (ribofit!=NULL) {
+                        double avg_identity = average_pairwise_identity(seqA,seqB);
+                        alphabet = & ribofit->alphabet();
+                        p_basematch_scores = & ribofit->get_basematch_scores(avg_identity,
+                                                                             basematch_scores);
+                    } else {
+                        assert(false);
+                    }
+                
+                    match_probs->pf_probs(*rna_dataA,*rna_dataB,
+                                          *p_basematch_scores,
+                                          *alphabet,
+                                          clp.indel_opening_score/100.0,
+                                          clp.indel_score/100.0,
+                                          clp.pf_struct_weight/100.0,
+                                          clp.temperature/100.0,
+                                          sl);
+                }
+            }
+            
+            return match_probs;
+        }
+        
+        template<class CLP>
+        void
+        write_match_probs(const CLP &clp,
+                          const MatchProbs *match_probs)  {
+            if (clp.opt_verbose) {
+                std::cout << "Write match probabilities to file "
+                          <<clp.matchprobs_file<<"."<<std::endl; 
+            }
+            
+            match_probs->write_sparse(clp.matchprobs_file,
+                                      1.0/clp.probability_scale);
+        }
+
+        /**
+         * @brief consensus ensemble
+         */
+        template<class CLP>
+        RnaData *
+        consensus(const CLP &clp,
+                  const PFoldParams &pfparams,
+                  double my_exp_probA,
+                  double my_exp_probB,
+                  const RnaData *rna_dataA,
+                  const RnaData *rna_dataB,
+                  const Alignment &alignment,
+                  std::string &consensus_structure
+                  )  {
+            
+            RnaData *consensus=0L;
+                
+            if (clp.opt_alifold_consensus_dp) {
+                MultipleAlignment ma(alignment, clp.opt_local_file_output);
+		
+                // compute cutoff probability as geometric mean
+                double min_prob = sqrt( rna_dataA->arc_cutoff_prob() * rna_dataB->arc_cutoff_prob() );
+                
+                RnaEnsemble ens(ma,pfparams,false,true); // alifold the alignment
+
+                consensus_structure = ens.min_free_energy_structure();
+                consensus = new RnaData(ens,
+                                       min_prob,
+                                       0, //don't filter by max_bps_length_ratio
+                                       pfparams); // construct rna data from ensemble
+            } else {
+                // compute averaged consensus base pair probabilities
+                
+                consensus = new RnaData(*rna_dataA,
+                                        *rna_dataB,
+                                        alignment,
+                                        my_exp_probA,
+                                        my_exp_probB,
+                                        clp.opt_local_file_output);
+                consensus_structure = consensus->mea_structure(1);
+            }
+            return consensus;
+        }
+        
+        
+        /** @brief write output to file/s (optionally)
+         */
+        template <class CLP>
+        int
+        write_alignment(const CLP &clp,
+                        infty_score_t score,
+                        const std::string &consensus_structure,
+                        const RnaData *consensus,
+                        const Alignment &alignment,
+                        const MultipleAlignment *multiple_ref_alignment) {
+            
+            const Sequence &seqA=alignment.seqA();
+            const Sequence &seqB=alignment.seqB();
+            
+            int return_code=0;
+            
+            // write MultipleAlignment to screen if verbose
+            if (clp.opt_verbose) {
+                MultipleAlignment resultMA(alignment);
+                
+                if (multiple_ref_alignment) {
+                    std::cout << "Deviation to reference: "<< multiple_ref_alignment->deviation(resultMA)<<std::endl;
+                }
+            }
+            
+            if (clp.opt_clustal_out) {
+                std::ofstream out(clp.clustal_out.c_str());
+                if (out.good()) {
+
+                    MultipleAlignment ma(alignment, clp.opt_local_file_output);
+                    
+                    out << "CLUSTAL W --- "<<PACKAGE_STRING;
+		
+                    // for legacy, clustal files of pairwise alignments contain the score 
+                    if (seqA.num_of_rows()==1 && seqB.num_of_rows()==1)
+                        out  <<" --- Score: " << score;
+                    out <<std::endl<<std::endl;
+                    
+                    if (clp.opt_write_structure) {
+                        // annotate multiple alignment with structures
+                        ma.prepend(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureA(clp.opt_local_file_output)));
+                        ma.append(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureB(clp.opt_local_file_output)));
+                    }
+                    
+                    ma.write(out,clp.output_width,MultipleAlignment::FormatType::CLUSTAL);
+                    
+                } else {
+                    std::cerr << "Cannot write to "<<clp.clustal_out<<"! Exit."<<std::endl;
+                    return_code=-1;
+                }
+            }
+            
+            if (clp.opt_stockholm_out) {
+                std::ofstream out(clp.stockholm_out.c_str());
+                if (out.good()) {
+                    MultipleAlignment ma(alignment, clp.opt_local_file_output);
+                    
+                    ma.set_annotation( MultipleAlignment::AnnoType::consensus_structure,
+                                       SequenceAnnotation(consensus_structure)
+                                       );
+                    
+                    out << "# STOCKHOLM 1.0" << std::endl;
+                    out << "#=GF CC " << "Generated by "<<PACKAGE_STRING << std::endl;
+                    out << "#=GF SQ " << ma.num_of_rows() << std::endl;
+                    out << std::endl;
+                    
+                    ma.write(out,clp.output_width,MultipleAlignment::FormatType::STOCKHOLM);
+                } else {
+                    std::cerr << "Cannot write to "<<clp.stockholm_out<<"! Exit."<<std::endl;
+                    return_code=-1;
+                }
+            }
+	
+            if (clp.opt_pp_out) {
+                std::ofstream out(clp.pp_out.c_str());
+                if (out.good()) {
+                    
+                    consensus->write_pp(out);
+                    
+                } else {
+                    std::cerr << "Cannot write to "<<clp.pp_out<<std::endl<<"! Exit.";
+                    return_code=-1;
+                }
+            }
+            
+            return return_code;
+        }
+
+        void
+        report_input(const Sequence &seqA,
+                     const Sequence &seqB,
+                     const ArcMatches &arc_matches) {
+            const BasePairs &bpsA = arc_matches.get_base_pairsA();
+            const BasePairs &bpsB = arc_matches.get_base_pairsB();
+            
+            // ----------------------------------------
+            // report on input in verbose mode
+            std::cout << "Sequence A: "<<std::endl;
+            seqA.write(std::cout,MultipleAlignment::FormatType::CLUSTAL);
+            std::cout<<" (Length:"<< seqA.length()<<", Basepairs:"<<bpsA.num_bps() << ")" <<std::endl;
+            
+            std::cout << "Sequence B: "<<std::endl;
+            seqB.write(std::cout,MultipleAlignment::FormatType::CLUSTAL);
+            std::cout<<" (Length:"<< seqB.length()<<", Basepairs:"<<bpsB.num_bps() << ")" <<std::endl;
+            
+            std::cout <<std::endl 
+                      <<"Base Pair Matches: "<<arc_matches.num_arc_matches() << "." <<std::endl;
+            // std::cout << "Base Identity: "<<(seq_identity(seqA,seqB)*100)<<std::endl; 
+            
+        }
+
+        double average_pairwise_identity(const Sequence &seqA, const Sequence &seqB) {
+            double avg_identity = 0;
+            for (size_t i=0; i<seqA.num_of_rows(); i++) {
+                for (size_t j=0; i<seqB.num_of_rows(); j++) {
+                    avg_identity += sequence_identity(seqA.seqentry(i).seq(),
+                                                      seqB.seqentry(j).seq());
+                }
+            }
+            avg_identity /= seqA.num_of_rows()*seqB.num_of_rows();
+        }
+        
+    }
+}
+
+#endif // LOCARNA_MAIN_HELPER

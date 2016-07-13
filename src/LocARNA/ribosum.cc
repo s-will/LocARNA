@@ -288,24 +288,37 @@ namespace LocARNA {
     }
 
 
-    void RibosumFreq::write_CC_matrix(const std::string &ribname,const std::string &matname, 
+    void RibosumFreq::write_CC_matrix(std::ostream &out, 
+                                      const std::string &ribname,
+                                      const std::string &matname, 
 				      int x, int y, const Ribosum::matrix_t &m) const{
-	std::cout << "const double "<<ribname<<"::"<<matname<<"[] = {" <<std::endl;
+	out << "const double "<<ribname<<"::"<<matname<<"[] = {" <<std::endl;
 	for (int i=0;i<x;i++) {
-	    std::cout << "    ";
+	    out << "    ";
 	    for (int j=0;j<y;j++) {
-		std::cout << m(i,j);
-		if (i<(x-1) || j<(y-1)) std::cout << ", "; else std::cout << " ";
+		out << m(i,j);
+		if (i<(x-1) || j<(y-1)) out << ", "; else out << " ";
 	    }
-	    std::cout << std::endl;
+	    out << std::endl;
 	}
-	std::cout << "};"<<std::endl<<std::endl;
+	out << "};"<<std::endl<<std::endl;
     }
 
     void
-    RibosumFreq::write_CC_code(const std::string &ribname) const {
-	std::cout 
-	    << "class "<<ribname<<": public LocARNA::RibosumFreq {" << std::endl
+    RibosumFreq::write_ICC_code(std::ostream &out, const std::string &ribname) const {
+        std::string macro_headerfile=ribname;
+        transform(macro_headerfile.begin(), 
+                  macro_headerfile.end(), 
+                  macro_headerfile.begin(), 
+                  ::toupper);
+        
+        macro_headerfile="LOCARNA_"+macro_headerfile+"_HH";
+        
+	out << "#ifndef "<<macro_headerfile<<std::endl
+            << "#define "<<macro_headerfile<<std::endl
+            << "#include \"LocARNA/ribosum.hh\""<<std::endl
+            << "namespace LocARNA {"<<std::endl
+            << "class "<<ribname<<": public RibosumFreq {" << std::endl
 	    << "    static const double bm_init[];" << std::endl
 	    << "    static const double am_init[];" << std::endl
 	    << "    static const double base_probs_init[];" << std::endl
@@ -317,7 +330,7 @@ namespace LocARNA {
 	    << "    static const std::string arcname_alphabet_init[];" << std::endl
 	    << std::endl
 	    << "  public:"<<std::endl
-	    << "    "<<ribname<<"(): LocARNA::RibosumFreq() {" << std::endl
+	    << "    "<<ribname<<"(): RibosumFreq() {" << std::endl
 	    << "        bm = matrix_t(4,4,bm_init);" << std::endl
 	    << "        am = matrix_t(16,16,am_init);" << std::endl
 	
@@ -329,25 +342,28 @@ namespace LocARNA {
 	    << "        set_basename_alphabet(basename_alphabet_init);" << std::endl
 	    << "        set_arcname_alphabet(arcname_alphabet_init);" << std::endl
 	    << "    }" << std::endl
-	    << "};" << std::endl
-	    <<std::endl;
-    
-	write_CC_matrix(ribname,"bm_init",4,4,get_basematch_scores());
-	write_CC_matrix(ribname,"am_init",16,16,get_arcmatch_scores());
+	    << "};" << std::endl;
+        
+	write_CC_matrix(out, ribname,"bm_init",4,4,get_basematch_scores());
+	write_CC_matrix(out, ribname,"am_init",16,16,get_arcmatch_scores());
 
-	write_CC_matrix(ribname,"base_probs_init",4,1,get_base_probs());
-	write_CC_matrix(ribname,"base_nonstruct_probs_init",4,1,get_base_nonstruct_probs());
-	write_CC_matrix(ribname,"basepair_probs_init",4,4,get_basepair_probs());
-	write_CC_matrix(ribname,"basematch_probs_init",4,4,get_basematch_probs());
+	write_CC_matrix(out, ribname,"base_probs_init",4,1,get_base_probs());
+	write_CC_matrix(out, ribname,"base_nonstruct_probs_init",
+                        4,1,get_base_nonstruct_probs());
+	
+        write_CC_matrix(out, ribname,"basepair_probs_init",4,4,get_basepair_probs());
+	write_CC_matrix(out, ribname,"basematch_probs_init",4,4,get_basematch_probs());
 
-	write_CC_matrix(ribname,"arcmatch_probs_init",16,16,get_arcmatch_probs());
+	write_CC_matrix(out, ribname,"arcmatch_probs_init",16,16,get_arcmatch_probs());
 
-	std::cout
-	    << "const std::string "<<ribname<<"::basename_alphabet_init[] = "
-	    << "{\"A\",\"C\",\"G\",\"U\"};" << std::endl << std::endl;
-	std::cout
+	out << "const std::string "<<ribname<<"::basename_alphabet_init[] = "
+	    << "{\"A\",\"C\",\"G\",\"U\"};" << std::endl << std::endl
+
 	    << "const std::string "<<ribname<<"::arcname_alphabet_init[] = "
-	    << "{\"AA\",\"AC\",\"AG\",\"AU\",\"CA\",\"CC\",\"CG\",\"CU\",\"GA\",\"GC\",\"GG\",\"GU\",\"UA\",\"UC\",\"UG\",\"UU\"};" << std::endl << std::endl;
+	    << "{\"AA\",\"AC\",\"AG\",\"AU\",\"CA\",\"CC\",\"CG\",\"CU\",\"GA\",\"GC\",\"GG\",\"GU\",\"UA\",\"UC\",\"UG\",\"UU\"};" << std::endl << std::endl
+
+            << "}" << std::endl // end of namespace LocARNA
+            << "#endif" << std::endl;
     }
 
 
@@ -361,15 +377,15 @@ namespace LocARNA {
     }
 
     void
-    RibosumFreq::print_basematch_scores_corrected() const {
+    RibosumFreq::print_basematch_scores_corrected(std::ostream &out) const {
 	for (Alphabet<char>::const_iterator it=char_basename_alphabet.begin(); char_basename_alphabet.end()!=it; ++it) {
-	    std::cout << (*it) <<" ";
+	    out << (*it) <<" ";
 	    for (Alphabet<char>::const_iterator it2=char_basename_alphabet.begin(); char_basename_alphabet.end()!=it2; ++it2) {
-		std::cout << basematch_score_corrected(*it,*it2)<<" ";
+		out << basematch_score_corrected(*it,*it2)<<" ";
 	    }
-	    std::cout << std::endl;
+	    out << std::endl;
 	}
-	std::cout << std::endl;
+	out << std::endl;
     }
 
 }

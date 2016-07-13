@@ -68,8 +68,7 @@ namespace LocARNA {
 	std::string deflt; //!<  pointer to default argument, if arg optional. otherwise 0 
 	std::string argname; //!< optional name for an argument (shown in usage string)
 	std::string description; //!< optional description (shown in help) 
-    }
-	option_def;
+    } option_def;
 
     /* longname==0 and shortname==0 and arg_type<=O_SECTION is not allowed for regular options definition */
 

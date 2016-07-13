@@ -73,6 +73,8 @@ namespace LocARNA {
 	    read_fasta(in);
 	} else if (format==FormatType::CLUSTAL) {
 	    read_clustalw(in);
+	} else if (format==FormatType::PP) {
+	    read_clustallike(in,format);
 	} else if (format==FormatType::STOCKHOLM) {
             read_stockholm(in);
         } else {
@@ -1009,12 +1011,6 @@ namespace LocARNA {
         }
         size_t namewidth = std::max((size_t)18,max_name_length);
         
-	std::string structure_string = 
-	    annotation(AnnoType::structure).single_string();
-	
-	std::string fixed_structure_string = 
-	    annotation(AnnoType::fixed_structure).single_string();
-	
 	for (size_type i=0; i<alig_.size(); i++) {
 	    const std::string seq = alig_[i].seq().str();
 	    assert(end <= seq.length()); 
@@ -1043,6 +1039,10 @@ namespace LocARNA {
 	
 	if (has_annotation(AnnoType::structure)) {
 	    const std::string structure_tag   = "#"+annotation_tags[format][AnnoType::structure];
+
+            std::string structure_string = 
+                annotation(AnnoType::structure).single_string();
+            
 	    write_name_sequence_line(out,
 				     structure_tag,
 				     structure_string.substr(start-1,end-start+1),
@@ -1051,12 +1051,28 @@ namespace LocARNA {
 
 	if (has_annotation(AnnoType::fixed_structure)) {
 	    const std::string structure_tag   = "#"+annotation_tags[format][AnnoType::fixed_structure];
-	    write_name_sequence_line(out,
+
+            std::string fixed_structure_string = 
+                annotation(AnnoType::fixed_structure).single_string();
+            
+            write_name_sequence_line(out,
 				     structure_tag,
 				     fixed_structure_string.substr(start-1,end-start+1),
                                      namewidth);
 	}
 	
+        if (has_annotation(AnnoType::consensus_structure)) {
+            const std::string structure_tag   = "#"+annotation_tags[format][AnnoType::consensus_structure];
+
+            std::string structure_string = 
+                annotation(AnnoType::consensus_structure).single_string();
+            
+	    write_name_sequence_line(out,
+				     structure_tag,
+				     structure_string.substr(start-1,end-start+1),
+                                     namewidth);
+	}
+        
 	return out;
     }
 

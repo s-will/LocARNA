@@ -9,6 +9,11 @@
 #include "aux.hh"
 #include "sparse_matrix.hh"
 
+extern "C" {
+#   include <ViennaRNA/data_structures.h>
+}
+
+
 namespace LocARNA {
 
     class MultipleAlignment;
@@ -186,6 +191,31 @@ namespace LocARNA {
 	 */
 	double 
 	arc_prob(pos_type i, pos_type j) const;
+                
+	/** 
+	 * \brief maximum expected accuracy structure
+	 *
+         * @param gamma
+         *
+         * @return maximum non-crossing expected accuracy structure
+	 *
+         * Works as interface to the RNAlib function MEA. From the
+         * ViennaRNA docu: Each base pair (i,j) gets a score 2*gamma*p_ij
+         * and the score of an unpaired base is given by the
+         * probability of not forming a pair (compare RNAfold)
+         */
+	std::string
+	mea_structure(double gamma=1.) const;
+
+        /** 
+         * @brief Construct plist (pair list of Vienna RNA) 
+         *
+         * @note the plist has to be deleted by the caller
+         *
+         * @return pointer to plist
+         */
+        vrna_plist_t *
+        plist() const;
 
     protected:
 	//! type of constant iterator over arcs with probability above cutoff
@@ -449,7 +479,6 @@ namespace LocARNA {
 	 */
 	void
 	read_ps(const std::string &filename);
-
 	
     }; // end class RnaData
   

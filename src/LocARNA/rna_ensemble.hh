@@ -9,7 +9,6 @@
 
 #include "aux.hh"
 
-
 namespace LocARNA {
 
     class MultipleAlignment;
@@ -142,7 +141,7 @@ namespace LocARNA {
 	 */
 	double
 	min_free_energy() const;
-	
+
 	/** 
 	 * \brief get minimum free energy structure
 	 *
@@ -303,7 +302,7 @@ namespace LocARNA {
 
 
 	/** 
-	 * \brief Probabilty of base pair in the external 'loop'
+	 * \brief Probability of base pair in the external 'loop'
 	 * 
 	 * @param i left end of inner base pair
 	 * @param j right end of inner base pair
@@ -323,8 +322,7 @@ namespace LocARNA {
 	double
 	arc_external_prob(size_type i,
 			  size_type j) const;
-		
-		
+
     };
 
 }

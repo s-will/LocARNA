@@ -309,7 +309,7 @@ namespace LocARNA {
 	//! \brief Print the corrected score of base matches
 	//! @see basematch_score_corrected()
 	void
-	print_basematch_scores_corrected() const;
+	print_basematch_scores_corrected(std::ostream &out) const;
     
 	/** 
 	 * Read one matrix in ribosum input 
@@ -323,14 +323,15 @@ namespace LocARNA {
 	void
 	read_matrix(std::istream &in, const std::string &header, matrix_t &mat, size_t xdim, size_t ydim);
 
-	//! Write the ribosum matrices as C++ code to cout
+	//! Write the ribosum matrices as C++ code
+        //! @param out output stream
 	//! @param ribname Name of ribosum
 	//! @note this is used to precompile ribosum matrices, 
 	//! such that their parameters can be linked to the code 
 	//! and we do not have to depend on data files.
-	void
-	write_CC_code(const std::string &ribname) const;
-
+	//! @see write_HH_code()
+        void
+	write_ICC_code(std::ostream &out, const std::string &ribname) const;
      
 	/** 
 	 * Write single matrix to output stream
@@ -348,7 +349,9 @@ namespace LocARNA {
 
     private:
     
-	void write_CC_matrix(const std::string &ribname,const std::string &matname,
+	void write_CC_matrix(std::ostream &out,
+                             const std::string &ribname,
+                             const std::string &matname,
 			     int x, int y, const Ribosum::matrix_t &m) const;
 
 	void

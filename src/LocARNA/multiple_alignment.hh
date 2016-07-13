@@ -816,30 +816,32 @@ public:
      * @brief Write alignment to stream
      *
      * @param out output stream
-     * @param format alignment format (@see FormatType)
+     * @param format alignment format; default: CLUSTAL (@see FormatType)
+     *
      * @return output stream
      *
-     * Writes one line "<name> <seq>" for each sequence.
-     * @todo implement other formats than clustal
-     * @note currently, CLUSTAL format is asserted
+     * Writes one line "<name> <seq>" for each sequence; moereover, writes annotations.
+     *
+     * @note does not write format header
      */
     std::ostream &
-    write(std::ostream &out, FormatType::type format) const;
+    write(std::ostream &out, FormatType::type format=MultipleAlignment::FormatType::CLUSTAL) const;
 
     /**
      * @brief Write alignment to stream (wrapped)
      *
      * @param out output stream
      * @param width output stream
-     * @param format alignment format (@see FormatType)
+     * @param format alignment format; default: CLUSTAL (@see FormatType)
+     *
      * @return output stream
      *
      * Writes lines "<name> <seq>" per sequence, wraps lines at width
-     * @todo implement other formats than clustal
-     * @note currently, CLUSTAL format is asserted
+     *
+     * @note: do not write format header
      */
     std::ostream &
-    write(std::ostream &out, size_t width, FormatType::type format) const;
+    write(std::ostream &out, size_t width, FormatType::type format=MultipleAlignment::FormatType::CLUSTAL) const;
     
     /**
      * @brief Write formatted line of name and sequence
@@ -850,6 +852,7 @@ public:
      * @param out output stream
      * @param name name string
      * @param sequence sequence string
+     *
      * @return output stream
      */
     std::ostream &
@@ -861,19 +864,21 @@ public:
     /**
      * @brief Write sub-alignment to stream 
      *
-     * Write from position start to position end to output stream
-     * out; write lines "<name> <seq>"
+     * Write from position start to position end to output stream out;
+     * write lines "<name> <seq>"
      *
      * @param out output stream
      * @param start start column (1-based)
      * @param end end column (1-based)
+     * @param format alignment format; default: CLUSTAL (@see FormatType)
+     *
      * @return output stream
      */
     std::ostream &
     write(std::ostream &out,
           size_type start, 
           size_type end,
-          FormatType::type format) const;
+          FormatType::type format=MultipleAlignment::FormatType::CLUSTAL) const;
     
     /**
      * @brief check character constraints

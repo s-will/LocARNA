@@ -63,37 +63,36 @@ namespace LocARNA {
      * @see Scoring
      */
     class ScoringParams {
-	friend class Scoring;
-
+    public:
 	/**
 	 * constant bonus for a base match.
 	 * together with basemismatch yields the simplest form
 	 * of base match/mismatch scoring.
 	 * Can be replaced by RIBOSUM scores.
 	 */
-	score_t basematch;
+	const score_t basematch;
     
 	//! constant cost of a base mismatch
-	score_t basemismatch;
+	const score_t basemismatch;
    
 	//! cost per indel (for linear or affine gap cost).
-	score_t indel;
+	const score_t indel;
 
 	//! cost per indel for loops (for linear or affine gap cost).
-	score_t indel_loop;
+	const score_t indel_loop;
 
 	//! cost per gap (for affine gap-cost). Use affine gap cost if non-zero.
-	score_t indel_opening;
+	const score_t indel_opening;
         
 	//! cost per gap for loops(for affine gap-cost). Use affine gap cost if non-zero.
-	score_t indel_opening_loop;
+	const score_t indel_opening_loop;
         
 	/**
 	 * the ribosum matrix, if non-null (and ribofit==null) it is used
 	 * for base match/mismatch instead of constant values
 	 * and as contribution for arc-matchs (tau_factor)
 	 */
-	RibosumFreq *ribosum;
+	const RibosumFreq *ribosum;
 
 	/**
 	 * the ribofit matrix, if non-null it is used
@@ -101,50 +100,50 @@ namespace LocARNA {
 	 * and as contribution for arc-matchs (tau_factor).
 	 * Overrides ribosum
 	 */
-	Ribofit *ribofit;
+	const Ribofit *ribofit;
 
 	//! penalty/cost for unpaired bases matched/mismatched/gapped
-	score_t unpaired_penalty;
+	const score_t unpaired_penalty;
 
 	/**
 	 * Factor for structure contribution in the classic score.
 	 * Maximal contribution of 1/2 arc match
 	 */
-	score_t struct_weight;
+	const score_t struct_weight;
     
 	/**
 	 * Factor for the contribution of sequence score or
 	 * ribosum score to arc matchs
 	 */
-	score_t tau_factor;
+	const score_t tau_factor;
     
 	//! cost of one exclusion.
-	score_t exclusion;
+	const score_t exclusion;
     
-	double exp_probA;
+	const double exp_probA;
 
-	double exp_probB;
+	const double exp_probB;
   
-	double temperature;
+	const double temperature;
     
     
 	//! turn on/off stacking terms
-	bool stacking;
+	const bool stacking;
 
 	//! turn on/off new stacking terms
-	bool new_stacking;
+	const bool new_stacking;
 
 	//! turn on/off mea scoring
-	bool mea_scoring;
+	const bool mea_scoring;
 
 	//! weight for mea contribution "unstructured"
-	score_t alpha_factor;
+	const score_t alpha_factor;
 
 	//! weight for mea contribution "structure" 
-	score_t beta_factor;
+	const score_t beta_factor;
 
 	//! weight for mea contribution "consensus"
-	score_t gamma_factor;
+	const score_t gamma_factor;
 
     
 	/**
@@ -154,7 +153,7 @@ namespace LocARNA {
 	 * there must be some factor to scale the probabilities
 	 * in order to get scores.
 	 */
-	score_t probability_scale;
+	const score_t probability_scale;
     
 	/*
 	  The mea score is composed in the following way:

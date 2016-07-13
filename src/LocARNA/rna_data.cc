@@ -20,7 +20,8 @@
 #include "LocARNA/global_stopwatch.hh"
 
 extern "C" {
-#  include <ViennaRNA/energy_const.h> // import TURN
+#   include <ViennaRNA/energy_const.h> // import TURN
+#   include <ViennaRNA/MEA.h>
 }
 
 
@@ -1004,7 +1005,7 @@ namespace LocARNA {
     std::istream &
     RnaDataImpl::read_pp_sequence(std::istream &in) {
 	
-	sequence_ = MultipleAlignment(in,MultipleAlignment::FormatType::CLUSTAL);
+	sequence_ = MultipleAlignment(in,MultipleAlignment::FormatType::PP);
 	sequence_.normalize_rna_symbols();
 	
 	return in;
@@ -1722,6 +1723,56 @@ namespace LocARNA {
 	}
 
 
+    }
+
+    vrna_plist_t *
+    RnaData::plist() const {
+        std::vector<vrna_plist_t> plist;
+        size_type len = length();
+        for(size_t i=1; i<=len; ++i) {
+            for(size_t j=1; j<=len; ++j) {
+                double p=arc_prob(i,j);
+                if (p>0) {
+                    vrna_plist_t x;
+                    x.i=i;
+                    x.j=j;
+                    x.p=p;
+                    x.type=0;
+                    plist.push_back(x);
+                }
+            }
+        }
+        
+        // construct Vienna RNA / C - compatible array
+        vrna_plist_t * c_plist = new vrna_plist_t[plist.size()+1];
+        // and copy contents of the vecctor to this array
+        copy(plist.begin(), plist.end(), c_plist);
+        // mark end of list
+        plist[plist.size()].i=0;
+        plist[plist.size()].j=0;
+        plist[plist.size()].p=0;
+        plist[plist.size()].type=0;
+        
+        return c_plist;
+    }
+
+    std::string
+    RnaData::mea_structure(double gamma) const {
+        vrna_plist_t *pl = plist();
+        
+        char *c_structure = new char[length()+1];
+        for (size_t i=0; i<length(); ++i) {c_structure[i]='.';}
+        c_structure[length()]=0;
+        
+        // call RNAlib's mea function
+        float mea = MEA(pl,c_structure,gamma);
+        
+        std::string structure(c_structure);
+        
+        delete [] c_structure;
+        delete [] pl;
+        
+        return structure;
     }
 
 } // end namespace LocARNA

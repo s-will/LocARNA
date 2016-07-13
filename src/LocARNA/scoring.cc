@@ -396,7 +396,7 @@ namespace LocARNA {
 	assert(params->ribosum != 0);
 	// compute average ribosum score
 
-	RibosumFreq *ribosum = params->ribosum;
+	const RibosumFreq *ribosum = params->ribosum;
 
 
 	const size_type rowsA = seqA.num_of_rows();
@@ -451,8 +451,8 @@ namespace LocARNA {
 
 	// compute average ribosum score
 
-	RibosumFreq *ribosum = params->ribosum;
-	Ribofit *ribofit = params->ribofit;
+	const RibosumFreq *ribosum = params->ribosum;
+	const Ribofit *ribofit = params->ribofit;
 
 	const size_type rowsA = seqA.num_of_rows();
 	const size_type rowsB = seqB.num_of_rows();

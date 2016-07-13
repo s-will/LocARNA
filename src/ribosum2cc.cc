@@ -32,16 +32,27 @@ int main(int argc, char **argv) {
             exit(0);
         }
     }
-    if (argc!=3) {
+    if (argc!=4) {
         help(argv[0]);
         return -1;
     }
 
     string ribname=argv[1];
-    string file=argv[2];
+    string matrixfile=argv[2];
     
-    RibosumFreq ribosum(file);
+    string ccfile=argv[3];
+    
+    RibosumFreq ribosum(matrixfile);
+    
+    try {
+        ofstream out(ccfile.c_str());
+        ribosum.write_ICC_code(out, ribname);
+    } catch (std::ofstream::failure &f) {
+	std::cerr << "ERROR: failed to write to file " <<ccfile <<std::endl
+		  << "       "<< f.what() <<std::endl;
+	return -1;
+    }
 
-    ribosum.write_CC_code(ribname);
     return 0;
+
 }
