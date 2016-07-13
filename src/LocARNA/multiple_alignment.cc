@@ -45,7 +45,7 @@ namespace LocARNA {
 	// ovwerwrite tags for stockholm format
         annotation_tags[FormatType::STOCKHOLM].resize(AnnoType::size());
 
-        annotation_tags[FormatType::STOCKHOLM][AnnoType::structure]="=GC SS";
+        annotation_tags[FormatType::STOCKHOLM][AnnoType::structure]="=GC CS";
 	annotation_tags[FormatType::STOCKHOLM][AnnoType::fixed_structure]="=GC FS";
 	annotation_tags[FormatType::STOCKHOLM][AnnoType::anchors]="=GC A";
 	annotation_tags[FormatType::STOCKHOLM][AnnoType::consensus_structure]="=GC SS_cons";
@@ -102,13 +102,12 @@ namespace LocARNA {
 		read_fasta(in);
 	    } else if (format == FormatType::CLUSTAL) {
 		read_clustalw(in);
-	    } else if (format==FormatType::STOCKHOLM) {
+	    } else if (format == FormatType::STOCKHOLM) {
                 read_stockholm(in);
             } else {
 		throw failure("Unknown format.");
 	    }
 
-	
 	    in.close();
 	} catch (std::ifstream::failure &e) {
 	    throw failure("Cannot construct multiple alignment: "+(std::string)e.what());
@@ -130,14 +129,25 @@ namespace LocARNA {
     	create_name2idx_map();
     }
 
-    MultipleAlignment::MultipleAlignment(const std::string &nameA,
-					 const std::string &nameB, 
+    MultipleAlignment::MultipleAlignment(const std::string &in_nameA,
+					 const std::string &in_nameB, 
 					 const std::string &aliA,
 					 const std::string &aliB)
 	: alig_(),
 	  annotations_(),
 	  name2idx_() {
 	
+        std::string nameA=in_nameA;
+        std::string nameB=in_nameB;
+        
+        //make names unique
+        if (nameA==nameB) {
+            nameA="A."+nameA;
+            nameB="B."+nameA;
+        }
+        
+
+        
 	if (aliA.length() != aliB.length()) {
     	    throw failure("Alignment strings of unequal length."); 
     	}
@@ -200,8 +210,7 @@ namespace LocARNA {
 			    const Sequence &seqA,
 			    const Sequence &seqB,
 			    bool special_gap_symbols) {
-	
-	std::vector<std::string> aliA(seqA.num_of_rows(),"");
+        std::vector<std::string> aliA(seqA.num_of_rows(),"");
 	std::vector<std::string> aliB(seqB.num_of_rows(),"");
     
 	std::vector<int>::size_type alisize = edges.size();
@@ -232,12 +241,27 @@ namespace LocARNA {
 		}
 	    }
 	}
-    
-	for (size_type k=0; k<seqA.num_of_rows();k++) {
-	    alig_.push_back(SeqEntry(seqA.seqentry(k).name(),aliA[k]));
+
+        // check for name conflicts
+        bool name_clash=false;
+        for (size_type k=0; k<seqA.num_of_rows();k++) {
+            if (seqB.contains(seqA.seqentry(k).name())) {
+                name_clash=true;
+            }
+        }
+
+	// construct sequences from seqA
+        for (size_type k=0; k<seqA.num_of_rows();k++) {
+            std::string name=seqA.seqentry(k).name();
+            if (name_clash) {name="A."+name;}
+            alig_.push_back(SeqEntry(name,aliA[k]));
 	}
-	for (size_type k=0; k<seqB.num_of_rows();k++) {
-	    alig_.push_back(SeqEntry(seqB.seqentry(k).name(),aliB[k]));
+
+        // construct sequences from seqB
+        for (size_type k=0; k<seqB.num_of_rows();k++) {
+	    std::string name=seqB.seqentry(k).name();
+	    if (name_clash) {name="B."+name;}
+            alig_.push_back(SeqEntry(name,aliB[k]));
 	}
 
     	create_name2idx_map();
@@ -268,7 +292,7 @@ namespace LocARNA {
         get_nonempty_line(in,line);
         if (!has_prefix(line,format_header))  {
             // complain
-            throw syntax_error_failure("STOCKHOLM 1.x header expected.");
+            throw wrong_format_failure();
         }
         
         read_clustallike(in,FormatType::STOCKHOLM);
@@ -338,26 +362,32 @@ namespace LocARNA {
 		    }
 		    
 		    anchors[idx-1] += astr;
-		} else if (has_prefix(line,structure_tag) 
-			   || has_prefix(line,fixed_structure_tag)) {
-		    std::istringstream in(line);
-		    std::string tag;
-		    std::string str;
-		    in >> tag >> str;
+		} else if (has_prefix(line,structure_tag)) {
+                    
+                    std::istringstream in(line.substr(structure_tag.length()));
+		    
+                    std::string str;
+		    in >> str;
 		    
 		    if ( in.fail() ) {
 			throw syntax_error_failure("Invalid tag with structure prefix "
 						   +structure_tag+".");
 		    }
+                    structure_string += str;
+                                        
+                } else if (has_prefix(line,fixed_structure_tag)) {
 		    
-		    if (tag==structure_tag) {
-			structure_string += str;
-		    } else if (tag==fixed_structure_tag) {
-		    	fixed_structure_string += str;
-		    } else {
-                        throw syntax_error_failure("Unknown tag with structure prefix "
-                                                   +structure_tag+".");
-                    }
+                    std::istringstream in(line.substr(fixed_structure_tag.length()));
+		    
+                    std::string str;
+		    in >> str;
+		    
+		    if ( in.fail() ) {
+			throw syntax_error_failure("Invalid tag with structure prefix "
+						   +fixed_structure_tag+".");
+		    }
+                    fixed_structure_string += str;
+                    
 		} else {
                     // ignore unknown tags
                 }
@@ -409,6 +439,7 @@ namespace LocARNA {
 	// check and set structure string
 	if (!structure_string.empty()) {
 	    if (structure_string.length() != length()) {
+                //std::cerr << "\""<<structure_string<<"\""<<std::endl;
 		throw syntax_error_failure("Structure annotation of wrong length.");
 	    }
 	    try {
@@ -433,7 +464,6 @@ namespace LocARNA {
 					   +f.what());
 	    }
 	}
-	
     }
     
     void

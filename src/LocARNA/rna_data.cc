@@ -224,7 +224,6 @@ namespace LocARNA {
 	delete ext_pimpl_;
     }
 
-
     bool
     RnaData::read_autodetect(const std::string &filename,
 			     bool stacking) {
@@ -250,7 +249,6 @@ namespace LocARNA {
 		failed=true;
 	    }
 	}
-
 
 	// try pp 2.0
 	if (failed) {
@@ -304,6 +302,42 @@ namespace LocARNA {
 	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
 	    // else std::cerr << "  ... success."<<std::endl;
 	}
+        
+        // try stockholm format
+        if (failed) {
+            sequence_only=true;
+	    failed=false;
+	    try {
+		// std::cerr << "Try reading stockholm "<<filename<<" ..."<<std::endl;
+		MultipleAlignment ma(filename, MultipleAlignment::FormatType::STOCKHOLM);
+                
+		pimpl_->sequence_ = ma;
+	    	// even if reading does not fail, we still want to
+		// make sure that the result is reasonable. Otherwise,
+		// we assume that the file is in a different format.
+		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
+		    failed=true;
+		}
+
+                // handle potential fixed structure in MA
+		if (!failed) {
+                    typedef MultipleAlignment::AnnoType TA;
+
+		    if (ma.has_annotation(TA::fixed_structure)) {
+			init_from_fixed_structure(ma.annotation(TA::fixed_structure),
+						  stacking);
+			sequence_only=false;
+		    }
+		}
+
+            } catch (wrong_format_failure &f) {
+                failed=true;
+            }catch (syntax_error_failure &f) {
+		throw failure((std::string)"RnaData: Cannot read input data from stockholm file.\n\t"+f.what());
+	    } catch (failure &f) {
+		failed=true;
+	    }
+        }
 
 	// try clustal format
 	if (failed) {
@@ -323,10 +357,10 @@ namespace LocARNA {
 		
 		// handle potential fixed structure in MA
 		if (!failed) {
-		    typedef MultipleAlignment::AnnoType AT;
-		    
-		    if (ma.has_annotation(AT::fixed_structure)) {
-			init_from_fixed_structure(ma.annotation(AT::fixed_structure),
+                    typedef MultipleAlignment::AnnoType TA;
+
+		    if (ma.has_annotation(TA::fixed_structure)) {
+			init_from_fixed_structure(ma.annotation(TA::fixed_structure),
 						  stacking);
 			sequence_only=false;
 		    }

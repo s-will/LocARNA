@@ -38,7 +38,10 @@ namespace LocARNA {
  * Supports traversal of name/sequence pairs. The sequence entries support
  * mapping from columns to positions and back.
  *
- * Names are unique in a multiple alignment object.
+ * Names are unique in a multiple alignment object. 
+ *
+ * @todo constructors ensure name uniqueness; if constructing as
+ * alignment of alignments, names are made unique if needed.
  *
  * Sequences positions and column indices are 1..len.
  *
@@ -86,10 +89,16 @@ public:
     struct AnnoType {
 	//! inner type
 	enum type {
-            consensus_structure, //!< consensus structure annotation (consensus structure)
-	    structure,           //!< structure annotation (often, constraint; allowed are Vienna-package structure constraints)
-	    fixed_structure,     //!< structure annotation (a single structure; used as fixed structure constraint)
-	    anchors              //!< anchor annotation (anchor constraints)
+            //! consensus structure annotation (consensus structure)
+            consensus_structure,
+            //! structure annotation (often, constraint; allowed are
+            //! Vienna-package structure constraints)
+            structure,
+            //! structure annotation (a single structure; used as fixed
+            //! structure constraint)
+	    fixed_structure,
+            //! anchor annotation (anchor constraints)
+	    anchors
 	};
         
         //!@brief size of enum
@@ -473,15 +482,18 @@ public:
      * @brief Construct from Alignment object
      * @param alignment object of type Alignment
      * @param only_local if true, construct only local alignment
-     * @param special_gap_symbols if true, use special distinct gap symbols for gaps due to loop deletion '_' or sparsification '~'
+     * @param special_gap_symbols if true, use special distinct gap symbols
+     *        for gaps due to loop deletion '_' or sparsification '~'
      *
-     * Automatically computes a consensus anchor string if anchors are
+     * @note Automatically computes a consensus anchor string if anchors are
      * available. Consensus anchors containing duplicate names are cleared.
      * Does not compute some kind of consensus structure,
      * even if structure annotation of sequences A and B in Alignment
      * is available.
      */
-    MultipleAlignment(const Alignment &alignment, bool only_local=false, bool special_gap_symbols=false);
+    MultipleAlignment(const Alignment &alignment,
+                      bool only_local=false,
+                      bool special_gap_symbols=false);
     
     /**
      * @brief Construct from alignment edges and sequences
@@ -489,7 +501,7 @@ public:
      * @param seqA sequence A
      * @param seqB sequence B
      *
-     * Automatically computes a consensus anchor string if anchors are
+     * @note Automatically computes a consensus anchor string if anchors are
      * available. Consensus anchors containing duplicate names are
      * cleared. Does not compute some kind of consensus structure,
      * even if structure annotation of sequences A and B is available.

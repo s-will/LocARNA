@@ -1,7 +1,9 @@
 ============================================================
 === 2016
 1.8.10alpha
-	factorize common code in locarna, locarna_p and sparse (MainHelper)
+	Handle sequence name clashes by systematic renaming
+	Read stockholm format
+	Factorize common code in locarna, locarna_p and sparse (MainHelper)
 	Add stockholm support input and output to locarna
         Fix bug occuring with empty input sequences
 	Call alifold with /best/ parameters (from perl /and/ c++)
