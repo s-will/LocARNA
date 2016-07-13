@@ -324,9 +324,6 @@ main(int argc, char **argv) {
                                              seq_constraints
                                              );
 	
-    const BasePairs &bpsA = arc_matches->get_base_pairsA();
-    const BasePairs &bpsB = arc_matches->get_base_pairsB();
-    
     // ----------------------------------------
     // report on input in verbose mode
     if (clp.opt_verbose) MainHelper::report_input(seqA,seqB,*arc_matches);

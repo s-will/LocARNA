@@ -456,7 +456,7 @@ namespace LocARNA {
                                                       seqB.seqentry(j).seq());
                 }
             }
-            avg_identity /= seqA.num_of_rows()*seqB.num_of_rows();
+            return  avg_identity / ( seqA.num_of_rows()*seqB.num_of_rows() );
         }
         
     }

@@ -67,7 +67,6 @@ namespace LocARNA {
 	if (max_bps_length_ratio > 0) {
 	    pimpl_->drop_worst_bps(max_bps_length_ratio*pimpl_->sequence_.length());
 	}
-
     }
     
     // do almost nothing
@@ -326,7 +325,7 @@ namespace LocARNA {
 		    if (ma.has_annotation(TA::fixed_structure)) {
 			init_from_fixed_structure(ma.annotation(TA::fixed_structure),
 						  stacking);
-			sequence_only=false;
+                        sequence_only=false;
 		    }
 		}
 
@@ -399,19 +398,20 @@ namespace LocARNA {
 	assert(structure.length() == sequence_.length());
 	RnaStructure rna_structure(structure.single_string());
 	
-	p_bpcut_=1.0;
+	p_bpcut_=0.99; // this has to be less than 1.0 (to ensure p>bp_cut_)
 	
 	for (RnaStructure::const_iterator it=rna_structure.begin();
 	     rna_structure.end() != it; ++it) {
 	    arc_probs_(it->first,it->second)=1.0;
-	
+            
 	    if (stacking) {
 		if (rna_structure.contains(RnaStructure::bp_t(it->first+1,it->second-1))) {
 		    arc_2_probs_(it->first,it->second)=1.0;
 		}
 	    }
 	}
-	has_stacking_=stacking;
+        
+        has_stacking_=stacking;
     }
 
     void
@@ -1741,22 +1741,20 @@ namespace LocARNA {
 
 		vec.push_back(kv_t::kvpair_t(key_t(it->first,it2->first), it2->second));
 	    }
-		double keep =  ratio * ((double)(it->first.second)- (double)(it->first.first) + 1) ;
-		if (vec.size()> keep)
-		{
-			std::make_heap(vec.begin(),vec.end(),kv_t::comp);
-			while(vec.size()> keep ) {
-				const key_t &key = vec.front().first;
-				arc_in_loop_probs_.ref(key.first.first,key.first.second).reset(key.second.first,key.second.second);
-
-				std::pop_heap(vec.begin(),vec.end(),kv_t::comp);
-				vec.pop_back();
-			}
-		}
-
+            double keep =  ratio * ((double)(it->first.second)- (double)(it->first.first) + 1) ;
+            if (vec.size()> keep) {
+                std::make_heap(vec.begin(),vec.end(),kv_t::comp);
+                while(vec.size()> keep ) {
+                    const key_t &key = vec.front().first;
+                    arc_in_loop_probs_.ref(key.first.first,
+                                           key.first.second).reset(key.second.first,
+                                                                   key.second.second);
+                    
+                    std::pop_heap(vec.begin(),vec.end(),kv_t::comp);
+                    vec.pop_back();
+                }
+            }
 	}
-
-
     }
 
     vrna_plist_t *
@@ -1782,10 +1780,10 @@ namespace LocARNA {
         // and copy contents of the vecctor to this array
         copy(plist.begin(), plist.end(), c_plist);
         // mark end of list
-        plist[plist.size()].i=0;
-        plist[plist.size()].j=0;
-        plist[plist.size()].p=0;
-        plist[plist.size()].type=0;
+        c_plist[plist.size()].i=0;
+        c_plist[plist.size()].j=0;
+        c_plist[plist.size()].p=0;
+        c_plist[plist.size()].type=0;
         
         return c_plist;
     }
@@ -1799,7 +1797,8 @@ namespace LocARNA {
         c_structure[length()]=0;
         
         // call RNAlib's mea function
-        float mea = MEA(pl,c_structure,gamma);
+        //float mea = 
+        MEA(pl,c_structure,gamma);
         
         std::string structure(c_structure);
         
