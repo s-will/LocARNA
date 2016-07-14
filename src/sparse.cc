@@ -121,7 +121,8 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling_output"},
 
     {"width",'w',0,O_ARG_INT,&clp.output_width,"120","columns","Output width"},
-    {"clustal",0,&clp.opt_clustal_out,O_ARG_STRING,&clp.clustal_out,O_NODEFAULT,"file","Clustal output"},
+    {"clustal",0,&clp.opt_clustal_out,O_ARG_STRING,&clp.clustal_out,O_NODEFAULT,"file",
+     "Clustal output"},
     {"pp",0,&clp.opt_pp_out,O_ARG_STRING,&clp.pp_out,O_NODEFAULT,"file","PP output"},
     
     //    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
@@ -145,8 +146,12 @@ option_def my_options[] = {
     {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
-    {"prob-unpaired-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.00005","threshold","Threshold for prob_unpaired_in_loop"},
-    {"prob-basepair-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0001","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
+    {"prob-unpaired-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,
+     "0.00005","threshold","Threshold for prob_unpaired_in_loop"},
+
+     //todo: is the default threshold value reasonable?
+    {"prob-basepair-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,
+     "0.0001","threshold","Threshold for prob_basepair_in_loop"},
     
     //    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
     //    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
@@ -155,24 +160,35 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","MEA_score controlling options"},
 
     {"mea-alignment",0,&clp.opt_mea_alignment,O_NO_ARG,0,O_NODEFAULT,"","Do MEA alignment"},
-    {"probcons-file",0,&clp.opt_probcons_file,O_ARG_STRING,&clp.probcons_file,O_NODEFAULT,"file","Probcons parameter file"},
+    {"probcons-file",0,&clp.opt_probcons_file,O_ARG_STRING,&clp.probcons_file,
+     O_NODEFAULT,"file","Probcons parameter file"},
 
-    {"match-prob-method",0,0,O_ARG_INT,&clp.match_prob_method,"0","int","Method for computation of match probs"},
+    {"match-prob-method",0,0,O_ARG_INT,&clp.match_prob_method,"0","int",
+     "Method for computation of match probs"},
     {"temperature",0,0,O_ARG_INT,&clp.temperature,"150","int","Temperature for PF-computation"},
-    //{"pf-struct-weight",0,0,O_ARG_INT,&clp.pf_struct_weight,"200","weight","Structure weight in PF-computation"},
+    {"pf-struct-weight",0,0,O_ARG_INT,&clp.pf_struct_weight,"200","weight",
+     "Structure weight in PF-computation"},
 
-    {"mea-gapcost",0,&clp.opt_mea_gapcost,O_NO_ARG,0,O_NODEFAULT,"","Use gap cost in mea alignment"},   
+    {"mea-gapcost",0,&clp.opt_mea_gapcost,O_NO_ARG,0,O_NODEFAULT,"",
+     "Use gap cost in mea alignment"},   
     {"mea-alpha",0,0,O_ARG_INT,&clp.mea_alpha,"0","weight","Weight alpha for MEA"},
     {"mea-beta",0,0,O_ARG_INT,&clp.mea_beta,"200","weight","Weight beta for MEA"},
     {"mea-gamma",0,0,O_ARG_INT,&clp.mea_gamma,"100","weight","Weight gamma for MEA"},
-    {"probability-scale",0,0,O_ARG_INT,&clp.probability_scale,"10000","scale","Scale for probabilities/resolution of mea score"},
+    {"probability-scale",0,0,O_ARG_INT,&clp.probability_scale,"10000","scale",
+     "Scale for probabilities/resolution of mea score"},
 
-    {"write-match-probs",0,&clp.opt_write_matchprobs,O_ARG_STRING,&clp.matchprobs_file,O_NODEFAULT,"file","Write match probs to file (don't align!)"},
-    {"read-match-probs",0,&clp.opt_read_matchprobs,O_ARG_STRING,&clp.matchprobs_file,O_NODEFAULT,"file","Read match probabilities from file"},
+    {"write-match-probs",0,&clp.opt_write_matchprobs,O_ARG_STRING,&clp.matchprobs_file,
+     O_NODEFAULT,"file","Write match probs to file (don't align!)"},
+    {"read-match-probs",0,&clp.opt_read_matchprobs,O_ARG_STRING,&clp.matchprobs_file,
+     O_NODEFAULT,"file","Read match probabilities from file"},
 
-    {"write-arcmatch-scores",0,&clp.opt_write_arcmatch_scores,O_ARG_STRING,&clp.arcmatch_scores_file,O_NODEFAULT,"file","Write arcmatch scores (don't align!)"},
-    {"read-arcmatch-scores",0,&clp.opt_read_arcmatch_scores,O_ARG_STRING,&clp.arcmatch_scores_file,O_NODEFAULT,"file","Read arcmatch scores"},
-    {"read-arcmatch-probs",0,&clp.opt_read_arcmatch_probs,O_ARG_STRING,&clp.arcmatch_scores_file,O_NODEFAULT,"file","Read arcmatch probabilities (weight by mea_beta/100)"},
+    {"write-arcmatch-scores",0,&clp.opt_write_arcmatch_scores,O_ARG_STRING,
+     &clp.arcmatch_scores_file,O_NODEFAULT,"file","Write arcmatch scores (don't align!)"},
+    {"read-arcmatch-scores",0,&clp.opt_read_arcmatch_scores,O_ARG_STRING,
+     &clp.arcmatch_scores_file,O_NODEFAULT,"file","Read arcmatch scores"},
+    {"read-arcmatch-probs",0,&clp.opt_read_arcmatch_probs,O_ARG_STRING,
+     &clp.arcmatch_scores_file,O_NODEFAULT,
+     "file","Read arcmatch probabilities (weight by mea_beta/100)"},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
@@ -183,8 +199,9 @@ option_def my_options[] = {
 
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
     // TODO: relocate ribofit
-    {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool","Use Ribofit base and arc match scores (overrides ribosum)"},
-
+    {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false",
+     "bool","Use Ribofit base and arc match scores (overrides ribosum)"},
+    
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
 
     {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"input1","Input file 1"},
@@ -210,8 +227,17 @@ int
 main(int argc, char **argv) {
     stopwatch.start("total");
 
+    // make sure that unsupported features are turned off; consider moving
+    // to standard clp class
     clp.opt_local_file_output = false;
     clp.opt_pos_output = false;
+    clp.opt_local_output = false;
+    clp.struct_local=false;
+    clp.sequ_local=false;
+    clp.free_endgaps="";
+    //clp.opt_normalized=0;    
+    clp.opt_stacking=false;
+    clp.opt_new_stacking=false;
 
     typedef std::vector<int>::size_type size_type;
 
@@ -260,37 +286,30 @@ main(int argc, char **argv) {
 
     // --------------------
     //Forbid unsupported option of SPARSE
-    if ( clp.struct_local )
-        {
-            std::cerr << "Exclusions is not supported" << std::endl;
-            return -1;
-        }
+    if ( clp.struct_local ) {
+        std::cerr << "Exclusions is not supported" << std::endl;
+        return -1;
+    }
    
 
     //noLP is not supported by sparse recursion but yet useful for calculating probablities with RNAfold
-    if( clp.no_lonely_pairs )
-        {
-            std::cerr << "WARNING: No lonely pairs option is not supported by sparse algortihm" << std::endl;
-            //	return -1;
-        }
-    if( clp.sequ_local )
-        {
-            std::cerr << "Local sequence alignment is not supported" << std::endl;
-            return -1;
-        }
-    if( clp.opt_stacking || clp.opt_new_stacking)
-        {
-            std::cerr << "Stacking is not supported" << std::endl;
-            return -1;
-        }
-    /*  if(clp.free_endgaps.compare("----") != 0 )
-        {
+    if( clp.no_lonely_pairs ) {
+        // std::cerr << "WARNING: No lonely pairs option is not supported by sparse algortihm" << std::endl;
+        //	return -1;
+    }
+    if( clp.sequ_local )  {
+        std::cerr << "Local sequence alignment is not supported" << std::endl;
+        return -1;
+    }
+    if( clp.opt_stacking || clp.opt_new_stacking) {
+        std::cerr << "Stacking is not supported" << std::endl;
+        return -1;
+    }
+    /*  if(clp.free_endgaps.compare("----") != 0 ) {
 	std::cerr << "Free end gaps is not supported" << std::endl;
 	return -1;
         }
     */
-
-
 
     // ------------------------------------------------------------
     // parameter consistency
@@ -394,7 +413,8 @@ main(int argc, char **argv) {
     // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
     //
     if (clp.max_diff_pw_alignment!="" && clp.max_diff_alignment_file!="") {
-	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
+	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignment"
+                  <<" and --max-diff-alignment-file."<<std::endl;
 	return -1;
     }
 
@@ -407,7 +427,8 @@ main(int argc, char **argv) {
 	multiple_ref_alignment = new MultipleAlignment(clp.max_diff_alignment_file);
     } else if (clp.max_diff_pw_alignment!="") {
 	if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
-	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
+	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." 
+                      << std::endl;
 	    return -1;
 	}
 	
@@ -438,17 +459,19 @@ main(int argc, char **argv) {
     // 	std::cout << std::flush;
     // }
     
-    TraceController trace_controller(seqA,seqB,multiple_ref_alignment,clp.max_diff,clp.opt_max_diff_relax);
+    TraceController trace_controller(seqA,seqB,multiple_ref_alignment,
+                                     clp.max_diff,clp.opt_max_diff_relax);
     
     
     // ------------------------------------------------------------
     // Handle constraints (optionally)
     
-    AnchorConstraints seq_constraints(lenA,
-				      seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string(),
-				      lenB,
-				      seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string());
-        
+    AnchorConstraints 
+        seq_constraints(lenA,
+                        seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string(),
+                        lenB,
+                        seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string());
+    
     if (clp.opt_verbose) {
 	if (! seq_constraints.empty()) {
 	    std::cout << "Found sequence constraints."<<std::endl;
@@ -463,11 +486,13 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // handle reading and writing of arcmatch_scores
     //
-    // (needed for mea alignment with probabilistic consistency transformation of arc match scores)
+    // (needed for mea alignment with probabilistic consistency
+    // transformation of arc match scores)
     //
     if (clp.opt_read_arcmatch_scores || clp.opt_read_arcmatch_probs) {
 	if (clp.opt_verbose) {
-	    std::cout << "Read arcmatch scores from file " << clp.arcmatch_scores_file << "." <<std::endl;
+	    std::cout << "Read arcmatch scores from file "
+                      << clp.arcmatch_scores_file << "." <<std::endl;
 	}
 	arc_matches = new ArcMatches(seqA,
 				     seqB,
@@ -509,8 +534,10 @@ main(int argc, char **argv) {
 
 
     // construct sparsification mapper for seqs A,B
-    SparsificationMapper mapperA(bpsA, *rna_dataA, clp.prob_unpaired_in_loop_threshold, clp.prob_basepair_in_loop_threshold, true);
-    SparsificationMapper mapperB(bpsB, *rna_dataB, clp.prob_unpaired_in_loop_threshold, clp.prob_basepair_in_loop_threshold, true);
+    SparsificationMapper mapperA(bpsA, *rna_dataA, clp.prob_unpaired_in_loop_threshold,
+                                 clp.prob_basepair_in_loop_threshold, true);
+    SparsificationMapper mapperB(bpsB, *rna_dataB, clp.prob_unpaired_in_loop_threshold,
+                                 clp.prob_basepair_in_loop_threshold, true);
 
     // ------------------------------------------------------------
     // Sequence match probabilities (for MEA-Alignment)
@@ -522,7 +549,8 @@ main(int argc, char **argv) {
     if ( (clp.opt_write_matchprobs || clp.opt_mea_alignment)
          && ribosum==NULL && ribofit==NULL
          ) {
-        std::cerr << "ERROR: Ribosum/fit is required for mea_alignment and computing matchprobs."<<std::endl;
+        std::cerr << "ERROR: Ribosum/fit is required for mea_alignment"
+                  << " and computing matchprobs."<<std::endl;
         exit(-1);
     }
     //
@@ -532,8 +560,8 @@ main(int argc, char **argv) {
     }
     if (clp.opt_write_matchprobs) {
         MainHelper::write_match_probs(clp, match_probs);
+        if (!clp.opt_write_arcmatch_scores) { return 0; } // return from main()
     }
-    if (!clp.opt_write_arcmatch_scores) { return 0; } // return from main()
     //
 
     // ----------------------------------------
@@ -544,41 +572,45 @@ main(int argc, char **argv) {
     double my_exp_probA = clp.opt_exp_prob?clp.exp_prob:prob_exp_f(lenA);
     double my_exp_probB = clp.opt_exp_prob?clp.exp_prob:prob_exp_f(lenB);
     //
-    ScoringParams scoring_params(clp.match_score,
-				 clp.mismatch_score,
-				 // In true mea alignment gaps are only 
-				 // scored for computing base match probs.
-				 // Consequently, we set the indel and indel opening cost to 0
-				 // for the case of mea alignment!
-				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
-				 ?0
-				 :clp.indel_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
-				 ?0
-				 :clp.indel_score_loop * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
-				 ?0
-				 :clp.indel_opening_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
-				 ?0
-				 :clp.indel_opening_loop_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
-				 ribosum,
-				 ribofit,
-				 0, //unpaired_weight
-				 clp.struct_weight,
-				 clp.tau_factor,
-				 clp.exclusion_score,
-				 my_exp_probA,
-				 my_exp_probB,
-				 clp.temperature,
-				 clp.opt_stacking,
-				 clp.opt_new_stacking,
-				 clp.opt_mea_alignment,
-				 clp.mea_alpha,
-				 clp.mea_beta,
-				 clp.mea_gamma,
-				 clp.probability_scale
-				 );
+    ScoringParams 
+        scoring_params(clp.match_score,
+                       clp.mismatch_score,
+                       // In true mea alignment gaps are only 
+                       // scored for computing base match probs.
+                       // Consequently, we set the indel and indel opening cost to 0
+                       // for the case of mea alignment!
+                       (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+                       ?0
+                       :clp.indel_score * (clp.opt_mea_gapcost?clp.probability_scale/100:1),
+                       (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+                       ?0
+                       :(clp.indel_score_loop 
+                         * (clp.opt_mea_gapcost?clp.probability_scale/100:1)),
+                       (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+                       ?0
+                       :(clp.indel_opening_score 
+                         * (clp.opt_mea_gapcost?clp.probability_scale/100:1)),
+                       (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+                       ?0
+                       :(clp.indel_opening_loop_score 
+                         * (clp.opt_mea_gapcost?clp.probability_scale/100:1)),
+                       ribosum,
+                       ribofit,
+                       0, //unpaired_weight
+                       clp.struct_weight,
+                       clp.tau_factor,
+                       clp.exclusion_score,
+                       my_exp_probA,
+                       my_exp_probB,
+                       clp.temperature,
+                       clp.opt_stacking,
+                       clp.opt_new_stacking,
+                       clp.opt_mea_alignment,
+                       clp.mea_alpha,
+                       clp.mea_beta,
+                       clp.mea_gamma,
+                       clp.probability_scale
+                       );
 
 
 
@@ -594,7 +626,8 @@ main(int argc, char **argv) {
 
     if (clp.opt_write_arcmatch_scores) {
 	if (clp.opt_verbose) {
-	    std::cout << "Write arcmatch scores to file "<< clp.arcmatch_scores_file<<" and exit."<<std::endl;
+	    std::cout << "Write arcmatch scores to file "
+                      << clp.arcmatch_scores_file<<" and exit."<<std::endl;
 	}
 	arc_matches->write_arcmatch_scores(clp.arcmatch_scores_file,scoring);
 	return 0;
@@ -670,7 +703,7 @@ main(int argc, char **argv) {
 		      <<alignment.local_endB()<<" "
 		      <<std::endl;
 	} 
-	if (!clp.opt_pos_output && !clp.opt_local_output) {
+	if (!clp.opt_pos_output || clp.opt_local_output) {
 	    MultipleAlignment ma(alignment,clp.opt_local_output,clp.opt_special_gap_symbols);
 
 	    if (clp.opt_write_structure) {

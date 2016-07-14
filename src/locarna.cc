@@ -365,7 +365,8 @@ main(int argc, char **argv) {
     // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
     //
     if (clp.max_diff_pw_alignment!="" && clp.max_diff_alignment_file!="") {
-	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
+	std::cerr <<"Cannot simultaneously use options --max-diff-pw-alignment"
+                  <<" and --max-diff-alignment-file."<<std::endl;
 	return -1;
     }
 

@@ -31,6 +31,8 @@ namespace LocARNA {
      * weighted base pair sets
 
      * usage: construct, align, trace, get_alignment
+     *
+     * @todo implement noLP in sparse algorithm
      */
     class AlignerN {
     public:
