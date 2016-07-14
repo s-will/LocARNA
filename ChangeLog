@@ -1,6 +1,8 @@
 ============================================================
 === 2016
-1.8.10alpha
+1.8.10
+	Increase API version to 1.5
+	Wrap long alifold consensus output in mlocarna
 	Add consensus structure in locarna output, selectable types mea|alifold|none
 	Add optional stockholm output to mlocarna
 	Introduce quiet switch for locarna, locarna_p, sparse, and exparna_p

@@ -2,7 +2,7 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.8.10alpha], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.8.10], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 dnl special dir for aux config files 
@@ -10,7 +10,7 @@ AC_CONFIG_AUX_DIR(config)
 
 dnl Define here to keep all version information in one place.
 AC_SUBST([SO_VERSION], [1:0:0])
-AC_SUBST([API_VERSION], [1.4])
+AC_SUBST([API_VERSION], [1.5])
 
 
 dnl Package meta information
@@ -138,16 +138,9 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
     dnl if with_vrna is set, then use it to set the path for pkg_config
     if test "$with_vrna" != "" ; then
         export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
-        if test ! -e "$with_vrna/lib/pkgconfig/RNAlib2.pc" ; then
-            AC_MSG_NOTICE([Pkg-config of Vienna RNA cannot be found.])
-            AC_MSG_NOTICE([Fall back to guessing.])
-            VRNA_GUESS_FALLBACK="true"
-        fi
     fi
     dnl call pkg-config (macro PKG_CHECK_MODULES) to set VRNA_LIBS and VRNA_CFLAGS
-    AS_IF([test "$VRNA_GUESS_FALLBACK" != "true"],[
-        PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.2.4],[VRNALIB_OK=true],[VRNALIB_OK=false])
-    ])
+    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.2.4],[VRNALIB_OK=true],[VRNALIB_OK=false])
 ])
 dnl if pkg-config is not available or something else went wrong with pkg-config,
 dnl then guess the configuration
