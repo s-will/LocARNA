@@ -19,8 +19,6 @@
 #include <sstream>
 #include<limits>
 #include <stdio.h>
-//#include <math.h>
-// for getrusage()
 #include <sys/resource.h>
 #include <sys/types.h>
 // for gettimeofday()
@@ -30,8 +28,6 @@
 
 #include "LocARNA/sequence.hh"
 #include "LocARNA/basepairs.hh"
-
-//#include "LocARNA/exact_matcher.hh"
 
 #include "LocARNA/rna_data.hh"
 #include "LocARNA/arc_matches.hh"
@@ -59,65 +55,83 @@ const bool DO_TRACE=true;
 // ------------------------------------------------------------
 // Parameter
 
-double min_prob; // only pairs with a probability of at least min_prob are taken into account
-double out_min_prob; // minimal probability for output
+struct command_line_parameters {
+    bool opt_help;
+    bool opt_version;
+    bool opt_verbose;
+    bool opt_quiet;
+    bool opt_postscript_output;
+    bool opt_subopt;
+    bool add_filter;
+    bool no_stacking;
+    
+    bool opt_stopwatch;
 
-//! maximal ratio of number of base pairs divided by sequence
-//! length. This serves as a second filter on the "significant"
-//! base pairs.
-double max_bps_length_ratio;
+    double min_prob; // only pairs with a probability of at least min_prob are taken into account
+    double out_min_prob; // minimal probability for output
+    
+    //! maximal ratio of number of base pairs divided by sequence
+    //! length. This serves as a second filter on the "significant"
+    //! base pairs.
+    double max_bps_length_ratio;
+    
+    double max_uil_length_ratio; // max unpaired in loop length ratio
+    double max_bpil_length_ratio; // max base pairs in loop length ratio
+    
+    bool no_lonely_pairs;
+    
+    int max_diff; // maximal difference for positions of alignment traces
+    // (only used for ends of arcs)
+    int max_diff_am; //maximal difference between two arc ends, -1 is off
+    
+    //! maximal difference for alignment traces, at arc match
+    //! positions
+    int max_diff_at_am;
+    
+    // only consider arc matchs where
+    //   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0)
+    //   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
+    // except when there is no additional computation of M matrices necessary,
+    // this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
+    
+    double prob_unpaired_in_loop_threshold; // threshold for prob_unpaired_in_loop
+    double prob_basepair_in_loop_threshold; // threshold for prob_basepair_in_loop
+    
+    int alpha_1; //parameter for sequential score
+    int alpha_2; //parameter for structural score
+    int alpha_3; //parameter for stacking score
+    int difference_to_opt_score;
+    int min_score;
+    int am_threshold;
+    long int number_of_EPMs;
+    bool inexact_struct_match;
+    int struct_mismatch_score;
+    
+    std::string seq_constraints_A;
+    std::string seq_constraints_B;
+    
+    bool opt_ignore_constraints;
+    
+    bool no_chaining;
+    
 
-double max_uil_length_ratio; // max unpaired in loop length ratio
-double max_bpil_length_ratio; // max base pairs in loop length ratio
+    // ------------------------------------------------------------
+    // File arguments
+    std::string fileA;
+    std::string fileB;
+    string psFileA;
+    string psFileB;
+    string locarna_output;
+    string output_anchor_pp;
+    string clustal_output;
+    string epm_list_output;
+    string chained_epm_list_output;
 
-bool no_lonely_pairs=false;
+};
 
-int max_diff; // maximal difference for positions of alignment traces
-// (only used for ends of arcs)
-int max_diff_am; //maximal difference between two arc ends, -1 is off
+//! \brief holds command line parameters
+command_line_parameters clp;
 
-//! maximal difference for alignment traces, at arc match
-//! positions
-int max_diff_at_am;
-
-// only consider arc matchs where
-//   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0)
-//   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
-// except when there is no additional computation of M matrices necessary,
-// this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
-
-double prob_unpaired_in_loop_threshold; // threshold for prob_unpaired_in_loop
-double prob_basepair_in_loop_threshold; // threshold for prob_basepair_in_loop
-
-int alpha_1; //parameter for sequential score
-int alpha_2; //parameter for structural score
-int alpha_3; //parameter for stacking score
-int difference_to_opt_score;
-int min_score;
-int am_threshold;
-long int number_of_EPMs;
-bool inexact_struct_match;
-int struct_mismatch_score;
-
-std::string seq_constraints_A;
-std::string seq_constraints_B;
-
-bool opt_ignore_constraints;
-
-bool no_chaining;
-
-
-// ------------------------------------------------------------
-// File arguments
-std::string fileA;
-std::string fileB;
-string psFileA;
-string psFileB;
-string locarna_output;
-string output_anchor_pp;
-string clustal_output;
-string epm_list_output;
-string chained_epm_list_output;
 
 // ------------------------------------------------------------
 //
@@ -127,60 +141,72 @@ string chained_epm_list_output;
 
 using namespace LocARNA;
 
-bool opt_help;
-bool opt_version;
-bool opt_verbose;
-bool opt_postscript_output;
-bool opt_subopt;
-bool add_filter;
-bool no_stacking;
-
-bool opt_stopwatch;
-
 option_def my_options[] = {
-    {"min-prob",'p',0,O_ARG_DOUBLE,&min_prob,"0.01","prob","Minimal probability"},
-    {"out-min-prob",'p',0,O_ARG_DOUBLE,&out_min_prob,"0.0005","prob",
+    {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.01","prob","Minimal probability"},
+    {"out-min-prob",'p',0,O_ARG_DOUBLE,&clp.out_min_prob,"0.0005","prob",
      "Minimal probability for output (min-prob overrides if smaller)"},
-    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
-    {"max-uil-length-ratio",0,0,O_ARG_DOUBLE,&max_uil_length_ratio,"0.0","factor","Maximal ratio of #unpaired bases in loops divided by sequence length (default: no effect)"},
-    {"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&max_bpil_length_ratio,"0.0","factor","Maximal ratio of #base pairs in loops divided by loop length (default: no effect)"},
+    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor",
+     "Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
+    {"max-uil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_uil_length_ratio,"0.0","factor",
+     "Maximal ratio of #unpaired bases in loops divided by sequence length (default: no effect)"},
+    {"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bpil_length_ratio,"0.0","factor",
+     "Maximal ratio of #base pairs in loops divided by loop length (default: no effect)"},
+    
+    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"30","diff",
+     "Maximal difference for sizes of matched arcs"},
+    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",
+     "Maximal difference for alignment traces"},
+    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff",
+     "Maximal difference for alignment traces, only at arc match positions"},
+    {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
+    {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
+    {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+    {"quiet",'q',&clp.opt_quiet,O_NO_ARG,0,O_NODEFAULT,"","Quiet"},
 
-    {"max-diff-am",'D',0,O_ARG_INT,&max_diff_am,"30","diff","Maximal difference for sizes of matched arcs"},
-    {"max-diff",'d',0,O_ARG_INT,&max_diff,"-1","diff","Maximal difference for alignment traces"},
-    {"max-diff-at-am",0,0,O_ARG_INT,&max_diff_at_am,"-1","diff","Maximal difference for alignment traces, only at arc match positions"},
-    {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
-    {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
-    {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+    {"no-stacking",0,&clp.no_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking",
+     "Do not use stacking terms (needs stack-probs by RNAfold -p2)"},
+    {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.01","prob",
+     "Threshold for prob_unpaired_in_loop"},
+    {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.01","prob",
+     "Threshold for prob_basepair_in_loop"},
+    {"alpha_1",0,0,O_ARG_INT,&clp.alpha_1,"1","factor","Multiplier for sequential score"},
+    {"alpha_2",0,0,O_ARG_INT,&clp.alpha_2,"5","factor","Multiplier for structural score"},
+    {"alpha_3",0,0,O_ARG_INT,&clp.alpha_3,"5","factor",
+     "Multiplier for stacking score, 0 means no stacking contribution"},
+    {"subopt",0,&clp.opt_subopt,O_NO_ARG,0,O_NODEFAULT,"subopt_traceback","Use the suboptimal traceback"},
+    {"diff-to-opt-score",0,0,O_ARG_INT,&clp.difference_to_opt_score,"-1","threshold",
+     "Threshold for suboptimal traceback"},
+    {"min-score",0,0,O_ARG_INT,&clp.min_score,"90","score","Minimal score of a traced EPM"},
+    {"number-of-EPMs",0,0,O_ARG_INT,&clp.number_of_EPMs,"100","threshold",
+     "Maximal number of EPMs for the suboptimal traceback"},
+    {"inexact-struct-match",0,&clp.inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool",
+     "Allow inexact structure matches"},
+    {"struct-mismatch-score",0,0,O_ARG_INT,&clp.struct_mismatch_score,"-10","score",
+     "Score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
+    {"add-filter",0,&clp.add_filter,O_NO_ARG,0,O_NODEFAULT,"bool",
+     "Apply an additional filter to enumerate only EPMs that are maximally extended (only inexact)"},
+    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
+    {"no-chaining",0,&clp.no_chaining,O_NO_ARG,0,O_NODEFAULT,"bool",
+     "Do not use the chaining algorithm to find best overall chain"},
 
-    {"no-stacking",0,&no_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking","do not use stacking terms (needs stack-probs by RNAfold -p2)"},
-    {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_unpaired_in_loop_threshold,"0.01","prob","Threshold for prob_unpaired_in_loop"},
-    {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&prob_basepair_in_loop_threshold,"0.01","prob","Threshold for prob_basepair_in_loop"},
-    {"alpha_1",0,0,O_ARG_INT,&alpha_1,"1","factor","Multiplier for sequential score"},
-    {"alpha_2",0,0,O_ARG_INT,&alpha_2,"5","factor","Multiplier for structural score"},
-    {"alpha_3",0,0,O_ARG_INT,&alpha_3,"5","factor","Multiplier for stacking score, 0 means no stacking contribution"},
-    {"subopt",0,&opt_subopt,O_NO_ARG,0,O_NODEFAULT,"subopt_traceback","Use the suboptimal traceback"},
-    {"diff-to-opt-score",0,0,O_ARG_INT,&difference_to_opt_score,"-1","threshold","Threshold for suboptimal traceback"},
-    {"min-score",0,0,O_ARG_INT,&min_score,"90","score","Minimal score of a traced EPM"},
-    {"number-of-EPMs",0,0,O_ARG_INT,&number_of_EPMs,"100","threshold","Maximal number of EPMs for the suboptimal traceback"},
-    {"inexact-struct-match",0,&inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool","allow inexact structure matches"},
-    {"struct-mismatch-score",0,0,O_ARG_INT,&struct_mismatch_score,"-10","score","score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
-    {"add-filter",0,&add_filter,O_NO_ARG,0,O_NODEFAULT,"bool","Apply an additional filter to enumerate only EPMs that are maximally extended (only inexact)"},
-    {"noLP",0,&no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
-    {"no-chaining",0,&no_chaining,O_NO_ARG,0,O_NODEFAULT,"bool","do not use the chaining algorithm to find best overall chain"},
+    {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
-    {"stopwatch",0,&opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
-
-    {"output-ps", 0,&opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"","Output best EPM chain as colored postscript"},
-    {"PS_fileA",'a',0,O_ARG_STRING,&psFileA,"","file","Postscript output file for sequence A"},
-    {"PS_fileB",'b',0,O_ARG_STRING,&psFileB,"","file","Postscript output file for sequence B"},
-    {"output-locarna",'o',0,O_ARG_STRING,&locarna_output,"","file","Fasta file with anchor constraints for locarna"},
-    {"output-anchor-pp",0,0,O_ARG_STRING,&output_anchor_pp,"","fileroot","PP files <fileroot>_A.pp and <fileroot>_B.pp, merging input PPs and anchor constraints from chaining"},
-    {"output-clustal",0,0,O_ARG_STRING,&clustal_output,"","file","Write file with chain as alignment in clustalw format"},
-    {"output-epm-list",0,0,O_ARG_STRING,&epm_list_output,"","file","A list of all found epms"},
-    {"output-chained-epm-list",0,0,O_ARG_STRING,&chained_epm_list_output,"","file","A list of all EPMs that are present in the chain"},
-
-    {"",0,0,O_ARG_STRING,&fileA,O_NODEFAULT,"file A","input file A"},
-    {"",0,0,O_ARG_STRING,&fileB,O_NODEFAULT,"file B","input file B"},
+    {"output-ps", 0,&clp.opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"",
+     "Output best EPM chain as colored postscript"},
+    {"PS_fileA",'a',0,O_ARG_STRING,&clp.psFileA,"","file","Postscript output file for sequence A"},
+    {"PS_fileB",'b',0,O_ARG_STRING,&clp.psFileB,"","file","Postscript output file for sequence B"},
+    {"output-locarna",'o',0,O_ARG_STRING,&clp.locarna_output,"","file",
+     "Fasta file with anchor constraints for locarna"},
+    {"output-anchor-pp",0,0,O_ARG_STRING,&clp.output_anchor_pp,"","fileroot",
+     "PP files <fileroot>_A.pp and <fileroot>_B.pp, merging input PPs and anchor constraints from chaining"},
+    {"output-clustal",0,0,O_ARG_STRING,&clp.clustal_output,"","file",
+     "Write file with chain as alignment in clustalw format"},
+    {"output-epm-list",0,0,O_ARG_STRING,&clp.epm_list_output,"","file","A list of all found epms"},
+    {"output-chained-epm-list",0,0,O_ARG_STRING,&clp.chained_epm_list_output,"","file",
+     "A list of all EPMs that are present in the chain"},
+    
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"file A","input file A"},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"file B","input file B"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 
 
@@ -199,7 +225,7 @@ main(int argc, char **argv) {
 
     bool process_success=process_options(argc,argv,my_options);
 
-    if (opt_help) {
+    if (clp.opt_help) {
 
         cout << "exparna_p: A tool for fast structure local exact matchings."<<endl<<endl;
 
@@ -211,9 +237,11 @@ main(int argc, char **argv) {
         return 0;
     }
 
-    if (opt_version || opt_verbose) {
+    if (clp.opt_quiet) { clp.opt_verbose=false;} // quiet overrides verbose
+
+    if (clp.opt_version || clp.opt_verbose) {
         cout << "exparna_p (" << VERSION_STRING << ")" <<endl;
-        if (opt_version) return 0; else cout <<endl;
+        if (clp.opt_version) return 0; else cout <<endl;
     }
 
     if (!process_success) {
@@ -225,11 +253,11 @@ main(int argc, char **argv) {
         return -1;
     }
 
-    if (opt_stopwatch) {
+    if (clp.opt_stopwatch) {
         stopwatch.set_print_on_exit(true);
     }
 
-    if (opt_verbose) {
+    if (clp.opt_verbose) {
         print_options(my_options);
     }
 
@@ -237,55 +265,55 @@ main(int argc, char **argv) {
     // parameter consistency
 
     //if no stacking should be considered, set the parameter for stacking to 0
-    if(no_stacking){
-        alpha_3 = 0;
+    if(clp.no_stacking){
+        clp.alpha_3 = 0;
     }
 
-    if(no_chaining && chained_epm_list_output.size()>0){
+    if(clp.no_chaining && clp.chained_epm_list_output.size()>0){
         cout << "Enable chaining in order to output chained epm list " << endl;
-        no_chaining = false;
+        clp.no_chaining = false;
     }
 
     // no filtering needed if we do exact matching
-    if(!inexact_struct_match){
-        if(add_filter) cout << "Disable filtering as only exact matches are considered " << endl;
-        add_filter = false;
+    if(!clp.inexact_struct_match){
+        if(clp.add_filter) cout << "Disable filtering as only exact matches are considered " << endl;
+        clp.add_filter = false;
     }
 
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(no_lonely_pairs,(!no_stacking));
+    PFoldParams pfparams(clp.no_lonely_pairs,(!clp.no_stacking));
 
     ExtRnaData *rna_dataA=0;
     try {
-	rna_dataA = new ExtRnaData(fileA,
-				   std::min(min_prob,out_min_prob),
-				   prob_basepair_in_loop_threshold,
-				   prob_unpaired_in_loop_threshold,
-				   max_bps_length_ratio,
-				   max_uil_length_ratio,
-				   max_bpil_length_ratio,
+	rna_dataA = new ExtRnaData(clp.fileA,
+				   std::min(clp.min_prob,clp.out_min_prob),
+				   clp.prob_basepair_in_loop_threshold,
+				   clp.prob_unpaired_in_loop_threshold,
+				   clp.max_bps_length_ratio,
+				   clp.max_uil_length_ratio,
+				   clp.max_bpil_length_ratio,
 				   pfparams);
     } catch (failure &f) {
-	std::cerr << "ERROR: failed to read from file "<<fileA <<std::endl
+	std::cerr << "ERROR: failed to read from file "<<clp.fileA <<std::endl
 		  << "       "<< f.what() <<std::endl;
 	return -1;
     }
     
     ExtRnaData *rna_dataB=0;
     try {
-	rna_dataB = new ExtRnaData(fileB,
-				   std::min(min_prob,out_min_prob),
-				   prob_basepair_in_loop_threshold,
-				   prob_unpaired_in_loop_threshold,
-				   max_bps_length_ratio,
-				   max_uil_length_ratio,
-				   max_bpil_length_ratio,
+	rna_dataB = new ExtRnaData(clp.fileB,
+				   std::min(clp.min_prob,clp.out_min_prob),
+				   clp.prob_basepair_in_loop_threshold,
+				   clp.prob_unpaired_in_loop_threshold,
+				   clp.max_bps_length_ratio,
+				   clp.max_uil_length_ratio,
+				   clp.max_bpil_length_ratio,
 				   pfparams);
     } catch (failure &f) {
-	std::cerr << "ERROR: failed to read from file "<<fileB <<std::endl
+	std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
 		  << "       "<< f.what() <<std::endl;
 	if (rna_dataA) delete rna_dataA;
 	return -1;
@@ -300,7 +328,7 @@ main(int argc, char **argv) {
     // --------------------
     // handle max_diff restriction
 
-    TraceController trace_controller(seqA,seqB,NULL,max_diff);
+    TraceController trace_controller(seqA,seqB,NULL,clp.max_diff);
 
     // ------------------------------------------------------------
     // Handle constraints (optionally)
@@ -316,7 +344,7 @@ main(int argc, char **argv) {
                                       ?seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string()
                                       :"");
 
-    if (opt_verbose) {
+    if (clp.opt_verbose) {
         if (! seq_constraints.empty()) {
             std::cout << "Found sequence constraints."<<std::endl;
         }
@@ -329,12 +357,12 @@ main(int argc, char **argv) {
     // initialize from RnaData
     ArcMatches *arc_matches = new ArcMatches(*rna_dataA,
                                              *rna_dataB,
-                                             min_prob,
-                                             (max_diff_am!=-1)
-                                             ? (size_type)max_diff_am
+                                             clp.min_prob,
+                                             (clp.max_diff_am!=-1)
+                                             ? (size_type)clp.max_diff_am
                                              : std::max(seqA.length(),seqB.length()),
-                                             (max_diff_at_am!=-1)
-                                             ? (size_type)max_diff_at_am
+                                             (clp.max_diff_at_am!=-1)
+                                             ? (size_type)clp.max_diff_at_am
                                              : std::max(seqA.length(),seqB.length()),
                                              trace_controller,
                                              seq_constraints
@@ -346,7 +374,7 @@ main(int argc, char **argv) {
 
     // ----------------------------------------
     // report on input in verbose mode
-    if (opt_verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
+    if (clp.opt_verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
 
     // ------------------------------------------------------------
     // construct datastructures to handle sparse matrices
@@ -355,15 +383,15 @@ main(int argc, char **argv) {
     //time_t start_mapping = time (NULL);
     SparsificationMapper sparse_mapperA(bpsA,
                                         *rna_dataA,
-                                        prob_unpaired_in_loop_threshold,
-                                        prob_basepair_in_loop_threshold,
+                                        clp.prob_unpaired_in_loop_threshold,
+                                        clp.prob_basepair_in_loop_threshold,
                                         false
                                         );
 
     SparsificationMapper sparse_mapperB(bpsB,
                                         *rna_dataB,
-                                        prob_unpaired_in_loop_threshold,
-                                        prob_basepair_in_loop_threshold,
+                                        clp.prob_unpaired_in_loop_threshold,
+                                        clp.prob_basepair_in_loop_threshold,
                                         false
                                         );
 
@@ -378,20 +406,20 @@ main(int argc, char **argv) {
                     *arc_matches,
                     sparse_trace_controller,
                     myEPMs,
-                    alpha_1,
-                    alpha_2,
-                    alpha_3,
-                    difference_to_opt_score,
-                    min_score,
-                    number_of_EPMs,
-                    inexact_struct_match,
-                    struct_mismatch_score,
-                    add_filter,
-                    opt_verbose
+                    clp.alpha_1,
+                    clp.alpha_2,
+                    clp.alpha_3,
+                    clp.difference_to_opt_score,
+                    clp.min_score,
+                    clp.number_of_EPMs,
+                    clp.inexact_struct_match,
+                    clp.struct_mismatch_score,
+                    clp.add_filter,
+                    clp.opt_verbose
                     );
 
 #ifndef NDEBUG
-    if(opt_verbose) cout << "test arcmatch score... " << endl;
+    if(clp.opt_verbose) cout << "test arcmatch score... " << endl;
     em.test_arcmatch_score();
 #endif
 
@@ -408,18 +436,18 @@ main(int argc, char **argv) {
     //
     if (DO_TRACE) {
 
-        if (opt_verbose) {
-            if(opt_subopt)  cout << endl << "start suboptimal traceback..." << endl;
+        if (clp.opt_verbose) {
+            if(clp.opt_subopt)  cout << endl << "start suboptimal traceback..." << endl;
             else cout << endl << "start heuristic traceback..." << endl;
         }
 
-        em.trace_EPMs(opt_subopt);
+        em.trace_EPMs(clp.opt_subopt);
 
         stopwatch.stop("EPMcomp");
 
-        if(epm_list_output.size()>0){
-            if (opt_verbose) { cout << "write list of traced EPMs in file..." << endl;}
-            ofstream out_EPM_file (epm_list_output.c_str());
+        if(clp.epm_list_output.size()>0){
+            if (clp.opt_verbose) { cout << "write list of traced EPMs in file..." << endl;}
+            ofstream out_EPM_file (clp.epm_list_output.c_str());
             out_EPM_file << myEPMs.getList() << endl;
             out_EPM_file.close();
         }
@@ -428,43 +456,43 @@ main(int argc, char **argv) {
     // ------------------------------------------------------------
     // Chaining
     //
-    if(!no_chaining){
+    if(!clp.no_chaining){
 
-        if (opt_verbose) {cout << "Start chaining..." << endl;}
+        if (clp.opt_verbose) {cout << "Start chaining..." << endl;}
         stopwatch.start("chaining");
 
         PatternPairMap myLCSEPM;
         LCSEPM myChaining(seqA, seqB, myEPMs, myLCSEPM);
 
         //begin chaining algorithm
-        myChaining.calculateLCSEPM();
+        myChaining.calculateLCSEPM(clp.opt_quiet);
 
         stopwatch.stop("chaining");
 
         //output chained EPMs to PS files
-        if(opt_postscript_output){
-            if (opt_verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
-            if (psFileA.size()==0){psFileA = seqA.seqentry(0).name()+"_EPMs.ps";}
-            if (psFileB.size()==0){psFileB = seqB.seqentry(0).name()+"_EPMs.ps";}
+        if(clp.opt_postscript_output){
+            if (clp.opt_verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
+            if (clp.psFileA.size()==0){clp.psFileA = seqA.seqentry(0).name()+"_EPMs.ps";}
+            if (clp.psFileB.size()==0){clp.psFileB = seqB.seqentry(0).name()+"_EPMs.ps";}
 
-            myChaining.MapToPS(maA.consensus_sequence(), maB.consensus_sequence(), myLCSEPM, psFileA,psFileB);
+            myChaining.MapToPS(maA.consensus_sequence(), maB.consensus_sequence(), myLCSEPM, clp.psFileA,clp.psFileB);
         }
 
-        if(locarna_output.size()>0){
-            if (opt_verbose) { cout << "write locarna anchor constraints..." << endl;}
-            myChaining.output_locarna(maA.consensus_sequence(), maB.consensus_sequence(), locarna_output);
+        if(clp.locarna_output.size()>0){
+            if (clp.opt_verbose) { cout << "write locarna anchor constraints..." << endl;}
+            myChaining.output_locarna(maA.consensus_sequence(), maB.consensus_sequence(), clp.locarna_output);
         }
 
-        if(output_anchor_pp.size()>0){
-            if (opt_verbose) { cout << "write pp files with anchor constraints..." << endl;}
+        if(clp.output_anchor_pp.size()>0){
+            if (clp.opt_verbose) { cout << "write pp files with anchor constraints..." << endl;}
 
             pair<SequenceAnnotation,SequenceAnnotation> anchors = myChaining.anchor_annotation();
 
             rna_dataA->set_anchors(anchors.first);
             rna_dataB->set_anchors(anchors.second);
 
-            std::ofstream outA((output_anchor_pp+"_A.pp").c_str());
-            std::ofstream outB((output_anchor_pp+"_B.pp").c_str());
+            std::ofstream outA((clp.output_anchor_pp+"_A.pp").c_str());
+            std::ofstream outB((clp.output_anchor_pp+"_B.pp").c_str());
 
             rna_dataA->write_pp(outA);
             rna_dataB->write_pp(outB);
@@ -474,14 +502,14 @@ main(int argc, char **argv) {
 
         }
 
-        if (clustal_output.size()>0){
-            if (opt_verbose) { cout << "write chain as clustal alignment..." << endl;}
-            myChaining.output_clustal(clustal_output);
+        if (clp.clustal_output.size()>0){
+            if (clp.opt_verbose) { cout << "write chain as clustal alignment..." << endl;}
+            myChaining.output_clustal(clp.clustal_output);
         }
 
-        if(chained_epm_list_output.size()>0){
-            if (opt_verbose) { cout << "write list of chained EPMs in file..." << endl;}
-            ofstream out_chained_EPM_file (chained_epm_list_output.c_str());
+        if(clp.chained_epm_list_output.size()>0){
+            if (clp.opt_verbose) { cout << "write list of chained EPMs in file..." << endl;}
+            ofstream out_chained_EPM_file (clp.chained_epm_list_output.c_str());
             out_chained_EPM_file << myLCSEPM.getList() << endl;
             out_chained_EPM_file.close();
         }
@@ -495,7 +523,7 @@ main(int argc, char **argv) {
     delete rna_dataA;
     delete rna_dataB;
 
-    if (opt_verbose) { cout << "... Exparna-P finished!" << endl << endl;}
+    if (clp.opt_verbose) { cout << "... Exparna-P finished!" << endl << endl;}
     stopwatch.stop("total");
 
     return 0;

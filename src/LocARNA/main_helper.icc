@@ -133,6 +133,7 @@ namespace LocARNA {
             bool opt_galaxy_xml; //!< whether to print a galaxy xml wrapper for the parameters
             bool opt_version; //!< whether to print version
             bool opt_verbose; //!< whether to print verbose output
+            bool opt_quiet; //!< whether to stay quiet (overrides verbose)
             bool opt_local_output; //!< whether to write local output
             bool opt_local_file_output; //!< whether to write local output to files (pp, aln)
             bool opt_pos_output; //!< whether to output positions
@@ -353,13 +354,11 @@ namespace LocARNA {
             
             int return_code=0;
             
-            // write MultipleAlignment to screen if verbose
-            if (clp.opt_verbose) {
+            // write MultipleAlignment deviation, if reference alignment given and verbose
+            if (clp.opt_verbose && multiple_ref_alignment!=0L) {
                 MultipleAlignment resultMA(alignment);
-                
-                if (multiple_ref_alignment) {
-                    std::cout << "Deviation to reference: "<< multiple_ref_alignment->deviation(resultMA)<<std::endl;
-                }
+                std::cout << "Deviation to reference: "
+                          << multiple_ref_alignment->deviation(resultMA)<<std::endl;
             }
             
             if (clp.opt_clustal_out) {

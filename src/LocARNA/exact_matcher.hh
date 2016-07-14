@@ -374,7 +374,7 @@ namespace LocARNA {
 	void 		MapToPS(const std::string& sequenceA, const std::string& sequenceB, PatternPairMap& myMap, const std::string& file1, const std::string& file2);
 
 	//! calculates the best chain of EPMs, the LCS-EPM
-	void		calculateLCSEPM();
+	void		calculateLCSEPM(bool quiet);
     
         //! get anchor annotation
         std::pair<SequenceAnnotation,SequenceAnnotation>
@@ -409,7 +409,7 @@ namespace LocARNA {
 
 
 	void    preProcessing			();
-	void    calculateHoles3			();
+	void    calculateHoles3			(bool quiet);
 	void    calculatePatternBoundaries	(PatternPair* myPair);
 	void 	calculateTraceback2		(const int i,const int j,const int k,const int l,std::vector < std::vector<int> > holeVec);
 	int 	D_rec2				(const int& i,const  int& j,const int& k,const int& l,std::vector < std::vector<int> >& D_h,const bool debug);

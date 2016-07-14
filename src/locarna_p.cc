@@ -56,8 +56,6 @@ struct command_line_parameters : public MainHelper::std_command_line_parameters 
     bool opt_write_arcmatch_probs; //!< opt_write_arcmatch_probs
     bool opt_write_basematch_probs; //!< opt_write_basematch_probs
     
-    bool opt_stopwatch; //!< whether to print verbose output
-    
     // ------------------------------------------------------------
     // File arguments
     
@@ -93,6 +91,7 @@ option_def my_options[] = {
     {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
     {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+    {"quiet",'q',&clp.opt_quiet,O_NO_ARG,0,O_NODEFAULT,"","Quiet"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
 
@@ -101,46 +100,56 @@ option_def my_options[] = {
     {"ribosum-file",0,0,O_ARG_STRING,&clp.ribosum_file,"RIBOSUM85_60","f","Ribosum file"},
     {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,"true","bool","Use ribosum scores"},
     {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
-    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-500","score","Indel opening score"},
-    {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"180","score","Maximal weight of 1/2 arc match"},
-    {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
+    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-500","score",
+     "Indel opening score"},
+    {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"180","score",
+     "Maximal weight of 1/2 arc match"},
+    {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob",
+     "Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
     {"temperature",0,0,O_ARG_INT,&clp.temperature,"150","int","Temperature for PF-computation"},
-    
-    {"pf-scale",0,0,O_ARG_DOUBLE,&clp.locarna_pf_scale,"1.0","scale","Scaling of the partition function. Use in order to avoid overflow."},
-    
+    {"pf-scale",0,0,O_ARG_DOUBLE,&clp.locarna_pf_scale,"1.0","scale",
+     "Scaling of the partition function. Use in order to avoid overflow."},
     {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
-
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
-    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor","Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
-    {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
-    {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
-
-    {"include-am-in-bm",0,&clp.basematch_probs_include_arcmatch,O_NO_ARG,0,O_NODEFAULT,"","Include arc match cases in computation of base match probabilities"},
-
-    // {"kbest",'k',0,O_ARG_INT,&clp.kbest_k,"-1","k","Find k-best alignments"},
+    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor",
+     "Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
+    {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob",
+     "Minimal Arc-match probability"},
+    {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob",
+     "Minimal Base-match probability"},
+    {"include-am-in-bm",0,&clp.basematch_probs_include_arcmatch,O_NO_ARG,0,O_NODEFAULT,"",
+     "Include arc match cases in computation of base match probabilities"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling output"},
-    {"write-arcmatch-probs",0,&clp.opt_write_arcmatch_probs,O_ARG_STRING,&clp.arcmatch_probs_file,O_NODEFAULT,"file","Write arcmatch probabilities"},
-    {"write-basematch-probs",0,&clp.opt_write_basematch_probs,O_ARG_STRING,&clp.basematch_probs_file,O_NODEFAULT,"file","Write basematch probabilities"},
+
+    {"write-arcmatch-probs",0,&clp.opt_write_arcmatch_probs,O_ARG_STRING,
+     &clp.arcmatch_probs_file,O_NODEFAULT,"file","Write arcmatch probabilities"},
+    {"write-basematch-probs",0,&clp.opt_write_basematch_probs,O_ARG_STRING,
+     &clp.basematch_probs_file,O_NODEFAULT,"file","Write basematch probabilities"},
     {"width",'w',0,O_ARG_INT,&clp.output_width,"120","columns","Output width"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
-    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff","Maximal difference for alignment traces"},
-    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"-1","diff","Maximal difference for sizes of matched arcs"},
+    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",
+     "Maximal difference for alignment traces"},
+    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"-1","diff",
+     "Maximal difference for sizes of matched arcs"},
+    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff",
+     "Maximal difference for alignment traces, only at arc match positions"},
+    {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file",
+     "Maximal difference relative to given alignment (file in clustalw format))"},
+    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment",
+     "Maximal difference relative to given alignment (string, delim=&)"},
 
-    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff","Maximal difference for alignment traces, only at arc match positions"},
-    
-    {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
-    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=&)"},
-    
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Computed probabilities"},
+
     {"fragment-match-probs",0,0,O_ARG_STRING,&clp.fragment_match_probs,"","\"i j k l\"",
-     "Requests probabilities for the match of fragments [i..j] and [k..l]. Accepts a ';' separated list of ranges."},
-    
+     "Requests probabilities for the match of fragments [i..j] and [k..l]. "
+     "Accepts a ';' separated list of ranges."},    
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
-    {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool","Use Ribofit base and arc match scores (overrides ribosum)"},
+    {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool",
+     "Use Ribofit base and arc match scores (overrides ribosum)"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
 
@@ -193,6 +202,8 @@ main(int argc, char **argv) {
 	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
 	return 0;
     }
+
+    if (clp.opt_quiet) { clp.opt_verbose=false;} // quiet overrides verbose
 
     if (clp.opt_version || clp.opt_verbose) {
 	cout << "locarna_p ("<< VERSION_STRING<<")"<<endl;
@@ -251,12 +262,14 @@ main(int argc, char **argv) {
     // --------------------
     // handle max_diff restriction
     
-    // missing: proper error handling in case that lenA, lenB, and max_diff_alignment are incompatible 
+    // missing: proper error handling in case that lenA, lenB, and
+    // max_diff_alignment are incompatible
 
     // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
     //
     if (clp.max_diff_pw_alignment!="" && clp.max_diff_alignment_file!="") {
-	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt and --max-diff-alignment-file."<<std::endl;
+	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt"
+                  <<" and --max-diff-alignment-file."<<std::endl;
 	return -1;
     }
 
@@ -269,7 +282,8 @@ main(int argc, char **argv) {
 	multiple_ref_alignment = new MultipleAlignment(clp.max_diff_alignment_file);
     } else if (clp.max_diff_pw_alignment!="") {
 	if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
-	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments." << std::endl;
+	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments."
+                      << std::endl;
 	    return -1;
 	}
 	
@@ -277,13 +291,15 @@ main(int argc, char **argv) {
 	split_at_separator(clp.max_diff_pw_alignment,'&',alistr);
 	
 	if (alistr.size()!=2) {
-	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; require exactly one '&' separating the alignment strings."
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; "
+                      <<"require exactly one '&' separating the alignment strings."
 		      << std::endl; 
 	    return -1;
 	}
     
 	if (alistr[0].length() != alistr[1].length()) {
-	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; alignment strings have unequal lengths."
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; "
+                      <<"alignment strings have unequal lengths."
 		      << std::endl; 
 	    return -1;
 	}
@@ -405,7 +421,9 @@ main(int argc, char **argv) {
 
     pf_score_t pf=aligner.align_inside();
     
-    std::cout << "Partition function: "<<pf<<std::endl;
+    if (!clp.opt_quiet) {
+        std::cout << "Partition function: "<<pf<<std::endl;
+    }
     
     if (clp.opt_verbose) {
 	std::cout << "Run outside algorithm."<<std::endl;
@@ -419,16 +437,10 @@ main(int argc, char **argv) {
 	
     aligner.compute_arcmatch_probabilities();
 
-    
-//     if (clp.opt_verbose) {
-// 	std::cout << "Arc match probabilities:"<<std::endl;
-// 	aligner.write_arcmatch_probabilities(std::cout);
-// 	std::cout << std::endl;
-//     }
-	
     if (clp.opt_write_arcmatch_probs) {
 	if (clp.opt_verbose) {
-	    std::cout << "Write Arc-match probabilities to file "<<clp.arcmatch_probs_file<<"."<<std::endl; 
+	    std::cout << "Write Arc-match probabilities to file "
+                      <<clp.arcmatch_probs_file<<"."<<std::endl; 
 	}
 	ofstream out(clp.arcmatch_probs_file.c_str());
 	if (out.good()) {
@@ -441,17 +453,11 @@ main(int argc, char **argv) {
 	
     
     aligner.compute_basematch_probabilities(clp.basematch_probs_include_arcmatch);
-	
-//     if (clp.opt_verbose) {
-// 	std::cout << "Base match probabilities:"<<std::endl;
-// 	aligner.write_basematch_probabilities(std::cout);
-// 	std::cout << std::endl;
-//     }
-
 
     if (clp.opt_write_basematch_probs) {
 	if (clp.opt_verbose) {
-	    std::cout << "Write Base-match probabilities to file "<<clp.basematch_probs_file<<"."<<std::endl; 
+	    std::cout << "Write Base-match probabilities to file "
+                      << clp.basematch_probs_file<<"."<<std::endl; 
 	}
 	ofstream out(clp.basematch_probs_file.c_str());
 	if (out.good()) {
@@ -481,8 +487,10 @@ main(int argc, char **argv) {
 	while (! fragments.eof()) {
 	    
 	    if (!(fragments >> i >> j >> k >> l)) {
-		std::cerr << "WARNING: expected 4 positions or end when parsing argument fragment-match-probs"
-			  <<"\""<<clp.fragment_match_probs<<"\""<<std::endl;
+		std::cerr <<"WARNING: expected 4 positions or end"
+                          <<" when parsing argument fragment-match-probs"
+			  <<"\""<<clp.fragment_match_probs<<"\""
+                          <<std::endl;
 		break;
 	    }
 	    
@@ -494,21 +502,15 @@ main(int argc, char **argv) {
 		char sep;
 		fragments >> sep;
 		if (sep != ';') {
-		    std::cerr << "WARNING: expected ';' or end when parsing argument fragment-match-probs"
-			  <<std::endl;
+		    std::cerr << "WARNING: expected ';' or end"
+                              <<" when parsing argument fragment-match-probs"
+                              << std::endl;
 		    break;
 		}
 	    }
 	}
     }
     
-    // ----------------------------------------
-    // for debugging: print all arcmatch scores
-    
-    //for (ArcMatches::const_iterator it=arc_matches->begin(); it!=arc_matches->end(); ++it) {
-    // std::cout << it->arcA() <<" " << it->arcB() <<" " << it->idx() << " " << scoring.exp_arcmatch(*it)<< std::endl;
-    //}
-
     // clean up
     delete arc_matches;
     if (ribosum) delete ribosum;

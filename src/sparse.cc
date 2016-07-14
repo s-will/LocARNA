@@ -92,6 +92,7 @@ option_def my_options[] = {
     {"galaxy-xml",0,&clp.opt_galaxy_xml,O_NO_ARG,0,O_NODEFAULT,"","Galaxy xml wrapper"},
     {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+    {"quiet",'q',&clp.opt_quiet,O_NO_ARG,0,O_NODEFAULT,"","Quiet"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring_parameters"},
 
@@ -101,74 +102,73 @@ option_def my_options[] = {
     {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,"true","bool","Use ribosum scores"},
     {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
     {"indel-loop",'i',0,O_ARG_INT,&clp.indel_score_loop,"-350","score","Indel score for loops"},
-    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-600","score","Indel opening score"},
-    {"indel-opening-loop",0,0,O_ARG_INT,&clp.indel_opening_loop_score,"-900","score","Indel opening score for loops"},
-    {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score","Maximal weight of 1/2 arc match"},
-    {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob","Expected probability"},
+    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-600","score",
+     "Indel opening score"},
+    {"indel-opening-loop",0,0,O_ARG_INT,&clp.indel_opening_loop_score,"-900","score",
+     "Indel opening score for loops"},
+    {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score",
+     "Maximal weight of 1/2 arc match"},
+    {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob",
+     "Expected probability"},
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"100","factor","Tau factor in percent"},
-    //    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
-    //    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Use stacking terms (needs stack-probs by RNAfold -p2)"},
-    //    {"new-stacking",0,&clp.opt_newstacking,O_NO_ARG,0,O_NODEFAULT,"","Use new stacking terms (needs stack-probs by RNAfold -p2)"},
-
-    /*    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Type of locality"},
-
-          {"struct-local",0,0,O_ARG_BOOL,&clp.struct_local,"false","bool","Structure local"},
-          {"sequ-local",0,0,O_ARG_BOOL,&clp.sequ_local,"false","bool","Sequence local"},
-          {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,"----","spec","Whether and which end gaps are free. order: L1,R1,L2,R2"},
-          {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L","Normalized local alignment with parameter L"},
-    */
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling_output"},
 
     {"width",'w',0,O_ARG_INT,&clp.output_width,"120","columns","Output width"},
     {"clustal",0,&clp.opt_clustal_out,O_ARG_STRING,&clp.clustal_out,O_NODEFAULT,"file",
      "Clustal output"},
+    {"stockholm",0,&clp.opt_stockholm_out,O_ARG_STRING,&clp.stockholm_out,O_NODEFAULT,"file",
+     "Stockholm output"},
     {"pp",0,&clp.opt_pp_out,O_ARG_STRING,&clp.pp_out,O_NODEFAULT,"file","PP output"},
-    
-    //    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment"},
-    //    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"","Output only local sub-alignment positions"},
-    {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"","Write guidance structure in output"},
-    {"special-gap-symbols",0,&clp.opt_special_gap_symbols,O_NO_ARG,0,O_NODEFAULT,"","Special distinct gap symbols for loop gaps or gaps caused by sparsification"},
-
+    {"alifold-consensus-dp",0,&clp.opt_alifold_consensus_dp,O_NO_ARG,0,O_NODEFAULT,"",
+     "Compute consensus dot plot by alifold"},
+    {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"",
+     "Write guidance structure in output"},
+    {"special-gap-symbols",0,&clp.opt_special_gap_symbols,O_NO_ARG,0,O_NODEFAULT,"",
+     "Special distinct gap symbols for loop gaps or gaps caused by sparsification"},
     {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
-    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"1.3","factor","Maximal ratio of #base pairs divided by sequence length (default: 1.3)"},
-    {"max-uil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_uil_length_ratio,"0.0","factor","Maximal ratio of #unpaired bases in loops divided by sequence length (default: no effect)"},
-    {"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bpil_length_ratio,"0.0","factor","Maximal ratio of #base pairs in loops divided by loop length (default: no effect)"},
-    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"30","diff","Maximal difference for sizes of matched arcs"},
-    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff","Maximal difference for alignment traces"},
-    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff","Maximal difference for alignment traces, only at arc match positions"},
-    {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file","Maximal difference relative to given alignment (file in clustalw format))"},
-    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment","Maximal difference relative to given alignment (string, delim=AMPERSAND)"},
-    {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"","Relax deviation constraints in multiple aligmnent"},
-    {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob","Minimal Arc-match probability"},
-    {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob","Minimal Base-match probability"},
+    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"1.3","factor",
+     "Maximal ratio of #base pairs divided by sequence length (default: 1.3)"},
+    {"max-uil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_uil_length_ratio,"0.0","factor",
+     "Maximal ratio of #unpaired bases in loops divided by sequence length (def: no effect)"},
+    {"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bpil_length_ratio,"0.0","factor",
+     "Maximal ratio of #base pairs in loops divided by loop length (def: no effect)"},
+    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"30","diff",
+     "Maximal difference for sizes of matched arcs"},
+    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",
+     "Maximal difference for alignment traces"},
+    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff",
+     "Maximal difference for alignment traces, only at arc match positions"},
+    {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file",
+     "Maximal difference relative to given alignment (file in clustalw format))"},
+    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment",
+     "Maximal difference relative to given alignment (string, delim=AMPERSAND)"},
+    {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"",
+     "Relax deviation constraints in multiple aligmnent"},
+    {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob",
+     "Minimal Arc-match probability"},
+    {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob",
+     "Minimal Base-match probability"},
     {"prob-unpaired-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,
      "0.00005","threshold","Threshold for prob_unpaired_in_loop"},
-
-     //todo: is the default threshold value reasonable?
+    //todo: is the default threshold value reasonable?
     {"prob-basepair-in-loop-threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,
      "0.0001","threshold","Threshold for prob_basepair_in_loop"},
-    
-    //    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
-    //    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
-    //    {"better",0,&clp.opt_subopt,O_ARG_INT,&clp.subopt_threshold,"-1000000","t","Enumerate alignments better threshold t"},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","MEA_score controlling options"},
 
     {"mea-alignment",0,&clp.opt_mea_alignment,O_NO_ARG,0,O_NODEFAULT,"","Do MEA alignment"},
     {"probcons-file",0,&clp.opt_probcons_file,O_ARG_STRING,&clp.probcons_file,
      O_NODEFAULT,"file","Probcons parameter file"},
-
     {"match-prob-method",0,0,O_ARG_INT,&clp.match_prob_method,"0","int",
      "Method for computation of match probs"},
     {"temperature",0,0,O_ARG_INT,&clp.temperature,"150","int","Temperature for PF-computation"},
     {"pf-struct-weight",0,0,O_ARG_INT,&clp.pf_struct_weight,"200","weight",
      "Structure weight in PF-computation"},
-
     {"mea-gapcost",0,&clp.opt_mea_gapcost,O_NO_ARG,0,O_NODEFAULT,"",
      "Use gap cost in mea alignment"},   
     {"mea-alpha",0,0,O_ARG_INT,&clp.mea_alpha,"0","weight","Weight alpha for MEA"},
@@ -176,12 +176,10 @@ option_def my_options[] = {
     {"mea-gamma",0,0,O_ARG_INT,&clp.mea_gamma,"100","weight","Weight gamma for MEA"},
     {"probability-scale",0,0,O_ARG_INT,&clp.probability_scale,"10000","scale",
      "Scale for probabilities/resolution of mea score"},
-
     {"write-match-probs",0,&clp.opt_write_matchprobs,O_ARG_STRING,&clp.matchprobs_file,
      O_NODEFAULT,"file","Write match probs to file (don't align!)"},
     {"read-match-probs",0,&clp.opt_read_matchprobs,O_ARG_STRING,&clp.matchprobs_file,
      O_NODEFAULT,"file","Read match probabilities from file"},
-
     {"write-arcmatch-scores",0,&clp.opt_write_arcmatch_scores,O_ARG_STRING,
      &clp.arcmatch_scores_file,O_NODEFAULT,"file","Write arcmatch scores (don't align!)"},
     {"read-arcmatch-scores",0,&clp.opt_read_arcmatch_scores,O_ARG_STRING,
@@ -194,11 +192,8 @@ option_def my_options[] = {
 
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
 
-    //    {"ignore-constraints",0,&clp.opt_ignore_constraints,O_NO_ARG,0,O_NODEFAULT,"","Ignore constraints in pp-file"},
-    
-
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
-    // TODO: relocate ribofit
+    // TODO: make ribofit visible
     {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false",
      "bool","Use Ribofit base and arc match scores (overrides ribosum)"},
     
@@ -255,6 +250,8 @@ main(int argc, char **argv) {
 	cout << "Report bugs to <miladim (at) informatik.uni-freiburg.de>."<<endl<<endl;
 	return 0;
     }
+    
+    if (clp.opt_quiet) { clp.opt_verbose=false;} // quiet overrides verbose
 
     if (clp.opt_galaxy_xml) {
     	print_galaxy_xml((char *)"sparse",my_options);
@@ -408,7 +405,8 @@ main(int argc, char **argv) {
     // --------------------
     // handle max_diff restriction  
     
-    // missing: proper error handling in case that lenA, lenB, and max_diff_pw_alignment/max_diff_alignment_file are incompatible 
+    // missing: proper error handling in case that lenA, lenB, and
+    // max_diff_pw_alignment/max_diff_alignment_file are incompatible
     
     // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
     //
@@ -418,7 +416,8 @@ main(int argc, char **argv) {
 	return -1;
     }
 
-    // construct TraceController and check inconsistency for with multiplicity of sequences
+    // construct TraceController and check inconsistency for with
+    // multiplicity of sequences
     //
 
     MultipleAlignment *multiple_ref_alignment=NULL;
@@ -436,13 +435,15 @@ main(int argc, char **argv) {
 	split_at_separator(clp.max_diff_pw_alignment,'&',alistr);
 	
 	if (alistr.size()!=2) {
-	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; require exactly one '&' separating the alignment strings."
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt;"
+                      <<" require exactly one '&' separating the alignment strings."
 		      << std::endl; 
 	    return -1;
 	}
     
 	if (alistr[0].length() != alistr[1].length()) {
-	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; alignment strings have unequal lengths."
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt;"
+                      <<" alignment strings have unequal lengths."
 		      << std::endl; 
 	    return -1;
 	}
@@ -669,8 +670,9 @@ main(int argc, char **argv) {
     // ----------------------------------------
     // report score
     //
-    std::cout << "Score: "<<score<<std::endl;
-
+    if (!clp.opt_quiet) {
+        std::cout << "Score: "<<score<<std::endl<<std::endl;
+    }
 
     // ------------------------------------------------------------
     // Traceback
@@ -695,45 +697,22 @@ main(int argc, char **argv) {
 
 	const Alignment &alignment = aligner.get_alignment();
 	
-	if (clp.opt_pos_output) {
-	    std::cout << "HIT "<<score
-		      <<alignment.local_startA()<<" "
-		      <<alignment.local_startB()<<" "
-		      <<alignment.local_endA()<<" "
-		      <<alignment.local_endB()<<" "
-		      <<std::endl;
-	} 
-	if (!clp.opt_pos_output || clp.opt_local_output) {
-	    MultipleAlignment ma(alignment,clp.opt_local_output,clp.opt_special_gap_symbols);
+        if (!clp.opt_quiet) {
+            MultipleAlignment ma(alignment,clp.opt_local_output,clp.opt_special_gap_symbols);
 
-	    if (clp.opt_write_structure) {
-		// annotate multiple alignment with structures
-		ma.prepend(MultipleAlignment::SeqEntry("",
-						       alignment.dot_bracket_structureA(clp.opt_local_output)));
-		ma.append(MultipleAlignment::SeqEntry("",
-						      alignment.dot_bracket_structureB(clp.opt_local_output)));
-	    }
+            if (clp.opt_write_structure) {
+                // annotate multiple alignment with structures
+                std::string structureA=alignment.dot_bracket_structureA(clp.opt_local_output);
+                std::string structureB=alignment.dot_bracket_structureB(clp.opt_local_output);
+                ma.prepend(MultipleAlignment::SeqEntry("",structureA));
+                ma.append(MultipleAlignment::SeqEntry("",structureB));
+            }
 	    
-	    if (clp.opt_local_output) {
-		std::cout  << std::endl 
-			   << "\t+" << alignment.local_startA() << std::endl
-			   << "\t+" << alignment.local_startB() << std::endl
-			   << std::endl;
-	    }
-	    
-	    ma.write(std::cout,clp.output_width,MultipleAlignment::FormatType::CLUSTAL);
-
-	    if (clp.opt_local_output) {
-		std::cout  << std::endl 
-			   << "\t+" << alignment.local_endA() << std::endl
-			   << "\t+" << alignment.local_endB() << std::endl
-			   << std::endl;
-	    }
-
+            ma.write(std::cout,clp.output_width,MultipleAlignment::FormatType::CLUSTAL);
+		
+            std::cout<<endl;
 	}
-	
-	std::cout<<endl;
-	
+        
         // ----------------------------------------
 	// write alignment in different output formats
 	//

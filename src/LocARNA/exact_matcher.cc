@@ -2205,25 +2205,36 @@ namespace LocARNA {
 	holeOrdering2.clear();
     }
 
-    void    LCSEPM::calculateLCSEPM()
+    void
+    LCSEPM::calculateLCSEPM(bool quiet)
     {
-	std::cout << " LCSEPM preprocessing..."  <<std::endl;
-	std::cout << "     found #EPMs = " << patterns.size() << std::endl;
-	std::cout << "    min EPM size = "<< patterns.getMinPatternSize()<< std::endl;
- 	preProcessing();
-	std::cout << " LCSEPM calculate holes..."  <<std::endl;
-	std::cout << "   holes to calculate = " << holeOrdering2.size() << std::endl;
-	calculateHoles3();
-	std::cout << " LCSEPM calculate outmost D_rec..."  <<std::endl;
-	int i = 1;
+	if (!quiet) {
+            std::cout << " LCSEPM preprocessing..."  <<std::endl;
+            std::cout << "     found #EPMs = " << patterns.size() << std::endl;
+            std::cout << "    min EPM size = "<< patterns.getMinPatternSize()<< std::endl;
+ 	}
+        preProcessing();
+	if (!quiet) {
+            std::cout << " LCSEPM calculate holes..."  <<std::endl;
+            std::cout << "   holes to calculate = " << holeOrdering2.size() << std::endl;
+	}
+        calculateHoles3(quiet);
+	if (!quiet) {
+            std::cout << " LCSEPM calculate outmost D_rec..."  <<std::endl;
+	}
+        int i = 1;
 	int k = 1;
 	std::vector < std::vector<int> > last_vec;
 	int LCSEPMscore = D_rec2(i,seqA.length(),k,seqB.length(),last_vec,false);
-	std::cout << "    Score LCS-EPM: "<< LCSEPMscore <<std::endl;
-	std::cout << " LCSEPM calculate traceback..."  <<std::endl;
-	calculateTraceback2(i,seqA.length(),k,seqB.length(),last_vec);
+	if (!quiet) {
+            std::cout << "    Score LCS-EPM: "<< LCSEPMscore <<std::endl;
+            std::cout << " LCSEPM calculate traceback..."  <<std::endl;
+	}
+        calculateTraceback2(i,seqA.length(),k,seqB.length(),last_vec);
 	int LCSEPMsize = matchedEPMs.getMapBases();
-	std::cout << "    #EPMs: "<< matchedEPMs.size() << " / matched Bases: "<< LCSEPMsize <<std::endl;
+        if (!quiet) {
+            std::cout << "    #EPMs: "<< matchedEPMs.size() << " / matched Bases: "<< LCSEPMsize <<std::endl;
+        }
     }
 
     void    LCSEPM::calculatePatternBoundaries(PatternPair*   myPair)
@@ -2330,7 +2341,7 @@ namespace LocARNA {
     }
 
 
-    void LCSEPM::calculateHoles3()
+    void LCSEPM::calculateHoles3(bool quiet)
     {
 	intPPairPTR lastHole 			= NULL;
 	//PatternPairMap::SelfValuePTR lastEPM 	= NULL;
@@ -2370,7 +2381,9 @@ namespace LocARNA {
 		    //std::cout << "score:"<< lastHoleScore << "-"<< (*t).second->getEPMScore() << "-" << (*t).second->getScore() << " - current hole is same as last hole. skip!" << std::endl;
 		}
 	    }
-	std::cout << "   skipped holes = " << skippedHoles << std::endl;
+        if (!quiet) {
+            std::cout << "   skipped holes = " << skippedHoles << std::endl;
+        }
     }
 
 
