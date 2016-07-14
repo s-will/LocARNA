@@ -1553,8 +1553,30 @@ sub compute_and_write_reliabilities {
     return \%reliable_structures;
 }
 
+## chop string into parts of fixed length
+##
+## @param $s string
+## @param $w length (<=0 means don't split)
+## @return list of substrings
+##
+sub chop_string {
+    my ($s,$w) = @_;
 
+    if ($w<=0) {
+        return ($s);
+    }
 
+    my @l=();
+    while (length($s)>0) {
+        push @l,substr($s,0,$w);
+        if (length($s)>$w) {
+            $s=substr($s,$w);
+        } else {
+            last;
+        }
+    }
+    return @l;
+}
 
 ## perform the complete multiple alignment for the given sequences
 ##
@@ -1911,19 +1933,22 @@ sub perform_multiple_alignment($) {
     my $namewidth=write_clustalw_alnloh(*ALNOUT,$aln,$width);
     close ALNOUT;
 
-
-    #if (!$verbose || (defined($iterations) && ($iterations>0))) {
     printmsg 3, readpipe("cat $results_dir/result.aln | grep -v '^CLUSTAL'");
-    #}
-
-
+    
     ## ----------------------------------------
     ## compute and show alifold prediction
     
     my $alistr = alifold_structure("$results_dir/result.aln",$RNAfold_args);
     chomp $alistr;
 
-    printmsg 3, sprintf("%-".$namewidth."s %s\n","alifold",$alistr);
+    if ($alistr=~/([^\s]*)\s(.*)/) {
+        my $name="alifold";
+        for my $s (chop_string($1,$width)) {
+            printmsg 3, sprintf("\n%-".$namewidth."s %s",$name,$s);
+            $name="";
+        }
+        printmsg 3, " ".$2."\n";
+    }
     
     # in probabilistic mode compute and store alifold dotplot
     if ($probabilistic) {
@@ -1933,13 +1958,10 @@ sub perform_multiple_alignment($) {
     
     rename "alirna.ps", "$results_dir/alirna.ps";
     
-    
     chdir $current_dir;
 }
 
 
-### ============================================================================
-### ============================================================================
 ### ============================================================================
 ### SUBS
 ###
