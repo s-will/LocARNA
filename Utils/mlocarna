@@ -47,6 +47,11 @@ Be quiet.
 Preserve sequence order of the input in the final alignment.  Affects
 output to stdout and results/result.aln.
 
+=item B<--stockholm>
+
+Write STOCKHOLM files of all final and intermediate alignments (in
+addition to CLUSTALW files).
+
 =back 
 
 =head2 Controlling pairwise alignments
@@ -449,6 +454,8 @@ my $verbose;
 
 my $keep_sequence_order;
 
+my $stockholm;
+
 my $noLP=1;
 my $no_lonely_pair;
 my $lonely_pair;
@@ -693,9 +700,9 @@ my %options_hash=
      
      ## output
      "write-structure" => \$write_structure,
-
+     
      "width" => \$width,
-
+     
      ## "standard" options
      
      "verbose" => \$verbose,
@@ -704,6 +711,8 @@ my %options_hash=
      "quiet" => \$quiet,
      
      "keep-sequence-order" => \$keep_sequence_order,
+
+     "stockholm" => \$stockholm,
 
      "local-progressive" => \$opt_local_progressive,
      
@@ -728,7 +737,7 @@ my @options = #options that are not or not automatically passed to locarna
 
      "pw-aligner=s",
      "pw-aligner-p=s",
-
+     
      "pw-aligner-options=s",
      "pw-aligner-p-options=s",
      
@@ -812,6 +821,8 @@ my @options = #options that are not or not automatically passed to locarna
      "width=i",
 
      "keep-sequence-order",
+
+     "stockholm",
 
      "local-progressive",
      "global-progressive",
@@ -1791,9 +1802,10 @@ sub perform_multiple_alignment($) {
 	$tree = upgma_tree(\@names,$score_matrix);
 	
     } # end generation of tree
-
     
-    open(TREE,">$results_dir/result.tree")|| die "Cannot write to $results_dir/result.tree";
+    
+    open(TREE,">$results_dir/result.tree") 
+      || die "Cannot write to $results_dir/result.tree";
     print TREE "$tree\n";
     close TREE;
 
@@ -1819,14 +1831,16 @@ sub perform_multiple_alignment($) {
     printmsg 3, "Perform progressive alignment ...\n";
 
     my $current_alignment_name =
-	perform_progressive_steps($tree_postorder,\%bmprobs,\%amprobs);
-
+      perform_progressive_steps($tree_postorder,\%bmprobs,\%amprobs);
+    
     ## ----------------------------------------
     ## copy results to files result_prog.aln and result_prog.pp
     ##
     system "cp", "$current_alignment_name.aln", "$results_dir/result_prog.aln";
     system "cp", "$current_alignment_name.pp", "$results_dir/result_prog.pp";
-
+    if ($stockholm) {
+        system "cp", "$current_alignment_name.stk", "$results_dir/result_prog.stk";
+    }
 
     ### ============================================================
     ### iterative refinement
@@ -1880,7 +1894,10 @@ sub perform_multiple_alignment($) {
     #
     system "cp", "$current_alignment_name.aln", "$results_dir/result.aln";
     system "cp", "$current_alignment_name.pp", "$results_dir/result.pp";
-    
+    if ($stockholm) {
+        system "cp", "$current_alignment_name.stk", "$results_dir/result.stk";
+    }
+
     ########################################
     ## rewrite the result alignment result.aln: sort
     ##
@@ -1893,10 +1910,10 @@ sub perform_multiple_alignment($) {
     open(ALNOUT,">$results_dir/result.aln") || die "Cannot write $results_dir/result.aln";
     my $namewidth=write_clustalw_alnloh(*ALNOUT,$aln,$width);
     close ALNOUT;
-    
+
 
     #if (!$verbose || (defined($iterations) && ($iterations>0))) {
-	printmsg 3, readpipe("cat $results_dir/result.aln | grep -v '^CLUSTAL W --- LocARNA'");
+    printmsg 3, readpipe("cat $results_dir/result.aln | grep -v '^CLUSTAL'");
     #}
 
 
@@ -2056,11 +2073,6 @@ sub compute_match_probs($$$$$$$) {
 	    die "Pairwise aligner failed to write match probabilities to file; called by $cmd";
 	}
 	
-	#if ($moreverbose) {
-	#    system("cat $tmpfile_bm");
-	#    system("cat $tmpfile_am");
-	#}
-	
 	my %mat_bm = read_sparsematrix_2D($tmpfile_bm);
 	my %mat_am = read_sparsematrix_4D($tmpfile_am);
 	
@@ -2110,6 +2122,10 @@ sub call_locarna( $$$ ) {
     
     my $cmd="$pw_aligner $inA $inB $locarna_params --clustal=$tgt.aln";
     
+    if ($stockholm) {
+        $cmd .= " --stockholm=$tgt.stk";
+    }
+
     $cmd .= " --pp=$tgt.pp";
     
     $cmd .= " ".reference_alignment_option($refaln_filename);
@@ -2125,7 +2141,10 @@ sub call_locarna( $$$ ) {
 	die "Pairwise aligner ($pw_aligner) failed to write alignment to file";
     }
     
-    system "cat $tgt.aln | grep -v '^CLUSTAL --- LocARNA'" if $verbose;
+    if ($verbose and not $moreverbose) {
+        system "cat $tgt.aln | grep -v '^CLUSTAL'";
+        print "\n";
+    }
 }
 
 

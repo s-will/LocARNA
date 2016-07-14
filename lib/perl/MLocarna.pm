@@ -1037,7 +1037,7 @@ sub alifold_structure {
 sub alifold_mfe {
     my ($file,$RNAfold_args) = @_;
     
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options -r $RNAfold_args $file 2>/dev/null");
+    my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args $file 2>/dev/null");
 
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /[().]+\s+\(\s*([\d.-]+)\s*=\s*([\d.-]+)\s*\+\s*([\d.-]+)\)/) {
@@ -1055,13 +1055,18 @@ sub alifold_mfe {
 ##
 ## compute the alifold partition function for an aln file
 ##
-## returns alifold mfe of the alignment in $file
+## returns alifold output
+##
+## side effect: writes files alirna.ps and alidot.ps to current
+## directory
 ##
 ########################################+
 sub alifold_pf {
     my ($file,$RNAfold_args) = @_;
     
     my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args -p $file >/dev/null 2>&1");
+    
+    return \@aliout;
 }
 
 

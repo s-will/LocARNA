@@ -58,7 +58,7 @@ nobase_library_include_HEADERS = LocARNA/aux.hh LocARNA/plusvector.hh	\
 	LocARNA/type_wrapper.hh LocARNA/global_stopwatch.hh		\
 	LocARNA/tuples.hh LocARNA/mcc_matrices.hh			\
 	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh		\
-	LocARNA/exact_matcher.hh
+	LocARNA/exact_matcher.hh LocARNA/main_helper.icc
 
 ## binary programs
 ##
@@ -121,7 +121,7 @@ locarna_deviation_SOURCES = deviation.cc
 
 locarna_rnafold_pp_SOURCES = locarna_rnafold_pp.cc
 
-BUILT_SOURCES += LocARNA/main_helper.icc LocARNA/ribosum85_60.icc
+BUILT_SOURCES += LocARNA/ribosum85_60.icc
 
 if !VC_CROSS_COMPILING
 LocARNA/ribosum85_60.icc: \

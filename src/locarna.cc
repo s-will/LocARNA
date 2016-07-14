@@ -142,6 +142,8 @@ option_def my_options[] = {
     {"pp",0,&clp.opt_pp_out,O_ARG_STRING,&clp.pp_out,O_NODEFAULT,"file","PP output"},
     {"alifold-consensus-dp",0,&clp.opt_alifold_consensus_dp,O_NO_ARG,0,O_NODEFAULT,"",
      "Compute consensus dot plot by alifold"},
+    {"consensus-structure",0,0,O_ARG_STRING,&clp.cons_struct_type,"alifold","type",
+     "Type of consensus structures written to screen and stockholm output [alifold|mea|none]"},
     {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"",
      "Output only local sub-alignment (to standard out)"},
     {"local-file-output",0,&clp.opt_local_file_output,O_NO_ARG,0,O_NODEFAULT,"",
@@ -685,10 +687,6 @@ main(int argc, char **argv) {
     // Traceback
     //
     if ((!clp.opt_normalized && !clp.opt_penalized) && DO_TRACE) {
-	    
-	if (clp.opt_verbose) {
-	    std::cout << "Traceback."<<std::endl;
-	}
 	
 	aligner.trace();
 	
@@ -763,7 +761,31 @@ main(int argc, char **argv) {
 	// if we did a trace (one way or the other)
 	
 	const Alignment &alignment = aligner.get_alignment();
-	
+
+        // ----------------------------------------
+	// write alignment in different output formats to files
+	//
+        
+        std::string consensus_structure=""; 
+        
+        RnaData *consensus =
+            MainHelper::consensus(clp,
+                                  pfparams,
+                                  my_exp_probA, my_exp_probB,
+                                  rna_dataA, rna_dataB,
+                                  alignment,
+                                  consensus_structure);
+        
+        return_code = MainHelper::write_alignment(clp,
+                                                  score,
+                                                  consensus_structure,
+                                                  consensus,
+                                                  alignment,
+                                                  multiple_ref_alignment);
+        
+        // ----------------------------------------
+        // write alignment to screen
+                
 	if (clp.opt_pos_output) {
 	    std::cout << "HIT "<<score<<" "
 		      <<alignment.local_startA()<<" "
@@ -773,6 +795,7 @@ main(int argc, char **argv) {
 		      <<std::endl;
             std::cout << std::endl;
 	}
+        
 	if ((!clp.opt_pos_output && !clp.opt_quiet) || clp.opt_local_output) {
 	    MultipleAlignment ma(alignment,clp.opt_local_output);
 	    
@@ -790,7 +813,25 @@ main(int argc, char **argv) {
 			   << std::endl;
                 std::cout << std::endl;
             }
-	    
+            
+            if (consensus_structure!="") {
+                if (clp.opt_local_output!=clp.opt_local_file_output) {
+                    // recompute consensus structure
+                    clp.opt_local_file_output=clp.opt_local_output;
+                    
+                    if (consensus) { delete consensus; }
+                    consensus =
+                        MainHelper::consensus(clp,
+                                              pfparams,
+                                              my_exp_probA, my_exp_probB,
+                                              rna_dataA, rna_dataB,
+                                              alignment,
+                                              consensus_structure);
+                    clp.opt_local_file_output=!clp.opt_local_output;
+                }
+                ma.append(MultipleAlignment::SeqEntry(clp.cons_struct_type,
+                                                      consensus_structure));
+            }
 	    ma.write(std::cout,clp.output_width,MultipleAlignment::FormatType::CLUSTAL);
 
 	    if (clp.opt_pos_output) {
@@ -799,33 +840,12 @@ main(int argc, char **argv) {
 			   << "\t+" << alignment.local_endB() << std::endl
 			   << std::endl;
 	    }
-
-	}
+            
+        }
 
 	if (!clp.opt_quiet) {
             std::cout<<std::endl;
 	}
-        
-        // ----------------------------------------
-	// write alignment in different output formats
-	//
-        
-        RnaData *consensus=0L;
-        std::string consensus_structure=""; 
-        
-	consensus = MainHelper::consensus(clp,
-                                          pfparams,
-                                          my_exp_probA, my_exp_probB,
-                                          rna_dataA, rna_dataB,
-                                          alignment,
-                                          consensus_structure);
-        
-        return_code = MainHelper::write_alignment(clp,
-                                                  score,
-                                                  consensus_structure,
-                                                  consensus,
-                                                  alignment,
-                                                  multiple_ref_alignment);
         
         if (consensus) { delete consensus; }
 
