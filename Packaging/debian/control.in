@@ -2,7 +2,7 @@ Source: @PACKAGE@
 Section: science
 Priority: optional
 Maintainer: @PACKAGE_MAIN_AUTHOR@
-Build-Depends: debhelper (>= 9), autotools-dev, viennarna (>= 2.2.5), viennarna-dev (>= 2.2.5), help2man, pkg-config, perl        
+Build-Depends: debhelper (>= 9), autotools-dev, viennarna (>= 2.2.7), viennarna-dev (>= 2.2.7), help2man, pkg-config, perl        
 Standards-Version: 3.9.6
 Vcs-Hg: @PACKAGE_VCS@
 Vcs-Browser: @PACKAGE_VCS_BROWSER@
@@ -10,7 +10,7 @@ Homepage: @PACKAGE_URL@
 
 Package: @PACKAGE@
 Architecture: any
-Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, viennarna (>=2.2.4)
+Depends: ${shlibs:Depends}, ${perl:Depends}, ${misc:Depends}, viennarna (>=2.2.7)
 Recommends:
 Suggests:
 Description: @PACKAGE_NAME@ - @PACKAGE_SHORT_DESCRIPTION@
