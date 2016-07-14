@@ -45,9 +45,9 @@ namespace LocARNA {
 	// ovwerwrite tags for stockholm format
         annotation_tags[FormatType::STOCKHOLM].resize(AnnoType::size());
 
-        annotation_tags[FormatType::STOCKHOLM][AnnoType::structure]="=GC CS";
-	annotation_tags[FormatType::STOCKHOLM][AnnoType::fixed_structure]="=GC FS";
-	annotation_tags[FormatType::STOCKHOLM][AnnoType::anchors]="=GC A";
+        annotation_tags[FormatType::STOCKHOLM][AnnoType::structure]="=GC cS";
+	annotation_tags[FormatType::STOCKHOLM][AnnoType::fixed_structure]="=GC cFS";
+	annotation_tags[FormatType::STOCKHOLM][AnnoType::anchors]="=GC cA";
 	annotation_tags[FormatType::STOCKHOLM][AnnoType::consensus_structure]="=GC SS_cons";
     }
     
@@ -337,6 +337,10 @@ namespace LocARNA {
 	const std::string fixed_structure_tag = "#"+annotation_tags[format][AnnoType::fixed_structure];
 	
 	do {
+            // for STOCKHOLM end at '//', which allows multiple entries in one stream
+            if (format == FormatType::STOCKHOLM && line=="//") {
+                break;
+            }
 	    if (line[0]=='#') {
 		if (format==FormatType::PP && has_prefix(line,"#END")) { // recognize END in pp files
 		    // section end
@@ -410,10 +414,10 @@ namespace LocARNA {
 		}
 		seq_map[name] += seqstr;
 	    }
-	    // stop when reading a "CLUSTAL" header line again, this
+	    // if format is CLUSTAL, stop when reading a "CLUSTAL" header line again, this
 	    // allows reading multiple clustal entries from one file
 	} while (get_nonempty_line(in,line) 
-		 && !has_prefix(line,"CLUSTAL"));
+		 && !(format==FormatType::CLUSTAL && has_prefix(line,"CLUSTAL")));
     
 	// store the name/sequence pairs in the vector alig
 	for (std::vector<std::string>::const_iterator it=names.begin(); it!=names.end(); ++it) {
@@ -1117,7 +1121,12 @@ namespace LocARNA {
 	    write(out,start,end,format);
 	    start=end+1;
 	} while (start <= length() && out << std::endl);
-	
+
+        // write end marker if writing STOCKHOLM format
+        if ( format == FormatType::STOCKHOLM ) {
+            out << "//" <<std::endl;
+        }
+
 	return out;
     }
 
