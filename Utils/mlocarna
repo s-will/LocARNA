@@ -933,7 +933,8 @@ if ($moreverbose) {
     $MLocarna::Aux::verbosemode=1;
 }
 
-
+## make STDOUT 'hot', so output does not get mixed up when redirected
+$|=1;
 
 ## ------------------------------------------------------------
 ## write header
@@ -1204,7 +1205,12 @@ if (defined($opt_no_write_am_probs)) { $opt_write_am_probs = !$opt_no_write_am_p
 ####
 ## get full, absolute path for parameter file
 if (defined($rnafold_parameter_file)) {
-    $rnafold_parameter_file = abs_path($rnafold_parameter_file);
+    if ((!defined(abs_path($rnafold_parameter_file)) || (! -e $rnafold_parameter_file))) {
+        printerr "WARNING: RNAfold parameters $rnafold_parameter_file not found (use default)!\n";
+        $rnafold_parameter_file = undef;
+    } else {
+        $rnafold_parameter_file = abs_path($rnafold_parameter_file);
+    }
 }
 
 ####
@@ -1218,7 +1224,6 @@ if (defined($rnafold_parameter_file)) {
 if (defined($rnafold_temperature)) {
     $RNAfold_args.=" -T $rnafold_temperature";
 }
-
 
 ####
 ## get full, absolute path for pairwise aligner
@@ -2578,7 +2583,7 @@ sub generate_input_files_without_bpps( $ ) {
 	if (! $ignore_constraints) {
 	    my $constraints = sequence_constraint_string($seqs->[$i]);
 	    if (defined($constraints) && ($constraints ne "")) {
-		print "WARNING: Constraints found for sequence $i, but not supported without precomputation of base pair probabilities\n."
+		printerr "WARNING: Constraints found for sequence $i, but not supported without precomputation of base pair probabilities\n."
 	    }
 	}
 	
@@ -2728,8 +2733,27 @@ sub compute_dotplot($$) {
 					 "$RNAfoldpNonLocal -C $RNAfoldp_redirect");
 		}
 	    } else { ## no constraints given; we could apply local folding
-		systemverb_withinput(">$seqname\n$seq_str\n",
-				     "$RNAfoldp $RNAfoldp_redirect");
+                ##
+                ## fix -W and -L parameters to avoid warnings of
+                ## RNAplfold if window size is too large for sequence.
+                ##
+                my $RNAfoldp_edited=$RNAfoldp;
+                if ($RNAfoldp =~ /-W (\d+)/) {
+                    my $win=$1;
+                    my $slen=length($seq_str);
+                    if ($win>$slen) {
+                        $RNAfoldp_edited =~ s/-W $win/-W $slen/;
+                        $win=$slen;
+                    }
+                    if ($RNAfoldp =~ /-L (\d+)/) {
+                        if ($1 > $win) {
+                            $RNAfoldp_edited =~ s/-L $1/-L $win/;
+                        }
+                    }
+                }
+                
+                systemverb_withinput(">$seqname\n$seq_str\n",
+				     "$RNAfoldp_edited $RNAfoldp_redirect");
 	    }
 	    
 	    if (defined($dp_cache)) {

@@ -1,6 +1,7 @@
 ============================================================
 === 2016
 1.8.10
+	Improve input checking in mlocarna
 	Increase API version to 1.5
 	Wrap long alifold consensus output in mlocarna
 	Add consensus structure in locarna output, selectable types mea|alifold|none

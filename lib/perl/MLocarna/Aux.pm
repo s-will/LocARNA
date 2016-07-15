@@ -92,7 +92,7 @@ sub systemverb($) {
 ## make systemcall with input and print call if verbose-mode
 sub systemverb_withinput($$) {
     my ($input,$cmd)=@_;
-    printmsg 1,"+++$input+++ >>> $cmd\n";
+    printmsg 1,"\"$input\" >>> $cmd\n";
     
     $cmd.=">/dev/null" unless $verbosemode>0;
     my $fh;
