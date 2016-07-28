@@ -1,4 +1,4 @@
-locarna (1.8.10-0~trusty) xenial; urgency=low
+locarna (1.8.10-0~trusty) trusty; urgency=low
 
   * Update to 1.8.10 release
   * Update to 1.8.9 release

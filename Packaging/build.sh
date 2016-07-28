@@ -4,6 +4,9 @@
 ## build a new source package of locarna and test it
 ##
 ##
+## USAGE:
+usage="$0 [--dput] release-version distribution [package-version] [architecture]"
+
 
 if [ "$1" = "--dput" ] ; then
   shift
@@ -13,13 +16,19 @@ fi
 ## release and package version have to be used consistently
 ## in distribution tar file and debian/changelog
 PACKAGE_NAME=locarna
-RELEASE=1.8.9
-PACKAGE_VERSION=0
+RELEASE=$1 ## e.g. 1.8.9
+DISTRIBUTION=$2
+PACKAGE_VERSION=${3:-0}
 
 ## distribution and architecture are relevant only for the creation of
 ## the binary package
-DISTRIBUTION=${1:-wily}
-ARCHITECTURE=amd64
+ARCHITECTURE=${4:-amd64}
+
+if [ "$RELEASE" == "" ] || [ "$DISTRIBUTION" == "" ] ; then
+    echo $usage
+    exit -1
+fi
+
 
 PACKAGE_FULLVERSION="$RELEASE-$PACKAGE_VERSION~${DISTRIBUTION}"
 PACKAGE_BASENAME="${PACKAGE_NAME}_${PACKAGE_FULLVERSION}"
@@ -43,17 +52,17 @@ runIt cp ../_build/locarna-$RELEASE.tar.gz locarna_$RELEASE.orig.tar.gz
 ## extract the original tar file
 runIt tar xzf ../_build/locarna-$RELEASE.tar.gz
 
-## modify changelog header
-runIt cp debian/changelog debian/changelog.orig
-
-echo "Set changelog header to ${CHANGELOG_HEADER}" 
-(echo $CHANGELOG_HEADER; tail -n +2 debian/changelog.orig ) > debian/changelog
-
-## call editor to edit changelog
-## runIt emacs debian/changelog 
-
 ## copy debian directory to release directory
 runIt cp -Lr debian locarna-$RELEASE
+
+## modify changelog header
+runIt cp locarna-$RELEASE/debian/changelog locarna-$RELEASE/debian/changelog.orig
+
+echo "Set changelog header to ${CHANGELOG_HEADER}" 
+(echo $CHANGELOG_HEADER; tail -n +2 locarna-$RELEASE/debian/changelog.orig ) > locarna-$RELEASE/debian/changelog
+
+runIt cp ../_build/Packaging/debian/control locarna-$RELEASE/debian/control
+
 
 ## create source package (signed).
 ## 
