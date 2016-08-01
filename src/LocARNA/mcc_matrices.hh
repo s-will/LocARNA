@@ -16,60 +16,58 @@ namespace LocARNA {
 
     class McC_matrices_base {
     protected:
-    	size_t length_;     //!< sequence length
-	bool local_copy_; //!< whether pointers point to local copies of data structures
-	
-	FLT_OR_DBL *qb_;  //!< Q<sup>B</sup> matrix					
-	FLT_OR_DBL *qm_;  //!< Q<sup>M</sup> matrix					
-	
-	FLT_OR_DBL *bppm_;  //!< base pair probability matrix
-	
-    	int* iindx_;        //!< iindx from librna's get_iindx()
+        /** @brief vrna fold compound
+         * 
+         * The fold compound holds the DP matrices, input and model
+         * details.  It is freed on destruction of the
+         * McC_matrices_base object.
+         */
+        vrna_fold_compound_t *vc_;        
+        
     	/** 
 	 * @brief construct empty
 	 */
-	McC_matrices_base();
-
-	/** 
-	 * @brief initialize
-	 * 
-	 * @param length length of sequence 
-	 */
-	void
-	init(size_t length);
+	McC_matrices_base(vrna_fold_compound_t *vc);
 
     public:
-	FLT_OR_DBL *q1k_; //!< 5' slice of the Q matrix (\f$q1k(k) = Q(1, k)\f$)	
-	FLT_OR_DBL *qln_; //!< 3' slice of the Q matrix (\f$qln(l) = Q(l, n)\f$)      
-	
-	pf_paramT *pf_params_; //!< parameters for pf folding
-	
 		
-	/** 
-	 * @brief destruct, optionally free local copy
+    	/** 
+	 * @brief Destructor
+         *
+         * Frees the fold compound
 	 */
 	virtual
-	~McC_matrices_base();
+        ~McC_matrices_base();
 
-	
-	//! \brief index in triagonal matrix
+	/** \brief index in triagonal matrix
+         */
 	size_t iidx(size_t i,size_t j) const {
 	    assert(1<=i);
 	    assert(i<=j);
-	    assert(j<=length_);
+	    assert(j<=vc_->length);
 
-	    return iindx_[i]-j;
+	    return vc_->iindx[i]-j;
+	}
+
+	/** \brief index in triagonal matrix
+         */
+	size_t jidx(size_t i,size_t j) const {
+	    assert(1<=i);
+	    assert(i<=j);
+	    assert(j<=vc_->length);
+
+	    return vc_->jindx[j]+i;
 	}
 
 	/** 
 	 * @brief Read access matrix bppm
 	 * 
-	 * @param i first index
+	 * @param i first indexb
 	 * @param j second index
 	 * 
 	 * @return matrix entry 
 	 */
-	FLT_OR_DBL bppm(size_t i, size_t j) const { return bppm_[iidx(i,j)]; }
+	FLT_OR_DBL bppm(size_t i, size_t j) const { return vc_->exp_matrices->probs[iidx(i,j)]; }
 
 	/** 
 	 * @brief Read access matrix qb
@@ -79,7 +77,7 @@ namespace LocARNA {
 	 * 
 	 * @return matrix entry 
 	 */
-	FLT_OR_DBL qb(size_t i, size_t j) const { return qb_[iidx(i,j)]; }
+	FLT_OR_DBL qb(size_t i, size_t j) const { return vc_->exp_matrices->qb[iidx(i,j)]; }
 
 	/** 
 	 * @brief Read access matrix qm
@@ -89,47 +87,90 @@ namespace LocARNA {
 	 * 
 	 * @return matrix entry 
 	 */
-	FLT_OR_DBL qm(size_t i, size_t j) const { return qm_[iidx(i,j)]; }
-	    
-    protected:
-	
-	/** 
-	 * @brief free all local copies of data structures
-	 */
-	void free_all_local();
+	FLT_OR_DBL qm(size_t i, size_t j) const { return vc_->exp_matrices->qm[iidx(i,j)]; }
 
-	//! \brief deep copy all data structures 
-	void
-	deep_copy(const McC_matrices_base &McCmat);
+        /**
+         * @brief exp params
+         */
+        vrna_exp_param_t *exp_params() const { return vc_->exp_params; }
+        
+        /**
+         * @brief scale
+         * @param i length
+         * @return scaling factor for fragment of length i
+         */
+        FLT_OR_DBL scale(size_t i) const { return vc_->exp_matrices->scale[i]; }
+
+        /**
+         * @brief expMLbase
+         * @param i index
+         * @return contribution to pf for base i in ML
+         */
+        FLT_OR_DBL expMLbase(size_t i) const { return vc_->exp_matrices->expMLbase[i]; }        
+
+        /**
+         * @brief kT
+         * @return k times temperature
+         */
+        FLT_OR_DBL kT() const {return vc_->exp_params->kT; }
+       
+        
+        /** 
+	 * @brief Read access matrix q1k
+	 * 
+	 * @param k index
+	 * 
+	 * @return matrix entry 
+	 */
+	FLT_OR_DBL q1k(size_t k) const { return vc_->exp_matrices->q1k[k]; }
+
+        /** 
+	 * @brief Read access matrix qln
+	 * 
+	 * @param l index
+	 * 
+	 * @return matrix entry 
+	 */
+	FLT_OR_DBL qln(size_t l) const { return vc_->exp_matrices->qln[l]; }
+
+        
+        /** 
+	 * @brief Read access matrix pair
+	 * 
+	 * @param c first base code
+	 * @param d second base code
+	 * 
+	 * @return matrix entry 
+	 */
+	int 
+        pair(size_t c, size_t d) const {
+            assert(vc_);
+            assert(vc_->exp_params);
+            return vc_->exp_params->model_details.pair[c][d];
+        }
+
+
     };
     
-    //! @brief  structure for McCaskill matrices pointers
-    //!
-    //! Contains pointers to matrices made accessible through
-    //! get_pf_arrays() and get_bppm() of Vienna librna
+    /** @brief McCaskill matrices
+     *
+     * Holds vrna fold compound with DP matrices
+     */
     class McC_matrices_t : public McC_matrices_base {
-	char *ptype_;	   //!< pair type matrix					
-	
     public:
 
-	char *sequence_;  //!< 0-terminated sequence string
-	short *S_;        //!< 'S' array (integer representation of nucleotides)	
-	short *S1_;	   //!< 'S1' array (2nd integer representation of nucleotides)	
-	
 	/** 
-	 * @brief construct by call to VRNA lib functions and optionally make local copy
+	 * @brief Construct from fold compound
 	 * 
-	 * @param sequence the sequence as 0-terminated C-string 
-	 * @param local_copy  if TRUE, copy the data structures; otherwise, only store pointers
+	 * @param vc vrna fold compound (single)
 	 */
-	McC_matrices_t(char *sequence, bool local_copy);
+	McC_matrices_t(vrna_fold_compound_t *vc);
 	
 	/** 
 	 * @brief destruct, optionally free local copy
 	 */
 	virtual 
 	~McC_matrices_t();
-
 
 	/** 
 	 * @brief Access matrix ptype
@@ -139,7 +180,7 @@ namespace LocARNA {
 	 * 
 	 * @return matrix entry 
 	 */
-	char ptype(size_t i, size_t j) const { return ptype_[iidx(i,j)]; }
+	char ptype(size_t i, size_t j) const { return vc_->ptype[jidx(i,j)]; }
 
 	/** 
 	 * @brief Reverse ptype
@@ -150,56 +191,45 @@ namespace LocARNA {
 	 * @return matrix entry 
 	 */
 	char 
-	rev_ptype(size_t i, size_t j) const;
+	rev_ptype(size_t i, size_t j) const {
+            return vc_->exp_params->model_details.rtype[(size_t)ptype(i,j)];
+        }
 
-    protected:
 
 	/** 
-	 * Free all data structures of the Vienna package
+	 * @brief Read access to sequence encoding S1
+	 * 
+	 * @param i index
+	 * 
+	 * @return encoding of base i 
 	 */
-	void free_all();
-
-	//! \brief deep copy all data structures 
-	void
-	deep_copy(const McC_matrices_t &McCmat);
+	short
+        S1(size_t i) const { return vc_->sequence_encoding[i]; }
+        
+        char *sequence() const {return vc_->sequence;}
+        
     };
 
-     //! @brief  structure for Alifold-McCaskill matrices pointers
+    //! @brief Alifold-McCaskill matrices
     //!
-    //! Contains pointers to matrices made accessible through
-    //! get_alipf_arrays() and alipf_export_bppm() of Vienna librna
     class McC_ali_matrices_t : public McC_matrices_base {
-    protected:
-	size_t n_seq_;     //!< sequence length
-	
+    
     public:
 
-	short **S_;       //!< 'S' array (integer representation of nucleotides)	
-	short **S5_;	   //!< 'S5' array
-	short **S3_;	   //!< 'S3' array
-	unsigned short  **a2s_;  //!< 'a2s' array
-	char **Ss_;	   //!< 'Ss' array
-	
-    protected:
-	short *pscore_; //!< alifold covariance/conservation scores
-    public:
 	/** 
-	 * @brief construct by call to VRNA lib functions and optionally make local copy
+	 * @brief Construct from fold compound
 	 * 
-	 * @param n_seq number of sequenes in alignment
-	 * @param length length of sequences in alignment 
-	 * @param local_copy  if TRUE, copy the data structures; otherwise, only store pointers
+	 * @param vc vrna fold compound (alignment)
 	 */
-	McC_ali_matrices_t(size_t n_seq, size_t length, bool local_copy);
+	McC_ali_matrices_t(vrna_fold_compound_t *vc);
 	
 	/** 
-	 * @brief destruct, optionally free local copy
+	 * @brief destruct
 	 */
 	virtual
 	~McC_ali_matrices_t();
 
-
-	/** 
+        /** 
 	 * @brief Access matrix pscore
 	 * 
 	 * @param i first index
@@ -207,25 +237,64 @@ namespace LocARNA {
 	 * 
 	 * @return matrix entry 
 	 */
-	short pscore(size_t i, size_t j) const { return pscore_[iidx(i,j)]; }
-
-
-    protected:
+	short pscore(size_t i, size_t j) const { return vc_->pscore[jidx(i,j)]; }
 
 	/** 
-	 * @brief Free McCaskill/VRNA data structures
+	 * @brief Read access to sequence encoding S
+	 * 
+	 * @param s sequence index
+	 * @param i base index
+	 * 
+	 * @return encoding of base i in sequence s
 	 */
-	void free_all();
+	short
+        S(size_t s,size_t i) const { 
+            std::cout << "S() "<<s<<" "<<i<<std::endl;
+            assert(vc_);
+            std::cout << "  returns " << vc_->S[s][i] <<std::endl;
+            return vc_->S[s][i];
+        }
 
-	/**
-	 * @brief deep copy all data structures
-	 * @param McCmat object to copy
+	/** 
+	 * @brief Read access to sequence encoding S3
+	 * 
+	 * @param s sequence index
+	 * @param i base index
+	 * 
+	 * @return encoding of base i in sequence s
 	 */
-	void
-	deep_copy(const McC_ali_matrices_t &McCmat);
+	short
+        S3(size_t s,size_t i) const { return vc_->S3[s][i]; }
+
+	/** 
+	 * @brief Read access to sequence encoding S5
+	 * 
+	 * @param s sequence index
+	 * @param i base index
+	 * 
+	 * @return encoding of base i in sequence s
+	 */
+	short
+        S5(size_t s,size_t i) const { return vc_->S5[s][i]; }
+
+	/** 
+	 * @brief Read access to a2s
+	 * 
+	 * @param s sequence index
+	 * @param i base index
+	 * 
+	 * @return encoding of base i in sequence s
+	 */
+	short
+        a2s(size_t s,size_t i) const { return vc_->a2s[s][i]; }
+
+        char *Ss(size_t s) const {return vc_->Ss[s];}
+
     };
     
 } // end namespace LocARNA
 
 
 #endif // LOCARNA_MCC_MATRICES_HH
+
+    

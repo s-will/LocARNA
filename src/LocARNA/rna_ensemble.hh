@@ -33,14 +33,6 @@ namespace LocARNA {
      * @todo split up RnaEnsemble into two classes; one with and one
      * without in-loop probabilities (like RnaData and ExtRnaData)
      *
-     * @todo consider to introduce local_copy flag in constructor to allow
-     * using the object without local copy, which could improve
-     * performance in the common use of the class; however, this is very
-     * dangerous and violates common assumptions, since without local copy
-     * of ViennaRNA-data structures the construction of an object
-     * invalidates previous instances. We could make this an "protected"
-     * option for exclusive internal use, e.g. by RnaData.
-     *
      * @note the class guarantees that sequences are normalized
      * (uppercase, T->U) even when read in unnormalized form,
      * e.g. from file or stream or received from other objects

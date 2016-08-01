@@ -33,7 +33,6 @@ namespace LocARNA {
 		
 	// std::vector<FLT_OR_DBL> qm1; // store qm1 for debugging
 	std::vector<FLT_OR_DBL> qm2_;     //!< matrix qm2_ (stored VRNA-style in a vector)
-	std::vector<FLT_OR_DBL> scale_;   //!< table for precomputed scaling of pf values
 	std::vector<FLT_OR_DBL> expMLbase_; //!< table for precomputed multi loop terms
 	
 	McC_matrices_base *McCmat_; //!< DP matrix data structures of VRNA's McCaskill algorithm
@@ -44,20 +43,6 @@ namespace LocARNA {
 	double min_free_energy_; //!< minimum free energy (if computed anyway)
 	std::string min_free_energy_structure_; //!< minimum free energy structure (if computed)
 
-	
-	// /** 
-	//  * @brief Construct from file
-	//  * 
-	//  * @param file file name
-	//  * @param readPairProbs whether to read pair probabilities
-	//  * @param readStackingProbs whether to read stacking probabilities
-	//  * @param readInLoopProbs whether to read in loop probabilities
-	//  */
-	// RnaEnsembleImpl(const std::string &file,
-	// 		bool readPairProbs,
-	// 		bool readStackingProbs,
-	// 		bool readInLoopProbs);
-	
 	/** 
 	 * @brief Construct from sequence or multiple alignment
 	 * 
@@ -72,7 +57,12 @@ namespace LocARNA {
 			bool inLoopProbs, 
 			bool use_alifold);
 	
-	~RnaEnsembleImpl();
+	/** 
+	 * @brief Destructor
+         *
+         * Free McCaskill DP matrices
+	 */ 	
+        ~RnaEnsembleImpl();
 
 	////////////////////////////////////////////////////////////
 	
@@ -232,14 +222,10 @@ namespace LocARNA {
 	 *
 	 * @param params parameters for partition folding
 	 * @param inLoopProbs whether to compute information for in loop probablities
-	 * @param local_copy whether to make a local copy of ViennaRNA's data structures
-	 * 
-	 * @note requires linking to librna
 	 */
 	void
-	compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy=true);
-	
-	
+	compute_McCaskill_matrices(const PFoldParams &params,
+                                   bool inLoopProbs);
 	
 	/** 
 	 * \brief Computes the McCaskill matrices and keeps them accessible (alifold)
@@ -248,13 +234,10 @@ namespace LocARNA {
 	 *
 	 * @param params parameters for partition folding
 	 * @param inLoopProbs whether to compute and keep information for in loop probablities
-	 * @param local_copy whether to make a local copy of ViennaRNA's data structures
-	 * 
-	 * @note requires linking to librna
 	 */
 	void
-	compute_McCaskill_alifold_matrices(const PFoldParams &params, bool inLoopProbs, bool local_copy=true);
-
+	compute_McCaskill_alifold_matrices(const PFoldParams &params,
+                                           bool inLoopProbs);
 
     };
 

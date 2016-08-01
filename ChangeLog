@@ -1,5 +1,7 @@
 ============================================================
 === 2016
+1.8.11
+	Migrate to new vrna api; fix pf_scale bug; require C++11
 1.8.10  (2016-Jul-15)
 	Improve input checking in mlocarna
 	Increase API version to 1.5
