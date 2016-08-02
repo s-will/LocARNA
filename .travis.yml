@@ -13,7 +13,7 @@ before_install:
   - sudo apt-add-repository -y ppa:j-4/vienna-rna
 
   # update package list
-  - sudo apt-get update -qq
+  - sudo apt-get update -q -y
 
 install:
   # g++-5
@@ -21,11 +21,9 @@ install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-5"; fi
 
   # clang 3.6
-  - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -qq clang-3.6; fi
+  - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -y clang-3.6; fi
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.6"; fi
 
-  - sudo apt-get install -qq gcc-5
-  - export CXX="g++-5"
   - sudo apt-get install -qq viennarna viennarna-dev
   - sudo apt-get install help2man
 
