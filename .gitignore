@@ -32,6 +32,7 @@ Ideas/locarna-ng.pdf
 Ideas/new-score.pdf
 
 Examples/*.out
+Examples/*.ps
 
 Packaging/OSBS/
 Packaging/locarna*

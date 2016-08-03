@@ -1,0 +1,28 @@
+CALL 2 ====================
+mlocarna example2.fa --struct-weight=200 --use-ribosum=true --max-diff-am=30 --match=50 --max-diff=60 --min-prob=5.0E-4 --tree-min-prob=0.005 --rnafold-temperature=37.0 --noLP --plfold-span=150 --indel=-350 --indel-opening=-500 --sequ-local=false --mismatch=0 --write-structure
+OUTPUT ====================
+mLocARNA --- multiple Local (and global) Alignment of RNA --- LocARNA 1.8.11
+Copyright Sebastian Will
+
+Compute pair probs ...
+Compute pairwise alignments ... 
+Perform progressive alignment ...
+
+
+
+ACA7               ACCUCCUGGGAUCGCAUCUGG-AGAGUGC---CUAGUAUUCUGCCAGCUU-CGGAAAGGGAGGGAAAGCAAGC-CUGGCAGAGGCACCCAUUCCAUUCCCAGCUUGCUCCGUAGCUGGCG
+ACA30              UGGCACUUU--CACAGUUCCU-UCCCCAG---GCAGUGGGGCCAGGAUUUGGUAGCUGGUGCUGAGAGAAAAC----CC-UUG--AUUGUAUUCUUGCCCUGGG---AUUAUACCAGUGG
+ACA5               UGCAGCCGUGUCAAAUUCAGUACCUGUCCUAUGCAUGGUAGGCACUGGC--CCAGAAGGCUGCCACAGAAACA-C--UGUGACUCAUGG-----GCCCUGUUCCUGUGUCCCAGGCUCAG
+ACA59              GCCCAGGGUAUGUUCACGGGGCGAUGCUGCCCUCCCAGCUGG-CCCAUG--GGUGACCCUGGGAACAUUAACUGCCUCACAACGUUUGUGCCUCAGUUACCCGUAGAUGUAGUGAGGGUA
+#A1                ................................................................AAAAAA..................................................
+#A2                ................................................................123456..................................................
+
+ACA7               AUUGGA--AGA--CACUC-UGC------GACA
+ACA30              CAACUG--UCA--CUCAA-UGG------GACA
+ACA5               GGAUAA--AUU--UGGUU-ACA------GACA
+ACA59              ACAAUACUUACUCUCGUUGGUGAUAAGGAACA
+#A1                .............................BBB
+#A2                .............................123
+
+alifold            .((((((..........((((.(((((((......))))))).))))..........)))))).............((((((((...((.....((((((((((((.....)))))))))
+                   )))......))...)))).))))......... (-63.42 = -36.25 + -27.17) 

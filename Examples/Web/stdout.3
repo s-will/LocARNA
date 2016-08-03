@@ -1,0 +1,20 @@
+CALL 3 ====================
+mlocarna example3.fa --alifold-consensus-dp --struct-weight=200 --use-ribosum=true --max-diff-am=30 --match=50 --max-diff=60 --min-prob=5.0E-4 --tree-min-prob=0.005 --rnafold-temperature=37.0 --noLP --plfold-span=150 --indel=-350 --indel-opening=-500 --sequ-local=false --mismatch=0 --write-structure
+
+OUTPUT ====================
+mLocARNA --- multiple Local (and global) Alignment of RNA --- LocARNA 1.8.11
+Copyright Sebastian Will
+
+Compute pair probs ...
+Compute pairwise alignments ... 
+Perform progressive alignment ...
+
+
+
+AF008220           GGAGGAUUAGCUCAGCUGGGAGAGCAUCUGCCUUACAAGCAGA-----GGG------UCGGCGGUUCGAGCCCGUCAUCCUCCA
+Z11880             GCCUUCCUAGCUCAG-UGGUAGAGCGCACGGCUUUUAACCGUG-----UGG------UCGUGGGUUCGAUCCCCACGGAAGGCG
+X02172             GCCUUUAUAGCUUAG-UGGUAAAGCGAUAAACUGAAGAUUUAU-----UUA------CAUGUAGUUCGAUUCUCAUUAAGGGCA
+M68929             GCGGAUAUAACUUAGGGGUUAAAGUUGCAGAUUGUGGCUCUGA-----AAA-------CACGGGUUCGAAUCCCGUUAUUCGCC
+D10744             GGAAAAUU-GAUCAUCGGCAAGAUAAGUUAUUUACUAAAUAAUAGGAUUUAAUAACCUGGUGAGUUCGAAUCUCACAUUUUCCG
+
+alifold            (((((((..((((........))))((((((.......))))).....)..........(((((.......)))))))))))). (-40.17 = -18.16 + -22.01) 

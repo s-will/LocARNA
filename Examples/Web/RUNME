@@ -1,0 +1,17 @@
+#!/bin/bash
+export PATH=../../_inst/bin:$PATH
+
+function callIt {
+    echo "CALL $1 ===================="
+    (
+        echo "CALL $1 ===================="
+        cat call$1.sh
+        echo "OUTPUT ===================="
+        . ./call$1.sh
+    )  >stdout.$1 2>stderr.$1
+    git diff stdout.$1 stderr.$1
+    echo "END $1 ===================="
+}
+
+#parallel callIt {} ::: 1 2 3 4
+for i in 1 2 3 4 ; do time callIt $i ; done 2>&1 | tee output
