@@ -13,7 +13,6 @@ extern "C" {
 #   include <ViennaRNA/data_structures.h>
 }
 
-
 namespace LocARNA {
 
     class MultipleAlignment;

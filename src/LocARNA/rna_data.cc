@@ -24,7 +24,6 @@ extern "C" {
 #   include <ViennaRNA/MEA.h>
 }
 
-
 namespace LocARNA {
 
     RnaData::RnaData(const RnaEnsemble &rna_ensemble,

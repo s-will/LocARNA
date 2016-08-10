@@ -269,6 +269,33 @@ if test "$use_large_pf" = "yes"; then
     AC_DEFINE([VERY_LARGE_PF],1,[Use long double type for partition functions])
 fi
 
+
+dnl Pretend a certain C-std (C99 or C11)
+dnl
+dnl Option --enable-STDC=11 is necessary (set by default), when the
+dnl ViennaRNA library was generated with C11-standard (default for
+dnl recent gcc). We set this as default, since ViennaRNA should be
+dnl compiled with C11 if possible; this is either default or should be
+dnl possible for most systems. (Systems without C11-capable C-compiler
+dnl require --enable-STDC=no or --enable-STDC=99.)
+dnl
+AC_MSG_CHECKING([whether to pretend a certain C standard (relevant for C-libs, i.p. RNAlib)])
+use_STDC=11
+AC_ARG_ENABLE([STDC],
+    AC_HELP_STRING(
+        [--enable-STDC],
+        [Pretend a certain C standard (set __STDC_VERSION__) (values=no|99|11, def=11)]
+    ),
+    use_STDC="$enableval"
+)
+AC_MSG_RESULT([$use_STDC])
+if test "$use_STDC" = "11"; then
+   CXXFLAGS="$CXXFLAGS -D __STDC_VERSION__=201112L"
+elif test "$use_STDC" = "99"; then
+   CXXFLAGS="$CXXFLAGS -D __STDC_VERSION__=199901L"
+fi
+
+
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_CONST

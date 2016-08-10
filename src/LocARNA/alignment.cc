@@ -13,7 +13,6 @@
 #include "plusvector.hh"
 
 extern "C" {
-#  include <string.h>
 #  include <ViennaRNA/data_structures.h>
 #  include <ViennaRNA/fold_vars.h>
 #  include <ViennaRNA/alifold.h>

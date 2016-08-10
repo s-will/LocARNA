@@ -18,12 +18,11 @@
 #include "ext_rna_data.hh"
 #include "aux.hh"
 
-extern "C"
-{
-#include <ViennaRNA/fold_vars.h>
-#include <ViennaRNA/utils.h>
-#include <ViennaRNA/PS_dot.h>
-#include <ViennaRNA/fold.h>
+extern "C" {
+#   include <ViennaRNA/fold_vars.h>
+#   include <ViennaRNA/utils.h>
+#   include <ViennaRNA/PS_dot.h>
+#   include <ViennaRNA/fold.h>
     int    PS_rna_plot(char *string, char *structure, char *file);
     int    PS_rna_plot_a(char *string, char *structure, char *file, char *pre, char *post);
     float  fold(const char *sequence, char *structure);

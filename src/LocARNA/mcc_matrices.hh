@@ -8,6 +8,7 @@
 #include <assert.h>
 
 #define PUBLIC // for Vienna
+
 extern "C" {
 #include <ViennaRNA/params.h> // import pf_paramT definition
 }

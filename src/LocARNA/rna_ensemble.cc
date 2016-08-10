@@ -10,9 +10,7 @@
 #include "global_stopwatch.hh"
 #include "pfold_params.hh"
 
-
 extern "C" {
-
 #   include <ViennaRNA/data_structures.h>
 #   include <ViennaRNA/part_func.h>
 #   include <ViennaRNA/fold.h>
@@ -22,7 +20,6 @@ extern "C" {
 #   include <ViennaRNA/params.h>
 #   include <ViennaRNA/pair_mat.h>
 #   include <ViennaRNA/alifold.h>
-
 }
 
 #include "mcc_matrices.hh"
