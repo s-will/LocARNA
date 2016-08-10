@@ -9,4 +9,4 @@ before_install:
   - sudo apt-get install help2man
 before_script:
   - autoreconf -i
-script: ./configure && make && make check
+script: ./configure --enable-STDC=no && make && make check
