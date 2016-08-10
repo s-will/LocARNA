@@ -56,8 +56,8 @@ AC_PROG_CPP
 
 AC_LANG_CPLUSPLUS
 
-dnl require c++11
-AX_CXX_COMPILE_STDCXX_11
+dnl uncomment to require c++11
+dnl AX_CXX_COMPILE_STDCXX_11
 
 AC_CHECK_PROGS([PERL],[perl])
 
