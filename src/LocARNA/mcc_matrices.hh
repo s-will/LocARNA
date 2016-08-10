@@ -250,9 +250,6 @@ namespace LocARNA {
 	 */
 	short
         S(size_t s,size_t i) const { 
-            std::cout << "S() "<<s<<" "<<i<<std::endl;
-            assert(vc_);
-            std::cout << "  returns " << vc_->S[s][i] <<std::endl;
             return vc_->S[s][i];
         }
 
