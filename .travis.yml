@@ -1,12 +1,27 @@
 language: cpp
+
 compiler:
   - gcc 
   - clang
+
 before_install:
+  # for clang
+  - sudo add-apt-repository -y ppa:h-rayflood/llvm-upper
+  # for vrna
   - sudo apt-add-repository -y ppa:j-4/vienna-rna
+
+  # update package list
   - sudo apt-get update -q -y
-  - sudo apt-get install -q -y viennarna viennarna-dev
-  - sudo apt-get install help2man
+
+install:
+  - sudo apt-get install -qq viennarna viennarna-dev
+  - sudo apt-get install -qq help2man
+
+  # clang 3.6
+  - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -y clang-3.6; fi
+  - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.6"; fi
+
 before_script:
   - autoreconf -i
+
 script: ./configure --enable-STDC=no && make && make check
