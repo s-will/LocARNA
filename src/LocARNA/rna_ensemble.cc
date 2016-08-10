@@ -276,8 +276,6 @@ namespace LocARNA {
 	const char **c_sequences=const_cast<const char **>(sequences);
 
         vc  = vrna_fold_compound_comparative(c_sequences, &md, VRNA_OPTION_PF);
-
-        std::cout << "n_seq: " << vc->n_seq << std::endl;
         
 	// reserve space for structure
 	char *c_structure = new char [length+1]; 
