@@ -192,6 +192,25 @@ namespace LocARNA {
 	void transform(UnaryOperator f) {
 	    std::transform(mat_.begin(),mat_.end(),mat_.begin(),f);
 	}
+
+    /**
+	 * Dump matrix by formatted writing matrix to output stream
+	 *
+	 * @param out the output stream
+	 *
+	 */
+	void
+	dump_matrix(std::ostream &out) {
+
+	for (size_type i=0; i<xdim_; i++) {
+		for (size_type j=0; j<ydim_; j++) {
+		out << this->get(i,j) ;
+		out << " ";
+		}
+		out << std::endl;
+	}
+	}
+
     };
 
     /** 
@@ -214,6 +233,8 @@ namespace LocARNA {
 	}
 	return out;
     }
+
+
 
     /** 
      * Input operator for reading (templated) matrix from input stream

@@ -117,6 +117,9 @@ namespace LocARNA {
 
 	bool sequ_local_; //!< sequence local alignment / maximize alignment of subsequences
 
+	std::string dump_D_matrix_out_; //!< name of the D matrix dumped file
+	bool opt_dump_D_matrix_out_; //!< whether to Print the computed D matrix into file
+
 	std::string free_endgaps_; //!< description of potentially allowed free end gaps
     
 	bool DO_TRACE_; //!< whether do perfom trace back
@@ -186,6 +189,16 @@ namespace LocARNA {
 	 */
 	AlignerParams &
 	sequ_local(bool sequ_local) {sequ_local_=sequ_local; return *this;}
+
+	/**
+	 * @brief set parameter dump_D_matrix
+	 * @param dump_D_matrix  dumping the D matrix into stdout
+	 */
+	AlignerParams &
+	dump_D_matrix_out(const std::string &dump_D_matrix_out) {dump_D_matrix_out_=dump_D_matrix_out; return *this;}
+
+	AlignerParams &
+	opt_dump_D_matrix_out(bool opt_dump_D_matrix_out) {opt_dump_D_matrix_out_=opt_dump_D_matrix_out; return *this;}
 
 	/**
 	 * @brief set parameter free_endgaps

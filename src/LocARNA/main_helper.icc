@@ -121,6 +121,9 @@ namespace LocARNA {
             std::string clustal_out; //!< name of clustal output file
             bool opt_clustal_out; //!< whether to write clustal output to file
 
+        	std::string dump_D_matrix_out; //!< name of the D matrix `ed file
+        	bool opt_dump_D_matrix_out; //!< whether to Print the computed D matrix into file
+
             std::string stockholm_out; //!< name of stockholm output file
             bool opt_stockholm_out; //!< whether to write stockholm output to file
 

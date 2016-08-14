@@ -449,6 +449,14 @@ namespace LocARNA {
 	    return Dmat_(am.arcA().idx(),am.arcB().idx());
 	}
 
+	/**
+	 * Print the D matrix into the output stream
+	 * @param out reference to the output stream
+	 * @param min_score Print D entries with value larger than min_score
+	 */
+
+	void dump_D_matrix (std::ostream &out, score_t min_score);
+
 	/** 
 	 * Read/Write access to D matrix
 	 * 

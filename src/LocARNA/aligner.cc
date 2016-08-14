@@ -12,6 +12,7 @@
 #include <queue>
 
 #include <iostream>
+#include <fstream>
 
 
 namespace LocARNA {
@@ -923,6 +924,19 @@ namespace LocARNA {
     }
     */
 
+    void AlignerImpl::dump_D_matrix (std::ostream &out, score_t min_score=0) {
+//    		Dmat_.dump_matrix(out);
+		for(ArcMatchVec::const_iterator it=arc_matches_.begin();arc_matches_.end() != it; ++it ) {
+			const ArcMatch &am = *it;
+		    const Arc &arcA=am.arcA();
+		    const Arc &arcB=am.arcB();
+		    if (infty_score_t(min_score) < D(am) ) {
+		    	out << arcA.left() << "," << arcA.right() << " " << arcB.left() << "," << arcB.right() << " " << D(am) ;
+		    	out << std::endl;
+		    }
+		}
+
+    }
     // compute the alignment score
     infty_score_t
     AlignerImpl::align() {
@@ -931,7 +945,16 @@ namespace LocARNA {
 	// ------------------------------------------------------------
     
 	if (!D_created_) align_D();
-
+	if (params_->opt_dump_D_matrix_out_) {
+		// try to open file
+		std::ofstream out((params_->dump_D_matrix_out_).c_str());
+		// catch error while opening
+		if (!out.is_open()) {
+		    std::cerr << "Cannot open file "<< params_->dump_D_matrix_out_ <<" for writing arcmatch-scores.";
+		    throw failure("Cannot open D_matrix_out file");
+		}
+		dump_D_matrix(out);
+	}
 	if (params_->sequ_local_) {
 	    return align_top_level_locally(def_scoring_view_);
 	} else { // sequence global alignment

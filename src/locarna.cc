@@ -155,6 +155,9 @@ option_def my_options[] = {
     {"score-components",0,&clp.opt_score_components,O_NO_ARG,0,O_NODEFAULT,"",
      "Output components of the score (experimental)"},
     {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
+
+    {"dump-D-matrix",0,&clp.opt_dump_D_matrix_out,O_ARG_STRING,&clp.dump_D_matrix_out, "","file",
+          "Dump D matrix to file"},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
@@ -318,6 +321,7 @@ main(int argc, char **argv) {
     	std::cerr << "One cannot specify penalized and normalized simultaneously."<<std::endl;
     	return -1;
     }
+
 
     // ----------------------------------------
     // temporarily turn off stacking unless background prob is set
@@ -632,6 +636,8 @@ main(int argc, char **argv) {
 	. no_lonely_pairs(clp.no_lonely_pairs)
 	. struct_local(clp.struct_local)
 	. sequ_local(clp.sequ_local)
+	. dump_D_matrix_out(clp.dump_D_matrix_out)
+	. opt_dump_D_matrix_out(clp.opt_dump_D_matrix_out)
 	. free_endgaps(clp.free_endgaps)
 	. max_diff_am(clp.max_diff_am)
 	. max_diff_at_am(clp.max_diff_at_am)
@@ -672,8 +678,9 @@ main(int argc, char **argv) {
 	// ========== STANDARD CASE ==========
 	
 	// otherwise compute the best alignment
+
 	score = aligner.align();
-	
+
     }
     
     // ----------------------------------------
