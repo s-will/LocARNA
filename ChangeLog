@@ -1,6 +1,6 @@
 ============================================================
 === 2016
-1.8.11
+1.8.11 (2016-Aug-15)
 	Add configure flag --enable-STDC; set default to C11 (RNAlib compatibility)
 	Fix output order of reliable structures in mlocarna
 	Migrate to new vrna api; fix pf_scale bug

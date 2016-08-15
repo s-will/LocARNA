@@ -1,3 +1,9 @@
+#
+# NOTE: The process is now largely automated by build.sh
+# The description in this file is still more low-level 
+#
+
+
 # for launchpad the distrib in the changelog must be one of the
 #  supported distribs like xenial, wily, ...
 #
