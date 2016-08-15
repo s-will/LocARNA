@@ -29,7 +29,6 @@ if [ "$RELEASE" == "" ] || [ "$DISTRIBUTION" == "" ] ; then
     exit -1
 fi
 
-
 PACKAGE_FULLVERSION="$RELEASE-$PACKAGE_VERSION~${DISTRIBUTION}"
 PACKAGE_BASENAME="${PACKAGE_NAME}_${PACKAGE_FULLVERSION}"
 
@@ -72,22 +71,42 @@ runIt dpkg-buildpackage -S
 ## test package building with pbuilder-dist;
 ## pbuilder creates 
 runIt cd ..
+success=1
 pbuilder_basefile=$HOME/pbuilder/${DISTRIBUTION}-base.tgz
 if [ -e "$pbuilder_basefile" ] ; then
-  runIt pbuilder-dist $DISTRIBUTION $ARCHITECTURE build ${PACKAGE_BASENAME}.dsc
+    pbuilder-dist $DISTRIBUTION $ARCHITECTURE build ${PACKAGE_BASENAME}.dsc
+    success=$?
 else
-  echo "Do not test build package for distribution ${DISTRIBUTION}, since base file ${pbuilder_basefile} is missing."
+    echo "Do not test build package for distribution ${DISTRIBUTION}, 
+since base file ${pbuilder_basefile} is missing.
+creation of binary packages requires that the base image was
+created by 
+
+pbuilder-dist $DISTRIBUTION $ARCHITECTURE create
+"
 fi
 
+if [ "$success" == $(true) ] ; then 
 # upload to launchpad
-echo "The package was build successfully."
-echo ""
-dput_cmd="dput ppa:swill/locarna ${PACKAGE_BASENAME}_source.changes"
-
-if [ "$INSTALL_IT" = "true" ] ; then
-    runIt $dput_cmd
+    echo "The package was build successfully."
+    echo ""
+    dput_cmd="dput ppa:swill/locarna ${PACKAGE_BASENAME}_source.changes"
+    
+    if [ "$INSTALL_IT" = "true" ] ; then
+        runIt $dput_cmd
+    else
+        echo "Upload to launchpad by running"
+        echo "  $dput_cmd"
+    fi
 else
-    echo "Upload to launchpad by running"
-    echo "  $dput_cmd"
-fi
+    echo "Build failed. Maybe required repositories
+are missing. The repository can be added after login into the base
+image and adding the ppa like
 
+pbuilder-dist $DISTRIBUTION $ARCHITECTURE login --save-after-login
+  apt-get -qq install software-properties-common
+  add-apt-repository ppa:j-4/vienna-rna
+  apt-get update
+  exit
+"
+fi

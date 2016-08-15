@@ -1,8 +1,9 @@
-locarna (1.8.10-0~trusty) trusty; urgency=low
+locarna (1.8.11-0~trusty) trusty; urgency=low
 
+  * Update to 1.8.11 release
   * Update to 1.8.10 release
   * Update to 1.8.9 release
   * Initial release
 
- -- Sebastian Will <swill@csail.mit.edu>  Thu, 14 Jul 2016 20:20:12 +0100
+ -- Sebastian Will <swill@csail.mit.edu>  Thu, 15 Aug 2016 19:48:12 +0100
 
