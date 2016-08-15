@@ -12,12 +12,12 @@ mkdir $bin
 
 topdir=../$srcdir/.. # top level directory of the locarna source
 
-cp -l $topdir/Utils/mlocarna $bin
-cp -l $topdir/Utils/locarnate $bin
-cp -l ../locarna.bin $bin/locarna
-cp -l ../locarna_p $bin
-cp -l ../sparse $bin
-cp -l ../locarna_rnafold_pp $bin
+ln -sf ../$topdir/Utils/mlocarna $bin/mlocarna
+ln -sf ../$topdir/Utils/locarnate $bin/locarnate
+ln -sf ../../locarna.bin $bin/locarna
+ln -sf ../../locarna_p $bin/locarna_p
+ln -sf ../../sparse $bin/sparse
+ln -sf ../../locarna_rnafold_pp $bin/locarna_rnafold_pp
 ln -sf $topdir/lib . # also put perl lib modules in the right place
 
 function calltest {

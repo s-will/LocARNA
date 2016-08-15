@@ -130,7 +130,7 @@ option_def my_options[] = {
     {"p_unpaired_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.0005","threshold","Threshold for prob_unpaired_in_loop"},
     {"p_basepair_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0005","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
     {"output",'o',0,O_ARG_STRING,&clp.output_file,"","filename","Output file"},
-    {"force-alifold",0,&clp.force_alifold,O_NO_ARG,0,O_NODEFAULT,"","Force alifold for single sequnces"},
+    {"force-alifold",0,&clp.force_alifold,O_NO_ARG,0,O_NODEFAULT,"","Force alifold for single seqeunces"},
     {"",0,0,O_ARG_STRING,&clp.input_file,"-","filename","Input file"},
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
