@@ -97,16 +97,19 @@ check_PROGRAMS = $(BINTESTS)
 
 AM_DEFAULT_SOURCE_EXT = .cc
 
-MYTESTDATA = Tests/archaea.aln Tests/archaea.fa Tests/archaea-wrong.fa
-BUILT_SOURCES = $(MYTESTDATA)
-EXTRA_DIST=$(MYTESTDATA:%=%.data) $(SCRIPTTESTS) Tests/check.hh
-Tests/archaea.aln: Tests/archaea.aln.data
+MYTESTDATA    = archaea.aln archaea-aln.fa archaea-wrong.fa
+BUILT_SOURCES = $(MYTESTDATA:%=Tests/%)
+EXTRA_DIST    = $(MYTESTDATA:%=$(top_srcdir)/Data/Examples/%) $(SCRIPTTESTS) Tests/check.hh
+
+Tests/archaea.aln: $(top_srcdir)/Data/Examples/archaea.aln
 	cp $< $@
-Tests/archaea.fa: Tests/archaea.fa.data
+Tests/archaea-aln.fa: $(top_srcdir)/Data/Examples/archaea-aln.fa
 	cp $< $@
-Tests/archaea-wrong.fa: Tests/archaea-wrong.fa.data
+Tests/archaea-wrong.fa: $(top_srcdir)/Data/Examples/archaea-wrong.fa
 	cp $< $@
-CLEANFILES=$(MYTESTDATA)
+
+
+CLEANFILES = $(MYTESTDATA:%=Tests/%)
 
 dist_locarna_bin_SOURCES = locarna.cc
 
@@ -128,7 +131,7 @@ CLEANFILES += LocARNA/ribosum85_60.icc
 if !VC_CROSS_COMPILING
 LocARNA/ribosum85_60.icc: \
 	ribosum2cc \
-	$(top_srcdir)/Matrices/RIBOSUM85_60
+	$(top_srcdir)/Data/Matrices/RIBOSUM85_60
 
-	./ribosum2cc Ribosum85_60 "$(top_srcdir)/Matrices/RIBOSUM85_60" $@
+	./ribosum2cc Ribosum85_60 "$(top_srcdir)/Data/Matrices/RIBOSUM85_60" $@
 endif

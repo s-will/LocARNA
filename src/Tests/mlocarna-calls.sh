@@ -36,23 +36,26 @@ function calltest {
 ## test mlocarna
 ##
 
-calltest $bin/mlocarna $topdir/Examples/archaea.fa --tgtdir test.out --alifold-cons -p 0.05 --max-diff 10
+# examples directory
+exdir=$topdir/Data/Examples
+
+calltest $bin/mlocarna $exdir/archaea.fa --tgtdir test.out --alifold-cons -p 0.05 --max-diff 10
 rm -rf test.out
 
-calltest $bin/mlocarna $topdir/Examples/haca.snoRNA.fa --tgtdir test.out -p 0.05 --max-diff 20
+calltest $bin/mlocarna $exdir/haca.snoRNA.fa --tgtdir test.out -p 0.05 --max-diff 20
 rm -rf test.out
 
-calltest $bin/mlocarna $topdir/Examples/archaea.fa --tgtdir test.out --sparse -p 0.05  --max-diff 10
+calltest $bin/mlocarna $exdir/archaea.fa --tgtdir test.out --sparse -p 0.05  --max-diff 10
 rm -rf test.out
 
-calltest $bin/mlocarna $topdir/Examples/archaea.fa --tgtdir test.out --probabilistic --consistency-transformation -p 0.05  --max-diff 10
+calltest $bin/mlocarna $exdir/archaea.fa --tgtdir test.out --probabilistic --consistency-transformation -p 0.05  --max-diff 10
 rm -rf test.out
 
 
 ## ========================================
 ## test locarnate (if t_coffee is available)
 ##
-calltest $bin/locarnate $topdir/Examples/archaea.fa
+calltest $bin/locarnate $exdir/archaea.fa
 if [ -d "test_results" ] ; then
     rm -rf test_results
 fi

@@ -32,7 +32,7 @@ main(int argc, char **argv) {
     ma2 = new MultipleAlignment("Tests/archaea.aln");
     if (!ma2->is_proper()) throw(failure("Wrong format"));
     if (ma2->empty()) throw(failure("Wrong format"));
-    
+
     // test whether ma2 is proper
     CHECK(ma2->is_proper());
     
@@ -92,7 +92,7 @@ main(int argc, char **argv) {
     
     MultipleAlignment *ma5;
     
-    ma5 = new MultipleAlignment("Tests/archaea.fa",MultipleAlignment::FormatType::FASTA);
+    ma5 = new MultipleAlignment("Tests/archaea-aln.fa",MultipleAlignment::FormatType::FASTA);
     if (!ma5->is_proper()) throw(failure("Wrong format"));
     if (ma5->empty()) throw(failure("Wrong format"));
     
@@ -103,7 +103,7 @@ main(int argc, char **argv) {
     CHECK(seq.is_proper());
 
     //! test whether seq has correct size
-    CHECK(seq.num_of_rows() == 3);
+    CHECK(seq.num_of_rows() == 6);
     
     {
 	// write and read again test
