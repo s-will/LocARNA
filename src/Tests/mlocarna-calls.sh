@@ -12,8 +12,8 @@ mkdir $bin
 
 topdir=../$srcdir/.. # top level directory of the locarna source
 
-ln -sf ../$topdir/Utils/mlocarna $bin/mlocarna
-ln -sf ../$topdir/Utils/locarnate $bin/locarnate
+ln -sf ../$topdir/src/Utils/mlocarna $bin/mlocarna
+ln -sf ../$topdir/src/Utils/locarnate $bin/locarnate
 ln -sf ../../locarna.bin $bin/locarna
 ln -sf ../../locarna_p $bin/locarna_p
 ln -sf ../../sparse $bin/sparse

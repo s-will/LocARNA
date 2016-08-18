@@ -52,7 +52,7 @@ if BUILD_FROM_VC
 # %.1:	$(top_builddir)/src/%
 # 	-$(HELP2MAN) $(HELP2MANOPTS) --output=$@ $<
 
-# %.1: $(top_srcdir)/Utils/%
+# %.1: $(top_srcdir)/src/Utils/%
 # 	-$(POD2MAN) $< >$@
 
 include help2man-rules pod2man-rules
@@ -66,7 +66,7 @@ help2man-rules:
 
 pod2man-rules:
 	for i in $(pod2man_prgs); do\
-	  printf "$$i.1:	$(top_srcdir)/Utils/$$i\n\
+	  printf "$$i.1:	$(top_srcdir)/src/Utils/$$i\n\
 	\t$(POD2MAN) $$< \$$@\n\n" ;\
 	done > $@
 
