@@ -1115,6 +1115,7 @@ namespace LocARNA {
                                  size_t width,
                                  FormatType::type format
                                  ) const {
+        assert(format == FormatType::CLUSTAL || format == FormatType::STOCKHOLM);
         size_t start=1;
 	do {
 	    size_t end = std::min(length(),start+width-1);
@@ -1133,6 +1134,7 @@ namespace LocARNA {
     std::ostream &
     MultipleAlignment::write(std::ostream &out, 
                                  FormatType::type format) const {
+        assert(format == FormatType::CLUSTAL || format == FormatType::STOCKHOLM);
         return
             write(out,length(),format);
     }

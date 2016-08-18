@@ -1,55 +1,53 @@
-#include <assert.h>
-#include <iostream>
+#include "catch.hpp"
+
 #include <fstream>
 #include <sstream>
-#include <stdio.h>
 
-#include <LocARNA/pfold_params.hh>
-#include <LocARNA/ext_rna_data.hh>
-
-#include "check.hh" 
+#include <../LocARNA/pfold_params.hh>
+#include <../LocARNA/ext_rna_data.hh>
 
 using namespace LocARNA;
 
 /** @file some unit tests for ExtRnaData 
 */
 
-int
-main(int argc, char **argv) {
- 
+
+TEST_CASE("ExtRnaData can fold alignments, write to file and read again") {
     PFoldParams pfparams(true,true);
 
     std::ostringstream sizeinfo1;
     std::ostringstream sizeinfo2;
 
-    std::string outfilename="Tests/ext-archaea.pp";
-    try {
-	
-	ExtRnaData rna_data("Tests/archaea.aln",0.01,0.0001,0.0001,5,10,10,pfparams);
-	rna_data.write_size_info(sizeinfo1);
-
-	std::ofstream out(outfilename.c_str());
-	if (!out.good()) {
-	    throw failure("Cannot write to file.");
-	}
-	rna_data.write_pp(out);
-	
-	out.close();
-
-	ExtRnaData rna_data2(outfilename,0.01,0.0001,0.0001,5,10,10,pfparams);
-
-	rna_data.write_size_info(sizeinfo2);
-	
-    } catch(failure &f) {
-	std::cerr << "Failure: " << f.what() << std::endl;
-	std::remove(outfilename.c_str());
-	return 1;
-    }
-
-    std::remove(outfilename.c_str());
-
-    CHECK(sizeinfo1.str() == sizeinfo2.str());
+    std::string outfilename="ext-archaea.pp";
     
+    SECTION("fold alignment") {
+        ExtRnaData *rna_data=0L;
+        REQUIRE_NOTHROW( rna_data = 
+                         new ExtRnaData("archaea.aln",0.01,0.0001,0.0001,5,10,10,pfparams) );
 
-    return 0;
+        rna_data->write_size_info(sizeinfo1);
+        
+        REQUIRE(sizeinfo1.str()
+                == "arcs: 13  stackings: 10  arcs in loops: 18  unpaireds in loops: 64");
+        
+        SECTION("write to pp file") {
+            std::ofstream out(outfilename.c_str());
+            REQUIRE(out.good());
+            rna_data->write_pp(out);
+            out.close();
+            
+            SECTION("and read again") {
+                if (rna_data) delete rna_data;
+                REQUIRE_NOTHROW( rna_data = 
+                                 new ExtRnaData(outfilename, 
+                                                0.01,0.0001,0.0001,5,10,10,pfparams) );
+
+                rna_data->write_size_info(sizeinfo2);
+                
+                REQUIRE(sizeinfo1.str() == sizeinfo2.str());
+            }
+            std::remove(outfilename.c_str());
+        }
+        delete rna_data;
+    }
 }

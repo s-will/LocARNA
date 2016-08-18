@@ -1,8 +1,10 @@
+#include <catch.hpp>
+
 #include <stdio.h>
-#include <LocARNA/sequence.hh>
-#include <LocARNA/rna_ensemble.hh>
-#include <LocARNA/basepairs.hh>
-#include <LocARNA/pfold_params.hh>
+#include <../LocARNA/sequence.hh>
+#include <../LocARNA/rna_ensemble.hh>
+#include <../LocARNA/basepairs.hh>
+#include <../LocARNA/pfold_params.hh>
 
 using namespace LocARNA;
 
@@ -27,7 +29,7 @@ fold_sequence(const Sequence &seq, bool use_alifold) {
     return rna_ensemble;
 }
 
-bool
+void
 test_in_loop_probs(const Sequence &seq, const RnaEnsemble &rna_ensemble) {     
 
     size_t fails=0;
@@ -135,66 +137,39 @@ test_in_loop_probs(const Sequence &seq, const RnaEnsemble &rna_ensemble) {
 	}
     }
 
-    if (fails==0) {
-	return true;
-    } else {
-	std::cerr << fails << " Fails."<<std::endl;
-	return false;
-    }
+    REQUIRE( fails == 0 );
 }
 
 
-int
-main(int argc,char **argv) {
+TEST_CASE("in loop probabilities can be predicted") {
+    SECTION("in loop probs are predicted for single sequences") {
+        std::string testseqstr="CCCCAGGAAAACCGGAAAACCAGGGG";
+        Sequence seq;
+        seq.append(Sequence::SeqEntry("test",testseqstr));
     
-    //std::string testseqstr="UUACGACUUCGGCCGGAGCGCGGACGUAGCGACGUAGGCGCGAUGCGACGCGACGUGGGAGCGAUCGGCGCGUACGGCGGCAUCGCGGAUCGAUGCGGCAUCG";
-    //std::string testseqstr="AAGGGAUCUAGAAAGCAUUCGGGUUACGGACUCUCUUAAGAGGAUACUUCACUGCGGGCAUGUACCUCCAUGGGGCGAAGCAUAGAGAUUCGCAGUCCAUCUCACUCAUGGAGCACGUCCGGUAUCUAGUUAGAAAACAUUGAGUAUCUAGGUCGGGCGCAGCGGCGGGGGGAGAAGUCGUAAGCGAAUUCUCGCUUAGCGAUUGUUAGAGGAGAGACGUAUGCCAAAAGCGGCCAAACUCUCCGCUGGCGGAAUCAACAGUUCAACACGUGGAUAGUGAAAUCCGGCGAGCUCGUCUUGGUAAUAACUGGUUCAAUUCGUUUGACCGAAAGUCGUCGAACGUAUAAUUCCGCAACCCUCCAACCGAGCAGGUCGGCGCAUGGAGGGUUCCCCCGGUGAAGGGCAAACGCGGAAGGUAGGGUUUACGUUGAGCGUCUUGCCAUCCGUAGCGAAGAAUGAUAACCGAGCACUCCGGGACGUUCUUUUAGCACGAGUGUGAUUUAACGUGUCCGGAGCAGACGCUGAUAUCAGAUGACAUUUCAGUA";
-    //                      12345678901234567890123456
-    
-    std::string testseqstr="CCCCAGGAAAACCGGAAAACCAGGGG";
-    //std::string testseqstr="GAAAACC";
-    
-    Sequence seq;
-    Sequence mseq;
+        RnaEnsemble *rna_ensemble=0L;
+        REQUIRE_NOTHROW( rna_ensemble = fold_sequence(seq,false) );
+        test_in_loop_probs(seq, *rna_ensemble);
+        if (rna_ensemble) delete rna_ensemble;
+    }
 
-    seq.append(Sequence::SeqEntry("test",testseqstr));
-    
-    std::string seq_data[]={
-	"AF008220",           "GGAGGAUUAG-CUCAGCUGGGAGAGCAUCUG--CC----U-UACAAG--CAGAGGGUCGGCGGUUCGAGCCCGUCAUCCUCCA",
-	"M68929",             "GCGGAUAUAA-CUUAGGGGUUAAAGUUGCAG--AU----U-GUGGCU--CUGAAAA-CACGGGUUCGAAUCCCGUUAUUCGCC",
-	"X02172",             "GCCUUUAUAG-CUUAG-UGGUAAAGCGAUAA--AC----U-GAAGAU--UUAUUUACAUGUAGUUCGAUUCUCAUUAAGGGCA",
-	"Z11880",             "GCCUUCCUAG-CUCAG-UGGUAGAGCGCACG--GC----U-UUUAAC--CGUGUGGUCGUGGGUUCGAUCCCCACGGAAGGCG",
-	    "D10744",             "GGAAAAUUGAUCAUCGGCAAGAUAAGUUAUUUACUAAAUAAUAGGAUUUAAUAACCUGGUGAGUUCGAAUCUCACAUUUUCCG"
-    };
-    
-    for (size_t i=4; i<5; i++) {
-	mseq.append(Sequence::SeqEntry(seq_data[2*i],seq_data[2*i+1]));
-    }
-    
-    // seq.write(std::cout);   
-
-    // seq.write(std::cout);
-    
-    // mseq.write(std::cout);
-    
-    RnaEnsemble *rna_ensemble   = fold_sequence(seq,false);
-    RnaEnsemble *mrna_ensemble  = fold_sequence(mseq,true);
-    
-    if (! test_in_loop_probs(seq, *rna_ensemble)) {
-	delete rna_ensemble;
-	delete mrna_ensemble;
-	throw(failure("test in loop probs failed for rna_ensemble"));
-    }
-    
-    if (! test_in_loop_probs(mseq, *mrna_ensemble)) {
-	delete rna_ensemble;
-	delete mrna_ensemble;
-	throw(failure("test in loop probs failed for mrna_ensemble"));
-    }
-    
-    delete rna_ensemble;
-    delete mrna_ensemble;
-    
-    
-    return 0;
+    SECTION("in loop probs are predicted for alignemnts") {
+        Sequence mseq;
+        std::string seq_data[]={
+            "AF008220", "GGAGGAUUAG-CUCAGCUGGGAGAGCAUCUG--CC----U-UACAAG--CAGAGGGUCGGCGGUUCGAGCCCGUCAUCCUCCA",
+            "M68929",   "GCGGAUAUAA-CUUAGGGGUUAAAGUUGCAG--AU----U-GUGGCU--CUGAAAA-CACGGGUUCGAAUCCCGUUAUUCGCC",
+            "X02172",   "GCCUUUAUAG-CUUAG-UGGUAAAGCGAUAA--AC----U-GAAGAU--UUAUUUACAUGUAGUUCGAUUCUCAUUAAGGGCA",
+            "Z11880",   "GCCUUCCUAG-CUCAG-UGGUAGAGCGCACG--GC----U-UUUAAC--CGUGUGGUCGUGGGUUCGAUCCCCACGGAAGGCG",
+            "D10744",   "GGAAAAUUGAUCAUCGGCAAGAUAAGUUAUUUACUAAAUAAUAGGAUUUAAUAACCUGGUGAGUUCGAAUCUCACAUUUUCCG"
+        };
+        
+        for (size_t i=0; i<5; i++) {
+            mseq.append(Sequence::SeqEntry(seq_data[2*i],seq_data[2*i+1]));
+        }
+        
+        RnaEnsemble *mrna_ensemble=0L;
+        REQUIRE_NOTHROW( mrna_ensemble=fold_sequence(mseq,true) );
+        test_in_loop_probs(mseq, *mrna_ensemble);
+        if (mrna_ensemble) delete mrna_ensemble;
+    }    
 }

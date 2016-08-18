@@ -302,7 +302,7 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 
-AC_CONFIG_FILES([Makefile src/Makefile src/Utils/Makefile Doc/man/Makefile
+AC_CONFIG_FILES([Makefile src/Makefile src/Tests/Makefile src/Utils/Makefile Doc/man/Makefile
 lib/Makefile lib/perl/Makefile lib/perl/MLocarna/Makefile
 LocARNA-${API_VERSION}.pc:lib/LocARNA.pc.in
 src/package_constants.hh:src/package_constants.hh.in

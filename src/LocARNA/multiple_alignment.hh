@@ -828,7 +828,7 @@ public:
      * @brief Write alignment to stream
      *
      * @param out output stream
-     * @param format alignment format; default: CLUSTAL (@see FormatType)
+     * @param format alignment format; only CLUSTAL or STOCKHOLM; default: CLUSTAL (@see FormatType)
      *
      * @return output stream
      *
@@ -844,7 +844,7 @@ public:
      *
      * @param out output stream
      * @param width output stream
-     * @param format alignment format; default: CLUSTAL (@see FormatType)
+     * @param format alignment format; only CLUSTAL or STOCKHOLM; default: CLUSTAL (@see FormatType)
      *
      * @return output stream
      *

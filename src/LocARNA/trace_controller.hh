@@ -246,13 +246,6 @@ namespace LocARNA {
 	 */
 	size_type get_delta() const {return delta_;}
 
-	/**
-	 * print debugging information to stream
-	 * @param out output stream
-	 */
-	void
-	print_debug(std::ostream & out) const;
-
     private:
 	/**
 	 * For n=lenA>0 and m=lenB>0, constrain the min/max j without reference alignment by

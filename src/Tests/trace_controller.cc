@@ -1,33 +1,20 @@
+#include "catch.hpp"
+
 #include <iostream>
 #include <string>
 #include <sstream>
 
-#include <LocARNA/sequence.hh>
-#include <LocARNA/multiple_alignment.hh>
-#include <LocARNA/trace_controller.hh>
+#include <../LocARNA/sequence.hh>
+#include <../LocARNA/multiple_alignment.hh>
+#include <../LocARNA/trace_controller.hh>
 
 using namespace LocARNA;
 
-bool verbose=false;
-
-int main(int argc, char**argv) {
-    int retVal = 0;
-
-    for (size_t i=1; i<(size_t)argc; i++)  {
-	if (std::string(argv[i])=="-v" || std::string(argv[i])=="--verbose") verbose=true;
-    }    
-    
+TEST_CASE("TracController is correctly initialized with simple alignment") {
     const std::string example_ma=
     	"CLUSTAL W --- LocARNA 1.5.4 - Local Alignment of RNA\n"
     	"\n"
     	"\n"
-    // 	"fruA               ---CCUCGAGGGGAACCCG-A------------AAGGGACCCGAGAGG---\n"
-    // 	// "fwdB               AU-GUUGGAGGGGAACCCG-U------------AAGGGACCCUCCAAGAU-\n"
-    // 	// "hdrA               GG--CACCACUCGAAGGC--U------------AAGCCAAAGUGGUG-CU-\n"
-    // 	// "selD               UUACGAUGUGCCGAACCCUUU------------AAGGGAGGCACAUCGAAA\n"
-    // 	// "vhuD               GU--UCUCUCGGGAACCCGUC------------AAGGGACCGAGAGA-AC-\n"
-    // 	// "vhuU               AG-CUCACAACCGAACCCA-U------------UUGGGAGGUUGUGAGCU-\n"
-    // 	"fdhA               CG-CCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAG-GUGGCG-\n";
 	"seqA A--CTTG\n"
 	"seqB ACCT--G\n"
 	;
@@ -52,30 +39,19 @@ int main(int argc, char**argv) {
     
     MultipleAlignment ma(example_ma_istream);
     
-    if (verbose) {
-	std::cout <<"ma:"<<std::endl;
-	ma.write_debug(std::cout);
-    }
-    
     Sequence seqA;
-    //seqA.append_row("fruA","CCUCGAGGGGAACCCGAAAGGGACCCGAGAGG");
     seqA.append(Sequence::SeqEntry("seqA","A-CTTG"));
 
     Sequence seqB;
-    //seqB.append_row("fdhA","CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG");
     seqB.append(Sequence::SeqEntry("seqB","ACCT-G"));
-    
-    if (verbose) {
- 	std::cout<<"seqA:"<<std::endl;
-	seqA.write(std::cout);
-	std::cout<<"seqB:"<<std::endl;
-	seqB.write(std::cout);
-    }
     
     TraceController tc(seqA,seqB,&ma,0);
     
-    //if (verbose) tc.print_debug(std::cout);
-    
-    return retVal;
+    std::string expected_debug = 
+        "min_col_vector:   0   1   1   4   4   4   6 \n"
+        "max_col_vector:   0   3   3   5   5   5   6 \n";
 
+    std::ostringstream observed_debug;
+    tc.print_debug(observed_debug);
+    REQUIRE(observed_debug.str() == expected_debug);
 }

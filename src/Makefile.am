@@ -1,3 +1,7 @@
+SUBDIRS=Utils . Tests
+
+AM_DEFAULT_SOURCE_EXT = .cc
+
 ## Place generated object files (.o) into the same directory as their source
 ## files, in order to avoid collisions when non-recursive make is used.
 AUTOMAKE_OPTIONS = subdir-objects
@@ -86,31 +90,6 @@ transform = s/\.bin$$//
 # all binaries should be linked to libLocARNA
 LDADD=libLocARNA-$(API_VERSION).la
 
-BINTESTS = Tests/multiple_alignment Tests/rna_data Tests/ext_rna_data	\
-           Tests/trace_controller Tests/rna_ensemble			\
-           Tests/rna_structure Tests/matrices
-SCRIPTTESTS = Tests/mlocarna-calls.sh
-
-TESTS= $(BINTESTS) $(SCRIPTTESTS)
-
-check_PROGRAMS = $(BINTESTS)
-
-AM_DEFAULT_SOURCE_EXT = .cc
-
-MYTESTDATA    = archaea.aln archaea-aln.fa archaea-wrong.fa
-BUILT_SOURCES = $(MYTESTDATA:%=Tests/%)
-EXTRA_DIST    = $(MYTESTDATA:%=$(top_srcdir)/Data/Examples/%) $(SCRIPTTESTS) Tests/check.hh
-
-Tests/archaea.aln: $(top_srcdir)/Data/Examples/archaea.aln
-	cp $< $@
-Tests/archaea-aln.fa: $(top_srcdir)/Data/Examples/archaea-aln.fa
-	cp $< $@
-Tests/archaea-wrong.fa: $(top_srcdir)/Data/Examples/archaea-wrong.fa
-	cp $< $@
-
-
-CLEANFILES = $(MYTESTDATA:%=Tests/%)
-
 dist_locarna_bin_SOURCES = locarna.cc
 
 locarna_p_SOURCES = locarna_p.cc
@@ -125,8 +104,8 @@ locarna_deviation_SOURCES = deviation.cc
 
 locarna_rnafold_pp_SOURCES = locarna_rnafold_pp.cc
 
-BUILT_SOURCES += LocARNA/ribosum85_60.icc
-CLEANFILES += LocARNA/ribosum85_60.icc
+BUILT_SOURCES = LocARNA/ribosum85_60.icc
+CLEANFILES = LocARNA/ribosum85_60.icc
 
 if !VC_CROSS_COMPILING
 LocARNA/ribosum85_60.icc: \

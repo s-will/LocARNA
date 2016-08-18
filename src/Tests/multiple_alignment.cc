@@ -1,10 +1,10 @@
+#include "catch.hpp"
+
 #include <iostream>
 #include <sstream>
-#include <LocARNA/multiple_alignment.hh>
-#include <LocARNA/alignment.hh>
-#include <LocARNA/sequence.hh>
-
-#include "check.hh"
+#include <../LocARNA/multiple_alignment.hh>
+#include <../LocARNA/alignment.hh>
+#include <../LocARNA/sequence.hh>
 
 using namespace LocARNA;
 
@@ -15,108 +15,123 @@ using namespace LocARNA;
     and simple checks
 */
 
-int
-main(int argc, char **argv) {
+
+TEST_CASE("a multiple alignment can be constructed as empty") {
+    MultipleAlignment ma;
     
-    // create simple alignment
+    REQUIRE(ma.empty());
+}
+
+TEST_CASE("2-way multiple alignment can be created from strings") {
     MultipleAlignment ma("seqA","seqB",
-			 "A-CGT-U",
-			 "CCCG-CU");
+                         "A-CGT-U",
+                         "CCCG-CU");
     
-    // test whether ma is proper
-    CHECK(ma.is_proper());
-    
-    // create simple alignment from file
-    MultipleAlignment *ma2=0L;
-    
-    ma2 = new MultipleAlignment("Tests/archaea.aln");
-    if (!ma2->is_proper()) throw(failure("Wrong format"));
-    if (ma2->empty()) throw(failure("Wrong format"));
+    REQUIRE(ma.is_proper());
+}
 
-    // test whether ma2 is proper
-    CHECK(ma2->is_proper());
+TEST_CASE("a multiple alignment can be created from file (clustalw)") {
+    MultipleAlignment *ma=0L;
     
-    // test whether ma2 has correct size
-    CHECK(ma2->num_of_rows() == 6);
+    ma = new MultipleAlignment("archaea.aln");
     
-    // test whether ma2 contains "fdhA" and "fruA" 
-    CHECK (ma2->contains("fdhA") && ma2->contains("fruA"));
-    
-    Sequence seq = (*ma2).as_sequence();
-    delete ma2;
-    
-    std::string name_str = "hdrA";
-    std::string seq_str  = "GG--CACCACUCGAAGGCUA-------------AG-CCAAAGUGGUG--CU";
-    seq.append(Sequence::SeqEntry(name_str,seq_str));
-    
-    //! test whether seq is proper
-    CHECK(seq.is_proper());
-
-    // test whether seq has correct size
-    CHECK(7 == seq.num_of_rows());
-    
-    // test whether seq contains "fdhA" and "hdrA" 
-    CHECK(seq.contains("fdhA") && seq.contains(name_str));
-    
-    size_t index = seq.index(name_str);
-    CHECK(seq.seqentry(index).seq().str() == seq_str);
-    
-    bool ok=false;
-    MultipleAlignment *ma3=0L;
-
-    // CHECK whether wrong format (unequal length) is recognized
-    try {
-    	ma3 = new MultipleAlignment("Tests/archaea-wrong.fa",MultipleAlignment::FormatType::FASTA);
-	if (!ma3->is_proper()) throw(failure("Wrong format"));
-	if (ma3->empty()) throw(failure("Wrong format"));
-    } catch(failure &f) {
-	ok=true;
+    SECTION("the alignment is properly constructed, as intended") {
+        REQUIRE(ma->is_proper());
+        REQUIRE(!ma->empty());
+        REQUIRE(ma->num_of_rows() == 6);
+        REQUIRE(ma->contains("fdhA"));
+        REQUIRE(ma->contains("fruA"));
     }
-    if (ma3) delete ma3;
-    CHECK(ok);
     
-    // // ATTENTION: since we allow empty clustal files, we cannot
-    // // distinguish clustal without header and strange names from 
-    // // fasta
-    // // CHECK whether wrong format (fasta given but clustal expected) is recognized
-    // ok=false;
-    // try {
-    //     MultipleAlignment ma4("Tests/archaea.fa",MultipleAlignment::FormatType::CLUSTAL);
-    //     if (!ma4.is_proper()) throw(failure("Wrong format"));
-    //     if (ma4.empty()) throw(failure("Wrong format"));
-    //     //ma4.write_debug(std::cerr);
-    // } catch(failure &f) {
-    //     ok=true;
-    // }
-    // CHECK(ok);
-    
-    MultipleAlignment *ma5;
-    
-    ma5 = new MultipleAlignment("Tests/archaea-aln.fa",MultipleAlignment::FormatType::FASTA);
-    if (!ma5->is_proper()) throw(failure("Wrong format"));
-    if (ma5->empty()) throw(failure("Wrong format"));
-    
-    seq=(*ma5).as_sequence();
-    delete ma5;
-    
-    //! test whether seq is proper
-    CHECK(seq.is_proper());
-
-    //! test whether seq has correct size
-    CHECK(seq.num_of_rows() == 6);
-    
-    {
-	// write and read again test
-	
-	std::ostringstream out; 
-	seq.write(out);
-
-	std::istringstream in(out.str()); 
-	MultipleAlignment seq2(in,MultipleAlignment::FormatType::CLUSTAL);
-	
-	CHECK(seq.num_of_rows() == seq2.num_of_rows());
-	CHECK(seq.length() == seq2.length());
+    SECTION("a sequence object can be created from the multiple alignment") {
+            
+        Sequence seq = (*ma).as_sequence();
+        delete ma;
+        
+        SECTION("a further alignment string can be appended, after deleting the original multiple alignment") {
+            std::string name_str = "hdrA";
+            std::string seq_str  = "GG--CACCACUCGAAGGCUA-------------AG-CCAAAGUGGUG--CU";
+            seq.append(Sequence::SeqEntry(name_str,seq_str));
+            
+            REQUIRE(seq.is_proper());
+            REQUIRE(7 == seq.num_of_rows());
+            REQUIRE(seq.contains("fdhA"));
+            REQUIRE(seq.contains(name_str));
+            
+            size_t index = seq.index(name_str);
+            std::string seq_str_at_index = seq.seqentry(index).seq().str();
+            REQUIRE(seq_str_at_index == seq_str);
+        }
     }
+}
 
-    return 0;
+    
+TEST_CASE("creating multiple alignment from file with wrong format fails") {    
+    MultipleAlignment ma("archaea-wrong.fa",MultipleAlignment::FormatType::FASTA);
+
+    REQUIRE(!ma.is_proper());
+}
+
+TEST_CASE("multiple alignment can be constructed from file (fasta)") {    
+    MultipleAlignment *ma;
+    
+    ma = new MultipleAlignment("archaea-aln.fa",MultipleAlignment::FormatType::FASTA);
+    REQUIRE(ma->is_proper());
+    REQUIRE(!ma->empty());
+    
+    SECTION("the multiple alignment can be converted to a sequence") {
+        Sequence seq=(*ma).as_sequence();
+        delete ma;
+        
+        SECTION("the sequence is proper and has 6 entries, after deleting the multiple alignment") {
+            //! test whether seq is proper
+            REQUIRE(seq.is_proper());
+            
+            //! test whether seq has correct size
+            REQUIRE(seq.num_of_rows() == 6);
+        }
+
+        SECTION("the sequence can be written and read again (clustalw)") {
+            std::ostringstream out; 
+            out << "CLUSTAL W" << std::endl;
+            seq.write(out);
+            
+            std::istringstream in(out.str()); 
+            try {
+                MultipleAlignment seq2(in,MultipleAlignment::FormatType::CLUSTAL);
+                
+                REQUIRE(seq2.is_proper());
+                REQUIRE(seq.num_of_rows() == seq2.num_of_rows());
+                REQUIRE(seq.length() == seq2.length());
+                
+            } catch (failure &f) {
+                std::cerr << "Catched exception: "<<f.what()<<std::endl;
+                std::cerr << "... while reading" << std::endl
+                          << out.str() << std::endl;
+                REQUIRE(false);
+            }
+        }
+
+        SECTION("the sequence can be written and read again (stockholm)") {
+            std::ostringstream out; 
+
+            out << "# STOCKHOLM 1.0" << std::endl;
+            seq.write(out,MultipleAlignment::FormatType::STOCKHOLM);
+            
+            std::istringstream in(out.str()); 
+            try {
+                MultipleAlignment seq2(in,MultipleAlignment::FormatType::STOCKHOLM);
+                
+                REQUIRE(seq2.is_proper());
+                REQUIRE(seq.num_of_rows() == seq2.num_of_rows());
+                REQUIRE(seq.length() == seq2.length());
+                
+            } catch (failure &f) {
+                std::cerr << "Catched exception: "<<f.what()<<std::endl;
+                std::cerr << "... while reading" << std::endl
+                          << out.str() << std::endl;
+                REQUIRE(false);
+            }
+        }
+    }
 }
