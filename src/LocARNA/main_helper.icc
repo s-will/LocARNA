@@ -59,6 +59,8 @@ namespace LocARNA {
         
             bool no_lonely_pairs; //!< no lonely pairs option
         
+            int max_bp_span; //!< maximum base pair span
+
             //! allow exclusions for maximizing alignment of connected substructures
             bool struct_local;
         

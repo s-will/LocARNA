@@ -7,11 +7,11 @@
  * for a input RNA sequence and writes a file in the
  * LocARNA-internal pp-format.
  * 
+ * locarna_rnafold_pp folds a sequence or multiple alignment using
+ * partition function folding and writes the result in pp 2.0 format.
+ *
  * This program is part of the LocARNA package. It is intended for
  * computing pair probabilities of the input sequences.
- *
- * Reads sequence in fasta or clustalw from cin and writes pp-files to
- * cout or file
  *
  ************************************************************/
 
@@ -41,73 +41,26 @@
 
 using namespace LocARNA;
 
-    /*
-	 * Concerning rnafold_pp: we need to support at least the following
-    options/arguments
 
-    input file: either format that is parsed by MultipleAlignment; it is not
-    necessary to support input in dot plot ps or pp formats; the new tool
-    should be able to read the input from file or from stdin (e.g. if no
-    filename is provided or filename=="-"). Unlike RNAfold, we want to
-    interpret multiple sequences in fasta format as one alignment. We need
-    to check that the input alignment is proper.
-
-    -C           use structural constraints. [Actually, this becomes
-    obsolete; the tool could use constraints, if they are present in the
-    input. However, the tool could print a warning to std::cerr if
-    constraints are found but -C is missing. We could also add an option
-    like --ignore-constraints. Alternatively, the behavior could be to use
-    structure constraints only when -C is given and otherwise ignore them.
-    The latter would be closer to the behavior of RNAfold; maybe a good idea:)].
-
-    --noLP       forbid lonely base pairs
-
-    --stacking   compute stacking terms
-
-    --in-loop  compute in-loop probabilities
-
-    -p,--min-prob    set cutoff probability (default 0.0005)
-
-    --prob_unpaired_in_loop_threshold   Threshold for prob_unpaired_in_loop
-
-    --prob_basepair_in_loop_threshold    Threshold for prob_basepair_in_loop
-
-    ( the cutoffs like in sparse/locarna_X )
-
-    -o,--output=<file>                       PP output [default: output to
-    std::cout; if file is give output only to file]
-
-    optionally:
-    --force-alifold    use alifold even for single sequences. [The standard
-    behavior could be to use alifold unless the input contains only a single
-    sequence.]
-
-    We need mechanisms to catch wrong input; some of these things are
-    already handled in the lib classes, which raise exceptions on errors.
-    catch such exceptions and print errors on wrong input.
-    Currently the constraint string is not  checked for allowed characters
-    (see RNAfold man page) and balanced parentheses; probably this could
-    crash the fold routine of RNAlib. check this in the set_annotation method of
-    MultipleAlignment, which would make it impossible to put
-    MultipleAlignment objects into some inconsistent state.
-	 * */
-
-//! \brief Structure for command line parameters of locarna
-//!
-//! Encapsulating all command line parameters in a common structure
-//! avoids name conflicts and makes downstream code more informative.
-//!
+/**
+ * \brief Structure for command line parameters
+ *
+ * Encapsulating all command line parameters in a common structure
+ * avoids name conflicts and makes downstream code more informative.
+ *
+ */
 struct command_line_parameters {
     bool opt_help; 	//!< whether to print help
     bool opt_version; 	//!< whether to print version
     bool opt_verbose; 	//!< whether to print verbose output
-    std::string input_file; 		//!< input_file
-    bool use_struct_constraints; 	//!< -C use structural constraints
-    bool no_lonely_pairs; 		//!< no lonely pairs option
+    std::string input_file; 	//!< input_file
+    bool use_struct_constraints;//!< -C use structural constraints
+    bool no_lonely_pairs; 	//!< no lonely pairs option
+    int max_bp_span; 		//!< maximum base pair span
     bool opt_stacking; 		//!< whether to stacking
     int opt_dangling; 		//!< dangling option value
     bool opt_in_loop; 		//!< whether to compute in-loop probabilities
-    double min_prob; 		//! < only pairs with a probability of at least min_prob are taken into account
+    double min_prob; 		//!< only pairs with a probability of at least min_prob are taken into account
     double prob_unpaired_in_loop_threshold; //!< threshold for prob_unpaired_in_loop
     double prob_basepair_in_loop_threshold; //!< threshold for prob_basepait_in_loop
     std::string output_file; 	//!< output file name
@@ -123,6 +76,7 @@ option_def my_options[] = {
     {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
     {"use-struct-constraints",'C',&clp.use_struct_constraints, O_NO_ARG, 0, O_NODEFAULT, "","Use structural constraints"},
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
+    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
     {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Compute stacking terms"},
     {"dangling",0,0,O_ARG_INT,&clp.opt_dangling,"2","","Dangling option value"},
     {"in-loop",0,&clp.opt_in_loop,O_NO_ARG,0,O_NODEFAULT,"","Compute in-loop probabilities"},
@@ -261,7 +215,7 @@ main(int argc, char **argv) {
 
     }
     
-    PFoldParams pfoldparams(clp.no_lonely_pairs, clp.opt_stacking, clp.opt_dangling);
+    PFoldParams pfoldparams(clp.no_lonely_pairs, clp.opt_stacking, clp.max_bp_span, clp.opt_dangling);
 
     RnaEnsemble rna_ensemble(*mseq, pfoldparams, clp.opt_in_loop, use_alifold);
 

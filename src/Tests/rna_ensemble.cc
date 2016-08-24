@@ -18,7 +18,7 @@ extern "C" {
 RnaEnsemble *
 fold_sequence(const Sequence &seq, bool use_alifold) {
     bool inloopprobs=true;
-    PFoldParams pfoldparams(true,false);
+    PFoldParams pfoldparams(true,false,-1,2);
     
     RnaEnsemble *rna_ensemble = new RnaEnsemble(seq,pfoldparams,inloopprobs,use_alifold);
     

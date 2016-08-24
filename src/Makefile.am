@@ -21,8 +21,9 @@ libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
 	LocARNA/sequence.cc LocARNA/stopwatch.cc LocARNA/options.cc	\
 	LocARNA/basepairs.cc LocARNA/alignment.cc			\
 	LocARNA/rna_ensemble.cc LocARNA/rna_data.cc			\
-	LocARNA/scoring.cc LocARNA/infty_int.cc				\
-	LocARNA/match_probs.cc LocARNA/ribosum.cc LocARNA/ribofit.cc	\
+	LocARNA/pfold_params.cc LocARNA/scoring.cc			\
+	LocARNA/infty_int.cc LocARNA/match_probs.cc			\
+	LocARNA/ribosum.cc LocARNA/ribofit.cc				\
 	LocARNA/sequence_annotation.cc LocARNA/anchor_constraints.cc	\
 	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
 	LocARNA/stral_score.cc LocARNA/aligner_p.cc			\

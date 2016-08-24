@@ -80,16 +80,17 @@ namespace LocARNA {
 	// ----------------------------------------
 	// METHODS
 
-
 	/** 
 	 * @brief initialize from fixed structure
 	 * 
-	 * @param structure fixed structure
-	 * @param stacking whether to initialize stacking terms
+	 * @param structure fixed structure @param pfoldparams folding
+	 * parameters. If stacking, initialize stacking terms; if
+	 * noLP, drop lonely pairs, ignore base pairs with
+	 * span>max_bp_span
 	 */
 	void
 	init_from_fixed_structure(const SequenceAnnotation &structure,
-				  bool stacking);
+				  const PFoldParams &pfoldparams);
 
 	/** 
 	 * @brief initialize from rna ensemble 

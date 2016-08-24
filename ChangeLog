@@ -1,6 +1,9 @@
 ============================================================
 === 2016
 1.8.13pre (2016-Dec-5)
+	Introduce maxBPspan option to binary programs.
+	  * maxBPspan shall be applied for structure prediction and reading in of base pairs; thus,
+	    the constraint is also satisfied by the alignment algorithms 'automatically' (TODO!)
 	add stockholm writing test
 	Fix mlocarna bug: write stockholm also in probabilistic mode
 	Fix mlocarna error handling when running multithreaded

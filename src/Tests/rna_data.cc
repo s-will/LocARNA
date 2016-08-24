@@ -16,7 +16,7 @@ using namespace LocARNA;
 /** @file some unit tests for RnaData and ExtRnaData    
 */
 
-PFoldParams pfparams(true,true);
+PFoldParams pfparams(true,true,-1,2);
 
 
 TEST_CASE("RnaData can fold alignments, write to file and reead again") {

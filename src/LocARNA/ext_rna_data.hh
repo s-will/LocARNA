@@ -209,7 +209,7 @@ namespace LocARNA {
 	 * @brief initialize from fixed structure
 	 * 
 	 * @param structure fixed structure
-	 * @param stacking whether to initialize stacking terms
+	 * @param pfoldparams folding parameters
 	 *
 	 * @note overloaded to initialize with additional information
 	 * (in loop probabilities)
@@ -217,13 +217,13 @@ namespace LocARNA {
 	virtual
 	void
 	init_from_fixed_structure(const SequenceAnnotation &structure,
-				  bool stacking);
+				  const PFoldParams &pfoldparams);
 
 	/** 
 	 * @brief initialize from rna ensemble 
 	 * 
 	 * @param rna_ensemble rna ensemble
-	 * @param stacking whether to initialize stacking terms
+	 * @param pfoldparams folding parameters
 	 * 
 	 * @note overloaded to initialize with additional information
 	 * (in loop probabilities)

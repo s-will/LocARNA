@@ -193,6 +193,7 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
+    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
 
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
     // TODO: make ribofit visible
@@ -347,7 +348,7 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking||clp.opt_new_stacking);
+    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking||clp.opt_new_stacking, clp.max_bp_span, 2);
     
     ExtRnaData *rna_dataA=0;
     try {

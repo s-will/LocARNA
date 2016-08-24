@@ -328,7 +328,21 @@ namespace LocARNA {
     inline
     size_t
     frag_len(size_t i, size_t j) {
-	return j+1-i;	
+	return j+1-i;
+    }
+
+    /** 
+     * Span of a base pair
+     * 
+     * @param i left end
+     * @param j right end
+     *
+     * @return number of bases in range i..j
+     */
+    inline
+    size_t
+    bp_span(size_t i, size_t j) {
+	return frag_len(i,j);
     }
 
     /** 

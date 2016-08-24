@@ -87,7 +87,18 @@ namespace LocARNA {
 	 * istream::seekg(0) to reset stream to beginning (needed for
 	 * format autodetect.) Is there a problem due to fail on
 	 * eofbit in C++98?
-	 */
+         *
+         * @todo filter by maxBPspan when reading base pair probabilities from file.
+         * currently maxBPspan in pfoldparams is only respected when folding  
+         *
+         * @note If probabilities have to be computed by folding the
+         * input sequence(s), folding is subject to the parameters
+         * pfoldparams. Also when reading ensemble probabilities from
+         * file, the outcome depends on settings in pfoldparams
+         * (stacking, max_bp_span). Without stacking, stacking probs
+         * are ignored and max_bp_span is used to filter the base
+         * pairs by their maximum span.
+         */
 	RnaData(const std::string &filename,
 		double p_bpcut,
 		double max_bps_length_ratio,
@@ -341,7 +352,9 @@ namespace LocARNA {
 	 * @brief initialize from fixed structure
 	 * 
 	 * @param structure fixed structure
-	 * @param stacking whether to initialize stacking terms
+	 * @param pfoldparams folding parameters
+         *  - stacking: whether to initialize stacking terms
+         *  - max_bp_span: maximum base pair span
 	 *
 	 * @note can be overloaded to initialize with additional
 	 * information (in loop probabilities)
@@ -349,13 +362,15 @@ namespace LocARNA {
 	virtual
 	void
 	init_from_fixed_structure(const SequenceAnnotation &structure,
-				  bool stacking);
+				  const PFoldParams &pfoldparams);
 
 	/** 
 	 * @brief initialize from rna ensemble 
 	 * 
 	 * @param rna_ensemble rna ensemble
-	 * @param stacking whether to initialize stacking terms
+	 * @param pfoldparams folding parameters
+         *  - stacking: whether to initialize stacking terms
+         *  - max_bp_span: maximum base pair span
 	 * 
 	 * @note can be overloaded to initialize with additional
 	 * information (in loop probabilities)
@@ -370,7 +385,9 @@ namespace LocARNA {
 	 * @brief read and initialize from file, autodetect format
 	 * 
 	 * @param filename name of input file
-	 * @param stacking whether to read stacking terms
+	 * @param pfoldparams folding parameters
+         *  - stacking: whether to initialize stacking terms
+         *  - max_bp_span: maximum base pair span
 	 *
 	 * @return whether probabilities were read completely
 	 *
@@ -379,7 +396,7 @@ namespace LocARNA {
 	 */
 	bool
 	read_autodetect(const std::string &filename,
-			bool stacking);
+			const PFoldParams &pfoldparams);
 		
 	/**
 	 * @brief check in loop probabilities

@@ -50,7 +50,7 @@ namespace LocARNA {
 				 )) {
 	bool complete=
 	    read_autodetect(filename,
-			    pfoldparams.stacking());
+			    pfoldparams);
     	
 	if (!complete) {
 	    // recompute all probabilities
@@ -155,7 +155,7 @@ namespace LocARNA {
                                       p_uilcut)) {
 
 	bool complete=
-	    read_autodetect(filename,pfoldparams.stacking());
+	    read_autodetect(filename,pfoldparams);
     	
 	if (!complete) {
 	    // recompute all probabilities
@@ -224,7 +224,7 @@ namespace LocARNA {
 
     bool
     RnaData::read_autodetect(const std::string &filename,
-			     bool stacking) {
+			     const PFoldParams &pfoldparams) {
 	bool failed=true;  //flag for signalling a failed attempt to
 			   //read a certain file format
 	
@@ -232,7 +232,7 @@ namespace LocARNA {
 	// does the file format contain only sequence information or
 	// should we assume that the base pair probabilities are given
 
-	pimpl_->has_stacking_=stacking;
+	pimpl_->has_stacking_ = pfoldparams.stacking();
 
 	// try dot plot ps format
 	if (failed) {
@@ -323,7 +323,7 @@ namespace LocARNA {
 
 		    if (ma.has_annotation(TA::fixed_structure)) {
 			init_from_fixed_structure(ma.annotation(TA::fixed_structure),
-						  stacking);
+						  pfoldparams);
                         sequence_only=false;
 		    }
 		}
@@ -359,7 +359,7 @@ namespace LocARNA {
 
 		    if (ma.has_annotation(TA::fixed_structure)) {
 			init_from_fixed_structure(ma.annotation(TA::fixed_structure),
-						  stacking);
+						  pfoldparams);
 			sequence_only=false;
 		    }
 		}
@@ -387,13 +387,13 @@ namespace LocARNA {
 
     void
     RnaData::init_from_fixed_structure(const SequenceAnnotation &structure,
-				       bool stacking) {
-	pimpl_->init_from_fixed_structure(structure,stacking);
+				       const PFoldParams &pfoldparams) {
+	pimpl_->init_from_fixed_structure(structure, pfoldparams);
     }
     
     void
     RnaDataImpl::init_from_fixed_structure(const SequenceAnnotation &structure,
-					   bool stacking) {
+					   const PFoldParams &pfoldparams) {
 	assert(structure.length() == sequence_.length());
 	RnaStructure rna_structure(structure.single_string());
 	
@@ -401,22 +401,41 @@ namespace LocARNA {
 	
 	for (RnaStructure::const_iterator it=rna_structure.begin();
 	     rna_structure.end() != it; ++it) {
+
+            if ( bp_span(it->first,it->second) > pfoldparams.max_bp_span() ) {continue;}
+
 	    arc_probs_(it->first,it->second)=1.0;
             
-	    if (stacking) {
+	    if (pfoldparams.stacking()) {
 		if (rna_structure.contains(RnaStructure::bp_t(it->first+1,it->second-1))) {
 		    arc_2_probs_(it->first,it->second)=1.0;
 		}
 	    }
 	}
         
-        has_stacking_=stacking;
+        
+        if (pfoldparams.noLP()) {
+            // remove all lonely base pairs
+            for (RnaStructure::const_iterator it=rna_structure.begin();
+                 rna_structure.end() != it; ++it) {
+                
+                if (!(arc_probs_(it->first+1,it->second-1)>0.0
+                      ||
+                      arc_probs_(it->first-1,it->second+1)>0.0)) {
+                    
+                    arc_probs_(it->first,it->second)=0.0;
+                }
+            }
+        }
+        
+        has_stacking_=pfoldparams.stacking();
     }
+    
 
     void
     ExtRnaData::init_from_fixed_structure(const SequenceAnnotation &structure,
-					  bool stacking) {
-	RnaData::init_from_fixed_structure(structure,stacking);
+					  const PFoldParams &pfoldparams) {
+	RnaData::init_from_fixed_structure(structure,pfoldparams);
 	ext_pimpl_->init_from_fixed_structure(structure);
     }
 
@@ -424,24 +443,27 @@ namespace LocARNA {
     ExtRnaDataImpl::init_fixed_unpaired_in_loop(size_t i,
 						size_t j,
 						const RnaStructure &rna_structure) {
-	for (size_t k=i+1; k<j; ++k) {
-	    bool contained=true;
-	    for (RnaStructure::const_iterator it2=rna_structure.begin();
+	// for all k enclosed by (i,j)
+        for (size_t k=i+1; k<j; ++k) {	    
+            // check whether k is contained in the loop of (i,j),
+            // i.e. there is not other base pair between (i,j) and k
+            bool contained=true;
+            for (RnaStructure::const_iterator it2=rna_structure.begin();
 		 contained && rna_structure.end() != it2; ++it2) {
-		if (i < it2->first
-		    && it2->first <= k
-		    && k <= it2->second
-		    && it2->second < j) {
-		    
-		    contained=false;
-		    // k=it2->second-1; // micro-optimization
+                // testing the probability of bp *it2 handles constraints
+                if (arc_probs_(it2->first,it2->second) > 0
+                    && (i < it2->first
+                        && it2->first <= k
+                        && k <= it2->second
+                        && it2->second < j
+                        )
+                    ) {
+                    contained=false;
 		}
 	    }
 	    if (contained) {
-		std::cout << "UIL "<<i<<" "<<j<<": "<<k<<std::endl;
 		unpaired_in_loop_probs_.ref(i,j)[k] = 1.0;
 	    }
-	    
 	}
     }
 

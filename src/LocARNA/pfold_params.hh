@@ -5,6 +5,14 @@
 #  include <config.h>
 #endif
 
+extern "C" {
+#   include <ViennaRNA/data_structures.h>
+}
+
+#include <limits>
+#include "aux.hh"
+
+
 namespace LocARNA {
 
     /**
@@ -13,13 +21,16 @@ namespace LocARNA {
      * Describes certain parameters for the partition folding of 
      * a sequence or alignment.
      *
+     * This is used to store and pass model details for RNA
+     * folding. Works as wrapper for the ViennaRNA model details
+     * structure.
+     *
      * @see RnaEnsemble
      *
     */
     class PFoldParams {
-	bool noLP_;
-	bool stacking_;
-	int dangling_;
+	vrna_md_t md_;
+	int stacking_;
     public:
 	/** 
 	 * Construct with all parameters
@@ -29,19 +40,32 @@ namespace LocARNA {
 	 */
 	PFoldParams(bool noLP,
 		    bool stacking,
-		    int dangling=2
-		    )
-	    : noLP_(noLP),
-	      stacking_(stacking),
-	      dangling_(dangling)
-	{}
-	
+                    int max_bp_span,
+		    int dangling
+		    );
+        
+        /**
+         * @brief get ViennaRNA model details structure
+         *
+         * @return initialized md structure
+         *
+         * The structure is set to the values of this object for
+         * maintained values; some further values are set explicitly, e.g. alifold parameters.
+         * All other values are set to the ViennaRNA default values.
+         */
+        const vrna_md_t &
+        model_details() const {
+            return md_;
+        }
+
+        /* provide read access for selected model details */
+
 	/** 
 	 * @brief Check no LP flag
 	 * 
 	 * @return value of flag 
 	 */
-	bool noLP() const {return noLP_;}
+	bool noLP() const {return md_.noLP==1;}
 	
 	/** 
 	 * @brief Check stacking flag
@@ -50,12 +74,24 @@ namespace LocARNA {
 	 */
 	bool stacking() const {return stacking_;}
 
-  /**
-	 * @brief Check dangling value
+        /**
+	 * @brief Get maximum base pair span
+	 *
+	 * @return value of max_bp_span
+	 */
+	size_t
+        max_bp_span() const {return 
+                md_.max_bp_span>=0
+                ? md_.max_bp_span>=0
+                : std::numeric_limits<size_t>::max();
+        }
+
+        /**
+	 * @brief Get dangling value
 	 *
 	 * @return value of dangling
 	 */
-	int dangling() const {return dangling_;}
+	int dangling() const {return md_.dangles;}
 
     };
 

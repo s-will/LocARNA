@@ -13,7 +13,7 @@ using namespace LocARNA;
 
 
 TEST_CASE("ExtRnaData can fold alignments, write to file and read again") {
-    PFoldParams pfparams(true,true);
+    PFoldParams pfparams(true,true,-1,2);
 
     std::ostringstream sizeinfo1;
     std::ostringstream sizeinfo2;

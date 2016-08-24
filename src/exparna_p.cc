@@ -113,7 +113,8 @@ struct command_line_parameters {
     bool opt_ignore_constraints;
     
     bool no_chaining;
-    
+
+    int max_bp_span;
 
     // ------------------------------------------------------------
     // File arguments
@@ -142,55 +143,45 @@ command_line_parameters clp;
 using namespace LocARNA;
 
 option_def my_options[] = {
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","cmd_only"},
+    {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
+    {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
+    {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+    {"quiet",'q',&clp.opt_quiet,O_NO_ARG,0,O_NODEFAULT,"","Quiet"},
+
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring_parameters"},
+    {"no-stacking",0,&clp.no_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking",
+     "Do not use stacking terms (otherwise needs stacking probs by RNAfold -p2)"},
+    {"alpha_1",0,0,O_ARG_INT,&clp.alpha_1,"1","factor","Multiplier for sequential score"},
+    {"alpha_2",0,0,O_ARG_INT,&clp.alpha_2,"5","factor","Multiplier for structural score"},
+    {"alpha_3",0,0,O_ARG_INT,&clp.alpha_3,"5","factor",
+     "Multiplier for stacking score, 0 means no stacking contribution"},
+    {"struct-mismatch-score",0,0,O_ARG_INT,&clp.struct_mismatch_score,"-10","score",
+     "Score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
+
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.01","prob","Minimal probability"},
-    {"out-min-prob",'p',0,O_ARG_DOUBLE,&clp.out_min_prob,"0.0005","prob",
-     "Minimal probability for output (min-prob overrides if smaller)"},
     {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor",
      "Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
     {"max-uil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_uil_length_ratio,"0.0","factor",
      "Maximal ratio of #unpaired bases in loops divided by sequence length (default: no effect)"},
     {"max-bpil-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bpil_length_ratio,"0.0","factor",
      "Maximal ratio of #base pairs in loops divided by loop length (default: no effect)"},
-    
     {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"30","diff",
      "Maximal difference for sizes of matched arcs"},
     {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",
      "Maximal difference for alignment traces"},
     {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff",
      "Maximal difference for alignment traces, only at arc match positions"},
-    {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
-    {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
-    {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
-    {"quiet",'q',&clp.opt_quiet,O_NO_ARG,0,O_NODEFAULT,"","Quiet"},
-
-    {"no-stacking",0,&clp.no_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking",
-     "Do not use stacking terms (needs stack-probs by RNAfold -p2)"},
     {"prob_unpaired_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.01","prob",
      "Threshold for prob_unpaired_in_loop"},
     {"prob_basepair_in_loop_threshold",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.01","prob",
      "Threshold for prob_basepair_in_loop"},
-    {"alpha_1",0,0,O_ARG_INT,&clp.alpha_1,"1","factor","Multiplier for sequential score"},
-    {"alpha_2",0,0,O_ARG_INT,&clp.alpha_2,"5","factor","Multiplier for structural score"},
-    {"alpha_3",0,0,O_ARG_INT,&clp.alpha_3,"5","factor",
-     "Multiplier for stacking score, 0 means no stacking contribution"},
-    {"subopt",0,&clp.opt_subopt,O_NO_ARG,0,O_NODEFAULT,"subopt_traceback","Use the suboptimal traceback"},
-    {"diff-to-opt-score",0,0,O_ARG_INT,&clp.difference_to_opt_score,"-1","threshold",
-     "Threshold for suboptimal traceback"},
-    {"min-score",0,0,O_ARG_INT,&clp.min_score,"90","score","Minimal score of a traced EPM"},
-    {"number-of-EPMs",0,0,O_ARG_INT,&clp.number_of_EPMs,"100","threshold",
-     "Maximal number of EPMs for the suboptimal traceback"},
-    {"inexact-struct-match",0,&clp.inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool",
-     "Allow inexact structure matches"},
-    {"struct-mismatch-score",0,0,O_ARG_INT,&clp.struct_mismatch_score,"-10","score",
-     "Score for a structural mismatch (nucleotide mismatch in an arcmatch)"},
-    {"add-filter",0,&clp.add_filter,O_NO_ARG,0,O_NODEFAULT,"bool",
-     "Apply an additional filter to enumerate only EPMs that are maximally extended (only inexact)"},
-    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
-    {"no-chaining",0,&clp.no_chaining,O_NO_ARG,0,O_NODEFAULT,"bool",
-     "Do not use the chaining algorithm to find best overall chain"},
 
-    {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling_output"},
+    {"out-min-prob",'p',0,O_ARG_DOUBLE,&clp.out_min_prob,"0.0005","prob",
+     "Minimal probability for output (min-prob overrides if smaller)"},
     {"output-ps", 0,&clp.opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"",
      "Output best EPM chain as colored postscript"},
     {"PS_fileA",'a',0,O_ARG_STRING,&clp.psFileA,"","file","Postscript output file for sequence A"},
@@ -204,12 +195,33 @@ option_def my_options[] = {
     {"output-epm-list",0,0,O_ARG_STRING,&clp.epm_list_output,"","file","A list of all found epms"},
     {"output-chained-epm-list",0,0,O_ARG_STRING,&clp.chained_epm_list_output,"","file",
      "A list of all EPMs that are present in the chain"},
+    {"inexact-struct-match",0,&clp.inexact_struct_match,O_NO_ARG,0,O_NODEFAULT,"bool",
+     "Allow inexact structure matches"},
+    {"add-filter",0,&clp.add_filter,O_NO_ARG,0,O_NODEFAULT,"bool",
+     "Apply an additional filter to enumerate only EPMs that are maximally extended (only inexact)"},
+    {"no-chaining",0,&clp.no_chaining,O_NO_ARG,0,O_NODEFAULT,"bool",
+     "Do not use the chaining algorithm to find best overall chain"},
+
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Suboptimal traceback"},
+    {"subopt",0,&clp.opt_subopt,O_NO_ARG,0,O_NODEFAULT,"subopt_traceback","Use the suboptimal traceback"},
+    {"diff-to-opt-score",0,0,O_ARG_INT,&clp.difference_to_opt_score,"-1","threshold",
+     "Threshold for suboptimal traceback"},
+    {"min-score",0,0,O_ARG_INT,&clp.min_score,"90","score","Minimal score of a traced EPM"},
+    {"number-of-EPMs",0,0,O_ARG_INT,&clp.number_of_EPMs,"100","threshold",
+     "Maximal number of EPMs for the suboptimal traceback"},
     
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
+    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
+    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
+
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Miscalleneous"},
+    {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
+
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
     {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"file A","input file A"},
     {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"file B","input file B"},
+    
     {"",0,0,0,0,O_NODEFAULT,"",""}
-
-
 };
 
 // ------------------------------------------------------------
@@ -282,7 +294,7 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs,(!clp.no_stacking));
+    PFoldParams pfparams(clp.no_lonely_pairs,(!clp.no_stacking),clp.max_bp_span,2);
 
     ExtRnaData *rna_dataA=0;
     try {

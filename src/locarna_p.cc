@@ -151,6 +151,9 @@ option_def my_options[] = {
     {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool",
      "Use Ribofit base and arc match scores (overrides ribosum)"},
 
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
+    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
 
     {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"bps-file 1","Input file 1"},
@@ -228,7 +231,7 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking);
+    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking,clp.max_bp_span,2);
     
     RnaData *rna_dataA=0;
     try {

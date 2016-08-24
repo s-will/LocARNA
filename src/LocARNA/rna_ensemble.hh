@@ -43,7 +43,7 @@ namespace LocARNA {
     public:
 	
 	/** 
-	 * @brief Construct from sequence or multiple alignment
+	 * @brief folding constructor (from sequence or multiple alignment)
 	 * 
 	 * Computes ensemble partition functions and probabilities
 	 * using McCaskill's algorithm.  Optionally computes
