@@ -143,7 +143,7 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
         export PKG_CONFIG_PATH="$with_vrna/lib/pkgconfig:$PKG_CONFIG_PATH"
     fi
     dnl call pkg-config (macro PKG_CHECK_MODULES) to set VRNA_LIBS and VRNA_CFLAGS
-    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.2.4],[VRNALIB_OK=true],[VRNALIB_OK=false])
+    PKG_CHECK_MODULES([VRNA],[RNAlib2 >= 2.2.9],[VRNALIB_OK=true],[VRNALIB_OK=false])
 ])
 dnl if pkg-config is not available or something else went wrong with pkg-config,
 dnl then guess the configuration
@@ -169,6 +169,38 @@ AS_IF([test "$VRNALIB_OK" != "true"],
   VRNA_CFLAGS="-I$vrna_prefix/include"
   AC_MSG_NOTICE([Guessing of ViennaRNA flags may be avoided by installing pkg-config.])
   VRNALIB_OK=true
+])
+
+
+dnl ============================================================ 
+dnl check for RNAlib/c++-compiler incompatibility 
+dnl If the ViennaRNA lib is compiled w/ C11 support, then the c++
+dnl compiler has to support anonymous unions and structs.
+
+dnl does the RNAlib require C11 support
+AC_CHECK_LIB([RNA],[vrna_C11_features],[VRNA_USES_C11_FEATURES="true"],[VRNA_USES_C11_FEATURES="false"])
+
+dnl can the C++ compiler compile anonymous unions
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([struct s{union{struct {float x;};struct {int i;};};};])],
+                  [HAS_ANONYMOUS_STRUCT="yes"],[HAS_ANONYMOUS_STRUCT="no"])
+dnl
+AS_IF([test "$VRNA_USES_C11_FEATURES" = "true" && test "$HAS_ANONYMOUS_STRUCT" = "no"], 
+      [AC_MSG_ERROR([
+      ============================================================
+      Your C++ compiler does not support C11 features
+      (anonymous structs) that are required by the available
+      RNAlib. Please recompile the Vienna RNA library with
+      --disable-c11 or use a different C++ compiler.
+      ============================================================
+      ])
+])
+
+dnl END check for RNAlib/c++-compiler incompatibility
+dnl ============================================================
+
+dnl disable c11 if necessary
+AS_IF([test "$VRNA_USES_C11_FEATURES" = "false" ],[
+    AX_APPEND_FLAG(["-DVRNA_DISABLE_C11_FEATURES"],[VRNA_CFLAGS])
 ])
 
 AC_MSG_NOTICE([VRNA_LIBS=$VRNA_LIBS; VRNA_CFLAGS=$VRNA_CFLAGS])
@@ -227,7 +259,7 @@ AC_ARG_ENABLE([link-static],
 
 AC_MSG_RESULT([$link_statically])
 if test "$link_statically" = "yes"; then
-   LDFLAGS="$LDFLAGS -all-static"
+   AX_APPEND_FLAG(["-all-static"],[LDFLAGS])
 fi
 
 dnl ----------------------------------------
@@ -248,7 +280,7 @@ AM_CONDITIONAL([STATIC_LIBLOCARNA],[test "$link_statically" = "no" -a "$dynamic_
 dnl for lgomp if all-static
 AS_IF([test "$link_statically" = "yes"],
 [
-LDFLAGS="$LDFLAGS -ldl"
+        AX_APPEND_FLAG(["-ldl"],[LDFLAGS])
 ])
 
 
@@ -265,36 +297,9 @@ AC_ARG_ENABLE([large-pf],
 )
 AC_MSG_RESULT([$use_large_pf])
 if test "$use_large_pf" = "yes"; then
-    LIBDEFS="$LIBDEFS -DVERY_LARGE_PF"
+    AX_APPEND_FLAG(["-DVERY_LARGE_PF"],[LIBDEFS])
     AC_DEFINE([VERY_LARGE_PF],1,[Use long double type for partition functions])
 fi
-
-
-dnl Pretend a certain C-std (C99 or C11)
-dnl
-dnl Option --enable-STDC=11 is necessary (set by default), when the
-dnl ViennaRNA library was generated with C11-standard (default for
-dnl recent gcc). We set this as default, since ViennaRNA should be
-dnl compiled with C11 if possible; this is either default or should be
-dnl possible for most systems. (Systems without C11-capable C-compiler
-dnl require --enable-STDC=no or --enable-STDC=99.)
-dnl
-AC_MSG_CHECKING([whether to pretend a certain C standard (relevant for C-libs, i.p. RNAlib)])
-use_STDC=11
-AC_ARG_ENABLE([STDC],
-    AC_HELP_STRING(
-        [--enable-STDC],
-        [Pretend a certain C standard (set __STDC_VERSION__) (values=no|99|11, def=11)]
-    ),
-    use_STDC="$enableval"
-)
-AC_MSG_RESULT([$use_STDC])
-if test "$use_STDC" = "11"; then
-   CXXFLAGS="$CXXFLAGS -D __STDC_VERSION__=201112L"
-elif test "$use_STDC" = "99"; then
-   CXXFLAGS="$CXXFLAGS -D __STDC_VERSION__=199901L"
-fi
-
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
