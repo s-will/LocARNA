@@ -247,9 +247,7 @@ main(int argc, char **argv) {
     if (!process_success) {
         std::cerr << "ERROR --- "
                   <<O_error_msg<<std::endl;
-        printf("USAGE: ");
         print_usage(argv[0],my_options);
-        printf("\n");
         return -1;
     }
 

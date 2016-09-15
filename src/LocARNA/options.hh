@@ -9,26 +9,20 @@
 /*------------------------------------------------------------
 
   Copyright (C) 1999 by Sebastian Will.
-
-  All Rights Reserved.
   
   ------------------------------------------------------------*/
 
-/************************************************************
+/**
+ * @file options.hh
+ * @brief options -- an interface for getopt_long
  *
- * options -- an interface for getopt_long
- *
- ************************************************************/
-
-/************************************************************
- * 
- * interface to getopt
+ * Interface to getopt
  *  
  *  - easier to use
- *  - may be restricted to certain cases
- *  - hopefully useable for many cases
+ *  - hopefully useable in many cases
  *
- ************************************************************/
+ * @todo replace by gengetopt
+ */
 
 #include <getopt.h>
 #include <string>
@@ -101,7 +95,7 @@ namespace LocARNA {
 
     /* ***********************************************************/
     /* error message */
-    extern char *O_error_msg;
+    extern std::string O_error_msg;
 
     /* ***********************************************************/
     /* prototypes */

@@ -211,10 +211,8 @@ main(int argc, char **argv) {
     }
 
     if (!process_success) {
-	puts(O_error_msg);
-	printf("USAGE: ");
+	std::cerr << O_error_msg << std::endl;
 	print_usage(argv[0],my_options);
-	printf("\n");
 	return -1;
     }
 

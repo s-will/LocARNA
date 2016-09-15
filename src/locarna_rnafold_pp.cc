@@ -162,9 +162,7 @@ main(int argc, char **argv) {
     if (!process_success) {
 	std::cerr << "ERROR --- "
 		<<O_error_msg<<std::endl;
-	std::cout << "USAGE: " << std::endl;
 	print_usage(argv[0],my_options);
-	std::cout << std::endl;
 	return -1;
     }
 

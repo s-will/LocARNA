@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS=-I m4
 
-SUBDIRS = src lib Doc/man
+SUBDIRS = src lib Doc
 
 ## doxygen documentation
 include $(top_srcdir)/Doc/doxygen.am
