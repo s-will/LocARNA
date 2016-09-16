@@ -18,7 +18,8 @@ before_install:
 install:
   - sudo apt-get install -qq viennarna viennarna-dev
   - sudo apt-get install -qq help2man
-
+  - sudo apt-get install -qq libgsl0-dev
+  
   # g++-5
   #- if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-5; fi
   #- if [ "$CXX" = "g++" ]; then export CXX="g++-5"; fi
@@ -30,4 +31,4 @@ install:
 before_script:
   - autoreconf -i
 
-script: ./configure --enable-STDC=no && make -j4 && make -j4 check
+script: ./configure && make -j4 && make -j4 check
