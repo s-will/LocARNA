@@ -18,11 +18,11 @@ addons:
   apt:
     sources:
       # for gcc5
-      - 'ppa:ubuntu-toolchain-r/test'
+      - sourceline: 'ppa:ubuntu-toolchain-r/test'
       # for clang
-      - 'ppa:h-rayflood/llvm-upper'
+      - sourceline: 'ppa:h-rayflood/llvm-upper'
       # for vrna
-      - 'ppa:j-4/vienna-rna'
+      - sourceline: 'ppa:j-4/vienna-rna'
     packages:
       - viennarna
       - viennarna-dev
