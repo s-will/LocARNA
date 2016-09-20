@@ -1,34 +1,32 @@
+sudo: false
+
 language: cpp
 
 compiler:
   - gcc 
   - clang
 
-before_install:
-  # for gcc 5
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  # for clang
-  - sudo add-apt-repository -y ppa:h-rayflood/llvm-upper
-  # for vrna
-  - sudo apt-add-repository -y ppa:j-4/vienna-rna
-
-  # update package list
-  - sudo apt-get update -q -y
-
 install:
-  - sudo apt-get install -qq viennarna viennarna-dev
-  - sudo apt-get install -qq help2man
-  - sudo apt-get install -qq libgsl0-dev
-  
-  # g++-5
-  #- if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-5; fi
-  #- if [ "$CXX" = "g++" ]; then export CXX="g++-5"; fi
-
-  # clang 3.6
-  - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -y clang-3.6; fi
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.6"; fi
 
 before_script:
   - autoreconf -i
 
 script: ./configure && make -j4 && make -j4 check
+
+addons:
+  apt:
+    sources:
+      # for gcc5
+      - sourceline: 'ppa:ubuntu-toolchain-r/test'
+      # for clang
+      - sourceline: 'ppa:h-rayflood/llvm-upper'
+      # for vrna
+      - sourceline: 'ppa:j-4/vienna-rna'
+    packages:
+      - viennarna
+      - viennarna-dev
+      - help2man
+      - libgsl0-dev
+      # clang 3.6; only needed if [ "$CXX" == "clang++" ]
+      - clang-3.6
