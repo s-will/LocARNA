@@ -1,6 +1,7 @@
 ============================================================
 === 2016
 1.8.12-pre
+	Improved options help
 	Cleanup some files in the repository and distribution
 1.8.11 (2016-Aug-15)
 	Add configure flag --enable-STDC; set default to C11 (RNAlib compatibility)

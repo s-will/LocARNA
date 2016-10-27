@@ -115,9 +115,9 @@ option_def my_options[] = {
     {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
     {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
     {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"",
-     "Use stacking terms (needs stack-probs by RNAfold -p2)"},
+     "Use stacking terms (requires stack-probs by RNAfold -p2)"},
     {"new-stacking",0,&clp.opt_new_stacking,O_NO_ARG,0,O_NODEFAULT,"",
-     "Use new stacking terms (needs stack-probs by RNAfold -p2)"},   
+     "Use new stacking terms (requires stack-probs by RNAfold -p2)"},   
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Locality_type"},
 
@@ -126,7 +126,9 @@ option_def my_options[] = {
     {"sequ-local",0,&clp.sequ_local_given,O_ARG_BOOL,&clp.sequ_local,"false","bool",
      "Sequence local"},
     {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,"----","spec",
-     "Whether and which end gaps are free. order: L1,R1,L2,R2"},
+     "String of four +/- symbols, allowing/disallowing free end gaps at the four sequence ends"
+     " in the order left end of first sequence, right end of first sequence,"
+     " left end of second sequence, right end of second sequence."},
     {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L",
      "Normalized local alignment with parameter L"},
     {"penalized",0,&clp.opt_penalized,O_ARG_INT,&clp.position_penalty,"0","PP",
@@ -145,7 +147,7 @@ option_def my_options[] = {
     {"consensus-structure",0,0,O_ARG_STRING,&clp.cons_struct_type,"alifold","type",
      "Type of consensus structures written to screen and stockholm output [alifold|mea|none]"},
     {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"",
-     "Output only local sub-alignment (to standard out)"},
+     "Output only local sub-alignment (to std out)"},
     {"local-file-output",0,&clp.opt_local_file_output,O_NO_ARG,0,O_NODEFAULT,"",
      "Write only local sub-alignment to output files"},
     {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"",
@@ -168,7 +170,7 @@ option_def my_options[] = {
     {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff",
      "Maximal difference for alignment traces, only at arc match positions"},
     {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file",
-     "Maximal difference relative to given alignment (file in clustalw format))"},
+     "Maximal difference relative to given alignment (file in clustalw format)"},
     {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment",
      "Maximal difference relative to given alignment (string, delim=AMPERSAND)"},
     {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"",
@@ -210,7 +212,7 @@ option_def my_options[] = {
      &clp.arcmatch_scores_file,O_NODEFAULT,"file","Read arcmatch scores"},
     {"read-arcmatch-probs",0,&clp.opt_read_arcmatch_probs,O_ARG_STRING,
      &clp.arcmatch_scores_file,O_NODEFAULT,"file",
-     "Read arcmatch probabilities (weight by mea_beta/100)"},
+     "Read arcmatch probabilities (weighted by factor mea_beta/100)"},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
