@@ -980,6 +980,7 @@ if (exists $options_hash{"exp-prob"}) {
 ## if option sparse is given, then use sparse as pairwise aligner
 if ($sparse) {
     $pw_aligner = "$bindir/sparse";
+    $opt_in_loop_probabilities=1;
 }
 
 ## construct parameter string for locarna
