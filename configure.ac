@@ -38,7 +38,7 @@ AC_SUBST([PACKAGE_SOURCES_URL], ["http://www.bioinf.uni-freiburg.de/Software/Loc
 
 
 dnl minimally required ViennaRNA version
-VRNA_VERSION=2.2.9
+VRNA_VERSION=2.3.0
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -173,9 +173,11 @@ AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true" ],
   VRNA_CFLAGS="-I$vrna_prefix/include"
   AC_MSG_NOTICE([Guessing of ViennaRNA flags may be avoided by installing pkg-config.])
   
-  AC_CHECK_LIB([libRNA],vrna_fold,[VRNALIB_OK=true],[VRNALIB_OK=false])
+  AC_CHECK_LIB([RNA],[vrna_fold],[VRNALIB_OK=true],[VRNALIB_OK=false])
 ])
 
+# add vrna to libs
+LIBS="$VRNA_LIBS $LIBS"
 
 dnl ============================================================ 
 dnl check for RNAlib/c++-compiler incompatibility 
@@ -210,8 +212,7 @@ AS_IF([test "$VRNA_USES_C11_FEATURES" = "false" ],[
 
 AC_MSG_NOTICE([VRNA_LIBS=$VRNA_LIBS; VRNA_CFLAGS=$VRNA_CFLAGS])
 
-dnl finally, set LDFLAGS and CPPFLAGS
-LIBS="$VRNA_LIBS $LIBS"
+dnl finally, set CPPFLAGS
 CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 
 

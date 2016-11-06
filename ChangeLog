@@ -1,6 +1,8 @@
 ============================================================
 === 2016
 1.8.12-pre
+	Fix configure bug: correctly recognize C11 features of ViennaRNA
+	Require ViennaRNA 2.3.0
 	Improved options help
 	Cleanup some files in the repository and distribution
 1.8.11 (2016-Aug-15)
