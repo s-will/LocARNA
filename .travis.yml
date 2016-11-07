@@ -5,35 +5,19 @@ compiler:
   - clang
 
 before_install:
-  # for gcc 5
-  # - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-
-  # for clang
-  - sudo add-apt-repository -y ppa:h-rayflood/llvm-upper
-
-  # update package list
-  - sudo apt-get update -q -y
 
 install:
   - sudo apt-get install -qq help2man
   - sudo apt-get install -qq libgsl0-dev
   
-  # g++-5
-  #- if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-5; fi
-  #- if [ "$CXX" = "g++" ]; then export CXX="g++-5"; fi
-
-  # clang 3.6
-  - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -y clang-3.6; fi
-  - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.6"; fi
-
-  # install conda to install viennarna
+  # install conda to install build requirements
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - "./miniconda.sh -b"
   - export CONDA_PATH=/home/travis/miniconda3/
   - export PATH=$CONDA_PATH/bin:$PATH
   - conda update --yes conda
-  - conda install --yes viennarna -c bioconda # -c conda-forge
+  - conda install --yes -c bioconda llvm gcc viennarna 
   - export CONDA_LIB_PATH=$CONDA_PATH/lib
   # - ls $CONDA_LIB_PATH
   # - ls $CONDA_PATH/include
