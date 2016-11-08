@@ -237,7 +237,8 @@ namespace LocARNA {
 			    O_error_msg = "Cannot parse argument of option --"
                                 + options[index].longname;
 			} else {
-			    O_error_msg = "Cannot parse argument of option -" + c;
+			    O_error_msg = "Cannot parse argument of option -";
+                            O_error_msg += c;
 			}
 			return FALSE;
 		    }
