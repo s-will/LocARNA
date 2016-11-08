@@ -14,7 +14,7 @@ install:
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - "./miniconda.sh -b"
-  - export CONDA_PATH=/home/travis/miniconda3/
+  - export CONDA_PATH=$HOME/miniconda3/
   - export PATH=$CONDA_PATH/bin:$PATH
   - conda update --yes conda
   - conda install --yes -c bioconda llvm gcc viennarna 
