@@ -13,14 +13,14 @@ install:
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - "./miniconda.sh -b"
-  - export CONDA_PATH=$HOME/miniconda3/
+  - export CONDA_PATH=$HOME/miniconda3
   - export PATH=$CONDA_PATH/bin:$PATH
   - conda update --yes conda
   - conda install --yes -c bioconda llvm gcc viennarna 
   - export CONDA_LIB_PATH=$CONDA_PATH/lib
   # - ls $CONDA_LIB_PATH
   # - ls $CONDA_PATH/include
-  - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++ -I$CONDA_PATH/gcc/include/c++" ; fi
+  - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++ -I$CONDA_PATH/gcc/include/c++ -I$CONDA_PATH/gcc/include/c++/x86_64-unknown-linux-gnu" ; fi
 
 before_script:
   - autoreconf -i
