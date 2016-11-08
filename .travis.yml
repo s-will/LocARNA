@@ -20,7 +20,7 @@ install:
   - export CONDA_LIB_PATH=$CONDA_PATH/lib
   # - ls $CONDA_LIB_PATH
   # - ls $CONDA_PATH/include
-  - if [ "$CXX" == "clang++" ]; then CXXFLAGS='--stdlib=libc++' ; fi
+  - if [ "$CXX" == "clang++" ]; then export CXXFLAGS='--stdlib=libc++' ; fi
 
 before_script:
   - autoreconf -i
