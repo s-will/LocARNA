@@ -13,7 +13,12 @@ addons:
     - g++-4.8
     - libc++-dev
 
+
 before_install:
+  # for clang
+  - sudo add-apt-repository -y ppa:h-rayflood/llvm-upper
+  # update package list
+  - sudo apt-get update -q -y
 
 install:
   - sudo apt-get install -qq help2man libgsl0-dev
@@ -31,6 +36,7 @@ install:
 
   - if [ "$CXX" == "g++" ]; then conda install --yes gcc ; fi
 
+  - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -y clang-3.6; fi
   - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.6"; fi
 
