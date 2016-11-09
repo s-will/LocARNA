@@ -27,7 +27,7 @@ install:
 
   - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -y clang-3.6; fi
   - if [ "$CXX" == "clang++" ]; then sudo apt-get install libc++-dev ; fi
-  - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++ ; fi
+  - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.6"; fi
 
 before_script:
