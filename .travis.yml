@@ -1,34 +1,37 @@
+sudo: false
 language: cpp
-
 compiler:
-  - gcc 
+  - gcc
   - clang
 
-before_install:
-  # for gcc 5
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  # for clang
-  - sudo add-apt-repository -y ppa:h-rayflood/llvm-upper
-  # for vrna
-  - sudo apt-add-repository -y ppa:j-4/vienna-rna
-
-  # update package list
-  - sudo apt-get update -q -y
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-4.8
+    - g++-4.8
+    - clang
+    - help2man
+    - libgsl0-dev
 
 install:
-  - sudo apt-get install -qq viennarna viennarna-dev
-  - sudo apt-get install -qq help2man
-  - sudo apt-get install -qq libgsl0-dev
-  
-  # g++-5
-  #- if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-5; fi
-  #- if [ "$CXX" = "g++" ]; then export CXX="g++-5"; fi
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 
-  # clang 3.6
-  - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -y clang-3.6; fi
-  - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.6"; fi
+  # install conda to install viennarna
+  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - "./miniconda.sh -b"
+  - export CONDA_PATH=$HOME/miniconda3
+  - export PATH=$CONDA_PATH/bin:$PATH
+  - export CONDA_LIB_PATH=$CONDA_PATH/lib
+  - conda update --yes conda
+  - conda install --yes -c bioconda viennarna
+
+  # don't use libc++ for now
+  # - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
 
 before_script:
   - autoreconf -i
 
-script: ./configure && make -j4 && make -j4 check
+script: ./configure --with-vrna=$CONDA_PATH && make -j${CPU_COUNT} && make -j${CPU_COUNT} check
