@@ -18,15 +18,14 @@ addons:
 install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 
-  # install conda to install viennarna
+  # install conda to install build requirements
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - "./miniconda.sh -b"
   - export CONDA_PATH=$HOME/miniconda3
   - export PATH=$CONDA_PATH/bin:$PATH
-  - export CONDA_LIB_PATH=$CONDA_PATH/lib
   - conda update --yes conda
-  - conda install --yes -c bioconda viennarna
+  - conda install --yes -c bioconda viennarna gcc
 
   # don't use libc++ for now
   # - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
