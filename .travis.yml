@@ -32,7 +32,10 @@ install:
 
 before_script:
 - autoreconf -i
-script: ./configure && make -j4 && make -j4 check && make dist-gzip
+
+script: 
+- ./configure --with-vrna=$CONDA_PATH
+- make -j${CPU_COUNT} && make -j${CPU_COUNT} check && make dist-gzip
 
 before_deploy:
   - export DIST_GZIP=$(ls locarna-*.tar.gz)
