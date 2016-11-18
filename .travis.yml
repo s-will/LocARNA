@@ -1,19 +1,35 @@
+sudo: false
 language: cpp
 compiler:
-- gcc
-- clang
-before_install:
-- sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-- sudo add-apt-repository -y ppa:h-rayflood/llvm-upper
-- sudo apt-add-repository -y ppa:j-4/vienna-rna
-- sudo apt-get update -q -y
+  - gcc
+  - clang
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-4.8
+    - g++-4.8
+    - clang
+    - help2man
+    - libgsl0-dev
+
 install:
-- sudo apt-get install -qq viennarna viennarna-dev
-- sudo apt-get install -qq help2man
-- sudo apt-get install -qq libgsl0-dev
-- if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -y
-  clang-3.6; fi
-- if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.6"; fi
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+
+  # install conda to install build requirements
+  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - "./miniconda.sh -b"
+  - export CONDA_PATH=$HOME/miniconda3
+  - export PATH=$CONDA_PATH/bin:$PATH
+  - conda update --yes conda
+  - conda install --yes -c bioconda viennarna gcc
+
+  # don't use libc++ for now
+  # - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
+
 before_script:
 - autoreconf -i
 script: ./configure && make -j4 && make -j4 check && make dist-gzip
