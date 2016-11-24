@@ -37,11 +37,11 @@ script:
 - ./configure --with-vrna=${CONDA_PATH}
 - make -j${CPU_COUNT}
 - make -j${CPU_COUNT} check
-- make dist-gzip
 
 before_deploy:
   - export DIST_GZIP=$(ls locarna-*.tar.gz)
   - echo "Deploying autoconf's ${DIST_GZIP} to GitHub releases"
+  - make dist-gzip
 
 deploy:
   provider: releases
