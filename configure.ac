@@ -38,7 +38,7 @@ AC_SUBST([PACKAGE_SOURCES_URL], ["http://www.bioinf.uni-freiburg.de/Software/Loc
 
 
 dnl minimally required ViennaRNA version
-VRNA_VERSION=2.3.0
+VRNA_VERSION=2.3.1
 
 AC_CONFIG_MACRO_DIR([m4])
 

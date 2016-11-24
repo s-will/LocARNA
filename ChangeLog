@@ -1,9 +1,9 @@
 ============================================================
 === 2016
-1.8.12 (2016-Nov-18)
+1.8.12 (2016-Nov-24)
 	Fix mlocarna with sparse (precomputation of inloop probs)
 	Update VRNA/C11 configuration (adapts automatically; remove --enable-STDC )
-	Require ViennaRNA >=2.3.0
+	Require ViennaRNA >=2.3.1
 	Improved options help
 	Cleanup some files in the repository and distribution
 1.8.11 (2016-Aug-15)
