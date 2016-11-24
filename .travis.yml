@@ -40,8 +40,10 @@ script:
 
 before_deploy:
   - make dist-gzip
+  - make dist-zip
   - export DIST_GZIP=$(ls locarna-*.tar.gz)
-  - echo "Deploying autoconf's ${DIST_GZIP} to GitHub releases"
+  - export DIST_ZIP=$(ls locarna-*.zip)
+  - echo "Deploying Changelog and autoconf's dists (${DIST_GZIP} and ${DIST_ZIP}) to GitHub releases"
 
 deploy:
   provider: releases
@@ -49,7 +51,11 @@ deploy:
     secure: rHvVz0u8eLMD/m95NscWxqrvQJcwzoWqDU2FVg0toURBjzsPCYa/7t4s1Pu26ycCXW9fOc2UEJhQ60AVHuMFIM9n7EFJEqygZPZXs+Is6lFlQXphN8frWa2xb7gi25LvxH/mnd+XWIZdCTUT7us1rk9msXn48y7S9sR4qSIq8ibwB/5ZwtGCR9fybfdx4mhkIloUTGKjSslsFpwTjVLx/Ch1F3yULANMvaS8gwS7pE0d4Ci6HPFO7vi7QRtGJmtmeSvm+pNpriZ7oe/YUA+EWMWDRKyJQI2diM0j+V2YLcNB60Z2BO0L5My8Gre++pIwSgjd+uTy/p7Nwy8w8BT6LKSlwHwAM/lPd8JAzGoN+yBKEHUwJcnIfeGbG5RVgSNFn+8SOsECvy15JncMb+1rFLp3GrTCJhV+JSU6zvFLMZ9LzlKB8ARKZd9DrSW39zDWO6HRO53HMM6M5hjWV+msGYexQjmqRSc/U8nxYwtNziVJy2ndbp40eZnMMF9J8vMy/sWQy1U44amcIj+J+N8jc9rfIRx3/R559udCgYx+Tpn6GJVXd71ruLAWChVDWGE06kHHKgG8aljpZMUbwjG50Af3XyGLuuOBSMV2q7YDgQLkY9veSfhj6Znf9gQijRypLy6GJYAwVet8+MttYdN/sAjIqBZl9plLhJg3MXJtSfw=
   skip_cleanup: true
   file_glob: true
-  file: "${DIST_GZIP}"
+  overwrite: true
+  file:
+    - ${DIST_GZIP}
+    - ${DIST_ZIP}
+    - ChangeLog
   on:
     repo: s-will/LocARNA
     tags: true
