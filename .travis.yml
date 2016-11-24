@@ -39,9 +39,9 @@ script:
 - make -j${CPU_COUNT} check
 
 before_deploy:
+  - make dist-gzip
   - export DIST_GZIP=$(ls locarna-*.tar.gz)
   - echo "Deploying autoconf's ${DIST_GZIP} to GitHub releases"
-  - make dist-gzip
 
 deploy:
   provider: releases
