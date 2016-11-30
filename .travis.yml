@@ -41,9 +41,12 @@ script:
 before_deploy:
   - make dist-gzip
   - make dist-zip
+  - make doxygen-doc
   - export DIST_GZIP=$(ls locarna-*.tar.gz)
   - export DIST_ZIP=$(ls locarna-*.zip)
-  - echo "Deploying Changelog and autoconf's dists (${DIST_GZIP} and ${DIST_ZIP}) to GitHub releases"
+  - export DOC_GZIP=${DIST_GZIP/locarna/locarna-doc}
+  - tar czf ${DOC_GZIP} Doc
+  - echo "Deploying API-Doc, Changelog and autoconf's dists (${DIST_GZIP} and ${DIST_ZIP}) to GitHub releases"
 
 deploy:
   provider: releases
@@ -55,6 +58,7 @@ deploy:
   file:
     - ${DIST_GZIP}
     - ${DIST_ZIP}
+    - ${DOC_GZIP}
     - ChangeLog
   on:
     repo: s-will/LocARNA
