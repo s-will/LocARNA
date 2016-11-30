@@ -95,10 +95,7 @@ sub systemverb_withinput($$) {
     printmsg 1,"\"$input\" >>> $cmd\n";
     
     $cmd.=">/dev/null" unless $verbosemode>0;
-    my $fh;
-    open($fh,"|$cmd");
-    print $fh $input;
-    close $fh;
+    system("printf \"$input\" |$cmd");
 }
 
 
