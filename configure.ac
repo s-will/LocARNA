@@ -89,7 +89,7 @@ AS_IF([test $cross_compiling = no], [
 AC_CHECK_PROG([POD2MAN],[pod2man],[pod2man],[false])
 
 dnl ----------------------------------------
-dnl doxygen documentation
+dnl generate doxygen documentation in Doxy
 dnl
 
 DX_HTML_FEATURE(ON)
@@ -101,7 +101,7 @@ DX_XML_FEATURE(OFF)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
 
-DX_INIT_DOXYGEN($PACKAGE_NAME, ["Doc/doxygen.cfg"], ["Doc"])
+DX_INIT_DOXYGEN($PACKAGE_NAME, ["Doc/doxygen.cfg"], ["Doxy"])
 dnl ----------------------------------------
 
 

@@ -45,8 +45,8 @@ before_deploy:
   - make doxygen-doc
   - export DIST_GZIP=$(ls locarna-*.tar.gz)
   - export DIST_ZIP=$(ls locarna-*.zip)
-  - export DOC_GZIP=${DIST_GZIP/locarna/locarna-doc}
-  - tar czf ${DOC_GZIP} Doc
+  - export DOC_GZIP=${DIST_GZIP/locarna/locarna-doxy}
+  - tar czf ${DOC_GZIP} Doxy
   - echo "Deploying API-Doc, Changelog and autoconf's dists (${DIST_GZIP} and ${DIST_ZIP}) to GitHub releases"
 
 deploy:
