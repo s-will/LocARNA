@@ -1,0 +1,50 @@
+## requires installation in ../_inst
+
+INSTDIR=../_inst
+EXDIR=../Data/Examples
+
+FIGS=Figs/relprof.pdf
+
+MANDIR=${INSTDIR}/share/man/man1
+MANS=$(wildcard ${MANDIR}/*.1)
+DOCPDFS=$(subst ${MANDIR}/,man/,$(MANS:.1=.pdf))
+
+.PHONY: manpagepdfs
+
+all:	locarnap-doc.pdf
+
+%.output: %.fa
+	${INSTDIR}/bin/mlocarna --probabilistic --consistency-transformation $< >$@
+
+example.evaluation: example.output
+	${INSTDIR}/bin/mlocarna --evaluate example.out/results/result.aln example.fa  >$@
+
+example.fa:
+	cp ${EXDIR}/archaea.fa example.fa
+
+example2.fa:
+	cp ${EXDIR}/tRNA_5.fa example2.fa
+
+locarnap-doc.pdf: locarnap-doc.tex $(FIGS) example.fa example.output manpagepdfs
+	pdflatex $<
+	pdflatex $<
+# append all manual pages
+	pdfjoin $@ $(DOCPDFS) --outfile $@-joined
+	mv $@-joined $@
+
+Figs/relprof.pdf: example.output
+	${INSTDIR}/bin/reliability-profile.pl example.out --out=Figs/relprof.pdf
+
+
+manpagepdfs: $(DOCPDFS)
+	if [ ! -d man ] ; then mkdir man ; fi
+
+man/%.pdf: ${MANDIR}/%.1
+	man -t $< | ps2pdf - > $@
+
+
+clean:
+	$(RM) locarnap-doc.aux locarnap-doc.bbl locarnap-doc.blg locarnap-doc.log \
+          locarnap-doc.out locarnap-doc.pdf example.evaluation example.fa example2.fa \
+          example*.output Figs/relprof.pdf man/*.pdf
+	$(RM) -r example.out
