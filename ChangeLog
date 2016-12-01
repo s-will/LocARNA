@@ -1,6 +1,7 @@
 ============================================================
 === 2016
-1.8.12 (2016-Nov-30)
+1.8.12 (2016-Dec-1)
+	Add checks: multi-threaded mlocarna, locarnate
 	Fix severe problem with threads in mlocarna, which caused hangs
 	Fix mlocarna with sparse (precomputation of inloop probs)
 	Update VRNA/C11 configuration (adapts automatically; remove --enable-STDC )
