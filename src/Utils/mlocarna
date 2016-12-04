@@ -2208,6 +2208,10 @@ sub call_locarna_prob( $$$$$ ) {
     printmsg 2, "Align $inA + $inB --> $tgt\n";
     my $cmd="$pw_aligner $inA $inB $locarna_params --pp=$tgt.pp --clustal=$tgt.aln $readprob_args";
 
+    if ($stockholm) {
+        $cmd .= " --stockholm=$tgt.stk";
+    }
+
     $cmd.=" ".reference_alignment_option($refaln_filename);
 
     if (! $moreverbose) { $cmd.=" >/dev/null"; }
