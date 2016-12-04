@@ -52,8 +52,8 @@ rm -rf test.out
 calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --sparse -p 0.05  --max-diff 10
 rm -rf test.out
 
-# check probabilistic mode
-calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --probabilistic --consistency-transformation -p 0.05  --max-diff 10
+# check probabilistic mode and stockholm
+calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --probabilistic --consistency-transformation -p 0.05  --max-diff 10 --stockholm
 rm -rf test.out
 
 # check many threads, probabilistic, and local folding
