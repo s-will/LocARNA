@@ -2051,6 +2051,12 @@ sub compute_all_match_probs_par {
 
 }
 
+sub die_hard {
+    my ($errtext)=@_;
+    printerr $errtext;
+    exit(-1);
+}
+
 sub compute_match_probs($$$$$$$) {
     my ($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$num_seqs) = @_;
         
@@ -2095,10 +2101,10 @@ sub compute_match_probs($$$$$$$) {
 	
 	$cmd .= " >/dev/null" unless $moreverbose;
 	printmsg 1, "$cmd\n";
-	system($cmd)==0 || die "Cannot compute match probabilities by $cmd";
+	system($cmd)==0 || die_hard "Cannot compute match probabilities by $cmd";
 	
 	if ((! -e $tmpfile_bm) || (! -e $tmpfile_am)) {
-	    die "Pairwise aligner failed to write match probabilities to file; called by $cmd";
+	    die_hard "Pairwise aligner failed to write match probabilities to file; called by $cmd";
 	}
 	
 	my %mat_bm = read_sparsematrix_2D($tmpfile_bm);
@@ -2464,10 +2470,10 @@ sub compute_alignment_from_dps( $$$$ ) {
     
     $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
         
-    system $cmd || die "Command $cmd failed."; 
+    system $cmd || die_hard "Command $cmd failed."; 
     
     open(CA_IN,"$tmpfile") || 
-	die 
+	die_hard
 	"\nPairwise aligner failed to write alignment ($tmpfile.)\n  Failed call:\n    $cmd\n";
 	
     
@@ -2511,9 +2517,9 @@ sub compute_alignment_from_dps_probs( $$$$$$ ) {
     
     $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
     
-    system $cmd || die "Command $cmd failed."; 
+    system $cmd || die_hard "Command $cmd failed."; 
    
-    open(CA_IN,"$tmpfile") || die "compute_alignment_from_dps_probs: Cannot read temporary file $tmpfile\n";
+    open(CA_IN,"$tmpfile") || die_hard "compute_alignment_from_dps_probs: Cannot read temporary file $tmpfile\n";
 
     if (!$fast_mea && !$only_basematch_probs) {
 	unlink $tmpfile3;
