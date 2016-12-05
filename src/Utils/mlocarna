@@ -314,7 +314,7 @@ Use RNAplfold with window of size ws (default=2*span)
 
 Parameter file for RNAfold (RNAfold's -P option)
 
-=item  B<--rnafold-temperature=<file>>
+=item  B<--rnafold-temperature=<temp>>
 
 Temperature for RNAfold (RNAfold's -T option)
 

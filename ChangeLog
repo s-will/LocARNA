@@ -1,5 +1,10 @@
 ============================================================
 === 2016
+1.8.13pre (2016-Dec-5)
+	add stockholm writing test
+	Fix mlocarna bug: write stockholm also in probabilistic mode
+	Fix mlocarna error handling when running multithreaded
+	Fix doxygen/docu generation
 1.8.12 (2016-Dec-1)
 	Add checks: multi-threaded mlocarna, locarnate
 	Fix severe problem with threads in mlocarna, which caused hangs
