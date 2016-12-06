@@ -58,9 +58,13 @@ addition to CLUSTALW files).
 
 =over 4
 
-=item  B<--noLP> / B<--LP>                       
+=item  B<--noLP> / B<--LP>
 
 Disallow/Allow lonely pairs (default: Disallow).
+
+=item  B<maxBPspan>
+
+Limit maximum span of base pairs (default off).
 
 =item  B<--free-endgaps>
 
@@ -457,6 +461,7 @@ my $keep_sequence_order;
 my $stockholm;
 
 my $noLP=1;
+
 my $no_lonely_pair;
 my $lonely_pair;
 
@@ -859,7 +864,9 @@ my @autopass_arg_options =
      "max-diff-am=i",
      "max-diff=i",
      "max-diff-at-am=i",
-     
+
+     "maxBPspan=i",
+
      "struct-local=s",
      "sequ-local=s",
      

@@ -16,6 +16,7 @@
 #include "rna_data_impl.hh"
 #include "ext_rna_data_impl.hh"
 #include "rna_structure.hh"
+#include "base_pair_filter.hh"
 
 #include "LocARNA/global_stopwatch.hh"
 
@@ -34,7 +35,7 @@ namespace LocARNA {
 				 p_bpcut)) {
 	init_from_rna_ensemble(rna_ensemble,pfoldparams);
 
-	if (max_bps_length_ratio > 0) {
+	if (max_bps_length_ratio > 0.0) {
 	    pimpl_->drop_worst_bps(max_bps_length_ratio*pimpl_->sequence_.length());
 	}
     }
@@ -54,7 +55,7 @@ namespace LocARNA {
     	
 	if (!complete) {
 	    // recompute all probabilities
-	    RnaEnsemble 
+            RnaEnsemble
 		rna_ensemble(pimpl_->sequence_,
 			     pfoldparams,false,true); // use given parameters, no in loop, use alifold
 	    
@@ -63,7 +64,7 @@ namespace LocARNA {
 				   pfoldparams);
 	}
 	
-	if (max_bps_length_ratio > 0) {
+	if (max_bps_length_ratio > 0.0) {
 	    pimpl_->drop_worst_bps(max_bps_length_ratio*pimpl_->sequence_.length());
 	}
     }
@@ -159,7 +160,7 @@ namespace LocARNA {
     	
 	if (!complete) {
 	    // recompute all probabilities
-	    RnaEnsemble 
+            RnaEnsemble
 		rna_ensemble(sequence(),
 			     pfoldparams,true,true); // use given parameters, in-loop, use alifold
 	    
@@ -167,13 +168,13 @@ namespace LocARNA {
 	    init_from_rna_ensemble(rna_ensemble,pfoldparams);
 	}
 	
-	if (max_bps_length_ratio > 0) {
+	if (max_bps_length_ratio > 0.0) {
 	    ext_pimpl_->drop_worst_bps(max_bps_length_ratio*length());
 	}
-	if (max_uil_length_ratio > 0) {
+	if (max_uil_length_ratio > 0.0) {
 	    ext_pimpl_->drop_worst_uil(max_uil_length_ratio*length());
 	}
-	if (max_bpil_length_ratio > 0) {
+	if (max_bpil_length_ratio > 0.0) {
 	    ext_pimpl_->drop_worst_bpil_precise(max_bpil_length_ratio);
 	}
 
@@ -205,14 +206,14 @@ namespace LocARNA {
 		max_bps_length_ratio,
 		pfoldparams),
 	ext_pimpl_(new ExtRnaDataImpl(this,
-				  p_bpilcut,
-				  p_uilcut)) {
+                                      p_bpilcut,
+                                      p_uilcut)) {
 	init_from_rna_ensemble(rna_ensemble,pfoldparams);
 
-	if (max_uil_length_ratio > 0) {
+	if (max_uil_length_ratio > 0.0) {
 	    	ext_pimpl_->drop_worst_uil(max_uil_length_ratio*length());
 	}
-	if (max_bpil_length_ratio > 0) {
+	if (max_bpil_length_ratio > 0.0) {
 	    	ext_pimpl_->drop_worst_bpil(max_bpil_length_ratio*length());
 	}
 	
@@ -322,8 +323,14 @@ namespace LocARNA {
                     typedef MultipleAlignment::AnnoType TA;
 
 		    if (ma.has_annotation(TA::fixed_structure)) {
-			init_from_fixed_structure(ma.annotation(TA::fixed_structure),
-						  pfoldparams);
+                        RnaStructure structure( ma.annotation(TA::fixed_structure).single_string() );
+                        structure.
+                            apply_bpfilter(BasePairFilter::
+                                           SpanRange(0, pfoldparams.max_bp_span()));
+                        if (pfoldparams.noLP()) {
+                            structure.remove_lonely_pairs();
+                        }
+                        init_from_fixed_structure(structure, pfoldparams);
                         sequence_only=false;
 		    }
 		}
@@ -358,9 +365,16 @@ namespace LocARNA {
                     typedef MultipleAlignment::AnnoType TA;
 
 		    if (ma.has_annotation(TA::fixed_structure)) {
-			init_from_fixed_structure(ma.annotation(TA::fixed_structure),
-						  pfoldparams);
-			sequence_only=false;
+                        RnaStructure structure( ma.annotation(TA::fixed_structure).single_string() );
+                        structure.
+                            apply_bpfilter(BasePairFilter::
+                                           SpanRange(0, pfoldparams.max_bp_span()));
+                        if (pfoldparams.noLP()) {
+                            structure.remove_lonely_pairs();
+                        }
+                        init_from_fixed_structure(structure, pfoldparams);
+
+                        sequence_only=false;
 		    }
 		}
 		
@@ -377,7 +391,7 @@ namespace LocARNA {
 	if (failed) {
 	    throw failure("RnaData: Cannot read input data from file.");
 	}
-	
+
 	pimpl_->sequence_.normalize_rna_symbols();
 
 	// now, we have the sequence but not necessarily all required probabilities!
@@ -386,24 +400,19 @@ namespace LocARNA {
     }
 
     void
-    RnaData::init_from_fixed_structure(const SequenceAnnotation &structure,
-				       const PFoldParams &pfoldparams) {
-	pimpl_->init_from_fixed_structure(structure, pfoldparams);
+    RnaData::init_from_fixed_structure(const RnaStructure &structure,
+                                       const PFoldParams &pfoldparams ) {
+        pimpl_->init_from_fixed_structure(structure, pfoldparams);
     }
     
     void
-    RnaDataImpl::init_from_fixed_structure(const SequenceAnnotation &structure,
-					   const PFoldParams &pfoldparams) {
-	assert(structure.length() == sequence_.length());
-	RnaStructure rna_structure(structure.single_string());
-	
+    RnaDataImpl::init_from_fixed_structure(const RnaStructure &rna_structure,
+                                           const PFoldParams &pfoldparams) {
+        
 	p_bpcut_=0.99; // this has to be less than 1.0 (to ensure p>bp_cut_)
 	
 	for (RnaStructure::const_iterator it=rna_structure.begin();
 	     rna_structure.end() != it; ++it) {
-
-            if ( bp_span(it->first,it->second) > pfoldparams.max_bp_span() ) {continue;}
-
 	    arc_probs_(it->first,it->second)=1.0;
             
 	    if (pfoldparams.stacking()) {
@@ -413,30 +422,14 @@ namespace LocARNA {
 	    }
 	}
         
-        
-        if (pfoldparams.noLP()) {
-            // remove all lonely base pairs
-            for (RnaStructure::const_iterator it=rna_structure.begin();
-                 rna_structure.end() != it; ++it) {
-                
-                if (!(arc_probs_(it->first+1,it->second-1)>0.0
-                      ||
-                      arc_probs_(it->first-1,it->second+1)>0.0)) {
-                    
-                    arc_probs_(it->first,it->second)=0.0;
-                }
-            }
-        }
-        
         has_stacking_=pfoldparams.stacking();
     }
-    
 
     void
-    ExtRnaData::init_from_fixed_structure(const SequenceAnnotation &structure,
-					  const PFoldParams &pfoldparams) {
-	RnaData::init_from_fixed_structure(structure,pfoldparams);
-	ext_pimpl_->init_from_fixed_structure(structure);
+    ExtRnaData::init_from_fixed_structure(const RnaStructure &structure,
+                                          const PFoldParams &pfoldparams) {
+        RnaData::init_from_fixed_structure(structure, pfoldparams);
+        ext_pimpl_->init_from_fixed_structure(structure);
     }
 
     void
@@ -450,13 +443,10 @@ namespace LocARNA {
             bool contained=true;
             for (RnaStructure::const_iterator it2=rna_structure.begin();
 		 contained && rna_structure.end() != it2; ++it2) {
-                // testing the probability of bp *it2 handles constraints
-                if (arc_probs_(it2->first,it2->second) > 0
-                    && (i < it2->first
-                        && it2->first <= k
-                        && k <= it2->second
-                        && it2->second < j
-                        )
+                if (i < it2->first
+                    && it2->first <= k
+                    && k <= it2->second
+                    && it2->second < j
                     ) {
                     contained=false;
 		}
@@ -491,19 +481,13 @@ namespace LocARNA {
 		}
 	    }
 	    if (contained) {
-		std::cout << "BPIL "<<i<<" "<<j<<" "
-			  << ": "<<it2->first<<" "<<it2->second<<" "
-			  << std::endl;
 		arc_in_loop_probs_.ref(i,j)(it2->first,it2->second) = 1.0;
 	    }
-	    
 	}
     }
     
-
     void
-    ExtRnaDataImpl::init_from_fixed_structure(const SequenceAnnotation &structure) {
-	RnaStructure rna_structure(structure.single_string());
+    ExtRnaDataImpl::init_from_fixed_structure(const RnaStructure &rna_structure) {
 	
 	// initialize in loop probabilities
 	//
@@ -525,12 +509,13 @@ namespace LocARNA {
 	}
 
 	// external loop
-
 	init_fixed_unpaired_in_loop(0,rna_structure.length()+1,rna_structure);
 	
 	init_fixed_basepairs_in_loop(0,rna_structure.length()+1,rna_structure);
 	
-	
+
+        // flag that inloop probs are set properly
+        has_in_loop_probs_=true;
     }
 
     void

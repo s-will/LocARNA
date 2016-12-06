@@ -163,7 +163,7 @@ namespace LocARNA {
 				     const std::string &pred_struct,
 				     bool slide,
 				     bool conflict,
-				     const BPFilter &filter)
+				     const BasePairFilter::Filter &filter)
 	:slide_(slide),
 	 conflict_(conflict),
 	 filter_(filter)
@@ -181,7 +181,7 @@ namespace LocARNA {
 				     const RnaStructure &pred, 
 				     bool slide,
 				     bool conflict,
-				     const BPFilter &filter)
+				     const BasePairFilter::Filter &filter)
 	:slide_(slide),
 	 conflict_(conflict),
 	 filter_(filter)

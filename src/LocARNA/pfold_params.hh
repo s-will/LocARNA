@@ -29,14 +29,16 @@ namespace LocARNA {
      *
     */
     class PFoldParams {
-	vrna_md_t md_;
-	int stacking_;
+	vrna_md_t md_; //!< ViennaRNA model details
+	int stacking_; //!< calculate stacking probabilities
     public:
 	/** 
 	 * Construct with all parameters
 	 * 
-	 * @param noLP
-	 * @param stacking 
+	 * @param noLP forbid lonely base pairs
+	 * @param stacking calculate stacking probabilities
+         * @param max_bp_span maximum base pair span
+         * @param dangling ViennaRNA dangling end type
 	 */
 	PFoldParams(bool noLP,
 		    bool stacking,
@@ -77,12 +79,17 @@ namespace LocARNA {
         /**
 	 * @brief Get maximum base pair span
 	 *
-	 * @return value of max_bp_span
+         * @note in vrna_md_s, a value of -1 indicates no restriction
+         * for distant base pairs; in this case, return the maximum
+         * value of size_t
+         *
+         * @return maximum allowed base pair span (returns maximum
+         * size_t value if unrestricted)
 	 */
 	size_t
         max_bp_span() const {return 
                 md_.max_bp_span>=0
-                ? md_.max_bp_span>=0
+                ? md_.max_bp_span
                 : std::numeric_limits<size_t>::max();
         }
 

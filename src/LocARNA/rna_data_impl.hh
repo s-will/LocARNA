@@ -83,14 +83,16 @@ namespace LocARNA {
 	/** 
 	 * @brief initialize from fixed structure
 	 * 
-	 * @param structure fixed structure @param pfoldparams folding
-	 * parameters. If stacking, initialize stacking terms; if
-	 * noLP, drop lonely pairs, ignore base pairs with
-	 * span>max_bp_span
-	 */
+	 * @param structure fixed structure
+         * @param pfoldparams pfold parameters; only stacking is used
+         *
+         * @note this strictly sets the probability of all base pairs
+         * in structure to 1.0. It does not care for constraints like
+         * noLP or maxBPspan; this has to be handled by the caller!
+         */
 	void
-	init_from_fixed_structure(const SequenceAnnotation &structure,
-				  const PFoldParams &pfoldparams);
+	init_from_fixed_structure(const RnaStructure &structure,
+                                  const PFoldParams &pfoldparams);
 
 	/** 
 	 * @brief initialize from rna ensemble 

@@ -79,27 +79,35 @@ namespace LocARNA {
 	// METHODS
 
     private:
+        /**
+         * set the inloop unpaired probabilities of all unpaired bases
+         * in the loop (i,j) to 1.0 according to the given structure
+         */
 	void
 	init_fixed_unpaired_in_loop(size_t i,
 				    size_t j,
 				    const RnaStructure &structure);
+        /**
+         * set the inloop base pair probabilities of all base pairs in
+         * the loop (i,j) to 1.0 according to the given structure
+         */
 	void
 	init_fixed_basepairs_in_loop(size_t i,
 				     size_t j,
 				     const RnaStructure &structure);
     public:
 
-	
 	/** 
 	 * @brief initialize in loop probabilities from fixed structure
 	 * 
 	 * @param structure fixed structure
 	 *
-	 * @note this does not initialize base pair probabilities,
-	 * which is done by the corresponding method of RnaDataImpl.
+	 * @note this initializes only the inloop probabilities;
+	 * itdoes not initialize base pair probabilities, which is
+	 * done by the corresponding method of RnaDataImpl.
 	 */
 	void
-	init_from_fixed_structure(const SequenceAnnotation &structure);
+	init_from_fixed_structure(const RnaStructure &structure);
 
 	/** 
 	 * @brief initialize from rna ensemble 

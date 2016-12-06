@@ -16,13 +16,12 @@ extern "C" {
 }
     
 RnaEnsemble *
-fold_sequence(const Sequence &seq, bool use_alifold) {
-    bool inloopprobs=true;
-    PFoldParams pfoldparams(true,false,-1,2);
+fold_sequence(const Sequence &seq, bool use_alifold, bool inloopprobs, int maxBPspan=-1) {
+    PFoldParams pfoldparams(true,false,maxBPspan,2);
     
     RnaEnsemble *rna_ensemble = new RnaEnsemble(seq,pfoldparams,inloopprobs,use_alifold);
     
-    if (!rna_ensemble->has_in_loop_probs()) {
+    if (inloopprobs && !rna_ensemble->has_in_loop_probs()) {
 	throw failure("No in loop probabilities could be computed!");
     }
     
@@ -148,7 +147,7 @@ TEST_CASE("in loop probabilities can be predicted") {
         seq.append(Sequence::SeqEntry("test",testseqstr));
     
         RnaEnsemble *rna_ensemble=0L;
-        REQUIRE_NOTHROW( rna_ensemble = fold_sequence(seq,false) );
+        REQUIRE_NOTHROW( rna_ensemble = fold_sequence(seq, false, true) );
         test_in_loop_probs(seq, *rna_ensemble);
         if (rna_ensemble) delete rna_ensemble;
     }
@@ -168,8 +167,59 @@ TEST_CASE("in loop probabilities can be predicted") {
         }
         
         RnaEnsemble *mrna_ensemble=0L;
-        REQUIRE_NOTHROW( mrna_ensemble=fold_sequence(mseq,true) );
+        REQUIRE_NOTHROW( mrna_ensemble=fold_sequence(mseq, true, true) );
         test_in_loop_probs(mseq, *mrna_ensemble);
         if (mrna_ensemble) delete mrna_ensemble;
     }    
+}
+
+// test that all basepairs larger than maxBPspan have prob 0 and there are bps with prob >0
+void
+test_maxBPspan(RnaEnsemble *re, size_t maxBPspan) {
+    bool any_nonzero=false;
+    bool all_exceeding_maxBPspan_are_zero=true;
+
+    for (size_t i=1; i<re->length(); ++i) {
+        for (size_t j=i+1; j<=re->length(); ++j) {
+            any_nonzero |= re->arc_prob(i,j)>0;
+            
+            all_exceeding_maxBPspan_are_zero &= bp_span(i,j)<=maxBPspan || re->arc_prob(i,j)==0.0;
+        }
+    }
+
+    REQUIRE( any_nonzero );
+    REQUIRE( all_exceeding_maxBPspan_are_zero );
+}
+
+TEST_CASE("maxBPspan limits base pair span of predictions") {
+    SECTION("maxBPspan works for alignemnts") {
+        
+        size_t maxBPspan = 50;
+        
+        Sequence mseq;
+        std::string seq_data[]={
+            "AF008220", "GGAGGAUUAG-CUCAGCUGGGAGAGCAUCUG--CC----U-UACAAG--CAGAGGGUCGGCGGUUCGAGCCCGUCAUCCUCCA",
+            "M68929",   "GCGGAUAUAA-CUUAGGGGUUAAAGUUGCAG--AU----U-GUGGCU--CUGAAAA-CACGGGUUCGAAUCCCGUUAUUCGCC",
+            "X02172",   "GCCUUUAUAG-CUUAG-UGGUAAAGCGAUAA--AC----U-GAAGAU--UUAUUUACAUGUAGUUCGAUUCUCAUUAAGGGCA",
+            "Z11880",   "GCCUUCCUAG-CUCAG-UGGUAGAGCGCACG--GC----U-UUUAAC--CGUGUGGUCGUGGGUUCGAUCCCCACGGAAGGCG",
+            "D10744",   "GGAAAAUUGAUCAUCGGCAAGAUAAGUUAUUUACUAAAUAAUAGGAUUUAAUAACCUGGUGAGUUCGAAUCUCACAUUUUCCG"
+        };
+        for (size_t i=0; i<5; i++) {
+            mseq.append(Sequence::SeqEntry(seq_data[2*i],seq_data[2*i+1]));
+        }
+        
+        RnaEnsemble *mrna_ensemble=0L;
+         
+        SECTION("without inloop probs") {
+            REQUIRE_NOTHROW( mrna_ensemble=fold_sequence(mseq, true, false, (int)maxBPspan) );
+            test_maxBPspan(mrna_ensemble, maxBPspan);
+        }
+        
+        SECTION("with inloop probs") {
+            REQUIRE_NOTHROW( mrna_ensemble=fold_sequence(mseq, true, true, (int)maxBPspan) );
+            test_maxBPspan(mrna_ensemble, maxBPspan);
+        }
+                
+        if (mrna_ensemble) delete mrna_ensemble;
+    }
 }

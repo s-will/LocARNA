@@ -15,7 +15,8 @@ namespace LocARNA {
     class RnaEnsemble;
     class ExtRnaDataImpl;
     class PFoldParams;
-
+    class RnaStructure;
+    
     /**
      * @brief represent sparsified data of RNA ensemble extended by in loop probabilities
      * 
@@ -158,7 +159,6 @@ namespace LocARNA {
 	 */
 	double 
 	unpaired_external_prob(pos_type k) const;
-
 	
 	/**
 	 * @brief Write object size information
@@ -170,8 +170,6 @@ namespace LocARNA {
 	std::ostream &
 	write_size_info(std::ostream &out) const;
 	
-	
-	// IO
 	/** 
 	 * Write data in extended pp format
 	 * 
@@ -216,7 +214,7 @@ namespace LocARNA {
 	 */
 	virtual
 	void
-	init_from_fixed_structure(const SequenceAnnotation &structure,
+	init_from_fixed_structure(const RnaStructure &structure,
 				  const PFoldParams &pfoldparams);
 
 	/** 

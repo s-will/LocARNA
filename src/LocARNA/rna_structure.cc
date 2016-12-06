@@ -6,6 +6,7 @@
 
 #include "aux.hh"
 #include "rna_structure.hh"
+#include "base_pair_filter.hh"
 
 namespace LocARNA {
 
@@ -155,6 +156,39 @@ namespace LocARNA {
 	}
 	
 	return true;
+    }
+
+    void
+    RnaStructure::
+    remove_lonely_pairs() {
+        //@todo define and use bpfilter for nolp
+        for (bps_t::const_iterator it=bps_.begin(); bps_.end() != it;) {
+            if (!( contains(bp_t(it->first+1,it->second-1))
+                   ||
+                   contains(bp_t(it->first-1,it->second+1)))) {
+                bps_.erase(it++);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+
+    void
+    RnaStructure::
+    apply_bpfilter(const BasePairFilter::Filter &filter) {
+        for(bps_t::const_iterator it=bps_.begin(); bps_.end() != it; ) {
+            if (! filter(*it)) {
+                bps_.erase(it++);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    std::ostream &
+    operator <<(std::ostream &out,const RnaStructure &structure) {
+        return out << structure.to_string();
     }
 
 } // end namespace LocARNA

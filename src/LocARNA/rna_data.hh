@@ -22,6 +22,7 @@ namespace LocARNA {
     class RnaDataImpl;
     class PFoldParams;
     class SequenceAnnotation;
+    class RnaStructure;
     
     /**
      * @brief represent sparsified data of RNA ensemble
@@ -354,15 +355,14 @@ namespace LocARNA {
 	 * @param structure fixed structure
 	 * @param pfoldparams folding parameters
          *  - stacking: whether to initialize stacking terms
-         *  - max_bp_span: maximum base pair span
-	 *
-	 * @note can be overloaded to initialize with additional
+         *
+         * @note can be overloaded to initialize with additional
 	 * information (in loop probabilities)
 	 */
 	virtual
 	void
-	init_from_fixed_structure(const SequenceAnnotation &structure,
-				  const PFoldParams &pfoldparams);
+	init_from_fixed_structure(const RnaStructure &structure,
+                                  const PFoldParams &pfoldparams);
 
 	/** 
 	 * @brief initialize from rna ensemble 

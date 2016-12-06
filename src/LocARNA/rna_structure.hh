@@ -8,8 +8,15 @@
 #include <assert.h>
 #include <set>
 #include <string>
+#include <ostream>
+
 
 namespace LocARNA {
+    
+    namespace BasePairFilter {
+        class Filter;
+    }
+    
     /** 
      * @brief An RNA secondary structure
      *
@@ -33,7 +40,7 @@ namespace LocARNA {
 	
     private:
 	size_t length_;
-	bps_t bps_; 
+	bps_t bps_;
 	
 	static const char unpaired_symbol_='.';
 	static const std::string open_symbols_;
@@ -199,7 +206,7 @@ namespace LocARNA {
 	 * following the order defined in the class (by constants
 	 * open_symbols_ and close_symbols_).
 	 *
-	 * @pre structure is in crossing class!
+	 * @pre structure is in crossing class, i.e. not unlimited!
 	 */
 	std::string
 	to_string() const;
@@ -279,9 +286,29 @@ namespace LocARNA {
 	 */
 	bool
 	crossing() const {return crossing(bps_);}
+
+
+        // base pair filter operations
+        
+        /** @brief remove lonely base pairs
+         *
+         * Removes the lonely base pairs in the structure; in place
+         */
+        void
+        remove_lonely_pairs();
 	
+        /** @brief apply base pair filter
+         *
+         * Applies a base pair filter to all base pairs; removes all
+         * base pairs that don't pass; in place.
+         */
+        void
+        apply_bpfilter(const BasePairFilter::Filter &filter);
+        
     }; // end class RnaStructure
 
+    std::ostream &
+    operator <<(std::ostream &out,const RnaStructure &structure);
 
 } // end namespace LocARNA
 

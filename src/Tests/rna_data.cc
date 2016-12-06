@@ -77,7 +77,7 @@ TEST_CASE("RnaData can construct pairwise (averaged) consensus dot plots") {
 
             SECTION("write to file and read again") {
                 
-                std::string filename="test.pp";
+                std::string filename="test_avg_dp.pp";
                 std::ofstream out(filename.c_str());
                 
                 consensus.write_pp(out);
@@ -107,7 +107,7 @@ TEST_CASE("RnaData can construct pairwise (averaged) consensus dot plots") {
 
             SECTION("this can be written to file and read again by RnaData") {
                 
-                std::string filename="test.pp";
+                std::string filename="test_alicons_dp.pp";
                 // write and read again for the ali_consensus object
                 std::ofstream out(filename.c_str());
                 //std::cout<<"Consensus: "<<std::endl;
@@ -129,3 +129,38 @@ TEST_CASE("RnaData can construct pairwise (averaged) consensus dot plots") {
     }
 }
     
+
+TEST_CASE("RnaData can initialize from fixed structure, even in the context of restricted maxBPspan") {
+    SECTION("Write clustal-like input with fixed structure") {
+
+        std::string filename="test_fixed_structure.pp";
+        // write test example
+        std::ofstream out(filename.c_str());
+        
+        out
+            << "test CCCUCGGG"<<std::endl
+            << "#FS  ((...).)"<<std::endl;
+        
+        out.close();
+
+        SECTION("read without maxBPspan restriction and check some base pairs") {
+            PFoldParams pfoldparams(false,false,-1,2);
+            RnaData rd(filename,0.0,0.0,pfoldparams);
+            
+            REQUIRE( rd.arc_prob(2,6) > 0.99 );
+            REQUIRE( rd.arc_prob(1,8) > 0.99 );
+            REQUIRE( rd.arc_prob(2,7) < 0.01 );
+        }
+
+        SECTION("read with maxBPspan restriction and check some base pairs") {
+            PFoldParams pfoldparams(false,false,6,2);
+            RnaData rd(filename,0.0,0.0,pfoldparams);
+            
+            REQUIRE( rd.arc_prob(2,6) > 0.99 );
+            REQUIRE( rd.arc_prob(1,8) < 0.01 );
+            REQUIRE( rd.arc_prob(2,7) < 0.01 );
+        }
+
+        std::remove(filename.c_str());
+    }
+}

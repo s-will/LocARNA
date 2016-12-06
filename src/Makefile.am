@@ -59,12 +59,12 @@ nobase_library_include_HEADERS = LocARNA/aux.hh LocARNA/plusvector.hh	\
 	LocARNA/aligner_p.hh LocARNA/stral_score.hh			\
 	LocARNA/trace_controller.hh LocARNA/multiple_alignment.hh	\
 	LocARNA/rna_structure.hh LocARNA/confusion_matrix.hh		\
-	LocARNA/discrete_distribution.hh LocARNA/string1.hh		\
-	LocARNA/type_wrapper.hh LocARNA/global_stopwatch.hh		\
-	LocARNA/tuples.hh LocARNA/mcc_matrices.hh			\
-	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh		\
-	LocARNA/exact_matcher.hh LocARNA/main_helper.icc		\
-	LocARNA/ribosum85_60.icc
+	LocARNA/base_pair_filter.hh LocARNA/discrete_distribution.hh	\
+	LocARNA/string1.hh LocARNA/type_wrapper.hh			\
+	LocARNA/global_stopwatch.hh LocARNA/tuples.hh			\
+	LocARNA/mcc_matrices.hh LocARNA/aligner_n.hh			\
+	LocARNA/sparsification_mapper.hh LocARNA/exact_matcher.hh	\
+	LocARNA/main_helper.icc LocARNA/ribosum85_60.icc
 
 ## binary programs
 ##

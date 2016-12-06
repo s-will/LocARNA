@@ -60,7 +60,7 @@ struct command_line_parameters {
     bool opt_stacking; 		//!< whether to stacking
     int opt_dangling; 		//!< dangling option value
     bool opt_in_loop; 		//!< whether to compute in-loop probabilities
-    double min_prob; 		//!< only pairs with a probability of at least min_prob are taken into account
+    double min_prob;            //!< minimal / cutoff base pair probability
     double prob_unpaired_in_loop_threshold; //!< threshold for prob_unpaired_in_loop
     double prob_basepair_in_loop_threshold; //!< threshold for prob_basepait_in_loop
     std::string output_file; 	//!< output file name

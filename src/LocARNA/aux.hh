@@ -337,7 +337,8 @@ namespace LocARNA {
      * @param i left end
      * @param j right end
      *
-     * @return number of bases in range i..j
+     * @return span of base pair (i,j), i.e. the number of bases in
+     * the range i..j
      */
     inline
     size_t
