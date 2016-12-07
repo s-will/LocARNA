@@ -41,23 +41,28 @@ function calltest {
 exdir=$topdir/Data/Examples
 
 # check standard usage with alifold consensus (similar to web server)
-calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --alifold-cons -p 0.05 --max-diff 10
+calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --alifold-cons \
+         -p 0.05 --max-diff 10
 rm -rf test.out
 
 # check constraints
-calltest bin/mlocarna $exdir/haca.snoRNA.fa --tgtdir test.out -p 0.05 --max-diff 20
+calltest bin/mlocarna $exdir/haca.snoRNA.fa --tgtdir test.out -p 0.05 \
+         --max-diff 20
 rm -rf test.out
 
 # check mlocarna sparse
-calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --sparse -p 0.05  --max-diff 10
+calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --sparse -p 0.05 \
+         --max-diff 10
 rm -rf test.out
 
 # check probabilistic mode and stockholm
-calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --probabilistic --consistency-transformation -p 0.05  --max-diff 10 --stockholm
+calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --probabilistic \
+         --consistency-transformation -p 0.05  --max-diff 10 --stockholm
 rm -rf test.out
 
-# check many threads, probabilistic, and local folding
-calltest bin/mlocarna $exdir/SECIS_15.fa  --tgtdir test.out --threads 32 --max-diff 20 --plfold-span 50 --probabilistic -p 0.01
+# check many threads, and local folding and max-diff-aln
+calltest bin/mlocarna $exdir/SECIS_15.fa  --tgtdir test.out --threads 32 \
+         --plfold-span 50 --max-diff 10 --max-diff-aln $exdir/SECIS_15_ref.aln
 rm -rf test.out
 
 
