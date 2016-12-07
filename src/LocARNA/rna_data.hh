@@ -138,9 +138,11 @@ namespace LocARNA {
 	 * @brief Almost empty constructor
 	 * 
 	 * @param p_bpcut cutoff probability
-	 */
+	 * @param max_bp_span maximum base pair span
+         */
 	explicit
-        RnaData(double p_bpcut);
+        RnaData(double p_bpcut,
+                size_t max_bp_span);
 	
     private:
 	/**
@@ -370,11 +372,13 @@ namespace LocARNA {
 	 * @param rna_ensemble rna ensemble
 	 * @param pfoldparams folding parameters
          *  - stacking: whether to initialize stacking terms
-         *  - max_bp_span: maximum base pair span
-	 * 
+         *
 	 * @note can be overloaded to initialize with additional
 	 * information (in loop probabilities)
-	 */
+	 *
+         * @note this method *never* removes lonely or too long base
+         * pairs (according to noLP or maxBPspan, resp.)
+         */
 	virtual
 	void
 	init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
@@ -393,7 +397,15 @@ namespace LocARNA {
 	 *
 	 * @note: this method is designed such that it can be used for
 	 * RnaData and ExtRnaData
-	 */
+	 *
+         * @note the method delegates actual reading to methods
+         * read_pp(), read_old_pp(), read_ps(), and the
+         * MultipleAlignment class.
+         * 
+         * @note when reading in, base pairs exceeding max_bp_span_ or
+         * structure information below the probability thresholds are
+         * ignored (which is -in part- job of the delegates).
+         */
 	bool
 	read_autodetect(const std::string &filename,
 			const PFoldParams &pfoldparams);
@@ -469,8 +481,10 @@ namespace LocARNA {
 	 * @note handling of stacking: after the call, has_stacking_
 	 * is true only if the file specified at least one stacking
 	 * probability and has_stacking_ was true before.
-	 */
-	void
+	 *
+         * @todo move implementation to impl class
+         */
+        void
 	read_old_pp(const std::string &filename);
 
 	/** 
@@ -482,16 +496,13 @@ namespace LocARNA {
 	 * p_bpcut_; reads stacking probabilities only if
 	 * has_stacking_ is true
 	 *
-	 * @note Recently changed behavior: reads sequence name from
-	 * file (instead of guessing from filename!); stacking
-	 * probabilities are read if available (then, sets
-	 * has_stacking_ to true)
+	 * @note reads sequence name from file (instead of guessing
+	 * from filename!); stacking probabilities are read if
+	 * available (then, sets has_stacking_ to true)
 	 *
 	 * @note throws wrong_format exception if not in ps format 
 	 *
-	 * @note reading dot plot ps format is extremely fragile since
-	 * the dot plot ps format was designed for viewing not for
-	 * data input 
+         * @todo move implementation to impl class
 	 */
 	void
 	read_ps(const std::string &filename);

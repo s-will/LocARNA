@@ -31,7 +31,8 @@ namespace LocARNA {
 
 	//! cutoff probabilitiy for base pair
 	double p_bpcut_;
-	
+        size_t max_bp_span_;
+
 	/**
 	 * sparse array for all arc probabilities above threshold; the
 	 * array is used when reading in the probabilities and for
@@ -75,7 +76,8 @@ namespace LocARNA {
 	 * @param p_bpcut cutoff probability
 	 */
 	RnaDataImpl(RnaData *self,
-		    double p_bpcut);
+		    double p_bpcut,
+                    size_t max_bp_span);
 	
 	// ----------------------------------------
 	// METHODS

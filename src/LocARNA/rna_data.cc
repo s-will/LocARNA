@@ -32,26 +32,26 @@ namespace LocARNA {
 		     double max_bps_length_ratio,
 		     const PFoldParams &pfoldparams)
 	: pimpl_(new RnaDataImpl(this,
-				 p_bpcut)) {
+				 p_bpcut,
+                                 pfoldparams.max_bp_span())) {
 	init_from_rna_ensemble(rna_ensemble,pfoldparams);
 
 	if (max_bps_length_ratio > 0.0) {
 	    pimpl_->drop_worst_bps(max_bps_length_ratio*pimpl_->sequence_.length());
 	}
     }
-
-
+    
     RnaData::RnaData(const std::string &filename,
 		     double p_bpcut,
 		     double max_bps_length_ratio,
 		     const PFoldParams &pfoldparams
 		     )
 	: pimpl_(new RnaDataImpl(this,
-				 p_bpcut
+				 p_bpcut,
+                                 pfoldparams.max_bp_span()
 				 )) {
 	bool complete=
-	    read_autodetect(filename,
-			    pfoldparams);
+	    read_autodetect(filename, pfoldparams);
     	
 	if (!complete) {
 	    // recompute all probabilities
@@ -70,9 +70,11 @@ namespace LocARNA {
     }
     
     // do almost nothing
-    RnaData::RnaData(double p_bpcut)
+    RnaData::RnaData(double p_bpcut, size_t max_bp_span)
 	: pimpl_(new RnaDataImpl(this,
-				 p_bpcut)) {
+				 p_bpcut,
+                                 max_bp_span
+                                 )) {
     }
     
     // "consensus" constructor
@@ -115,7 +117,8 @@ namespace LocARNA {
 	:self_(self),
 	 sequence_(edges,rna_dataA.sequence(),rna_dataB.sequence()),
 	 p_bpcut_(),
-	 arc_probs_(0.0),
+         max_bp_span_(),
+         arc_probs_(0.0),
 	 arc_2_probs_(0.0),
 	 has_stacking_(false)
     {
@@ -130,10 +133,12 @@ namespace LocARNA {
 
     // do almost nothing
     RnaDataImpl::RnaDataImpl(RnaData *self,
-			     double p_bpcut)
+			     double p_bpcut,
+                             size_t max_bp_span)
 	:self_(self),
 	 sequence_(),
 	 p_bpcut_(p_bpcut),
+	 max_bp_span_(max_bp_span),
 	 arc_probs_(0.0),
 	 arc_2_probs_(0.0),
 	 has_stacking_(false)
@@ -150,7 +155,7 @@ namespace LocARNA {
 			   double max_bpil_length_ratio,
 			   const PFoldParams &pfoldparams)
 	: 
-	RnaData(p_bpcut),
+	RnaData(p_bpcut, pfoldparams.max_bp_span()),
 	ext_pimpl_(new ExtRnaDataImpl(this,
                                       p_bpilcut,
                                       p_uilcut)) {
@@ -254,7 +259,6 @@ namespace LocARNA {
 	    sequence_only=false;
 	    failed=false;
 	    try {
-		// std::cerr << "Try reading pp "<<filename<<" ..."<<std::endl;
 		read_pp(filename);
 		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
 		    failed=true;
@@ -262,8 +266,6 @@ namespace LocARNA {
 	    } catch (wrong_format_failure &f) {
 		failed=true;
 	    }
-	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
-	    // else std::cerr << "  ... success."<<std::endl;
 	}
 	
 
@@ -290,7 +292,6 @@ namespace LocARNA {
 	    sequence_only=false;
 	    failed=false;
 	    try {
-		// std::cerr << "Try reading old pp "<<filename<<" ..."<<std::endl;
 		read_old_pp(filename);
 		if (!pimpl_->sequence_.is_proper() || pimpl_->sequence_.empty() ) {
 		    failed=true;
@@ -298,8 +299,6 @@ namespace LocARNA {
 	    } catch (wrong_format_failure &f) {
 		failed=true;
 	    }
-	    // if (failed) std::cerr << "  ... did not succeed."<<std::endl;
-	    // else std::cerr << "  ... success."<<std::endl;
 	}
         
         // try stockholm format
@@ -307,7 +306,6 @@ namespace LocARNA {
             sequence_only=true;
 	    failed=false;
 	    try {
-		// std::cerr << "Try reading stockholm "<<filename<<" ..."<<std::endl;
 		MultipleAlignment ma(filename, MultipleAlignment::FormatType::STOCKHOLM);
                 
 		pimpl_->sequence_ = ma;
@@ -331,6 +329,7 @@ namespace LocARNA {
                             structure.remove_lonely_pairs();
                         }
                         init_from_fixed_structure(structure, pfoldparams);
+
                         sequence_only=false;
 		    }
 		}
@@ -549,22 +548,8 @@ namespace LocARNA {
 		
 		double p = rna_ensemble.arc_prob(i,j);
 		
-		// commented out: drop lonely base pairs
-		// double p_out = 
-		//     (i>1 && j<len)
-		//     ? rna_ensemble.arc_prob(i-1,j+1)
-		//     : 0.0;
-		// double p_in = rna_ensemble.arc_prob(i+1,j-1);
-		
 		if ( p > p_bpcut_ ) { // apply filter
-		    
-		    // if (!pfoldparams.noLP() 
-		    // 	|| p_in>p_bpcut_ 
-		    // 	|| p_out>p_bpcut_ ) {
 		    arc_probs_(i,j)=p;
-		    // }  else {
-		    //std::cout << "Drop "<< i<<" " <<j << " "<<p<<" "<<p_in<<" " <<p_out<<std::endl;
-		    //}
 		}
 	    }
 	}
@@ -584,7 +569,6 @@ namespace LocARNA {
 	    }
 	}
 
-	// all set
 	return;
     }
 
@@ -904,17 +888,26 @@ namespace LocARNA {
 		    ss >> i >> j >> p;
 		
 		    p*=p;
-		
+                    
+                    // filter base pairs according to probability and span
+                    if ( p<=pimpl_->p_bpcut_ || bp_span(i,j)>pimpl_->max_bp_span_ ) continue;
+                    
 		    //std::cout << i << " " << j << std::endl;
-		
+                    
 		    if (! (1<=i && i<j && j<=pimpl_->sequence_.length())) {
-			std::cerr << "WARNING: Input dotplot "<<filename<<" contains invalid line " << line << " (indices out of range)" << std::endl;
+			std::cerr << "WARNING: Input dotplot "<<filename
+                                  <<" contains invalid line " << line
+                                  << " (indices out of range)" << std::endl;
 		    } else {
 			if (type=="ubox") {
-			    pimpl_->arc_probs_(i,j)=p;
-			}
-			else if (pimpl_->has_stacking_ && type=="lbox") { // read a stacking probability
-			    pimpl_->arc_2_probs_(i,j)=p; // we store the joint probability of (i,j) and (i+1,j-1)
+                            pimpl_->arc_probs_(i,j)=p;
+                        }
+                        else if (pimpl_->has_stacking_ && type=="lbox") {
+                            // read a stacking probability
+                            //
+                            // we store the joint probability of (i,j)
+                            // and (i+1,j-1)
+                            pimpl_->arc_2_probs_(i,j)=p;
 			}
 		    }
 		}
@@ -940,7 +933,8 @@ namespace LocARNA {
 	
 	bool contains_stacking=false;
 	
-	while (get_nonempty_line(in,line) && line!="#") { // iterate through lines; stop at the first line that equals "#"
+        // iterate through lines; stop at the first line that equals "#"
+	while (get_nonempty_line(in,line) && line!="#") {
 	    std::istringstream in(line);
 	    in >> name >> seqstr;
 	    
@@ -948,9 +942,10 @@ namespace LocARNA {
 		throw wrong_format_failure();
 	    }
 	    
-	    
-	    if (name != "SCORE:") { // ignore the (usually first) line that begins with SCORE:
-		if (name == "#C") {
+	    // ignore the (usually first) line that begins with
+	    // 'SCORE:'
+            if (name != "SCORE:") {
+                if (name == "#C") {
 		    sequence_anchor_string += seqstr;
 		} else {
 		    normalize_rna_sequence(seqstr);
@@ -988,21 +983,26 @@ namespace LocARNA {
 	    in>>i>>j>>p;
       
 	    if ( in.fail() ) {
-		throw syntax_error_failure("Invalid line \"" +line+ "\" does not specify base pair probability.");
+		throw syntax_error_failure("Invalid line \"" +line
+                                           + "\" does not specify base pair probability.");
 	    }
 	    
 	    if (i>=j) {
 		throw syntax_error_failure("Error in PP input line \""+line+"\" (i>=j).\n");
 	    }
-      
-	    pimpl_->arc_probs_(i,j)=p;
+            
+            // filter base pairs according to probability and span
+            if ( p<=pimpl_->p_bpcut_ || bp_span(i,j)>pimpl_->max_bp_span_ ) continue;
+            
+            pimpl_->arc_probs_(i,j)=p;
 	    
 	    double p2;
 	    
 	    if (pimpl_->has_stacking_ && (in >> p2)) {
-		pimpl_->arc_2_probs_(i,j)=p2; // p2 is joint prob of (i,j) and (i+1,j-1)
-		contains_stacking=true;
-	    }
+                // p2 is joint prob of (i,j) and (i+1,j-1)
+                pimpl_->arc_2_probs_(i,j)=p2;
+                contains_stacking=true;
+            }
 	}
 	
 	if (!contains_stacking) {
@@ -1092,7 +1092,7 @@ namespace LocARNA {
 		    if ( in.fail() ) {
 			throw syntax_error_failure("Cannot parse line \""+line+"\" in base pairs section.");
 		    }
-		    p_bpcut_ = std::max(p,p_bpcut_);
+		    p_bpcut_ = std::max(p, p_bpcut_);
 		}  else if (has_prefix(line,"#STACK")) {
 		    contains_stacking = true;
 		}
@@ -1109,18 +1109,23 @@ namespace LocARNA {
 		if (!(1<=i && i<j && j<=sequence_.length())) {
 		    throw syntax_error_failure("Invalid indices in PP input line \""+line+"\".");
 		}
+                
+                // filter base pairs according to probability and span
+                if ( p<=p_bpcut_ || bp_span(i,j)>max_bp_span_ ) continue;
+                
+                arc_probs_(i,j)=p;
 		
-		if (p>p_bpcut_) {
-		    arc_probs_(i,j)=p;
+                double p2;
 		
-		    double p2;
-		
-		    if (has_stacking_ && (in >> p2)) {
-			if (p2>p_bpcut_) {
-			    arc_2_probs_(i,j)=p2; // p2 is joint prob of (i,j) and (i+1,j-1)
-			}
-		    }
-		}
+                if (has_stacking_ && (in >> p2)) {
+                    // p2 is joint prob of (i,j) and (i+1,j-1)
+                    //
+                    // (note: this implies p>=p2; thus one can filter
+                    //  hierarchically)
+                    if ( p2>p_bpcut_ ) {
+                        arc_2_probs_(i,j)=p2;
+                    }
+                }
 	    }
 	}
 
@@ -1132,7 +1137,8 @@ namespace LocARNA {
     }
 
     std::string
-    read_pp_in_loop_block(const std::string &firstline,std::istream &in) {
+    read_pp_in_loop_block(const std::string &firstline,
+                          std::istream &in) {
 	size_t pos = firstline.find(":");
 	assert(pos != std::string::npos);
 	
@@ -1168,6 +1174,7 @@ namespace LocARNA {
 	return in;
     }
 
+    // read line prefixed by keyword
     void
     ExtRnaDataImpl::read_pp_in_loop_probabilities_kwline(const std::string &line) {
 	if (has_prefix(line,"#BPILCUT")) {
@@ -1193,6 +1200,7 @@ namespace LocARNA {
 	}
     }
     
+    // read line containing inloop probabilities
     void
     ExtRnaDataImpl::read_pp_in_loop_probabilities_line(const std::string &line) {
 	size_t i;
@@ -1201,7 +1209,14 @@ namespace LocARNA {
 	std::istringstream in(line);
 	std::string sep;
 	in>>i>>j>>sep;
-		    
+
+        // if base pair i,j was dropped before, ignore its inloop probs
+        // (unless i,j is the external pseudo-basepair)
+        if ( !(i==0 && j==self_->length()+1) && self_->arc_prob(i,j)==0.0 ) {
+            std::cerr << "Ignore inloops of bp "<<i<<","<<j<<std::endl;
+            return;
+        }
+
 	if (sep!=":") {
 	    throw syntax_error_failure("Invalid line \""
 				       +line+"\" in in-loop section.");
