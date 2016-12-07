@@ -20,6 +20,22 @@ sequences.
 
 =head1 OPTIONS
 
+
+=head2 Load configurations from file
+
+=over 4
+
+=item B<--configure>
+
+Load a parameter set from a configuration file of options and option
+value pairs. This is used to specify the default parameters for
+mlocarna, which can still be modified by other options to
+mlocarna. The position of this option is irrelevant. Options are
+specified as single entries per line; option value pairs, like option: value.
+Blanks and '#'-prefixed comments are ignored.
+
+=back
+
 =head2 Controlling Output
 
 =over 4
@@ -36,7 +52,7 @@ Turn on verbose ouput.
 
 =item  B<--moreverbose>
 
-Be even more verbose
+Be even more verbose.
 
 =item  B<-q, --quiet>
 
@@ -448,10 +464,6 @@ my $single_reliabilities_dir="single_reliabilities";
 use Getopt::Long;
 use Pod::Usage;
 
-Getopt::Long::Configure("no_ignore_case");
-
-my %opts;
-
 my @options = #options that are not or not automatically passed to locarna
     (
      "noLP",
@@ -603,10 +615,15 @@ my @autopass_arg_options =
 my @autopass_noarg_options = ( "max-diff-relax" );
 
 
-# -----------------------------------
-# some default values
+## ----------------------------------------
+## the hash of options
+#
+my %opts;
 
 
+## ----------------------------------------
+## some default values
+#
 $opts{'skip-pp'}=0; ## =1 skips the computation of pair probabilities
                     ## for files that exist already
 $opts{'it-reliable-structure'}=0;
@@ -624,14 +641,13 @@ $opts{'pw-aligner-p'}="$bindir/locarna_p";
 $opts{'pw-aligner-options'}="";
 $opts{'pw-aligner-p-options'}="";
 
-
+# defaults for experimental graph kernel interface
 $opts{'svmsgdnspdk'}="svmsgdnspdk";
 $opts{'svmsgdnspdk-radius'}=2;
 $opts{'svmsgdnspdk-distance'}=4;
 
 $opts{'fasta2shrep'}="fasta2shrep_gspan.pl";
 
-##########
 # default options of fasta2shrep. In particular, specify
 # -wins window size
 # -shift window shift in percent of window size
@@ -642,9 +658,36 @@ $opts{'fasta2shrep'}="fasta2shrep_gspan.pl";
 $opts{'fasta2shrep-options'}="-wins 200 -shift 50 -stack -t 3 -M 3";
 
 
+## ----------------------------------------
+## if config file is given, read config into options hash to set
+## default options
+my $config_file;
 
+## we run two option parses
+## 1) detect option --config and if present load defaults from file
+## 2) parse all other options
 
+## allow unknown options to pass through for the first parse
+#
+Getopt::Long::Configure("pass_through");
+#
+if (GetOptions( 'configure=s' => \$config_file, 
+                'verbose' => \$opts{'verbose'},
+                'quiet' => \$opts{'quiet'}
+              ) && defined($config_file)) {
+    print "Load configuration from $config_file.\n" unless $opts{'quiet'};
+    {
+        open(my $in, "$config_file")
+          || die "Cannot read configuration from file $config_file.\n";
+        load_keyvalue_pairs( $in, \%opts );
+        close $in;
+    }
+}
 
+## perform main option parse
+#
+Getopt::Long::Configure("no_ignore_case");
+#
 GetOptions( \%opts, @options, @autopass_arg_options, @autopass_noarg_options )
     || pod2usage(2);
 
@@ -694,6 +737,34 @@ sub help_msg {
     For details on options call mlocarna --man.
 ";
 exit 0;
+}
+
+############################################################
+# load key value pairs
+#
+# load pairs of 'key: value' pairs and single keys from file handle
+# into hash; blanks and '#'-prefixed comments are ignored
+#
+# @param $fh input file handle
+# @param $hash reference to hash
+#
+sub load_keyvalue_pairs {
+    my ($fh,$hash)=@_;
+    while(<$fh>) {
+        $_ =~ s/\s*#.*$//; # remove comments
+        next if $_ =~ /^\s*$/; # ignore whitespace lines
+
+        $_ =~ s/^\s+//; # remove whitespace prefix
+        $_ =~ s/\s+$//; # remove whitespace suffix
+
+        if ( $_ =~ /^(\S+)\s*:\s*(.+)$/ ) { # line "key: val"
+            $hash->{$1} = $2;
+        } elsif ( $_ =~ /^(\S+)$/ ) { # line "key"
+            $hash->{$1} = 1;
+        } else {
+            print STDERR "  WARNING: line $_ does not define key or proper colon-separated key value pair.";
+        }
+    }
 }
 
 
