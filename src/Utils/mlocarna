@@ -991,8 +991,8 @@ if (defined($opts{'rnafold-parameter'})) {
 }
 
 ####
-## parameters for RNAfold and RNAalifold (parameter file and
-## temperature)
+## parameters for RNAfold and RNAalifold (parameter file,
+## temperature, and maxBPspan)
 my $RNAfold_args="";
 if (defined($opts{'rnafold-parameter'})) {
     $RNAfold_args.=" -P $opts{'rnafold-parameter'}";
@@ -1000,6 +1000,10 @@ if (defined($opts{'rnafold-parameter'})) {
 
 if (defined($opts{'rnafold-temperature'})) {
     $RNAfold_args.=" -T $opts{'rnafold-temperature'}";
+}
+
+if (defined($opts{'maxBPspan'}) && $opts{'maxBPspan'} ne "-1") {
+    $RNAfold_args.=" --maxBPspan $opts{'maxBPspan'}";
 }
 
 ####
