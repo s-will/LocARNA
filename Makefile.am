@@ -102,6 +102,7 @@ Data/Matrices/RIBOSUM95_90 Data/Matrices/RIBOSUM95_95
 matricesdir=$(prefix)/share/locarna/Matrices
 
 EXTRA_DIST= Data/Examples/archaea.fa Data/Examples/ferritin.fa		\
-	Data/Examples/haca.snoRNA.fa Data/Examples/hammerhead_3.fa	\
-	Data/Examples/gcvT.fa Data/Examples/SECIS_15.fa			\
-	$(matrices_DATA) Doc/doxygen.cfg
+	Data/Examples/haca.snoRNA.fa					\
+	Data/Examples/haca.snoRNA_anchor.bed				\
+	Data/Examples/hammerhead_3.fa Data/Examples/gcvT.fa		\
+	Data/Examples/SECIS_15.fa $(matrices_DATA) Doc/doxygen.cfg

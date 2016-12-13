@@ -21,7 +21,9 @@ our @ISA         = qw(Exporter);
 our @EXPORT      = qw(
 
 read_fasta
+
 check_constraints_in_fasta
+read_anchor_constraints
 
 sequence_constraint_string
 
@@ -294,8 +296,8 @@ sub nnamepair {
 ## read_fasta($filename)
 ## ------------------------------
 ##
-## Read a simplified fasta file. If filename ends with "*.gz" the file
-## is automatically uncompressed by gunzip.  Dies if file is not
+## Read an (extended) fasta file. If filename ends with "*.gz" the
+## file is automatically uncompressed by gunzip.  Dies if file is not
 ## readable or gunzippable.  The result is returned as list of the
 ## sequences.
 ##
@@ -340,7 +342,8 @@ sub read_fasta {
 		    $bar=$description;
 		}
 		printerr "Note that in \">$name $bar\", only \"$name\" is the name, ";
-		printerr "whereas the rest of the line \"$bar\" (after the blank) is interpreted as description.\n";
+		printerr "whereas the rest of the line \"$bar\" (after the blank)"
+                  ." is interpreted as description.\n";
 		exit(-1);
 	    }
 	    $seen_names{$name}=1;
@@ -420,6 +423,162 @@ sub check_constraints_in_fasta {
             }
         }
     }
+}
+
+## print error and exit(-1)
+sub error_exit {
+    my $msg = shift;
+    printerr $msg;
+    exit(-1);
+}
+
+##maximization
+sub max {
+    my ($x,$y)=@_;
+    return ($x>=$y)?$x:$y;
+}
+
+########################################
+## read_anchor_constraints($seqs,$filename)
+##
+## Read anchor constraints from bed file and set them in $seqs
+##
+## @param $seqs     sequences (list of hashs)
+## @param $filename bed file with anchor constraints
+##
+## @return ref to list of anchor region names in the order of assigned
+## anchor ids
+##
+## Anchor constraints in four-column bed format specify positions of
+## named anchor regions per sequence. The 'contig' names have to
+## correspond to the fasta input sequence names. Anchor names must be
+## unique per sequence and regions of the same name for different
+## sequences must have the same length. This constrains the alignment
+## to align all regions of the same name.
+##
+## The specification of anchors via this option removes all anchor
+## definitions that may be given directly in the fasta input file!
+##
+## Details: region names receive name numbers in the order of their
+## appearance in the bed file. As well, positions in a region receive
+## position numbers from left to right. Numbering starts with
+## 0. Anchor names are than composed of region number and position
+## number, both with leading 0s, where the number of digits is choosen
+## minimally to encode all occuring anchor names with the same length.
+## Finally the anchor names are encoded as anchor constraint lines in
+## the same way LocARNA accepts them in the fasta input file.
+##
+## FAILURE policy:
+## * exit with error message, if file cannot be read or
+##   has the wrong format.
+## * exit if bed file does not contain >=2 sequence names in seqs
+## * exit if some sequence names in bed file do not exist in $seqs
+##
+## @pre names in $seqs are unique
+##
+########################################
+sub read_anchor_constraints {
+    my $seqs = shift;
+    my $filename = shift;
+
+    open(my $fh, $filename)
+      || error_exit "ERROR: Cannot open anchor constraints file for reading\n";
+
+    ## read in bed file, check 4-column format, check existence of sequence names
+    my @bedentries=(); # entries in the bed file
+    my %seqnames=(); # set of sequence names in the bed file
+    while(<$fh>) {
+        my @F=split /\s+/;
+        if (@F != 4) {
+            error_exit "ERROR: anchor constraints file has wrong format. Require four-column bed format.\n";
+        }
+        $seqnames{$F[0]}=1;
+        push @bedentries, [ @F ];
+    }
+    ## count sequences with specification; fill name->idx hash
+    my $specified_seqs=0;
+    my $unknown_seqs="";
+    my %seq_idx_by_name=();
+    my $seq_idx=0;
+    for my $seq (@{$seqs}) {
+        $seq_idx_by_name{$seq->{name}}=$seq_idx++;
+        if (exists $seqnames{$seq->{'name'}}) {
+            $specified_seqs++;
+        } else {
+            $unknown_seqs.=$seq->{'name'}." ";
+        }
+    }
+    if ($specified_seqs<2) {
+        error_exit
+          "ERROR: $specified_seqs sequence name(s) in the anchor constraint file match the fasta input (required >=2).\n";
+    }
+    if ( $unknown_seqs ne "" ) {
+        error_exit "ERROR: anchor constraint file contains specifications for unknown sequence(s):\n\t$unknown_seqs\n";
+    }
+
+    ## assign numbers to region names
+    my %region_names=();
+    my $region_number=0;
+    for my $bedentry (@bedentries) {
+        if (! exists $region_names{$bedentry->[3]}) {
+            $region_names{$bedentry->[3]} = $region_number++;
+        }
+    }
+    my $region_id_width = length($region_number-1);
+
+    # determine longest range
+    my $position_id_width=0;
+    for my $bedentry (@bedentries) {
+        my $region_len=$bedentry->[2]-$bedentry->[1];
+        $position_id_width=max($position_id_width,length($region_len-1));
+    }
+
+    ########################################
+    ## generate anchor constraint lines
+    #
+    ## 0) remove existing anchor lines
+    for my $seq (@{$seqs}) {
+        for my $key (keys %{$seq}) {
+            if ( $key =~ /ANNO#(\d+)/ ) {
+                $seq->{$key}=undef;
+            }
+        }
+    }
+    #
+    ## 1) generate empty lines
+    for my $seq (@{$seqs}) {
+        for (my $i=1; $i<=$region_id_width+$position_id_width; $i++) {
+            my $key="ANNO#$i";
+            my $seq_length=length($seq->{seq});
+            $seq->{$key}='.'x$seq_length;
+        }
+    }
+    #
+    ## 2) set anchors
+    for my $bedentry (@bedentries) {
+        my $seq=$seqs->[$seq_idx_by_name{$bedentry->[0]}];
+        my $rid = $region_names{$bedentry->[3]};
+        my @rid = split //, sprintf("%0${region_id_width}d",$rid);
+        for (my $p=$bedentry->[1]; $p<$bedentry->[2]; $p++) {
+            ## set name at pos $p for region $rid
+            for ( my $i=1; $i<=$region_id_width; $i++ ) {
+                substr($seq->{"ANNO#$i"},$p,1) = $rid[$i-1];
+            }
+            my @pos = 
+              split //, sprintf("%0${position_id_width}d",$p-$bedentry->[1]);
+            for ( my $i=1; $i<=$position_id_width; $i++ ) {
+                substr($seq->{"ANNO#".($i+$region_id_width)},$p,1)
+                  = $pos[$i-1];
+            }
+        }
+    }
+
+    ## get list of region names and return it
+    my @regions_names_list;
+    for my $key (keys %region_names) {
+        $regions_names_list[$region_names{$key}]=$key;
+    }
+    return \@regions_names_list;
 }
 
 ########################################

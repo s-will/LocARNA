@@ -65,6 +65,10 @@ calltest bin/mlocarna $exdir/SECIS_15.fa  --tgtdir test.out --threads 32 \
          --plfold-span 50 --max-diff 10 --max-diff-aln $exdir/SECIS_15_ref.aln
 rm -rf test.out
 
+# check anchor constraints from bed file
+calltest bin/mlocarna  --anchor-constraints $exdir/haca.snoRNA_anchor.bed $exdir/haca.snoRNA.fa
+rm -rf test.out
+
 
 ## ========================================
 ## test locarnate (if t_coffee is available)

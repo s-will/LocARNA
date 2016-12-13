@@ -1,6 +1,7 @@
 ============================================================
 === 2016
-1.8.13pre (2016-Dec-8)
+1.9.0RC (2016-Dec-13)
+	add mlocarna option to read anchor constraints from bed-format specification
 	add mlocarna option to load (default) configuration from file
 	add option --maxBPspan (analogous to ViennaRNA's maxBPspan)
 	add stockholm writing test

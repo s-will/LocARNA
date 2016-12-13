@@ -20,19 +20,19 @@ sequences.
 
 =head1 OPTIONS
 
-
 =head2 Load configurations from file
 
 =over 4
 
-=item B<--configure>
+=item B<--configure=<file>>
 
 Load a parameter set from a configuration file of options and option
 value pairs. This is used to specify the default parameters for
 mlocarna, which can still be modified by other options to
-mlocarna. The position of this option is irrelevant. Options are
-specified as single entries per line; option value pairs, like option: value.
-Blanks and '#'-prefixed comments are ignored.
+mlocarna. Command line arguments always take precedence over this
+configuration. Options are specified as single entries per line;
+option value pairs, like option: value.  Whitespace and '#'-prefixed
+comments are ignored.
 
 =back
 
@@ -312,9 +312,23 @@ Assume that alignment for evaluation is in fasta format.
 
 =over 4
 
+=item  B<--anchor-constraints=<file>>
+
+Read anchor constraints from bed format specification.
+
+Anchor constraints in four-column bed format specify positions of
+named anchor regions per sequence. The 'contig' names have to
+correspond to the fasta input sequence names. Anchor names must be
+unique per sequence and regions of the same name for different
+sequences must have the same length. This constrains the alignment to
+align all regions of the same name.
+
+The specification of anchors via this option removes all anchor
+definitions that may be given directly in the fasta input file!
+
 =item  B<--ignore-constraints>
 
-Ignore constraints even if given.
+Ignore all constraints (anchor and structure constraints) even if given.
 
 =back
 
@@ -324,7 +338,7 @@ Ignore constraints even if given.
 
 =item  B<--plfold-span=span>
 
-Use RNAplfold with span
+Use RNAplfold with span.
 
 =item  B<--plfold-winsize=ws>
 
@@ -565,6 +579,8 @@ my @options = #options that are not or not automatically passed to locarna
      "local-progressive",
      "global-progressive",
 
+     "anchor-constraints=s",
+
      "verbose|v",
      "moreverbose",
      "quiet",
@@ -624,6 +640,9 @@ my %opts;
 ## ----------------------------------------
 ## some default values
 #
+
+$opts{'noLP'}=1;
+
 $opts{'skip-pp'}=0; ## =1 skips the computation of pair probabilities
                     ## for files that exist already
 $opts{'it-reliable-structure'}=0;
@@ -1168,12 +1187,22 @@ sub main {
 	exit(-1);
     }
 
+    if ( defined $opts{'anchor-constraints'} ) {
+        print "Read anchor constraints from file $opts{'anchor-constraints'}...\n" if $opts{'verbose'};
+        my $regions = read_anchor_constraints($seqs,
+                                              $opts{'anchor-constraints'});
+        if ($opts{'verbose'}) {
+            print "ANCHOR REGIONS: @{$regions}\n";
+        }
+    }
 
     check_constraints_in_fasta($seqs);
 
     ## check whether sequences and reference alignment are compatible
     if (defined($refaln) && (! is_aln_of_seqs($seqs,$refaln)) ) {
-	print STDERR "Inconsistent input: Given reference alignment ( --max-diff-aln \"$opts{'max-diff-aln'}\" ) does not match input sequences ( \"$opts{'input-file'}\" ).\n";
+	print STDERR "Inconsistent input: Given reference alignment "
+          ."( --max-diff-aln \"$opts{'max-diff-aln'}\" ) "
+          ."does not match input sequences ( \"$opts{'input-file'}\" ).\n";
 	exit(-1);
     }
 
