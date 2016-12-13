@@ -526,7 +526,7 @@ my @options = #options that are not or not automatically passed to locarna
      "fasta2shrep=s",
      "fasta2shrep-options=s",
 
-     "outdir|tgtdir=s",
+     "tgtdir|outdir=s",
 
      "min-bm-prob=f",
      "min-am-prob=f",
