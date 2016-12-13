@@ -37,7 +37,7 @@ read_pp_file_pairprob_info
 convert_dp_to_pp_with_constraints
 convert_alifold_dp_to_pp
 alifold_structure
-constrain_sequences
+constrain_sequences_from_reliable_structures
 
 
 extract_from_clustal_alignment
@@ -1232,24 +1232,24 @@ sub alifold_pf {
 ########################################
 ## constrain_sequences($seqs,$constraints)
 ##
-## in-place adds (or replaces) structure constraints to a sequences 
-## data structure
-## 
+## in-place adds (or replaces) structure constraints to a sequences
+## data structure, where constraints come from the most reliable
+## structure strings.
+##
 ## @param $seqs fasta data structure
 ## @param $constraints hashs containing constraints (same names as in seqs),
 ##        all symbols different to '(' or ')' are replaced by '.'
 ##
 ########################################
-sub constrain_sequences($$) {
+sub constrain_sequences_from_reliable_structures($$) {
     my ($seqs,$constraints) = @_;
-        
+
     foreach my $i (0..@$seqs-1) {
-	
+
 	if (exists $constraints->{$seqs->[$i]->{name}}) {
-	    my $constraint_string = $constraints->{$seqs->[$i]->{name}}->{"ANNO\#S"};
-	    $constraint_string =~ s/[^()]/\./g;	    
+	    my $constraint_string = $constraints->{$seqs->[$i]->{name}};
+	    $constraint_string =~ s/[^()]/\./g;
 	    $seqs->[$i]->{"ANNO\#S"} = $constraint_string;
-	    printmsg 3,"ANNO\#S: $constraint_string\n";
 	}
     }
 }

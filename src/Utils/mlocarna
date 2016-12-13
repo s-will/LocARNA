@@ -1237,7 +1237,7 @@ sub main {
 	    printmsg 3, "\nIterate alignment with structure constraints from reliability information.\n";
 
 	    ## add constraints for new round of iteration
-	    constrain_sequences($seqs,$reliable_structures);
+	    constrain_sequences_from_reliable_structures($seqs,$reliable_structures);
 
 	    perform_multiple_alignment($seqs);
 	}
