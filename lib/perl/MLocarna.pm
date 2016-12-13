@@ -1965,7 +1965,6 @@ sub write_tcoffee_lib_file($$) {
 
     # first collect all the sequences
     my %sequences;
-    my $seqCounter = 1;
     foreach my $aln (@{$alignments}) {
         while( my ($name, $seq) = each(%{$aln->{rows}})){
             if (!defined $sequences{$name}) {
@@ -1973,12 +1972,18 @@ sub write_tcoffee_lib_file($$) {
                 # remove all non alphanumeric characters (i.e. Gap symbols)
                 $temp =~ s/\W//g;
                 $sequences{$name} = { "sequence" => $temp,
-                                        "number"   => $seqCounter};
-                $seqCounter++;
+                                      "number"   => undef};
             }
         }
     }
-
+    
+    ## assign sequence numbers in alphanumeric order of sequence names
+    my $seqCounter = 1;
+    for my $name (sort keys(%sequences)) {
+        $sequences{$name}->{"number"} = $seqCounter;
+        $seqCounter++;
+    }
+    
     # write the header to the file
     print $FILE "! TC_LIB_FORMAT_01\n";
     # print number of sequences

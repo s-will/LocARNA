@@ -105,4 +105,8 @@ EXTRA_DIST= Data/Examples/archaea.fa Data/Examples/ferritin.fa		\
 	Data/Examples/haca.snoRNA.fa					\
 	Data/Examples/haca.snoRNA_anchor.bed				\
 	Data/Examples/hammerhead_3.fa Data/Examples/gcvT.fa		\
-	Data/Examples/SECIS_15.fa $(matrices_DATA) Doc/doxygen.cfg
+	Data/Examples/SECIS_15.fa Data/Examples/SECIS_15_ref.aln	\
+	$(matrices_DATA) Doc/doxygen.cfg
+
+gen-test-results:
+	make -C src/Tests gen-test-results

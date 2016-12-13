@@ -1,0 +1,19 @@
+CLUSTAL W --- LocARNA 1.9.0-alpha
+
+
+
+ACA7               ACCUCCUGGGAUCGCAUCUGG-AGAGUGC---CUAGUAUUCUGCCAGCUU-CGGAAAGGGAGGGAAAGCAAGC-CUGGCAGAGGCACCCAUUCCAUUCCCAGCUUGCUCCGUAGCUGGCG
+ACA30              UGGCACUUU--CACAGUUCCU-UCCCCAG---GCAGUGGGGCCAGGAUUUGGUAGCUGGUGCUGAGAGAAAAC----CC-UUG--AUUGUAUUCUUGCCCUGGG---AUUAUACCAGUGG
+ACA5               UGCAGCCGUGUCAAAUUCAGUACCUGUCCUAUGCAUGGUAGGCACUGGC--CCAGAAGGCUGCCACAGAAACA-C--UGUGACUCAUGG-----GCCCUGUUCCUGUGUCCCAGGCUCAG
+ACA59              GCCCAGGGUAUGUUCACGGGGCGAUGCUGCCCUCCCAGCUGG-CCCAUG--GGUGACCCUGGGAACAUUAACUGCCUCACAACGUUUGUGCCUCAGUUACCCGUAGAUGUAGUGAGGGUA
+#A1                ................................................................00000000000.............................................
+#A2                ................................................................00000000001.............................................
+#A3                ................................................................01234567890.............................................
+
+ACA7               AUUGGA--AGA--CACUC-UGC------GACA
+ACA30              CAACUG--UCA--CUCAA-UGG------GACA
+ACA5               GGAUAA--AUU--UGGUU-ACA------GACA
+ACA59              ACAAUACUUACUCUCGUUGGUGAUAAGGAACA
+#A1                .............................111
+#A2                .............................000
+#A3                .............................012

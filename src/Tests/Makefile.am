@@ -17,8 +17,18 @@ TESTS= $(BINTESTS) $(SCRIPTTESTS)
 check_PROGRAMS = $(BINTESTS)
 
 MYTESTDATA    = archaea.aln archaea-aln.fa archaea-wrong.fa
+
+MYTESTRESULTS = locarnate.testresult					\
+mlocarna-archaea-alifold.testresult mlocarna-bed-anchors.testresult	\
+mlocarna-haca-constraints.testresult					\
+mlocarna-probabilistic.testresult mlocarna-sparse.testresult		\
+mlocarna-threads.testresult
+
 BUILT_SOURCES = $(MYTESTDATA)
-EXTRA_DIST    = $(MYTESTDATA:%=$(top_srcdir)/Data/Examples/%) $(SCRIPTTESTS)
+
+EXTRA_DIST    = $(MYTESTDATA:%=$(top_srcdir)/Data/Examples/%) \
+	$(MYTESTRESULTS) \
+	$(SCRIPTTESTS)
 
 archaea.aln: $(top_srcdir)/Data/Examples/archaea.aln
 	cp $< $@
@@ -29,4 +39,9 @@ archaea-wrong.fa: $(top_srcdir)/Data/Examples/archaea-wrong.fa
 
 
 CLEANFILES = $(MYTESTDATA)
+
+## generate test results for mlocarna test
+gen-test-results:
+	srcdir=$(srcdir) \
+	$(srcdir)/test_mlocarna --generate-references
 

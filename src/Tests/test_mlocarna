@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ "$1" = "--generate-references" ] ; then
+    GENERATE_OUTPUT=true
+else 
+    GENERATE_OUTPUT=false
+fi
 ## Test mlocarna and locarnate
 
 ## perform pseudo installation in subdir bin
@@ -11,6 +16,8 @@ mkdir bin
 # ---- get the top level by going two levels up from srcdir
 topdir=$srcdir/../..
 
+testsdir=$topdir/src/Tests
+
 ## prefix links to bin files by another ../ since the links reside in bin
 ln -sf ../$topdir/src/Utils/mlocarna bin/mlocarna
 ln -sf ../$topdir/src/Utils/locarnate bin/locarnate
@@ -21,16 +28,64 @@ ln -sf ../../locarna_rnafold_pp bin/locarna_rnafold_pp
 
 ln -sf $topdir/lib . # also put perl lib modules in the right place
 
+DIFFERENCES=false
+
+## ----------------------------------------
+## call test and compare output
+##
+## @param $1 the name of the test; shall not contain special symbols
+## and white space, since this is used to derive file names
+## @param $2 target directory, which is wiped after the test
+## @param $3 result file, which is compared after test (or used to generate file)
+## @param $4- command to call the test
+##
+## compare to (or generate) files src/Tests/$name.testresult
 function calltest {
+    name="$1"
+    tgtdir="$2"
+    resultfile="$3"
+
+    reference_resultsfile=$testsdir/$name.testresult
+
+    shift 3
+    
     echo "============================================================"
+    echo TEST $name
     echo CALL $*
     echo
+
     if $* ; then
-      echo "======================================== OK"
+        if [ -e "$reference_resultsfile" ] ; then
+            if diff "$resultfile" "$reference_resultsfile" ; then
+                echo "==================== OK"
+            else
+                DIFFERENCES=true
+                echo "==================== DIFFERENT"
+            fi
+        else
+            echo "WARNING: file '$reference_resultsfile' does not exist!"
+                echo "==================== NO_REFERENCE"
+            DIFFERENCES=true
+        fi
+
+        if $GENERATE_OUTPUT ; then
+            echo "Write new reference '$reference_resultsfile'."
+            \cp $resultfile "$reference_resultsfile"
+        fi
+    
     else
-      echo "======================================== FAILED"
-      exit -1
+        echo "==================== FAIL"
+        rm -rf $tgtdir
+        exit -1
     fi
+
+    rm -rf $tgtdir
+}
+
+function mlocarna_calltest {
+    name=$1
+    shift
+    calltest $name test.out test.out/results/result.aln $* --tgtdir test.out
 }
 
 ## ========================================
@@ -41,39 +96,41 @@ function calltest {
 exdir=$topdir/Data/Examples
 
 # check standard usage with alifold consensus (similar to web server)
-calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --alifold-cons \
+mlocarna_calltest mlocarna-archaea-alifold \
+         bin/mlocarna $exdir/archaea.fa --alifold-cons \
          -p 0.05 --max-diff 10
-rm -rf test.out
 
 # check constraints
-calltest bin/mlocarna $exdir/haca.snoRNA.fa --tgtdir test.out -p 0.05 \
+mlocarna_calltest mlocarna-haca-constraints \
+         bin/mlocarna $exdir/haca.snoRNA.fa -p 0.05 \
          --max-diff 20
-rm -rf test.out
 
 # check mlocarna sparse
-calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --sparse -p 0.05 \
+mlocarna_calltest mlocarna-sparse \
+         bin/mlocarna $exdir/archaea.fa --sparse -p 0.05 \
          --max-diff 10
-rm -rf test.out
 
 # check probabilistic mode and stockholm
-calltest bin/mlocarna $exdir/archaea.fa --tgtdir test.out --probabilistic \
+mlocarna_calltest mlocarna-probabilistic \
+         bin/mlocarna $exdir/archaea.fa --probabilistic \
          --consistency-transformation -p 0.05  --max-diff 10 --stockholm
-rm -rf test.out
 
 # check many threads, and local folding and max-diff-aln
-calltest bin/mlocarna $exdir/SECIS_15.fa  --tgtdir test.out --threads 32 \
+mlocarna_calltest mlocarna-threads \
+         bin/mlocarna $exdir/SECIS_15.fa  --threads 32 \
          --plfold-span 50 --max-diff 10 --max-diff-aln $exdir/SECIS_15_ref.aln
-rm -rf test.out
 
 # check anchor constraints from bed file
-calltest bin/mlocarna  --anchor-constraints $exdir/haca.snoRNA_anchor.bed $exdir/haca.snoRNA.fa
-rm -rf test.out
+mlocarna_calltest mlocarna-bed-anchors \
+         bin/mlocarna  --anchor-constraints $exdir/haca.snoRNA_anchor.bed $exdir/haca.snoRNA.fa
 
 
 ## ========================================
 ## test locarnate (if t_coffee is available)
 ##
-calltest bin/locarnate $exdir/archaea.fa
+calltest locarnate test_results test_results/mult/tcoffee.aln \
+         bin/locarnate $exdir/archaea.fa
+
 if [ -d "test_results" ] ; then
     rm -rf test_results
 fi
@@ -84,3 +141,9 @@ fi
 ## cleanup
 rm -rf bin
 rm -f lib
+
+
+if $DIFFERENCES ; then
+    echo "ERROR: test output and the expected results differ."
+    exit -1
+fi
