@@ -750,10 +750,12 @@ if ($#ARGV == 0) {
 
 sub help_msg {
     print STDERR
-"Usage:
-    mlocarna [options] <fasta file>
-    Multiply aligns the RNA sequences in the fasta file based on sequence-structure similarity.
-    For details on options call mlocarna --man.
+"USAGE: mlocarna [options] <fasta file>
+
+Multiply aligns the RNA sequences in the fasta file based on
+sequence-structure similarity.
+
+For details on options call mlocarna --man.
 ";
 exit 0;
 }

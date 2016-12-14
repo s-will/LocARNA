@@ -469,10 +469,11 @@ sub max {
 ## the same way LocARNA accepts them in the fasta input file.
 ##
 ## FAILURE policy:
-## * exit with error message, if file cannot be read or
-##   has the wrong format.
-## * exit if bed file does not contain >=2 sequence names in seqs
-## * exit if some sequence names in bed file do not exist in $seqs
+## exit with error message,
+## * if file cannot be read or has the wrong format.
+## * if bed file does not contain >=2 sequence names in seqs
+## * if some sequence names in bed file do not exist in $seqs
+## * if some anchor regions is out of range
 ##
 ## @pre names in $seqs are unique
 ##
@@ -484,13 +485,21 @@ sub read_anchor_constraints {
     open(my $fh, $filename)
       || error_exit "ERROR: Cannot open anchor constraints file for reading\n";
 
-    ## read in bed file, check 4-column format, check existence of sequence names
+    ## read in bed file, check 4-column format, check existence of
+    ## sequence names
     my @bedentries=(); # entries in the bed file
     my %seqnames=(); # set of sequence names in the bed file
     while(<$fh>) {
         my @F=split /\s+/;
         if (@F != 4) {
-            error_exit "ERROR: anchor constraints file has wrong format. Require four-column bed format.\n";
+            error_exit "ERROR: anchor constraints file has wrong format. "
+              ."Require four-column bed format (line "
+              .(1 + scalar @bedentries).").\n";
+        }
+        if ($F[1]>$F[2]) {
+            error_exit "ERROR: start position greater than end position "
+              ."in anchor constraints bed entry\n  "
+              .(1 + scalar @bedentries).": $_\n";
         }
         $seqnames{$F[0]}=1;
         push @bedentries, [ @F ];
@@ -510,10 +519,12 @@ sub read_anchor_constraints {
     }
     if ($specified_seqs<2) {
         error_exit
-          "ERROR: $specified_seqs sequence name(s) in the anchor constraint file match the fasta input (required >=2).\n";
+          "ERROR: $specified_seqs sequence name(s) in the anchor "
+          ."constraint file match the fasta input (required >=2).\n";
     }
     if ( $unknown_seqs ne "" ) {
-        error_exit "ERROR: anchor constraint file contains specifications for unknown sequence(s):\n\t$unknown_seqs\n";
+        error_exit "ERROR: anchor constraint file contains specifications "
+          ."for unknown sequence(s):\n\t$unknown_seqs\n";
     }
 
     ## assign numbers to region names
@@ -556,9 +567,17 @@ sub read_anchor_constraints {
     #
     ## 2) set anchors
     for my $bedentry (@bedentries) {
+        next unless exists $seq_idx_by_name{$bedentry->[0]};
+
         my $seq=$seqs->[$seq_idx_by_name{$bedentry->[0]}];
         my $rid = $region_names{$bedentry->[3]};
         my @rid = split //, sprintf("%0${region_id_width}d",$rid);
+
+        if ($bedentry->[1]<0 || $bedentry->[2]>length($seq->{'seq'})) {
+            error_exit("ERROR: region out of range in anchor constraints".
+                       " file ($bedentry->[0], $bedentry->[3]).\n");
+        }
+
         for (my $p=$bedentry->[1]; $p<$bedentry->[2]; $p++) {
             ## set name at pos $p for region $rid
             for ( my $i=1; $i<=$region_id_width; $i++ ) {
