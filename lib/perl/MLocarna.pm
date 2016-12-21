@@ -1230,7 +1230,7 @@ sub alifold_pf {
 
 
 ########################################
-## constrain_sequences($seqs,$constraints)
+## constrain_sequences_from_reliable_structures($seqs,$constraints)
 ##
 ## in-place adds (or replaces) structure constraints to a sequences
 ## data structure, where constraints come from the most reliable

@@ -2571,6 +2571,7 @@ sub compute_dotplot($$) {
 	# partition folding
 	#
 
+        # whether to convert this to pp
 	my $convert_to_pp_this=$convert_to_pp;
 
 	my $longname=$seqs->[$i]->{name};
@@ -3079,7 +3080,6 @@ sub is_aln_of_seqs {
 	foreach my $alnseq ( @$aln ) {
 	    if ($seq->{name} eq $alnseq->{name}) {
 
-
 		my $alnseqstr = $alnseq->{seq};
 		$alnseqstr =~ tr/~.-//d;
 		$alnseqstr = uc $alnseqstr;
@@ -3092,9 +3092,9 @@ sub is_aln_of_seqs {
 		$found = ( $alnseqstr eq $seqstr );
 
 		if ($opts{'verbose'} && !$found) {
-		    print STDERR "Warning: name match ($seq->{name}) but sequence clash between input and reference alignment!";
-		    print STDERR "  Reference: $alnseqstr\n";
-		    print STDERR "  Input    : $alnseqstr\n";
+		    print STDERR "Warning: name match ($seq->{name}) but sequence mismatch.\n";
+		    print STDERR "  Sequences: $seqstr\n";
+                    print STDERR "  Alignment: $alnseqstr\n";
 		}
 
 		last;
