@@ -283,9 +283,9 @@ if ($seqname ne "") {
 	}
     }
     close IN;
-    
-    print "Sequence $seqname in $alnfile (alignment string): $sequence_alistr\n";
-        
+
+    #print "Sequence $seqname in $alnfile (alignment string): $sequence_alistr\n";
+
     if ($sequence_alistr eq "") {
 	print STDERR "No sequence with given name found in alignment.\n";
 	exit(-1);
@@ -310,7 +310,7 @@ if (defined($signals) && ($signals ne "")) {
 	$num_signals++;
     
 	if ($#s_list%2 != 0) {
-	    print STDERR "Need pairs of \"from\", \"to\" and \"strand\" per signal, got: \"$s\" in \"$signals\".\n";
+	    print STDERR "Require (possibly repeated) \"from\" \"to\" pairs and \"orientation\" (+1/-1) per signal.\n  Got: \"$s\" in \"$signals\".\n";
 	    exit(-1);
 	}
     }
@@ -423,13 +423,29 @@ if ($fit_once_on) {
 
 
 
-my $sequence = $sequence_alistr;
-$sequence =~ s/-//g;
-
-if ($write_subseq) {    
-    print "SEQ ".">".$title." fit=".($fitlist[0]+$offset-1)."-".($fitlist[1]+$offset-1)."\n";
-    print "SEQ ".substr($sequence,$fitlist[0]-1,$fitlist[1]-$fitlist[0]+1)."\n";
+if ( $write_subseq ) {
+    my $sequence = $sequence_alistr;
+    $sequence =~ s/-//g;
+    
+    if ($sequence ne "") {
+        my $fastanamestr="";
+        if ($title ne "") {
+            $fastanamestr="$title";
+        } elsif ($seqname ne "") {
+            $fastanamestr="$seqname";
+        } else {
+            $fastanamestr="unknown"
+        }
+        print "SEQ ".">".$fastanamestr." fit=".($fitlist[0]+$offset-1)."-".($fitlist[1]+$offset-1)."\n";
+        print "SEQ ".substr($sequence,$fitlist[0]-1,$fitlist[1]-$fitlist[0]+1)."\n";
+        if (@fitlist>2) {
+            print STDERR "WARNING: SEQ reports subsequence of the first predicted signal range only.\n";
+        }
+    } else {
+        print STDERR "Writing the subsequene requires sequence name\n";
+    }
 }
+
 
 
 if (($#fitlist+1)%2!=0) {
@@ -637,14 +653,11 @@ if (length(signal_names)>0 || ($dont_predict!=1)) {
   legend(\"bottom\",c(\"LocARNA\",signal_names),lwd=7,col=c(hit_color,colors),horiz=TRUE,inset=-0.4);
   # ,xpd=TRUE
 }
-
-dev.off();
 ";
 
 
 if (!$dont_plot) {
-#    open(R,"|R --vanilla -q > /dev/null");
-    open(R,"|R --vanilla ");
+    open(R,"|Rscript -");
     print R $rscript;
     close R;
 }
