@@ -15,8 +15,26 @@ mlocarna [options] <fasta file>
 
 =head1 DESCRIPTION
 
-B<MLocARNA> computes a multiple sequence-structure alignment of RNA
-sequences.
+B<MLocarna> computes a multiple sequence-structure alignment of RNA
+sequences. The structure of these sequences does not have to be known
+but is inferred based in simultaneous alignment and folding.
+
+Generally, mlocarna takes multiple sequences as input, given in a
+fasta file. The fasta file can be extended to specify structure and
+anchor constraints that respectively control the possible foldings and
+possible alignments. The main outcome is a multiple alignment together
+with a consensus structure.
+
+Technically, mlocarna works as front end to the pairwise alignment
+tools locarna, locarna_p, and sparse (and even carna), which are
+employed to construct the multiple alignment progressively. 
+
+Going beyond the basic progressive alignment scheme, Mlocarna
+implements probabilistic consistency transformation and iterative
+alignment, which are available in probabilistic mode. Moreover, the
+LocARNA package provides an alternative multiple alignment tool
+"locarante", which generates alignments based on T-Coffee using
+(non-probabilistic) consistency transformation.
 
 =head1 OPTIONS
 
@@ -24,10 +42,10 @@ sequences.
 
 =over 4
 
-=item B<--configure=<file>>
+=item B<--configure>=file
 
 Load a parameter set from a configuration file of options and option
-value pairs. This is used to specify the default parameters for
+value pairs. This enables specifying (sets of) default parameters for
 mlocarna, which can still be modified by other options to
 mlocarna. Command line arguments always take precedence over this
 configuration. Options are specified as single entries per line;
@@ -35,6 +53,40 @@ option value pairs, like option: value.  Whitespace and '#'-prefixed
 comments are ignored.
 
 =back
+
+=head2 Major alignment modes
+
+=over 4
+
+=item B<>
+
+By default, mlocarna performs progressive alignment, where the
+progressive alignment steps are computed by the pairwise aligner
+locarna based on sequences and dot plots (RNAfold -p); subsequently,
+partial alignmetns and their consensus dot plots.
+
+=item B<--probabilistic>
+
+In probabilistic mode, mlocarna scores alignments using match
+probabilities that are computed by a partition function approach
+[tech. details: the probability computation is implemented in
+locarna_p; the probability-based scoring is performed by locarna in
+mea mode]. This enables mlocarna to consistency-transform the
+probabilities (option --consistency-transform) and to compute
+reliabilities.  The tool reliability-profile.pl is provided to
+visualize reliability profiles. Reliabilities can also be used for
+iterating the alignment with reliably aligned base pairs as structural
+constraints (option --it-reliable-structure).
+
+=item B<--sparse>
+
+Apply the sparsified alignment algorithm SPARSE for all pairwise
+alignments (instead of the default pairwise aligner locarna). SPARSE
+supports stronger sparsification for faster alignment computation and
+increases the structure prediction capabilities over locarna.
+
+=back
+
 
 =head2 Controlling Output
 
@@ -48,11 +100,16 @@ replacing suffix fa by (or appending) out.
 
 =item  B<-v, --verbose>
 
-Turn on verbose ouput.
+Turn on verbose ouput. Shows progress of computation of all-2-all
+pairwise alignments for guide tree computation; shows intermediary
+alignments during the progressive alignment computation.
 
 =item  B<--moreverbose>
 
-Be even more verbose.
+Be even more verbose: additionally shows parameters for the pairwise
+aligner; moreover, the calls and output of the RNA base pair
+probability computations as well as the pairwise aligner during
+progressive alignment.
 
 =item  B<-q, --quiet>
 
@@ -68,19 +125,28 @@ output to stdout and results/result.aln.
 Write STOCKHOLM files of all final and intermediate alignments (in
 addition to CLUSTALW files).
 
+
+=item B<-w,--width>=columns(120)
+
+Output width for sequences in clustal-like and stockholm output; note
+that the clustalw standard format requires 60 or less.
+
+=item B<--write-structure>
+
+Write guidance structure in output to stdout. This provides some
+insight into the influence of structure into the generated pairwise
+alignments. The guidance structure shows the base pairs 'predicted' by
+each pairwise locarna (or sparse) alignment. These structures should
+not be mistaken as predicted consensus structures of multiple
+alignments. Consensus structures can be more adequately derived from
+the multiple alignment. For this reason, mlocarna reports the
+consensus structure by RNAalifold.
+
 =back
 
-=head2 Controlling pairwise alignments
+=head2 Locality
 
 =over 4
-
-=item  B<--noLP> / B<--LP>
-
-Disallow/Allow lonely pairs (default: Disallow).
-
-=item  B<maxBPspan>
-
-Limit maximum span of base pairs (default off).
 
 =item  B<--free-endgaps>
 
@@ -94,42 +160,203 @@ Allow free endgaps 3'.
 
 Allow free endgaps 5'.
 
-=item B<Other locarna options>
+=item B<--sequ-local>=bool(false)
 
-Many of the options of locarna, the program for pairwise alignment, will work as well.
-This allows controlling scoring, locality, and speed/acccuracy trade off (heuristics).
-B<Please see> C<locarna -h> or the manpage of locarna.
+Turns on/off sequence locality [def=off]. Sequence locality refers to
+the usual form of local alignment. If on, mlocarna bases all
+calculations on local pairwise alignments, which determin the best
+alignments of subsequences (disregarding dissimilar starts and
+ends). Note that truely local structure alignments as well as local
+multiple alignments are still a matter of research; so don't expect
+perfect results in all instances.
 
-=item B<--pw-aligner>
+=item B<--struct-local>=bool(false)
 
-Utilize given binary for the pairwise alignment (overrides def=locarna).
-
-=item B<--pw-aligner-p>
-
-Utilize given binary for the probabilistic pairwise alignment
-(overrides def=locarna_p).
-
-=item B<--pw-aligner-options>
-
-Additional option string for the pairwise alignment (def="").
-
-=item B<--pw-aligner-p-options>
-
-Additional option string for the probabilistic pairwise alignment (def="").
+Turns on/off structure locality [def=off]. Structural locality enables
+skipping entire substructures in alignments. In pairwise alignments,
+this allows one exclusion of some subsequence in each loop; thus,
+guaranteeing that the (structure locally) aligned parts of the
+sequences are always connected w.r.t. the predicted structure but not
+necessarily consecutive in the sequence. Structure locality does not
+imply sequence locality, but rather the two concepts are orthogonal.
 
 =back
 
-=head2 Controlling guide tree construction
+=head2 Pairwise alignment and scoring
 
 =over 4
 
-=item  B<--treefile>
+
+=item B<--indel=score>(-350)
+
+Score of each single base insertion or deletion.
+
+=item B<--indel-opening>=score(-500)
+
+Score of opening an insertion or deletion, i.e. score for a
+consecutive run of deletions or insertions. Indel opening score and
+indel score define the affine scoring of gaps.
+
+=item B<-m,--match>=score(50)
+
+Score of a base match (unless ribosum-based scoring)
+
+=item B<-M,--mismatch>=score(0)
+
+Score of a base mismatch (unless ribosum-based scoring)
+
+=item B<--use-ribosum>=bool(true)
+
+Use ribosum scores for scoring base matches and base pair matches;
+note that tau=0 suppresses any effect on the latter.
+
+=item B<--ribosum-file>=file
+
+File specifying the Ribosum base and base-pair similarities. [default: use RIBOSUM85_60 without requiring a Ribosum file.]
+
+=item B<-s,--struct-weight>=score(200)
+
+Maximum weight of one predicted arc, aka base pair. Note that this
+means that the maximum weight of an arc match is twice as high. The
+maximum weight is assigned to base pairs with (almost) probability 1
+in the dot plot; less probable base pairs receive gradually degrading
+scores. The struct-weight factor balances the score contribution from
+structure to the score contribution from base similarity scores
+(e.g. ribosum scores).
+
+=item B<-e,--exp-prob>=prob
+
+Expected probability of a base pair.
+
+=item B<-t,--tau>=factor(0)
+
+Tau factor in percent. The tau factor controls the contribution of
+sequence-dependent scores to the score of arc matches.
+
+=item B<-E,--exclusion>=<score>(0)
+
+Weight of an exclusion, i.e. an ommitted subsequence in a loop, which
+applies only to structural local alignment.
+
+=item B<--stacking>
+
+Use stacking terms. In this case, stacked arcs are scored based on
+conditional probabilities (conditioned by their stacked inner arc)
+rather than unconditioned base pair probabilities. [Experimental]
+
+=item B<--new-stacking>
+
+Use new stacking terms; cf. --stacking. These terms directly award
+bonuses to stacking. [Experimental]
+
+=back
+
+=head2 Alignment heuristics
+
+Several parameters are available to speed up the pairwise alignment
+computations heuristically. Choosing these parameters reasonably is
+necessary to achieve good trade-off between speed and accuracy,
+especially for large alignment instances.
+
+=over 4
+
+=item B<-p,--min-prob>=probability(0.0005)
+
+Minimum base pair / arc probability. Arc with lower probability in the
+input RNA structure ensembles are ignored.
+
+=item B<-P, --tree-min-prob>=probability
+
+Minimal prob for constructing guide tree. This probability can be set
+separately for the all-2-all comparison for constructing the guide
+tree and the progressive/iterative alignment steps.
+
+=item B<--max-bps-length-ratio>=factor(0.0)
+
+Maximal ratio of the number of base pairs divided by sequence length
+(default: no effect)
+
+=item B<-D,--max-diff-am>=difference
+
+Maximal difference for lengths of matched arcs. Two arcs that have a
+higher difference of their lengths are ignored. This speeds up the
+alignment, since less arc comparisons (i.e. less DP matrices) have to
+be computed. [def: off/-1]
+
+=item B<-d,--max-diff>=difference
+
+Maximal difference of the positions of any two bases that are
+considered to be aligned. Bases with higher difference are generally
+not aligned. This allows banding of the DP matrices and thus can
+result in high speed ups. Note that the semantic changes in the
+context of a reference alignment specified with max-diff-aln. Then,
+the difference to the reference alignment is restricted. [def: off/-1]
+
+=item B<--max-diff-at-am>=difference
+
+Same restriction as max-diff but only at the ends of arcs in arc
+matches. [def: off/-1]
+
+=item B<--max-diff-aln>=file
+
+Computes "realignment" in the environment of the given reference
+alignment (file in clustalw format) by constraining the maximum
+difference to this reference (controlled by --max-diff). The input
+sequences (and their names) have to be identical to these alignment
+sequences; however the alignment is allowed to contain extra
+sequences, which are ignored.
+
+=item B<--max-diff-relax>
+
+Relax deviation constraints (cf. --max-diff-aln) in multiple
+aligmnent. This option is useful if the default strategy for
+realignment fails.
+
+=item B<-a,--min-am-prob>=probability(0.0005)
+
+Minimum arc-match probability (filters output of locarna-p)
+
+=item B<-b,--min-bm-prob>=probability(0.0005)
+
+Minimum base-match probability (filters output of locarna-p)
+
+=back
+
+=head2 Low-level selection of pairwise alignment tools and options
+
+=over 4
+
+=item B<--pw-aligner>
+
+Utilize the given tool for computing pairwise alignments
+(def=locarna).
+
+=item B<--pw-aligner-p>=tool
+
+Utilize the given tool for computing partition function pairwise
+alignments (def=locarna_p).
+
+=item B<--pw-aligner-options>
+
+Additional option string for the pairwise alignment tool (def="").
+
+=item B<--pw-aligner-p-options>
+
+Additional option string for the partition function pairwise alignment tool (def="").
+
+=back
+
+=head2 Controlling the guide tree construction
+
+=over 4
+
+=item  B<--treefile>=file
 
 File with guide tree in NEWICK format. The given tree is used as guide
 tree for the progressive alignment. This saves the calculation of
 pairwise all-vs-all similarities and construction of the guide tree.
 
-=item B<--similarity-matrix>
+=item B<--similarity-matrix>=file
 
 File with similarity matrix. The similarities in the matrix are used
 to construct the guide tree for the progressive alignment. This saves
@@ -140,32 +367,25 @@ the calculation of pairwise all-vs-all similarities.
 
 Use the graphkernel for constructing the guide tree.
 
-=item B<--svmsgdnspdk[=<program>]>
+=item B<--svmsgdnspdk>[=program]
 
 Specify the svmsgdnspdk program (potentially including path). Default:
 use "svmsgdnspdk" in path.
 
-=item B<--fasta2shrep=<program>>
+=item B<--fasta2shrep>=program
 
 Program "fasta2shrep" for generating graphs from the input sequences
 for use with the graph kernel guide tree generation (potentially
 including path). Default: use "fasta2shrep_gspan.pl" in path.
 
-=item B<--fasta2shrep-options=<args>>
+=item B<--fasta2shrep-options>=argument-string
 
 Command line arguments for fasta2shrep. Default: "-wins 200 -shift 50
 -stack -t 3 -M 3".
 
-=item B<-P, --tree-min-prob=<f>>
-
-Minimal prob for constructing guide tree. This probability can be set
-separately for the all-2-all comparison for constructing the guide
-tree and the progressive/iterative alignment steps.
-
 =back
 
-
-=head2 Controlling multiple alignment
+=head2 Controlling multiple alignment construction
 
 =over 4
 
@@ -192,26 +412,6 @@ Use alignments including "locality gaps" in subsequent steps of the
 progressive multiple alignment. Note: this is only effective if local
 alignment is turned on. (Opposite of B<--local-progressive>)
 
-=item B<--max-diff-aln=<file>>
-
-Restrict maximal difference to the alignment in <file> in clustalw
-format (difference given by --max-diff). Use this option for
-constrained re-aligning.
-
-=item B<--sparse>
-
-Apply the sparsified alignment algorithm SPARSE (instead of the
-default pairwise aligner locarna).
-
-=item B<--probabilistic>
-
-Score alignments using match probabilities that are computed by a
-partition function approach. This makes possible to
-consistency-transform the probabilities (option
---consistency-transform) and to compute reliabilities.  Reliabilities
-can also be used for iterating the alignment with reliably aligned
-base pairs as structural constraints (option --it-reliable-structure).
-
 =item B<--consistency-transformation>
 
 Apply probabilistic consistency transformation (only possible in
@@ -223,7 +423,7 @@ Refine iteratively after progressive alignment. Currently, iterative
 refinement optimizes the SCI or RELIABILITY (not the locarna score)! Iterative
 refinement realigns all binary splits along the guide tree.
 
-=item  B<--iterations=<num>>
+=item  B<--iterations>=number
 
 Refine iteratively for given number of iterations (or stop at
 convergence).
@@ -232,14 +432,14 @@ convergence).
 
 Use library extension for base pair probabilities (experimental/not functional).
 
-=item  B<--it-reliable-structure=<num>>
+=item  B<--it-reliable-structure>=number
 
 Iterate alignment <num> times with reliable structure. This works only
 in probabilistic mode, when reliabilities can be computed.
 
 =back
 
-=head2 Options for probabilistic mode
+=head2 Further options for probabilistic mode
 
 =over 4
 
@@ -286,11 +486,11 @@ Don't write / Write arc match probabilities to files in target dir (default: wri
 
 =back
 
-=head2 Special modes of operation
+=head2 Miscallaneous modes of operation
 
 =over 4
 
-=item  B<--dp-cache=<dir>>
+=item  B<--dp-cache>=directory
 
 Use directory <dir> as cache for dp files (useful for avoiding multiple computation).
 
@@ -298,13 +498,16 @@ Use directory <dir> as cache for dp files (useful for avoiding multiple computat
 
 Compute only the missing dp files, don't align (useful for filling the dp-cache).
 
-=item  B<--evaluate=<file>>
+=item  B<--evaluate>=file
 
-Evaluate the given multiple alignment (clustalw aln format, or use --eval-fasta).
+Evaluate the given multiple alignment (clustalw aln format, or use
+--eval-fasta). This requires that probailities are already computed
+(mlocarna --probabilistic) and present in the target directory
+(--tgtdir).
 
 =item  B<--eval-fasta>
 
-Assume that alignment for evaluation is in fasta format.
+Assume that alignment for evaluation (cf. --evaluate) is in fasta format.
 
 =back
 
@@ -335,6 +538,14 @@ Ignore all constraints (anchor and structure constraints) even if given.
 =head2 Rna folding (RNAfold/RNAplfold)
 
 =over 4
+
+=item  B<--noLP> / B<--LP>
+
+Disallow/Allow lonely pairs (default: Disallow).
+
+=item  B<--maxBPspan>
+
+Limit maximum span of base pairs (default off).
 
 =item  B<--plfold-span=span>
 
@@ -375,9 +586,10 @@ pairwise aligners (e.g. locarna_n) that use such probabilities.
 
 =over 4
 
-=item  B<--threads=<num>> or B<--cpus=<num>>
+=item  B<--threads, --cpus>=number
 
-Use <num> threads in parallel (support multicore/processor).
+Use the given number of threads for computing pair probabilities and
+all-2-all alignments in parallel (multicore/processor support).
 
 =back
 
@@ -402,13 +614,141 @@ guide tree for the progressive alignment. The final results are
 collected in <tgtdir>/results. The final multiple alignment is
 <tgtdir>/results/result.aln.
 
-Whenever parameters are not specified explicitly, we use the locarna defaults
-(please see C<locarna -h> or the manpage of locarna).
+=head1 EXAMPLES
+
+=head2 Calling mlocarna
+
+Sequences are typically given in plain fasta format like
+
+  example.fa:
+  ----------------------------------------
+  >fruA
+  CCUCGAGGGGAACCCGAAAGGGACCCGAGAGG
+  >fdhA
+  CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG
+  >vhuU
+  AGCUCACAACCGAACCCAUUUGGGAGGUUGUGAGCU
+  ----------------------------------------
+
+To align these sequences, simply call
+
+  mlocarna example.fa
+
+Usually, it makes sense to set additional options; this is either done
+on the command line or via configuration files. A reasonable
+small configuration for global alignment of large instances would be
+
+  short-example.cfg
+  ----------------------------------------
+  max-diff-am: 25
+  max-diff:    60
+  min-prob:    0.01
+  plfold-span: 100
+  indel:       -50
+  indel-open:  -750
+  threads:     8   # <- adapt to your hardware
+  alifold-consensus-dp
+  ----------------------------------------
+
+To use it, call
+
+  mlocarna --config short-example.cfg example.fa
+
+which is equivalent to
+
+  mlocarna --max-diff-am 25 --max-diff 60 --min-prob 0.01 \
+           --indel -50 --indel-open -750 \
+           --plfold-span 100 --threads 8 --alifold-consensus-dp \
+           example.fa
+
+For  probabilistic alignment with consistency transformation, call
+
+  mlocarna --probabilistic --consistency-transform example.fa
+
+In both cases, mlocarna writes the main results to stdout and more
+detailed results to the target directory example.out. The results
+directory is overwritten if it exists already. To avoid this, one can
+specify the target directory (--tgtdir).
+
+=head2 Use of constraints
+
+Mlocarna supports structure constraints for folding and anchor
+constraints for alignment. Both types of constraints can be specified
+in extension of the standard fasta format via 'constraint
+lines'. Fasta-ish input with constraints looks like this
+
+  example-w-constraints.fa
+  ----------------------------------------
+  >A
+  GACCCUGGGAACAUUAACUACUCUCGUUGGUGAUAAGGAACA
+  ..((.(....xxxxxx...................))).xxx #S
+  ..........000000.......................111 #1
+  ..........123456.......................123 #2
+  >B
+  ACGGAGGGAAAGCAAGCCUUCUGCGACA
+  .(((....xxxxxx.......))).xxx #S
+  ........000000...........111 #1
+  ........123456...........123 #2
+  ----------------------------------------
+
+The same anchor constraints (like by the lines tagged #1, #2) can
+alternatively be specified in bed format by the entries
+
+  example-anchors.bed
+  ----------------------------------------
+  A	10	16	first_box
+  B	8	14	first_box
+  A	39	42	ACA-box
+  B	25	28	ACA-box
+  ----------------------------------------
+
+where anchor regions (boxes) have arbitrary but matching names
+and contig/sequence names correspond to the sequence names
+of the fasta(-like) input.
+
+Given, e.g.
+
+  example-wo-anchors.fa
+  ----------------------------------------
+  >A
+  GACCCUGGGAACAUUAACUACUCUCGUUGGUGAUAAGGAACA
+  ..((.(....xxxxxx...................))).xxx #S
+  >B
+  ACGGAGGGAAAGCAAGCCUUCUGCGACA
+  .(((....xxxxxx.......))).xxx #S
+  ----------------------------------------
+
+once calls
+
+  mlocarna --anchor-constraints example-anchors.bed  example-wo-anchors.fa
+
+The LocARNA distribution provides files of these examples and other
+examples in Data/Examples.
+
+=head1 AUTHORS
+
+Sebastian Will,
+Christina Otto,
+Milad Miladi
 
 
-=head1 AUTHOR
+=head1 ONLINE INFORMATION
 
-Sebastian Will
+For download and online information, see
+L<http://www.bioinf.uni-freiburg.de/Software/LocARNA>
+
+=head1 REFERENCES 
+
+Sebastian Will, Kristin Reiche, Ivo L. Hofacker, Peter F. Stadler, and
+Rolf Backofen.  Inferring non-coding RNA families and classes by means
+of genome-scale structure-based clustering.  PLOS Computational
+Biology, 3 no. 4 pp. e65, 2007.
+doi: 10.1371/journal.pcbi.0030065
+
+Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler,
+and Rolf Backofen. LocARNA-P: Accurate boundary prediction and
+improved detection of structural RNAs. RNA, 18 no. 5 pp. 900-14, 2012.
+doi: 10.1261/rna.029041.111
 
 =cut
 
@@ -602,6 +942,7 @@ my @autopass_arg_options =
      "mismatch|M=i",
      "indel|i=i",
      "indel-opening=i",
+     "unpaired-penalty=i",
      "ribosum-file=s",
      "use-ribosum=s",
      "ribofit=s",
@@ -690,7 +1031,7 @@ my $config_file;
 #
 Getopt::Long::Configure("pass_through");
 #
-if (GetOptions( 'configure=s' => \$config_file, 
+if (GetOptions( 'configure=s' => \$config_file,
                 'verbose' => \$opts{'verbose'},
                 'quiet' => \$opts{'quiet'}
               ) && defined($config_file)) {
