@@ -180,6 +180,12 @@ sequences are always connected w.r.t. the predicted structure but not
 necessarily consecutive in the sequence. Structure locality does not
 imply sequence locality, but rather the two concepts are orthogonal.
 
+=item B<--penalized>=score
+
+Variant of sequence local alignment (cf. --sequ-local), where the
+specified penalty score is subtracted for each base in the local
+alignment. [Experimental]
+
 =back
 
 =head2 Pairwise alignment and scoring
@@ -950,6 +956,8 @@ my @autopass_arg_options =
      "tau|t=i",
      "exclusion|E=i",
      "exp-prob|e=f",
+
+     "penalized=i",
 
      "max-diff-am=i",
      "max-diff=i",
