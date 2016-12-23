@@ -154,8 +154,8 @@ namespace LocARNA {
         
         const vrna_md_t &md = params.model_details();
         
-        vrna_fold_compound_t  *vc;       
-        
+        vrna_fold_compound_t *vc;
+
 	// use MultipleAlignment to get pointer to c-string of the
 	// first (and only) sequence in object sequence.
 	//
@@ -239,6 +239,15 @@ namespace LocARNA {
         
 	size_t length = sequence_.length();
 	size_t n_seq = sequence_.num_of_rows();
+
+        // catch special case of length 0 sequence, since the Vienna
+        // package does not handle this for us -- sad :(
+        if (length==0) {
+	    min_free_energy_ = 0;
+	    min_free_energy_structure_ = "";
+            McCmat_ = 0;
+            return;
+        }
         
 	// ----------------------------------------
 	// write sequences to array of C-strings
@@ -284,17 +293,11 @@ namespace LocARNA {
         
 	// ----------------------------------------
 	// call alifold for setting the scale
-	if (length>0) { // don't call alifold for 0 length (necessary
-			// workaround, since alifold cannot handle
-            // empty sequences)
-	    min_free_energy_ = vrna_mfe(vc, c_structure);
-	    min_free_energy_structure_ = c_structure;
-
-            vrna_exp_params_rescale(vc, &min_free_energy_);
-	} else {
-	    min_free_energy_ = 0;
-	    min_free_energy_structure_ = "";
-	}
+        // empty sequences)
+        min_free_energy_ = vrna_mfe(vc, c_structure);
+        min_free_energy_structure_ = c_structure;
+        
+        vrna_exp_params_rescale(vc, &min_free_energy_);
 	
 	// ----------------------------------------
 	// call alifold partition function
