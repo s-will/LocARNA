@@ -1,14 +1,24 @@
 ============================================================
 === 2016
-1.9.0-alpha (2016-Dec-13)
-	introduce mlocarna test with comparison to reference results (generation with make gen-test-results)
-	add mlocarna option to read anchor constraints from bed-format specification
+1.9.0 (2016-Dec-26)
 	add mlocarna option to load (default) configuration from file
+	add mlocarna option to read anchor constraints from
+	  bed-format specification
 	add option --maxBPspan (analogous to ViennaRNA's maxBPspan)
-	add stockholm writing test
-	Fix mlocarna bug: write stockholm also in probabilistic mode
-	Fix mlocarna error handling when running multithreaded
-	Fix doxygen/docu generation
+	activate penalized option for mlocarna
+        update documentation of mlocarna
+	update reliability-profile.pl: suppress too verbose output;
+	  improve behavior of subseq option
+	Tests:
+	    introduce mlocarna test with comparison to reference results
+	      -- generate reference results with make gen-test-results
+	    add stockholm writing test
+	Bug fixes:
+	    catch empty sequence case for alifold
+	    fix error message concerning max-diff-aln in mlocarna
+	    fix mlocarna bug: write stockholm also in probabilistic mode
+	    fix mlocarna error handling when running multithreaded
+	    fix doxygen/docu generation
 1.8.12 (2016-Dec-1)
 	Add checks: multi-threaded mlocarna, locarnate
 	Fix severe problem with threads in mlocarna, which caused hangs
