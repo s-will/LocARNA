@@ -1352,7 +1352,6 @@ $locarna_params_tree .= " --new-stacking" if ($opts{'new-stacking'});
 
 ## pass alifold-consensus-dp
 $locarna_params .= " --alifold-consensus-dp" if ($opts{'alifold-consensus-dp'});
-$locarna_p_params .= " --alifold-consensus-dp" if ($opts{'alifold-consensus-dp'});
 $locarna_params_tree .= " --alifold-consensus-dp" if ($opts{'alifold-consensus-dp'});
 
 
