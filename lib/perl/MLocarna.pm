@@ -13,95 +13,97 @@ use MLocarna::MatchProbs;
 use MLocarna::Aux;
 
 require Exporter;
-    
+
 # set the version for version checking
 our $VERSION     = 1.00;
 
 our @ISA         = qw(Exporter);
-our @EXPORT      = qw(
+our @EXPORT      =
+  qw(
+        read_fasta
 
-read_fasta
+        check_constraints_in_fasta
+        read_anchor_constraints
 
-check_constraints_in_fasta
-read_anchor_constraints
+        sequence_constraint_string
 
-sequence_constraint_string
-
-compute_alignment_from_seqs
-compute_alignment_score
-read_dp_ps
-read_pp_file_aln_wo_anno
-read_pp_file_aln_w_anno
-read_pp_file_pairprobs
-read_pp_file_pairprob_info
-convert_dp_to_pp_with_constraints
-convert_alifold_dp_to_pp
-alifold_structure
-constrain_sequences_from_reliable_structures
+        compute_alignment_from_seqs
+        compute_alignment_score
+        read_dp_ps
+        read_pp_file_aln_wo_anno
+        read_pp_file_aln_w_anno
+        read_pp_file_pairprobs
+        read_pp_file_pairprob_info
+        convert_dp_to_pp_with_constraints
+        convert_alifold_dp_to_pp
+        alifold_structure
+        constrain_sequences_from_reliable_structures
 
 
-extract_from_clustal_alignment
+        extract_from_clustal_alignment
 
-project_str_to_aln_seq
+        project_string_to_alignment_sequence
+        project_structure_to_alignment_sequence
 
-clone_hash
+        clone_hash
 
-read_aln_wo_anno
-write_aln
-project_aln
-project_alnloh
-aln_h2loh
-write_clustalw_loh
-aln_length_atleastonematch
+        read_aln_wo_anno
+        write_aln
+        project_aln
+        project_alnloh
+        aln_h2loh
+        write_clustalw_loh
+        aln_length_atleastonematch
 
-aln_to_alnloh
-read_clustalw_alignment
-read_clustalw_alnloh
-read_clustalw_aln
-write_clustalw_alnloh
-%loh_translate_names
-%loh_associate_nnames_to_names
-loh_names 
-loh_sort
+        aln_to_alnloh
+        read_clustalw_alignment
+        read_clustalw_alnloh
+        read_clustalw_aln
+        write_clustalw_alnloh
+        %loh_translate_names
+        %loh_associate_nnames_to_names
+        loh_names
+        loh_sort
 
-sprint_fasta_alnloh
+        sprint_fasta_alnloh
 
-write_pp
+        write_pp
 
-write_2D_matrix
+        write_2D_matrix
 
-read_2D_matrix
+        read_2D_matrix
 
-new_intermediate_name
+        new_intermediate_name
 
-extract_score_matrix_from_alignments
+        extract_score_matrix_from_alignments
 
-aln_reliability_beststruct_fromfile
-aln_reliability_fromfile
+        aln_reliability_beststruct_fromfile
+        aln_reliability_fromfile
 
-register_normalized_seqname
-register_normalized_seqnames
-get_normalized_seqname
-forget_normalized_seqnames
-print_normalized_sequence_names_hash
+        register_normalized_seqname
+        register_normalized_seqnames
+        get_normalized_seqname
+        forget_normalized_seqnames
+        print_normalized_sequence_names_hash
 
-nnamepair
+        nnamepair
 
-alifold_mfe
-alifold_pf
+        alifold_mfe
+        alifold_pf
 
-);
+        convert_fix_structure_to_pp
+   );
 
 our %EXPORT_TAGS = ();
 
 # your exported package globals go here,
 # as well as any optionally exported functions
-our @EXPORT_OK   = qw(
-$PACKAGE_STRING
-
-parse_mfasta
-parse_mfasta_constraints
-);
+our @EXPORT_OK   =
+  qw(
+        $PACKAGE_STRING
+        parse_mfasta
+        parse_mfasta_constraints
+   );
 
 our $RNAalifold = "RNAalifold";
 
@@ -119,7 +121,7 @@ our $PACKAGE_STRING = "MLocarna";
 ## new_intermediate_name
 ##
 ## returns a new name for intermediate files
-## uses counter 
+## uses counter
 my $intermediate_name_counter=0;
 ## and basename
 my $intermediate_name_base="intermediate";
@@ -136,30 +138,11 @@ sub new_intermediate_name {
 
 
 ########################################
-## threading support
-##
-
-# use Config;
-
-# my $THREADS_ENABLED = $Config{useithreads};
-
-# if ($THREADS_ENABLED) {
-#     require MLocarna::threaded;
-#     import MLocarna::threaded;
-# } else {
-#     require MLocarna::unthreaded;
-#     import MLocarna::unthreaded;
-# }
-
-
-
-########################################
 ## Sequence names in fasta and clustalw files can contain characters
 ## that cannot be written to disk.  Therefore, we introduce name
 ## normalization that removes special characters and restrict name
 ## length in order to generate a nice filename.
 ##
-
 
 ########################################
 ## normalize_seqname($name, @names list of existing names)
@@ -168,20 +151,20 @@ sub new_intermediate_name {
 ## has at most a length of 16
 ## and
 ## does not already exist in @names
-## 
+##
 ########################################
 sub normalize_seqname {
     my ($name, @names) = @_;
-    
+
     my $maxlen=16;
 
     chomp $name;
 
-    # replace all non-alpha-numeric symbols by '_' 
+    # replace all non-alpha-numeric symbols by '_'
     $name =~ s/[^a-zA-Z\d]/_/g;
     # take first 16 characters
     $name = substr $name,0,$maxlen;
-    
+
     # make $name unique if it already occurs in @names
     # by appending '_' and a number $i to the truncated name
     # ($name is truncated such that maxlen is not exceeded)
@@ -193,7 +176,7 @@ sub normalize_seqname {
 	if ($arity > 10) { # this will never happen ;)
 	    die "Could not generate unique name";
 	}
-	
+
 	$name = substr $name,0,$maxlen-$arity-1;
 	$name = sprintf("%s_%0$arity"."d",$name,$i);
 	$i++;
@@ -207,10 +190,10 @@ my %normalized_sequence_names_hash;
 
 ########################################
 ## print normalized sequence names hash to stdout for debugging
-## 
+##
 sub print_normalized_sequence_names_hash {
     #print "Normalized sequence names hash:\n";
-    foreach my $k (sort keys %normalized_sequence_names_hash) { 
+    foreach my $k (sort keys %normalized_sequence_names_hash) {
 	print "$k => $normalized_sequence_names_hash{$k}\n";
     }
 }
@@ -219,16 +202,16 @@ sub print_normalized_sequence_names_hash {
 ## register_normalized_seqname( $name )
 ##
 ## registers a normalized name for $name
-## if the name exists already, do nothing 
+## if the name exists already, do nothing
 ##
 ## @param $name a sequence name
 ##
 sub register_normalized_seqname( $ ) {
     my ( $name ) = @_;
-    
+
     if ( ! exists $normalized_sequence_names_hash{$name} ) {
-	$normalized_sequence_names_hash{$name} = 
-	    normalize_seqname($name,values %normalized_sequence_names_hash);
+	$normalized_sequence_names_hash{$name} =
+          normalize_seqname($name,values %normalized_sequence_names_hash);
     }
 }
 
@@ -242,7 +225,7 @@ sub register_normalized_seqname( $ ) {
 ##
 sub register_normalized_seqnames( $ ) {
     my ( $loh ) = @_;
-    
+
     foreach my $h (@$loh) {
 	register_normalized_seqname($h->{name});
     }
@@ -266,7 +249,7 @@ sub forget_normalized_names {
 ## if normalized name was not registered: prints error message and exits with error code -1.
 sub get_normalized_seqname( $ ){
     my ( $name ) = @_;
-    
+
     if (exists $normalized_sequence_names_hash{$name}) {
 	return $normalized_sequence_names_hash{$name};
     } else {
@@ -284,10 +267,10 @@ sub get_normalized_seqname( $ ){
 ## normalized names do not containt '-' (see MLocarna::chp !)
 sub nnamepair {
     my ($nameA,$nameB) = @_;
-    
+
     my $nnameA=get_normalized_seqname($nameA);
     my $nnameB=get_normalized_seqname($nameB);
-    
+
     return MLocarna::chp($nnameA,$nnameB);
 }
 
@@ -308,9 +291,9 @@ sub nnamepair {
 ##   seq:  sequence string
 ##
 ## supports special annotation strings as used by locarna
-## lines ending in #(\S+) are recognized and 
+## lines ending in #(\S+) are recognized and
 ## returned as features "ANNO#$1" of the sequence.
-## 
+##
 ## return reference to list of hash representation
 ##
 ########################################
@@ -318,13 +301,13 @@ sub read_fasta {
     my $filename = shift;
 
     my $fh;
-    
+
     if ($filename =~ /\.gz$/) {
 	open($fh,"gunzip -c $filename |") || die "Cannot read or uncompress file $filename.";
     } else {
 	open($fh,$filename) || die "Cannot read file $filename.";
     }
- 
+
     my @fasta = ();
     my %seen_names;
 
@@ -333,7 +316,7 @@ sub read_fasta {
 	if ($line=~/^>\s*(\S+)\s*(.*)/) {
 	    my $name=$1;
 	    my $description=$2;
-	    
+
 	    ## check for duplicate names in fasta
 	    if (exists $seen_names{$name}) {
 		printerr "Duplicate name \"$name\" in fasta input. ";
@@ -347,29 +330,29 @@ sub read_fasta {
 		exit(-1);
 	    }
 	    $seen_names{$name}=1;
-	    
+
 	    my $seq = { name  => $name,
 			descr => $description };
-	    
+
 	    while (defined($line=<$fh>) && ($line !~ /^>/)) {
 		chomp $line;
 		$line =~ s/\s+//g;
-		
+
 		if  ($line =~ /(.+)\s*\#(.+)/) {
 		    $seq->{"ANNO\#$2"} .= $1;
 		} else {
 		    $seq->{seq} .= $line;
 		}
 	    }
-	    
+
 	    push @fasta, $seq;
 	} else {
 	    $line=<$fh>;
 	}
     }
-    
+
     close $fh;
-    
+
     return \@fasta;
 }
 
@@ -583,7 +566,7 @@ sub read_anchor_constraints {
             for ( my $i=1; $i<=$region_id_width; $i++ ) {
                 substr($seq->{"ANNO#$i"},$p,1) = $rid[$i-1];
             }
-            my @pos = 
+            my @pos =
               split //, sprintf("%0${position_id_width}d",$p-$bedentry->[1]);
             for ( my $i=1; $i<=$position_id_width; $i++ ) {
                 substr($seq->{"ANNO#".($i+$region_id_width)},$p,1)
@@ -611,14 +594,14 @@ sub read_anchor_constraints {
 sub sequence_constraint_string {
     my $seq=shift;
     my $i=1;
-    
+
     my $str="";
     while (exists $seq->{"ANNO#$i"}) {
 	$str .= $seq->{"ANNO#$i"}."#";
 	$i++;
     }
     $str =~ s/\#$//;
-    
+
     return $str;
 }
 
@@ -631,11 +614,11 @@ sub sequence_constraint_string {
 sub parse_mfasta($) {
     my ($file) = @_;
     my %mfasta;
-    
+
     local *PMF_IN;
 
     printerr "Use of parse_mfasta is deprecated. Use read_fasta instead.";
-    
+
     open(PMF_IN,$file) || die "Cannot read mfasta file $file\n";
 
     my $line=<PMF_IN>;
@@ -647,7 +630,7 @@ sub parse_mfasta($) {
 	    $name =~ s/\s+.+$//g; ## ignore everything after first blank
 	    $name =~ s/[^a-zA-Z\d]/_/g;
 	    $name = substr $name,0,16;
-	    
+
 	    if (exists $mfasta{$name}) {
 		printerr "Duplicate name in mfasta: $name\n";
 		exit -1;
@@ -666,7 +649,7 @@ sub parse_mfasta($) {
 
 ########################################
 # DEPRECATED
-# read a (multiple) fasta file 
+# read a (multiple) fasta file
 # with constraint annotation
 # also reads long names (the complete name in the fasta file)
 #
@@ -684,8 +667,8 @@ sub parse_mfasta($) {
 # corresponding sequences and constraints:
 #
 #  for a sequence name $name, we generate hash entries
-#    - $mfasta{"$name"} 
-#    - $mfasta{"$name#S"} 
+#    - $mfasta{"$name"}
+#    - $mfasta{"$name#S"}
 #    - $mfasta{"$name#C"}
 #    - $mfasta{"$name#LONG"}
 #
@@ -698,27 +681,27 @@ sub parse_mfasta_constraints {
 
     my %seqcons; # sequence constraints hash
     my %strcons; # sequence constraints hash
-    
+
     local *PMF_IN;
-    
+
     open(PMF_IN,$file) || die "Cannot read mfasta file $file\n";
 
     my $line=<PMF_IN>;
     while(defined($line)) {
 	if ($line=~/^>\s*(.+)/) {
-	    
+
 	    my $longname = $1;
 	    $longname =~ s/\s+.*$//; # eat everything after first space in $longname
 
 	    my $name = make_unique_seqname $longname,(keys %mfasta);
-	    
+
 	    if (exists $mfasta{$name}) {
 		printerr "Duplicate name in mfasta, cannot make unique : $name\n";
 		exit -1;
 	    }
-	    
+
 	    $mfasta{"$name\#LONG"}=$longname;
-	    
+
 	    while (defined($line=<PMF_IN>) && ($line !~ /^>/)) {
 		chomp $line;
 		$line =~ s/\s+//g;
@@ -732,15 +715,15 @@ sub parse_mfasta_constraints {
 	    }
 	}
     }
-    
+
     my @names = keys %mfasta;
-    
+
     ## ----------------------------------------
     # insert constraints in mfasta hash
     # and check validity
     #
     my $has_seq_constraints=0; # whether there are seq constraints
-    
+
     for my $name (@names) {
 	if (exists $strcons{$name}) {
 	    if (length $strcons{$name} != length $mfasta{$name}) {
@@ -750,14 +733,14 @@ sub parse_mfasta_constraints {
 
 	    $mfasta{"$name\#S"} = $strcons{$name};
 	}
-	
+
 	my $i=1;
 	while (exists $seqcons{"$name\#$i"}) {
 	    if (length $seqcons{"$name\#$i"} != length $mfasta{$name}) {
 		printerr "Sequence constraint length unequals sequence length for $name.\n";
 		exit -1;
 	    }
-	    
+
 	    $mfasta{"$name\#C"} .= $seqcons{"$name\#$i"}."\#";
 	    $i++;
 	}
@@ -765,14 +748,14 @@ sub parse_mfasta_constraints {
 	    $mfasta{"$name\#C"} =~ s/\#$//; # remove last '#'
 	    $has_seq_constraints=1;
 	}
-	
+
 	my $num_seq_constraint_lines=grep /$name\#/, keys %seqcons;
 	if ($i-1 != $num_seq_constraint_lines) {
 	    printerr "Bad sequence constraints for sequence $name.\n";
 	    exit -1;
 	}
     }
-    
+
     for my $name (@names) {
 	if (($name!~/#/) &&  $has_seq_constraints) {
 	    if (! exists $mfasta{"$name\#C"}) {
@@ -782,7 +765,7 @@ sub parse_mfasta_constraints {
     }
     #
     ## ----------------------------------------
-    
+
     return %mfasta;
 }
 
@@ -790,10 +773,10 @@ sub parse_mfasta_constraints {
 ## thereby insert the sequence constraint strings
 sub convert_dp_to_pp_with_constraints($$$$$$) {
     my ($dpfile,$ppfile,$name,$sequence,$constraints,$read_condprobs) = @_;
-    
-    open(PP_OUT,">$ppfile") || die "Cannot open $ppfile for writing."; 
-    open(DP_IN,"$dpfile") || die "Cannot open $dpfile for reading."; 
-    
+
+    open(PP_OUT,">$ppfile") || die "Cannot open $ppfile for writing.";
+    open(DP_IN,"$dpfile") || die "Cannot open $dpfile for reading.";
+
     print PP_OUT "#PP 2.0\n\n";
     print PP_OUT "$name $sequence\n";
     if (defined $constraints && $constraints ne "") {
@@ -802,25 +785,25 @@ sub convert_dp_to_pp_with_constraints($$$$$$) {
 	    print PP_OUT "#A".($i+1)." ".$cs[$i]."\n";
 	}
     }
-    
-    print PP_OUT "\n#END\n"; 
 
-    print PP_OUT "\n#SECTION BASEPAIRS\n\n"; 
-    
+    print PP_OUT "\n#END\n";
+
+    print PP_OUT "\n#SECTION BASEPAIRS\n\n";
+
     if ($read_condprobs) {
 	print PP_OUT "\n#STACK\n";
     }
-    
+
     my %pp;
-    
+
     while (my $line=<DP_IN>) {
 	if ($line =~ /^(\d+) (\d+) ([\d\.]+) ubox/) {
 	    my $i=$1;
 	    my $j=$2;
-	    my $p=$3*$3; 
+	    my $p=$3*$3;
 	    $pp{$i}{$j}="$p";
 	}
-	
+
 	if ($read_condprobs) {
 	    # assume ubox always before lbox
 	    if ($line =~ /^(\d+) (\d+) ([\d\.]+) lbox/) {
@@ -834,10 +817,10 @@ sub convert_dp_to_pp_with_constraints($$$$$$) {
 	    }
 	}
     }
-    
+
     close DP_IN;
-    
-    
+
+
     for my $i ( keys %pp ) {
 	for my $j ( keys %{ $pp{$i} } ) {
 	    print PP_OUT "$i $j $pp{$i}{$j}\n";
@@ -845,7 +828,7 @@ sub convert_dp_to_pp_with_constraints($$$$$$) {
     }
 
     print PP_OUT "\n\#END\n";
-    
+
     close PP_OUT;
 }
 
@@ -858,32 +841,32 @@ sub convert_dp_to_pp_with_constraints($$$$$$) {
 ##
 sub convert_alifold_dp_to_pp( $$$ ) {
     my ($dpfile,$alnfile,$ppfile) = @_;
-    
+
     my $aln = read_clustalw_alnloh($alnfile);
-    
+
     my $PP_OUT;
     my $DP_IN;
 
-    open($PP_OUT,">$ppfile") || die "Cannot open $ppfile for writing."; 
-    open($DP_IN,"$dpfile") || die "Cannot open $dpfile for reading."; 
-    
+    open($PP_OUT,">$ppfile") || die "Cannot open $ppfile for writing.";
+    open($DP_IN,"$dpfile") || die "Cannot open $dpfile for reading.";
+
     print $PP_OUT "SCORE: 0\n\n";
-    
+
     ## copy alignment from alnfile
     write_clustalw_alnloh($PP_OUT, $aln, 75, 0);
 
     print $PP_OUT "\n\#\n";
-    
+
     while (my $line=<$DP_IN>) {
 	if ($line =~ /(\d+) (\d+) ([\d\.]+) ubox/) {
 	    my $i=$1;
 	    my $j=$2;
-	    my $p=$3*$3; 
+	    my $p=$3*$3;
 
 	    print $PP_OUT "$i $j $p\n";
 	}
     }
-    close $DP_IN;    
+    close $DP_IN;
     close $PP_OUT;
 }
 
@@ -891,21 +874,21 @@ sub convert_alifold_dp_to_pp( $$$ ) {
 ## compute pairwise alignment for given sequences using RNAfold -p for generating dps
 sub compute_alignment($$$$$) {
     my ($bindir,$seqA,$seqB,$locarna_params,$tmpprefix) =  @_;
-    
+
     local *CA_IN;
-    
+
     my $tmpfile="$tmpprefix.clustal";
 
     system("$bindir/locarna.pl $seqA $seqB $locarna_params --clustal=$tmpfile >/dev/null");
-    
+
     open(CA_IN,"$tmpfile") || die "Cannot read tmp file $tmpfile\n";
-    
+
     my @content=<CA_IN>;
-   
+
     close CA_IN;
-    
+
     unlink $tmpfile;
-    
+
     return @content;
 }
 
@@ -913,7 +896,7 @@ sub compute_alignment($$$$$) {
 
 sub compute_alignment_score($$$$$) {
     my ($bindir,$seqA,$seqB,$locarna_params,$tmpprefix) =  @_;
-    
+
     my @content=compute_alignment($bindir,$seqA,$seqB,$locarna_params,$tmpprefix);
     # print "@content\n";
     $content[0] =~ /Score: ([\d\.\-]+)/ || die "Cannot return score.\n";
@@ -939,10 +922,10 @@ sub compute_alignment_score($$$$$) {
 ########################################
 sub extract_from_clustal_alignment {
     my ($nameA,$nameB,$alignment) = @_;
-    
+
     my $aliA="";
     my $aliB="";
-    
+
     for my $line (@$alignment) {
 	if ($line =~ /^$nameA\s+(.+)/) {
 	    $aliA.=$1;
@@ -955,7 +938,7 @@ sub extract_from_clustal_alignment {
 
 ########################################
 ## read_dp_ps($filename)
-## 
+##
 ## Parse a "RNAfold -p"-generated dotplot postscript file
 ##
 ## $filename name of dot plot ps file
@@ -966,12 +949,12 @@ sub extract_from_clustal_alignment {
 sub read_dp_ps {
     my ($filename) = @_;
     local *IN;
-    
+
     open(IN,$filename) || die "Cannot read $filename for parsing as dp-ps file.\n";
-    
+
     my $seq="";
     my @pairprobs;
-    
+
     while (my $line=<IN>) {
 	if ($line =~ /^\/sequence \{ \(/) {
 	    while (defined($line = <IN>) && ($line !~  /\} def/  ))  {
@@ -981,16 +964,16 @@ sub read_dp_ps {
 	    }
 	    #print "read_dp_ps $filename: $seq\n";
 	}
-	
+
 	if ($line =~ /(\d+)\s+(\d+)\s+(\S+)\s+ubox/) {
 	    $pairprobs[$1-1][$2-1]=$3*$3;
 	}
     }
-    
+
     close IN;
-    
+
     $seq ne "" || die "Empty sequence in dp.ps file $filename\n";
-    
+
     return ($seq,\@pairprobs);
 }
 
@@ -1000,7 +983,7 @@ sub read_dp_ps {
 sub read_pp_file_aln_wo_anno {
     my ($filename)=@_;
     my %aln = read_pp_file_aln_w_anno($filename);
-    
+
     for my $k (keys %aln) {
 	if ($k =~ /^#/) { ## delete names beginning with '#'
 	    delete $aln{$k};
@@ -1014,9 +997,9 @@ sub read_pp_file_aln_wo_anno {
 sub read_pp_file_aln_w_anno {
     my ($filename)=@_;
     my $pp_in;
-   
+
     open($pp_in,$filename) || die "MLocarna::read_pp_file_aln: Cannot read $filename\n";
-    
+
     my %aln;
     my %pairprobs;
 
@@ -1027,20 +1010,20 @@ sub read_pp_file_aln_w_anno {
 	$pp_version=$1;
 	$line = <$pp_in>
     }
-    
+
     while ($line) {
 	$line = <$pp_in>;
-	
+
 	if ($pp_version>=2 && $line =~ /^\#END/) { last; }
 	if ($pp_version<2 && $line =~ /^\#\s*$/) { last; }
-	
+
 	if (($line =~ /^(\S+)\s+(.+)/) && ($line !~ /^SCORE:/) ) {
 	    $aln{$1}.=$2;
 	}
     }
-    
+
     close $pp_in;
-    
+
     return %aln;
 }
 
@@ -1057,15 +1040,15 @@ sub read_pp_file_pairprobs($) {
     my $pp_in;
 
     open($pp_in,$filename) || die "Can not read $filename\n";
-    
+
     #my %aln;
     my %pairprobs = read_pp_file_pairprob_info($filename);
-    
+
     foreach my $k (keys %pairprobs) {
 	$pairprobs{$k} =~ /^(\S+)/;
 	$pairprobs{$k} = $1;
     }
-    
+
     return %pairprobs;
 }
 
@@ -1085,7 +1068,7 @@ sub read_pp_file_pairprob_info($) {
     my $pp_in;
 
     open($pp_in,$filename) || die "Can not read $filename\n";
-    
+
     #my %aln;
     my %pairprobinfo;
 
@@ -1098,9 +1081,9 @@ sub read_pp_file_pairprob_info($) {
     }
 
     while ($line = <$pp_in>) {
-	if ($pp_version>=2 && $line =~ /^\#END/) { 
+	if ($pp_version>=2 && $line =~ /^\#END/) {
 	    while ($line = <$pp_in>) {
-		if ($line =~ /^\#SECTION BASEPAIRS/) { 
+		if ($line =~ /^\#SECTION BASEPAIRS/) {
 		    last;
 		}
 	    }
@@ -1108,7 +1091,7 @@ sub read_pp_file_pairprob_info($) {
 	}
 	if ($pp_version<2 && $line =~ /^\#\s*$/) { last; }
     }
-    
+
     while (($line = <$pp_in>)) {
 	if ($line =~ /^(\S+)\s+(\S+)\s+(.+)/) {
 	    my $i=$1;
@@ -1116,43 +1099,112 @@ sub read_pp_file_pairprob_info($) {
 	    my $pi=$3;
 	    $pairprobinfo{"$i $j"}=$pi;
 	}
-	if ($pp_version>=2 && $line =~ /^\#END/) { 
+	if ($pp_version>=2 && $line =~ /^\#END/) {
 	    last;
 	}
     }
     close $pp_in;
-    
+
     return %pairprobinfo;
 }
 
+########################################
+## minimum of two numbers
+##
+sub min {
+    my ($x,$y) = @_;
+    return ($x<=$y)?$x:$y;
+}
 
 ########################################
-## project_str_to_aln_seq($str,$seq)
+## project_string_to_alignment_sequence($str,$seq,$gap_symbols)
 ##
-## Project structure string to alignment sequence
-## Remove all columns from structure string that
-## have a corresponding gap colunn in alignment sequence
+## Project string to alignment sequence by removing all columns from
+## string that have a corresponding gap colunn in the alignment
+## sequence
 ##
-## $str structure string (with gaps)
-## $seq sequence with gaps
+## @param $str string
+## @param $seq alignment string (sequence with gaps)
+## @param $gap_symbols symbols considered as gaps
 ##
-## pre: $str and $seq must have same length
-## consider everything different from [a-zA-Z] as gap
+## @pre $str and $seq have same length
 ##
-## returns resulting structure string
+## @returns projected string
 ##
 ########################################
-sub project_str_to_aln_seq($$) {
-    my ($str,$seq)=@_;
+sub project_string_to_alignment_sequence($$$) {
+    my ($str,$seq,$gap_symbols)=@_;
     my $res="";
     for (my $i=0; $i<length($seq); $i++) {
-	if (substr($seq,$i,1) =~ /[a-zA-Z]/) {
+	if (substr($seq,$i,1) !~ /[$gap_symbols]/) {
 	    $res .= substr $str,$i,1;
 	}
     }
     return $res;
 }
 
+########################################
+## project_structure_to_alignment_sequence($str,$seq,$gap_symbols,$opening_symbols,$closing_symbols,$neutral_symbol)
+##
+## Project structure string to alignment sequence by removing all
+## columns that have a corresponding gap colunn in the alignment
+## sequence; in addition we maintain structure: if (only) one end of a base pair is removed,
+## the character corresponding to the other base pair is set to $neutral_symbol
+##
+## @param $str structure string
+## @param $seq alignment string (sequence with gaps)
+## @param $gap_symbols symbols considered as gaps
+## @param $opening_symbols symbols of opening brackets
+## @param $closing_symbols symbols of closing brackets
+## @param $neutral_symbol neutral symbol
+##
+## @pre $str and $seq have same length
+## @pre opening and closing symbols have same length
+##
+## @returns projected structure string
+##
+########################################
+sub project_structure_to_alignment_sequence($$$$$$) {
+    my ($str,
+        $seq,
+        $gap_symbols,
+        $opening_symbols,
+        $closing_symbols,
+        $neutral_symbol)
+      = @_;
+
+    # 0) parse structure
+    my $nbs = # number of bracket symbols
+      min(length($opening_symbols),
+          length($closing_symbols),
+         );
+    my @str_array = ();
+    for (my $i=0; $i<length($str); $i++) {
+        push @str_array,-1;
+    }
+    for (my $i=0; $i<$nbs; $i++) {
+        @str_array =
+          parse_bracket_structure_single(
+                                         $str,
+                                         substr($opening_symbols,$i,1),
+                                         substr($closing_symbols,$i,1),
+                                         \@str_array
+                                        );
+    }
+
+    # 1) set (potentially kept) ends of deleted base pairs to neutral
+    for (my $i=0; $i<length($str); $i++) {
+        if ( substr($seq,$i,1) =~ /[$gap_symbols]/ ) {
+            if ( $str_array[$i] != -1) {
+                substr($str,$str_array[$i],1) = $neutral_symbol;
+            }
+        }
+    }
+
+    # 2) project
+    return
+      project_string_to_alignment_sequence($str, $seq, $gap_symbols);
+}
 
 
 ########################################
@@ -1166,7 +1218,7 @@ sub project_str_to_aln_seq($$) {
 sub clone_hash {
     my ($levels,$x) = @_;
     my %y;
-	
+
     if ($levels>1) {
 	foreach my $k (keys %{ $x }) {
 	    $y{$k} = clone_hash( $levels-1, $x->{$k} );
@@ -1192,15 +1244,15 @@ sub clone_hash {
 ########################################
 sub alifold_structure {
     my ($filename,$RNAfold_args)=@_;
-    
+
     my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args $filename 2>/dev/null");
-    
+
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /([().]+) /) {
 	    return $aliout[1];
 	}
     }
-    
+
     return "";
 }
 
@@ -1214,7 +1266,7 @@ sub alifold_structure {
 ########################################+
 sub alifold_mfe {
     my ($file,$RNAfold_args) = @_;
-    
+
     my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args $file 2>/dev/null");
 
     if ($#aliout>=1) {
@@ -1241,9 +1293,9 @@ sub alifold_mfe {
 ########################################+
 sub alifold_pf {
     my ($file,$RNAfold_args) = @_;
-    
+
     my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args -p $file >/dev/null 2>&1");
-    
+
     return \@aliout;
 }
 
@@ -1281,7 +1333,7 @@ sub constrain_sequences_from_reliable_structures($$) {
 ########################################
 sub print_k_dim_hash {
     my ($h,$k,$s) = @_;
-    
+
     foreach my $i (sort keys %$h) {
 	print "$s$i:";
 	if ($k==1) {
@@ -1314,23 +1366,23 @@ sub print_k_dim_hash {
 ## $seqs ref of list of hash representation of alignment sequences
 ## $aln ref of alignment hash
 ##
-## The names in $seqs have to occur as keys in $aln 
+## The names in $seqs have to occur as keys in $aln
 ##
 ## @returns ref of alignment in list of hash representations
 ########################################
 sub aln_to_alnloh($$) {
     my ($seqs,$aln) = @_;
-    
+
     my @resaln=();
-    
+
     foreach my $seq (@$seqs) {
-       my $id = $seq->{name}; ## the name of sequence as in the alignment 
-       
+       my $id = $seq->{name}; ## the name of sequence as in the alignment
+
        my %resseq= %{ $seq }; ## copy entries of $seqs
        $resseq{seq} = $aln->{$id};
        push @resaln, \%resseq;
     }
-    
+
     return \@resaln;
 }
 
@@ -1353,35 +1405,35 @@ sub aln_to_alnloh($$) {
 ########################################
 sub read_clustalw_alignment {
     my ($fh) = @_;
-    
+
     my %aln;
-    
+
     my @names=(); ## keep a list of names for order
-    
+
     my $line;
-    
+
     my $clustal_header=0;
     if (($line=<$fh>) =~ /^CLUSTAL/) {
 	$clustal_header=$line;
 	$line=<$fh>;
     }
-    
+
     do {
         ## regognize lines "name[whitespace]sequence", but allow empty
         ## sequence (even without whitespace after name)!
 	if ($line =~ /^(\S+)\s*(\S*)/) {
 	    my $name=$1;
 	    my $seq=$2;
-	    
+
 	    if (!exists $aln{$name}) {
 		push @names,$name;
 	    }
-	    
+
 	    $aln{$name} .= $seq;
-	    
+
 	}
     } while ($line = <$fh>);
-    
+
     return (\%aln,\@names,$clustal_header);
 }
 
@@ -1392,31 +1444,34 @@ sub read_clustalw_alignment {
 ##
 ## read multiple alignment in CLUSTALW aln format from file $filename
 ##
+## @param aln_filename  file name
+## @param strict        require header
+##
 ## returns ref of alignment list of hash
 ##
 ########################################
 sub read_clustalw_alnloh {
-    my ($aln_filename) = @_;
-		
+    my ($aln_filename, $strict) = @_;
+
     my $fh;
-    
-    open($fh, "$aln_filename") 
+
+    open($fh, "$aln_filename")
 	|| die "Can not read alignment file $aln_filename\n";
-    my ($aln, $names, $header) = 
+    my ($aln, $names, $header) =
 	read_clustalw_alignment($fh);
     close $fh;
-    
-    if (!$header) { die "Missing CLUSTAL header in $aln_filename."; }
-    
+
+    if ($strict and !$header) { die "Missing CLUSTAL header in $aln_filename."; }
+
     ## generate list of hash alignment
     my @alnloh;
-    
+
     for my $name (@$names) {
 	my $seq = $aln->{$name};
 	my $entry = { name=>$name, seq=>$seq};
 	push @alnloh,$entry;
     }
-    
+
     return \@alnloh;
 }
 
@@ -1425,6 +1480,8 @@ sub read_clustalw_alnloh {
 ##
 ## read multiple alignment in CLUSTALW aln format from file $filename
 ##
+## @param aln_filename  file name
+##
 ## the result hash associates names to alignment strings
 ##
 ## returns ref of alignment hash and the header line
@@ -1432,15 +1489,15 @@ sub read_clustalw_alnloh {
 ########################################
 sub read_clustalw_aln {
     my ($aln_filename) = @_;
-    
+
     my $fh;
-    
-    open($fh, "$aln_filename") 
+
+    open($fh, "$aln_filename")
 	|| die "Can not read alignment file $aln_filename\n";
-    my ($aln, $names, $header) = 
+    my ($aln, $names, $header) =
 	read_clustalw_alignment($fh);
     close $fh;
-    
+
     if (!$header) { die "Missing CLUSTAL header in $aln_filename."; }
 
     # the return value was changed form just $aln to $header and $aln
@@ -1453,7 +1510,7 @@ sub read_clustalw_aln {
 
 ########################################
 ## write_clustalw_alnloh($fh, $seqs, $width)
-## 
+##
 ## Writes alignment $aln to filehandle $fh, where
 ## the alignment is given in list of hash format.
 ## Breaks lines to restrict maximal line width
@@ -1474,8 +1531,8 @@ sub write_clustalw_alnloh {
     if ($width<=0) {
         $width=undef;
     }
-    
-    if (!defined($write_header) || $write_header==1 ) { 
+
+    if (!defined($write_header) || $write_header==1 ) {
 	print $fh "CLUSTAL W --- $PACKAGE_STRING\n\n\n"; #  - Local Alignment of RNA
     }
 
@@ -1488,15 +1545,15 @@ sub write_clustalw_alnloh {
     if ($maxlen < 18) {
 	$maxlen = 18;
     }
-    
+
     my $offset=0;
     while(1) {
 	my $more=0;
 
 	foreach my $seq (@$aln) {
-	    
+
 	    my $s=$seq->{seq};
-	    
+
 	    if (defined($width)) {
 		if ($offset<length($s)) {
 		    $s = substr $s,$offset,$width;
@@ -1507,7 +1564,7 @@ sub write_clustalw_alnloh {
 	    }
 	    print $fh sprintf("%-".$maxlen."s %s\n",$seq->{name},$s);
 	}
-	
+
 	last unless $more;
 
 	print $fh "\n";
@@ -1518,7 +1575,7 @@ sub write_clustalw_alnloh {
 
 ########################################
 ## sprint_fasta_alnloh($fh, $seqs, $width)
-## 
+##
 ## Writes alignment $aln to string, where
 ## the alignment is given in list of hash format.
 ## Breaks lines to restrict maximal line width.
@@ -1531,30 +1588,30 @@ sub write_clustalw_alnloh {
 sub sprint_fasta_alnloh {
     my $aln   = shift;
     my $width = shift;
-    
+
     my $res="";
-    
+
     foreach my $seq (@$aln) {
-	
+
 	$res .= ">".$seq->{name};
 	if (exists $seq->{desc}) {
 	    $res.=" ".$seq->{desc};
 	}
 	$res.="\n";
-	
+
 	my $offset=0;
-	while(1) {	
+	while(1) {
 	    my $more=0;
-	    
+
 	    my $s=$seq->{seq};
 	    if (defined($width)) {
 		$s = substr $s,$offset,$width;
 		$more |= length($seq->{seq})>$offset+$width;
 	    }
 	    $res .= "$s\n";
-	    
+
 	    last unless $more;
-	    
+
 	    $offset+=$width;
 	}
     }
@@ -1576,8 +1633,8 @@ sub sprint_fasta_alnloh {
 # ## $alnloh alignment as list of hashs
 # ## $names  hash of names
 # ##
-# ## Example: 
-# ##    use 
+# ## Example:
+# ##    use
 # ##       alnloh_translate_names($alnloh,loh_associate_nnames_to_names($seqs))
 # ##    to 'unnormalize' names in $alnloh
 # ##
@@ -1587,7 +1644,7 @@ sub sprint_fasta_alnloh {
 # ########################################
 # sub loh_translate_names {
 #     my ($alnloh,$names) = @_;
-    
+
 #     my @res=();
 
 #     for my $seq (@$alnloh) {
@@ -1595,7 +1652,7 @@ sub sprint_fasta_alnloh {
 # 	$entry{name}=$names->{$seq->{name}};
 # 	push @res,\%entry;
 #     }
-    
+
 #     return \@res;
 # }
 
@@ -1605,18 +1662,18 @@ sub sprint_fasta_alnloh {
 # ## Associate normalized names to their long names as in $loh.
 # ##
 # ## $loh sequences or alignment as list of hashs
-# ## 
+# ##
 # ## returns ref to a hash that associates the names.
 # ##
 # ########################################
 # sub loh_associate_nnames_to_names {
 #     my $loh = shift;
-    
+
 #     my %names=();
 #     for my $seq (@$loh) {
 # 	$names{$seq->{nname}}=$seq->{name};
 #     }
-    
+
 #     return \%names;
 # }
 
@@ -1636,23 +1693,23 @@ sub loh_names {
 ##
 ## $loh ref of list of hash alignemnt or sequences
 ## $names ref of list of names
-## 
+##
 ## returns ref of copy of @$loh sorted by $names
 ########################################
 sub loh_sort {
     my ($loh,$names) = @_;
-    
+
     my @res;
-    
+
     my %idx=();
     for my $i (0..(@$names-1)) {
 	$idx{$names->[$i]} = $i;
     }
-    
+
     for my $seq (@$loh) {
 	$res[$idx{$seq->{name}}] = { %$seq };
     }
-    
+
     return \@res;
 }
 
@@ -1661,7 +1718,7 @@ sub loh_sort {
 sub write_aln($) {
     my ($aln_ref)=@_;;
     my %aln=%{ $aln_ref };
-    
+
     foreach my $name (sort(keys %aln)) {
 	printf "%-18s %s\n",$name,$aln{$name};
     }
@@ -1680,33 +1737,33 @@ sub write_aln($) {
 sub read_aln_wo_anno {
     my ($aln_filename) = @_;
     local *ALN_IN;
-    
+
     open(ALN_IN,$aln_filename) || die "MLocarna::read_aln_wo_anno: Cannot read aln file $aln_filename\n";
-    
+
     my %aln;
-    
+
     my %names=();
-    
+
     my $line;
-    
+
     if (($line=<ALN_IN>) !~ /CLUSTAL/) {
 	printerr "$aln_filename not in clustal aln-format.\n";
 	exit(-1);
     }
-    
+
     while ($line = <ALN_IN>) {
 	if ($line =~ /^([^\s]+)\s+(.+)/) {
 	    my $name=$1;
 	    my $seq=$2;
-	    
+
 	    if ($name !~ /^#/) { # ignore annotation
 		$aln{$name} .= $seq;
 	    }
 	}
     }
-    
+
     close ALN_IN;
-    
+
     return \%aln;
 }
 
@@ -1725,9 +1782,9 @@ sub project_aln {
     foreach my $name (@$names) {
 	$alnP{$name} = $aln->{$name};
     }
-    
+
     my $len = aln_length(\%alnP);
-    
+
     for (my $i=0; $i<$len; ) {
 	my $allgap=1;
 	foreach my $name (keys %alnP) {
@@ -1748,7 +1805,7 @@ sub project_aln {
 	    $i++;
 	}
     }
-    
+
     return %alnP;
 }
 
@@ -1760,7 +1817,7 @@ sub project_aln {
 ##
 sub project_alnloh {
     my $aln = shift;
-    
+
     my $len = length($aln->[0]{seq}); ## number of alignment columns
 
     for (my $col=0; $col<$len; ) {
@@ -1783,7 +1840,7 @@ sub project_alnloh {
 	    $col++;
 	}
     }
-    
+
     return $aln;
 }
 
@@ -1797,7 +1854,7 @@ sub aln_length_atleastonematch($) {
 
     my $len=aln_length($aln); ## length alignment (and of each alignment string)
     my $mylen=0; ## counts columns with at least one match
-    
+
     for (my $i=0; $i<$len; $i++) {
 	my $non_gap=0;
 	foreach my $k (keys %$aln) {
@@ -1805,7 +1862,7 @@ sub aln_length_atleastonematch($) {
 	}
 	if ($non_gap>1) {$mylen++;}
     }
-    
+
     return $mylen;
 }
 
@@ -1819,33 +1876,33 @@ sub aln_length_atleastonematch($) {
 ########################################
 sub read_2D_matrix {
     my ($file,$n,$m) = @_;
-    
+
     my @matrix=();
 
     my $MAT;
 
     open($MAT,"$file") || die "Cannot read matrix $file\n";
-    
+
     for (my $a=0; $a<$n; $a++) {
 	my $line;
 	if ($line=<$MAT>) {
-	    
+
 	    chomp $line;
 	    $line=~s/^\s+//;
-	    
+
 	    my @row=split /\s+/,$line;
 	    if (int(@row) != $m) {
 		die "Expect $m entries per row while reading matrix from $file; found ".int(@row)."\n";
 	    }
-	    
-	    push @matrix, [ @row ]; 
+
+	    push @matrix, [ @row ];
 	}
 	else {
 	    die "Expect $n rows while reading matrix from $file, found ".($a-1)."\n";
 	}
     }
     close $MAT;
-    
+
     return \@matrix;
 }
 
@@ -1859,15 +1916,15 @@ sub read_2D_matrix {
 ########################################
 sub write_2D_matrix {
     my ($file,$matrix) = @_;
-    
+
     open(MAT,">$file") || die "Cannot write matrix $file\n";
-    
+
     my $size_x=@$matrix;
     for (my $a=0; $a<$size_x; $a++) {
 	my @row = @{ $matrix->[$a] };
 	my $size_y = $#row+1;
 	for (my $b=0; $b<$size_y; $b++) {
-	    if ($a==$b) {print MAT "     0 ";} else { 
+	    if ($a==$b) {print MAT "     0 ";} else {
 		printf MAT "%6d ",$matrix->[$a][$b];
 	    }
 	}
@@ -1883,12 +1940,12 @@ sub write_2D_matrix {
 ########################################
 sub seqpos_to_alipos {
     my ($ali) = @_;
-    
+
     my @res;
 
     my $seqpos=0;
     my $alipos=0;
-    
+
     for my $c (split //, $ali) {
 	if ($c =~ /[ACGUT]/) {
 	    push @res,$alipos;
@@ -1904,12 +1961,12 @@ sub seqpos_to_alipos {
 ########################################
 sub alipos_to_seqpos {
     my ($ali) = @_;
-    
+
     my @res;
 
     my $seqpos=0;
     my $alipos=0;
-    
+
     for my $c (split //, $ali) {
 	if ($c =~ /[ACGUT]/) {
 	    push @res,$seqpos;
@@ -1924,29 +1981,27 @@ sub alipos_to_seqpos {
 }
 
 
-
-
 ########################################
 ## write pp file from aln and consensus dp, write only probs >= min_prob
 sub write_pp($$$$) {
     my ($file,$aln_ref, $cons_ref, $min_prob) = @_;
     my %aln = %{ $aln_ref };
     my @cons = @{ $cons_ref };
-    
+
     local *OUT;
     open(OUT, ">$file") || die "Cannot open $file for writing\n";
 
     print OUT "SCORE: 0\n\n";
-    
+
     foreach my $name (keys %aln) {
 	printf OUT "%-18s %s\n", $name, $aln{$name};
     }
-    
-    
+
+
     print OUT "\n#\n";
 
     my $len = aln_length(\%aln);
-    
+
     for (my $i=1; $i<=$len; $i++) {
 	for (my $j=$i+1; $j<=$len; $j++) {
 	    if (defined $cons[$i][$j]) {
@@ -1957,7 +2012,7 @@ sub write_pp($$$$) {
 	    }
 	}
     }
-    
+
     close OUT;
 }
 
@@ -1995,14 +2050,14 @@ sub write_tcoffee_lib_file($$) {
             }
         }
     }
-    
+
     ## assign sequence numbers in alphanumeric order of sequence names
     my $seqCounter = 1;
     for my $name (sort keys(%sequences)) {
         $sequences{$name}->{"number"} = $seqCounter;
         $seqCounter++;
     }
-    
+
     # write the header to the file
     print $FILE "! TC_LIB_FORMAT_01\n";
     # print number of sequences
@@ -2014,7 +2069,7 @@ sub write_tcoffee_lib_file($$) {
                     . $sequences{$key}->{sequence} . "\n";
     }
 
-    
+
     foreach my $aln (@{$alignments}) {
         # get the sequence indexes
         my @tmp = keys(%{$aln->{rows}});
@@ -2051,7 +2106,7 @@ sub write_tcoffee_lib_file($$) {
 sub get_alignment_edges($$)
 {
   my ($sequenceA, $sequenceB) = @_;
-  
+
   my @gappedA = split //, $sequenceA;
   my @gappedB = split //, $sequenceB;
   my $gapFree = $sequenceA;
@@ -2067,7 +2122,7 @@ sub get_alignment_edges($$)
     if ($gappedA[$i] ne "-" and $gappedB[$i] ne "-") {
         # set the alignment edge
         $seq[$currentPos[0]] = $currentPos[1];
-        
+
         # count up the pointers
         $currentPos[0]++;
         $currentPos[1]++;
@@ -2082,7 +2137,7 @@ sub get_alignment_edges($$)
     # case 3: gap in second sequence
     if ($gappedA[$i] ne "-" and $gappedB[$i] eq "-") {
         $seq[$currentPos[0]] = "-1";
-        
+
         # count up first counter
         $currentPos[0]++;
         next;
@@ -2090,7 +2145,7 @@ sub get_alignment_edges($$)
     # this should never be reached as that would mean - and - are matched
     print "two gaps matched!!!!!";
   }
-  
+
   return \@seq;
 }
 
@@ -2110,22 +2165,22 @@ sub get_alignment_edges($$)
 sub extract_score_matrix_from_alignments($$) {
     my ($names,$pairwise_alns_ref) = @_;
     my @pairwise_alns = @{ $pairwise_alns_ref };
-    
+
     my @score_matrix; ## result
-    
+
 
     for (my $a=0; $a<@$names; $a++) {
 	$score_matrix[$a][$a] = 0; ## set diagonal to 0
 	for (my $b=0; $b<$a; $b++) {
-	    
+
 	    my @aln = @{ $pairwise_alns[$a][$b] };
-		
+
 	    $aln[0] =~ /Score: (\S+)/ || die "Cannot extract score for sequence $a vs. $b.\n";
 	    my $score=$1;
-	    
+
 	    ## replace -inf scores by something strongly negative (that
 	    ## does not immediately overflow); apparently, too negative values confuse tree construction
-	    if ($score eq "-inf") {$score=-1e8;} 
+	    if ($score eq "-inf") {$score=-1e8;}
 	    #{$score = sprintf "%d",$score; $score=-sqrt(-$score);}
 
 	    $score_matrix[$a][$b] = $score;
@@ -2142,9 +2197,9 @@ sub extract_score_matrix_from_alignments($$) {
 sub aln_reliability_beststruct_fromfile($$$) {
     my ($file,$bmprobs,$amprobs)=@_;
     my $aln=read_aln_wo_anno($file);
-    
+
     my ($score,$rel_str) = evaluate_alignment($aln,$bmprobs,$amprobs,0);
-    
+
     return $score;
 }
 
@@ -2156,8 +2211,97 @@ sub aln_reliability_beststruct_fromfile($$$) {
 sub aln_reliability_fromfile($$$) {
     my ($file,$bmprobs,$amprobs)=@_;
     my $aln=read_aln_wo_anno($file);
-    
+
     return aln_reliability($aln,$bmprobs,$amprobs);
+}
+
+
+########################################
+## parse pseudoknotted dot-bracket structures
+## and generate pp file for fixed structure
+##
+sub parse_bracket_structure_single {
+    my ($str,$open,$close,$str_array_ref)=@_;
+
+    my @str_array = @{ $str_array_ref };
+
+    my @stack;
+
+    for (my $i=0; $i<length($str); $i++) {
+	my $c=substr $str,$i,1;
+
+	if ($c eq $open) {
+	    push @stack,$i;
+	} elsif ($c eq $close) {
+	    my $j=pop @stack;
+	    $str_array[$i]=$j;
+	    $str_array[$j]=$i;
+	}
+    }
+
+    return @str_array;
+}
+
+########################################
+## @returns array for structure
+## entry per sequence position: gives paired position or -1
+sub parse_bracket_structure {
+    my ($str)=@_;
+    my @str_array;
+
+    for (my $i=0; $i<length($str); $i++) {
+	$str_array[$i]=-1;
+    }
+
+    @str_array=parse_bracket_structure_single $str,"(",")",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"{","}",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"[","]",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"<",">",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"A","a",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"B","b",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"C","c",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"D","d",\@str_array;
+
+    return @str_array;
+}
+
+
+########################################
+## convert_fix_structure_to_pp($ppfilename,$name,$seq,$str,$constraints)
+##
+## @param $ppfilename output file name
+## @param $name sequence name
+## @param $seq sequence string
+## @param $str structure string
+## @param $constraints anchor constraint string
+##
+sub convert_fix_structure_to_pp($$$$$) {
+    my ($ppfilename,$name,$seq,$str,$constraints) = @_;
+
+    my @str=parse_bracket_structure($str);
+
+    local *OUT;
+
+    open(OUT,">$ppfilename") || die "Cannot write $!";
+
+    print OUT "#PP 2.0\n\n";
+    print OUT "$name\t$seq\n";
+
+    if (defined $constraints && $constraints ne "") {
+    	my @cs = split /\#/, $constraints;
+	for (my $i=0; $i<@cs;$i++) {
+	    print OUT "#A".($i+1)." ".$cs[$i]."\n";
+	}
+    }
+    print OUT "\n#END\n\n";
+    print OUT "#SECTION BASEPAIRS\n\n";
+
+    for (my $i=0; $i<=$#str; $i++) {
+	if ($str[$i]>$i) {
+	    print OUT ($i+1)." ".($str[$i]+1)." 1.0\n";
+	}
+    }
+    print OUT "\n#END\n";
 }
 
 

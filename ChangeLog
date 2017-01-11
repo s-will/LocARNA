@@ -1,5 +1,8 @@
 ============================================================
 === 2016
+1.9.1-pre
+	add mlocarna option to realign; support 'consensus' constraint specifications
+
 1.9.0 (2016-Dec-26)
 	add mlocarna option to load (default) configuration from file
 	add mlocarna option to read anchor constraints from

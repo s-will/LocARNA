@@ -310,7 +310,10 @@ alignment (file in clustalw format) by constraining the maximum
 difference to this reference (controlled by --max-diff). The input
 sequences (and their names) have to be identical to these alignment
 sequences; however the alignment is allowed to contain extra
-sequences, which are ignored.
+sequences, which are ignored. In combination with option --realign,
+the reference alignment is taken from the (main) input file. In this
+case, the 'file' argument should be '.', but is ignored (with warning)
+otherwise.
 
 =item B<--max-diff-relax>
 
@@ -495,6 +498,23 @@ Don't write / Write arc match probabilities to files in target dir (default: wri
 =head2 Miscallaneous modes of operation
 
 =over 4
+
+=item  B<--realign>
+
+Realignment mode. In this mode, the input must be in clustal format
+and is interpreted as alignment of the input sequences; the sequences
+are obtained by removing all gap symbols. Moreover, the given
+alignment is set as reference alignment for --max-diff-aln.  Structure
+and anchor constraints can be specified as consensus constraints in
+the input; constraints are specified as 'alignment strings' with names
+'#A1', '#S', or '#FS' for anchor, structure, or fixed structure
+constraints, respectively. Characters in the '#A1' anchor
+specification other than '-' and '.' constrain the aligned residues in
+the respective column to remain aligned (blanks are disallowed;
+annotations '#A2', '#A3', ... are ignored). The consensus structure
+constraint is equivalent to constraining each single sequence by the
+projection of the consensus constraint to the sequence (removing all
+base pairs with at least one gapped end).
 
 =item  B<--dp-cache>=directory
 
@@ -728,6 +748,31 @@ once calls
 
   mlocarna --anchor-constraints example-anchors.bed  example-wo-anchors.fa
 
+=head2 Realignment
+
+In realignment mode (option --realign), mlocarna is called with an
+input alignment in clustal format, e.g.
+
+  mlocarna --realign example-realign.aln
+
+This allows to define constraints as 'consensus constraints' in the input, e.g.
+
+  example-realign.aln
+  ----------------------------------------
+  fruA               --CCUCGAGGGGAACCCGAA-------------AGGGACCCGAGAGG--
+  vhuU               AGCUCACAACCGAACCCAUU-------------UGGGAGGUUGUGAGCU
+  fdhA               CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAG-GUGGCG
+  #A1                ..*...........CCC.............................5..
+  #S                 ((((((.((((...(((.................))).)))).))))))
+  ----------------------------------------
+
+Note that anchor names are arbitrary and the consensus structure is
+'projected' to the single sequences.  Moreover, the input alignment
+can be used as reference for limited realignment, e.g. call to realign
+in distance 5 of the reference alignment:
+
+  mlocarna --realign example-realign.aln --max-diff 5 --max-diff-aln .
+
 The LocARNA distribution provides files of these examples and other
 examples in Data/Examples.
 
@@ -926,6 +971,8 @@ my @options = #options that are not or not automatically passed to locarna
      "global-progressive",
 
      "anchor-constraints=s",
+
+     "realign",
 
      "verbose|v",
      "moreverbose",
@@ -1169,7 +1216,7 @@ printmsg 3,"Copyright Sebastian Will\n\n";
 ## target/output directory
 if (!defined($opts{'tgtdir'})) {
     $opts{'tgtdir'} = $opts{'input-file'};
-    $opts{'tgtdir'} =~ s/\.mfasta$|\.fasta$|\.fa$//;
+    $opts{'tgtdir'} =~ s/\.mfasta$|\.fasta$|\.fa$|\.aln$//;
     $opts{'tgtdir'} .= ".out";
 }
 
@@ -1385,25 +1432,9 @@ if (defined($opts{'rnafold-parameter'}) && defined($opts{'alifold-consensus-dp'}
     printerr "WARNING: alifold consensus dotplots are computed with standard parameters\n\n";
 }
 
-
-
-##### ------------------------------------------------------------
-## realignment: max_diff_aln
-
-my $refaln;
-my $refaln_filename;
-
-if (defined($opts{'max-diff-aln'})) {
-
-    $refaln_filename=abs_path($opts{'max-diff-aln'});
-
-    ## read alignment from file
-    $refaln = read_clustalw_alnloh("$refaln_filename");
-
-}
-
-##### ------------------------------------------------------------
-
+### global variables for reference alignment
+my $refaln;          # reference alignment
+my $refaln_filename; # filename of reference alignment
 
 ##### ----------------------------------------
 #### Writing of probabilities
@@ -1519,9 +1550,37 @@ sub main {
 	}
     }
 
+    my $seqs;            # input sequences
+
     ## ----------------------------------------
-    # read input sequences from mfasta file
-    my $seqs = read_fasta($opts{'input-file'}); ## input sequences
+    # read input sequences from file
+    #
+    if ($opts{'realign'}) {
+        $refaln = read_clustalw_alnloh($opts{'input-file'});
+        $refaln_filename = abs_path($opts{'input-file'});
+        $seqs = project_sequences_for_realign($refaln);
+    } else {
+        $seqs = read_fasta($opts{'input-file'}) ;
+    }
+
+    ##### ------------------------------------------------------------
+    ## limited realignment: max_diff_aln
+
+    if (defined($opts{'max-diff-aln'})) {
+        if ($opts{'realign'}) {
+            ## require '.' argument to max-diff-aln
+            if (!($opts{'max-diff-aln'} eq "." or $opts{'max-diff-aln'} eq $opts{'input-file'})) {
+                printerr "WARNING: due to '--realign', the argument of max-diff-aln is ignored;\n";
+                printerr "         to avoid this warning, set it to '.' (or identical to the input file).\n";
+            }
+        } else {
+            $refaln_filename=abs_path($opts{'max-diff-aln'});
+            ## read alignment from file
+            $refaln = read_clustalw_alnloh("$refaln_filename");
+        }
+    }
+
+##### ------------------------------------------------------------
 
     register_normalized_seqnames($seqs); ## register normalized names for them that can be used as filenames
 
@@ -1549,7 +1608,7 @@ sub main {
     check_constraints_in_fasta($seqs);
 
     ## check whether sequences and reference alignment are compatible
-    if (defined($refaln) && (! is_aln_of_seqs($seqs,$refaln)) ) {
+    if ($opts{'max-diff-aln'} && (! is_aln_of_seqs($seqs,$refaln)) ) {
 	print STDERR "Inconsistent input: Given reference alignment "
           ."( --max-diff-aln \"$opts{'max-diff-aln'}\" ) "
           ."does not match input sequences ( \"$opts{'input-file'}\" ).\n";
@@ -1602,97 +1661,6 @@ sub main {
 } ## end main
 
 
-### ------------------------------------------------------------
-### ------------------------------------------------------------
-### parse pseudoknotted dot-bracket structures
-### and generate pp file for fixed structure
-###
-
-sub parse_bracket_structure_single {
-    my ($str,$open,$close,$str_array_ref)=@_;
-
-    my @str_array = @{ $str_array_ref };
-
-    my @stack;
-
-    for (my $i=0; $i<length($str); $i++) {
-	my $c=substr $str,$i,1;
-
-	if ($c eq $open) {
-	    push @stack,$i;
-	} elsif ($c eq $close) {
-	    my $j=pop @stack;
-	    $str_array[$i]=$j;
-	    $str_array[$j]=$i;
-	}
-    }
-
-    return @str_array;
-}
-
-
-## @returns array for structure
-## entry per sequence position: gives paired position or -1
-sub parse_bracket_structure {
-    my ($str)=@_;
-    my @str_array;
-
-    for (my $i=0; $i<length($str); $i++) {
-	$str_array[$i]=-1;
-    }
-
-    @str_array=parse_bracket_structure_single $str,"(",")",\@str_array;
-    @str_array=parse_bracket_structure_single $str,"{","}",\@str_array;
-    @str_array=parse_bracket_structure_single $str,"[","]",\@str_array;
-    @str_array=parse_bracket_structure_single $str,"<",">",\@str_array;
-    @str_array=parse_bracket_structure_single $str,"A","a",\@str_array;
-    @str_array=parse_bracket_structure_single $str,"B","b",\@str_array;
-    @str_array=parse_bracket_structure_single $str,"C","c",\@str_array;
-    @str_array=parse_bracket_structure_single $str,"D","d",\@str_array;
-
-    return @str_array;
-}
-
-
-## convert_fix_structure_to_pp($ppfilename,$name,$seq,$str,$constraints)
-##
-## @param $ppfilename output file name
-## @param $name sequence name
-## @param $seq sequence string
-## @param $str structure string
-## @param $constraints anchor constraint string
-##
-##
-sub convert_fix_structure_to_pp($$$$$) {
-    my ($ppfilename,$name,$seq,$str,$constraints) = @_;
-
-    my @str=parse_bracket_structure($str);
-
-    local *OUT;
-
-    open(OUT,">$ppfilename") || die "Cannot write $!";
-
-    print OUT "#PP 2.0\n\n";
-    print OUT "$name\t$seq\n";
-
-    if (defined $constraints && $constraints ne "") {
-    	my @cs = split /\#/, $constraints;
-	for (my $i=0; $i<@cs;$i++) {
-	    print OUT "#A".($i+1)." ".$cs[$i]."\n";
-	}
-    }
-    print OUT "\n#END\n\n";
-    print OUT "#SECTION BASEPAIRS\n\n";
-
-    for (my $i=0; $i<=$#str; $i++) {
-	if ($str[$i]>$i) {
-	    print OUT ($i+1)." ".($str[$i]+1)." 1.0\n";
-	}
-    }
-    print OUT "\n#END\n";
-}
-### ------------------------------------------------------------
-### ------------------------------------------------------------
 
 
 ## compute and print reliabilities
@@ -1780,8 +1748,13 @@ sub compute_and_write_reliabilities {
 
 	    printmsg 3,sprintf("%-18s ",$name).$rel_str."\n";
 
-	    $rel_str = project_str_to_aln_seq($rel_str,$aln{$name});
-
+	    $rel_str = project_structure_to_alignment_sequence($rel_str,
+                                                               $aln{$name},
+                                                               "-~.",
+                                                               "({`",
+                                                               ")}'",
+                                                               "."
+                                                              );
 	    $reliable_structures{$name} = $rel_str;
 	}
     }
@@ -3405,7 +3378,7 @@ sub pairwise_reference_alignment_option( $$$$ ) {
 ## @returns option string or "" if $refaln_filename undefined
 sub reference_alignment_option {
     my ($refaln_filename) =@_;
-    if (defined( $refaln_filename )) {
+    if ( $opts{'max-diff-aln'} ) {
 	return "--max-diff-aln=\"$refaln_filename\"";
     } else {
 	return "";
@@ -3455,6 +3428,116 @@ sub is_aln_of_seqs {
 	}
     }
     return 1;
+}
+
+########################################
+## project_sequences_for_realign($aln)
+##
+## @param $refaln reference alignment (list of hash alignment)
+##
+## @returns sequences (reference to list of hash representation)
+##
+## process consensus constraint annotation; convert to single sequence constraints
+##
+## @note '-', '.', and '~' are considered gap symbols
+##
+sub project_sequences_for_realign {
+    my $aln = shift;
+
+    my $gap_symbols="-.~";
+
+    my @seqs=();
+
+    my $anchors;
+    my $structure;
+    my $fixed_structure;
+
+    for my $entry (@$aln) {
+        if ( $entry->{name} eq "#A1" ) {
+            $anchors = $entry->{seq};
+        } elsif ( $entry->{name} eq "#S" ) {
+            $structure = $entry->{seq};
+        }
+        elsif ( $entry->{name} eq "#FS" ) {
+            $fixed_structure = $entry->{seq};
+        }
+        elsif ( $entry->{name} =~ /^#A\d/ ) {
+            ##ignore
+        }
+        elsif ( $entry->{name} =~ /^#/ ) {
+            printerr "WARNING: project_sequences_for_realign: unsupported annotation $entry->{name}.\n";
+        }
+    }
+
+    my @anchor_idx;
+    my $anchor_width=0;
+
+    my @consensus_anchors=();
+
+    if ($anchors) {
+        my $idx=0;
+        for (my $i=0; $i<length($anchors); $i++) {
+            if (substr($anchors,$i,1) !~ /[$gap_symbols]/) {
+                $anchor_idx[$i]=$idx;
+                $idx++;
+            } else {
+                $anchor_idx[$i]=undef;
+            }
+        }
+        if ($idx>0) {
+            $anchor_width = length(sprintf("%d",$idx-1));
+        }
+
+        for (my $i=0; $i < $anchor_width; $i++) {
+            push @consensus_anchors, "." x length($anchors);
+        }
+
+        ## generate the anchor constraint strings
+        my @anchor_lines=();
+        if ($anchors) {
+            for (my $i=0; $i<length($anchors); $i++) {
+                if (defined($anchor_idx[$i])) {
+                    my @id = split //, sprintf("%0${anchor_width}d",$anchor_idx[$i]);
+                    for (my $j=0; $j<$anchor_width; $j++) {
+                        substr($consensus_anchors[$j],$i,1)
+                          = $id[$j];
+                    }
+                }
+            }
+        }
+    }
+
+    for my $entry (@$aln) {
+        next if ( $entry->{name} =~ /^#/ ); # skip annotations
+        my $seqs_entry = { name=>$entry->{name}, descr=>"", seq=>$entry->{seq}};
+
+        $seqs_entry->{seq} =~ s/[$gap_symbols]//g;
+
+        if ($anchors) {
+            # generate ANNO#i entries
+            for (my $i=0; $i < $anchor_width; $i++) {
+                $seqs_entry->{"ANNO#".($i+1)} =
+                  project_string_to_alignment_sequence($consensus_anchors[$i],$entry->{seq},$gap_symbols);
+            }
+        }
+        if ($structure) {
+            $seqs_entry->{"ANNO#S"} =
+              project_structure_to_alignment_sequence($structure,
+                                                      $entry->{seq},
+                                                      $gap_symbols,
+                                                      "(",")",".");
+        }
+        if ($fixed_structure) {
+            $seqs_entry->{"ANNO#FS"} =
+              project_structure_to_alignment_sequence($fixed_structure,
+                                                      $entry->{seq},
+                                                      $gap_symbols,
+                                                      "(",")",".");
+        }
+
+        push @seqs, $seqs_entry;
+    }
+    return \@seqs;
 }
 
 ### ============================================================================
