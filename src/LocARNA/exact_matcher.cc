@@ -2662,13 +2662,13 @@ namespace LocARNA {
 	outLocARNAfile << ">"<< seqA.seqentry(0).name() << std::endl 
 		       << upperCase(sequenceA) << std::endl;
 	for (size_type i=0; i<3; i++) {
-	    outLocARNAfile << anchors.first.annotation_string(i) << "#" <<(i+1) << std::endl; 
+	    outLocARNAfile << anchors.first.annotation_string(i) << " #" <<(i+1) << std::endl; 
 	}
 
 	outLocARNAfile << ">"<<seqB.seqentry(0).name() << std::endl 
 		       << upperCase(sequenceB) << std::endl;
 	for (size_type i=0; i<3; i++) {
-	    outLocARNAfile << anchors.first.annotation_string(i) << "#" <<(i+1) << std::endl; 
+	    outLocARNAfile << anchors.second.annotation_string(i) << " #" <<(i+1) << std::endl; 
 	}
 	outLocARNAfile << std::endl;
 
@@ -2750,7 +2750,7 @@ namespace LocARNA {
 		//seq2_aln_str.push_back(myMol2.getStructure(j));
 	    }
 
-	outfile << "CLUSTAL W (1.83) multiple sequence alignment --- expaRNA 0.7.2 - exact pattern Alignment of RNA --- Score: "<< matchingsLCSEPM.size() << std::endl <<std::endl;
+	outfile << "CLUSTAL W --- ExpaRNA-P - exact pattern Alignment of RNA --- Score: "<< matchingsLCSEPM.size() << std::endl <<std::endl;
 
 	std::string tmp1 = seqA.seqentry(0).name() +"      ";
 	std::string tmp2 = seqB.seqentry(0).name() +"      ";
