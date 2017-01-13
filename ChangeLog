@@ -1,6 +1,8 @@
 ============================================================
 === 2016
 1.9.1-pre
+	introduce strict semantics for anchor constraints
+	  and make default (see mlocarna --relaxed-anchors)
 	fix exparna_p output
 	add mlocarna option to realign; support 'consensus' constraint specifications
 

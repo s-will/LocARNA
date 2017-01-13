@@ -573,6 +573,19 @@ Disallow/Allow lonely pairs (default: Disallow).
 
 Limit maximum span of base pairs (default off).
 
+=item  B<--relaxed-anchors>
+
+Relax semantics of anchor constraints (default off, meaning 'strict'
+semantics). For lexicographically ordered anchors, where each sequence
+is annotated with exactly the same names, both semantics are
+equivalent; thus, in this common case, the subtle differences can be
+ignored. In strict semantics, anchor names must be ordered
+lexicographically and can only be aligned in this order. In relaxed
+semantics, the only requirement is that equal anchor names are
+matched. Consequently, anchor names that don't occur in all sequences
+could be overwritten (if two names are assigned to the same position)
+or even introduce inconsistencies.
+
 =item  B<--plfold-span=span>
 
 Use RNAplfold with span.
@@ -1024,7 +1037,7 @@ my @autopass_arg_options =
      "max-bps-length-ratio=f"
     );
 
-my @autopass_noarg_options = ( "max-diff-relax" );
+my @autopass_noarg_options = ( "max-diff-relax", "relaxed-anchors" );
 
 
 ## ----------------------------------------

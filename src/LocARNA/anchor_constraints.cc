@@ -11,21 +11,23 @@ namespace LocARNA {
     AnchorConstraints::AnchorConstraints(size_type lenA,
 					 const std::vector<std::string> &seqVecA,
 					 size_type lenB,
-					 const std::vector<std::string> &seqVecB)
-	: a(lenA+1,0),
+					 const std::vector<std::string> &seqVecB,
+                                         bool strict)
+	: strict_(strict),
+          a(lenA+1,0),
 	  b(lenB+1,0),
-	  ar(lenA+1,range_t(1,lenB)),
+	  ar_(lenA+1,range_t(1,lenB)),
 	  name_size_(seqVecA.size())
-    {    
+    {
 	if (seqVecA.size()!=seqVecB.size()) {
 	    throw( failure("Wrong input for sequence constraints. Lengths of names in sequences don't fit.") );
 	}
 
 	std::map<std::string,size_type> nameTabA;
 	std::map<std::string,size_type> nameTabB;
-   
-	transform_input(nameTabA,lenA,seqVecA);
-	transform_input(nameTabB,lenB,seqVecB);
+
+	transform_input(nameTabA,lenA,seqVecA,strict_);
+	transform_input(nameTabB,lenB,seqVecB,strict_);
 
 	init_tables(nameTabA,nameTabB);
     }
@@ -34,53 +36,37 @@ namespace LocARNA {
     AnchorConstraints::AnchorConstraints(size_type lenA,
 					 const std::string &seqCA,
 					 size_type lenB,
-					 const std::string &seqCB)
-	: a(lenA+1,0),
+					 const std::string &seqCB,
+                                         bool strict)
+	: strict_(strict),
+          a(lenA+1,0),
 	  b(lenB+1,0),
-	  ar(lenA+1,range_t(1,lenB)),
+	  ar_(lenA+1,range_t(1,lenB)),
 	  name_size_(0)
     {
 	if (seqCA=="" || seqCB=="") return;
-    
+
 	//std::cerr << "seqCA: " << seqCA << std::endl;
 	//std::cerr << "seqCB: " << seqCB << std::endl;
-    
+
 	std::vector<std::string> seqVecA;
 	std::vector<std::string> seqVecB;
-    
+
 	split_at_separator(seqCA,'#',seqVecA);
 	split_at_separator(seqCB,'#',seqVecB);
-    
-	/*
-	  for(size_type i=0; i<seqVecA.size(); ++i) {
-	  std::cerr << "seqVecA: " << seqVecA[i] <<std::endl;
-	  }
-	  for(size_type i=0; i<seqVecB.size(); ++i) {
-	  std::cerr << "seqVecB: " << seqVecB[i] <<std::endl;
-	  }
-	*/
-    
+
 	if (seqVecA.size()!=seqVecB.size()) {
 	    throw( failure("Error during parsing of constraints. Lengths of names in sequences don't fit.") );
 	}
 
 	name_size_=seqVecA.size();
-    
+
 	std::map<std::string,size_type> nameTabA;
 	std::map<std::string,size_type> nameTabB;
-    
-	transform_input(nameTabA,lenA,seqVecA);
-	transform_input(nameTabB,lenB,seqVecB);        
-    
-	/*
-	  for(std::map<std::string,size_type>::iterator it=nameTabA.begin(); it!=nameTabA.end(); ++it) {
-	  std::cerr << "nameTabA " << it->first << " " << it->second << std::endl;
-	  }
-	  for(std::map<std::string,size_type>::iterator it=nameTabB.begin(); it!=nameTabB.end(); ++it) {
-	  std::cerr << "nameTabB " << it->first << " " << it->second << std::endl;
-	  }
-	*/
-    
+
+	transform_input(nameTabA,lenA,seqVecA,strict_);
+	transform_input(nameTabB,lenB,seqVecB,strict_);
+
 	init_tables(nameTabA,nameTabB);
     }
 
@@ -89,7 +75,7 @@ namespace LocARNA {
     bool
     AnchorConstraints::only_dont_care(const std::string &s) {
 	for (std::string::const_iterator it=s.begin(); s.end()!=it; ++it) {
-	    if (*it!=' ' && *it!='.') return false;
+	    if (*it!=' ' && *it!='.' && *it!='-') return false;
 	}
 	return true;
     }
@@ -98,35 +84,42 @@ namespace LocARNA {
     void
     AnchorConstraints::transform_input(name_tab_t &nameTab,
 				       size_type seq_len,
-				       const std::vector<std::string> &seq) {
-    
-	std::vector<std::string> vec(seq_len,"");
-    
+				       const std::vector<std::string> &seq,
+                                       bool strict) {
+
+	std::vector<std::string> vec(seq_len,""); //vector of names at each sequence position
+
 	for(std::vector<std::string>::const_iterator it=seq.begin();
 	    seq.end() != it;
-	    ++it) 
+	    ++it)
 	    {
-		// 	    std::cout << "length of sequence " << seq_len << " length of constraint " << it->length() << std::endl;
 		if (seq_len != it->length()){
-		    // 		std::cout << "length of sequence " << seq_len << " length of constraints " << it->length() << std::endl;
 		    throw( failure("Error during parsing of constraints. Constraint string of wrong length.") );
 		}
-	    
+
 		for (std::string::size_type i=0; i<seq_len; i++) {
 		    vec[i].push_back((*it)[i]);
 		}
 	    }
-    
+
+        std::string last_name="";
 	size_type i=1;
 	for(std::vector<std::string>::iterator it=vec.begin();
 	    vec.end()!=it;
 	    ++it)
-	    {	    
+	    {
 		if (!only_dont_care(*it)) {
-		    if (nameTab.find(*it)!=nameTab.end()) {
-			throw( failure("Error during parsing of constraints. Duplicate constraint name: \""+(*it)+"\".") );
-		    }
-		
+
+		    // check name consistency
+                    if (strict) {
+                        if (*it<=last_name) {
+                            throw( failure("Error during parsing of constraints. Anchor names not in strict lexicographic order at name \""+(*it)+"\".") );
+                        }
+                    } else {
+                        if (nameTab.find(*it)!=nameTab.end()) {
+                            throw( failure("Error during parsing of constraints. Duplicate constraint name: \""+(*it)+"\".") );
+                        }
+                    }
 		    nameTab[*it]=i;
 		}
 		++i;
@@ -143,11 +136,11 @@ namespace LocARNA {
 	     ++it) {
 	    std::string name=it->first;
 	    size_type posA=it->second;
-	
+
 	    name_seq_tab[posA] = name;
-	
+
 	    name_tab_t::const_iterator itB = nameTabB.find(name);
-	
+
 	    if (itB != nameTabB.end()) {
 		size_type posB = itB->second;
 		seq_tab[posA] = posB;
@@ -160,71 +153,96 @@ namespace LocARNA {
     void
     AnchorConstraints::init_tables(const name_tab_t &nameTabA,
 				   const name_tab_t &nameTabB) {
-    
+
 	assert(!a.empty());
-	size_type lenA = a.size()-1; // -1 !!! 
-    
+        
+	size_type lenA = a.size()-1; // -1 !
+	size_type lenB = b.size()-1; // -1 !
+        
 	names_a.resize(a.size());
 	names_b.resize(b.size());
-    
+
 	// named positions a
 	init_seq_table(a,names_a,nameTabA,nameTabB);
-    
+
 	// named positions b
 	init_seq_table(b,names_b,nameTabB,nameTabA); // (symmetrical call)
-    
-	/*
-	  for (name_seq_t::iterator it=names_a.begin(); names_a.end()!=it; ++it) {
-	  std::cerr << "names_a: \""<<*it<<"\""<<std::endl;
-	  }
-	  for (name_seq_t::iterator it=names_b.begin(); names_b.end()!=it; ++it) {
-	  std::cerr << "names_b: \""<<*it<<"\""<<std::endl;
-	  }*/
-    
-	size_type last=0;
-    
-	// matches from a to b
-    
-	/*
-	  scan A twice.
-	  First, from left to right and set left end of range.
-	  Second, from right to left and set right end.
-	*/
-    
-	for (size_type i=0; i<=lenA; i++) {
-	    if (a[i] > 0) {
-		last  = a[i];
-		ar[i].first = last;
-	    } else {
-		ar[i].first = last+1;
-	    }
-	}
-    
-	last = b.size()+1;
-	for (size_type i=lenA; i>=1; i--) {
-	    if (a[i] > 0) {
-		last  = a[i];
-		ar[i].second = last;
-	    } else {
-		ar[i].second = last-1;
-	    }
-	}
 
-	/*
-	  for (int i=0; i<a.size();++i) {
-	  std::cerr << "a["<<i<<"]: "<<a[i]<<std::endl;
-	  }
-	  for (int i=0; i<b.size(); ++i) {
-	  std::cerr << "b["<<i<<"]: "<<b[i]<<std::endl;
-	  }
-	*/
-	/*
-	  std::cerr << "ar: ";
-	  for (size_type i=1; i<a.size();++i) {
-	  std::cerr <<i<<":"<<ar[i].first<<"-"<<ar[i].second<<" ";
-	  }
-	  std::cerr << std::endl;
-	*/
+	// matches from a to b
+
+	if (strict_) {
+            
+            size_type last=0; // index of largest name in B, which is smaller than the last seen name in A
+            for (size_type i=1; i<=lenA; i++) {
+                if (a[i] > 0) {
+                    last = a[i];
+                    ar_[i].first = last;
+                } else if (a[i]==0) {
+                    ar_[i].first = last + 1;
+                } else { //  there is a name in A at i which is not in B
+                    // find largest name in B which is smaller than the name in A at i
+                    for (size_t j = last+1; j<=lenB && b[j]<=0; j++) {
+                        if (b[j]==-1) {
+                            if (names_b[j] < names_a[i]) {
+                                last=j;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    ar_[i].first = last+1;
+                }
+            }
+            
+            last = lenB+1; // index of smallest name in B, which is larger than the last seen name in A
+            for (size_type i=lenA; i>=1; i--) {
+                if (a[i] > 0) {
+                    last = a[i];
+                    ar_[i].second = last;
+                } else if (a[i]==0) {
+                    ar_[i].second = last - 1;
+                } else { //  there is a name in A at i which is not in B
+                    // find largest name in B which is smaller than the name in A at i
+                    for (size_t j = last-1; j>=1 && b[j]<=0; j--) {
+                        if (b[j]==-1) {
+                            if (names_b[j] > names_a[i]) {
+                                last=j;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    ar_[i].second = last-1;
+                }
+            }
+        } else { //relaxed
+            /*
+              scan A twice.
+              First, from left to right and set left end of range.
+              Second, from right to left and set right end.
+            */
+            size_type last=0;
+
+            for (size_type i=1; i<=lenA; i++) {
+                if (a[i] > 0) {
+                    last  = a[i];
+                    ar_[i].first = last;
+                } else {
+                    ar_[i].first = last+1;
+                }
+            }
+            
+            last = b.size();
+            for (size_type i=lenA; i>=1; i--) {
+                if (a[i] > 0) {
+                    last  = a[i];
+                    ar_[i].second = last;
+                } else {
+                    ar_[i].second = last-1;
+                }
+            }
+        }
+
     }
 
 } // end namespace LocARNA

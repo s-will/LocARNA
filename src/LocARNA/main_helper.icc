@@ -175,11 +175,8 @@ namespace LocARNA {
             double min_am_prob; //!< only matched arc-pair with a probability of at least min_am_prob are taken into account
             double min_bm_prob; //!< only matched base-pair with a probability of at least min_bm_prob are taken into account
 
-            std::string seq_anchors_A; //!< seq_anchors_A
-            std::string seq_anchors_B; //!< seq_anchors_B
+            bool relaxed_anchors; //!< strict or relaxed anchor constraints
 
-            //bool opt_ignore_constraints; //!< whether to ignore_constraints
-    
         };
         
         //! @brief write input summary

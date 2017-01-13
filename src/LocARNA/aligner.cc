@@ -16,28 +16,17 @@
 
 namespace LocARNA {
 
-    /*
-      SEMANTIC OF ANCHOR CONSTRAINTS
-  
-      Anchor constraints (i,j) enforce that positions i in A and j in B are matched;
-      neither i nor j are deleted (for local alignment, this implies that
-      both positions occur in the local alignment)
-  
-      Names that occur in only one sequence, do not impose constraints
-    */
-
-
-
     /* SEMANTICS OF MAX DIFF HEURISTIC
-
        restrict matrix cells (i,j) to valid trace cells due to trace_controller
-   
     */
-
+    /*
+      @todo move the test for allowed edges (due to anchor
+      constraints) into the trace controller
+     */
 
     /*
       recursions for global alignment:
-
+      
       the following recursions simplify the actual locarna algorithm
       most notably:
       * the computation of matrices M^ab and M^a'b' where al=a'l and bl=bl' is joined
@@ -71,8 +60,6 @@ namespace LocARNA {
       D^a'b' + s'(a',b') )
       where a'l-1=al,b'l-1=bl,a'r+1=ar,b'r+1=br
     */
-
-
 
 
 

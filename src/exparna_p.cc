@@ -110,11 +110,11 @@ struct command_line_parameters {
     std::string seq_constraints_A;
     std::string seq_constraints_B;
     
-    bool opt_ignore_constraints;
-    
     bool no_chaining;
 
     int max_bp_span;
+
+    bool relaxed_anchors;
 
     // ------------------------------------------------------------
     // File arguments
@@ -213,6 +213,7 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
     {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
+    {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"","Relax anchor constraints (default=off)"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Miscalleneous"},
     {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
@@ -352,7 +353,9 @@ main(int argc, char **argv) {
                                       lenB,
                                       seqB.has_annotation(MultipleAlignment::AnnoType::anchors)
                                       ?seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string()
-                                      :"");
+                                      :"",
+                                      !clp.relaxed_anchors
+                                      );
 
     if (clp.opt_verbose) {
         if (! seq_constraints.empty()) {

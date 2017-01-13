@@ -13,16 +13,49 @@
 
 #include <iosfwd>
 
-//#include "aux.hh"
-
 namespace LocARNA {
     
-
-    //! @brief Represents anchor constraints between two sequences
-    //! 
-    //! Maintains the constraints on (non-structural) alignment edges
-    //! that have to be satisfied during the alignment
-    //!
+    /**
+    * @brief Represents anchor constraints between two sequences
+    * 
+    * Maintains the constraints on (non-structural) alignment edges
+    * that have to be satisfied during the alignment
+    *
+    * alignment algorithms can
+    *
+    *   - test whether pairwise edges are allowed
+    *   - test whether positions have to aligned to some other position or can be deleted
+    *
+    * and ask informations about sequence names.
+    *
+    * SEMANTIC OF ANCHOR CONSTRAINTS
+    * 
+    * Generally, anchor constraints (i,j) enforce that positions i in
+    * A and j in B are matched; neither i nor j are deleted (for local
+    * alignment, this implies that both positions occur in the local
+    * alignment) The class allows to choose between two semantics of
+    * anchor constraints. The relaxed semantics can drop constraints
+    * and produce inconsisitencies during multiple alignment, when
+    * some names occur only in a subset of the sequences. Therefore,
+    * the strict semantics is introduced, which avoids such problems
+    * by introducing additional (order) dependencies between different
+    * names (consequently, the constraint specification is somewhat
+    * less flexible).
+    * 
+    * Relaxed semantics (originally, the only implemented semantics):
+    *
+    *   a) Positions with equal names must be matched (aligned to each other)
+    *      Consequently, positions with names that occur also in the other sequence cannot be deleted.
+    *   b) Names that occur in only one sequence, do not impose any constraints. Therefore, names can occur in arbitrary order.
+    *
+    * Strict (ordered) semantics:
+    *
+    *   a) Names must be strictly lexicographically ordered in the annotation of each sequence
+    *   b) Positions of equal names must be matched.
+    *   c) Alignment columns must not violate the lex order, in the following sense:
+    *      each alignment column, where at least one position is named, receives this name; 
+    *      the names of alignment columns must be lex-ordered (in the order of the columns).
+    */
     class AnchorConstraints {
     public:
 	typedef size_t size_type; //!< size type
@@ -38,7 +71,11 @@ namespace LocARNA {
 
 	typedef std::vector<std::string> name_seq_t;
 
-	//! sequence of connected positions in seq B or seq A.
+        //! flag choosing between strict or relaxed semantics
+        const bool strict_;
+        
+	//! for each position in A, tabulate the position in seq B that has the same name;
+        //! moreover encode whether the positions has a name or the corresponding name exists
 	//! a[i] = j (1<=j<=lenB) means there is an edge from A_i to B_j
 	//! a[i] = 0 means there is no name for position i in A
 	//! a[i] = -1 means, there is a name for A_i, but no match to B 
@@ -51,7 +88,7 @@ namespace LocARNA {
 	//! sequence of ranges for a, allows fast constraint checking.
 	//! a position i can only be matched to any position in ar[i].first..ar[i].second
 	//! without violating an anchor constraint (holds for arbitrary i: 1<=i<=lenA)
-	range_seq_t ar;
+	range_seq_t ar_;
 
 	//! map from position to names in a
 	name_seq_t names_a;
@@ -71,6 +108,7 @@ namespace LocARNA {
 	 * @param seqCA vector of anchor strings for sequence A
 	 * @param lenB length of sequence B
 	 * @param seqCB vector of anchor strings for sequence B
+         * @param strict use strict semantics
 	 *
 	 * The constraints (=alignment edges that have to be
 	 * satisfied) are encoded as follows: equal symbols in the
@@ -100,7 +138,8 @@ namespace LocARNA {
     	AnchorConstraints(size_type lenA, 
 			  const std::vector<std::string> &seqCA,
 			  size_type lenB,
-			  const std::vector<std::string> &seqCB);
+			  const std::vector<std::string> &seqCB,
+                          bool strict);
     
 	/**
 	 * @brief Construct from sequence lengths and anchor names
@@ -108,13 +147,15 @@ namespace LocARNA {
 	 * @param seqCA concatenated anchor strings for sequence A (separated by '#')
 	 * @param lenB length of sequence B
 	 * @param seqCB concatenated anchor strings for sequence B (separated by '#')
+	 * @param strict use strict semantics
 	 *	 
 	 * for semantics of anchor strings see first constructor
 	 */
 	AnchorConstraints(size_type lenA,
 			  const std::string &seqCA,
 			  size_type lenB,
-			  const std::string &seqCB);
+			  const std::string &seqCB,
+                          bool strict);
 	
 	// -----------------------------------------------------------
 	// asking for constraint information
@@ -123,11 +164,12 @@ namespace LocARNA {
 	//! an alignment edge is allowed, iff it is not in conflict with any anchor constraint
 	bool
 	allowed_edge(size_type i, size_type j) const {
-	    return
-		ar[i].first <= j 
-		&& j <= ar[i].second;
+	    assert(i>=1); assert(i<ar_.size());
+            return
+		ar_[i].first <= j 
+		&& j <= ar_[i].second;
 	}
-
+    private:
 	//! matching position in b for position i in a
 	//! @param i position in sequence A 
 	//!
@@ -148,7 +190,7 @@ namespace LocARNA {
 	match_to_b(size_type i) const {
 	    return b[i];
 	}
-    
+    public:
 	//! is position i in sequence A aligned to any position in B
 	bool
 	aligned_in_a(size_type i) const {
@@ -199,21 +241,53 @@ namespace LocARNA {
 	// construction helper
     
     
-	//! Translate input vector of strings <seq>
-	//! to a map of position names to sequence indices
-	//! (also tests input, return true for valid input)
-	static
+        /**
+         *
+	 * Translate input vector of strings <seq>
+	 * to a map of position names to sequence indices
+	 * (also tests input, return true for valid input)
+         * @param[out] nameTab generated table, mapping names to positions 
+         * @param seq_len      length of the sequence
+         * @param seq          array of anchor constraints annotation strings
+         * @param strict       whether order is enforced (strict semantics)
+         *
+         * throws failure if constraint strings have wrong length,
+         * names are duplicated, or (only if strict) in wrong order
+         */
+        static
 	void
 	transform_input(name_tab_t &nameTab,
 			size_type len,
-			const std::vector<std::string> &seq);
+			const std::vector<std::string> &seq,
+                        bool strict);
 
-	//! Initializes the data structures for efficiently answering
-	//! constraint queries later on
+	/**
+         * @brief Initialize tables for constraint checking 
+         *
+         * Initializes the data structures for efficiently answering
+         * constraint queries later on
+         * @param nameTabA name table for sequence A
+         * @param nameTabB name table for sequence B
+         *
+         * Calls init_seq_table() to initialize name-position lookup tables.
+         * Initializes array ar_ with ranges of allowed edges
+         */
 	void
 	init_tables(const name_tab_t &nameTabA,
 		    const name_tab_t &nameTabB);
 
+        /**
+         * @brief Initialize sequence tables
+         *
+         * Initializes tables for
+         *  - lookup of corresponding position with same name in the other sequence 
+         *  - lookup of name by pos and
+         *
+         * @param[out] seq_tab      table for corresponding position with same name in the other sequence
+         * @param[out] name_seq_tab table to get name by position
+         * @param nameTabA
+         * @param nameTabB
+         */
 	static
 	void
 	init_seq_table(seq_t & seq_tab,

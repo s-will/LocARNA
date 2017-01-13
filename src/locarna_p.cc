@@ -153,7 +153,8 @@ option_def my_options[] = {
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
     {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
-
+    {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"","Relax anchor constraints (default=off)"},
+    
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
 
     {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"bps-file 1","Input file 1"},
@@ -258,7 +259,7 @@ main(int argc, char **argv) {
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
-    AnchorConstraints seq_constraints(lenA,"",lenB,"");
+    AnchorConstraints seq_constraints(lenA,"",lenB,"",!clp.relaxed_anchors);
     
     // --------------------
     // handle max_diff restriction

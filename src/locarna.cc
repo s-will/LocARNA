@@ -218,6 +218,7 @@ option_def my_options[] = {
 
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
     {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
+    {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"","Relax anchor constraints (default=off)"},
     
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
 
@@ -466,7 +467,9 @@ main(int argc, char **argv) {
         seq_constraints(lenA,
                         seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string(),
                         lenB,
-                        seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string());
+                        seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string(),
+                        !clp.relaxed_anchors
+                        );
     
     if (clp.opt_verbose) {
 	if (! seq_constraints.empty()) {
