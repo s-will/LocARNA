@@ -22,7 +22,7 @@ MYTESTRESULTS = locarnate.testresult					\
 mlocarna-archaea-alifold.testresult mlocarna-bed-anchors.testresult	\
 mlocarna-haca-constraints.testresult					\
 mlocarna-probabilistic.testresult mlocarna-sparse.testresult		\
-mlocarna-threads.testresult
+mlocarna-threads.testresult mlocarna-realign.testresult
 
 BUILT_SOURCES = $(MYTESTDATA)
 

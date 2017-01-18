@@ -110,6 +110,7 @@ EXTRA_DIST= Data/Examples/archaea.fa Data/Examples/ferritin.fa		\
 	Data/Examples/example.cfg					\
 	Data/Examples/example-w-constraints.fa				\
 	Data/Examples/example-wo-anchors.fa				\
+	Data/Examples/example-realign.aln				\
 	Data/Examples/example-anchors.bed $(matrices_DATA)		\
 	Doc/doxygen.cfg
 

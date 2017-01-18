@@ -1,5 +1,16 @@
 #!/bin/bash
 
+########################################
+# mlocarna (and locarnate) tests 
+#
+# Test whether some mlocarna and locarnate calls work and produce the
+# expected result. 
+#
+# (Changes in the header version string of mlocarna are ignored, such
+# that the expected test results don't have to be updated with every
+# version change.)
+#
+
 if [ "$1" = "--generate-references" ] ; then
     GENERATE_OUTPUT=true
 else 
@@ -44,10 +55,11 @@ function calltest {
     name="$1"
     tgtdir="$2"
     resultfile="$3"
+    diffopts="$4"
 
     reference_resultsfile=$testsdir/$name.testresult
 
-    shift 3
+    shift 4
     
     echo "============================================================"
     echo TEST $name
@@ -56,7 +68,7 @@ function calltest {
 
     if $* ; then
         if [ -e "$reference_resultsfile" ] ; then
-            if diff "$resultfile" "$reference_resultsfile" ; then
+            if diff "$resultfile" "$reference_resultsfile" "${diffopts}"; then
                 echo "==================== OK"
             else
                 DIFFERENCES=true
@@ -85,7 +97,7 @@ function calltest {
 function mlocarna_calltest {
     name=$1
     shift
-    calltest $name test.out test.out/results/result.aln $* --tgtdir test.out
+    calltest $name test.out test.out/results/result.aln -I'^CLUSTAL W --- LocARNA [0123456789]\.[0123456789]\.[0123456789].*$' $* --tgtdir test.out
 }
 
 ## ========================================
@@ -124,11 +136,15 @@ mlocarna_calltest mlocarna-threads \
 mlocarna_calltest mlocarna-bed-anchors \
          bin/mlocarna  --anchor-constraints $exdir/haca.snoRNA_anchor.bed $exdir/haca.snoRNA.fa
 
+# check realign
+mlocarna_calltest mlocarna-realign \
+         bin/mlocarna --realign $exdir/example-realign.aln
+
 
 ## ========================================
 ## test locarnate (if t_coffee is available)
 ##
-calltest locarnate test_results test_results/mult/tcoffee.aln \
+calltest locarnate test_results test_results/mult/tcoffee.aln "--normal" \
          bin/locarnate $exdir/archaea.fa
 
 if [ -d "test_results" ] ; then
