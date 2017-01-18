@@ -169,7 +169,7 @@ namespace LocARNA {
 		ar_[i].first <= j 
 		&& j <= ar_[i].second;
 	}
-    private:
+
 	//! matching position in b for position i in a
 	//! @param i position in sequence A 
 	//!
@@ -190,7 +190,7 @@ namespace LocARNA {
 	match_to_b(size_type i) const {
 	    return b[i];
 	}
-    public:
+
 	//! is position i in sequence A aligned to any position in B
 	bool
 	aligned_in_a(size_type i) const {
