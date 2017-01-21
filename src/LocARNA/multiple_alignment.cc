@@ -348,7 +348,7 @@ namespace LocARNA {
 		}
 		else if (has_prefix(line,anchors_tag)) {
 		    // anchor constraint
-		    std::istringstream in(line.substr(2));
+		    std::istringstream in(line.substr(anchors_tag.length()));
 		    int idx;
 		    std::string astr;
 		    in >> idx >> astr;
