@@ -127,10 +127,6 @@ namespace LocARNA {
 
 	int max_diff_at_am_; //!< maximal difference of positions at ends of an arc match
 
-	double min_am_prob_; //!< minimal probability of an arc match
-
-	double min_bm_prob_;  //!< minimal probability of a base match
-    
 	bool stacking_; //!< whether to use stacking
 
 	const AnchorConstraints *constraints_; //!< anchor constraints
@@ -226,20 +222,6 @@ namespace LocARNA {
 	max_diff_at_am(int max_diff_at_am) {max_diff_at_am_=max_diff_at_am; return *this;}
 
 	/**
-	 * @brief set parameter min_am_prob
-	 * @param min_am_prob minimal probability of an arc match
-	 */
-	AlignerParams &
-	min_am_prob(double min_am_prob) {min_am_prob_=min_am_prob; return *this;}
-
-	/**
-	 * @brief set parameter min_bm_prob
-	 * @param min_bm_prob  minimal probability of a base match
-	 */
-	AlignerParams &
-	min_bm_prob(double min_bm_prob) {min_bm_prob_=min_bm_prob; return *this;}
-
-	/**
 	 * @brief set parameter stacking
 	 * @param stacking whether to use stacking
 	 */
@@ -272,8 +254,6 @@ namespace LocARNA {
 	    trace_controller_(0L),
 	    max_diff_am_(-1),
 	    max_diff_at_am_(-1),
-	    min_am_prob_(0), 
-	    min_bm_prob_(0),	   
 	    stacking_(false),
 	    constraints_(0L)
 	{}
@@ -291,6 +271,10 @@ namespace LocARNA {
 	friend class AlignerP;
 
     protected:
+        double min_am_prob_; //!< minimal probability of an arc match
+
+        double min_bm_prob_;  //!< minimal probability of a base match
+    
 	pf_score_t pf_scale_; //!< scaling factor for partition function
 
 	/** 
@@ -298,16 +282,32 @@ namespace LocARNA {
 	 */
 	AlignerPParams()
 	    : AlignerParams(),
+              min_am_prob_(0), 
+              min_bm_prob_(0),	   
 	      pf_scale_((pf_score_t)1)
 	{}
 
     public:
+        /**
+	 * @brief set parameter min_am_prob
+	 * @param min_am_prob minimal probability of an arc match
+	 */
+	AlignerPParams &
+	min_am_prob(double min_am_prob) {min_am_prob_=min_am_prob; return *this;}
+
 	/**
+	 * @brief set parameter min_bm_prob
+	 * @param min_bm_prob  minimal probability of a base match
+	 */
+	AlignerPParams &
+	min_bm_prob(double min_bm_prob) {min_bm_prob_=min_bm_prob; return *this;}
+
+        /**
 	 * @brief set parameter pf_scale
 	 * @param pf_scale scaling factor for partition function
 	 */
 	AlignerPParams &
-	pf_scale(pf_score_t pf_scale) {pf_scale_=pf_scale; return *this;}
+	pf_scale(pf_score_t pf_scale) {pf_scale_=pf_scale; return *this;}     
 
 	~AlignerPParams() {}
 	

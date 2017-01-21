@@ -1,0 +1,48 @@
+[>DESCRIPTION]
+
+sparse is an even faster, stronger sparsified pairwise alignment
+algorithm than locarna. Like locarna, it performs fast simultaneous
+folding and alignment based on two RNA sequences (or alignments). In
+addition to the filtering of considered base pairs by their
+probabilities, it filters by conditional probabilities of bases and
+base pairs in their enclosing loops.
+
+The usage, input, constraints-specifications and output are analogous
+to locarna; please refer to the help or man page of locarna for
+explanations and examples.
+
+[AVAILABILITY]
+
+The latest LocARNA package release is available online at
+  
+    http://www.bioinf.uni-freiburg.de/Software/LocARNA/
+
+and at Github https://github.com/s-will/LocARNA
+
+[AUTHOR]
+
+This man page is written and maintained by Sebastian Will it is part
+of the LocARNA package.
+
+The sparse tool and sparse alignment algorithm is written by Milad
+Miladi. Library classes for strong ensemble-based sparsification are
+written by Christina Otto.
+
+[COPYING (LICENSE)]
+
+Copyright 2005- Milad Miladi, Sebastian Will, Christina Otto
+
+The LocARNA package is released under GNU Public License v3.0
+
+[REFERENCES]
+
+Sebastian Will, Christina Otto, Milad Miladi, Mathias Möhl, and Rolf
+Backofen.  SPARSE: quadratic time simultaneous alignment and folding
+of RNAs without sequence-based heuristics. Bioinformatics 31 (15):
+2489-2496, 2015. doi:10.1093/bioinformatics/btv185
+
+[SEE ALSO]
+
+The LocARNA PP 2.0 format is described online at
+  
+  http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/

@@ -124,7 +124,7 @@ namespace LocARNA {
 
 	const double exp_probB;
   
-	const double temperature;
+	const double temperature_alipf;
     
     
 	//! turn on/off stacking terms
@@ -234,7 +234,7 @@ namespace LocARNA {
 	      exclusion(exclusion_),
 	      exp_probA(exp_probA_),
 	      exp_probB(exp_probB_),
-	      temperature(temp_),
+	      temperature_alipf(temp_),
 	      stacking(stacking_),
 	      new_stacking(new_stacking_),
 	      mea_scoring(mea_scoring_),
@@ -496,7 +496,7 @@ namespace LocARNA {
     
     
 	pf_score_t
-	boltzmann_weight(score_t s) const { return exp(s/(pf_score_t)params->temperature); }
+	boltzmann_weight(score_t s) const { return exp(s/(pf_score_t)params->temperature_alipf); }
 
 
 	//! subtract from each element of a score_t vector v a value x

@@ -47,9 +47,9 @@ const std::string
 VERSION_STRING = (std::string)PACKAGE_STRING;
 
 
-bool opt_help;
-bool opt_version;
-bool opt_verbose;
+bool help;
+bool version;
+bool verbose;
 
 string filename; // file that contains the sequence of numbers
 
@@ -64,9 +64,9 @@ bool opt_all_values;
 
 
 option_def my_options[] = {    
-    {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,"","This help"},
-    {"version",'V',&opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
-    {"verbose",'v',&opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+    {"help",'h',&help,O_NO_ARG,0,O_NODEFAULT,"","This help"},
+    {"version",'V',&version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
+    {"verbose",'v',&verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
     
     {"delta",'d',0,O_ARG_DOUBLE,&delta_ab,"0.5","float","Penalty for state change"},
     {"beta",'b',0,O_ARG_DOUBLE,&beta,"6","float","Inverse temperature"},
@@ -93,7 +93,7 @@ main(int argc, char **argv) {
     //
     bool process_success=process_options(argc,argv,my_options);
 
-    if (opt_help) {
+    if (help) {
 	cout << "locarnap_fit - Fit a two step function to a data series."<<endl<<endl;
 
 	print_help(argv[0],my_options);
@@ -102,9 +102,9 @@ main(int argc, char **argv) {
 	return 0;
     }
 
-    if (opt_version || opt_verbose) {
+    if (version || verbose) {
 	cout << "locarnap_fit ("<<VERSION_STRING<<")"<<endl;
-	if (opt_version) return 0; else cout <<endl;
+	if (version) return 0; else cout <<endl;
     }
 
     if (!process_success) {
@@ -114,7 +114,7 @@ main(int argc, char **argv) {
       return -1;
     }
     
-    if (opt_verbose) {
+    if (verbose) {
       print_options(my_options);
     }    
     //

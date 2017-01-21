@@ -388,8 +388,6 @@ private:
      *
      * @param in input stream
      * @note overwrites/clears existing data
-     *
-     * @todo implement
      */
     void
     read_stockholm(std::istream &in);

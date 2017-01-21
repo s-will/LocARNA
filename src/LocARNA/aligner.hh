@@ -149,10 +149,10 @@ namespace LocARNA {
 	 *
 	 * @param k number of suboptimals to be generated (k==-1 means unlimited)
 	 * @param threshold 
-	 * @param opt_normalized 
+	 * @param normalized 
 	 * @param normalized_L 
 	 * @param output_width 
-	 * @param opt_verbose 
+	 * @param verbose 
 	 * @param opt_local_output 
 	 * @param opt_pos_output 
 	 * @param opt_write_structure 
@@ -160,10 +160,10 @@ namespace LocARNA {
 	void 
 	suboptimal(int k,
 		   score_t threshold,
-		   bool opt_normalized,
+		   bool normalized,
 		   score_t normalized_L,
 		   size_t output_width,
-		   bool opt_verbose,
+		   bool verbose,
 		   bool opt_local_out,
 		   bool opt_pos_output,
 		   bool opt_write_structure
@@ -172,7 +172,7 @@ namespace LocARNA {
     
 	//! perform normalized local alignment with parameter L
 	infty_score_t
-	normalized_align(score_t L, bool opt_verbose);
+	normalized_align(score_t L, bool verbose);
 
 	//! perform local alignment by subtracting a penalty for each alignment position
 	infty_score_t

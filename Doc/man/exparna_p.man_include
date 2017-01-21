@@ -1,0 +1,64 @@
+[>DESCRIPTION]
+
+exparna_p performs pairwise matching and folding, i.e. it determines
+exactly matching local favourable sub-structures that can be
+simulataneously formed in the input RNAs.
+
+.SS Input
+
+.PP
+Input consists of two sequences or alignments, which are specified in
+fasta, clustal, stockholm, or LocARNA pp format.
+
+Optionally, one can specify structure and anchor constraints in these
+input files.
+
+.SS Output
+
+.PP
+The program enumerates exactly matching local substructures (exact
+pattern matches = EPMs) and optionally chains them. It returns lists
+of chained and unchained matches, visualizations of the results and
+anchor constraints for alignment.
+
+[EXAMPLES]
+
+Essentially exparna_p is called in the same way as locarna and the
+other pairwise alignemnt tools of the package. Please refer to their
+documentation. Note that exparna is usually called with single
+sequences rather than alignments.
+
+[AVAILABILITY]
+
+The latest LocARNA package release is available online at
+  
+    http://www.bioinf.uni-freiburg.de/Software/LocARNA/
+
+and at Github https://github.com/s-will/LocARNA
+
+[AUTHOR]
+
+This man page is written and maintained by Sebastian Will it is part
+of the LocARNA package.
+
+The exparna_p tool and the library classes for strong ensemble-based
+sparsification were written by Christina Otto.
+
+[COPYING (LICENSE)]
+
+Copyright 2005- Christina Otto, Sebastian Will
+
+The LocARNA package is released under GNU Public License v3.0
+
+[REFERENCES]
+
+Christina Otto, Mathias Mohl, Steffen Heyne, Mika Amit, Gad M. Landau,
+Rolf Backofen, and Sebastian Will.  ExpaRNA-P: simultaneous exact
+pattern matching and folding of RNAs. BMC Bioinformatics, 15:404,
+2014. DOI: 10.1186/s12859-014-0404-0
+
+[SEE ALSO]
+
+The LocARNA PP 2.0 format is described online at
+  
+  http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/

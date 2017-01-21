@@ -60,26 +60,34 @@ const bool DO_TRACE=true;
 //! Encapsulating all command line parameters in a common structure
 //! avoids name conflicts and makes downstream code more informative.
 //!
-struct command_line_parameters : public MainHelper::std_command_line_parameters {
-    bool opt_subopt; //!< find suboptimal solution (either k-best or all solutions better than a threshold)
+struct command_line_parameters 
+    : public MainHelper::std_command_line_parameters,
+      public MainHelper::mea_command_line_parameters {
+    
+    //! find suboptimal solution (either k-best or all solutions
+    //! better than a threshold)
+    bool subopt;
     
     int kbest_k; //!< kbest_k
     int subopt_threshold; //!< subopt_threshold
 
-    bool opt_mea_alignment; //!< whether to perform mea alignment
-    bool opt_mea_gapcost; //!< whether to use mea gapcost
-    int mea_alpha; //!< mea alpha
-    int mea_beta; //!< mea beta
-    int mea_gamma; //!< mea gamma
-    int probability_scale; //!< probability scale
+    std::string normalized_help =
+        "Normalized local alignment with parameter L";
+    bool normalized; //!< whether to do normalized alignment
 
-    bool opt_normalized; //!< whether to do normalized alignment
+    std::string penalized_help = 
+        "Penalized local alignment with penalty PP";
+    bool penalized; //!< whether to penalize alignment positions
+    int position_penalty; //!< position-wise penalty
 
-    bool opt_penalized; //!< whether to penalize alignment positions
-
+    std::string normalized_L_help =
+        "Parameter L for normalized local alignment. "
+        "Larger values produce larger alignments.";
     int normalized_L; //!< normalized_L
 
-    bool opt_score_components; //!< whether to report score components
+    std::string score_components_help =
+        "Output components of the score (experimental)";
+    bool score_components; //!< whether to report score components
 };
 
 //! \brief holds command line parameters of locarna  
@@ -89,146 +97,160 @@ command_line_parameters clp;
 option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","cmd_only"},
 
-    {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
-    {"galaxy-xml",0,&clp.opt_galaxy_xml,O_NO_ARG,0,O_NODEFAULT,"","Galaxy xml wrapper"},
-    {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
-    {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
-    {"quiet",'q',&clp.opt_quiet,O_NO_ARG,0,O_NODEFAULT,"","Quiet"},
+    {"help",'h',&clp.help,O_NO_ARG,0,O_NODEFAULT,"",clp.help_help},
+    {"galaxy-xml",0,&clp.galaxy_xml,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.galaxy_xml_help},
+    {"version",'V',&clp.version,O_NO_ARG,0,O_NODEFAULT,"",clp.version_help},
+    {"verbose",'v',&clp.verbose,O_NO_ARG,0,O_NODEFAULT,"",clp.verbose_help},
+    {"quiet",'q',&clp.quiet,O_NO_ARG,0,O_NODEFAULT,"",clp.quiet_help},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring_parameters"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
 
-    {"match",'m',0,O_ARG_INT,&clp.match_score,"50","score","Match score"},
-    {"mismatch",'M',0,O_ARG_INT,&clp.mismatch_score,"0","score","Mismatch score"},
-    {"ribosum-file",0,0,O_ARG_STRING,&clp.ribosum_file,"RIBOSUM85_60","f","Ribosum file"},
-    {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,"true","bool","Use ribosum scores"},
-    {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
-    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-500","score",
-     "Indel opening score"},
-    {"unpaired_penalty",0,0,O_ARG_INT,&clp.unpaired_penalty,"0","score",
-     "Penalty for unpaired bases"},
-    // {"position_penalty",0,0,O_ARG_INT,&clp.position_penalty,"0","score",
-    //  "Penalty for each alignment position"},
-    {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"200","score",
-     "Maximal weight of 1/2 arc match"},
-    {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob",
-     "Expected probability"},
-    {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
-    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion_score,"0","score","Exclusion weight"},
-    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"",
-     "Use stacking terms (requires stack-probs by RNAfold -p2)"},
-    {"new-stacking",0,&clp.opt_new_stacking,O_NO_ARG,0,O_NODEFAULT,"",
-     "Use new stacking terms (requires stack-probs by RNAfold -p2)"},   
+    {"indel",'i',0,O_ARG_INT,&clp.indel,"-350","score",clp.indel_help},
+    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening,
+     "-500","score",clp.indel_opening_help},
+    {"ribosum-file",0,0,O_ARG_STRING,&clp.ribosum_file,
+     "RIBOSUM85_60","f",clp.ribosum_file_help},
+    {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,
+     "true","bool",clp.use_ribosum_help},
+    {"match",'m',0,O_ARG_INT,&clp.match,"50","score",clp.match_help},
+    {"mismatch",'M',0,O_ARG_INT,&clp.mismatch,"0","score",clp.mismatch_help},
+    {"unpaired-penalty",0,0,O_ARG_INT,&clp.unpaired_penalty,
+     "0","score",clp.unpaired_penalty_help},
+    {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,
+     "200","score",clp.struct_weight_help},
+    {"exp-prob",'e',&clp.exp_prob_given,O_ARG_DOUBLE,&clp.exp_prob,
+     O_NODEFAULT,"prob",clp.exp_prob_help},
+    {"tau",'t',0,O_ARG_INT,&clp.tau,"0","factor",clp.tau_help},
+    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion,"0","score",clp.exclusion_help},
+    {"stacking",0,&clp.stacking,O_NO_ARG,0,O_NODEFAULT,"",clp.stacking_help},
+    {"new-stacking",0,&clp.new_stacking,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.new_stacking_help},   
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Locality_type"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Locality"},
 
-    {"struct-local",0,&clp.struct_local_given,O_ARG_BOOL,&clp.struct_local,"false","bool",
-     "Structure local"},
-    {"sequ-local",0,&clp.sequ_local_given,O_ARG_BOOL,&clp.sequ_local,"false","bool",
-     "Sequence local"},
-    {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,"----","spec",
-     "String of four +/- symbols, allowing/disallowing free end gaps at the four sequence ends"
-     " in the order left end of first sequence, right end of first sequence,"
-     " left end of second sequence, right end of second sequence."},
-    {"normalized",0,&clp.opt_normalized,O_ARG_INT,&clp.normalized_L,"0","L",
-     "Normalized local alignment with parameter L"},
-    {"penalized",0,&clp.opt_penalized,O_ARG_INT,&clp.position_penalty,"0","PP",
-     "Penalized local alignment with penalty PP"},
-
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling_output"},
-
-    {"width",'w',0,O_ARG_INT,&clp.output_width,"120","columns","Output width"},
-    {"clustal",0,&clp.opt_clustal_out,O_ARG_STRING,&clp.clustal_out,O_NODEFAULT,"file",
-     "ClustalW (aln) output"},
-    {"stockholm",0,&clp.opt_stockholm_out,O_ARG_STRING,&clp.stockholm_out,O_NODEFAULT,"file",
-     "Stockholm output"},
-    {"pp",0,&clp.opt_pp_out,O_ARG_STRING,&clp.pp_out,O_NODEFAULT,"file","PP output"},
-    {"alifold-consensus-dp",0,&clp.opt_alifold_consensus_dp,O_NO_ARG,0,O_NODEFAULT,"",
-     "Compute consensus dot plot by alifold"},
-    {"consensus-structure",0,0,O_ARG_STRING,&clp.cons_struct_type,"alifold","type",
-     "Type of consensus structures written to screen and stockholm output [alifold|mea|none]"},
-    {"local-output",'L',&clp.opt_local_output,O_NO_ARG,0,O_NODEFAULT,"",
-     "Output only local sub-alignment (to std out)"},
-    {"local-file-output",0,&clp.opt_local_file_output,O_NO_ARG,0,O_NODEFAULT,"",
-     "Write only local sub-alignment to output files"},
-    {"pos-output",'P',&clp.opt_pos_output,O_NO_ARG,0,O_NODEFAULT,"",
-     "Output only local sub-alignment positions"},
-    {"write-structure",0,&clp.opt_write_structure,O_NO_ARG,0,O_NODEFAULT,"",
-     "Write guidance structure in output"},
-    {"score-components",0,&clp.opt_score_components,O_NO_ARG,0,O_NODEFAULT,"",
-     "Output components of the score (experimental)"},
-    {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
+    {"struct-local",0,&clp.struct_local_given,O_ARG_BOOL,&clp.struct_local,
+     "false","bool",clp.struct_local_help},
+    {"sequ-local",0,&clp.sequ_local_given,O_ARG_BOOL,&clp.sequ_local,
+     "false","bool",clp.sequ_local_help},
+    {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,
+     "----","spec",clp.free_endgaps_help},
+    {"normalized",0,&clp.normalized,O_ARG_INT,&clp.normalized_L,
+     "0","L",clp.normalized_help},
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
+    {"penalized",0,&clp.penalized,O_ARG_INT,&clp.position_penalty,
+     "0","PP",clp.penalized_help},
 
-    {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
-    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor",
-     "Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
-    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"-1","diff",
-     "Maximal difference for sizes of matched arcs"},
-    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",
-     "Maximal difference for alignment traces"},
-    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff",
-     "Maximal difference for alignment traces, only at arc match positions"},
-    {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file",
-     "Maximal difference relative to given alignment (file in clustalw format)"},
-    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment",
-     "Maximal difference relative to given alignment (string, delim=AMPERSAND)"},
-    {"max-diff-relax",0,&clp.opt_max_diff_relax,O_NO_ARG,0,O_NODEFAULT,"",
-     "Relax deviation constraints in multiple aligmnent"},
-    {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob",
-     "Minimal Arc-match probability"},
-    {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob",
-     "Minimal Base-match probability"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Output"},
+
+    {"width",'w',0,O_ARG_INT,&clp.width,"120","columns",clp.width_help},
+    {"clustal",0,&clp.clustal_given,O_ARG_STRING,&clp.clustal,
+     O_NODEFAULT,"file",clp.clustal_help},
+    {"stockholm",0,&clp.stockholm_given,O_ARG_STRING,&clp.stockholm,
+     O_NODEFAULT,"file",clp.stockholm_help},
+    {"pp",0,&clp.pp_given,O_ARG_STRING,&clp.pp,O_NODEFAULT,"file",clp.pp_help},
+    {"alifold-consensus-dp",0,&clp.alifold_consensus_dp,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.alifold_consensus_dp_help},
+    {"consensus-structure",0,0,O_ARG_STRING,&clp.cons_struct_type,
+     "alifold","type",clp.cons_struct_type_help},
+    {"local-output",'L',&clp.local_output,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.local_output_help},
+    {"local-file-output",0,&clp.local_file_output,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.local_file_output_help},
+    {"pos-output",'P',&clp.pos_output,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.pos_output_help},
+    {"write-structure",0,&clp.write_structure,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.write_structure_help},
+    {"score-components",0,&clp.score_components,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.score_components_help},
+    {"stopwatch",0,&clp.stopwatch,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.stopwatch_help},
     
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"",
+     "Heuristics for speed accuracy trade off"},
+
+    {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,
+     "0.0005","prob",clp.min_prob_help},
+    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,
+     "0.0","factor",clp.max_bps_length_ratio_help},
+    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,
+     "-1","diff",clp.max_diff_am_help},
+    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",clp.max_diff_help},
+    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,
+     "-1","diff",clp.max_diff_at_am_help},
+    {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,
+     "","aln file",clp.max_diff_alignment_file_help},
+    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,
+     "","alignment",clp.max_diff_pw_alignment_help},
+    {"max-diff-relax",0,&clp.max_diff_relax,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.max_diff_relax_help},
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
-    {"kbest",0,&clp.opt_subopt,O_ARG_INT,&clp.kbest_k,"-1","k","Enumerate k-best alignments"},
-    {"better",0,&clp.opt_subopt,O_ARG_INT,&clp.subopt_threshold,"-1000000","t",
-     "Enumerate alignments better threshold t"},
+    {"kbest",0,&clp.subopt,O_ARG_INT,&clp.kbest_k,
+     "-1","k","Enumerate k-best alignments"},
+    {"better",0,&clp.subopt,O_ARG_INT,&clp.subopt_threshold,
+     "-1000000","t","Enumerate alignments better threshold t"},
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","MEA_score controlling options"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","MEA score"},
 
-    {"mea-alignment",0,&clp.opt_mea_alignment,O_NO_ARG,0,O_NODEFAULT,"","Do MEA alignment"},
-    {"probcons-file",0,&clp.opt_probcons_file,O_ARG_STRING,&clp.probcons_file,O_NODEFAULT,
-     "file","Probcons parameter file"},
-    {"match-prob-method",0,0,O_ARG_INT,&clp.match_prob_method,"0","int",
-     "Method for computation of match probs"},
-    {"temperature",0,0,O_ARG_INT,&clp.temperature,"150","int","Temperature for PF-computation"},
-    {"pf-struct-weight",0,0,O_ARG_INT,&clp.pf_struct_weight,"200","weight",
-     "Structure weight in PF-computation"},
-    {"mea-gapcost",0,&clp.opt_mea_gapcost,O_NO_ARG,0,O_NODEFAULT,"",
-     "Use gap cost in mea alignment"},   
-    {"mea-alpha",0,0,O_ARG_INT,&clp.mea_alpha,"0","weight","Weight alpha for MEA"},
-    {"mea-beta",0,0,O_ARG_INT,&clp.mea_beta,"200","weight","Weight beta for MEA"},
-    {"mea-gamma",0,0,O_ARG_INT,&clp.mea_gamma,"100","weight","Weight gamma for MEA"},
-    {"probability-scale",0,0,O_ARG_INT,&clp.probability_scale,"10000","scale",
-     "Scale for probabilities/resolution of mea score"},
-    {"write-match-probs",0,&clp.opt_write_matchprobs,O_ARG_STRING,&clp.matchprobs_file,
-     O_NODEFAULT,"file","Write match probs to file (don't align!)"},
-    {"read-match-probs",0,&clp.opt_read_matchprobs,O_ARG_STRING,&clp.matchprobs_file,
-     O_NODEFAULT,"file","Read match probabilities from file"},
-    {"write-arcmatch-scores",0,&clp.opt_write_arcmatch_scores,O_ARG_STRING,
-     &clp.arcmatch_scores_file,O_NODEFAULT,"file","Write arcmatch scores (don't align!)"},
-    {"read-arcmatch-scores",0,&clp.opt_read_arcmatch_scores,O_ARG_STRING,
-     &clp.arcmatch_scores_file,O_NODEFAULT,"file","Read arcmatch scores"},
-    {"read-arcmatch-probs",0,&clp.opt_read_arcmatch_probs,O_ARG_STRING,
-     &clp.arcmatch_scores_file,O_NODEFAULT,"file",
-     "Read arcmatch probabilities (weighted by factor mea_beta/100)"},
+    {"mea-alignment",0,&clp.mea_alignment,O_NO_ARG,0,O_NODEFAULT,"",
+     clp.mea_alignment_help},
+    {"match-prob-method",0,0,O_ARG_INT,&clp.match_prob_method,
+     "0","int",clp.match_prob_method_help},
+    {"probcons-file",0,&clp.probcons_file_given,O_ARG_STRING,&clp.probcons_file,
+     O_NODEFAULT,"file",
+     clp.probcons_file_help},
+    {"temperature-alipf",0,0,O_ARG_INT,&clp.temperature_alipf,
+     "150","int",clp.temperature_alipf_help},
+    {"pf-struct-weight",0,0,O_ARG_INT,&clp.pf_struct_weight,
+     "200","weight",clp.pf_struct_weight_help},
+    {"mea-gapcost",0,&clp.mea_gapcost,O_NO_ARG,0,
+     O_NODEFAULT,"","Use gap cost in mea alignment"},   
+    {"mea-alpha",0,0,O_ARG_INT,&clp.mea_alpha,
+     "0","weight",clp.mea_alpha_help},
+    {"mea-beta",0,0,O_ARG_INT,&clp.mea_beta,
+     "200","weight",clp.mea_beta_help},
+    {"mea-gamma",0,0,O_ARG_INT,&clp.mea_gamma,
+     "100","weight",clp.mea_gamma_help},
+    {"probability-scale",0,0,O_ARG_INT,&clp.probability_scale,
+     "10000","scale",
+     clp.probability_scale_help},
+    {"write-match-probs",0,&clp.write_matchprobs,
+     O_ARG_STRING,&clp.matchprobs_outfile,
+     O_NODEFAULT,"file",clp.write_matchprobs_help},
+    {"read-match-probs",0,&clp.read_matchprobs,
+     O_ARG_STRING,&clp.matchprobs_infile,
+     O_NODEFAULT,"file",clp.read_matchprobs_help},
+    {"write-arcmatch-scores",0,&clp.write_arcmatch_scores,
+     O_ARG_STRING,&clp.arcmatch_scores_outfile,
+     O_NODEFAULT,"file",clp.write_arcmatch_scores_help},
+    {"read-arcmatch-scores",0,&clp.read_arcmatch_scores,O_ARG_STRING,
+     &clp.arcmatch_scores_infile,O_NODEFAULT,"file",clp.read_arcmatch_scores_help},
+    {"read-arcmatch-probs",0,&clp.read_arcmatch_probs,O_ARG_STRING,
+     &clp.arcmatch_scores_infile,O_NODEFAULT,"file",
+     clp.read_arcmatch_probs_help},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
-    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
-    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
-    {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"","Relax anchor constraints (default=off)"},
+    {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.no_lonely_pairs_help},
+    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,
+     "-1","span",clp.max_bp_span_help},
+    {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.relaxed_anchors_help},
     
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
 
-    {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool",
-     "Use Ribofit base and arc match scores (overrides ribosum)"},
+    {"ribofit",0,0,O_ARG_BOOL,&clp.ribofit,"false","bool",clp.ribofit_help},
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"",
+     "Input files"},
 
-    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"input1","Input file 1"},
-    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"input2","Input file 2"},
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1",clp.fileA_help},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2",clp.fileB_help},
+
+    {"",0,0,O_TEXT,0,O_NODEFAULT,"",clp.files_help},
+
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -258,9 +280,10 @@ main(int argc, char **argv) {
 
     bool process_success=process_options(argc,argv,my_options);
 
-    if (clp.opt_help) {
-	std::cout << "locarna - a tool for pairwise (global and local) alignment of RNA."
-                  <<std::endl<<std::endl;
+    if (clp.help) {
+	std::cout
+            << "locarna - pairwise (global and local) alignment of RNA."
+            <<std::endl<<std::endl;
 	
 	//std::cout << VERSION_STRING<<std::endl<<std::endl;
 
@@ -271,16 +294,16 @@ main(int argc, char **argv) {
 	return 0;
     }
 
-    if (clp.opt_quiet) { clp.opt_verbose=false;} // quiet overrides verbose
+    if (clp.quiet) { clp.verbose=false;} // quiet overrides verbose
 
-    if (clp.opt_galaxy_xml) {
+    if (clp.galaxy_xml) {
     	print_galaxy_xml((char *)"locarna",my_options);
     	return 0;
     }
 
-    if (clp.opt_version || clp.opt_verbose) {
+    if (clp.version || clp.verbose) {
 	std::cout << VERSION_STRING<<std::endl;
-	if (clp.opt_version) return 0; else std::cout <<std::endl;
+	if (clp.version) return 0; else std::cout <<std::endl;
     }
 
     if (!process_success) {
@@ -290,19 +313,20 @@ main(int argc, char **argv) {
 	return -1;
     }
 
-    if (clp.opt_stopwatch) {
+    if (clp.stopwatch) {
 	stopwatch.set_print_on_exit(true);
     }
     
-    if (clp.opt_verbose) {
+    if (clp.verbose) {
 	print_options(my_options);
     }
     
     // ------------------------------------------------------------
     // parameter consistency
-    if (clp.opt_read_arcmatch_scores && clp.opt_read_arcmatch_probs) {
-	std::cerr <<"One cannot specify arc match score and probabilities file simultaneously."
-                  <<std::endl;
+    if (clp.read_arcmatch_scores && clp.read_arcmatch_probs) {
+	std::cerr << "One cannot specify files for arc match scores "
+                  << "and probabilities simultaneously."
+                  << std::endl;
 	return -1;
     }
     
@@ -316,41 +340,45 @@ main(int argc, char **argv) {
 	return -1;
     }
 
-    if (clp.opt_normalized && clp.opt_penalized) {
-    	std::cerr << "One cannot specify penalized and normalized simultaneously."<<std::endl;
+    if (clp.normalized && clp.penalized) {
+    	std::cerr << "One cannot specify penalized and normalized "
+                  << "simultaneously."<<std::endl;
     	return -1;
     }
 
     // ----------------------------------------
     // temporarily turn off stacking unless background prob is set
     //
-    if (clp.opt_stacking && !clp.opt_exp_prob) {
+    if (clp.stacking && !clp.exp_prob_given) {
 	std::cerr << "WARNING: stacking turned off. "
 		  << "Stacking requires setting a background probability "
 		  << "explicitely (option --exp-prob)." << std::endl;
-	clp.opt_stacking=false;
+	clp.stacking=false;
     }
     
-    // ------------------------------------------------------------
-    // if normalized or penalized alignment shall be computed, automatically turn on
-    // sequ_local unless sequ_local mode was explicitly specified
+    // ------------------------------------------------------------ 
+    // if normalized or penalized alignment shall be computed,
+    // automatically turn on sequ_local unless sequ_local mode was
+    // explicitly specified
     //
     // important: in the Aligner class, we rely on sequ_local==true in
     // normalized alignment mode
-    if (clp.opt_normalized || clp.opt_penalized) {
+    if (clp.normalized || clp.penalized) {
 	if(!clp.sequ_local_given) {
 	    clp.sequ_local = true;
 	} else {
 	    if (!clp.sequ_local) {
-		std::cerr << "ERROR: Cannot run normalized alignment without --sequ_local on."
+		std::cerr << "ERROR: Cannot run normalized alignment "
+                          << "without --sequ_local on."
                           << std::endl;
 		return -1;
 	    }
 	}
 
 	if (clp.struct_local_given && clp.struct_local) {
-	    std::cerr << "ERROR: Normalized structure local alignment not supported."
-                      <<std::endl;
+	    std::cerr << "ERROR: Normalized structure local alignment "
+                      << "not supported."
+                      << std::endl;
 	    return -1;
 	} else {
 	    clp.struct_local=false;
@@ -370,7 +398,7 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs, clp.opt_stacking || clp.opt_new_stacking, clp.max_bp_span, 2);
+    PFoldParams pfparams(clp.no_lonely_pairs, clp.stacking || clp.new_stacking, clp.max_bp_span, 2);
     
     RnaData *rna_dataA=0;
     try {
@@ -428,7 +456,8 @@ main(int argc, char **argv) {
 	multiple_ref_alignment = new MultipleAlignment(clp.max_diff_alignment_file);
     } else if (clp.max_diff_pw_alignment!="") {
 	if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
-	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments."
+	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning "
+                      << "of alignments."
                       << std::endl;
 	    return -1;
 	}
@@ -437,8 +466,8 @@ main(int argc, char **argv) {
 	split_at_separator(clp.max_diff_pw_alignment,'&',alistr);
 	
 	if (alistr.size()!=2) {
-	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt;"
-                      <<" require exactly one '&' separating the alignment strings."
+	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; require "
+                      << "exactly one '&' separating the alignment strings."
 		      << std::endl; 
 	    return -1;
 	}
@@ -457,7 +486,7 @@ main(int argc, char **argv) {
     }
     
     TraceController trace_controller(seqA,seqB,multiple_ref_alignment,
-                                     clp.max_diff,clp.opt_max_diff_relax);
+                                     clp.max_diff,clp.max_diff_relax);
     
     
     // ------------------------------------------------------------
@@ -465,13 +494,15 @@ main(int argc, char **argv) {
     
     AnchorConstraints 
         seq_constraints(lenA,
-                        seqA.annotation(MultipleAlignment::AnnoType::anchors).single_string(),
+                        seqA.annotation(MultipleAlignment::AnnoType::anchors)
+                        .single_string(),
                         lenB,
-                        seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string(),
+                        seqB.annotation(MultipleAlignment::AnnoType::anchors)
+                        .single_string(),
                         !clp.relaxed_anchors
                         );
     
-    if (clp.opt_verbose) {
+    if (clp.verbose) {
 	if (! seq_constraints.empty()) {
 	    std::cout << "Found sequence constraints."<<std::endl;
 	}
@@ -488,16 +519,17 @@ main(int argc, char **argv) {
     // (needed for mea alignment with probabilistic consistency
     // transformation of arc match scores)
     //
-    if (clp.opt_read_arcmatch_scores || clp.opt_read_arcmatch_probs) {
-	if (clp.opt_verbose) {
+    if (clp.read_arcmatch_scores || clp.read_arcmatch_probs) {
+	if (clp.verbose) {
 	    std::cout << "Read arcmatch scores from file "
-                      << clp.arcmatch_scores_file << "." <<std::endl;
+                      << clp.arcmatch_scores_infile << "." <<std::endl;
 	}
 	arc_matches = new ArcMatches(seqA,
 				     seqB,
-				     clp.arcmatch_scores_file,
-				     clp.opt_read_arcmatch_probs
-				     ? ((clp.mea_beta*clp.probability_scale)/100)
+				     clp.arcmatch_scores_infile,
+				     clp.read_arcmatch_probs
+				     ? ((clp.mea_beta*clp.probability_scale)
+                                        /100)
 				     : -1,
 				     clp.max_diff_am!=-1
 				     ? (size_type)clp.max_diff_am
@@ -524,62 +556,67 @@ main(int argc, char **argv) {
 				     );
     }
     
-    // note: arcmatches has to be assigned ( unless new failed, which we don't catch )
+    // note: arcmatches has to be assigned ( unless new failed, which
+    // we don't catch )
     
     // ----------------------------------------
     // report on input in verbose mode
-    if (clp.opt_verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
+    if (clp.verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
 
 
     // ------------------------------------------------------------
     // Sequence match probabilities (for MEA-Alignment)
     //
     // perform parameter consistency checks
-    if (clp.opt_read_matchprobs && !clp.opt_mea_alignment) {
-        std::cerr << "Warning: clp.opt_read_matchprobs ignored for non-mea alignment.\n"; 
+    if (clp.read_matchprobs && !clp.mea_alignment) {
+        std::cerr << "Warning: clp.read_matchprobs ignored for "<<
+            "non-mea alignment.\n"; 
     }
-    if ( (clp.opt_write_matchprobs || clp.opt_mea_alignment)
+    if ( (clp.write_matchprobs || clp.mea_alignment)
          && ribosum==NULL && ribofit==NULL
          ) {
-        std::cerr << "ERROR: Ribosum/fit is required for mea_alignment and computing matchprobs."<<std::endl;
+        std::cerr << "ERROR: Ribosum/fit is required for mea_alignment and "
+                  << "computing matchprobs."<<std::endl;
         exit(-1);
     }
     //
     MatchProbs *match_probs=0L;
-    if (clp.opt_write_matchprobs || clp.opt_mea_alignment) {
-        match_probs = MainHelper::init_match_probs(clp,rna_dataA,rna_dataB,ribosum,ribofit);
+    if (clp.write_matchprobs || clp.mea_alignment) {
+        match_probs = MainHelper::init_match_probs(clp,
+                                                   rna_dataA,rna_dataB,
+                                                   ribosum,ribofit);
     }
-    if (clp.opt_write_matchprobs) {
+    if (clp.write_matchprobs) {
         MainHelper::write_match_probs(clp,match_probs);
-        if (!clp.opt_write_arcmatch_scores) { return 0; } // return from main()
+        if (!clp.write_arcmatch_scores) { return 0; } // return from main()
     }
     //
 
     // ----------------------------------------
     // Scoring Parameter
     //
-    double my_exp_probA = clp.opt_exp_prob?clp.exp_prob:prob_exp_f(lenA);
-    double my_exp_probB = clp.opt_exp_prob?clp.exp_prob:prob_exp_f(lenB);
+    double my_exp_probA = clp.exp_prob_given?clp.exp_prob:prob_exp_f(lenA);
+    double my_exp_probB = clp.exp_prob_given?clp.exp_prob:prob_exp_f(lenB);
 
     ScoringParams
-        scoring_params(clp.match_score,
-                       clp.mismatch_score,
+        scoring_params(clp.match,
+                       clp.mismatch,
                        // In true mea alignment gaps are only scored
                        // for computing base match probs.
                        // Consequently, we set the indel and indel
                        // opening cost to 0 for the case of mea
                        // alignment!
-                       (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+                       (clp.mea_alignment && !clp.mea_gapcost)
                        ?0
-                       :(clp.indel_score
-                         * (clp.opt_mea_gapcost?clp.probability_scale/100:1)),
+                       :(clp.indel
+                         * (clp.mea_gapcost?clp.probability_scale/100:1)),
                        0, // indel__loop_score, for
                        // consistency and least modification to
                        // locarna.cc has been set to zero
-                       (clp.opt_mea_alignment && !clp.opt_mea_gapcost)
+                       (clp.mea_alignment && !clp.mea_gapcost)
                        ?0
-                       :(clp.indel_opening_score
-                         * (clp.opt_mea_gapcost?clp.probability_scale/100:1)),
+                       :(clp.indel_opening
+                         * (clp.mea_gapcost?clp.probability_scale/100:1)),
                        0, // indel_opening_loop_score, for
                        // consistency and least modification to
                        // locarna.cc has been set to zero
@@ -587,20 +624,20 @@ main(int argc, char **argv) {
                        ribofit,
                        clp.unpaired_penalty,
                        clp.struct_weight,
-                       clp.tau_factor,
-                       clp.exclusion_score,
+                       clp.tau,
+                       clp.exclusion,
                        my_exp_probA,
                        my_exp_probB,
-                       clp.temperature,
-                       clp.opt_stacking,
-                       clp.opt_new_stacking,
-                       clp.opt_mea_alignment,
+                       clp.temperature_alipf,
+                       clp.stacking,
+                       clp.new_stacking,
+                       clp.mea_alignment,
                        clp.mea_alpha,
                        clp.mea_beta,
                        clp.mea_gamma,
                        clp.probability_scale
                        );
-    // --------------------------------------------------------------------------------
+    // ------------------------------------------------------------
     // Construct scoring
     
     Scoring scoring(seqA,
@@ -613,12 +650,12 @@ main(int argc, char **argv) {
 		    false // no Boltzmann weights (as required for LocARNA-P)
 		    );    
 
-    if (clp.opt_write_arcmatch_scores) {
-	if (clp.opt_verbose) {
+    if (clp.write_arcmatch_scores) {
+	if (clp.verbose) {
 	    std::cout << "Write arcmatch scores to file "
-                      << clp.arcmatch_scores_file<<" and exit."<<std::endl;
+                      << clp.arcmatch_scores_outfile<<" and exit."<<std::endl;
 	}
-	arc_matches->write_arcmatch_scores(clp.arcmatch_scores_file,scoring);
+	arc_matches->write_arcmatch_scores(clp.arcmatch_scores_outfile,scoring);
 	return 0;
     }
         
@@ -640,22 +677,20 @@ main(int argc, char **argv) {
 	. max_diff_am(clp.max_diff_am)
 	. max_diff_at_am(clp.max_diff_at_am)
 	. trace_controller(trace_controller)
-	. min_am_prob(clp.min_am_prob)
-	. min_bm_prob(clp.min_bm_prob)
-	. stacking(clp.opt_stacking || clp.opt_new_stacking)
+	. stacking(clp.stacking || clp.new_stacking)
 	. constraints(seq_constraints);
 
     // enumerate suboptimal alignments (using interval splitting)
-    if (clp.opt_subopt) {
+    if (clp.subopt) {
 	aligner.suboptimal(clp.kbest_k,
 			   clp.subopt_threshold,
-			   clp.opt_normalized,
+			   clp.normalized,
 			   clp.normalized_L,
-			   clp.output_width,
-			   clp.opt_verbose,
-			   clp.opt_local_output,
-			   clp.opt_pos_output,
-			   clp.opt_write_structure
+			   clp.width,
+			   clp.verbose,
+			   clp.local_output,
+			   clp.pos_output,
+			   clp.write_structure
 			   );
 	return 0;
     }
@@ -663,11 +698,11 @@ main(int argc, char **argv) {
     infty_score_t score;
 
     // if option --normalized <L> is given, then do normalized local alignemnt
-    if (clp.opt_normalized) {
+    if (clp.normalized) {
 		
-	score = aligner.normalized_align(clp.normalized_L,clp.opt_verbose);
+	score = aligner.normalized_align(clp.normalized_L,clp.verbose);
 	
-    } else if (clp.opt_penalized) {
+    } else if (clp.penalized) {
     	score = aligner.penalized_align(clp.position_penalty);
     }
 
@@ -683,14 +718,14 @@ main(int argc, char **argv) {
     // ----------------------------------------
     // report score
     //
-    if (!clp.opt_quiet) {
+    if (!clp.quiet) {
         std::cout << "Score: "<<score<<std::endl<<std::endl;
     }
 
     // ------------------------------------------------------------
     // Traceback
     //
-    if ((!clp.opt_normalized && !clp.opt_penalized) && DO_TRACE) {
+    if ((!clp.normalized && !clp.penalized) && DO_TRACE) {
 	
 	aligner.trace();
 	
@@ -699,20 +734,23 @@ main(int argc, char **argv) {
 
 
 	// if score components should be reported
-	if (clp.opt_score_components) {
-	    // get alignment and compute contributions by sequence similarity and gap cost
+	if (clp.score_components) {
+	    // get alignment and compute contributions by sequence
+	    // similarity and gap cost
 	    const Alignment &alignment = aligner.get_alignment();
 	    
 	    // experimental: I do the calculations here until I
 	    // decide where to put the code
 	    
-	    std::cout << "WARNING: reporting score components is still experimental."
+	    std::cout << "WARNING: reporting score components is still "
+                      << "experimental."
                       << std::endl;
-	    std::cout << "         This does not work properly for some less standard"
-                      <<" scoring types, e.g. free end gaps." << std::endl;
+	    std::cout << "         This does not work properly for certain "
+                      << "non-standard standard scoring types, "
+                      << "e.g. free end gaps." << std::endl;
 
 	    const Alignment::edges_t edges = alignment.alignment_edges(false);
-	    
+
 	    score_t seq_sim=0;
 	    score_t gap_cost=0; // count linear component of gap cost
 	    score_t gap_numA=0; // count number of gap openings in A
@@ -723,7 +761,8 @@ main(int argc, char **argv) {
 	    
 	    for (size_t k=0; k< edges.size(); k++) {
 		if (edges.first[k].is_pos() && edges.second[k].is_pos()) {
-		    seq_sim += scoring.basematch(edges.first[k],edges.second[k]);
+		    seq_sim += scoring.basematch(edges.first[k],
+                                                 edges.second[k]);
 		}
 		if (edges.first[k].is_gap()) {
 		    if (!openA) {
@@ -747,21 +786,24 @@ main(int argc, char **argv) {
 	    }
 	    
 	    
-	    score_t total_gap_cost = gap_cost + (gap_numA+gap_numB)*scoring.indel_opening();
+	    score_t total_gap_cost = gap_cost
+                + (gap_numA+gap_numB)*scoring.indel_opening();
 	    
-	    std::cout << "#SCORE total        " << std::setw(8) << score<<std::endl;
-	    std::cout << "#SCORE seq_sim      " << std::setw(8) << seq_sim<<std::endl;
+	    std::cout << "#SCORE total        "
+                      << std::setw(8) << score<<std::endl;
+	    std::cout << "#SCORE seq_sim      "
+                      << std::setw(8) << seq_sim<<std::endl;
 	    std::cout << "#SCORE gap_penalty  "
-		//<<gap_cost<<"+"<<(gap_numA+gap_numB)<<"*("<<scoring.indel_opening()<<") = "
 		      << std::setw(8) << total_gap_cost<<std::endl;
 	    std::cout << "#SCORE str_contrib  "
-                      << std::setw(8) << score-seq_sim-total_gap_cost<<std::endl;
+                      << std::setw(8) << score-seq_sim-total_gap_cost
+                      << std::endl;
 	}
     }
     
     int return_code=0;
 
-    if (clp.opt_normalized || clp.opt_penalized || DO_TRACE) {
+    if (clp.normalized || clp.penalized || DO_TRACE) {
 	// if we did a trace (one way or the other)
 	
 	const Alignment &alignment = aligner.get_alignment();
@@ -790,7 +832,7 @@ main(int argc, char **argv) {
         // ----------------------------------------
         // write alignment to screen
                 
-	if (clp.opt_pos_output) {
+	if (clp.pos_output) {
 	    std::cout << "HIT "<<score<<" "
 		      <<alignment.local_startA()<<" "
 		      <<alignment.local_startB()<<" "
@@ -800,18 +842,20 @@ main(int argc, char **argv) {
             std::cout << std::endl;
 	}
         
-	if ((!clp.opt_pos_output && !clp.opt_quiet) || clp.opt_local_output) {
-	    MultipleAlignment ma(alignment,clp.opt_local_output);
+	if ((!clp.pos_output && !clp.quiet) || clp.local_output) {
+	    MultipleAlignment ma(alignment,clp.local_output);
 	    
-	    if (clp.opt_write_structure) {
+	    if (clp.write_structure) {
 		// annotate multiple alignment with structures
-                std::string structureA=alignment.dot_bracket_structureA(clp.opt_local_output);
-                std::string structureB=alignment.dot_bracket_structureB(clp.opt_local_output);
+                std::string structureA =
+                    alignment.dot_bracket_structureA(clp.local_output);
+                std::string structureB =
+                    alignment.dot_bracket_structureB(clp.local_output);
                 ma.prepend(MultipleAlignment::SeqEntry("",structureA));
 		ma.append(MultipleAlignment::SeqEntry("",structureB));
 	    }
 	    
-	    if (clp.opt_pos_output) {
+	    if (clp.pos_output) {
 		std::cout  << "\t+" << alignment.local_startA() << std::endl
 			   << "\t+" << alignment.local_startB() << std::endl
 			   << std::endl;
@@ -819,9 +863,9 @@ main(int argc, char **argv) {
             }
             
             if (consensus_structure!="") {
-                if (clp.opt_local_output!=clp.opt_local_file_output) {
+                if (clp.local_output!=clp.local_file_output) {
                     // recompute consensus structure
-                    clp.opt_local_file_output=clp.opt_local_output;
+                    clp.local_file_output=clp.local_output;
                     
                     if (consensus) { delete consensus; }
                     consensus =
@@ -831,14 +875,15 @@ main(int argc, char **argv) {
                                               rna_dataA, rna_dataB,
                                               alignment,
                                               consensus_structure);
-                    clp.opt_local_file_output=!clp.opt_local_output;
+                    clp.local_file_output=!clp.local_output;
                 }
                 ma.append(MultipleAlignment::SeqEntry(clp.cons_struct_type,
                                                       consensus_structure));
             }
-	    ma.write(std::cout,clp.output_width,MultipleAlignment::FormatType::CLUSTAL);
+	    ma.write(std::cout,clp.width,
+                     MultipleAlignment::FormatType::CLUSTAL);
 
-	    if (clp.opt_pos_output) {
+	    if (clp.pos_output) {
 		std::cout  << std::endl 
 			   << "\t+" << alignment.local_endA() << std::endl
 			   << "\t+" << alignment.local_endB() << std::endl
@@ -847,7 +892,7 @@ main(int argc, char **argv) {
             
         }
 
-	if (!clp.opt_quiet) {
+	if (!clp.quiet) {
             std::cout<<std::endl;
 	}
         

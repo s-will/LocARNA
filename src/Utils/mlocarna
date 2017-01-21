@@ -657,6 +657,9 @@ collected in <tgtdir>/results. The final multiple alignment is
 
 =head2 Calling mlocarna
 
+[Note that the LocARNA distribution provides files of the following and other
+examples in Data/Examples.]
+
 Sequences are typically given in plain fasta format like
 
   example.fa:
@@ -781,20 +784,16 @@ This allows to define constraints as 'consensus constraints' in the input, e.g.
 
 Note that anchor names are arbitrary and the consensus structure is
 'projected' to the single sequences.  Moreover, the input alignment
-can be used as reference for limited realignment, e.g. call to realign
-in distance 5 of the reference alignment:
+can be used as reference for fast limited realignment, e.g. call to
+realign in distance 5 of the reference alignment:
 
   mlocarna --realign example-realign.aln --max-diff 5 --max-diff-aln .
 
-The LocARNA distribution provides files of these examples and other
-examples in Data/Examples.
-
 =head1 AUTHORS
 
-Sebastian Will,
-Christina Otto,
-Milad Miladi
-
+Sebastian Will
+Christina Otto (ExpaRNA-P, sparsification classes for ExpaRNA-P and SPARSE)
+Milad Miladi (SPARSE)
 
 =head1 ONLINE INFORMATION
 
@@ -811,8 +810,12 @@ doi: 10.1371/journal.pcbi.0030065
 
 Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler,
 and Rolf Backofen. LocARNA-P: Accurate boundary prediction and
-improved detection of structural RNAs. RNA, 18 no. 5 pp. 900-14, 2012.
+improved detection of structural RNAs. RNA, 18 no. 5 pp. 900-914, 2012.
 doi: 10.1261/rna.029041.111
+
+Sebastian Will, Michael Yu, and Bonnie Berger. Structure-based Whole
+Genome Realignment Reveals Many Novel Non-coding RNAs. Genome Research,
+no. 23 pp. 1018-1027, 2013. doi: 10.1101/gr.137091.111
 
 =cut
 

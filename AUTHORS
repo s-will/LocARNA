@@ -1,1 +1,6 @@
-Sebastian Will <will@informatik.uni-freiburg.de>
+Sebastian Will (main author)
+Christina Otto (ExpaRNA-P, sparsification classes for ExpaRNA-P and SPARSE)
+Milad Miladi (SPARSE)
+Niklas Meinzer (LocARNATE script; reimplemenation)
+Wolfgang Otto (LocARNATE script; first versions)
+Tejal Joshi (LocARNA-P aligner, first version)

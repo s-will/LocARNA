@@ -1134,6 +1134,9 @@ sub min {
 ########################################
 sub project_string_to_alignment_sequence($$$) {
     my ($str,$seq,$gap_symbols)=@_;
+
+    die "project_string_to_alignment_sequence: string and alignment sequence must have the same length:\n  $str\n  $seq\n    " if length($str) != length($seq);
+    
     my $res="";
     for (my $i=0; $i<length($seq); $i++) {
 	if (substr($seq,$i,1) !~ /[$gap_symbols]/) {

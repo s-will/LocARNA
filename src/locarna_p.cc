@@ -1,14 +1,14 @@
- /**
- * \file locarna_p.cc
- *
- * \brief Defines main function of locarna_p
- *
- * LocARNA-P: global and LOCal Alignment of RNA - Partitition function variant
- *
- * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
- *               2005-
- * 
- */
+/**
+* \file locarna_p.cc
+*
+* \brief Defines main function of locarna_p
+*
+* LocARNA-P: global and LOCal Alignment of RNA - Partitition function variant
+*
+* Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
+*               2005-
+* 
+*/
 
 
 #include <iostream>
@@ -53,8 +53,8 @@ using namespace LocARNA;
 
 struct command_line_parameters : public MainHelper::std_command_line_parameters {
 
-    bool opt_write_arcmatch_probs; //!< opt_write_arcmatch_probs
-    bool opt_write_basematch_probs; //!< opt_write_basematch_probs
+    bool write_arcmatch_probs; //!< write_arcmatch_probs
+    bool write_basematch_probs; //!< write_basematch_probs
     
     // ------------------------------------------------------------
     // File arguments
@@ -62,10 +62,20 @@ struct command_line_parameters : public MainHelper::std_command_line_parameters 
     std::string arcmatch_probs_file; //!< arcmatch_probs_file
     std::string basematch_probs_file; //!< basematch_probs_file
 
-    bool basematch_probs_include_arcmatch; //!< basematch_probs_include_arcmatch
+    bool include_am_in_bm; //!< include_am_in_bm
 
-    
     std::string fragment_match_probs; //!< fragment_match_probs
+
+    std::string min_am_prob_help =
+        "Minimal arc match probability. Write probabilities for only the arc matchs "
+        "of at least this probability.";
+    double min_am_prob; //!< minimal arc match probability
+    
+    std::string min_bm_prob_help =
+        "Minimal base match probability. Write probabilities for only the base "
+        "matchs of at least this probability.";
+    double min_bm_prob;  //!< minimal arc match probability
+    
     
     /**
      * @brief Scale for partition function
@@ -75,11 +85,19 @@ struct command_line_parameters : public MainHelper::std_command_line_parameters 
      * in RNAfold, which adapts the scale to the sequence length.
      * 
      * @note IMPORTANT: here use double (not pf_score_t), since option
-     * parser cannot interpret pf_score_t, when using long double later
-     * this will be converted to pf_score_t
+     * parser cannot interpret pf_score_t, when using long double; later
+     * this will be converted to pf_score_t.
      * @note renamed to avoid conflict with vrna
      */
-    double locarna_pf_scale; 
+    double pf_scale; 
+    std::string pf_scale_help =
+        "Factor for scaling the partition functions. Use in order to avoid overflow.";
+
+    std::string temperature_alipf_help =
+        "Temperature for the /alignment/ partition functions (this temperature "
+        "different from the 'physical' temperature of RNA folding!). It controls the "
+        "probability distributions of computed base and arc match probabilities.";
+    int temperature_alipf; //!< temperature for alignment partition functions
 
 };
 
@@ -88,81 +106,91 @@ command_line_parameters clp;
 
 //! defines command line parameters
 option_def my_options[] = {
-    {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
-    {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
-    {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
-    {"quiet",'q',&clp.opt_quiet,O_NO_ARG,0,O_NODEFAULT,"","Quiet"},
+    {"help",'h',&clp.help,O_NO_ARG,0,O_NODEFAULT,"", clp.help_help},
+    {"version",'V',&clp.version,O_NO_ARG,0,O_NODEFAULT,"", clp.version_help},
+    {"verbose",'v',&clp.verbose,O_NO_ARG,0,O_NODEFAULT,"", clp.verbose_help},
+    {"quiet",'q',&clp.quiet,O_NO_ARG,0,O_NODEFAULT,"", clp.quiet_help},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
+    
+    {"indel",'i',0,O_ARG_INT,&clp.indel,"-350","score",clp.indel_help},
+    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening,
+     "-500","score",clp.indel_opening_help},
+    {"ribosum-file",0,0,O_ARG_STRING,&clp.ribosum_file,
+     "RIBOSUM85_60","f",clp.ribosum_file_help},
+    {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,
+     "true","bool",clp.use_ribosum_help},
+    {"match",'m',0,O_ARG_INT,&clp.match,"50","score",clp.match_help},
+    {"mismatch",'M',0,O_ARG_INT,&clp.mismatch,"0","score",clp.mismatch_help},
+    {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,
+     "200","score",clp.struct_weight_help},
+    {"exp-prob",'e',&clp.exp_prob_given,O_ARG_DOUBLE,&clp.exp_prob,
+     O_NODEFAULT,"prob",clp.exp_prob_help},
+    {"tau",'t',0,O_ARG_INT,&clp.tau,"0","factor",clp.tau_help},
 
-    {"match",'m',0,O_ARG_INT,&clp.match_score,"50","score","Match score"},
-    {"mismatch",'M',0,O_ARG_INT,&clp.mismatch_score,"0","score","Mismatch score"},
-    {"ribosum-file",0,0,O_ARG_STRING,&clp.ribosum_file,"RIBOSUM85_60","f","Ribosum file"},
-    {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,"true","bool","Use ribosum scores"},
-    {"indel",'i',0,O_ARG_INT,&clp.indel_score,"-350","score","Indel score"},
-    {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening_score,"-500","score",
-     "Indel opening score"},
-    {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,"180","score",
-     "Maximal weight of 1/2 arc match"},
-    {"exp-prob",'e',&clp.opt_exp_prob,O_ARG_DOUBLE,&clp.exp_prob,O_NODEFAULT,"prob",
-     "Expected probability"},
-    {"tau",'t',0,O_ARG_INT,&clp.tau_factor,"0","factor","Tau factor in percent"},
-    {"temperature",0,0,O_ARG_INT,&clp.temperature,"150","int","Temperature for PF-computation"},
-    {"pf-scale",0,0,O_ARG_DOUBLE,&clp.locarna_pf_scale,"1.0","scale",
-     "Scaling of the partition function. Use in order to avoid overflow."},
-    {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
-    {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
-    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,"0.0","factor",
-     "Maximal ratio of #base pairs divided by sequence length (default: no effect)"},
-    {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,"0.0005","amprob",
-     "Minimal Arc-match probability"},
-    {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,"0.0005","bmprob",
-     "Minimal Base-match probability"},
-    {"include-am-in-bm",0,&clp.basematch_probs_include_arcmatch,O_NO_ARG,0,O_NODEFAULT,"",
-     "Include arc match cases in computation of base match probabilities"},
+    {"temperature-alipf",0,0,O_ARG_INT,&clp.temperature_alipf,
+     "150","int", clp.temperature_alipf_help},
+    {"pf-scale",0,0,O_ARG_DOUBLE,&clp.pf_scale,
+     "1.0","scale", clp.pf_scale_help},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling output"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Output"},
 
-    {"write-arcmatch-probs",0,&clp.opt_write_arcmatch_probs,O_ARG_STRING,
-     &clp.arcmatch_probs_file,O_NODEFAULT,"file","Write arcmatch probabilities"},
-    {"write-basematch-probs",0,&clp.opt_write_basematch_probs,O_ARG_STRING,
-     &clp.basematch_probs_file,O_NODEFAULT,"file","Write basematch probabilities"},
-    {"width",'w',0,O_ARG_INT,&clp.output_width,"120","columns","Output width"},
+    {"write-arcmatch-probs",0,&clp.write_arcmatch_probs,O_ARG_STRING,
+     &clp.arcmatch_probs_file,O_NODEFAULT,"file",
+     "Write arcmatch probabilities"},
+    {"write-basematch-probs",0,&clp.write_basematch_probs,O_ARG_STRING,
+     &clp.basematch_probs_file,O_NODEFAULT,"file",
+     "Write basematch probabilities"},
+    {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,
+     "0.0005","amprob", clp.min_am_prob_help},
+    {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,
+     "0.0005","bmprob", clp.min_bm_prob_help},
+    {"include-am-in-bm",0,&clp.include_am_in_bm,O_NO_ARG,0,
+     O_NODEFAULT,"",
+     "Include arc match cases in base match probabilities"},
+    {"stopwatch",0,&clp.stopwatch,O_NO_ARG,0,
+     O_NODEFAULT,"", clp.stopwatch_help},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
-    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",
-     "Maximal difference for alignment traces"},
-    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,"-1","diff",
-     "Maximal difference for sizes of matched arcs"},
-    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,"-1","diff",
-     "Maximal difference for alignment traces, only at arc match positions"},
-    {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,"","aln file",
-     "Maximal difference relative to given alignment (file in clustalw format))"},
-    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,"","alignment",
-     "Maximal difference relative to given alignment (string, delim=&)"},
+    {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,
+     "0.0005","prob",clp.min_prob_help},
+    {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,
+     "0.0","factor",clp.max_bps_length_ratio_help},
+    {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,
+     "-1","diff",clp.max_diff_am_help},
+    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",clp.max_diff_help},
+    {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,
+     "-1","diff",clp.max_diff_at_am_help},
+    {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,
+     "","aln file",clp.max_diff_alignment_file_help},
+    {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,
+     "","alignment",clp.max_diff_pw_alignment_help},
+    {"max-diff-relax",0,&clp.max_diff_relax,O_NO_ARG,0,
+     O_NODEFAULT,"",clp.max_diff_relax_help},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Computed probabilities"},
 
     {"fragment-match-probs",0,0,O_ARG_STRING,&clp.fragment_match_probs,"","\"i j k l\"",
      "Requests probabilities for the match of fragments [i..j] and [k..l]. "
-     "Accepts a ';' separated list of ranges."},    
-    {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
-    {"ribofit",0,0,O_ARG_BOOL,&clp.opt_ribofit,"false","bool",
-     "Use Ribofit base and arc match scores (overrides ribosum)"},
-
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
-    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
-    {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"","Relax anchor constraints (default=off)"},
+     "Accepts a ';' separated list of ranges."},
     
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
+    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span", clp.max_bp_span_help},
+    {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"", clp.relaxed_anchors_help},
+    
+    {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
+    
+    {"ribofit",0,0,O_ARG_BOOL,&clp.ribofit,"false","bool",clp.ribofit_help},
 
-    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"bps-file 1","Input file 1"},
-    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"bps-file 2","Input file 2"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input files"},
 
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1", clp.fileA_help},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2", clp.fileB_help},
+    
+    {"",0,0,O_TEXT,0,O_NODEFAULT,"",clp.files_help},
 
     {"",0,0,0,0,O_NODEFAULT,"",""}
-
 };
 
 
@@ -193,25 +221,27 @@ main(int argc, char **argv) {
 
     bool process_success=process_options(argc,argv,my_options);
     
-    if (clp.opt_help) {
-	cout << "locarna_p - a tool for pairwise partition function alignment of RNA."<<endl;
-	cout << "Computes the partitition function and sequence and structure "
-	     << "match probabilities."<<endl<<endl;
+    if (clp.help) {
+	cout << "locarna_p - pairwise partition function of "
+             << "RNA alignments."<<std::endl;
+	cout << std::endl
+             << "Computes base and base pair match probabilities "<<std::endl
+             << "from alignment partitition functions."<<std::endl<<std::endl;
 	
-	//cout << VERSION_STRING<<endl;
+	//cout << VERSION_STRING<<std::endl;
 
 		
 	print_help(argv[0],my_options);
 
-	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<endl<<endl;
+	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<std::endl<<std::endl;
 	return 0;
     }
 
-    if (clp.opt_quiet) { clp.opt_verbose=false;} // quiet overrides verbose
+    if (clp.quiet) { clp.verbose=false;} // quiet overrides verbose
 
-    if (clp.opt_version || clp.opt_verbose) {
-	cout << "locarna_p ("<< VERSION_STRING<<")"<<endl;
-	if (clp.opt_version) return 0; else cout <<endl;
+    if (clp.version || clp.verbose) {
+	cout << "locarna_p ("<< VERSION_STRING<<")"<<std::endl;
+	if (clp.version) return 0; else cout <<std::endl;
     }
 
     if (!process_success) {
@@ -220,11 +250,11 @@ main(int argc, char **argv) {
 	return -1;
     }
 
-    if (clp.opt_stopwatch) {
+    if (clp.stopwatch) {
 	stopwatch.set_print_on_exit(true);
     }
 
-    if (clp.opt_verbose)
+    if (clp.verbose)
 	print_options(my_options);
 
 
@@ -232,7 +262,7 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs,clp.opt_stacking,clp.max_bp_span,2);
+    PFoldParams pfparams(clp.no_lonely_pairs,clp.stacking,clp.max_bp_span,2);
     
     RnaData *rna_dataA=0;
     try {
@@ -318,7 +348,8 @@ main(int argc, char **argv) {
     // 	std::cout << std::flush;
     // }
     
-    TraceController trace_controller(seqA,seqB,multiple_ref_alignment,clp.max_diff);
+    TraceController trace_controller(seqA,seqB,multiple_ref_alignment,
+                                     clp.max_diff,clp.max_diff_relax);
     
     if (multiple_ref_alignment) {
 	delete multiple_ref_alignment;
@@ -344,7 +375,7 @@ main(int argc, char **argv) {
 	
     // ----------------------------------------
     // report on input in verbose mode
-    if (clp.opt_verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
+    if (clp.verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
 
     // ----------------------------------------  
     // Ribosum matrix
@@ -356,27 +387,27 @@ main(int argc, char **argv) {
     // ----------------------------------------
     // construct scoring
    
-    double my_exp_probA = clp.opt_exp_prob?clp.exp_prob:prob_exp_f(lenA);
-    double my_exp_probB = clp.opt_exp_prob?clp.exp_prob:prob_exp_f(lenB);
+    double my_exp_probA = clp.exp_prob_given?clp.exp_prob:prob_exp_f(lenA);
+    double my_exp_probB = clp.exp_prob_given?clp.exp_prob:prob_exp_f(lenB);
 
-    ScoringParams scoring_params(clp.match_score,
-				 clp.mismatch_score,
-				 clp.indel_score,
+    ScoringParams scoring_params(clp.match,
+				 clp.mismatch,
+				 clp.indel,
 				 0, //indel__loop_score
-				 clp.indel_opening_score,
+				 clp.indel_opening,
 				 0, 
 				 ribosum,
 				 ribofit,
 				 0, //unpaired_weight
 				 clp.struct_weight,
-				 clp.tau_factor,
+				 clp.tau,
 				 0, // exclusion score
 				 my_exp_probA,
 				 my_exp_probB,
-				 clp.temperature,
-				 false,//opt_stacking,
-				 false,//opt_new_stacking,
-				 false,//opt_mea_alignment,
+				 clp.temperature_alipf,
+				 false,//stacking,
+				 false,//new_stacking,
+				 false,//mea_alignment,
 				 0,//mea_alpha,
 				 0,//mea_beta,
 				 0,//mea_gamma,
@@ -397,7 +428,9 @@ main(int argc, char **argv) {
 
     // initialize aligner-p object, which does the alignment computation
     AlignerP aligner = AlignerP::create()
-	. pf_scale((pf_score_t)clp.locarna_pf_scale)
+	. min_am_prob(clp.min_am_prob)
+	. min_bm_prob(clp.min_bm_prob)
+	. pf_scale((pf_score_t)clp.pf_scale)
 	. seqA(seqA)
 	. seqB(seqB)
 	. arc_matches(*arc_matches)
@@ -409,12 +442,10 @@ main(int argc, char **argv) {
 	. max_diff_am(clp.max_diff_am)
 	. max_diff_at_am(clp.max_diff_at_am)
 	. trace_controller(trace_controller)
-	. min_am_prob(clp.min_am_prob)
-	. min_bm_prob(clp.min_bm_prob)
 	. stacking(false)
 	. constraints(seq_constraints);
     
-    if (clp.opt_verbose) {
+    if (clp.verbose) {
 	std::cout << "Run inside algorithm."<<std::endl;
 #       ifdef VERY_LARGE_PF
 	std::cout << "Use large partition function type."<<std::endl;
@@ -423,24 +454,24 @@ main(int argc, char **argv) {
 
     pf_score_t pf=aligner.align_inside();
     
-    if (!clp.opt_quiet) {
+    if (!clp.quiet) {
         std::cout << "Partition function: "<<pf<<std::endl;
     }
     
-    if (clp.opt_verbose) {
+    if (clp.verbose) {
 	std::cout << "Run outside algorithm."<<std::endl;
     }
 	
     aligner.align_outside();
 
-    if (clp.opt_verbose) {
+    if (clp.verbose) {
 	std::cout << "Compute probabilities."<<std::endl;
     }
 	
     aligner.compute_arcmatch_probabilities();
 
-    if (clp.opt_write_arcmatch_probs) {
-	if (clp.opt_verbose) {
+    if (clp.write_arcmatch_probs) {
+	if (clp.verbose) {
 	    std::cout << "Write Arc-match probabilities to file "
                       <<clp.arcmatch_probs_file<<"."<<std::endl; 
 	}
@@ -448,16 +479,16 @@ main(int argc, char **argv) {
 	if (out.good()) {
 	    aligner.write_arcmatch_probabilities(out);
 	} else {
-	    cerr << "Cannot write to "<<clp.arcmatch_probs_file<<"! Exit."<<endl;
+	    cerr << "Cannot write to "<<clp.arcmatch_probs_file<<"! Exit."<<std::endl;
 	    return -1;
 	}
     }
 	
     
-    aligner.compute_basematch_probabilities(clp.basematch_probs_include_arcmatch);
+    aligner.compute_basematch_probabilities(clp.include_am_in_bm);
 
-    if (clp.opt_write_basematch_probs) {
-	if (clp.opt_verbose) {
+    if (clp.write_basematch_probs) {
+	if (clp.verbose) {
 	    std::cout << "Write Base-match probabilities to file "
                       << clp.basematch_probs_file<<"."<<std::endl; 
 	}
@@ -465,7 +496,7 @@ main(int argc, char **argv) {
 	if (out.good()) {
 	    aligner.write_basematch_probabilities(out);
 	} else {
-	    cerr << "Cannot write to "<<clp.basematch_probs_file<<"! Exit."<<endl;
+	    cerr << "Cannot write to "<<clp.basematch_probs_file<<"! Exit."<<std::endl;
 	    return -1;
 	}
     }

@@ -50,16 +50,16 @@ using namespace LocARNA;
  *
  */
 struct command_line_parameters {
-    bool opt_help; 	//!< whether to print help
-    bool opt_version; 	//!< whether to print version
-    bool opt_verbose; 	//!< whether to print verbose output
+    bool help; 	//!< whether to print help
+    bool version; 	//!< whether to print version
+    bool verbose; 	//!< whether to print verbose output
     std::string input_file; 	//!< input_file
     bool use_struct_constraints;//!< -C use structural constraints
     bool no_lonely_pairs; 	//!< no lonely pairs option
     int max_bp_span; 		//!< maximum base pair span
-    bool opt_stacking; 		//!< whether to stacking
-    int opt_dangling; 		//!< dangling option value
-    bool opt_in_loop; 		//!< whether to compute in-loop probabilities
+    bool stacking; 		//!< whether to stacking
+    int dangling; 		//!< dangling option value
+    bool in_loop; 		//!< whether to compute in-loop probabilities
     double min_prob;            //!< minimal / cutoff base pair probability
     double prob_unpaired_in_loop_threshold; //!< threshold for prob_unpaired_in_loop
     double prob_basepair_in_loop_threshold; //!< threshold for prob_basepait_in_loop
@@ -71,15 +71,15 @@ command_line_parameters clp;
 //longname,shortname,flag,arg_type,argument,default,argname,description
 //! defines command line parameters
 option_def my_options[] = {
-    {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
-    {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
-    {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+    {"help",'h',&clp.help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
+    {"version",'V',&clp.version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
+    {"verbose",'v',&clp.verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
     {"use-struct-constraints",'C',&clp.use_struct_constraints, O_NO_ARG, 0, O_NODEFAULT, "","Use structural constraints"},
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"","No lonely pairs"},
     {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
-    {"stacking",0,&clp.opt_stacking,O_NO_ARG,0,O_NODEFAULT,"","Compute stacking terms"},
-    {"dangling",0,0,O_ARG_INT,&clp.opt_dangling,"2","","Dangling option value"},
-    {"in-loop",0,&clp.opt_in_loop,O_NO_ARG,0,O_NODEFAULT,"","Compute in-loop probabilities"},
+    {"stacking",0,&clp.stacking,O_NO_ARG,0,O_NODEFAULT,"","Compute stacking terms"},
+    {"dangling",0,0,O_ARG_INT,&clp.dangling,"2","","Dangling option value"},
+    {"in-loop",0,&clp.in_loop,O_NO_ARG,0,O_NODEFAULT,"","Compute in-loop probabilities"},
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,"0.0005","prob","Minimal probability"},
     {"p_unpaired_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_unpaired_in_loop_threshold,"0.0005","threshold","Threshold for prob_unpaired_in_loop"},
     {"p_basepair_in_loop",0,0,O_ARG_DOUBLE,&clp.prob_basepair_in_loop_threshold,"0.0005","threshold","Threshold for prob_basepair_in_loop"}, //todo: is the default threshold value reasonable?
@@ -101,16 +101,16 @@ main(int argc, char **argv) {
 
     bool process_success=process_options(argc,argv,my_options);
 
-    if (clp.opt_help) {
+    if (clp.help) {
 	std::cout << "locarna_rnafold_pp -- compute RNA pair probabilities and write in pp-format" << std::endl;
 //	std::cout << VERSION_STRING<<std::endl<<std::endl;
 	print_help(argv[0],my_options);
 	return 0;
     }
 
-    if (clp.opt_version || clp.opt_verbose) {
+    if (clp.version || clp.verbose) {
 	std::cout << "locarna_rnafold_pp ("<< PACKAGE_STRING<<")"<<std::endl;
-	if (clp.opt_version) return 0; else std::cout <<std::endl;
+	if (clp.version) return 0; else std::cout <<std::endl;
     }
 
     if (!process_success) {
@@ -215,9 +215,9 @@ main(int argc, char **argv) {
 
     }
     
-    PFoldParams pfoldparams(clp.no_lonely_pairs, clp.opt_stacking, clp.max_bp_span, clp.opt_dangling);
+    PFoldParams pfoldparams(clp.no_lonely_pairs, clp.stacking, clp.max_bp_span, clp.dangling);
 
-    RnaEnsemble rna_ensemble(*mseq, pfoldparams, clp.opt_in_loop, use_alifold);
+    RnaEnsemble rna_ensemble(*mseq, pfoldparams, clp.in_loop, use_alifold);
 
     // write pp file
 
@@ -235,7 +235,7 @@ main(int argc, char **argv) {
     }
     std::ostream out_stream(buff);
 
-    if (clp.opt_in_loop)
+    if (clp.in_loop)
     {
 	ExtRnaData ext_rna_data(rna_ensemble, 
 				clp.min_prob, 

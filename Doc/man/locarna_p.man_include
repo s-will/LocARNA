@@ -1,0 +1,59 @@
+[>DESCRIPTION]
+
+locarna_p computes sequence and structure match probabilities from
+partition functions of locarna pairwise alignments, i.e. from fast
+simultaneous folding and alignment based on two RNA sequences (or
+alignments).
+
+See the documentation of locarna for inputs and the possible
+constraints specifications. 
+
+.SS Output
+
+.PP
+
+Probabilities of base and base pair matches can be written to
+files. (The total partition function is reported to standard out.)
+
+[DISCLAIMERS]
+
+locarna_p is a low level tool; most often this tool is used
+indirectly, by calling mlocarna with --probabilistic.  Note that the
+performance of locarna_p (as well as basically all tools in the
+LocARNA package) is often significantly improved by the use of
+suitable application-specific options, deviating from the default
+settings.
+
+[EXAMPLES]
+
+Please see the documentation of locarna for call and input constraint
+examples.
+
+[AVAILABILITY]
+
+The latest LocARNA package release is available online at
+  
+    http://www.bioinf.uni-freiburg.de/Software/LocARNA/
+
+and at Github https://github.com/s-will/LocARNA
+
+[AUTHOR]
+
+This man page is written and maintained by Sebastian Will it is part
+of the LocARNA package. 
+
+First versions of locarna_p and its aligner class were written by
+Tejal Joshi.
+
+[COPYING (LICENSE)]
+
+Copyright 2005- Sebastian Will
+
+The LocARNA package is released under GNU Public License v3.0
+
+[REFERENCES]
+
+Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler, and Rolf
+Backofen. LocARNA-P: Accurate boundary prediction and improved detection
+of structural RNAs. RNA, 18 no. 5 pp. 900-914, 2012. doi:
+10.1261/rna.029041.111

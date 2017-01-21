@@ -1581,7 +1581,7 @@ namespace LocARNA {
          * @param inexact_struct_match_ whether to allow inexact structure matches
          * @param struct_mismatch_score_ the mismatch score for two nucleotides in an arcmatch (only used if inexact_struct_match_ is set)
          * @param apply_filter_ whether to apply an additional filter when allowing inexact structure matches
-         * @param opt_verbose_ whether to write additional information
+         * @param verbose_ whether to write additional information
          */
         ExactMatcher(const Sequence &seqA_,
                      const Sequence &seqB_,
@@ -1599,7 +1599,7 @@ namespace LocARNA {
                      bool inexact_struct_match_,
                      score_t struct_mismatch_score_,
                      bool apply_filter_,
-                     bool opt_verbose_
+                     bool verbose_
                      );
 
         ~ExactMatcher();

@@ -44,6 +44,7 @@ namespace LocARNA {
 #define O_ARG_FLOAT 3
 #define O_ARG_DOUBLE 4
 #define O_ARG_BOOL 5
+#define O_TEXT 10
 #define O_SECTION -1
 #define O_SECTION_HIDE -2
 
@@ -69,7 +70,7 @@ namespace LocARNA {
     /*
       Example for option_def array
 
-      bool opt_help;
+      bool help;
       .
       .
       .
@@ -77,7 +78,7 @@ namespace LocARNA {
       int default_size=1000;
 
       struct option_def my_options[] = {
-      {"help",'h',&opt_help,O_NO_ARG,0,O_NODEFAULT,0,"This help"},
+      {"help",'h',&help,O_NO_ARG,0,O_NODEFAULT,0,"This help"},
       {"num",'n',&opt_num,O_ARG_INT,&optVal_num,O_NODEFAULT,0,"Some arbitrary number"},
       {"output",'o',0,O_ARG_STRING,&outputfile,O_NODEFAULT,
       "output-file", "File for output"}, // mandatory
@@ -104,7 +105,7 @@ namespace LocARNA {
     bool process_options(int argc, char *argv[], option_def options[]);
 
     /* print a usage string */
-    void print_usage(char *progname, option_def options[]);
+    void print_usage(char *progname, option_def options[], bool terse=true);
 
     /* print a longer help */
     void print_help(char *progname, option_def options[]);

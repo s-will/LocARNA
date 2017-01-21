@@ -1,0 +1,152 @@
+[>DESCRIPTION]
+
+locarna is the pairwise alignment tool of the LocARNA package, which
+performs fast simultaneous folding and alignment based on two RNA
+sequences (or alignments). 
+
+.SS Input
+
+.PP
+Input consists of two sequences or alignments, which are specified in
+fasta, clustal, stockholm, or LocARNA pp format.  Optionally,
+structure and anchor constraints can be specified in the input files.
+If alignments are given in the input, they are aligned without
+revising the gap structure within the given alignments. Unless
+specified, base pair probabilities of the input sequences or
+alignments are predicted using the ViennaRNA package.  Optionally,
+base pair probability information can be passed for one or both input
+sequences (or alignments) using the input formats LocARNA PP 2.0 or
+ViennaRNA postscript dotplot format.
+
+.SS Constraints
+
+.PP
+Anchor and structure constraints can be specified in the input
+files. Anchor constraints for sequences (alignments) are defined by
+assigning names to sequence positions (alignment columns),
+respectively. The exact semantics is either strict or relaxed
+(controled by --relaxed-anchors). In strict semantics, anchor names
+have to be sorted lexicographically in the input as well as in the
+result alignment (in the sense that result columns receive inherit the
+name from one or both input positions, where conflicts are
+disallowed). In relaxed semantics, anchors of the same name are forced
+into the same alignment column. The actual syntax of the constraint
+specification depends on the file format (see Constraint Examples
+below).
+
+.SS Output
+
+.PP
+The final pairwise alignment is reported in standard and/or variants of the
+clustal and stockholm format, as well as LocARNA's own pp format.
+
+[DISCLAIMERS]
+
+For many purposes, it is more convenient to use the multiple alignment
+tool mlocarna (even for pairwise alignment). However, certain tasks
+--like aligning two specific alignments-- are supported only by the
+pairwise tool or can be better controlled. Note that the performance
+of locarna (as well as basically all tools in the LocARNA package) is
+often significantly improved by the use of suitable
+application-specific options, deviating from the default
+settings. 
+
+.PP
+Locarna's alignments are optimal -- it's the parameters,
+stupid ;).
+
+[EXAMPLES]
+
+In the simplest case, the tool is called with two sequences in fasta
+format or two alignments in multiple fasta, clustal or stockholm format like
+
+  locarna file1.fa file2.fa 
+
+or
+
+   locarna file1.aln file2.aln
+
+Note that input formats can be mixed like in
+
+  locarna file1.aln file2.stk
+
+
+.SS Constraint Examples
+
+.PP
+Anchor and structure constraints can be specified in extended versions
+of the Clustal format, in the LocARNA PP 2.0 format, as well as in
+Stockholm format. Currently, the pairwise alignment tools of the
+package do not support constraints in fasta-like input. Here is an
+example of constraints in Clustal format:
+
+.nf
+.ft CW
+CLUSTAL W
+
+vhuU            AGCUCACAACCGAACCCAUUUGGGAGGUUGUGAGCU
+fruA            CC-UCGAGGG-GAACCCGAAA-GGGACCCGAGA-GG
+#S              (<<<<<<<<<......xxxx...............)
+#A1             .............AAABB..................
+#A2             .............12312..................
+.ft
+.fi
+
+The syntax (and semantic) of structure constraint strings (prefixed by
+#S) is the one of RNAfold of the ViennaRNA package. Moreover, fixed
+structures prefixed by #FS are accepted; fixed structures can contain
+pseudoknots encodes by different bracket symbols.
+
+Anchors are specified by naming columns, where names can consist of
+several places, in the example each name consists of two characters,
+such that the names are A1, A2, A3, B1, B2 for the respective columns.
+
+.PP
+Constraints in PP format are specified in the same way; however, in
+Stockholm format we use different prefixes, such that the example would look like
+
+.nf
+.ft CW
+# STOCKHOLM 1.0
+
+vhuU            AGCUCACAACCGAACCCAUUUGGGAGGUUGUGAGCU
+fruA            CC-UCGAGGG-GAACCCGAAA-GGGACCCGAGA-GG
+#=GC cS         (<<<<<<<<<......xxxx...............)
+#=GC cA1        .............AAABB..................
+#=GC cA2        .............12312..................
+.ft
+.fi
+
+The prefix for fixed structures is '#=GC cFS'.
+
+[AVAILABILITY]
+
+The latest LocARNA package release is available online at
+  
+    http://www.bioinf.uni-freiburg.de/Software/LocARNA/
+
+and at Github https://github.com/s-will/LocARNA
+
+[AUTHOR]
+
+This man page is written and maintained by Sebastian Will it is part
+of the LocARNA package.
+
+[COPYING (LICENSE)]
+
+Copyright 2005- Sebastian Will
+
+The LocARNA package is released under GNU Public License v3.0
+
+[REFERENCES]
+
+Sebastian Will, Kristin Reiche, Ivo L. Hofacker, Peter F. Stadler, and
+Rolf Backofen.  Inferring non-coding RNA families and classes by means
+of genome-scale structure-based clustering. PLOS Computational
+Biology, 3 no. 4 pp. e65, 2007.
+
+[SEE ALSO]
+
+The LocARNA PP 2.0 format is described online at
+  
+  http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/

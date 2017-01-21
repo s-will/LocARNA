@@ -1,10 +1,17 @@
 ============================================================
 === 2016
-1.9.1-pre
+1.9.1
+	improve help and man pages for locarna, locarna_p, sparse;
+	  refactor code for help text
+	fix bug in reading stockholm anchors
+	remove parameters min_am_prob and min_bm_prob from locarna
+	  and sparse CLIs;
+	  they are useful only for locarna_p
 	introduce strict semantics for anchor constraints
 	  and make default (see mlocarna --relaxed-anchors)
 	fix exparna_p output
-	add mlocarna option to realign; support 'consensus' constraint specifications
+	add mlocarna option to realign; support 'consensus'
+	  constraint specifications
 
 1.9.0 (2016-Dec-26)
 	add mlocarna option to load (default) configuration from file

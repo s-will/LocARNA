@@ -1356,10 +1356,10 @@ namespace LocARNA {
     
     void Aligner::suboptimal(int k,
                              score_t threshold,
-                             bool opt_normalized,
+                             bool normalized,
                              score_t normalized_L,
                              size_t output_width,
-                             bool opt_verbose,
+                             bool verbose,
                              bool opt_local_output,
                              bool opt_pos_output,
                              bool opt_write_structure
@@ -1367,7 +1367,7 @@ namespace LocARNA {
 	Aligner &a=*this;
 	
 	// compute alignment score for a
-	infty_score_t a_score = (!opt_normalized)?a.align():a.normalized_align(normalized_L,false);
+	infty_score_t a_score = (!normalized)?a.align():a.normalized_align(normalized_L,false);
     
 	// make priority queue tasks
 	std::priority_queue<task_t, std::vector<task_t>, greater_second<task_t> > tasks;
@@ -1393,12 +1393,12 @@ namespace LocARNA {
 	
 	    a.set_restriction(task_r);
 	
-	    if (!opt_normalized) {
+	    if (!normalized) {
 		a.align(); // alignment needs to be recomputed (this is fast)!
 		// do backtrace and write tasks alignment
 		a.trace();
 	    } else {
-		a.normalized_align(normalized_L,opt_verbose);
+		a.normalized_align(normalized_L,verbose);
 	    }
 	
 	    Alignment alignment = a.get_alignment();
@@ -1440,12 +1440,12 @@ namespace LocARNA {
 	    if (lenA>lenB) {
 		// split A
 		int splitA = (alignment.local_startA() + alignment.local_endA())/2;
-		if (opt_verbose) std::cout <<"Split A at "<<splitA<<std::endl;
+		if (verbose) std::cout <<"Split A at "<<splitA<<std::endl;
 		r1.set_endA(splitA);
 		r2.set_startA(splitA);
 	    } else {
 		int splitB = (alignment.local_startB() + alignment.local_endB())/2;
-		if (opt_verbose) std::cout <<"Split B at "<<splitB<<std::endl;
+		if (verbose) std::cout <<"Split B at "<<splitB<<std::endl;
 		r1.set_endB(splitB);
 		r2.set_startB(splitB);
 	    }
@@ -1453,9 +1453,9 @@ namespace LocARNA {
 	    // compute alignment scores for both splits
 	
 	    a.set_restriction(r1);
-	    infty_score_t a1_score = (!opt_normalized)?a.align():a.normalized_align(normalized_L,false);
+	    infty_score_t a1_score = (!normalized)?a.align():a.normalized_align(normalized_L,false);
 	    a.set_restriction(r2);
-	    infty_score_t a2_score = (!opt_normalized)?a.align():a.normalized_align(normalized_L,false);
+	    infty_score_t a2_score = (!normalized)?a.align():a.normalized_align(normalized_L,false);
 	
 	    // std::cout <<"a1_score: " << a1_score << std::endl;
 	    // std::cout <<"a2_score: " << a2_score << std::endl;
@@ -1476,7 +1476,7 @@ namespace LocARNA {
     //
 
     infty_score_t
-    Aligner::normalized_align(score_t L, bool opt_verbose) {
+    Aligner::normalized_align(score_t L, bool verbose) {
     
 	// The D matrix is filled as in non-normalized alignment. Because
 	// alignments of the subsequences enclosed by arcs are essentially
@@ -1498,7 +1498,7 @@ namespace LocARNA {
 	while ( lambda != new_lambda )
 	    {
 		++iteration;
-		if (opt_verbose) std::cout << "Perform Dinkelbach iteration "<<iteration<<std::endl;
+		if (verbose) std::cout << "Perform Dinkelbach iteration "<<iteration<<std::endl;
 	
 		lambda=new_lambda;
 		
@@ -1524,15 +1524,15 @@ namespace LocARNA {
 	
 		new_lambda = score.finite_value()/(length+L);
 	
-		if (opt_verbose) std::cout << "Score: "<<score<<" Length: "<<length<<" Normalized Score: "<<new_lambda<<std::endl;
+		if (verbose) std::cout << "Score: "<<score<<" Length: "<<length<<" Normalized Score: "<<new_lambda<<std::endl;
 
-		if (opt_verbose) {
+		if (verbose) {
 		    MultipleAlignment ma(pimpl_->alignment_,true);
 		    std::cout << "Score: "<<(infty_score_t)new_lambda<<std::endl;
 		    ma.write(std::cout,120,MultipleAlignment::FormatType::CLUSTAL);
 		}
 		
-		if (opt_verbose) std::cout<<std::endl;
+		if (verbose) std::cout<<std::endl;
 	    }
 	return (infty_score_t)new_lambda;
     }

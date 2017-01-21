@@ -56,16 +56,16 @@ const bool DO_TRACE=true;
 // Parameter
 
 struct command_line_parameters {
-    bool opt_help;
-    bool opt_version;
-    bool opt_verbose;
-    bool opt_quiet;
-    bool opt_postscript_output;
-    bool opt_subopt;
+    bool help;
+    bool version;
+    bool verbose;
+    bool quiet;
+    bool postscript_output;
+    bool subopt;
     bool add_filter;
     bool no_stacking;
     
-    bool opt_stopwatch;
+    bool stopwatch;
 
     double min_prob; // only pairs with a probability of at least min_prob are taken into account
     double out_min_prob; // minimal probability for output
@@ -128,6 +128,13 @@ struct command_line_parameters {
     string epm_list_output;
     string chained_epm_list_output;
 
+
+    string files_help = "The two input files <Input 1> and <Input 2> specify the input \
+sequences in various, automatically detected formats. Accepted formats are: Fasta, Clustal, Stockholm \
+LocARNA PP, ViennaRNA postscript dotplot. Unless in-loop \
+probabilities are provided (only possible in LocARNA PP), base pair \
+probabilities are computed by partition function folding. Clustal, Stockholm, \
+and PP input can contain constraints.";
 };
 
 //! \brief holds command line parameters
@@ -144,12 +151,12 @@ using namespace LocARNA;
 
 option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","cmd_only"},
-    {"help",'h',&clp.opt_help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
-    {"version",'V',&clp.opt_version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
-    {"verbose",'v',&clp.opt_verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
-    {"quiet",'q',&clp.opt_quiet,O_NO_ARG,0,O_NODEFAULT,"","Quiet"},
+    {"help",'h',&clp.help,O_NO_ARG,0,O_NODEFAULT,"","Help"},
+    {"version",'V',&clp.version,O_NO_ARG,0,O_NODEFAULT,"","Version info"},
+    {"verbose",'v',&clp.verbose,O_NO_ARG,0,O_NODEFAULT,"","Verbose"},
+    {"quiet",'q',&clp.quiet,O_NO_ARG,0,O_NODEFAULT,"","Quiet"},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring_parameters"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
     {"no-stacking",0,&clp.no_stacking,O_NO_ARG,0,O_NODEFAULT,"stacking",
      "Do not use stacking terms (otherwise needs stacking probs by RNAfold -p2)"},
     {"alpha_1",0,0,O_ARG_INT,&clp.alpha_1,"1","factor","Multiplier for sequential score"},
@@ -179,10 +186,10 @@ option_def my_options[] = {
      "Threshold for prob_basepair_in_loop"},
 
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Controlling_output"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Output"},
     {"out-min-prob",'p',0,O_ARG_DOUBLE,&clp.out_min_prob,"0.0005","prob",
      "Minimal probability for output (min-prob overrides if smaller)"},
-    {"output-ps", 0,&clp.opt_postscript_output,O_NO_ARG,0,O_NODEFAULT,"",
+    {"output-ps", 0,&clp.postscript_output,O_NO_ARG,0,O_NODEFAULT,"",
      "Output best EPM chain as colored postscript"},
     {"PS_fileA",'a',0,O_ARG_STRING,&clp.psFileA,"","file","Postscript output file for sequence A"},
     {"PS_fileB",'b',0,O_ARG_STRING,&clp.psFileB,"","file","Postscript output file for sequence B"},
@@ -203,7 +210,7 @@ option_def my_options[] = {
      "Do not use the chaining algorithm to find best overall chain"},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Suboptimal traceback"},
-    {"subopt",0,&clp.opt_subopt,O_NO_ARG,0,O_NODEFAULT,"subopt_traceback","Use the suboptimal traceback"},
+    {"subopt",0,&clp.subopt,O_NO_ARG,0,O_NODEFAULT,"subopt_traceback","Use the suboptimal traceback"},
     {"diff-to-opt-score",0,0,O_ARG_INT,&clp.difference_to_opt_score,"-1","threshold",
      "Threshold for suboptimal traceback"},
     {"min-score",0,0,O_ARG_INT,&clp.min_score,"90","score","Minimal score of a traced EPM"},
@@ -215,13 +222,15 @@ option_def my_options[] = {
     {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
     {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"","Relax anchor constraints (default=off)"},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Miscalleneous"},
-    {"stopwatch",0,&clp.opt_stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Miscellaneous"},
+    {"stopwatch",0,&clp.stopwatch,O_NO_ARG,0,O_NODEFAULT,"","Print run time information."},
 
-    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input_files RNA sequences and pair probabilities"},
-    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"file A","input file A"},
-    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"file B","input file B"},
+    {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input files"},
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1","Input file 1"},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2","Input file 2"},
     
+    {"",0,0,O_TEXT,0,O_NODEFAULT,"",clp.files_help},
+
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };
 
@@ -238,9 +247,9 @@ main(int argc, char **argv) {
 
     bool process_success=process_options(argc,argv,my_options);
 
-    if (clp.opt_help) {
+    if (clp.help) {
 
-        cout << "exparna_p: A tool for fast structure local exact matchings."<<endl<<endl;
+        cout << "exparna_p: fast exact structure local matching of RNAs."<<endl<<endl;
 
         //cout << VERSION_STRING<<endl;
 
@@ -250,11 +259,11 @@ main(int argc, char **argv) {
         return 0;
     }
 
-    if (clp.opt_quiet) { clp.opt_verbose=false;} // quiet overrides verbose
+    if (clp.quiet) { clp.verbose=false;} // quiet overrides verbose
 
-    if (clp.opt_version || clp.opt_verbose) {
+    if (clp.version || clp.verbose) {
         cout << "exparna_p (" << VERSION_STRING << ")" <<endl;
-        if (clp.opt_version) return 0; else cout <<endl;
+        if (clp.version) return 0; else cout <<endl;
     }
 
     if (!process_success) {
@@ -264,11 +273,11 @@ main(int argc, char **argv) {
         return -1;
     }
 
-    if (clp.opt_stopwatch) {
+    if (clp.stopwatch) {
         stopwatch.set_print_on_exit(true);
     }
 
-    if (clp.opt_verbose) {
+    if (clp.verbose) {
         print_options(my_options);
     }
 
@@ -357,7 +366,7 @@ main(int argc, char **argv) {
                                       !clp.relaxed_anchors
                                       );
 
-    if (clp.opt_verbose) {
+    if (clp.verbose) {
         if (! seq_constraints.empty()) {
             std::cout << "Found sequence constraints."<<std::endl;
         }
@@ -387,7 +396,7 @@ main(int argc, char **argv) {
 
     // ----------------------------------------
     // report on input in verbose mode
-    if (clp.opt_verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
+    if (clp.verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
 
     // ------------------------------------------------------------
     // construct datastructures to handle sparse matrices
@@ -428,11 +437,11 @@ main(int argc, char **argv) {
                     clp.inexact_struct_match,
                     clp.struct_mismatch_score,
                     clp.add_filter,
-                    clp.opt_verbose
+                    clp.verbose
                     );
 
 #ifndef NDEBUG
-    if(clp.opt_verbose) cout << "test arcmatch score... " << endl;
+    if(clp.verbose) cout << "test arcmatch score... " << endl;
     em.test_arcmatch_score();
 #endif
 
@@ -449,17 +458,17 @@ main(int argc, char **argv) {
     //
     if (DO_TRACE) {
 
-        if (clp.opt_verbose) {
-            if(clp.opt_subopt)  cout << endl << "start suboptimal traceback..." << endl;
+        if (clp.verbose) {
+            if(clp.subopt)  cout << endl << "start suboptimal traceback..." << endl;
             else cout << endl << "start heuristic traceback..." << endl;
         }
 
-        em.trace_EPMs(clp.opt_subopt);
+        em.trace_EPMs(clp.subopt);
 
         stopwatch.stop("EPMcomp");
 
         if(clp.epm_list_output.size()>0){
-            if (clp.opt_verbose) { cout << "write list of traced EPMs in file..." << endl;}
+            if (clp.verbose) { cout << "write list of traced EPMs in file..." << endl;}
             ofstream out_EPM_file (clp.epm_list_output.c_str());
             out_EPM_file << myEPMs.getList() << endl;
             out_EPM_file.close();
@@ -471,20 +480,20 @@ main(int argc, char **argv) {
     //
     if(!clp.no_chaining){
 
-        if (clp.opt_verbose) {cout << "Start chaining..." << endl;}
+        if (clp.verbose) {cout << "Start chaining..." << endl;}
         stopwatch.start("chaining");
 
         PatternPairMap myLCSEPM;
         LCSEPM myChaining(seqA, seqB, myEPMs, myLCSEPM);
 
         //begin chaining algorithm
-        myChaining.calculateLCSEPM(clp.opt_quiet);
+        myChaining.calculateLCSEPM(clp.quiet);
 
         stopwatch.stop("chaining");
 
         //output chained EPMs to PS files
-        if(clp.opt_postscript_output){
-            if (clp.opt_verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
+        if(clp.postscript_output){
+            if (clp.verbose) { cout << "write EPM chain as colored postscripts..." << endl;}
             if (clp.psFileA.size()==0){clp.psFileA = seqA.seqentry(0).name()+"_EPMs.ps";}
             if (clp.psFileB.size()==0){clp.psFileB = seqB.seqentry(0).name()+"_EPMs.ps";}
 
@@ -492,12 +501,12 @@ main(int argc, char **argv) {
         }
 
         if(clp.locarna_output.size()>0){
-            if (clp.opt_verbose) { cout << "write locarna anchor constraints..." << endl;}
+            if (clp.verbose) { cout << "write locarna anchor constraints..." << endl;}
             myChaining.output_locarna(maA.consensus_sequence(), maB.consensus_sequence(), clp.locarna_output);
         }
 
         if(clp.output_anchor_pp.size()>0){
-            if (clp.opt_verbose) { cout << "write pp files with anchor constraints..." << endl;}
+            if (clp.verbose) { cout << "write pp files with anchor constraints..." << endl;}
 
             pair<SequenceAnnotation,SequenceAnnotation> anchors = myChaining.anchor_annotation();
 
@@ -516,12 +525,12 @@ main(int argc, char **argv) {
         }
 
         if (clp.clustal_output.size()>0){
-            if (clp.opt_verbose) { cout << "write chain as clustal alignment..." << endl;}
+            if (clp.verbose) { cout << "write chain as clustal alignment..." << endl;}
             myChaining.output_clustal(clp.clustal_output);
         }
 
         if(clp.chained_epm_list_output.size()>0){
-            if (clp.opt_verbose) { cout << "write list of chained EPMs in file..." << endl;}
+            if (clp.verbose) { cout << "write list of chained EPMs in file..." << endl;}
             ofstream out_chained_EPM_file (clp.chained_epm_list_output.c_str());
             out_chained_EPM_file << myLCSEPM.getList() << endl;
             out_chained_EPM_file.close();
@@ -536,7 +545,7 @@ main(int argc, char **argv) {
     delete rna_dataA;
     delete rna_dataB;
 
-    if (clp.opt_verbose) { cout << "... Exparna-P finished!" << endl << endl;}
+    if (clp.verbose) { cout << "... Exparna-P finished!" << endl << endl;}
     stopwatch.stop("total");
 
     return 0;

@@ -374,6 +374,22 @@ namespace LocARNA {
 	}
     }
 
+    /**
+     * @brief test whether option is mandatory
+     */
+    bool mandatory(option_def *options,int i) {
+        return options[i].flag==0 && (options[i].deflt==O_NODEFAULT);
+    }
+
+    /**
+     * @brief test whether option is positional
+     */
+    bool positional(option_def *options,int i) {
+        return options[i].arg_type > O_SECTION 
+            && options[i].arg_type != O_TEXT
+            && !options[i].shortname 
+            && options[i].longname=="";
+    }
 
     /**
      * prints a standard usage string suited for short help output
@@ -382,7 +398,7 @@ namespace LocARNA {
      * @param options  Options array
      */
     void
-    print_usage(char *progname, option_def options[]) {
+    print_usage(char *progname, option_def options[], bool terse) {
 	bool hide_options=false; /* true for hidden sections */
 	int i;        /* counter */
 	int num_opts; /* number of options in options[] */
@@ -391,16 +407,19 @@ namespace LocARNA {
 
 	printf("USAGE: %s ", progname);
 
+        if (terse) {
+            fputs("[options]", stdout);
+        }
+
 	for (i=0; i < num_opts; ++i) {
 	    /* options and no options*/
 	    if (options[i].arg_type>O_SECTION) {
-		if (!hide_options) {
+		if (!hide_options && mandatory(options,i)) {
 		    fputs(sprint_option_name_opt(options,i).c_str(), stdout);
 		}
 	    } else {
 		hide_options = (options[i].arg_type == O_SECTION_HIDE);
-		if (!hide_options) fputs(" ", stdout);
-	    }
+            }
 	}
         fputs("\n", stdout);
     }
@@ -582,7 +601,7 @@ namespace LocARNA {
     print_wrapped(std::string s,
                   size_t offset,
                   size_t width) {
-        size_t tolerance=10;
+        size_t tolerance=16;
 
         std::string t;
         if (offset + s.length() > width) {
@@ -637,30 +656,37 @@ namespace LocARNA {
 	int i;
 	int num_opts = count_opts(options);
 
-	print_usage(progname, options); 
+	print_usage(progname, options, true); 
 
 	fputs("\nOptions:\n", stdout);
 
 	for (i=0; i<num_opts; i++) {
 	    if (options[i].arg_type>O_SECTION) {
-		if (!hide_options) {
-                   size_t offset=5+3;
-                   size_t width=77;
-		    if (((size_t)printf("  %-5s ",sprint_option_name(options,i).c_str())) > offset) {
+                if (!hide_options && !positional(options,i)) {
+                    size_t offset=4;
+                    size_t width=77;
+                    if (options[i].arg_type != O_TEXT) {
+                        printf("  %-5s",sprint_option_name(options,i).c_str());
                         fputs("\n",stdout);
                         fputs(std::string(offset,' ').c_str(), stdout);
+                    } else {
+                        // fputs("\n",stdout);
+                        offset=2;
+                        fputs(std::string(offset,' ').c_str(),stdout);
                     }
-		    if (options[i].description!="") {
+                    if (options[i].description!="") {
                         print_wrapped(options[i].description,offset,width);
                     }
-		    fputs("\n\n", stdout);
-		}
-	    } else { //NEW SECTION
+                    fputs("\n\n", stdout);
+                }
+            } else { //NEW SECTION
 		hide_options = (options[i].arg_type == O_SECTION_HIDE);
 
 		if (!hide_options) {
-                    printf("\n%s:\n",options[i].description.c_str());
-		}
+                    if (options[i].description != "cmd_only") {
+                        printf("\n%s:\n",options[i].description.c_str());
+                    }
+                }
 	    }
 	}
 	fputs("\n", stdout);
@@ -677,7 +703,7 @@ namespace LocARNA {
 	if (options[i].shortname && (options[i].longname!="")) s<<",";
 	if (options[i].longname!="") s<<"--"<<options[i].longname;
 
-	if (options[i].argument) {
+        if (options[i].argument) {
 	    if (options[i].longname!="") s<<"=";
 	    s << "<"
               << ((options[i].argname!="")?options[i].argname.c_str():"param")
@@ -753,11 +779,9 @@ namespace LocARNA {
     sprint_option_name_opt(option_def *options,int i) {
 	std::ostringstream s;
 
-	bool mandatory = options[i].flag==0 && (options[i].deflt!=O_NODEFAULT);
-
 	s<<" ";
 
-	if (!mandatory) s << "[";
+	if (!mandatory(options,i)) s << "[";
 
 	if (options[i].shortname) s << "-" << options[i].shortname;
 	if (options[i].shortname && (options[i].longname!="")) s << ",";
@@ -770,7 +794,7 @@ namespace LocARNA {
 	      << ">";
 	}
 
-	if (!mandatory) s << "]";
+	if (!mandatory(options,i)) s << "]";
 
 	return s.str();
     }
@@ -835,7 +859,10 @@ namespace LocARNA {
 
     int count_opts(option_def *options) {
 	int i;
-	for (i=0; !(options[i].argument == NULL && options[i].flag == NULL && options[i].arg_type>=0)
+	for (i=0; !(options[i].arg_type!=O_TEXT 
+                    && options[i].argument == NULL
+                    && options[i].flag == NULL &&
+                    options[i].arg_type>=0)
 		 ; ++i)
 	    ;
 	return i;
