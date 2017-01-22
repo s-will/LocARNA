@@ -1,6 +1,6 @@
 ============================================================
 === 2016
-1.9.1
+1.9.1 (2017-01-22)
 	improve help and man pages for locarna, locarna_p, sparse;
 	  refactor code for help text
 	fix bug in reading stockholm anchors

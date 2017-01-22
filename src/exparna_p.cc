@@ -127,14 +127,6 @@ struct command_line_parameters {
     string clustal_output;
     string epm_list_output;
     string chained_epm_list_output;
-
-
-    string files_help = "The two input files <Input 1> and <Input 2> specify the input \
-sequences in various, automatically detected formats. Accepted formats are: Fasta, Clustal, Stockholm \
-LocARNA PP, ViennaRNA postscript dotplot. Unless in-loop \
-probabilities are provided (only possible in LocARNA PP), base pair \
-probabilities are computed by partition function folding. Clustal, Stockholm, \
-and PP input can contain constraints.";
 };
 
 //! \brief holds command line parameters
@@ -229,7 +221,14 @@ option_def my_options[] = {
     {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1","Input file 1"},
     {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2","Input file 2"},
     
-    {"",0,0,O_TEXT,0,O_NODEFAULT,"",clp.files_help},
+    {"",0,0,O_TEXT,0,O_NODEFAULT,"",
+     "The two input files <Input 1> and <Input 2> specify the input \
+sequences in various, automatically detected formats. Accepted formats are: Fasta, Clustal, Stockholm \
+LocARNA PP, ViennaRNA postscript dotplot. Unless in-loop                \
+probabilities are provided (only possible in LocARNA PP), base pair     \
+probabilities are computed by partition function folding. Clustal, Stockholm, \
+and PP input can contain constraints."
+    },
 
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };

@@ -66,17 +66,10 @@ struct command_line_parameters : public MainHelper::std_command_line_parameters 
 
     std::string fragment_match_probs; //!< fragment_match_probs
 
-    std::string min_am_prob_help =
-        "Minimal arc match probability. Write probabilities for only the arc matchs "
-        "of at least this probability.";
     double min_am_prob; //!< minimal arc match probability
     
-    std::string min_bm_prob_help =
-        "Minimal base match probability. Write probabilities for only the base "
-        "matchs of at least this probability.";
     double min_bm_prob;  //!< minimal arc match probability
-    
-    
+        
     /**
      * @brief Scale for partition function
      * 
@@ -90,14 +83,25 @@ struct command_line_parameters : public MainHelper::std_command_line_parameters 
      * @note renamed to avoid conflict with vrna
      */
     double pf_scale; 
-    std::string pf_scale_help =
-        "Factor for scaling the partition functions. Use in order to avoid overflow.";
 
-    std::string temperature_alipf_help =
-        "Temperature for the /alignment/ partition functions (this temperature "
-        "different from the 'physical' temperature of RNA folding!). It controls the "
-        "probability distributions of computed base and arc match probabilities.";
     int temperature_alipf; //!< temperature for alignment partition functions
+
+    command_line_parameters() 
+        : MainHelper::std_command_line_parameters()
+    {
+        help_text["min_am_prob"] =
+            "Minimal arc match probability. Write probabilities for only the arc matchs "
+            "of at least this probability.";
+        help_text["min_bm_prob"] =
+            "Minimal base match probability. Write probabilities for only the base "
+            "matchs of at least this probability.";
+        help_text["pf_scale"] =
+            "Factor for scaling the partition functions. Use in order to avoid overflow.";
+        help_text["temperature_alipf"] =
+            "Temperature for the /alignment/ partition functions (this temperature "
+            "different from the 'physical' temperature of RNA folding!). It controls the "
+            "probability distributions of computed base and arc match probabilities.";
+    }
 
 };
 
@@ -106,32 +110,32 @@ command_line_parameters clp;
 
 //! defines command line parameters
 option_def my_options[] = {
-    {"help",'h',&clp.help,O_NO_ARG,0,O_NODEFAULT,"", clp.help_help},
-    {"version",'V',&clp.version,O_NO_ARG,0,O_NODEFAULT,"", clp.version_help},
-    {"verbose",'v',&clp.verbose,O_NO_ARG,0,O_NODEFAULT,"", clp.verbose_help},
-    {"quiet",'q',&clp.quiet,O_NO_ARG,0,O_NODEFAULT,"", clp.quiet_help},
+    {"help",'h',&clp.help,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["help"]},
+    {"version",'V',&clp.version,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["version"]},
+    {"verbose",'v',&clp.verbose,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["verbose"]},
+    {"quiet",'q',&clp.quiet,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["quiet"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
     
-    {"indel",'i',0,O_ARG_INT,&clp.indel,"-350","score",clp.indel_help},
+    {"indel",'i',0,O_ARG_INT,&clp.indel,"-350","score",clp.help_text["indel"]},
     {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening,
-     "-500","score",clp.indel_opening_help},
+     "-500","score",clp.help_text["indel_opening"]},
     {"ribosum-file",0,0,O_ARG_STRING,&clp.ribosum_file,
-     "RIBOSUM85_60","f",clp.ribosum_file_help},
+     "RIBOSUM85_60","f",clp.help_text["ribosum_file"]},
     {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,
-     "true","bool",clp.use_ribosum_help},
-    {"match",'m',0,O_ARG_INT,&clp.match,"50","score",clp.match_help},
-    {"mismatch",'M',0,O_ARG_INT,&clp.mismatch,"0","score",clp.mismatch_help},
+     "true","bool",clp.help_text["use_ribosum"]},
+    {"match",'m',0,O_ARG_INT,&clp.match,"50","score",clp.help_text["match"]},
+    {"mismatch",'M',0,O_ARG_INT,&clp.mismatch,"0","score",clp.help_text["mismatch"]},
     {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,
-     "200","score",clp.struct_weight_help},
+     "200","score",clp.help_text["struct_weight"]},
     {"exp-prob",'e',&clp.exp_prob_given,O_ARG_DOUBLE,&clp.exp_prob,
-     O_NODEFAULT,"prob",clp.exp_prob_help},
-    {"tau",'t',0,O_ARG_INT,&clp.tau,"0","factor",clp.tau_help},
+     O_NODEFAULT,"prob",clp.help_text["exp_prob"]},
+    {"tau",'t',0,O_ARG_INT,&clp.tau,"0","factor",clp.help_text["tau"]},
 
     {"temperature-alipf",0,0,O_ARG_INT,&clp.temperature_alipf,
-     "150","int", clp.temperature_alipf_help},
+     "150","int",clp.help_text["temperature_alipf"]},
     {"pf-scale",0,0,O_ARG_DOUBLE,&clp.pf_scale,
-     "1.0","scale", clp.pf_scale_help},
+     "1.0","scale",clp.help_text["pf_scale"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Output"},
 
@@ -142,32 +146,32 @@ option_def my_options[] = {
      &clp.basematch_probs_file,O_NODEFAULT,"file",
      "Write basematch probabilities"},
     {"min-am-prob",'a',0,O_ARG_DOUBLE,&clp.min_am_prob,
-     "0.0005","amprob", clp.min_am_prob_help},
+     "0.0005","amprob",clp.help_text["min_am_prob"]},
     {"min-bm-prob",'b',0,O_ARG_DOUBLE,&clp.min_bm_prob,
-     "0.0005","bmprob", clp.min_bm_prob_help},
+     "0.0005","bmprob",clp.help_text["min_bm_prob"]},
     {"include-am-in-bm",0,&clp.include_am_in_bm,O_NO_ARG,0,
      O_NODEFAULT,"",
      "Include arc match cases in base match probabilities"},
     {"stopwatch",0,&clp.stopwatch,O_NO_ARG,0,
-     O_NODEFAULT,"", clp.stopwatch_help},
+     O_NODEFAULT,"",clp.help_text["stopwatch"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Heuristics for speed accuracy trade off"},
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,
-     "0.0005","prob",clp.min_prob_help},
+     "0.0005","prob",clp.help_text["min_prob"]},
     {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,
-     "0.0","factor",clp.max_bps_length_ratio_help},
+     "0.0","factor",clp.help_text["max_bps_length_ratio"]},
     {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,
-     "-1","diff",clp.max_diff_am_help},
-    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",clp.max_diff_help},
+     "-1","diff",clp.help_text["max_diff_am"]},
+    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",clp.help_text["max_diff"]},
     {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,
-     "-1","diff",clp.max_diff_at_am_help},
+     "-1","diff",clp.help_text["max_diff_at_am"]},
     {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,
-     "","aln file",clp.max_diff_alignment_file_help},
+     "","aln file",clp.help_text["max_diff_alignment_file"]},
     {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,
-     "","alignment",clp.max_diff_pw_alignment_help},
+     "","alignment",clp.help_text["max_diff_pw_alignment"]},
     {"max-diff-relax",0,&clp.max_diff_relax,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.max_diff_relax_help},
+     O_NODEFAULT,"",clp.help_text["max_diff_relax"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Computed probabilities"},
 
@@ -176,19 +180,19 @@ option_def my_options[] = {
      "Accepts a ';' separated list of ranges."},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
-    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span", clp.max_bp_span_help},
-    {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"", clp.relaxed_anchors_help},
+    {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span",clp.help_text["max_bp_span"]},
+    {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["relaxed_anchors"]},
     
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
     
-    {"ribofit",0,0,O_ARG_BOOL,&clp.ribofit,"false","bool",clp.ribofit_help},
+    {"ribofit",0,0,O_ARG_BOOL,&clp.ribofit,"false","bool",clp.help_text["ribofit"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input files"},
 
-    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1", clp.fileA_help},
-    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2", clp.fileB_help},
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1",clp.help_text["fileA"]},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2",clp.help_text["fileB"]},
     
-    {"",0,0,O_TEXT,0,O_NODEFAULT,"",clp.files_help},
+    {"",0,0,O_TEXT,0,O_NODEFAULT,"",clp.help_text["files"]},
 
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };

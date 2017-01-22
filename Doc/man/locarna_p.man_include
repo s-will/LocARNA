@@ -5,7 +5,10 @@ partition functions of locarna pairwise alignments, i.e. from fast
 simultaneous folding and alignment based on two RNA sequences (or
 alignments).
 
-See the documentation of locarna for inputs and the possible
+.SS Input and Constraints
+
+.PP
+Please see the documentation of locarna for inputs and the possible
 constraints specifications. 
 
 .SS Output

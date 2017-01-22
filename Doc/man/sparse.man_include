@@ -7,6 +7,9 @@ addition to the filtering of considered base pairs by their
 probabilities, it filters by conditional probabilities of bases and
 base pairs in their enclosing loops.
 
+.SS Input, Constraints, and Output
+
+.PP
 The usage, input, constraints-specifications and output are analogous
 to locarna; please refer to the help or man page of locarna for
 explanations and examples.

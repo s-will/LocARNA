@@ -71,23 +71,29 @@ struct command_line_parameters
     int kbest_k; //!< kbest_k
     int subopt_threshold; //!< subopt_threshold
 
-    std::string normalized_help =
-        "Normalized local alignment with parameter L";
     bool normalized; //!< whether to do normalized alignment
 
-    std::string penalized_help = 
-        "Penalized local alignment with penalty PP";
     bool penalized; //!< whether to penalize alignment positions
     int position_penalty; //!< position-wise penalty
 
-    std::string normalized_L_help =
-        "Parameter L for normalized local alignment. "
-        "Larger values produce larger alignments.";
     int normalized_L; //!< normalized_L
 
-    std::string score_components_help =
-        "Output components of the score (experimental)";
     bool score_components; //!< whether to report score components
+
+    command_line_parameters() 
+        : MainHelper::std_command_line_parameters(),
+          MainHelper::mea_command_line_parameters(help_text)
+    {
+        help_text["normalized"] =
+            "Normalized local alignment with parameter L";
+        help_text["penalized"] = 
+            "Penalized local alignment with penalty PP";
+        help_text["normalized_L"] =
+            "Parameter L for normalized local alignment. "
+            "Larger values produce larger alignments.";
+        help_text["score_components"] =
+            "Output components of the score (experimental)";
+    }
 };
 
 //! \brief holds command line parameters of locarna  
@@ -97,93 +103,93 @@ command_line_parameters clp;
 option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","cmd_only"},
 
-    {"help",'h',&clp.help,O_NO_ARG,0,O_NODEFAULT,"",clp.help_help},
+    {"help",'h',&clp.help,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["help"]},
     {"galaxy-xml",0,&clp.galaxy_xml,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.galaxy_xml_help},
-    {"version",'V',&clp.version,O_NO_ARG,0,O_NODEFAULT,"",clp.version_help},
-    {"verbose",'v',&clp.verbose,O_NO_ARG,0,O_NODEFAULT,"",clp.verbose_help},
-    {"quiet",'q',&clp.quiet,O_NO_ARG,0,O_NODEFAULT,"",clp.quiet_help},
+     O_NODEFAULT,"",clp.help_text["galaxy_xml"]},
+    {"version",'V',&clp.version,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["version"]},
+    {"verbose",'v',&clp.verbose,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["verbose"]},
+    {"quiet",'q',&clp.quiet,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["quiet"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
 
-    {"indel",'i',0,O_ARG_INT,&clp.indel,"-350","score",clp.indel_help},
+    {"indel",'i',0,O_ARG_INT,&clp.indel,"-350","score",clp.help_text["indel"]},
     {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening,
-     "-500","score",clp.indel_opening_help},
+     "-500","score",clp.help_text["indel_opening"]},
     {"ribosum-file",0,0,O_ARG_STRING,&clp.ribosum_file,
-     "RIBOSUM85_60","f",clp.ribosum_file_help},
+     "RIBOSUM85_60","f",clp.help_text["ribosum_file"]},
     {"use-ribosum",0,0,O_ARG_BOOL,&clp.use_ribosum,
-     "true","bool",clp.use_ribosum_help},
-    {"match",'m',0,O_ARG_INT,&clp.match,"50","score",clp.match_help},
-    {"mismatch",'M',0,O_ARG_INT,&clp.mismatch,"0","score",clp.mismatch_help},
+     "true","bool",clp.help_text["use_ribosum"]},
+    {"match",'m',0,O_ARG_INT,&clp.match,"50","score",clp.help_text["match"]},
+    {"mismatch",'M',0,O_ARG_INT,&clp.mismatch,"0","score",clp.help_text["mismatch"]},
     {"unpaired-penalty",0,0,O_ARG_INT,&clp.unpaired_penalty,
-     "0","score",clp.unpaired_penalty_help},
+     "0","score",clp.help_text["unpaired_penalty"]},
     {"struct-weight",'s',0,O_ARG_INT,&clp.struct_weight,
-     "200","score",clp.struct_weight_help},
+     "200","score",clp.help_text["struct_weight"]},
     {"exp-prob",'e',&clp.exp_prob_given,O_ARG_DOUBLE,&clp.exp_prob,
-     O_NODEFAULT,"prob",clp.exp_prob_help},
-    {"tau",'t',0,O_ARG_INT,&clp.tau,"0","factor",clp.tau_help},
-    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion,"0","score",clp.exclusion_help},
-    {"stacking",0,&clp.stacking,O_NO_ARG,0,O_NODEFAULT,"",clp.stacking_help},
+     O_NODEFAULT,"prob",clp.help_text["exp_prob"]},
+    {"tau",'t',0,O_ARG_INT,&clp.tau,"0","factor",clp.help_text["tau"]},
+    {"exclusion",'E',0,O_ARG_INT,&clp.exclusion,"0","score",clp.help_text["exclusion"]},
+    {"stacking",0,&clp.stacking,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["stacking"]},
     {"new-stacking",0,&clp.new_stacking,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.new_stacking_help},   
+     O_NODEFAULT,"",clp.help_text["new_stacking"]},   
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Locality"},
 
     {"struct-local",0,&clp.struct_local_given,O_ARG_BOOL,&clp.struct_local,
-     "false","bool",clp.struct_local_help},
+     "false","bool",clp.help_text["struct_local"]},
     {"sequ-local",0,&clp.sequ_local_given,O_ARG_BOOL,&clp.sequ_local,
-     "false","bool",clp.sequ_local_help},
+     "false","bool",clp.help_text["sequ_local"]},
     {"free-endgaps",0,0,O_ARG_STRING,&clp.free_endgaps,
-     "----","spec",clp.free_endgaps_help},
+     "----","spec",clp.help_text["free_endgaps"]},
     {"normalized",0,&clp.normalized,O_ARG_INT,&clp.normalized_L,
-     "0","L",clp.normalized_help},
+     "0","L",clp.help_text["normalized"]},
     
     {"penalized",0,&clp.penalized,O_ARG_INT,&clp.position_penalty,
-     "0","PP",clp.penalized_help},
+     "0","PP",clp.help_text["penalized"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Output"},
 
-    {"width",'w',0,O_ARG_INT,&clp.width,"120","columns",clp.width_help},
+    {"width",'w',0,O_ARG_INT,&clp.width,"120","columns",clp.help_text["width"]},
     {"clustal",0,&clp.clustal_given,O_ARG_STRING,&clp.clustal,
-     O_NODEFAULT,"file",clp.clustal_help},
+     O_NODEFAULT,"file",clp.help_text["clustal"]},
     {"stockholm",0,&clp.stockholm_given,O_ARG_STRING,&clp.stockholm,
-     O_NODEFAULT,"file",clp.stockholm_help},
-    {"pp",0,&clp.pp_given,O_ARG_STRING,&clp.pp,O_NODEFAULT,"file",clp.pp_help},
+     O_NODEFAULT,"file",clp.help_text["stockholm"]},
+    {"pp",0,&clp.pp_given,O_ARG_STRING,&clp.pp,O_NODEFAULT,"file",clp.help_text["pp"]},
     {"alifold-consensus-dp",0,&clp.alifold_consensus_dp,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.alifold_consensus_dp_help},
+     O_NODEFAULT,"",clp.help_text["alifold_consensus_dp"]},
     {"consensus-structure",0,0,O_ARG_STRING,&clp.cons_struct_type,
-     "alifold","type",clp.cons_struct_type_help},
+     "alifold","type",clp.help_text["cons_struct_type"]},
     {"local-output",'L',&clp.local_output,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.local_output_help},
+     O_NODEFAULT,"",clp.help_text["local_output"]},
     {"local-file-output",0,&clp.local_file_output,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.local_file_output_help},
+     O_NODEFAULT,"",clp.help_text["local_file_output"]},
     {"pos-output",'P',&clp.pos_output,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.pos_output_help},
+     O_NODEFAULT,"",clp.help_text["pos_output"]},
     {"write-structure",0,&clp.write_structure,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.write_structure_help},
+     O_NODEFAULT,"",clp.help_text["write_structure"]},
     {"score-components",0,&clp.score_components,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.score_components_help},
+     O_NODEFAULT,"",clp.help_text["score_components"]},
     {"stopwatch",0,&clp.stopwatch,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.stopwatch_help},
+     O_NODEFAULT,"",clp.help_text["stopwatch"]},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"",
      "Heuristics for speed accuracy trade off"},
 
     {"min-prob",'p',0,O_ARG_DOUBLE,&clp.min_prob,
-     "0.0005","prob",clp.min_prob_help},
+     "0.0005","prob",clp.help_text["min_prob"]},
     {"max-bps-length-ratio",0,0,O_ARG_DOUBLE,&clp.max_bps_length_ratio,
-     "0.0","factor",clp.max_bps_length_ratio_help},
+     "0.0","factor",clp.help_text["max_bps_length_ratio"]},
     {"max-diff-am",'D',0,O_ARG_INT,&clp.max_diff_am,
-     "-1","diff",clp.max_diff_am_help},
-    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",clp.max_diff_help},
+     "-1","diff",clp.help_text["max_diff_am"]},
+    {"max-diff",'d',0,O_ARG_INT,&clp.max_diff,"-1","diff",clp.help_text["max_diff"]},
     {"max-diff-at-am",0,0,O_ARG_INT,&clp.max_diff_at_am,
-     "-1","diff",clp.max_diff_at_am_help},
+     "-1","diff",clp.help_text["max_diff_at_am"]},
     {"max-diff-aln",0,0,O_ARG_STRING,&clp.max_diff_alignment_file,
-     "","aln file",clp.max_diff_alignment_file_help},
+     "","aln file",clp.help_text["max_diff_alignment_file"]},
     {"max-diff-pw-aln",0,0,O_ARG_STRING,&clp.max_diff_pw_alignment,
-     "","alignment",clp.max_diff_pw_alignment_help},
+     "","alignment",clp.help_text["max_diff_pw_alignment"]},
     {"max-diff-relax",0,&clp.max_diff_relax,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.max_diff_relax_help},
+     O_NODEFAULT,"",clp.help_text["max_diff_relax"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Special sauce options"},
     {"kbest",0,&clp.subopt,O_ARG_INT,&clp.kbest_k,
@@ -194,62 +200,62 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","MEA score"},
 
     {"mea-alignment",0,&clp.mea_alignment,O_NO_ARG,0,O_NODEFAULT,"",
-     clp.mea_alignment_help},
+     clp.help_text["mea_alignment"]},
     {"match-prob-method",0,0,O_ARG_INT,&clp.match_prob_method,
-     "0","int",clp.match_prob_method_help},
+     "0","int",clp.help_text["match_prob_method"]},
     {"probcons-file",0,&clp.probcons_file_given,O_ARG_STRING,&clp.probcons_file,
      O_NODEFAULT,"file",
-     clp.probcons_file_help},
+     clp.help_text["probcons_file"]},
     {"temperature-alipf",0,0,O_ARG_INT,&clp.temperature_alipf,
-     "150","int",clp.temperature_alipf_help},
+     "150","int",clp.help_text["temperature_alipf"]},
     {"pf-struct-weight",0,0,O_ARG_INT,&clp.pf_struct_weight,
-     "200","weight",clp.pf_struct_weight_help},
+     "200","weight",clp.help_text["pf_struct_weight"]},
     {"mea-gapcost",0,&clp.mea_gapcost,O_NO_ARG,0,
      O_NODEFAULT,"","Use gap cost in mea alignment"},   
     {"mea-alpha",0,0,O_ARG_INT,&clp.mea_alpha,
-     "0","weight",clp.mea_alpha_help},
+     "0","weight",clp.help_text["mea_alpha"]},
     {"mea-beta",0,0,O_ARG_INT,&clp.mea_beta,
-     "200","weight",clp.mea_beta_help},
+     "200","weight",clp.help_text["mea_beta"]},
     {"mea-gamma",0,0,O_ARG_INT,&clp.mea_gamma,
-     "100","weight",clp.mea_gamma_help},
+     "100","weight",clp.help_text["mea_gamma"]},
     {"probability-scale",0,0,O_ARG_INT,&clp.probability_scale,
      "10000","scale",
-     clp.probability_scale_help},
+     clp.help_text["probability_scale"]},
     {"write-match-probs",0,&clp.write_matchprobs,
      O_ARG_STRING,&clp.matchprobs_outfile,
-     O_NODEFAULT,"file",clp.write_matchprobs_help},
+     O_NODEFAULT,"file",clp.help_text["write_matchprobs"]},
     {"read-match-probs",0,&clp.read_matchprobs,
      O_ARG_STRING,&clp.matchprobs_infile,
-     O_NODEFAULT,"file",clp.read_matchprobs_help},
+     O_NODEFAULT,"file",clp.help_text["read_matchprobs"]},
     {"write-arcmatch-scores",0,&clp.write_arcmatch_scores,
      O_ARG_STRING,&clp.arcmatch_scores_outfile,
-     O_NODEFAULT,"file",clp.write_arcmatch_scores_help},
+     O_NODEFAULT,"file",clp.help_text["write_arcmatch_scores"]},
     {"read-arcmatch-scores",0,&clp.read_arcmatch_scores,O_ARG_STRING,
-     &clp.arcmatch_scores_infile,O_NODEFAULT,"file",clp.read_arcmatch_scores_help},
+     &clp.arcmatch_scores_infile,O_NODEFAULT,"file",clp.help_text["read_arcmatch_scores"]},
     {"read-arcmatch-probs",0,&clp.read_arcmatch_probs,O_ARG_STRING,
      &clp.arcmatch_scores_infile,O_NODEFAULT,"file",
-     clp.read_arcmatch_probs_help},
+     clp.help_text["read_arcmatch_probs"]},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.no_lonely_pairs_help},
+     O_NODEFAULT,"",clp.help_text["no_lonely_pairs"]},
     {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,
-     "-1","span",clp.max_bp_span_help},
+     "-1","span",clp.help_text["max_bp_span"]},
     {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.relaxed_anchors_help},
+     O_NODEFAULT,"",clp.help_text["relaxed_anchors"]},
     
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
 
-    {"ribofit",0,0,O_ARG_BOOL,&clp.ribofit,"false","bool",clp.ribofit_help},
+    {"ribofit",0,0,O_ARG_BOOL,&clp.ribofit,"false","bool",clp.help_text["ribofit"]},
     
     {"",0,0,O_SECTION,0,O_NODEFAULT,"",
      "Input files"},
 
-    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1",clp.fileA_help},
-    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2",clp.fileB_help},
+    {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1",clp.help_text["fileA"]},
+    {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2",clp.help_text["fileB"]},
 
-    {"",0,0,O_TEXT,0,O_NODEFAULT,"",clp.files_help},
+    {"",0,0,O_TEXT,0,O_NODEFAULT,"",clp.help_text["files"]},
 
     {"",0,0,0,0,O_NODEFAULT,"",""}
 };

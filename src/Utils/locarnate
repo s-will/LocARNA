@@ -416,7 +416,7 @@ sub check_locarna_params {
     
     my @output = `$call`;
 
-    if ($output[0] =~ /ERROR --- Mandatory option and\/or argument missing: <input1>/) {
+    if ($output[0] =~ /ERROR --- Mandatory option and\/or argument missing: <Input 1>/) {
         return "";
     }
     my $error = $output[0];
