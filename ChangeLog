@@ -1,5 +1,8 @@
 ============================================================
-=== 2016
+=== 2017
+1.9.2pre
+	fix mlocarna: find pw-aligner and pw-aligner-p executables in PATH
+
 1.9.1 (2017-01-22)
 	improve help and man pages for locarna, locarna_p, sparse;
 	  refactor code for help text (string map for help text)
@@ -13,6 +16,9 @@
 	fix exparna_p output
 	add mlocarna option to realign; support 'consensus'
 	  constraint specifications
+
+============================================================
+=== 2016
 
 1.9.0 (2016-Dec-26)
 	add mlocarna option to load (default) configuration from file

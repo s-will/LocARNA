@@ -12,6 +12,8 @@ use MLocarna::Trees;
 use MLocarna::MatchProbs;
 use MLocarna::Aux;
 
+use Cwd;
+
 require Exporter;
 
 # set the version for version checking
@@ -92,6 +94,9 @@ our @EXPORT      =
         alifold_pf
 
         convert_fix_structure_to_pp
+
+        find_in_exec_path
+        find_in_exec_path_or_error
    );
 
 our %EXPORT_TAGS = ();
@@ -2306,6 +2311,49 @@ sub convert_fix_structure_to_pp($$$$$) {
     }
     print OUT "\n#END\n";
 }
+
+
+########################################
+## find_in_exec_path
+##
+## search in PATH, unless absolute or relative path is given,
+## and return the absolute path
+##
+## @param prg name or path of executable
+##
+## @return absolute path of the executable or undef if not found
+##
+sub find_in_exec_path {
+    my $prg = shift;
+    my $whichprg = readpipe("which $prg");
+    chomp $whichprg;
+    if ($? == 0) {
+        return Cwd::abs_path($whichprg);
+    } else {
+        return undef;
+    }
+}
+
+########################################
+## find_in_exec_path_or_error
+##
+## search in PATH, unless absolute or relative path is given,
+## and return the absolute path. On error, exit with error message.
+##
+## @param prg name or path of executable
+##
+## @return absolute path of the executable; exit if no success
+##
+sub find_in_exec_path_or_error {
+    my $prg = shift;
+    my $res=find_in_exec_path($prg);
+    if (! defined($res)) {
+        printerr "ERROR: cannot find required executable $prg.\n";
+        exit -1;
+    }
+    return $res;
+}
+
 
 
 ## ------------------------------------------------------------

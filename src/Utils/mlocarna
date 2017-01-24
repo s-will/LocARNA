@@ -1494,15 +1494,18 @@ if (defined($opts{'maxBPspan'}) && $opts{'maxBPspan'} ne "-1") {
 }
 
 ####
-## get full, absolute path for pairwise aligner
+## check existence of pairwise aligner
+## search in PATH, unless absolute or relative path is given
+## get full, absolute path
+
 if (defined($opts{'pw-aligner'})) {
-    $opts{'pw-aligner'} = abs_path($opts{'pw-aligner'});
+    $opts{'pw-aligner'} = find_in_exec_path_or_error($opts{'pw-aligner'});
 }
 
 ####
 ## get full, absolute path for pairwise aligner p
 if (defined($opts{'pw-aligner-p'})) {
-    $opts{'pw-aligner-p'} = abs_path($opts{'pw-aligner-p'});
+    $opts{'pw-aligner-p'} = find_in_exec_path_or_error($opts{'pw-aligner-p'});
 }
 
 
