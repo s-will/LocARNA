@@ -85,14 +85,19 @@ struct command_line_parameters
           MainHelper::mea_command_line_parameters(help_text)
     {
         help_text["normalized"] =
-            "Normalized local alignment with parameter L";
+            "Perform normalized local alignment with parameter L. "
+            "This causes locarna to compute the best local alignment according to "
+            "'Score' / ( L + 'length' ), "
+            "where length is the sum of the lengths of the two locally aligned subsequences. "
+            "Thus, the larger L, the larger the local alignment; the size of value L is in the order "
+            "of local alignment lengths. Verbose yields info on the iterative optimizations.";
         help_text["penalized"] = 
             "Penalized local alignment with penalty PP";
         help_text["normalized_L"] =
             "Parameter L for normalized local alignment. "
             "Larger values produce larger alignments.";
         help_text["score_components"] =
-            "Output components of the score (experimental)";
+            "Output components of the score (experimental).";
     }
 };
 
