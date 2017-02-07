@@ -115,6 +115,7 @@ namespace LocARNA {
                         if (*it<=last_name) {
                             throw( failure("Error during parsing of constraints. Anchor names not in strict lexicographic order at name \""+(*it)+"\".") );
                         }
+                        last_name = *it;
                     } else {
                         if (nameTab.find(*it)!=nameTab.end()) {
                             throw( failure("Error during parsing of constraints. Duplicate constraint name: \""+(*it)+"\".") );
