@@ -293,10 +293,9 @@ namespace LocARNA {
         
 	// ----------------------------------------
 	// call alifold for setting the scale
-        // empty sequences)
         min_free_energy_ = vrna_mfe(vc, c_structure);
         min_free_energy_structure_ = c_structure;
-        
+
         vrna_exp_params_rescale(vc, &min_free_energy_);
 	
 	// ----------------------------------------
