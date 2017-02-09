@@ -92,10 +92,10 @@ die "Cannot alifold $align_file\n" if !defined($seq);
 
 chomp $seq;
 
-open(PF,$pair_file) ||
-	  die "Can't open pair file: $pair_file";;
-my @pairs = <PF>;
-close PF;
+open(my $PF, "<", $pair_file) ||
+	  die "Can't open pair file $pair_file: $!";
+my @pairs = <$PF>;
+close $PF;
 
 
 ### print start until sequence

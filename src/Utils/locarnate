@@ -69,6 +69,9 @@ display this help message and exit
 
 =cut
 
+use strict;
+use warnings;
+
 
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
@@ -82,9 +85,6 @@ my $t_coffee = "t_coffee";
 my $RNAfold = "RNAfold";
 my $RNAalifold = "RNAalifold";
 
-
-use strict;
-use warnings;
 
 use Pod::Usage;
 use Getopt::Long;
@@ -333,7 +333,7 @@ sub calculate_basepair_probabilities {
     my $sequence = $sequences->[$i]->{seq};
 
     # open pipe to pp tool
-    open (my $PIPE, "|$pp_tool_call -o $pp_file");
+    open (my $PIPE, "|-", "$pp_tool_call -o $pp_file");
     print $PIPE $tag . "\n" . $sequence . "\n";
     close($PIPE);
   }
@@ -502,7 +502,7 @@ sub parse_pp_directory {
 sub get_sequence_from_pp_file {
     my ($file) = @_;
 
-    open(my $FILE, "<$file");
+    open(my $FILE, "<", "$file");
     my @data = <$FILE>;
     # the sequence should be on the third line of the file
     my $seqline = $data[2];

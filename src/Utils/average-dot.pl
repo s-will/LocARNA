@@ -102,27 +102,27 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 sub write_pp_annotated {
     my ($filename,$sequence,$probUR,$probLL,$threshold,$colorLL)=@_;
     
-    open(OUT,"> $filename") || die "Can't open file >$filename< for writing";
+    open(my $OUT, ">", "$filename") || die "Cannot write to $filename: $!";
     
-    print OUT "#PP 2.0\n\n";
+    print $OUT "#PP 2.0\n\n";
 
     while ( my ($name, $row) = each %$sequence ) {
-	print OUT "$name\t\t$row\n";
+	print $OUT "$name\t\t$row\n";
     }
-    print OUT "\n#END\n\n#SECTION BASEPAIRS\n\n";
+    print $OUT "\n#END\n\n#SECTION BASEPAIRS\n\n";
     
     foreach my $id (keys %{$probUR}){
 	my $highlight = 0;
 	if($probLL->{$id} > $threshold){ $highlight = 1;}
 	
 	my $fileLine = "$id $probUR->{$id} $probLL->{$id} $highlight $colorLL->{$id}\n";
-	print OUT $fileLine;
+	print $OUT $fileLine;
 	print $fileLine if $verbose;
     }
     
-    print OUT "\n#END\n";
+    print $OUT "\n#END\n";
     
-    close OUT;
+    close $OUT;
 }
 
 

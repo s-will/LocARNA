@@ -17,9 +17,9 @@ my $consfile=$aln_file;
 $consfile =~ s/\.[^\.]*$//;
 $consfile .= ".consensus.fasta";
 
-open(IN,"$aln_file") || die "Cannot read $aln_file\n";
+open(my $IN, "<", "$aln_file") || die "Cannot read $aln_file: $!";
 
-my $line=<IN>;
+my $line=<$IN>;
 
 if ($line !~ /^CLUSTAL/) {
     print STDERR "No clustal file.";
@@ -37,7 +37,7 @@ my $cur_str_name="";
 my $structure="";
 
 
-while ($line=<IN>) {
+while ($line=<$IN>) {
     if ($line =~ /^(\S+)\s+(.+)$/) {
 	my $name=$1;
 	my $seq=$2;
@@ -66,9 +66,9 @@ for my $name (keys %seqs) {
 }
 
 
-open (CONS,">$consfile");
+open (my $CONS, ">", "$consfile") || die "Cannot write to $consfile: $!";
 
-print CONS ">consensus of $aln_file\n";
+print $CONS ">consensus of $aln_file\n";
 
 for (my $i=0; $i<$len; $i++) {
     my %chars;
@@ -81,18 +81,18 @@ for (my $i=0; $i<$len; $i++) {
     
     my $iupac = get_iupac_code(%chars);
     
-    print CONS $iupac;
+    print $CONS $iupac;
 }
 
-print CONS "\n";
+print $CONS "\n";
 
 
 $structure =~ s/[~-]/./g;
-print CONS "$structure\n";
+print $CONS "$structure\n";
 
-close CONS;
+close $CONS;
 
-system "RNAplot <$consfile";
+system("RNAplot <$consfile") == 0 || die "Cannot run RNAplot: $!";
 
 
 ## ------------------------------------------------------------

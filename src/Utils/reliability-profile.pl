@@ -275,14 +275,14 @@ my $sequence_alistr=""; ## alignment string of sequence
 if ($seqname ne "") {
     ## get sequence
     #
-    open(IN,$alnfile) || die "Cannot read alignment from file $alnfile.\n";
-    while(my $line=<IN>) {
+    open(my $IN, "<", $alnfile) || die "Cannot read alignment from $alnfile: $!";
+    while(my $line=<$IN>) {
 	chomp $line;
 	if ($line=~/^$seqname\S*\s+(.+)$/) {
 	    $sequence_alistr.=$1;
 	}
     }
-    close IN;
+    close $IN;
 
     #print "Sequence $seqname in $alnfile (alignment string): $sequence_alistr\n";
 
@@ -340,16 +340,16 @@ if (!$dont_predict) {
 ## prepare data for fitting
 
 my $tmpfile="tmp.$$";
-open(TMP,">$tmpfile") || die "Cannot write $tmpfile";
+open(my $TMP, ">", "$tmpfile") || die "Cannot write to $tmpfile: $!";
 
 my @relprof=(); ## reliability profile for the reference sequence.
                 ## basically the same as content of tmpfile.
                 ## we use this memory copy for computing the reliability score.
 
-open(IN,$bmrelfile) || die "Cannot read $bmrelfile";
+open(my $IN, "<", $bmrelfile) || die "Cannot read from $bmrelfile: $!";
 
 my $len=0; ## determine length of the profile 
-while(<IN>) {
+while(<$IN>) {
     my @line=split /\s+/,$_;
     
     my $pos=$line[0];
@@ -358,13 +358,13 @@ while(<IN>) {
     my $rel = ($seqrel + $structure_weight * $strrel)/($structure_weight);
     
     if ($seqname eq "" || substr($sequence_alistr,$pos-1,1) ne "-") {
-	print TMP "$rel\n";
+	print $TMP "$rel\n";
 	push @relprof,$rel;
 	$len++;
     }
 }
 
-close TMP;
+close $TMP;
 
 ### do fit
 my $fit_cmd="cat $tmpfile | $LOCARNAP_FIT - --delta $fitpenalty".($fit_once_on?" --once-on":"").(defined($beta)?" --beta $beta":"");
@@ -657,15 +657,15 @@ if (length(signal_names)>0 || ($dont_predict!=1)) {
 
 
 if (!$dont_plot) {
-    open(R,"|Rscript -");
-    print R $rscript;
-    close R;
+    open(my $R, "|-", "Rscript -") || die "Cannot run Rscript: $!";
+    print $R $rscript;
+    close $R;
 }
 
 if ($write_R_script) {
-    open (FILE,">$write_R_script") || die "Cannot write R script to file";
-    print FILE $rscript;
-    close FILE;
+    open (my $FILE, ">", "$write_R_script") || die "Cannot write R script to file: $!";
+    print $FILE $rscript;
+    close $FILE;
 }
 
 

@@ -159,9 +159,9 @@ while(<>) {
 	my $left_context;
 	my $sequences="Realign-Sequences/$filename.mfa"; ## name of sequence file in Realign-Sequences
 	
-	open(SEQ,"$sequences");
-	while(<SEQ>) {if ($_=~/DroMel_CAF1.*left_context=(\d+)/) {$left_context=$1;}}
-	close SEQ;
+	open(my $SEQ, "<", "$sequences") || die "Cannot read from $sequences: $!";
+	while(<$SEQ>) {if ($_=~/DroMel_CAF1.*left_context=(\d+)/) {$left_context=$1;}}
+	close $SEQ;
 	if (!defined($left_context)) {
 	    print STDERR "Could not find left context in $sequences. Assume left context of 100.";
 	    $left_context=100;

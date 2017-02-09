@@ -137,7 +137,7 @@ sub exparna_compute_pairwise_alignments {
 sub parse_exparna_output {
     my ($options,$file) = @_;
 
-    open(my $FILE, "<$file");
+    open(my $FILE, "<", "$file") || die "Cannot read from $file: $!";
 
     my $header = <$FILE>;
 
@@ -172,7 +172,7 @@ sub parse_exparna_output {
 sub exparna_result_to_tcoffee_lib_file {
     my ($filename, $alignments, $sequences) = @_;
 
-    open(my $FILE, ">$filename");
+    open(my $FILE, ">", "$filename") || die "Cannot write to file $filename: $!";
     # print headers
     
     print $FILE "! TC_LIB_FORMAT_01\n";

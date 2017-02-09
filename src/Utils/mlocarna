@@ -27,7 +27,7 @@ with a consensus structure.
 
 Technically, mlocarna works as front end to the pairwise alignment
 tools locarna, locarna_p, and sparse (and even carna), which are
-employed to construct the multiple alignment progressively. 
+employed to construct the multiple alignment progressively.
 
 Going beyond the basic progressive alignment scheme, Mlocarna
 implements probabilistic consistency transformation and iterative
@@ -800,7 +800,7 @@ Milad Miladi (SPARSE)
 For download and online information, see
 L<http://www.bioinf.uni-freiburg.de/Software/LocARNA>
 
-=head1 REFERENCES 
+=head1 REFERENCES
 
 Sebastian Will, Kristin Reiche, Ivo L. Hofacker, Peter F. Stadler, and
 Rolf Backofen.  Inferring non-coding RNA families and classes by means
@@ -1108,8 +1108,8 @@ if (GetOptions( 'configure=s' => \$config_file,
               ) && defined($config_file)) {
     print "Load configuration from $config_file.\n" unless $opts{'quiet'};
     {
-        open(my $in, "$config_file")
-          || die "Cannot read configuration from file $config_file.\n";
+        open(my $in, "<","$config_file")
+          || die "Cannot read configuration from file $config_file: $!";
         load_keyvalue_pairs( $in, \%opts );
         close $in;
     }
@@ -1522,14 +1522,6 @@ printmsg 2,"Locarna parameter for guide tree construction: $locarna_params_tree\
 my $global_tmpname="_tmp_"; # valid file name, at max 12 characters
 my $global_tmpprefix="$global_tmpname"; # could be a absolute path, but there's no need to
 
-
-###------------------------------------------------------------
-## Forward references for subs
-#
-#
-sub compute_all_dotplots( $ );
-sub compute_match_probs( $$$$$$$ );
-
 ### ============================================================================
 ### ============================================================================
 ### ============================================================================
@@ -1823,7 +1815,7 @@ sub chop_string {
 ##
 ## GLOBAL VARS: amprobs, bmprobs, amprobs_nocbt, bmprobs_nocbt (since we need this later)
 ##
-sub perform_multiple_alignment($) {
+sub perform_multiple_alignment {
     my $seqs = shift;
 
     ## ----------------------------------------
@@ -1947,15 +1939,15 @@ sub perform_multiple_alignment($) {
 
 	printmsg 3,"Read guide tree from file. \n";
 
-	open(TREE,"$opts{'treefile'}") || die "Cannot read $opts{'treefile'} for reading tree\n";
-	$tree=<TREE>;
+	open(my $TREE,"<","$opts{'treefile'}") || die "Cannot read $opts{'treefile'} for reading tree: $!";
+	$tree=<$TREE>;
 	chomp($tree);
 
 	## don't allow names that end in :<float>, but accept input tree with distances (and ignore them)
 	$tree =~ s/:[\d.e-]+\s*([,)])/$1/g;
 	$tree =~ s/:[\d.e-]+\s*$//g;
 
-	close TREE;
+	close $TREE;
 
     } elsif (defined($opts{'similarity-matrix'})) {
 
@@ -1968,10 +1960,6 @@ sub perform_multiple_alignment($) {
     } elsif ($#names == 1) { # for only two sequences, tree is unique
 	$tree="(".quotemeta($names[0]).",".quotemeta($names[1]).");";
     } elsif ($opts{'graphkernel'}) {
-
-	sub noop_system {
-	    print "$@\n";
-	}
 
 	## RECALL: here the current directory is the target directory
 
@@ -1987,7 +1975,7 @@ sub perform_multiple_alignment($) {
 	mkdir "graphkernel/tmp";
 
 	## Run fasta2shrep; writes output directory
-	system("$cmd")==0 || die "Cannot run $cmd";
+	system("$cmd")==0 || die "Cannot run $cmd: $!";
 
 	File::Path::rmtree "graphkernel/tmp";
 
@@ -2000,7 +1988,7 @@ sub perform_multiple_alignment($) {
 	$cmd = "$opts{'svmsgdnspdk'} -i graphkernel/gspan -r $opts{'svmsgdnspdk-radius'} -d $opts{'svmsgdnspdk-distance'} -gt DIRECTED -a MATRIX";
 	print "Run $cmd\n";
 
-	system("$cmd")==0 || die "Cannot run $cmd";
+	system("$cmd")==0 || die "Cannot run $cmd: $!";
 
 	# system "bzip2 graphkernel/gspan"; ## keep the gspan file but compress it
 	# OR
@@ -2054,10 +2042,10 @@ sub perform_multiple_alignment($) {
     } # end generation of tree
 
 
-    open(TREE,">$results_dir/result.tree")
-      || die "Cannot write to $results_dir/result.tree";
-    print TREE "$tree\n";
-    close TREE;
+    open(my $TREE,">","$results_dir/result.tree")
+      || die "Cannot write to $results_dir/result.tree: $!";
+    print $TREE "$tree\n";
+    close $TREE;
 
     my $tree_postorder = newick_tree_to_postorder($tree);
 
@@ -2157,9 +2145,10 @@ sub perform_multiple_alignment($) {
 	$aln = loh_sort($aln,loh_names $seqs);
     }
 
-    open(ALNOUT,">$results_dir/result.aln") || die "Cannot write $results_dir/result.aln";
-    my $namewidth=write_clustalw_alnloh(*ALNOUT,$aln,$opts{'width'});
-    close ALNOUT;
+    open(my $ALNOUT, ">", "$results_dir/result.aln")
+      || die "Cannot write $results_dir/result.aln: $!";
+    my $namewidth=write_clustalw_alnloh($ALNOUT,$aln,$opts{'width'});
+    close $ALNOUT;
 
     printmsg 3, readpipe("cat $results_dir/result.aln | grep -v '^CLUSTAL'");
 
@@ -2279,7 +2268,7 @@ sub die_hard {
     exit(-1);
 }
 
-sub compute_match_probs($$$$$$$) {
+sub compute_match_probs {
     my ($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$num_seqs) = @_;
 
     if (exists $bmprobs_ref->{nnamepair($nameB,$nameA)}) {
@@ -2323,10 +2312,10 @@ sub compute_match_probs($$$$$$$) {
 
 	$cmd .= " >/dev/null" unless $opts{'moreverbose'};
 	printmsg 1, "$cmd\n";
-	system($cmd)==0 || die_hard "Cannot compute match probabilities by $cmd";
+	system($cmd)==0 || die_hard "Cannot compute match probabilities by $cmd: $!";
 
 	if ((! -e $tmpfile_bm) || (! -e $tmpfile_am)) {
-	    die_hard "Pairwise aligner failed to write match probabilities to file; called by $cmd";
+	    die_hard "Pairwise aligner failed to write match probabilities to file; called by $cmd.";
 	}
 
 	my %mat_bm = read_sparsematrix_2D($tmpfile_bm);
@@ -2371,7 +2360,7 @@ sub clone_share_hash {
 
 ## calls pairwise aligner ($opts{'pw-aligner'}) on nameA and nameB in
 ## input_dir and writes to $tgt.pp and $tgt.aln
-sub call_locarna( $$$ ) {
+sub call_locarna {
     my ($inA,$inB,$tgt) = @_;
 
     printmsg 2, "Align $inA + $inB --> $tgt\n";
@@ -2391,7 +2380,7 @@ sub call_locarna( $$$ ) {
     printmsg 1, "$cmd\n";
     printmsg 1, "\n";
     system($cmd)==0
-	|| die "Cannot execute $opts{'pw-aligner'}\n";
+	|| die "Cannot execute $opts{'pw-aligner'}: $!\n";
 
     if ((! -e "$tgt.aln") || (! -e "$tgt.pp")) {
 	die "Pairwise aligner ($opts{'pw-aligner'}) failed to write alignment to file";
@@ -2408,7 +2397,7 @@ sub call_locarna( $$$ ) {
 ## pass averaged base and (if required) arc match probs to locarna
 ## (unless in fast-mea mode, the pair probabilities in the pp files are ignored)
 ##
-sub call_locarna_prob( $$$$$ ) {
+sub call_locarna_prob {
     my ($inA,$inB,$tgt,$bmprobs_ref,$amprobs_ref) = @_;
 
     ## extract the alignments from the pp files
@@ -2447,7 +2436,7 @@ sub call_locarna_prob( $$$$$ ) {
     printmsg 1, "$cmd\n\n";
 
     system($cmd)==0
-	|| die "Cannot execute $opts{'pw-aligner'}\n";
+	|| die "Cannot execute $opts{'pw-aligner'}: $!\n";
 
     if ((! -e "$tgt.aln") || (! -e "$tgt.pp")) {
 	die "Pairwise aligner ($opts{'pw-aligner'}) failed to write alignment to file";
@@ -2466,7 +2455,7 @@ sub call_locarna_prob( $$$$$ ) {
 # the given names
 # generates consensus dotplot and constraints
 # out of single pp files
-sub write_pp_projected($$$) {
+sub write_pp_projected {
     my ($aln_ref, $names_ref, $tgt_name) = @_;
     my %aln = %{ $aln_ref };
     my @names = @{ $names_ref };
@@ -2533,7 +2522,7 @@ sub write_pp_projected($$$) {
 
 
 
-sub extend_library($$) {
+sub extend_library {
     my ($pairwise_alns_ref,$names_ref) = @_;
     my @pairwise_alns = @{ $pairwise_alns_ref };
 
@@ -2645,20 +2634,21 @@ sub extend_library($$) {
 	my @ext_pairprobs = @{ $ext_pairprobs[$a] }; # the extended probs
 
 
-	open(PP_OUT, ">$names[$a].pp") || die "Cannot write to $names[$a].pp\n";
+	open(my $PP_OUT, ">", "$names[$a].pp") || die "Cannot write to $names[$a].pp: $!";
 
-	print PP_OUT "$names[$a] $seq\n\n#\n";
+	print $PP_OUT "$names[$a] $seq\n\n#\n";
 
 	for (my $i=0; $i<$len; $i++) {
 	    for (my $j=$i+1; $j<$len; $j++) {
 		if (defined $ext_pairprobs[$i][$j]) {
 		    my $p = $ext_pairprobs[$i][$j];
 		    if ($p > $opts{'min-prob'}) {
-			print PP_OUT "$i $j $p\n";
+			print $PP_OUT "$i $j $p\n";
 		    }
 		}
 	    }
 	}
+        close $PP_OUT;
     }
 
     #
@@ -2676,10 +2666,8 @@ sub extend_library($$) {
 
 
 ## compute the alignment from dp-files or pp-files
-sub compute_alignment_from_dps( $$$$ ) {
+sub compute_alignment_from_dps {
     my ($input_dir,$nameA,$nameB,$locarna_params) =  @_;
-
-    local *CA_IN;
 
     my $tmpprefix = threadsafe_name("$global_tmpprefix");
 
@@ -2692,16 +2680,16 @@ sub compute_alignment_from_dps( $$$$ ) {
 
     $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
 
-    system $cmd || die_hard "Command $cmd failed.";
+    system($cmd)==0 || die_hard "Command $cmd failed: $!";
 
-    open(CA_IN,"$tmpfile") ||
+    open(my $CA_IN, "<", "$tmpfile") ||
 	die_hard
 	"\nPairwise aligner failed to write alignment ($tmpfile.)\n  Failed call:\n    $cmd\n";
 
 
-    my @content=<CA_IN>;
+    my @content=<$CA_IN>;
 
-    close CA_IN;
+    close $CA_IN;
 
     unlink $tmpfile;
 
@@ -2709,12 +2697,10 @@ sub compute_alignment_from_dps( $$$$ ) {
 }
 
 ## compute alignment with given probabilities
-sub compute_alignment_from_dps_probs( $$$$$$ ) {
+sub compute_alignment_from_dps_probs {
     my ($input_dir,$nameA,$nameB,$locarna_params,$bmprobs_ref,$amprobs_ref) =  @_;
 
     # printerr "compute_alignment_from_dps_probs $seqA_dp $seqB_dp";
-
-    local *CA_IN;
 
     my $tmpprefix = threadsafe_name("$global_tmpprefix");
 
@@ -2739,9 +2725,9 @@ sub compute_alignment_from_dps_probs( $$$$$$ ) {
 
     $cmd .= " ".pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
 
-    system $cmd || die_hard "Command $cmd failed.";
+    system($cmd)==0 || die_hard "Command $cmd failed: $!";
 
-    open(CA_IN,"$tmpfile") || die_hard "compute_alignment_from_dps_probs: Cannot read temporary file $tmpfile\n";
+    open(my $CA_IN, "<", "$tmpfile") || die_hard "compute_alignment_from_dps_probs: Cannot read temporary file $tmpfile: $!";
 
     if (!$opts{'fast-mea'} && !$opts{'only-basematch-probs'}) {
 	unlink $tmpfile3;
@@ -2749,9 +2735,9 @@ sub compute_alignment_from_dps_probs( $$$$$$ ) {
     unlink $tmpfile2;
 
 
-    my @content=<CA_IN>;
+    my @content=<$CA_IN>;
 
-    close CA_IN;
+    close $CA_IN;
 
     unlink $tmpfile;
 
@@ -2782,7 +2768,7 @@ sub compute_alignment_from_dps_probs( $$$$$$ ) {
 ## $opts{'plfold-span'}
 ## $opts{'plfold-winsize'}
 ##
-sub compute_all_dotplots($) {
+sub compute_all_dotplots {
     my ($seqs) = @_;
 
     for my $i (0..@$seqs-1) {
@@ -2791,7 +2777,7 @@ sub compute_all_dotplots($) {
 }
 
 
-sub compute_all_dotplots_par($$$) {
+sub compute_all_dotplots_par {
     my ($cpu_num,$seqs) = @_;
 
     my @arg_list;
@@ -2806,7 +2792,7 @@ sub compute_all_dotplots_par($$$) {
 
 ## ----------------------------------------
 ## generate input files without base pair probabilties
-sub generate_input_files_without_bpps( $ ) {
+sub generate_input_files_without_bpps {
     my ($seqs) = @_;
     for my $i (0..@$seqs-1) {
 	my $name = $seqs->[$i]->{name}; # the name of the sequence
@@ -2821,8 +2807,7 @@ sub generate_input_files_without_bpps( $ ) {
 	}
 
 	## write a simple fasta file with the input file name
-	my $fh;
-	open($fh, ">$ppname") || die "Cannot write to $ppname.\n";
+	open(my $fh, ">", "$ppname") || die "Cannot write to $ppname: $!";
 
 	print $fh ">$name\n";
 	print $fh "$seq_str\n";
@@ -2835,7 +2820,7 @@ sub generate_input_files_without_bpps( $ ) {
 ## compute_dotplot(i,seqs)
 ## compute probability dotplot for the $ith sequence in $seqs (using RNAfold/RNAplfold)
 ##
-sub compute_dotplot($$) {
+sub compute_dotplot {
     my ($i,$seqs)=@_;
 
     my $tmpname = threadsafe_name("$global_tmpname");
@@ -3030,7 +3015,7 @@ sub compute_dotplot($$) {
 ## %bmprobs         base match probs in case of probabilistic alignment
 ## %amprobs         arc  match probs in case of probabilistic alignment
 ##
-sub compute_all_pairwise_alignments($$$) {
+sub compute_all_pairwise_alignments {
     my ($names_ref,$bmprobs_ref,$amprobs_ref) = @_;
 
     my %bmprobs = %{ $bmprobs_ref };
@@ -3075,7 +3060,7 @@ sub compute_all_pairwise_alignments($$$) {
 }
 
 
-sub compute_all_pairwise_alignments_par($$$$) {
+sub compute_all_pairwise_alignments_par {
     my ($cpu_num,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
 
     my %bmprobs = %{ $bmprobs_ref };
@@ -3172,7 +3157,7 @@ sub compute_all_pairwise_alignments_par($$$$) {
 ## needs pp files
 ## needs bmprobs, amprobs in probabilistic mode
 ##
-sub perform_progressive_steps($$$) {
+sub perform_progressive_steps {
     my ($tree_postorder,$bmprobs_ref,$amprobs_ref)=@_;
 
     my @stack=();
@@ -3251,7 +3236,7 @@ sub perform_iterative_refinement {
 ##
 ## @returns file name of result and alignment quality
 ##
-sub perform_iterative_refinement_one_round($$$$$) {
+sub perform_iterative_refinement_one_round {
     my ($current_alignment_name,$current_aliquality,$tree_postorder,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
 
     my $round_aliquality = $current_aliquality;
@@ -3381,7 +3366,7 @@ sub run_evaluation_mode {
 ## @param $refaln_filename name of file with reference alignment
 ##
 ## @returns option string or "" if $aln undefined
-sub pairwise_reference_alignment_option( $$$$ ) {
+sub pairwise_reference_alignment_option {
     my ($nameA,$nameB,$refaln,$refaln_filename) = @_;
     return reference_alignment_option($refaln_filename);
 }

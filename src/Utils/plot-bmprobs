@@ -45,13 +45,13 @@ my @matrix;
 my $max_i=0;
 my $max_j=0;
 
-open(IN,$in) || die "Cannot read $in";
+open(my $IN, "<", $in) || die "Cannot read $in: $!";
 
 my $tmp="$out.tmp";
 if ( -e "$tmp" ) {print "$tmp is in the way.\n"; exit -1;}
-open(OUT,">$tmp")  || die "Cannot write to $tmp";
+open(my $OUT,">", "$tmp")  || die "Cannot write to $tmp: $!";
 
-while(my $line=<IN>) {
+while(my $line=<$IN>) {
     if ( $line =~ /^(\d*) (\d*) ([\d.]*)$/ ) {
 	my $i=$1;
 	my $j=$2;
@@ -63,26 +63,27 @@ while(my $line=<IN>) {
 	if ($j>$max_j) {$max_j=$j;}
     }
 }
+close $IN;
 
 for (my $i=1; $i<=$max_i; $i++) {
     for (my $j=1; $j<=$max_j; $j++) {
 	my $pij=$matrix[$i][$j];
 	if (! defined($pij)) {$pij=0;}
-	print OUT "$pij ";
+	print $OUT "$pij ";
     }
-    print OUT "\n";
+    print $OUT "\n";
 }
 
-close OUT;
+close $OUT;
 
 my $h=10;
 my $w=$h*$max_i/$max_j;
 
 my $scr="$out.scr";
 if ( -e "$scr" ) {print "$scr is in the way.\n"; exit -1;}
-open(SCR,">$scr")  || die "Cannot write to $scr";
+open(my $SCR, ">", "$scr")  || die "Cannot write to $scr: $!";
 
-print SCR "t<-read.table(\"$tmp\");
+print $SCR "t<-read.table(\"$tmp\");
 m<-as.matrix(t)
 
 gamma<-1
@@ -105,7 +106,7 @@ legend(\"bottomright\",col=rev(colors),legend=lgd,lwd=(32*18)/colnum,y.i=29/coln
 ";
 
 #col=rgb(1-(0:32)/32,1-(0:32)/32,1),
-close SCR;
+close $SCR;
 
 system("cat $scr");
 system("R --vanilla < $scr");
@@ -144,4 +145,3 @@ Options:
 =head1 DESCRIPTION
 
 =cut
-

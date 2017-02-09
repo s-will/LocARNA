@@ -242,11 +242,11 @@ sub find_in_alignments {
 sub slice_sequences_with_context {
     my ($mfa_outfile,$slice_outfile,$aln,$start_col,$end_col,$context_size,$max_gap_content)=@_;
     
-    open(MFAOUT,">$mfa_outfile") || die "Cannot open $mfa_outfile for writing.";
-    open(SLCOUT,">$slice_outfile") || die "Cannot open $slice_outfile for writing.";
+    open(my $MFAOUT, ">", "$mfa_outfile") || die "Cannot write to $mfa_outfile: $!";
+    open(my $SLCOUT, ">", "$slice_outfile") || die "Cannot write to $slice_outfile: $!";
     
     ## write clustalw header
-    print SLCOUT "CLUSTAL W (1.83)\n\n";
+    print $SLCOUT "CLUSTAL W (1.83)\n\n";
     
     # go through all sequences in the alignment, look at slice
     # sufficiently many non-gap?
@@ -270,7 +270,7 @@ sub slice_sequences_with_context {
 
 	if ($no_gaps<length($seq_slice)) {
 	    ## write alignment slice
-	    print SLCOUT $seq->id()." $seq_slice\n";
+	    print $SLCOUT $seq->id()." $seq_slice\n";
 	}
 
 	if ($gap_ratio <= $max_gap_content) {
@@ -311,13 +311,13 @@ sub slice_sequences_with_context {
 	    
 	    my $seq_slice_w_content = uc(substr($seq_wo_gaps,$start_w_context,$end_w_context-$start_w_context+1));
 	    
-	    print MFAOUT ">".$seq->id()." left_context=".($start-$start_w_context)."; right_context=".($end_w_context-$end)."; gap_ratio=$gap_ratio\n";
-	    print MFAOUT "$seq_slice_w_content\n";
+	    print $MFAOUT ">".$seq->id()." left_context=".($start-$start_w_context)."; right_context=".($end_w_context-$end)."; gap_ratio=$gap_ratio\n";
+	    print $MFAOUT "$seq_slice_w_content\n";
 	    
 	}
     }
-    close MFAOUT;
-    close SLCOUT;
+    close $MFAOUT;
+    close $SLCOUT;
 }
 
 
@@ -376,10 +376,10 @@ sub draw_and_store_random_instances {
     my $number_of_hits=0;
     foreach my $chromosome (@chromosomes) {
 	## read in RNAz hits for the chromosome
-	open(RNAZHITS,"gunzip -c $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz | grep '^locus' |") 
+	open(my $RNAZHITS, "-|", "gunzip -c $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz | grep '^locus'")
 	    || die "Cannot read or gunzip $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz";
-	my @rnazhits=<RNAZHITS>;
-	close RNAZHITS;
+	my @rnazhits=<$RNAZHITS>;
+	close $RNAZHITS;
 	$number_of_hits += $#rnazhits+1;
     }
     # print "Total number of RNAz hits: $number_of_hits\n";
@@ -397,10 +397,10 @@ sub draw_and_store_random_instances {
 
    
 	## read in RNAz hits for the chromosome
-	open(RNAZHITS,"gunzip -c $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz | grep '^locus' |") 
+	open(my $RNAZHITS, "-|", "gunzip -c $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz | grep '^locus'")
 	    || die "Cannot read $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz";
-	my @rnazhits=<RNAZHITS>;
-	close RNAZHITS;
+	my @rnazhits=<$RNAZHITS>;
+	close $RNAZHITS;
 	
 	# while the next random number refers to a hit of the current chromosome
 	while ( $num_idx < $random_n && $numbers[$num_idx] <= $hit_idx+$#rnazhits+1 ) {
@@ -433,10 +433,10 @@ sub extract_all_instances {
 
 	
 	## read in RNAz hits for the chromosome
-	open(RNAZHITS,"gunzip -c $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz | grep '^locus' |") 
+	open(my $RNAZHITS, "-|", "gunzip -c $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz | grep '^locus'") 
 	    || die "Cannot read $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz";
-	my @rnazhits=<RNAZHITS>;
-	close RNAZHITS;
+	my @rnazhits=<$RNAZHITS>;
+	close $RNAZHITS;
 	
 	# while the next random number refers to a hit of the current chromosome
 	foreach my $rnazhit ( @rnazhits ) {
@@ -497,10 +497,10 @@ foreach my $chromosome (@chromosomes) {
 
 
     ## read in RNAz hits for the chromosome
-    open(RNAZHITS,"gunzip -c $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz | grep '^locus' |") 
+    open(my $RNAZHITS, "-|", "gunzip -c $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz | grep '^locus'") 
 	|| die "Cannot read or gunzip $datadir/Annotation/$chromosome-pecan-CAF1.annotation.dat.gz";
-    my @rnazhits=<RNAZHITS>;
-    close RNAZHITS;
+    my @rnazhits=<$RNAZHITS>;
+    close $RNAZHITS;
     
     ## read in Flybase ncRNA annotation for the chromosome
     my $flybase_ncRNA_anno = 

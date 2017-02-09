@@ -44,7 +44,7 @@ if (! -e $tgtdir) {
     print STDERR "Warning: $tgtdir exists already.\n";
 }
 
-open(TLIB,">$tgtdir/$tlibname");
+open(my $TLIB, ">", "$tgtdir/$tlibname");
 
 
 ## ------------------------------------------------------------
@@ -54,7 +54,7 @@ my %mfasta = parse_mfasta($mfasta_file);
 
 my @names = keys %mfasta;
 
-print TLIB tcoffee_libheader(@names);
+print $TLIB tcoffee_libheader(@names);
 
 ## ------------------------------------------------------------
 # generate t-coffee lib
@@ -82,7 +82,7 @@ for (my $i=0; $i<=$#names; $i++) {
 	## write edges to t-coffee lib
 	
 	my $ip1=$i+1; my $jp1=$j+1;
-	print TLIB "#$ip1 $jp1\n";
+	print $TLIB "#$ip1 $jp1\n";
 	
 	# print STDERR "$aliA\n";
 	# print STDERR "$aliB\n";
@@ -103,17 +103,17 @@ for (my $i=0; $i<=$#names; $i++) {
 	    }
 
 	    if ( $cA =~ /^[ACTGU]$/ && $cB =~ /^[ACTGU]$/) {
-		print TLIB "$ia $ib $weight\n";
+		print $TLIB "$ia $ib $weight\n";
 	    }
 
 	}
     }
 }
 
-print TLIB "! CPU 0\n";
-print TLIB "! SEQ_1_TO_N\n";
+print $TLIB "! CPU 0\n";
+print $TLIB "! SEQ_1_TO_N\n";
 
-close TLIB;
+close $TLIB;
 
 ## ------------------------------------------------------------
 # call t-coffee

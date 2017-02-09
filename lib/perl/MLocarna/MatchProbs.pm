@@ -137,7 +137,7 @@ sub sum_paired_prob_am {
 ## returns hash of averaged base match probabilities
 ##
 ########################################
-sub average_basematch_probs($$$) {
+sub average_basematch_probs: prototype($$$) {
     my ($alnA,$alnB,$bmprobs) = @_;
 
     my @namesA = aln_names($alnA);
@@ -182,7 +182,7 @@ sub average_basematch_probs($$$) {
 ## returns hash of averaged arc match probabilities
 ##
 ########################################
-sub average_arcmatch_probs($$$) {
+sub average_arcmatch_probs: prototype($$$) {
     my ($alnA,$alnB,$amprobs) = @_;
 
     my @namesA = aln_names($alnA);
@@ -234,7 +234,7 @@ sub average_arcmatch_probs($$$) {
 ## returns ref of hash %mAB of re-estimated match probabilities between A and B
 ##
 ########################################
-sub consistency_transform_single_am($$) {
+sub consistency_transform_single_am: prototype($$) {
     my ($mCA,$mCB) = @_;
 
     my %mAB;
@@ -276,7 +276,7 @@ sub consistency_transform_single_am($$) {
 ## returns ref of hash %mAB of re-estimated match probabilities between A and B
 ##
 ########################################
-sub consistency_transform_single_bm($$) {
+sub consistency_transform_single_bm: prototype($$) {
     my ($mCA_ref,$mCB_ref) = @_;
 
     my %mAB;
@@ -388,24 +388,21 @@ sub consistency_transform_bm {
 ## returns ref of hash of base match probabilities
 ##
 ########################################
-sub read_bm_probs($) {
+sub read_bm_probs: prototype($) {
     my ($dir)=@_;
 
     my %bmprobs;
 
-    local *MYIN;
-
-    local *DIR;
-    opendir(DIR, $dir);
-    my @files = readdir DIR;
-    closedir DIR;
+    opendir(my $DIR, $dir) || die "Cannot read $dir: $!";
+    my @files = readdir $DIR;
+    closedir $DIR;
 
     foreach my $file (@files) {
 	if ($file =~ /(.+)-(.+)/) {
 	    my $nameA=$1;
 	    my $nameB=$2;
-	    open(MYIN,"$dir/$file") || die "Cannot read $dir/$file";
-	    while (my $line = <MYIN>) {
+	    open(my $MYIN, "<", "$dir/$file") || die "Cannot read $dir/$file: $!";
+	    while (my $line = <$MYIN>) {
 		if ($line =~ /(\d+) (\d+) ([\d.e+-]+)/) {
 		    my $i=$1;
 		    my $j=$2;
@@ -413,7 +410,7 @@ sub read_bm_probs($) {
 		    $bmprobs{MLocarna::chp($nameA,$nameB)}{$i}{$j}=$p;
 		}
 	    }
-	    close MYIN;
+	    close $MYIN;
 	}
     }
 
@@ -422,13 +419,10 @@ sub read_bm_probs($) {
 
 
 ## write the basematch probabilities to files for later inspection by a user
-sub write_bm_probs($$) {
+sub write_bm_probs: prototype($$) {
     my ($dir,$bmprobs_ref)=@_;
 
     my %bmprobs = %{ $bmprobs_ref };
-
-
-    local *MYOUT;
 
     mkdir "$dir" || die "Cannot make dir $dir";
 
@@ -438,18 +432,18 @@ sub write_bm_probs($$) {
 	my ($nameA,$nameB) = MLocarna::dhp($name_pair);
 
 	my $outfile="$dir/$nameA-$nameB";
-	open(MYOUT,">$outfile") || die "Cannot write to $outfile";
+	open(my $MYOUT,">", "$outfile") || die "Cannot write to $outfile: $!";
 
 	my %h = %{ $bmprobs{$name_pair} };
 
 	for my $i (keys %h) {
 	    my %h2 = %{ $h{$i} };
 	    for my $j (keys %h2) {
-		printf MYOUT "$i $j %.8f\n", $h2{$j};
+		printf $MYOUT "$i $j %.8f\n", $h2{$j};
 	    }
 	}
 
-	close MYOUT;
+	close $MYOUT;
     }
 }
 
@@ -464,30 +458,26 @@ sub write_bm_probs($$) {
 ## returns ref of hash of arc match probabilities
 ##
 ########################################
-sub read_am_probs($) {
+sub read_am_probs: prototype($) {
     my ($dir)=@_;
 
     my %amprobs;
 
-    local *MYIN;
-
-    local *DIR;
-    opendir(DIR, $dir);
-    my @files = readdir DIR;
-    closedir DIR;
-
+    opendir(my $DIR, $dir);
+    my @files = readdir $DIR;
+    closedir $DIR;
 
     foreach my $file (@files) {
 	if ($file =~ /(.*)-(.*)/) {
 	    my $nameA=$1;
 	    my $nameB=$2;
-	    open(MYIN,"$dir/$file") || die "Cannot read $dir/$file";
-	    while (my $line = <MYIN>) {
+	    open(my $MYIN, "<", "$dir/$file") || die "Cannot read from $dir/$file: $!";
+	    while (my $line = <$MYIN>) {
 		if ($line =~ /(\d+) (\d+) (\d+) (\d+) ([\d.e+-]+)/) {
 		    $amprobs{MLocarna::chp($nameA,$nameB)}{$1}{$2}{$3}{$4}=$5;
 		}
 	    }
-	    close MYIN;
+	    close $MYIN;
 	}
     }
 
@@ -496,12 +486,10 @@ sub read_am_probs($) {
 
 
 ## write the basematch probabilities to files for later inspection by a user
-sub write_am_probs($$) {
+sub write_am_probs: prototype($$) {
     my ($dir,$amprobs_ref)=@_;
 
     my %amprobs = %{ $amprobs_ref };
-
-    local *MYOUT;
 
     mkdir "$dir" || die "Cannot make dir $dir";
 
@@ -511,7 +499,7 @@ sub write_am_probs($$) {
 	my ($nameA,$nameB) = MLocarna::dhp($name_pair);
 
 	my $outfile="$dir/$nameA-$nameB";
-	open(MYOUT,">$outfile") || die "Cannot write to $outfile";
+	open(my $MYOUT,">", "$outfile") || die "Cannot write to $outfile: $!";
 
 	my %m = %{ $amprobs{$name_pair} };
 
@@ -519,12 +507,12 @@ sub write_am_probs($$) {
 	    foreach my $j (keys %{ $m{$i} }) {
 		foreach my $k (keys %{ $m{$i}{$j} }) {
 		    foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-			printf MYOUT "$i $j $k $l %.8f\n",$m{$i}{$j}{$k}{$l};
+			printf $MYOUT "$i $j $k $l %.8f\n",$m{$i}{$j}{$k}{$l};
 		    }
 		}
 	    }
 	}
-	close MYOUT;
+	close $MYOUT;
     }
 }
 
@@ -644,7 +632,7 @@ sub compute_bmreliabilities_single_seq {
 ## return ref of hash with arc match reliabilities
 ##
 ########################################
-sub compute_amreliabilities_single_seq($$$$) {
+sub compute_amreliabilities_single_seq: prototype($$$$) {
 
     my ($nameA,$aln,$amprobs,$pairprobs) = @_;
 
@@ -733,7 +721,7 @@ sub compute_amreliabilities_single_seq($$$$) {
 ## alignment column indices are 1..'alignment length' for structures bmrel_seq,bmrel_str, amrel.
 ##
 ########################################
-sub compute_reliability($$$) {
+sub compute_reliability: prototype($$$) {
     my ($aln,$bmprobs,$amprobs) = @_;
 
     my @names = aln_names($aln);
@@ -847,12 +835,12 @@ sub compute_reliability($$$) {
 sub write_bm_reliabilities {
     my ($file, $bmrels_seq, $bmrels_str) = @_;
 
-    open(BMREL,">$file") || die "Cannot write to $file";
+    open(my $BMREL, ">", "$file") || die "Cannot write to $file: $!";
     my $aln_length=@$bmrels_seq-1; # (!)
     for (my $i=1; $i<=$aln_length; $i++) {
-	print BMREL "$i $bmrels_seq->[$i] $bmrels_str->[$i]\n";
+	print $BMREL "$i $bmrels_seq->[$i] $bmrels_str->[$i]\n";
     }
-    close BMREL;
+    close $BMREL;
 }
 
 ########################################
@@ -865,11 +853,11 @@ sub write_bm_reliabilities {
 sub write_am_reliabilities {
     my ($file, $amrels) = @_;
 
-    open(AMREL,">$file")  || die "Cannot write to $file";
+    open(my $AMREL,">", "$file")  || die "Cannot write to $file: $!";
     foreach my $k (keys %$amrels) {
-	print AMREL "$k $amrels->{$k}\n";
+	print $AMREL "$k $amrels->{$k}\n";
     }
-    close AMREL;
+    close $AMREL;
 }
 
 ########################################
@@ -1073,10 +1061,9 @@ end
 %%EOF
 ";
 
-    local *OUT;
-    open(OUT,">$filename") || die "Cannot write to $filename";
-    print OUT $pscode;
-    close OUT;
+    open(my $OUT, ">", "$filename") || die "Cannot write to $filename: $!";
+    print $OUT $pscode;
+    close $OUT;
 
     return;
 }
@@ -1095,7 +1082,7 @@ end
 ##   ! indices in $pairprobs need to be in range 1..'sequence length'
 ##
 ########################################
-sub write_dotplot($$$) {
+sub write_dotplot: prototype($$$) {
     my ($filename,$sequence,$pairprobs) = @_;
 
     my @colors=("0 0 0");
@@ -1123,7 +1110,7 @@ sub write_dotplot($$$) {
 ## different bracket symbols to distinguish base pairs of different 'strength')
 ##
 ########################################
-sub max_weight_structure($$$$$) {
+sub max_weight_structure: prototype($$$$$) {
     my ($len,
         $base_weights,
         $arc_weights,
@@ -1334,7 +1321,7 @@ sub consistency_transform_am {
 ## the hash entries are only valid for non-gap positions
 ##
 ########################################
-sub alicol2seqpos($$) {
+sub alicol2seqpos: prototype($$) {
     my ($names_ref, $aln_ref) = @_;
     my @names = @{ $names_ref };
     my $aln_length=length($aln_ref->{$names[0]});
@@ -1401,7 +1388,7 @@ sub evaluate_alignment {
 ## as averaged column reliability (unweighted structure+sequence rel.)
 ##
 ########################################
-sub aln_reliability($$$) {
+sub aln_reliability: prototype($$$) {
     my ($aln,$bmprobs,$amprobs) = @_;
 
     my ($bmrels_seq, $bmrels_str, $amrels)

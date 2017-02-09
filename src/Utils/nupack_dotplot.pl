@@ -1,9 +1,4 @@
 #!/usr/bin/env perl
-
-## ATTENTION: absolute path
-my $nupackPath = "/usr/local/user/nupack3.0";
-
-
 #####################################################################
 ##
 ##  CALL : ./NuPack_dotplot.pl <SEQID> <SEQUENCE>
@@ -16,6 +11,9 @@ my $nupackPath = "/usr/local/user/nupack3.0";
 
 use warnings;
 use strict;
+
+## ATTENTION: absolute path
+my $nupackPath = "/usr/local/user/nupack3.0";
 
 # read sequence parameter
 my $seqID = $ARGV[0];
@@ -39,8 +37,8 @@ my %dotplot = ();
 
 my $length = length($seq);
 
-open(PAIRSFILE,"$seqID.ppairs");
-foreach my $zeile (<PAIRSFILE>){
+open(my $PAIRSFILE,"<","$seqID.ppairs") || die "Cannot read from $seqID.ppairs: $!";
+foreach my $zeile (<$PAIRSFILE>){
 #		if($verbose){print $zeile;}
     if($zeile =~/\%.+/){
 	if($verbose){print "Skipped: $zeile";}
@@ -56,27 +54,27 @@ foreach my $zeile (<PAIRSFILE>){
 	if($verbose){print "Skipped $zeile";}
     }
 }
-close PAIRSFILE;
+close $PAIRSFILE;
 #	unlink("$seqID.ppairs");
 
 # write dotplot output
 
-open(DPOUT,">$seqID.pp");
+open(my $DPOUT, ">", "$seqID.pp") || die "Cannot write to $seqID.pp: $!";
 
-print DPOUT "#PP 2.0\n\n";
+print $DPOUT "#PP 2.0\n\n";
 
-print DPOUT "$seqID $seq\n\n#END\n\n";
+print $DPOUT "$seqID $seq\n\n#END\n\n";
 
-print DPOUT "#SECTION BASEPAIRS\n\n";
+print $DPOUT "#SECTION BASEPAIRS\n\n";
 
 foreach my $value (values %dotplot){
     my $prob = sqrt( ${$value}[2]);
-    print DPOUT "${$value}[0] ${$value}[1] $prob\n";
+    print $DPOUT "${$value}[0] ${$value}[1] $prob\n";
 }
 
-print DPOUT "\n#END";
+print $DPOUT "\n#END";
 
-close DPOUT;
+close $DPOUT;
 
 exit 0;
 #### END OF SCRIPT
