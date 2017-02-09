@@ -2,12 +2,11 @@
 #define LOCARNA_STRING1_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <string>
 #include <algorithm>
-
 
 namespace LocARNA {
     /**
@@ -21,22 +20,21 @@ namespace LocARNA {
      */
     class string1 {
         std::string s_;
-    public:
 
+    public:
         /**
          * \brief Construct from std::string
          *
          * @param s string
          */
-        explicit
-        string1(const std::string &s): s_(s) {}
+        explicit string1(const std::string &s) : s_(s) {}
 
         /**
          * \brief Copy constructor
          *
          * @param s string (of type string1)
          */
-        string1(const string1 &s): s_(s.s_) {}
+        string1(const string1 &s) : s_(s.s_) {}
 
         /**
          * Cast to std::string (const)
@@ -66,11 +64,10 @@ namespace LocARNA {
          * @return ith character of string
          * @note 1-based
          */
-        const char&
-        operator [](size_t i) const {
-            assert(i>=1);
-            assert(i<=s_.length());
-            return s_[i-1];
+        const char &operator[](size_t i) const {
+            assert(i >= 1);
+            assert(i <= s_.length());
+            return s_[i - 1];
         }
 
         /**
@@ -81,11 +78,10 @@ namespace LocARNA {
          * @return (reference to) ith character of string
          * @note 1-based
          */
-        char&
-        operator [](size_t i) {
-            assert(i>=1);
-            assert(i<=s_.length());
-            return s_[i-1];
+        char &operator[](size_t i) {
+            assert(i >= 1);
+            assert(i <= s_.length());
+            return s_[i - 1];
         }
 
         /**
@@ -107,7 +103,10 @@ namespace LocARNA {
          * @post *this equals s
          */
         string1 &
-        operator =(const string1 &s) {s_ = s.s_; return *this;}
+        operator=(const string1 &s) {
+            s_ = s.s_;
+            return *this;
+        }
 
         /**
          * \brief reverse string
@@ -115,7 +114,7 @@ namespace LocARNA {
          */
         void
         reverse() {
-            std::reverse(s_.begin(),s_.end());
+            std::reverse(s_.begin(), s_.end());
         }
 
         /**
@@ -138,11 +137,10 @@ namespace LocARNA {
          */
         string1
         substr(size_t pos, size_t len) const {
-            assert(pos>=1);
-            assert(pos<=s_.length());
-            return string1(s_.substr(pos-1,len));
+            assert(pos >= 1);
+            assert(pos <= s_.length());
+            return string1(s_.substr(pos - 1, len));
         }
-
     };
 
 } // end namespace LocARNA

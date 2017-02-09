@@ -2,7 +2,7 @@
 #define LOCARNA_MATCH_PROBS
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <string>
@@ -13,7 +13,8 @@ namespace LocARNA {
 
     class StralScore;
     class RnaData;
-    template <class T> class Alphabet;
+    template <class T>
+    class Alphabet;
     class Sequence;
 
     /**
@@ -36,7 +37,8 @@ namespace LocARNA {
      * model. Assume alignments are Boltzman distributed,
      * calc match probs via partition function
      *
-     * the second approach supports Stral-like scoring (using pf_struct_weight as "alpha")
+     * the second approach supports Stral-like scoring (using pf_struct_weight
+     * as "alpha")
      *
      */
     class MatchProbs {
@@ -47,8 +49,7 @@ namespace LocARNA {
         MatchProbs();
 
         //! construct from file
-        explicit
-        MatchProbs(const std::string &filename);
+        explicit MatchProbs(const std::string &filename);
 
         /**
          * read probcons parameter file
@@ -59,10 +60,11 @@ namespace LocARNA {
         void
         pairHMM_probs(const Sequence &seqA,
                       const Sequence &seqB,
-                      const std::string & file);
+                      const std::string &file);
 
         /**
-         * calculate edge probabilities via statistical mechanics model (partition function)
+         * calculate edge probabilities via statistical mechanics model
+         * (partition function)
          * get match scores via matrix sim_mat.
          * The method accepts the matrix sim_mat together with an alphabet.
          * The alphabet object is necessary to translate sequence symbols
@@ -90,7 +92,6 @@ namespace LocARNA {
         void
         read(const std::string &filename);
 
-
         /**
          * read the probabilities from a stream
          * read 'sparse' format "i j p"
@@ -103,7 +104,9 @@ namespace LocARNA {
          * read 'sparse' format "i j p"
          */
         void
-        read_sparse(const std::string &filename, size_type lenA, size_type lenB);
+        read_sparse(const std::string &filename,
+                    size_type lenA,
+                    size_type lenB);
 
         /**
          * write the probabilities to a stream
@@ -131,17 +134,24 @@ namespace LocARNA {
         write_sparse(const std::string &filename, double threshold) const;
 
         //! get the length of the first sequence
-        size_type get_lenA() const {return probs.sizes().first;}
+        size_type
+        get_lenA() const {
+            return probs.sizes().first;
+        }
 
         //! get the length of the second sequence
-        size_type get_lenB() const {return probs.sizes().second;}
+        size_type
+        get_lenB() const {
+            return probs.sizes().second;
+        }
 
         //! return the match probability for the two bases
-        double prob(size_t i, size_t j) const {
-            assert(1<=i && i<probs.sizes().first);
-            assert(1<=j && j<probs.sizes().second);
+        double
+        prob(size_t i, size_t j) const {
+            assert(1 <= i && i < probs.sizes().first);
+            assert(1 <= j && j < probs.sizes().second);
 
-            return probs(i,j);
+            return probs(i, j);
         }
 
     private:
@@ -157,15 +167,15 @@ namespace LocARNA {
 
                  double temp,
 
-                 bool local
-                 );
+                 bool local);
 
         Matrix<double> probs; //!< the base match probabilities
 
         /**
          * @brief Maintains parameter for computing match probabilities
          *
-         * The class is used in sequence alignment a la Probcons by MatchProbs::pairHMM_probs()
+         * The class is used in sequence alignment a la Probcons by
+         * MatchProbs::pairHMM_probs()
          *
          * Supports reading parameter from file
          *
@@ -175,22 +185,24 @@ namespace LocARNA {
         public:
             // ------------------------------------------------------------
             // transition probabilities
-            // there are three states M, X, Y (plus implicitely start and end state)
-            double initM; //!< transition probability initM
-            double initX; //!< transition probability initX
-            double initY; //!< transition probability initY
-            double startX; //!< transition probability startX
-            double startY; //!< transition probability startY
-            double extendM; //!< transition probability extendM
-            double extendX; //!< transition probability extendX
-            double extendY; //!< transition probability extendY
+            // there are three states M, X, Y (plus implicitely start and end
+            // state)
+            double initM;       //!< transition probability initM
+            double initX;       //!< transition probability initX
+            double initY;       //!< transition probability initY
+            double startX;      //!< transition probability startX
+            double startY;      //!< transition probability startY
+            double extendM;     //!< transition probability extendM
+            double extendX;     //!< transition probability extendX
+            double extendY;     //!< transition probability extendY
             double startMFromX; //!< transition probability startMFromX
             double startMFromY; //!< transition probability startMFromY
 
             std::string basenames; //!< base names
 
             Matrix<double> emmission; //!< matrix of emmission probabilities
-            std::vector<double> background; //!< vector of background probabilities
+            std::vector<double>
+                background; //!< vector of background probabilities
 
             /**
              * Construct from file
@@ -199,12 +211,9 @@ namespace LocARNA {
              *
              * @throws failure
              */
-            explicit
-            ProbConsParameter(const std::string &filename);
+            explicit ProbConsParameter(const std::string &filename);
         };
-
     };
-
 }
 
 #endif // LOCARNA_MATCH_PROBS

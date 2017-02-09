@@ -2,7 +2,7 @@
 #define LOCARNA_RNA_DATA_IMPL_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <iosfwd>
@@ -75,9 +75,7 @@ namespace LocARNA {
          * @param self pointer to corresponding RnaData object
          * @param p_bpcut cutoff probability
          */
-        RnaDataImpl(RnaData *self,
-                    double p_bpcut,
-                    size_t max_bp_span);
+        RnaDataImpl(RnaData *self, double p_bpcut, size_t max_bp_span);
 
         // ----------------------------------------
         // METHODS
@@ -159,7 +157,6 @@ namespace LocARNA {
                                    double p_outbpcut,
                                    bool stacking) const;
 
-
         /**
          * @brief Initialize as consensus of two aligned RNAs
          *
@@ -176,8 +173,7 @@ namespace LocARNA {
                                    const RnaData &rna_dataB,
                                    double p_expA,
                                    double p_expB,
-                                   bool stacking
-                                   );
+                                   bool stacking);
 
         /**
          * @brief Consensus probability
@@ -205,18 +201,17 @@ namespace LocARNA {
                               double p_expA,
                               double p_expB) const;
 
-
-        template<class KEY>
+        template <class KEY>
         class keyvec {
         public:
-            typedef std::pair<KEY,arc_prob_matrix_t::value_t> kvpair_t;
+            typedef std::pair<KEY, arc_prob_matrix_t::value_t> kvpair_t;
 
             typedef std::vector<kvpair_t> vec_t;
 
             // compare for min heap
-            static
-            bool comp(const kvpair_t &x, const kvpair_t &y) {
-                return x.second>y.second;
+            static bool
+            comp(const kvpair_t &x, const kvpair_t &y) {
+                return x.second > y.second;
             }
         };
 
@@ -230,8 +225,6 @@ namespace LocARNA {
 
     }; // end class RnaDataImpl
 
-
-} //end namespace LocARNA
-
+} // end namespace LocARNA
 
 #endif // LOCARNA_RNA_DATA_IMPL_HH

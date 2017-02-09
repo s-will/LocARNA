@@ -2,7 +2,7 @@
 #define LOCARNA_AUX_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <iosfwd>
@@ -11,63 +11,62 @@
 #include <vector>
 #include <cassert>
 
-
 // import and define types for unordered_map/set
 // in a way that is compatible with stdc++ and libc++
 #ifdef _LIBCPP_VERSION
-#  include <unordered_map>
-#  include <unordered_set>
+#include <unordered_map>
+#include <unordered_set>
 namespace LocARNA {
-    template < class Key,                                    // unordered_map::key_type
-               class T,                                      // unordered_map::mapped_type
-               class Hash = std::hash<Key>,                       // unordered_map::hasher
-               class Pred = std::equal_to<Key>,                   // unordered_map::key_equal
-               class Alloc = std::allocator< std::pair<const Key,T> >  // unordered_map::allocator_type
-               >
+    template <class Key,                       // unordered_map::key_type
+              class T,                         // unordered_map::mapped_type
+              class Hash = std::hash<Key>,     // unordered_map::hasher
+              class Pred = std::equal_to<Key>, // unordered_map::key_equal
+              class Alloc = std::allocator<
+                  std::pair<const Key, T> > // unordered_map::allocator_type
+              >
     struct unordered_map {
-        typedef std::unordered_map<Key,T,Hash,Pred,Alloc> type;
+        typedef std::unordered_map<Key, T, Hash, Pred, Alloc> type;
     };
 
-    template < class Key,                        // unordered_set::key_type/value_type
-               class Hash = std::hash<Key>,           // unordered_set::hasher
-               class Pred = std::equal_to<Key>,       // unordered_set::key_equal
-               class Alloc = std::allocator<Key>      // unordered_set::allocator_type
-               >
+    template <class Key,                   // unordered_set::key_type/value_type
+              class Hash = std::hash<Key>, // unordered_set::hasher
+              class Pred = std::equal_to<Key>,  // unordered_set::key_equal
+              class Alloc = std::allocator<Key> // unordered_set::allocator_type
+              >
     struct unordered_set {
-        typedef std::unordered_set<Key,Hash,Pred,Alloc> type;
+        typedef std::unordered_set<Key, Hash, Pred, Alloc> type;
     };
 }
-//typedef std::unordered_set LocARNA::unordered_set;
+// typedef std::unordered_set LocARNA::unordered_set;
 #else
-#  include <tr1/unordered_map>
-#  include <tr1/unordered_set>
+#include <tr1/unordered_map>
+#include <tr1/unordered_set>
 namespace LocARNA {
-    template < class Key,                                    // unordered_map::key_type
-               class T,                                      // unordered_map::mapped_type
-               class Hash = std::tr1::hash<Key>,                       // unordered_map::hasher
-               class Pred = std::equal_to<Key>,                   // unordered_map::key_equal
-               class Alloc = std::allocator< std::pair<const Key,T> >  // unordered_map::allocator_type
-               >
+    template <class Key,                        // unordered_map::key_type
+              class T,                          // unordered_map::mapped_type
+              class Hash = std::tr1::hash<Key>, // unordered_map::hasher
+              class Pred = std::equal_to<Key>,  // unordered_map::key_equal
+              class Alloc = std::allocator<
+                  std::pair<const Key, T> > // unordered_map::allocator_type
+              >
     struct unordered_map {
-        typedef std::tr1::unordered_map<Key,T,Hash,Pred,Alloc> type;
+        typedef std::tr1::unordered_map<Key, T, Hash, Pred, Alloc> type;
     };
 
-    template < class Key,                        // unordered_set::key_type/value_type
-               class Hash = std::tr1::hash<Key>,           // unordered_set::hasher
-               class Pred = std::equal_to<Key>,       // unordered_set::key_equal
-               class Alloc = std::allocator<Key>      // unordered_set::allocator_type
-               >
+    template <class Key, // unordered_set::key_type/value_type
+              class Hash = std::tr1::hash<Key>, // unordered_set::hasher
+              class Pred = std::equal_to<Key>,  // unordered_set::key_equal
+              class Alloc = std::allocator<Key> // unordered_set::allocator_type
+              >
     struct unordered_set {
-        typedef std::tr1::unordered_set<Key,Hash,Pred,Alloc> type;
+        typedef std::tr1::unordered_set<Key, Hash, Pred, Alloc> type;
     };
 }
 #endif
 
-
 //!
 //! auxilliary types and global constants for use in locarna
 //!
-
 
 namespace LocARNA {
 
@@ -76,19 +75,17 @@ namespace LocARNA {
     /**
      * @brief Function class definining hash function for pairs of size_t
      */
-    struct pair_of_size_t_hash
-    {
+    struct pair_of_size_t_hash {
         /**
          * @brief Hash function for pairs of size_t
          *
          * @return hash code
          */
         size_t
-        operator()(std::pair<size_t,size_t> p) const {
-            return p.first<<(sizeof(size_t)/2) | p.second;
+        operator()(std::pair<size_t, size_t> p) const {
+            return p.first << (sizeof(size_t) / 2) | p.second;
         }
     };
-
 
     //! general size type
     typedef size_t size_type;
@@ -96,35 +93,35 @@ namespace LocARNA {
     //! type of a sequence position
     typedef size_type pos_type;
 
-
     // ------------------------------------------------------------
     // define gap codes and symbols
 
     //! @brief "enum class" of gaps in alignment edges
-    class Gap
-    {
+    class Gap {
     private:
         size_t idx_; //! < index of enumeration value
     public:
         static size_t size; //!< enum size
 
-         //! regular gap
+        //! regular gap
         static const Gap regular;
         //! gap from inserting/deleting a loop (in sparse)
         static const Gap loop;
-         //! gap outside of the locally aligned region (sequence and structure local alignment)
+        //! gap outside of the locally aligned region (sequence and structure
+        //! local alignment)
         static const Gap locality;
         //! other gaps
         static const Gap other;
 
         //! @brief init from 0-based index
         //! @param idx index
-        explicit
-        Gap(size_t idx) : idx_(idx) {}
+        explicit Gap(size_t idx) : idx_(idx) {}
 
         //! @brief 0-based index
         size_t
-        idx() const { return (size_t)idx_; }
+        idx() const {
+            return (size_t)idx_;
+        }
 
         /**
          * @brief equality
@@ -133,7 +130,9 @@ namespace LocARNA {
          * @return whether object equals operand
          */
         bool
-        operator == (const Gap & x) const { return this->idx_ == x.idx_; }
+        operator==(const Gap &x) const {
+            return this->idx_ == x.idx_;
+        }
 
         /**
          * @brief inequality
@@ -142,15 +141,17 @@ namespace LocARNA {
          * @return whether object not equals operand
          */
         bool
-        operator != (const Gap & x) const { return this->idx_ != x.idx_; }
+        operator!=(const Gap &x) const {
+            return this->idx_ != x.idx_;
+        }
     };
-
 
     //! @brief Test for gap symbol
     //! @param c character to be tested
     //! @returns whether c codes for a gap
     //! according to global constant gap_symbols
-    bool is_gap_symbol(char c);
+    bool
+    is_gap_symbol(char c);
 
     //! @brief simplified symbols of gaps
     char
@@ -161,72 +162,71 @@ namespace LocARNA {
     special_gap_symbol(Gap gap);
 
     //! code of a gap symbol
-    Gap gap_code(char symbol);
+    Gap
+    gap_code(char symbol);
     // ------------------------------------------------------------
 
     //! Simple exception class that supports a text message
     class failure : public std::exception {
         //! message that is reported by what
         std::string msg_;
+
     public:
         /**
          * @brief Construct with message
          *
          * @param msg the message
          */
-        explicit
-        failure (const std::string& msg): std::exception(), msg_(msg) {};
+        explicit failure(const std::string &msg)
+            : std::exception(), msg_(msg){};
 
         /**
          * @brief Construct empty
          */
-        explicit
-        failure (): std::exception(), msg_() {};
+        explicit failure() : std::exception(), msg_(){};
 
         //! Destruct
-        virtual
-        ~failure() throw();
+        virtual ~failure() throw();
 
         /** @brief Provide message string
          * @return message
          */
-        virtual
-        const char* what() const throw();
+        virtual const char *
+        what() const throw();
     };
 
     /**
      * @brief thrown, when reading data that is not in the supposed format
      */
-    struct wrong_format_failure: public failure {
-        wrong_format_failure():failure("Wrong format") {}
+    struct wrong_format_failure : public failure {
+        wrong_format_failure() : failure("Wrong format") {}
     };
 
     /**
      * @brief thrown, when the format is recognized but syntax is incorrect
      */
-    struct syntax_error_failure: public failure {
-
+    struct syntax_error_failure : public failure {
         //! @brief empty constructor
-        syntax_error_failure():failure("Syntax error") {}
+        syntax_error_failure() : failure("Syntax error") {}
 
         /**
          * @brief Construct with message string
          *
          * @param msg message string
          */
-        explicit
-        syntax_error_failure(const std::string &msg):failure("Syntax error: "+msg) {}
+        explicit syntax_error_failure(const std::string &msg)
+            : failure("Syntax error: " + msg) {}
     };
-
 
     /**
      * @brief expected probability of a base pair (null-model)
-     * @note magic formula for expected probability (aka background); actually questionable
+     * @note magic formula for expected probability (aka background); actually
+     * questionable
      */
-    inline
-    double
-    prob_exp_f(int seqlen) {return 1.0/(2.0*seqlen);}
-
+    inline double
+    prob_exp_f(int seqlen) {
+        return 1.0 / (2.0 * seqlen);
+    }
 
     // ------------------------------------------------------------
     // transformation of strings
@@ -237,8 +237,8 @@ namespace LocARNA {
      * @param[in,out] s string
      * @post string is all upper case
      */
-    void transform_toupper(std::string &s);
-
+    void
+    transform_toupper(std::string &s);
 
     //! \brief Transform an RNA sequence string
     //!
@@ -249,7 +249,6 @@ namespace LocARNA {
     //! @param seq sequence string
     void
     normalize_rna_sequence(std::string &seq);
-
 
     /**
      * @brief Tokenize string at separator symbol
@@ -262,7 +261,9 @@ namespace LocARNA {
      * @param v[out] vector of strings
      */
     void
-    split_at_separator(const std::string &s, char sep, std::vector<std::string> &v);
+    split_at_separator(const std::string &s,
+                       char sep,
+                       std::vector<std::string> &v);
 
     /**
      * @brief Tokenize string at separator symbol
@@ -301,7 +302,6 @@ namespace LocARNA {
      */
     typedef double FLT_OR_DBL;
 
-
     /**
      * Test for sufficient fragment length
      *
@@ -311,10 +311,9 @@ namespace LocARNA {
      *
      * @return whether fragment has at least length minlen
      */
-    inline
-    bool
+    inline bool
     frag_len_geq(size_t i, size_t j, size_t minlen) {
-        return i+minlen <= j+1;
+        return i + minlen <= j + 1;
     }
 
     /**
@@ -325,10 +324,9 @@ namespace LocARNA {
      *
      * @return number of bases in range i..j
      */
-    inline
-    size_t
+    inline size_t
     frag_len(size_t i, size_t j) {
-        return j+1-i;
+        return j + 1 - i;
     }
 
     /**
@@ -340,10 +338,9 @@ namespace LocARNA {
      * @return span of base pair (i,j), i.e. the number of bases in
      * the range i..j
      */
-    inline
-    size_t
+    inline size_t
     bp_span(size_t i, size_t j) {
-        return frag_len(i,j);
+        return frag_len(i, j);
     }
 
     /**
@@ -357,7 +354,7 @@ namespace LocARNA {
      * characters from s)
      */
     bool
-    has_prefix(const std::string &s, const std::string &p, size_t start=0);
+    has_prefix(const std::string &s, const std::string &p, size_t start = 0);
 
     /**
      * @brief Get next non-empty/non-comment line
@@ -377,15 +374,10 @@ namespace LocARNA {
      * @return success
      */
     bool
-    get_nonempty_line(std::istream &in,
-                      std::string &line);
-
+    get_nonempty_line(std::istream &in, std::string &line);
 
     double
     sequence_identity(const string1 &seqA, const string1 &seqB);
-
-
 }
-
 
 #endif

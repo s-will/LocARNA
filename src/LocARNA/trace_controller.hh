@@ -2,7 +2,7 @@
 #define LOCARNA_TRACE_CONTROLLER_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <vector>
@@ -40,17 +40,14 @@ namespace LocARNA {
          * pairwise alignment given by aliA and aliB where gap-only
          * columns are removed
          */
-        static
-        seqentry_pair_t
-        remove_common_gaps(const SeqEntry &aliA,
-                           const SeqEntry &aliB);
+        static seqentry_pair_t
+        remove_common_gaps(const SeqEntry &aliA, const SeqEntry &aliB);
 
     protected:
         std::vector<size_t> min_col_vector_; //!< minimal column in row
         std::vector<size_t> max_col_vector_; //!< maximal column in row
         //! \brief Construct empty
-        TraceRange() {
-        }
+        TraceRange() {}
 
     public:
         /**
@@ -80,7 +77,6 @@ namespace LocARNA {
                    const SeqEntry &aliB,
                    size_type delta);
 
-
         /**
          * @brief Construct as consensus trace range from a set of traces
          *
@@ -95,10 +91,14 @@ namespace LocARNA {
          * @param trs set of traces
          * @param delta deviation
          */
-        TraceRange(size_type lenA, size_type lenB, const std::vector<TraceRange> &trs, size_type delta);
+        TraceRange(size_type lenA,
+                   size_type lenB,
+                   const std::vector<TraceRange> &trs,
+                   size_type delta);
 
         /**
-         * \brief Computes cost of a cut in the consensus trace of a trace range set
+         * \brief Computes cost of a cut in the consensus trace of a trace range
+         * set
          * @param i cut.first
          * @param j cut.second
          * @param trs set of trace ranges
@@ -114,7 +114,9 @@ namespace LocARNA {
          * @return length of seqA, i.e. the maximal row of the trace
          */
         size_t
-        rows() const {return min_col_vector_.size()-1;}
+        rows() const {
+            return min_col_vector_.size() - 1;
+        }
 
         /**
          * \brief Minimal column of trace in a row
@@ -122,7 +124,9 @@ namespace LocARNA {
          * @returns minimal valid trace cell in the row i
          */
         size_t
-        min_col(size_t i) const {return min_col_vector_[i];}
+        min_col(size_t i) const {
+            return min_col_vector_[i];
+        }
 
         /**
          * \brief Maximal column of trace in a row
@@ -130,7 +134,9 @@ namespace LocARNA {
          * @returns maximal valid trace cell in the row i
          */
         size_t
-        max_col(size_t i) const {return max_col_vector_[i];}
+        max_col(size_t i) const {
+            return max_col_vector_[i];
+        }
 
         /**
          * Print object to ouptut stream for debugging
@@ -138,14 +144,11 @@ namespace LocARNA {
          * @param out output stream
          */
         void
-        print_debug(std::ostream & out) const;
-
+        print_debug(std::ostream &out) const;
     };
-
 
     //! abstract class that declares the method is_valid_match()
     class MatchController {
-
     public:
         /**
          * test for allowed matches due to valid traces
@@ -153,15 +156,11 @@ namespace LocARNA {
          * @param j position in sequence B in 1..lenB
          * @returns whether i~j is an allowed match due to valid traces
          */
-        virtual
-        bool
-        is_valid_match(size_t i, size_t j) const=0;
+        virtual bool
+        is_valid_match(size_t i, size_t j) const = 0;
 
-        virtual
-        ~MatchController();
-
+        virtual ~MatchController();
     };
-
 
     /**
      * @brief Controls the matrix cells valid for traces
@@ -175,9 +174,9 @@ namespace LocARNA {
      * a maximal difference to a given alignment (trace).
      */
     class TraceController : public TraceRange, public MatchController {
-
     private:
-        // The delimiter character separating the two sequences in the alignment string
+        // The delimiter character separating the two sequences in the alignment
+        // string
         static const char delimiter = '&';
 
         /**
@@ -197,7 +196,6 @@ namespace LocARNA {
         // const bool relaxed_merging_;
 
     public:
-
         /**
          * \brief Constructs for the general case of alignment of alignments
          * @param seqA sequence A
@@ -206,7 +204,8 @@ namespace LocARNA {
          * @param delta the allowed difference
          * @param relaxed_merging whether to use relaxed merging of trace ranges
          * @note If delta == -1 then min_col is 1 and max_col is lenB
-         * @note If delta != -1 and ma==NULL, then define min j, max j by deviation |i-(lenA/lenB)*j|<=delta
+         * @note If delta != -1 and ma==NULL, then define min j, max j by
+         * deviation |i-(lenA/lenB)*j|<=delta
          * @note These values are chosen such that for all j between
          *  min and max, the delta constraint holds for all pairs of
          *  sequences in seqA and seqB.
@@ -215,11 +214,10 @@ namespace LocARNA {
                         const Sequence &seqB,
                         const MultipleAlignment *ma,
                         int delta,
-                        bool relaxed_merging=false);
+                        bool relaxed_merging = false);
 
         //! \brief Virtual destructor
-        virtual
-        ~TraceController();
+        virtual ~TraceController();
 
         /**
          * test for matrix entries on valid trace
@@ -236,19 +234,22 @@ namespace LocARNA {
          * @param j position in sequence B in 1..lenB
          * @returns whether i~j is an allowed match due to valid traces
          */
-        virtual
-        bool
+        virtual bool
         is_valid_match(size_type i, size_type j) const;
 
         /**
          * \brief Read deviation
          * @return deviation Delta
          */
-        size_type get_delta() const {return delta_;}
+        size_type
+        get_delta() const {
+            return delta_;
+        }
 
     private:
         /**
-         * For n=lenA>0 and m=lenB>0, constrain the min/max j without reference alignment by
+         * For n=lenA>0 and m=lenB>0, constrain the min/max j without reference
+         * alignment by
          * delta only such that match i~j is allowed iff | i/n - j/m |
          * <= 2 delta/(n+m), unless delta is too small to connect
          * the matrix entries; in the latter case delta is chosen
@@ -260,22 +261,18 @@ namespace LocARNA {
          */
         void
         constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);
-
     };
 
-    inline
-    bool
+    inline bool
     TraceController::is_valid(size_type i, size_type j) const {
-        return min_col(i)<=j && j<=max_col(i);
+        return min_col(i) <= j && j <= max_col(i);
     }
 
-    inline
-    bool
+    inline bool
     TraceController::is_valid_match(size_type i, size_type j) const {
-        return is_valid(i,j) && is_valid(i-1,j-1);
+        return is_valid(i, j) && is_valid(i - 1, j - 1);
     }
 
-} //end namespace
-
+} // end namespace
 
 #endif /* LOCARNA_TRACE_CONTROLLER_HH */

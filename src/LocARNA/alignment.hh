@@ -2,7 +2,7 @@
 #define LOCARNA_ALIGNMENT_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <iosfwd>
@@ -27,57 +27,69 @@ namespace LocARNA {
     class EdgeEnd {
         int end_; //<! position or Gap
     public:
-
         //!@brief construct as invalid end
-        EdgeEnd(): end_(0) {}
+        EdgeEnd() : end_(0) {}
 
         //!@brief construct as position
         //!@note used for implicit type cast
-        EdgeEnd(pos_type end): end_(int(end)) {}
+        EdgeEnd(pos_type end) : end_(int(end)) {}
 
         //!@brief construct as gap
         //!@note used for implicit type cast
-        EdgeEnd(Gap end): end_(-int(end.idx())-1) {}
+        EdgeEnd(Gap end) : end_(-int(end.idx()) - 1) {}
 
         //! @brief gap test
         //! @return whether end is gap
-        bool is_gap() const {return end_<0;}
+        bool
+        is_gap() const {
+            return end_ < 0;
+        }
 
         //! @brief is position test
         //! @return whether end is position
-        bool is_pos() const {return end_>0;}
+        bool
+        is_pos() const {
+            return end_ > 0;
+        }
 
         //! edge end as gap
         //! @return gap enum
-        Gap gap() const {assert(end_<0); return Gap(size_t(-(end_+1)));}
+        Gap
+        gap() const {
+            assert(end_ < 0);
+            return Gap(size_t(-(end_ + 1)));
+        }
 
         //! edge end as position
         //! @return position
-        operator pos_type() const {assert(end_>0); return pos_type(end_);}
+        operator pos_type() const {
+            assert(end_ > 0);
+            return pos_type(end_);
+        }
     };
 
     //! @brief vector of alignment edge ends
     typedef std::vector<EdgeEnd> Alignment__edge_ends_t;
 
     //! @brief pair of vector of alignment edges
-    class AlignmentEdges : public std::pair<Alignment__edge_ends_t,Alignment__edge_ends_t> {
+    class AlignmentEdges
+        : public std::pair<Alignment__edge_ends_t, Alignment__edge_ends_t> {
         typedef Alignment__edge_ends_t edge_ends_t;
-        typedef std::pair<edge_ends_t,edge_ends_t> parent_t;
-    public:
+        typedef std::pair<edge_ends_t, edge_ends_t> parent_t;
 
+    public:
         //! @brief Construct asserting equal length
-        AlignmentEdges(const edge_ends_t &x,
-                       const edge_ends_t &y)
-            :parent_t(x,y)
-        {
-            assert(x.size()==y.size());
+        AlignmentEdges(const edge_ends_t &x, const edge_ends_t &y)
+            : parent_t(x, y) {
+            assert(x.size() == y.size());
         };
 
         //! @brief Size
         size_t
-        size() const {return first.size();}
+        size() const {
+            return first.size();
+        }
     };
-
 
     /**
      * \brief Represents a structure-annotated sequence alignment
@@ -85,11 +97,9 @@ namespace LocARNA {
      *  Supports construction of the alignment during traceback.
      */
     class Alignment {
-
         AlignmentImpl *pimpl_; //!< implementation pointer
 
     public:
-
         //! edge end
         typedef EdgeEnd edge_end_t;
 
@@ -99,23 +109,20 @@ namespace LocARNA {
         //! description of alignment edges
         typedef AlignmentEdges edges_t;
 
-
         /**
          * @brief convert alignemnt string to edge end vector
          * @param alistr alignment string
          * @return vector of edge ends corresponding to alistr
          */
-        static
-        edge_ends_t
+        static edge_ends_t
         alistr_to_edge_ends(const std::string &alistr);
-
 
         /**
          * Construct empty alignment from sequences
          * @param seqA First sequence
          * @param seqB Second sequence
          */
-        Alignment(const Sequence &seqA,const Sequence &seqB);
+        Alignment(const Sequence &seqA, const Sequence &seqB);
 
         /**
          * Destructor
@@ -129,7 +136,8 @@ namespace LocARNA {
          * @param seqB Second sequence
          * @param edges alignment edges
          */
-        Alignment(const Sequence &seqA, const Sequence &seqB,
+        Alignment(const Sequence &seqA,
+                  const Sequence &seqB,
                   const edges_t &edges);
 
         /**
@@ -144,7 +152,8 @@ namespace LocARNA {
          * @param alignment object to be assigned
          * Assigns implementation object (not only pointer)
          */
-        Alignment &operator =(const Alignment &alignment);
+        Alignment &
+        operator=(const Alignment &alignment);
 
         /**
          * @brief swap two alignments
@@ -153,8 +162,7 @@ namespace LocARNA {
          * Swaps implementation objects (not only pointer)
          */
         void
-        swap(Alignment &a1,Alignment &a2);
-
+        swap(Alignment &a1, Alignment &a2);
 
         /**
          * \brief Set consensus structure of the alignment
@@ -169,7 +177,8 @@ namespace LocARNA {
          * @param structureB structure B
          */
         void
-        set_structures(const RnaStructure &structureA,const RnaStructure &structureB);
+        set_structures(const RnaStructure &structureA,
+                       const RnaStructure &structureB);
 
         /**
            Delete the alignment edges and reset structure
@@ -198,15 +207,16 @@ namespace LocARNA {
         void
         add_basepairB(int i, int j);
 
-
         /**
            \brief Add a basepair to the structure of A
         */
-        void add_deleted_basepairA(int i, int j);
+        void
+        add_deleted_basepairA(int i, int j);
         /**
            \brief Add a basepair to the structure of B
         */
-        void add_deleted_basepairB(int i, int j);
+        void
+        add_deleted_basepairB(int i, int j);
 
         /**
          * @brief All alignment edges
@@ -249,10 +259,10 @@ namespace LocARNA {
         size_type
         local_endB() const;
 
-
         /**
          * @brief Structure A
-         * @param only_local if true, construct string only for aligned subsequence
+         * @param only_local if true, construct string only for aligned
+         * subsequence
          * @return dot bracket string for structure A with gaps
          */
         std::string
@@ -260,12 +270,12 @@ namespace LocARNA {
 
         /**
          * @brief Structure B
-         * @param only_local if true, construct string only for aligned subsequence
+         * @param only_local if true, construct string only for aligned
+         * subsequence
          * @return dot bracket string for structure B with gaps
          */
         std::string
         dot_bracket_structureB(bool only_local) const;
-
 
         /* access */
 
@@ -273,16 +283,15 @@ namespace LocARNA {
          * @brief read access seqA
          * @return sequence A
          */
-        const Sequence &seqA() const;
+        const Sequence &
+        seqA() const;
 
         /**
          * @brief read access seqB
          * @return sequence B
          */
-        const Sequence &seqB() const;
-
+        const Sequence &
+        seqB() const;
     };
-
-
 }
 #endif

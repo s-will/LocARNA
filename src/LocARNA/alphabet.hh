@@ -2,7 +2,7 @@
 #define LOCARNA_ALPHABET_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <vector>
@@ -19,19 +19,21 @@ namespace LocARNA {
      * between elements of alphabet and their indices
      *
      */
-    template<class T>
+    template <class T>
     class Alphabet {
         typedef std::vector<T> vec_t;
+
     public:
         typedef typename vec_t::size_type size_type; //!< size type
     private:
-        typedef std::map<T,size_type> hash_t;
+        typedef std::map<T, size_type> hash_t;
 
         vec_t alph_vec;
         hash_t alph_hash;
+
     public:
         typedef size_type index_type; //!< type of index
-        typedef T elem_type; //!< type of an alphabet element
+        typedef T elem_type;          //!< type of an alphabet element
         typedef std::vector<T> elem_vector_type; //!< vector of elements
 
         //! iterator over alphabet elements
@@ -44,17 +46,18 @@ namespace LocARNA {
         Alphabet();
 
         //! construct from vector of alphabet elements
-        explicit
-        Alphabet(const elem_vector_type &a);
+        explicit Alphabet(const elem_vector_type &a);
 
         //! construct from array of alphabet indices with given length
-        Alphabet(const elem_type *s,int len);
+        Alphabet(const elem_type *s, int len);
 
         //! get alphabet size
-        size_type size() const;
+        size_type
+        size() const;
 
         //! convert element to index
-        size_type idx(const elem_type &elem) const;
+        size_type
+        idx(const elem_type &elem) const;
 
         /**
          * @brief convert index to element
@@ -69,20 +72,33 @@ namespace LocARNA {
         in(const elem_type &elem) const;
 
         //! begin for const iteration over elements
-        const_iterator begin() const {return alph_vec.begin();}
+        const_iterator
+        begin() const {
+            return alph_vec.begin();
+        }
 
         //! end for const iteration over elements
-        const_iterator end() const {return alph_vec.end();}
+        const_iterator
+        end() const {
+            return alph_vec.end();
+        }
 
         //! begin for iteration over elements
-        iterator begin() {return alph_vec.begin();}
+        iterator
+        begin() {
+            return alph_vec.begin();
+        }
 
         //! end for iteration over elements
-        iterator end() {return alph_vec.end();}
+        iterator
+        end() {
+            return alph_vec.end();
+        }
 
     private:
         //! initilize data structures from alphabet vector a
-        void init(const vec_t &a);
+        void
+        init(const vec_t &a);
     };
 
     /**
@@ -93,11 +109,11 @@ namespace LocARNA {
      *
      * @return output stream after writing alphabet
      */
-    template<class T>
-    std::ostream & operator << (std::ostream &out,Alphabet<T> a);
-
+    template <class T>
+    std::ostream &
+    operator<<(std::ostream &out, Alphabet<T> a);
 }
 
-#   include "alphabet.icc"
+#include "alphabet.icc"
 
 #endif // LOCARNA_ALPHABET_HH

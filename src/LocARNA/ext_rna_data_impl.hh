@@ -2,7 +2,7 @@
 #define LOCARNA_EXT_RNA_DATA_IMPL_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <iosfwd>
@@ -36,7 +36,6 @@ namespace LocARNA {
         //! matrix of arc probability matrices
         typedef SparseMatrix<arc_prob_matrix_t> arc_prob_matrix_matrix_t;
 
-
         // ----------------------------------------
         // ATTRIBUTES
 
@@ -61,7 +60,6 @@ namespace LocARNA {
         // ----------------------------------------
         // CONSTRUCTORS
 
-
         /**
          * @brief Construct
          *
@@ -69,11 +67,10 @@ namespace LocARNA {
          * @param p_bpilcut probability cutoff base pair in loop
          * @param p_uilcut  probability cutoff unpaired in loop
          *
-         * @note autodetects file format, see corresponding RnaDataImpl constructor
+         * @note autodetects file format, see corresponding RnaDataImpl
+         * constructor
          */
-        ExtRnaDataImpl(ExtRnaData *self,
-                       double p_bpilcut,
-                       double p_uilcut);
+        ExtRnaDataImpl(ExtRnaData *self, double p_bpilcut, double p_uilcut);
 
         // ----------------------------------------
         // METHODS
@@ -95,8 +92,8 @@ namespace LocARNA {
         init_fixed_basepairs_in_loop(size_t i,
                                      size_t j,
                                      const RnaStructure &structure);
-    public:
 
+    public:
         /**
          * @brief initialize in loop probabilities from fixed structure
          *
@@ -134,7 +131,6 @@ namespace LocARNA {
         std::istream &
         read_pp_in_loop_probabilities(std::istream &in);
 
-
         /**
          * @brief read keyword line in loop probability section of
          * pp-format
@@ -167,8 +163,7 @@ namespace LocARNA {
         write_pp_in_loop_probabilities(std::ostream &out,
                                        double p_outbpcut,
                                        double p_outbpilcut,
-                                       double p_outuilcut
-                                       ) const;
+                                       double p_outuilcut) const;
 
         /**
          * @brief Write a line of in loop probabilities for one base pair
@@ -183,7 +178,8 @@ namespace LocARNA {
          */
         std::ostream &
         write_pp_in_loop_probability_line(std::ostream &out,
-                                          size_t i, size_t j,
+                                          size_t i,
+                                          size_t j,
                                           double p_bpcut,
                                           double p_ucut) const;
         /**
@@ -225,7 +221,8 @@ namespace LocARNA {
         /**
          * @brief Drop unpaired bases in loops with lowest probability
          *
-         * @param keep the maximum total number of unpaired bases in loops to keep
+         * @param keep the maximum total number of unpaired bases in loops to
+         * keep
          */
         void
         drop_worst_uil(size_t keep);
@@ -238,21 +235,18 @@ namespace LocARNA {
         void
         drop_worst_bpil(size_t keep);
 
-
-
         /**
          * @brief Drop base pairs in loops with lowest probability based on
          *  loop length
          *
-         * @param ratio limit on number of base pairs closed by a loop divided by loop length
+         * @param ratio limit on number of base pairs closed by a loop divided
+         * by loop length
          */
         void
         drop_worst_bpil_precise(double ratio);
 
     }; // end ExtRnaDataImpl
 
-
-} //end namespace LocARNA
-
+} // end namespace LocARNA
 
 #endif // LOCARNA_EXT_RNA_DATA_IMPL_HH

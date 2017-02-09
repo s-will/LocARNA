@@ -2,7 +2,7 @@
 #define LOCARNA_SEQUENCE_ANNOTATION_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <string>
@@ -22,7 +22,6 @@ namespace LocARNA {
      * consensus of two aligned annotation sequences.
      */
     class SequenceAnnotation {
-
         //! an anchcor name
         typedef std::string name_t;
 
@@ -42,26 +41,22 @@ namespace LocARNA {
         /**
          * @brief A static constant empty instance of type SequenceAnnotation
          */
-        static
-        const
-        SequenceAnnotation empty_instance_;
+        static const SequenceAnnotation empty_instance_;
 
     public:
-
         /**
          * @brief Construct empty
          * @param name_length length of names
          */
-        explicit
-        SequenceAnnotation(size_type name_length=0):annotation_(name_length) {}
+        explicit SequenceAnnotation(size_type name_length = 0)
+            : annotation_(name_length) {}
 
         /**
          * @brief Construct single string
          *
          * @param annotation_string string of '#'-separated sub-strings
          */
-        explicit
-        SequenceAnnotation(const std::string &annotation_string);
+        explicit SequenceAnnotation(const std::string &annotation_string);
 
         /**
          * @brief Construct from vector of strings
@@ -69,11 +64,12 @@ namespace LocARNA {
          * @param annotation_strings vector of annotation strings
          *
          * The strings specify names of uniform length. The name of a
-         * position i is the string annotation_strings[0][i]+...+annotation_strings[k-1][i],
+         * position i is the string
+         * annotation_strings[0][i]+...+annotation_strings[k-1][i],
          * where k=annotation_strings.size()
          */
-        explicit
-        SequenceAnnotation(const std::vector<std::string> &annotation_strings);
+        explicit SequenceAnnotation(
+            const std::vector<std::string> &annotation_strings);
 
         /**
          * @brief Construct as consensus annotation
@@ -82,11 +78,14 @@ namespace LocARNA {
          * @param annotationB annotation B
          * @return consensus annotation of A and B
          *
-         * @note If two different names are aligned (name clash!), the lexicographically smaller name is
+         * @note If two different names are aligned (name clash!), the
+         * lexicographically smaller name is
          * selected to resolve the conflict
-         * @note If two equal names are not aligned, this can result in duplicate names in the consensus
+         * @note If two equal names are not aligned, this can result in
+         * duplicate names in the consensus
          *
-         * The consensus contains all names that appear in either A or B or both at the
+         * The consensus contains all names that appear in either A or B or both
+         * at the
          * position of the corresponding alignment edge.
          *
          * @pre names in annotationA and annotationB must have the same lengths
@@ -95,13 +94,11 @@ namespace LocARNA {
                            const SequenceAnnotation &annotationA,
                            const SequenceAnnotation &annotationB);
 
-
         /**
          * @brief initialize the static member empty_instance
          *
          */
-        static
-        const SequenceAnnotation&
+        static const SequenceAnnotation &
         empty_instance() {
             return SequenceAnnotation::empty_instance_;
         }
@@ -114,7 +111,7 @@ namespace LocARNA {
          */
         size_t
         length() const {
-            return annotation_.size()>0?annotation_[0].size():0;
+            return annotation_.size() > 0 ? annotation_[0].size() : 0;
         }
 
         /**
@@ -123,7 +120,7 @@ namespace LocARNA {
          */
         bool
         empty() const {
-            return length()==0;
+            return length() == 0;
         }
 
         /**
@@ -144,7 +141,7 @@ namespace LocARNA {
          */
         const std::string &
         annotation_string(size_t i) const {
-            assert(i<annotation_.size());
+            assert(i < annotation_.size());
             return annotation_[i];
         }
 
@@ -156,31 +153,31 @@ namespace LocARNA {
          * @return string of annotation strings separated by sep
          */
         std::string
-        single_string(char sep='#') const;
+        single_string(char sep = '#') const;
 
         /**
          * @brief Test for neutral character
          * @param c
          * @return whether c is neutral
          */
-        static
-        bool
+        static bool
         is_neutral_char(char c) {
-            return c==' ' || c=='.';
+            return c == ' ' || c == '.';
         }
 
         /**
          * @brief Test neutral name
-         * @return whether name is neutral, i.e. contains no non-neutral characters
+         * @return whether name is neutral, i.e. contains no non-neutral
+         * characters
          */
-        static
-        bool
+        static bool
         is_neutral(const name_t &name);
 
         /**
          * @brief Test neutral name at a position
          * @param i position of name
-         * @return whether name at position i is neutral, i.e. contains no non-neutral characters
+         * @return whether name at position i is neutral, i.e. contains no
+         * non-neutral characters
          */
         bool
         is_neutral_pos(size_t i) const;
@@ -217,12 +214,10 @@ namespace LocARNA {
          *
          * @return whether names in A and B clash when aligned via edges
          */
-        static
-        bool
+        static bool
         clashing_names(const AlignmentEdges &edges,
                        const SequenceAnnotation &annotationA,
                        const SequenceAnnotation &annotationB);
-
     };
 }
 

@@ -2,7 +2,7 @@
 #define LOCARNA_ALIGNMENT_IMPL_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <iosfwd>
@@ -10,7 +10,8 @@
 
 namespace LocARNA {
 
-    template <class T> class plusvector;
+    template <class T>
+    class plusvector;
     class Alignment;
     class Sequence;
     class RnaData;
@@ -64,9 +65,16 @@ namespace LocARNA {
          * @param seqA sequence A
          * @param seqB sequence B
          */
-        AlignmentImpl(Alignment *self, const Sequence &seqA, const Sequence &seqB)
-            : self_(self),seqA_(seqA),seqB_(seqB),a_(),b_(),strA_(),strB_() {}
-
+        AlignmentImpl(Alignment *self,
+                      const Sequence &seqA,
+                      const Sequence &seqB)
+            : self_(self),
+              seqA_(seqA),
+              seqB_(seqB),
+              a_(),
+              b_(),
+              strA_(),
+              strB_() {}
 
         /**
          * @brief Write raw alignment information for debugging
@@ -82,8 +90,7 @@ namespace LocARNA {
          * @param out output stream
          * @param ends description of alignment edge ends
          */
-        static
-        void
+        static void
         write_debug(std::ostream &out, const Alignment::edge_ends_t &ends);
 
         /**
@@ -94,8 +101,7 @@ namespace LocARNA {
          *
          * @return structure string
          */
-        static
-        std::string
+        static std::string
         dot_bracket_structure(const std::string &str,
                               const Alignment::edge_ends_t &x);
     };

@@ -2,7 +2,7 @@
 #define LOCARNA_PLUSVECTOR_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <vector>
@@ -15,11 +15,9 @@ namespace LocARNA {
      *
      * @see Alignment::write_pp() for usage example
      */
-    template<class T>
-    class plusvector: public std::vector<T> {
-
+    template <class T>
+    class plusvector : public std::vector<T> {
     public:
-
         /**
          * @brief Add an element to end of vector
          *
@@ -28,12 +26,12 @@ namespace LocARNA {
          * @return *this
          * @post x is added at end of *this (like push_back)
          */
-        plusvector& operator += (const T &x) {
+        plusvector &
+        operator+=(const T &x) {
             this->push_back(x);
             return *this;
         }
     };
-
 }
 
 #endif // LOCARNA_PLUSVECTOR_HH

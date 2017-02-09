@@ -2,25 +2,24 @@
 #define LOCARNA_STRAL_SCORE_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
-
 #include <math.h>
-
 
 #include "aux.hh"
 #include "sequence.hh"
 
 namespace LocARNA {
 
-    template <class T> class Matrix;
-    template <class T> class Alphabet;
+    template <class T>
+    class Matrix;
+    template <class T>
+    class Alphabet;
     class RnaData;
 
     //! \brief Implements the stral-like scoring function
     class StralScore {
-
         typedef std::vector<double> p_vec_t;
 
         Sequence seqA;
@@ -41,12 +40,13 @@ namespace LocARNA {
         double gap_extension;
 
     private:
-        void init_prob_vecs(const RnaData &rna,
-                            p_vec_t &p_up,
-                            p_vec_t &p_down,
-                            p_vec_t &p_un);
-    public:
+        void
+        init_prob_vecs(const RnaData &rna,
+                       p_vec_t &p_up,
+                       p_vec_t &p_down,
+                       p_vec_t &p_un);
 
+    public:
         /**
          * Construct for pair of RNAs with parameters for alignment
          *
@@ -64,8 +64,7 @@ namespace LocARNA {
                    const Alphabet<char> &alphabet_,
                    double pf_struct_weight_,
                    double gap_opening_,
-                   double gap_extension_
-                   );
+                   double gap_extension_);
 
         /**
          * \brief Compute STRAL-like similarity of two residues in the two RNAs
@@ -83,14 +82,16 @@ namespace LocARNA {
          *
          * @return similarity of residues i in A and j in B.
          */
-        double sigma(size_type i, size_type j) const;
+        double
+        sigma(size_type i, size_type j) const;
 
         /**
          * \brief Read gap opening cost
          *
          * @return gap opening cost
          */
-        double alpha() const {
+        double
+        alpha() const {
             return gap_opening;
         }
 
@@ -99,7 +100,8 @@ namespace LocARNA {
          *
          * @return gap extension cost
          */
-        double beta() const {
+        double
+        beta() const {
             return gap_extension;
         }
 
@@ -108,9 +110,7 @@ namespace LocARNA {
         //! @post the object scores the reverted RNAs
         void
         reverse();
-
     };
-
 }
 
-#endif //LOCARNA_STRAL_SCORE_HH
+#endif // LOCARNA_STRAL_SCORE_HH

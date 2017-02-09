@@ -2,14 +2,13 @@
 #define LOCARNA_RNA_STRUCTURE_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <assert.h>
 #include <set>
 #include <string>
 #include <ostream>
-
 
 namespace LocARNA {
 
@@ -33,24 +32,21 @@ namespace LocARNA {
     class RnaStructure {
     public:
         //! base pair type
-        typedef std::pair<size_t,size_t> bp_t;
+        typedef std::pair<size_t, size_t> bp_t;
 
         //! base pair set type
-        typedef std::set<bp_t,std::less<bp_t> > bps_t;
+        typedef std::set<bp_t, std::less<bp_t> > bps_t;
 
     private:
         size_t length_;
         bps_t bps_;
 
-        static const char unpaired_symbol_='.';
+        static const char unpaired_symbol_ = '.';
         static const std::string open_symbols_;
         static const std::string close_symbols_;
 
         bool
-        parse(const std::string &s,
-              bps_t &bps,
-              char op,
-              char cl);
+        parse(const std::string &s, bps_t &bps, char op, char cl);
 
         bool
         parse(const std::string &s,
@@ -61,15 +57,15 @@ namespace LocARNA {
         void
         assert_valid_bp(const bp_t &bp) {
             assert(1 <= bp.first);
-            assert(bp.first<bp.second);
-            assert(bp.second<=length_);
+            assert(bp.first < bp.second);
+            assert(bp.second <= length_);
         }
 
     public:
         /**
          * @brief construct empty
          */
-        RnaStructure(): length_(0), bps_() {}
+        RnaStructure() : length_(0), bps_() {}
 
         /**
          * @brief construct from dot-bracket string
@@ -89,9 +85,7 @@ namespace LocARNA {
          * different bracket-symbols like [(...]), so that other
          * common pseudoknot specifications are recognized as well.
          */
-        explicit
-        RnaStructure(const std::string &structure);
-
+        explicit RnaStructure(const std::string &structure);
 
         /**
          * @brief Equality operator
@@ -100,11 +94,8 @@ namespace LocARNA {
          * @return whether equal
          */
         bool
-        operator ==(const RnaStructure &s) const {
-            return
-                this->length_ == s.length_
-                &&
-                this->bps_ == s.bps_;
+        operator==(const RnaStructure &s) const {
+            return this->length_ == s.length_ && this->bps_ == s.bps_;
         }
 
         /**
@@ -122,12 +113,16 @@ namespace LocARNA {
         /** @brief sequence length
          */
         size_t
-        length() const {return length_;}
+        length() const {
+            return length_;
+        }
 
         /** @brief number of base pairs
          */
         size_t
-        size() const {return bps_.size();}
+        size() const {
+            return bps_.size();
+        }
 
         /** @brief insert base pair
          * @param bp base pair
@@ -151,8 +146,9 @@ namespace LocARNA {
             set structure to empty
          */
         void
-        clear() {bps_.clear();}
-
+        clear() {
+            bps_.clear();
+        }
 
         // This is not well supported by the current structure
         // represenation. Therefore, we don't offer such functionality.
@@ -174,8 +170,7 @@ namespace LocARNA {
         // bp_t
         // in_loop_of(size_t k, bp_t x) const;
 
-
-        //support contant iteration over base pair set
+        // support contant iteration over base pair set
 
         //! constant iterator over base pairs
         typedef bps_t::const_iterator const_iterator;
@@ -185,14 +180,20 @@ namespace LocARNA {
          *
          * @return constant iterator at begin
          */
-        const_iterator begin() const {return bps_.begin();}
+        const_iterator
+        begin() const {
+            return bps_.begin();
+        }
 
         /**
          * @brief end of base pair set
          *
          * @return constant iterator at end
          */
-        const_iterator end() const {return bps_.end();}
+        const_iterator
+        end() const {
+            return bps_.end();
+        }
 
         /**
          * @brief convert to dot-bracket string
@@ -213,10 +214,9 @@ namespace LocARNA {
 
     private:
         std::string
-        to_string( const bps_t &bps ) const;
+        to_string(const bps_t &bps) const;
 
     public:
-
         /**
          * @brief Check base pair set for empty structure / class PLAIN
          *
@@ -224,8 +224,7 @@ namespace LocARNA {
          *
          * @return whether given base pair set represents empty structure
          */
-        static
-        bool
+        static bool
         empty(const bps_t &bps);
 
         /**
@@ -234,7 +233,9 @@ namespace LocARNA {
          * @return whether structure is empty
          */
         bool
-        empty() const {return empty(bps_);}
+        empty() const {
+            return empty(bps_);
+        }
 
         /**
          * @brief Check for class NESTED
@@ -249,8 +250,7 @@ namespace LocARNA {
          *
          * @see in_crossing() for naming
          */
-        static
-        bool
+        static bool
         nested(const bps_t &bps);
 
         /**
@@ -259,7 +259,9 @@ namespace LocARNA {
          * @return whether structure is nested class
          */
         bool
-        nested() const {return nested(bps_);}
+        nested() const {
+            return nested(bps_);
+        }
 
         /**
          * @brief Check for class CROSSING
@@ -275,8 +277,7 @@ namespace LocARNA {
          * @note this does *not* test for the presence of crossing
          * base pairs. For the latter, use !nested().
          */
-        static
-        bool
+        static bool
         crossing(const bps_t &bps);
 
         /**
@@ -285,8 +286,9 @@ namespace LocARNA {
          * @return whether structure is in crossing class
          */
         bool
-        crossing() const {return crossing(bps_);}
-
+        crossing() const {
+            return crossing(bps_);
+        }
 
         // base pair filter operations
 
@@ -308,9 +310,8 @@ namespace LocARNA {
     }; // end class RnaStructure
 
     std::ostream &
-    operator <<(std::ostream &out,const RnaStructure &structure);
+    operator<<(std::ostream &out, const RnaStructure &structure);
 
 } // end namespace LocARNA
 
 #endif
-

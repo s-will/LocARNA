@@ -2,16 +2,15 @@
 #define LOCARNA_PFOLD_PARAMS_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 extern "C" {
-#   include <ViennaRNA/data_structures.h>
+#include <ViennaRNA/data_structures.h>
 }
 
 #include <limits>
 #include "aux.hh"
-
 
 namespace LocARNA {
 
@@ -40,11 +39,7 @@ namespace LocARNA {
          * @param max_bp_span maximum base pair span
          * @param dangling ViennaRNA dangling end type
          */
-        PFoldParams(bool noLP,
-                    bool stacking,
-                    int max_bp_span,
-                    int dangling
-                    );
+        PFoldParams(bool noLP, bool stacking, int max_bp_span, int dangling);
 
         /**
          * @brief get ViennaRNA model details structure
@@ -52,7 +47,8 @@ namespace LocARNA {
          * @return initialized md structure
          *
          * The structure is set to the values of this object for
-         * maintained values; some further values are set explicitly, e.g. alifold parameters.
+         * maintained values; some further values are set explicitly, e.g.
+         * alifold parameters.
          * All other values are set to the ViennaRNA default values.
          */
         const vrna_md_t &
@@ -67,14 +63,20 @@ namespace LocARNA {
          *
          * @return value of flag
          */
-        bool noLP() const {return md_.noLP==1;}
+        bool
+        noLP() const {
+            return md_.noLP == 1;
+        }
 
         /**
          * @brief Check stacking flag
          *
          * @return value of flag
          */
-        bool stacking() const {return stacking_;}
+        bool
+        stacking() const {
+            return stacking_;
+        }
 
         /**
          * @brief Get maximum base pair span
@@ -87,10 +89,9 @@ namespace LocARNA {
          * size_t value if unrestricted)
          */
         size_t
-        max_bp_span() const {return
-                md_.max_bp_span>=0
-                ? md_.max_bp_span
-                : std::numeric_limits<size_t>::max();
+        max_bp_span() const {
+            return md_.max_bp_span >= 0 ? md_.max_bp_span
+                                        : std::numeric_limits<size_t>::max();
         }
 
         /**
@@ -98,11 +99,11 @@ namespace LocARNA {
          *
          * @return value of dangling
          */
-        int dangling() const {return md_.dangles;}
-
+        int
+        dangling() const {
+            return md_.dangles;
+        }
     };
-
-
 }
 
 #endif // LOCARNA_PFOLD_PARAMS_HH
