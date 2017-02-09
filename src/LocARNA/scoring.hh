@@ -2,7 +2,7 @@
 #define LOCARNA_SCORING_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <math.h>
@@ -19,9 +19,7 @@
 
 namespace LocARNA {
 
-
     //#define MEA_SCORING_OLD
-
 
     class RibosumFreq;
     class Ribofit;
@@ -40,7 +38,6 @@ namespace LocARNA {
     //! Vector of partition functions
     typedef std::vector<pf_score_t> PFScoreVector;
 
-
     //! matrix of scores supporting infinity
     typedef Matrix<infty_score_t> ScoreMatrix;
 
@@ -49,9 +46,6 @@ namespace LocARNA {
 
     //! Matrix of probabilities
     typedef Matrix<double> ProbMatrix;
-
-
-
 
     /**
      * \brief Parameters for scoring
@@ -84,7 +78,8 @@ namespace LocARNA {
         //! cost per gap (for affine gap-cost). Use affine gap cost if non-zero.
         const score_t indel_opening;
 
-        //! cost per gap for loops(for affine gap-cost). Use affine gap cost if non-zero.
+        //! cost per gap for loops(for affine gap-cost). Use affine gap cost if
+        //! non-zero.
         const score_t indel_opening_loop;
 
         /**
@@ -126,7 +121,6 @@ namespace LocARNA {
 
         const double temperature_alipf;
 
-
         //! turn on/off stacking terms
         const bool stacking;
 
@@ -144,7 +138,6 @@ namespace LocARNA {
 
         //! weight for mea contribution "consensus"
         const score_t gamma_factor;
-
 
         /**
          * resolution of the mea score.
@@ -165,12 +158,12 @@ namespace LocARNA {
           + alpha_factor/100 * (P(i unstructured) + P(j unstructured))
           +
           sum_arcmatchs (a,b)
-          beta_factor/100 * (P(a)+P(b)) * P(al~bl) * P(ar~br) * ribosum_arcmatch(a,b)
+          beta_factor/100 * (P(a)+P(b)) * P(al~bl) * P(ar~br) *
+          ribosum_arcmatch(a,b)
           )
         */
 
     public:
-
         /**
          * Construct with all scoring parameters
          *
@@ -218,8 +211,7 @@ namespace LocARNA {
                       score_t alpha_factor_,
                       score_t beta_factor_,
                       score_t gamma_factor_,
-                      score_t probability_scale_
-                      )
+                      score_t probability_scale_)
             : basematch(basematch_),
               basemismatch(basemismatch_),
               indel(indel_),
@@ -241,9 +233,7 @@ namespace LocARNA {
               alpha_factor(alpha_factor_),
               beta_factor(beta_factor_),
               gamma_factor(gamma_factor_),
-              probability_scale(probability_scale_)
-        {
-        }
+              probability_scale(probability_scale_) {}
     };
 
     /**
@@ -264,8 +254,10 @@ namespace LocARNA {
      *  * arc match score contributions from arc probabilities
      *  * weighting of single score contributions
      *
-     * The scoring class supports only characters ACGU, gap -, and N for ribosum scoring.
-     * ALL other characters are treated as unknown characters and are basically ignored.
+     * The scoring class supports only characters ACGU, gap -, and N for ribosum
+     * scoring.
+     * ALL other characters are treated as unknown characters and are basically
+     * ignored.
      * In consequence, IUPAC codes are handled badly. Even more important,
      * for ribosum scoring, sequences have to be upper case and Ts should be
      * converted to Us!!!
@@ -295,8 +287,8 @@ namespace LocARNA {
 
         const RnaData &rna_dataA; //!< rna data for RNA A
         const RnaData &rna_dataB; //!< rna data for RNA B
-        const Sequence &seqA; //!< sequence A
-        const Sequence &seqB; //!< sequence B
+        const Sequence &seqA;     //!< sequence A
+        const Sequence &seqB;     //!< sequence B
 
         /**
          * parameter for modified scoring in normalized local
@@ -305,7 +297,6 @@ namespace LocARNA {
         score_t lambda_;
 
     public:
-
         /**
          * @brief construct scoring object
          *
@@ -313,8 +304,10 @@ namespace LocARNA {
          * @param seqB second sequence
          * @param rna_dataA probability data of first sequence
          * @param rna_dataB probability data of second sequence
-         * @param arc_matches the (significant) arc matches between the sequences
-         * @param match_probs pointer to base match probabilities (can be 0L for non-mea scores)
+         * @param arc_matches the (significant) arc matches between the
+         * sequences
+         * @param match_probs pointer to base match probabilities (can be 0L for
+         * non-mea scores)
          * @param params a collection of parameters for scoring
          * @param exp_scores only if true, the results of the exp_*
          * scoring functions are defined, otherwise precomputations
@@ -327,9 +320,7 @@ namespace LocARNA {
                 const ArcMatches &arc_matches,
                 const MatchProbs *match_probs,
                 const ScoringParams &params,
-                bool exp_scores=false
-                );
-
+                bool exp_scores = false);
 
         /**
          * modify scoring by a parameter lambda. Used in the
@@ -345,9 +336,11 @@ namespace LocARNA {
         modify_by_parameter(score_t lambda);
 
         /**
-         * subtract the fixed unpaired_penalty from base match and base indel scores
+         * subtract the fixed unpaired_penalty from base match and base indel
+         * scores
          * it is similar to @modify_by_parameter method
-         * Please note that the base match and gap scores of ALL bases including the paired ones will be modified!
+         * Please note that the base match and gap scores of ALL bases including
+         * the paired ones will be modified!
          */
         void
         apply_unpaired_penalty();
@@ -357,13 +350,17 @@ namespace LocARNA {
          *
          * @return lambda
          */
-        score_t lambda() const {return lambda_;}
+        score_t
+        lambda() const {
+            return lambda_;
+        }
 
     private:
         // ------------------------------
         // tables for precomputed score contributions
         //
-        Matrix<score_t> sigma_tab; //!< precomputed table of base match similarities
+        Matrix<score_t>
+            sigma_tab; //!< precomputed table of base match similarities
 
         std::vector<score_t> gapcost_tabA; //!< table for gapcost in A
         std::vector<score_t> gapcost_tabB; //!< table for gapcost in B
@@ -379,12 +376,17 @@ namespace LocARNA {
         // ------------------------------
         // tables for precomputed exp score contributions for partition function
         //
-        Matrix<pf_score_t> exp_sigma_tab; //!< precomputed table of exp base match similarities
-        pf_score_t exp_indel_opening_score; //!< precomputed value for exp of indel opening cost
-        pf_score_t exp_indel_opening_loop_score; //!< precomputed value for exp of indel opening cost for loops
-        std::vector<pf_score_t> exp_gapcost_tabA; //!< table for exp gapcost in A
-        std::vector<pf_score_t> exp_gapcost_tabB; //!< table for exp gapcost in B
-
+        Matrix<pf_score_t>
+            exp_sigma_tab; //!< precomputed table of exp base match similarities
+        pf_score_t exp_indel_opening_score; //!< precomputed value for exp of
+                                            //!indel opening cost
+        pf_score_t exp_indel_opening_loop_score; //!< precomputed value for exp
+                                                 //!of indel opening cost for
+                                                 //!loops
+        std::vector<pf_score_t>
+            exp_gapcost_tabA; //!< table for exp gapcost in A
+        std::vector<pf_score_t>
+            exp_gapcost_tabB; //!< table for exp gapcost in B
 
         Matrix<size_t> identity; //!< sequence identities in percent
 
@@ -399,8 +401,9 @@ namespace LocARNA {
          * @param d score of type double
          * @return d rounded to integral type score_t
          */
-        score_t round2score(double d) const {
-            return (score_t)((d<0) ? (d-0.5) : (d+0.5));
+        score_t
+        round2score(double d) const {
+            return (score_t)((d < 0) ? (d - 0.5) : (d + 0.5));
         }
 
         /**
@@ -494,23 +497,22 @@ namespace LocARNA {
         score_t
         riboX_arcmatch_score(const Arc &arcA, const Arc &arcB) const;
 
-
         pf_score_t
-        boltzmann_weight(score_t s) const { return exp(s/(pf_score_t)params->temperature_alipf); }
-
+        boltzmann_weight(score_t s) const {
+            return exp(s / (pf_score_t)params->temperature_alipf);
+        }
 
         //! subtract from each element of a score_t vector v a value x
         void
-        subtract(std::vector<score_t> &v,score_t x) const;
+        subtract(std::vector<score_t> &v, score_t x) const;
 
         //! subtract from each element of a score_t Matrix m a value x
         void
-        subtract(Matrix<score_t> &m,score_t x) const;
+        subtract(Matrix<score_t> &m, score_t x) const;
 
     public:
         // ------------------------------------------------------------
         // SCORE CONTRIBUTIONS
-
 
         /**
          * \brief Score of a match of bases (without structure)
@@ -520,8 +522,9 @@ namespace LocARNA {
          *
          * @return score of base match i~j
          */
-        score_t basematch(size_type i, size_type j) const {
-            return sigma_tab(i,j);
+        score_t
+        basematch(size_type i, size_type j) const {
+            return sigma_tab(i, j);
         }
 
         /**
@@ -532,8 +535,9 @@ namespace LocARNA {
          *
          * @return Boltzmann weight of score of base match i~j
          */
-        pf_score_t exp_basematch(size_type i, size_type j) const {
-            return exp_sigma_tab(i,j);
+        pf_score_t
+        exp_basematch(size_type i, size_type j) const {
+            return exp_sigma_tab(i, j);
         }
 
         /**
@@ -553,7 +557,8 @@ namespace LocARNA {
          * explicit arc match scores are not needed and the use of
          * this method would be too inefficient.
          */
-        score_t arcmatch(const ArcMatch &am, bool stacked=false) const;
+        score_t
+        arcmatch(const ArcMatch &am, bool stacked = false) const;
 
         /**
          * @brief Score of arc match, given two arcs.
@@ -572,8 +577,10 @@ namespace LocARNA {
          * arc_matches->explicit_scores()==true (This results in a
          * run-time error if !NDEBUG).
          */
-        score_t arcmatch(const BasePairs__Arc &arcA, const BasePairs__Arc &arcB, bool stacked=false) const;
-
+        score_t
+        arcmatch(const BasePairs__Arc &arcA,
+                 const BasePairs__Arc &arcB,
+                 bool stacked = false) const;
 
         /**
          * @brief Very basic interface, score of aligning a basepair to gap
@@ -585,7 +592,9 @@ namespace LocARNA {
          * @return
          */
         score_t
-        arcDel(const BasePairs__Arc &arc, bool gapAorB, bool stacked=false) const;
+        arcDel(const BasePairs__Arc &arc,
+               bool gapAorB,
+               bool stacked = false) const;
 
         /**
          * @brief Boltzmann weight of score of arc match
@@ -594,7 +603,8 @@ namespace LocARNA {
          *
          * @return Boltzmann weight of score of arc match am
          */
-        pf_score_t exp_arcmatch(const ArcMatch &am) const {
+        pf_score_t
+        exp_arcmatch(const ArcMatch &am) const {
             return boltzmann_weight(arcmatch(am));
         }
 
@@ -605,7 +615,8 @@ namespace LocARNA {
          *
          * @return Score of arc match am when stacked
          */
-        score_t arcmatch_stacked(const ArcMatch &am) const {
+        score_t
+        arcmatch_stacked(const ArcMatch &am) const {
             return arcmatch(am, true);
         }
 
@@ -613,11 +624,13 @@ namespace LocARNA {
          * Score of deletion
          *
          * @param alignedToGap position in A or B
-         * @param gapInA whether symbol in A (true) or B (false) is aligned to gap
+         * @param gapInA whether symbol in A (true) or B (false) is aligned to
+         * gap
          *
          * @return score of deletion : posA <--> posB
          */
-        score_t gapX(size_type alignedToGap, bool gapInA) const {
+        score_t
+        gapX(size_type alignedToGap, bool gapInA) const {
             if (gapInA)
                 return gapA(alignedToGap);
             else
@@ -631,8 +644,9 @@ namespace LocARNA {
          *
          * @return score of deletion of posA after posB
          */
-        score_t gapA(size_type posA) const {
-            assert(1<=posA && posA <= seqA.length());
+        score_t
+        gapA(size_type posA) const {
+            assert(1 <= posA && posA <= seqA.length());
 
             return gapcost_tabA[posA];
         }
@@ -644,8 +658,9 @@ namespace LocARNA {
          *
          * @return Boltzmann weight of score of deletion of posA after posB
          */
-        pf_score_t exp_gapA(size_type posA) const {
-            assert(1<=posA && posA <= seqA.length());
+        pf_score_t
+        exp_gapA(size_type posA) const {
+            assert(1 <= posA && posA <= seqA.length());
             return exp_gapcost_tabA[posA];
         }
 
@@ -656,8 +671,9 @@ namespace LocARNA {
          *
          * @return score of insertion of posB after posA
          */
-        score_t gapB(size_type posB) const {
-            assert(1<=posB && posB <= seqB.length());
+        score_t
+        gapB(size_type posB) const {
+            assert(1 <= posB && posB <= seqB.length());
 
             return gapcost_tabB[posB];
         }
@@ -669,39 +685,45 @@ namespace LocARNA {
          *
          * @return Boltzmann weight of score of insertion of posB after posA
          */
-        pf_score_t exp_gapB(size_type posB) const {
-            assert(1<=posB && posB <= seqB.length());
+        pf_score_t
+        exp_gapB(size_type posB) const {
+            assert(1 <= posB && posB <= seqB.length());
 
             return exp_gapcost_tabB[posB];
         }
 
         //! cost of an exclusion
-        score_t exclusion() const {
+        score_t
+        exclusion() const {
             return params->exclusion;
         }
 
         //! cost to begin a new indel
-        score_t indel_opening() const {
+        score_t
+        indel_opening() const {
             return params->indel_opening;
         }
 
         //! multiply an score by the ratio of indel_loop/indel
-        score_t loop_indel_score(const score_t score) const {
+        score_t
+        loop_indel_score(const score_t score) const {
             return round2score(score * params->indel_loop / params->indel);
         }
         //! cost to begin a new indel
-        score_t indel_opening_loop() const {
+        score_t
+        indel_opening_loop() const {
             return params->indel_opening_loop;
         }
 
-
         //! exp of cost to begin a new indel
-        pf_score_t exp_indel_opening() const {
+        pf_score_t
+        exp_indel_opening() const {
             return exp_indel_opening_score;
         }
 
         //! exp of cost to begin a new indel in loops
-        pf_score_t exp_indel_opening_loop() const {
+        pf_score_t
+        exp_indel_opening_loop() const {
             return exp_indel_opening_loop_score;
         }
 
@@ -717,15 +739,18 @@ namespace LocARNA {
          *
          * @note influences computation of weights for base pairs
          */
-        double prob_exp(size_type len) const;
+        double
+        prob_exp(size_type len) const;
 
         /**
          * @brief Query stacking flag
          *
          * @return flag, whether stacking is used (old or new stacking terms)
          */
-        bool stacking() const {return params->stacking || params->new_stacking;}
-
+        bool
+        stacking() const {
+            return params->stacking || params->new_stacking;
+        }
 
         /**
          * @brief Is arc of A stackable

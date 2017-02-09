@@ -2,7 +2,7 @@
 #define LOCARNA_RNA_DATA_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <iosfwd>
@@ -10,7 +10,7 @@
 #include "sparse_matrix.hh"
 
 extern "C" {
-#   include <ViennaRNA/data_structures.h>
+#include <ViennaRNA/data_structures.h>
 }
 
 namespace LocARNA {
@@ -44,10 +44,10 @@ namespace LocARNA {
     protected:
         friend class RnaDataImpl;
         friend class ExtRnaDataImpl;
-        RnaDataImpl *pimpl_;  //!<- pointer to corresponding implementation object
+        RnaDataImpl
+            *pimpl_; //!<- pointer to corresponding implementation object
 
     public:
-
         //! arc probability matrix
         typedef SparseMatrix<double> arc_prob_matrix_t;
 
@@ -89,7 +89,8 @@ namespace LocARNA {
          * format autodetect.) Is there a problem due to fail on
          * eofbit in C++98?
          *
-         * @todo filter by maxBPspan when reading base pair probabilities from file.
+         * @todo filter by maxBPspan when reading base pair probabilities from
+         * file.
          * currently maxBPspan in pfoldparams is only respected when folding
          *
          * @note If probabilities have to be computed by folding the
@@ -103,8 +104,7 @@ namespace LocARNA {
         RnaData(const std::string &filename,
                 double p_bpcut,
                 double max_bps_length_ratio,
-                const PFoldParams &pfoldparams
-                );
+                const PFoldParams &pfoldparams);
 
         /**
          * @brief Construct as consensus of two aligned RNAs
@@ -130,8 +130,7 @@ namespace LocARNA {
                 const Alignment &alignment,
                 double p_expA,
                 double p_expB,
-                bool only_local=false
-                );
+                bool only_local = false);
 
     protected:
         /**
@@ -140,32 +139,28 @@ namespace LocARNA {
          * @param p_bpcut cutoff probability
          * @param max_bp_span maximum base pair span
          */
-        explicit
-        RnaData(double p_bpcut,
-                size_t max_bp_span);
+        explicit RnaData(double p_bpcut, size_t max_bp_span);
 
     private:
         /**
          * @brief copy constructor
          */
         RnaData(const RnaData &);
-    public:
 
+    public:
         /**
          * @brief destructor
          */
-        virtual
-        ~RnaData();
+        virtual ~RnaData();
 
     private:
         /**
          * @brief assignment operator
          */
         RnaData &
-        operator =(const RnaData &);
+        operator=(const RnaData &);
 
     public:
-
         /**
          * @brief Get the multiple alignment as sequence
          * @return sequence
@@ -218,7 +213,7 @@ namespace LocARNA {
          * probability of not forming a pair (compare RNAfold)
          */
         std::string
-        mea_structure(double gamma=1.) const;
+        mea_structure(double gamma = 1.) const;
 
         /**
          * @brief Construct plist (pair list of Vienna RNA)
@@ -249,9 +244,8 @@ namespace LocARNA {
          */
         arc_probs_const_iterator
         arc_probs_end() const;
+
     public:
-
-
         /**
          * @brief Get arc probability
          * @param i left sequence position
@@ -281,7 +275,8 @@ namespace LocARNA {
          * \brief Probability that a position is paired upstream
          *
          * \param i sequence position
-         * \return probability that a position i is paired with a position j>i (upstream)
+         * \return probability that a position i is paired with a position j>i
+         * (upstream)
          * @note O(sequence.length()) implementation
          * @see prob_paired_downstream
          */
@@ -292,7 +287,8 @@ namespace LocARNA {
          * \brief Probability that a position is paired downstream
          *
          * \param i sequence position
-         * \return probability that a position i is paired with a position j<i (downstream)
+         * \return probability that a position i is paired with a position j<i
+         * (downstream)
          * @note O(sequence.length()) implementation
          * @see prob_paired_upstream
          */
@@ -321,7 +317,7 @@ namespace LocARNA {
          * p_outbpcut
          */
         std::ostream &
-        write_pp(std::ostream &out, double p_outbpcut=0) const;
+        write_pp(std::ostream &out, double p_outbpcut = 0) const;
 
         /**
          * @brief Write object size information
@@ -350,7 +346,6 @@ namespace LocARNA {
         set_anchors(const SequenceAnnotation &anchors);
 
     protected:
-
         /**
          * @brief initialize from fixed structure
          *
@@ -361,8 +356,7 @@ namespace LocARNA {
          * @note can be overloaded to initialize with additional
          * information (in loop probabilities)
          */
-        virtual
-        void
+        virtual void
         init_from_fixed_structure(const RnaStructure &structure,
                                   const PFoldParams &pfoldparams);
 
@@ -379,11 +373,9 @@ namespace LocARNA {
          * @note this method *never* removes lonely or too long base
          * pairs (according to noLP or maxBPspan, resp.)
          */
-        virtual
-        void
+        virtual void
         init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
                                const PFoldParams &pfoldparams);
-
 
         /**
          * @brief read and initialize from file, autodetect format
@@ -418,10 +410,10 @@ namespace LocARNA {
          * @note use to indicate the need for recomputation
          * in read_autodetect(); always true in RnaData
          */
-        virtual
-        bool
-        inloopprobs_ok() const {return true;}
-
+        virtual bool
+        inloopprobs_ok() const {
+            return true;
+        }
 
         /**
          * Read data in pp format 2.0
@@ -446,8 +438,7 @@ namespace LocARNA {
          * is true only if the file specified the STACK keyword and
          * has_stacking_ was true before.
          */
-        virtual
-        void
+        virtual void
         read_pp(const std::string &filename);
 
         /**
@@ -457,8 +448,7 @@ namespace LocARNA {
          *
          * @see read_pp(std::string)
          */
-        virtual
-        std::istream &
+        virtual std::istream &
         read_pp(std::istream &in);
 
         /**
@@ -508,8 +498,6 @@ namespace LocARNA {
         read_ps(const std::string &filename);
 
     }; // end class RnaData
-
 }
-
 
 #endif // LOCARNA_RNA_DATA_HH

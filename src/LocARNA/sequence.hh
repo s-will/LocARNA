@@ -2,12 +2,11 @@
 #define LOCARNA_SEQUENCE_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <vector>
 #include "multiple_alignment.hh"
-
 
 namespace LocARNA {
 
@@ -26,29 +25,24 @@ namespace LocARNA {
      * Sequence. There should be a way to expresse this relation in a
      * nicer way.
      */
-    class Sequence:
-        public MultipleAlignment {
-
+    class Sequence : public MultipleAlignment {
         // BEWARE: don't define attributes in sequence! In
         // MultipleAlignment.as_sequence(), we rely on a simple upcast
         // to convert MultipleAlignment objects to Sequence objects
 
     public:
-
         /**
          * @brief Construct empty
          */
-        Sequence(): MultipleAlignment() {}
+        Sequence() : MultipleAlignment() {}
 
         /**
          * @brief Construct as single sequence
          * @param name name of sequence
          * @param sequence sequence string
          */
-        Sequence(const std::string &name,
-                 const std::string &sequence)
-            : MultipleAlignment(name,sequence) {
-        }
+        Sequence(const std::string &name, const std::string &sequence)
+            : MultipleAlignment(name, sequence) {}
 
         /**
          * @brief Access to columns
@@ -60,8 +54,7 @@ namespace LocARNA {
          * @note allows array notation via [] operator; this is the
          * main difference to MultipleAlignment class
          */
-        AliColumn
-        operator [](size_type col_index) const {
+        AliColumn operator[](size_type col_index) const {
             return column(col_index);
         }
 
@@ -69,11 +62,11 @@ namespace LocARNA {
          * \brief names vector (legacy, deprecated)
          *
          * @return vector of sequence names
-         * @note deprecated: in place of names()[i], rather use seqentry(i).name()
+         * @note deprecated: in place of names()[i], rather use
+         * seqentry(i).name()
          */
         std::vector<std::string>
         names() const;
-
     };
 
 } // end namespace LocARNA

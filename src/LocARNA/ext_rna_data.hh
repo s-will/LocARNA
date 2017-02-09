@@ -2,7 +2,7 @@
 #define LOCARNA_EXT_RNA_DATA_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <iosfwd>
@@ -18,7 +18,8 @@ namespace LocARNA {
     class RnaStructure;
 
     /**
-     * @brief represent sparsified data of RNA ensemble extended by in loop probabilities
+     * @brief represent sparsified data of RNA ensemble extended by in loop
+     * probabilities
      *
      * knows sequence, cutoff probability and base pair
      * probabilities greater than the cutoff probability
@@ -32,10 +33,11 @@ namespace LocARNA {
      * record after the regular pp-data, such that extended pp files
      * can be read as non-extended ones
      */
-    class ExtRnaData: public RnaData {
+    class ExtRnaData : public RnaData {
     private:
         friend class ExtRnaDataImpl;
-        ExtRnaDataImpl *ext_pimpl_;  //!<- pointer to corresponding implementation object
+        ExtRnaDataImpl
+            *ext_pimpl_; //!<- pointer to corresponding implementation object
     public:
         /**
          * @brief Construct from RnaEnsemble with cutoff probability
@@ -84,8 +86,8 @@ namespace LocARNA {
          * @brief copy constructor
          */
         ExtRnaData(const ExtRnaData &);
-    public:
 
+    public:
         /**
          * @brief destructor
          */
@@ -96,9 +98,9 @@ namespace LocARNA {
          * @brief assignment operator
          */
         ExtRnaData &
-        operator =(const ExtRnaData &);
-    public:
+        operator=(const ExtRnaData &);
 
+    public:
         /**
          * @brief Get base pair in loop cutoff probability
          * @return cutoff probability p_bpcut
@@ -117,7 +119,7 @@ namespace LocARNA {
          * above threshold; otherwise, 0
          */
         double
-        arc_in_loop_prob(pos_type i, pos_type j,pos_type p, pos_type q) const;
+        arc_in_loop_prob(pos_type i, pos_type j, pos_type p, pos_type q) const;
 
         /**
          * @brief Get base pair in loop probability
@@ -129,7 +131,6 @@ namespace LocARNA {
          */
         double
         arc_external_prob(pos_type i, pos_type j) const;
-
 
         /**
          * @brief Get unpaired base in loop cutoff probability
@@ -148,7 +149,7 @@ namespace LocARNA {
          * above threshold; otherwise, 0
          */
         double
-        unpaired_in_loop_prob(pos_type k,pos_type p, pos_type q) const;
+        unpaired_in_loop_prob(pos_type k, pos_type p, pos_type q) const;
 
         /**
          * @brief Get base pair in loop probability
@@ -186,12 +187,11 @@ namespace LocARNA {
          */
         std::ostream &
         write_pp(std::ostream &out,
-                 double p_outbpcut=0,
-                 double p_outbpilcut=0,
-                 double p_outuilcut=0) const;
+                 double p_outbpcut = 0,
+                 double p_outbpilcut = 0,
+                 double p_outuilcut = 0) const;
 
     protected:
-
         /**
          * Read data in pp format 2.0 with in-loop probabilities
          *
@@ -199,8 +199,7 @@ namespace LocARNA {
          *
          * @see RnaData::read_pp()
          */
-        virtual
-        std::istream &
+        virtual std::istream &
         read_pp(std::istream &in);
 
         /**
@@ -212,8 +211,7 @@ namespace LocARNA {
          * @note overloaded to initialize with additional information
          * (in loop probabilities)
          */
-        virtual
-        void
+        virtual void
         init_from_fixed_structure(const RnaStructure &structure,
                                   const PFoldParams &pfoldparams);
 
@@ -228,8 +226,7 @@ namespace LocARNA {
          *
          * @pre bp cutoff prob is initialized
          */
-        virtual
-        void
+        virtual void
         init_from_rna_ensemble(const RnaEnsemble &rna_ensemble,
                                const PFoldParams &pfoldparams);
 
@@ -241,12 +238,10 @@ namespace LocARNA {
          * @note use to indicate the need for recomputation
          * in read_autodetect(); always true in RnaData
          */
-        virtual
-        bool
+        virtual bool
         inloopprobs_ok() const;
 
     }; // end class ExtRnaData
-
 }
 
 #endif // LOCARNA_EXT_RNA_DATA_HH

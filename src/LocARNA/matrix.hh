@@ -2,7 +2,7 @@
 #define LOCARNA_MATRIX_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 /* @file Define simple, generic matrix class (with templated element
@@ -31,14 +31,16 @@ namespace LocARNA {
     class Matrix {
     public:
         typedef T elem_t; //!< type of elements
-        typedef typename std::vector<elem_t>::size_type size_type; //!< size type (from underlying vector)
+        typedef typename std::vector<elem_t>::size_type
+            size_type; //!< size type (from underlying vector)
 
-        typedef std::pair<size_type,size_type> size_pair_type; //!< type for pair of sizes
+        typedef std::pair<size_type, size_type>
+            size_pair_type; //!< type for pair of sizes
 
     protected:
         std::vector<elem_t> mat_; //!< vector storing the matrix entries
-        size_type xdim_; //!< first dimension
-        size_type ydim_; //!< second dimension
+        size_type xdim_;          //!< first dimension
+        size_type ydim_;          //!< second dimension
 
         /**
          * Computes address/index in 1D vector from 2D matrix indices
@@ -49,10 +51,11 @@ namespace LocARNA {
          * @return index in vector
          * @note this method is used for all internal access to the vector mat_
          */
-        size_type addr(size_type i, size_type j) const {
-            assert(0<=i && i<this->xdim_);
-            assert(0<=j && j<this->ydim_);
-            return i*ydim_+j;
+        size_type
+        addr(size_type i, size_type j) const {
+            assert(0 <= i && i < this->xdim_);
+            assert(0 <= j && j < this->ydim_);
+            return i * ydim_ + j;
         }
 
     public:
@@ -60,9 +63,7 @@ namespace LocARNA {
          * Empty constructor
          *
          */
-        Matrix()
-            : mat_(),xdim_(0),ydim_(0) {
-        }
+        Matrix() : mat_(), xdim_(0), ydim_(0) {}
 
         /**
          * Construct with dimensions, optionally initialize from array
@@ -74,12 +75,12 @@ namespace LocARNA {
          * @note if from given and !=0 initialize from array from
          *
          */
-        Matrix(size_type xdim, size_type ydim, const elem_t *from=0L)
-            : mat_(xdim*ydim),xdim_(xdim),ydim_(ydim) {
-            if (from!=0L) {
-                for (size_type i=0; i<xdim_; i++) {
-                    for (size_type j=0; j<ydim_; j++) {
-                        (*this)(i,j)=from[i*ydim+j];
+        Matrix(size_type xdim, size_type ydim, const elem_t *from = 0L)
+            : mat_(xdim * ydim), xdim_(xdim), ydim_(ydim) {
+            if (from != 0L) {
+                for (size_type i = 0; i < xdim_; i++) {
+                    for (size_type j = 0; j < ydim_; j++) {
+                        (*this)(i, j) = from[i * ydim + j];
                     }
                 }
             }
@@ -90,8 +91,9 @@ namespace LocARNA {
          *
          * @return size of matrix as pair of dimensions
          */
-        size_pair_type sizes() const {
-            return size_pair_type(xdim_,ydim_);
+        size_pair_type
+        sizes() const {
+            return size_pair_type(xdim_, ydim_);
         }
 
         /**
@@ -102,10 +104,10 @@ namespace LocARNA {
          */
         void
         resize(size_type xdim, size_type ydim) {
-            xdim_=xdim;
-            ydim_=ydim;
+            xdim_ = xdim;
+            ydim_ = ydim;
 
-            mat_.resize(xdim_*ydim_);
+            mat_.resize(xdim_ * ydim_);
         }
 
         /**
@@ -116,8 +118,9 @@ namespace LocARNA {
          *
          * @return entry (i,j)
          */
-        const elem_t & operator() (size_type i,size_type j) const {
-            return mat_[addr(i,j)];
+        const elem_t &
+        operator()(size_type i, size_type j) const {
+            return mat_[addr(i, j)];
         }
 
         /**
@@ -128,8 +131,9 @@ namespace LocARNA {
          *
          * @return reference to entry (i,j)
          */
-        elem_t & operator() (size_type i,size_type j) {
-            return mat_[addr(i,j)];
+        elem_t &
+        operator()(size_type i, size_type j) {
+            return mat_[addr(i, j)];
         }
 
         /**
@@ -140,8 +144,9 @@ namespace LocARNA {
          *
          * @return entry (i,j)
          */
-        const elem_t get(size_type i,size_type j) const {
-            return mat_[addr(i,j)];
+        const elem_t
+        get(size_type i, size_type j) const {
+            return mat_[addr(i, j)];
         }
 
         /**
@@ -153,8 +158,8 @@ namespace LocARNA {
          *
          */
         void
-        set(size_type i,size_type j, const elem_t &x) {
-            mat_[addr(i,j)]=x;
+        set(size_type i, size_type j, const elem_t &x) {
+            mat_[addr(i, j)] = x;
         }
 
         /**
@@ -165,8 +170,8 @@ namespace LocARNA {
          */
         void
         fill(const elem_t &val) {
-            for (size_type i=0; i<xdim_*ydim_; ++i)
-                mat_[i]=val;
+            for (size_type i = 0; i < xdim_ * ydim_; ++i)
+                mat_[i] = val;
         }
 
         /**
@@ -176,21 +181,23 @@ namespace LocARNA {
          */
         void
         clear() {
-            resize(0,0);
+            resize(0, 0);
             mat_.clear();
         }
 
         /**
-         * Transform matrix in place due to applying a given function to each element
+         * Transform matrix in place due to applying a given function to each
+         * element
          *
          * @param f function object
          *
          * @post All matrix entries are changed from x to f(x)
          * @note applies f via in place std::transform to all matrix entries
          */
-        template<class UnaryOperator>
-        void transform(UnaryOperator f) {
-            std::transform(mat_.begin(),mat_.end(),mat_.begin(),f);
+        template <class UnaryOperator>
+        void
+        transform(UnaryOperator f) {
+            std::transform(mat_.begin(), mat_.end(), mat_.begin(), f);
         }
     };
 
@@ -203,12 +210,13 @@ namespace LocARNA {
      * @return output stream after writing matrix mat
      */
     template <class T>
-    std::ostream & operator << (std::ostream &out, Matrix<T> mat) {
+    std::ostream &
+    operator<<(std::ostream &out, Matrix<T> mat) {
         typename Matrix<T>::size_pair_type sizes = mat.sizes();
 
-        for (typename Matrix<T>::size_type i=0; i<sizes.first; i++) {
-            for (typename Matrix<T>::size_type j=0; j<sizes.second; j++) {
-                out << mat(i,j) << " ";
+        for (typename Matrix<T>::size_type i = 0; i < sizes.first; i++) {
+            for (typename Matrix<T>::size_type j = 0; j < sizes.second; j++) {
+                out << mat(i, j) << " ";
             }
             out << std::endl;
         }
@@ -224,17 +232,17 @@ namespace LocARNA {
      * @return input stream after reading matrix mat
      */
     template <class T>
-    std::istream & operator >> (std::istream &in, Matrix<T> &mat) {
+    std::istream &
+    operator>>(std::istream &in, Matrix<T> &mat) {
         typename Matrix<T>::size_pair_type sizes = mat.sizes();
-        for (typename Matrix<T>::size_type i=0; i<=mat.sizes().first; i++) {
-            for (typename Matrix<T>::size_type j=0; j<=mat.sizes().second; j++) {
-                in >> mat(i,j);
+        for (typename Matrix<T>::size_type i = 0; i <= mat.sizes().first; i++) {
+            for (typename Matrix<T>::size_type j = 0; j <= mat.sizes().second;
+                 j++) {
+                in >> mat(i, j);
             }
         }
         return in;
     }
-
-
 
 } // end namespace LocARNA
 

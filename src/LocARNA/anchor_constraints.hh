@@ -2,7 +2,7 @@
 #define LOCARNA_ANCHOR_CONSTRAINTS_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <string>
@@ -24,7 +24,8 @@ namespace LocARNA {
     * alignment algorithms can
     *
     *   - test whether pairwise edges are allowed
-    *   - test whether positions have to aligned to some other position or can be deleted
+    *   - test whether positions have to aligned to some other position or can
+    * be deleted
     *
     * and ask informations about sequence names.
     *
@@ -45,27 +46,34 @@ namespace LocARNA {
     * Relaxed semantics (originally, the only implemented semantics):
     *
     *   a) Positions with equal names must be matched (aligned to each other)
-    *      Consequently, positions with names that occur also in the other sequence cannot be deleted.
-    *   b) Names that occur in only one sequence, do not impose any constraints. Therefore, names can occur in arbitrary order.
+    *      Consequently, positions with names that occur also in the other
+    * sequence cannot be deleted.
+    *   b) Names that occur in only one sequence, do not impose any constraints.
+    * Therefore, names can occur in arbitrary order.
     *
     * Strict (ordered) semantics:
     *
-    *   a) Names must be strictly lexicographically ordered in the annotation of each sequence
+    *   a) Names must be strictly lexicographically ordered in the annotation of
+    * each sequence
     *   b) Positions of equal names must be matched.
-    *   c) Alignment columns must not violate the lex order, in the following sense:
-    *      each alignment column, where at least one position is named, receives this name;
-    *      the names of alignment columns must be lex-ordered (in the order of the columns).
+    *   c) Alignment columns must not violate the lex order, in the following
+    * sense:
+    *      each alignment column, where at least one position is named, receives
+    * this name;
+    *      the names of alignment columns must be lex-ordered (in the order of
+    * the columns).
     */
     class AnchorConstraints {
     public:
-        typedef size_t size_type; //!< size type
-        typedef std::pair<size_type,size_type> size_pair_t;  //!< size pair
+        typedef size_t size_type;                            //!< size type
+        typedef std::pair<size_type, size_type> size_pair_t; //!< size pair
 
         typedef size_pair_t range_t; //!< type of range
-        typedef std::vector<range_t> range_seq_t; //!< type for sequence of ranges
+        typedef std::vector<range_t>
+            range_seq_t; //!< type for sequence of ranges
 
     private:
-        typedef std::map<std::string,size_type> name_tab_t;
+        typedef std::map<std::string, size_type> name_tab_t;
 
         typedef std::vector<int> seq_t;
 
@@ -74,8 +82,10 @@ namespace LocARNA {
         //! flag choosing between strict or relaxed semantics
         const bool strict_;
 
-        //! for each position in A, tabulate the position in seq B that has the same name;
-        //! moreover encode whether the positions has a name or the corresponding name exists
+        //! for each position in A, tabulate the position in seq B that has the
+        //! same name;
+        //! moreover encode whether the positions has a name or the
+        //! corresponding name exists
         //! a[i] = j (1<=j<=lenB) means there is an edge from A_i to B_j
         //! a[i] = 0 means there is no name for position i in A
         //! a[i] = -1 means, there is a name for A_i, but no match to B
@@ -86,8 +96,10 @@ namespace LocARNA {
         seq_t b;
 
         //! sequence of ranges for a, allows fast constraint checking.
-        //! a position i can only be matched to any position in ar[i].first..ar[i].second
-        //! without violating an anchor constraint (holds for arbitrary i: 1<=i<=lenA)
+        //! a position i can only be matched to any position in
+        //! ar[i].first..ar[i].second
+        //! without violating an anchor constraint (holds for arbitrary i:
+        //! 1<=i<=lenA)
         range_seq_t ar_;
 
         //! map from position to names in a
@@ -133,7 +145,8 @@ namespace LocARNA {
          * "..121...."}
          * seqCB={"...AA.B....",
          * "...12.1...."}
-         * specifies the same constraints, allowing a larger name space for constraints.
+         * specifies the same constraints, allowing a larger name space for
+         constraints.
          */
         AnchorConstraints(size_type lenA,
                           const std::vector<std::string> &seqCA,
@@ -144,9 +157,11 @@ namespace LocARNA {
         /**
          * @brief Construct from sequence lengths and anchor names
          * @param lenA length of sequence A
-         * @param seqCA concatenated anchor strings for sequence A (separated by '#')
+         * @param seqCA concatenated anchor strings for sequence A (separated by
+         * '#')
          * @param lenB length of sequence B
-         * @param seqCB concatenated anchor strings for sequence B (separated by '#')
+         * @param seqCB concatenated anchor strings for sequence B (separated by
+         * '#')
          * @param strict use strict semantics
          *
          * for semantics of anchor strings see first constructor
@@ -161,13 +176,13 @@ namespace LocARNA {
         // asking for constraint information
 
         //! is the alignment edge i~j (i.e. the match of i and j) allowed?
-        //! an alignment edge is allowed, iff it is not in conflict with any anchor constraint
+        //! an alignment edge is allowed, iff it is not in conflict with any
+        //! anchor constraint
         bool
         allowed_edge(size_type i, size_type j) const {
-            assert(i>=1); assert(i<ar_.size());
-            return
-                ar_[i].first <= j
-                && j <= ar_[i].second;
+            assert(i >= 1);
+            assert(i < ar_.size());
+            return ar_[i].first <= j && j <= ar_[i].second;
         }
 
         //! matching position in b for position i in a
@@ -194,52 +209,63 @@ namespace LocARNA {
         //! is position i in sequence A aligned to any position in B
         bool
         aligned_in_a(size_type i) const {
-            return match_to_a(i)>0;
+            return match_to_a(i) > 0;
         }
 
         //! is position j in sequence B aligned to any position in A
         bool
         aligned_in_b(size_type j) const {
-            return match_to_b(j)>0;
+            return match_to_b(j) > 0;
         }
 
         //! get the name of position i in A
         std::string
-        get_name_a(size_type i) const {return names_a[i];}
+        get_name_a(size_type i) const {
+            return names_a[i];
+        }
 
         //! get the name of position j in B
         std::string
-        get_name_b(size_type j) const {return names_b[j];}
+        get_name_b(size_type j) const {
+            return names_b[j];
+        }
 
         //! returns length/size of the names
         size_type
-        name_size() const {return name_size_;};
+        name_size() const {
+            return name_size_;
+        };
 
         //! is the constraint declaration empty
         bool
-        empty() const {return name_size()==0;}
+        empty() const {
+            return name_size() == 0;
+        }
 
         //! return the positions (i,j) of the rightmost anchor constraint
-        size_pair_t rightmost_anchor() const {
-            for (size_type i=a.size(); i>1; ) { // for i=lenA downto 1
+        size_pair_t
+        rightmost_anchor() const {
+            for (size_type i = a.size(); i > 1;) { // for i=lenA downto 1
                 --i;
-                if (a[i]>0) return size_pair_t(i,a[i]);
+                if (a[i] > 0)
+                    return size_pair_t(i, a[i]);
             }
-            return size_pair_t(0,0);
+            return size_pair_t(0, 0);
         }
 
         //! return the positions (i,j) of the leftmost anchor constraint
-        size_pair_t leftmost_anchor() const {
-            for (size_type i=0; i<a.size(); i++) {
-                if (a[i]>0) return size_pair_t(i,a[i]);
+        size_pair_t
+        leftmost_anchor() const {
+            for (size_type i = 0; i < a.size(); i++) {
+                if (a[i] > 0)
+                    return size_pair_t(i, a[i]);
             }
-            return size_pair_t(a.size()+1,b.size()+1);
+            return size_pair_t(a.size() + 1, b.size() + 1);
         }
 
     private:
         // ------------------------------------------------------------
         // construction helper
-
 
         /**
          *
@@ -254,8 +280,7 @@ namespace LocARNA {
          * throws failure if constraint strings have wrong length,
          * names are duplicated, or (only if strict) in wrong order
          */
-        static
-        void
+        static void
         transform_input(name_tab_t &nameTab,
                         size_type len,
                         const std::vector<std::string> &seq,
@@ -273,35 +298,33 @@ namespace LocARNA {
          * Initializes array ar_ with ranges of allowed edges
          */
         void
-        init_tables(const name_tab_t &nameTabA,
-                    const name_tab_t &nameTabB);
+        init_tables(const name_tab_t &nameTabA, const name_tab_t &nameTabB);
 
         /**
          * @brief Initialize sequence tables
          *
          * Initializes tables for
-         *  - lookup of corresponding position with same name in the other sequence
+         *  - lookup of corresponding position with same name in the other
+         * sequence
          *  - lookup of name by pos and
          *
-         * @param[out] seq_tab      table for corresponding position with same name in the other sequence
+         * @param[out] seq_tab      table for corresponding position with same
+         * name in the other sequence
          * @param[out] name_seq_tab table to get name by position
          * @param nameTabA
          * @param nameTabB
          */
-        static
-        void
-        init_seq_table(seq_t & seq_tab,
-                       name_seq_t & name_seq_tab,
+        static void
+        init_seq_table(seq_t &seq_tab,
+                       name_seq_t &name_seq_tab,
                        const name_tab_t &nameTabA,
                        const name_tab_t &nameTabB);
 
         //! test, whether string/name consists of only don't care symbols
         //! (used for ignoring '.' and ' ' in constraint names)
-        static
-        bool
+        static bool
         only_dont_care(const std::string &s);
     };
-
 }
 
 #endif // LOCARNA_ANCHOR_CONSTRAINTS_HH

@@ -2,7 +2,7 @@
 #define LOCARNA_RIBOFIT_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <cstdlib>
@@ -31,21 +31,15 @@ namespace LocARNA {
         Alphabet<char> alphabet_;
 
     public:
-
         /**
          * @brief Construct
          */
-        explicit
-        Ribofit(const char *alphabet)
-            : alphabet_(alphabet,4) {
-        }
+        explicit Ribofit(const char *alphabet) : alphabet_(alphabet, 4) {}
 
         //! @brief virtual destructor
-        virtual
-        ~Ribofit() {};
+        virtual ~Ribofit(){};
 
     public:
-
         /**
          * @brief ribofit base match score for specific identity
          *
@@ -55,9 +49,8 @@ namespace LocARNA {
          *
          * @return ribofit base match score
          */
-        virtual
-        double
-        basematch_score(char i,char j,double identity) const = 0;
+        virtual double
+        basematch_score(char i, char j, double identity) const = 0;
 
         /**
          * @brief ribofit arc match score for specific identity
@@ -70,12 +63,14 @@ namespace LocARNA {
          *
          * @return ribofit arc match score
          */
-        virtual
-        double
-        arcmatch_score(char i,char j,char k,char l,double identity) const = 0;
+        virtual double
+        arcmatch_score(char i, char j, char k, char l, double identity)
+            const = 0;
 
         const Alphabet<char> &
-        alphabet() const {return alphabet_;}
+        alphabet() const {
+            return alphabet_;
+        }
 
         /**
          * @brief Get base match scores
@@ -83,29 +78,25 @@ namespace LocARNA {
          * @param[out] basematch_scores matrix to hold basematch scores
          * @return the matrix of base match scores at given identity
          */
-        const matrix_t &get_basematch_scores(double identity, matrix_t &basematch_scores) const;
-
+        const matrix_t &
+        get_basematch_scores(double identity, matrix_t &basematch_scores) const;
     };
 
-    class Ribofit_will2014 : public Ribofit  {
-
-#       include "ribofit_will2014.ihh"
+    class Ribofit_will2014 : public Ribofit {
+#include "ribofit_will2014.ihh"
 
     public:
         /**
          * @brief Construct
          */
-        Ribofit_will2014()
-            : Ribofit(will2014_nucleotides) {
-        }
+        Ribofit_will2014() : Ribofit(will2014_nucleotides) {}
 
         /**
          * @brief destructor
          */
-        ~Ribofit_will2014() {};
+        ~Ribofit_will2014(){};
 
     protected:
-
         /**
          * @brief ribofit base match score for specific identity
          *
@@ -116,8 +107,9 @@ namespace LocARNA {
          * @return ribofit base match score
          */
         double
-        basematch_score(char i,char j,double identity) const {
-            return will2014_bmscore(alphabet_.idx(i),alphabet_.idx(j),identity);
+        basematch_score(char i, char j, double identity) const {
+            return will2014_bmscore(alphabet_.idx(i), alphabet_.idx(j),
+                                    identity);
         }
 
         /**
@@ -132,13 +124,13 @@ namespace LocARNA {
          * @return ribofit arc match score
          */
         double
-        arcmatch_score(char i,char j,char k,char l,double identity) const {
-            return will2014_amscore(alphabet_.idx(i),alphabet_.idx(j),
-                                    alphabet_.idx(k),alphabet_.idx(l),
+        arcmatch_score(char i, char j, char k, char l, double identity) const {
+            return will2014_amscore(alphabet_.idx(i), alphabet_.idx(j),
+                                    alphabet_.idx(k), alphabet_.idx(l),
                                     identity);
         }
     };
 
 } // end namespace LocARNA
 
-#endif //LOCARNA_RIBOFIT_HH
+#endif // LOCARNA_RIBOFIT_HH

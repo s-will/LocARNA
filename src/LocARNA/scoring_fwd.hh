@@ -2,7 +2,7 @@
 #define LOCARNA_SCORING_FWD_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include "infty_int.hh"
@@ -18,8 +18,7 @@ namespace LocARNA {
 
     typedef TaintedInftyInt tainted_infty_score_t;
 
-
-    //! type of partition functions
+//! type of partition functions
 #ifdef VERY_LARGE_PF
     typedef long double pf_score_t;
 #else
@@ -31,5 +30,3 @@ namespace LocARNA {
 } // end namespace LocARNA
 
 #endif // LOCARNA_SCORING_FWD_HH
-
-

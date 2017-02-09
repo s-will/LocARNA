@@ -2,7 +2,7 @@
 #define SPARSE_VECTOR_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <iosfwd>
@@ -18,13 +18,13 @@ namespace LocARNA {
      * map. The class is designed to be largely exchangable with
      * non-sparse vectors.
      *
-     * @todo this code is basically a stripped down version of the SparseMatrix code;
+     * @todo this code is basically a stripped down version of the SparseMatrix
+     * code;
      * likely one could reduce redundancy
      */
     template <typename T>
     class SparseVector {
     public:
-
         typedef T value_t; //!< type of vector entries
 
         typedef size_t size_type; //!< usual definition of size_type
@@ -32,20 +32,18 @@ namespace LocARNA {
         typedef size_type key_t; //!< type of vector index pair
 
     protected:
-
-        typedef typename unordered_map<key_t,value_t>::type map_t; //!< map type
+        typedef
+            typename unordered_map<key_t, value_t>::type map_t; //!< map type
         map_t the_map_; //!< internal representation of sparse vector
-        value_t def_; //!< default value of vector entries
+        value_t def_;   //!< default value of vector entries
 
     public:
-
         /**
          * \brief Stl-compatible constant iterator over vector elements.
          *
          * Behaves like a const iterator of the hash map.
          */
         typedef typename map_t::const_iterator const_iterator;
-
 
         /**
          * \brief Element of sparse vector
@@ -59,15 +57,17 @@ namespace LocARNA {
         private:
             SparseVector<T> *m_;
             key_t k_;
+
         public:
             /**
-             * @brief Construct as proxy for specified element in given sparse vector
+             * @brief Construct as proxy for specified element in given sparse
+             * vector
              *
              * @param m pointer to sparse vector
              * @param k key/index of entry in given sparse vector
              *
              */
-            element(SparseVector<T> *m,key_t k): m_(m),k_(k) {}
+            element(SparseVector<T> *m, key_t k) : m_(m), k_(k) {}
 
             /**
              * @brief Access entry for which the class acts as proxy
@@ -78,7 +78,7 @@ namespace LocARNA {
              */
             operator value_t() {
                 typename map_t::const_iterator it = m_->the_map_.find(k_);
-                if ( it == m_->the_map_.end() )
+                if (it == m_->the_map_.end())
                     return m_->def_;
                 else
                     return it->second;
@@ -96,9 +96,9 @@ namespace LocARNA {
              * @note If entry does not exist, x is added to the default value
              */
             element
-            operator +=(const value_t &x) {
+            operator+=(const value_t &x) {
                 const_iterator it = m_->the_map_.find(k_);
-                if ( it == m_->the_map_.end() )
+                if (it == m_->the_map_.end())
                     m_->the_map_[k_] = m_->def_ + x;
                 else
                     m_->the_map_[k_] += x;
@@ -115,35 +115,34 @@ namespace LocARNA {
              *
              * @return *this after assigning x
              *
-             * @note If x equals the default value and the entry exists, it is erased
+             * @note If x equals the default value and the entry exists, it is
+             * erased
              */
             element &
-            operator =(const value_t &x) {
-                if (x==m_->def_) {
+            operator=(const value_t &x) {
+                if (x == m_->def_) {
                     m_->the_map_.erase(k_);
                 } else {
                     // the following replaces m_->the_map_[k_] = x;
                     // but never calls the default constructor for value_t
 
                     typename map_t::iterator it = m_->the_map_.find(k_);
-                    if ( it != m_->the_map_.end() ) {
+                    if (it != m_->the_map_.end()) {
                         it->second = x;
                     } else {
-                        m_->the_map_.insert(typename map_t::value_type(k_,x));
+                        m_->the_map_.insert(typename map_t::value_type(k_, x));
                     }
                 }
                 return *this;
             }
         };
 
-
         /**
          * @brief Construct with default value
          *
          * @param def default value of entries
          */
-        explicit
-        SparseVector(const value_t &def) : the_map_(),def_(def) {}
+        explicit SparseVector(const value_t &def) : the_map_(), def_(def) {}
 
         /**
          * \brief Access to vector element
@@ -152,9 +151,7 @@ namespace LocARNA {
          *
          * @return proxy to vector entry i
          */
-        element operator[] (size_type i) {
-            return element(this,key_t(i));
-        }
+        element operator[](size_type i) { return element(this, key_t(i)); }
 
         /**
          * \brief Read-only access to vector element of const vector
@@ -163,9 +160,9 @@ namespace LocARNA {
          *
          * @return vector entry i
          */
-        const value_t & operator[] (size_type i) const {
+        const value_t &operator[](size_type i) const {
             const_iterator it = the_map_.find(key_t(i));
-            if ( it == the_map_.end() )
+            if (it == the_map_.end())
                 return def_;
             else
                 return it->second;
@@ -186,10 +183,10 @@ namespace LocARNA {
         void
         set(size_type i, const value_t &val) {
             typename map_t::iterator it = the_map_.find(key_t(i));
-            if ( it != the_map_.end() ) {
+            if (it != the_map_.end()) {
                 it->second = val;
             } else {
-                the_map_.insert(typename map_t::value_type(key_t(i),val));
+                the_map_.insert(typename map_t::value_type(key_t(i), val));
             }
         }
 
@@ -201,7 +198,7 @@ namespace LocARNA {
         void
         reset(size_type i) {
             typename map_t::iterator it = the_map_.find(key_t(i));
-            if ( it != the_map_.end() ) {
+            if (it != the_map_.end()) {
                 the_map_.erase(key_t(i));
             }
         }
@@ -240,7 +237,8 @@ namespace LocARNA {
          *
          * @see end()
          */
-        const_iterator begin() const {
+        const_iterator
+        begin() const {
             return the_map_.begin();
         }
 
@@ -250,10 +248,10 @@ namespace LocARNA {
          * @return const iterator pointing after end of entry hash
          * @see begin()
          */
-        const_iterator end() const {
+        const_iterator
+        end() const {
             return the_map_.end();
         }
-
     };
 
     /**
@@ -264,19 +262,17 @@ namespace LocARNA {
      *
      * @return output stream after writing
      */
-    template<class T>
-    inline
-    std::ostream &
-    operator <<(std::ostream &out, const SparseVector<T> &v) {
-        for (typename SparseVector<T>::const_iterator it=v.begin();
-             v.end()!=it;
-             ++it) {
-            out <<it->first <<":" << it->second << " ";
+    template <class T>
+    inline std::ostream &
+    operator<<(std::ostream &out, const SparseVector<T> &v) {
+        for (typename SparseVector<T>::const_iterator it = v.begin();
+             v.end() != it; ++it) {
+            out << it->first << ":" << it->second << " ";
         }
         out << std::endl;
         return out;
     }
 
-} //end namespace LocARNA
+} // end namespace LocARNA
 
 #endif // SPARSE_VECTOR_HH

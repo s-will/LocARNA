@@ -2,7 +2,7 @@
 #define LOCARNA_ALIGNER_P_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include "scoring.hh"
@@ -13,7 +13,6 @@
 #include "sparse_matrix.hh"
 
 #include "aligner_restriction.hh"
-
 
 namespace LocARNA {
 
@@ -36,7 +35,8 @@ namespace LocARNA {
     typedef AlignerRestriction AlignerPRestriction;
 
     /**
-       \brief Computes partition function of alignment, arc match and base match probabilities
+       \brief Computes partition function of alignment, arc match and base match
+       probabilities
 
        Performs partition function computation over alignment
        consensus structure pairs of two sequences and their associated
@@ -52,7 +52,8 @@ namespace LocARNA {
     class AlignerP {
     public:
         typedef size_t size_type; //!< size
-        typedef std::pair<size_type,size_type> size_pair; //!< pair of size_type
+        typedef std::pair<size_type, size_type>
+            size_pair; //!< pair of size_type
 
         typedef BasePairs__Arc Arc; //!< arc
     protected:
@@ -60,9 +61,9 @@ namespace LocARNA {
 
         const Scoring *scoring; //!< the scores
 
-        const Sequence &seqA; //!< sequence A
+        const Sequence &seqA;  //!< sequence A
         const BasePairs &bpsA; //!< base pairs A
-        const Sequence &seqB; //!< sequence B
+        const Sequence &seqB;  //!< sequence B
         const BasePairs &bpsB; //!< base pairs B
 
         const ArcMatches &arc_matches; //!< (potential) arc matches of A and B
@@ -78,7 +79,6 @@ namespace LocARNA {
         */
         AlignerPRestriction r;
 
-
         /**
          * scales the partition function.
          * We compute partition functions divided by pf_scale in order to avoid
@@ -86,48 +86,55 @@ namespace LocARNA {
          */
         pf_score_t pf_scale;
 
-
-        pf_score_t partFunc; //!< the total partition function (only defined after call of align_inside())
+        pf_score_t partFunc; //!< the total partition function (only defined
+                             //!after call of align_inside())
 
         /**
-           D(a,b) is the partition function of the subsequences seqA(al..ar) and seqB(bl..br),
+           D(a,b) is the partition function of the subsequences seqA(al..ar) and
+           seqB(bl..br),
            where the arcs a and b match
         */
         PFScoreMatrix Dmat;
 
-
         /**
            For the current pair of left arc ends (al,bl) and a current line i
-           E(j) is the partition function of the subsequences seqA(al+1..i) and seqB(bl+1..j)
+           E(j) is the partition function of the subsequences seqA(al+1..i) and
+           seqB(bl+1..j)
            covering only alignments that gap the last position of seqA
 
-           In the algorithm, this is constantly overwritten, i.e. for a current j
-           all entries E(j') j'<j are for the current line i and all entries j'>j are for the
+           In the algorithm, this is constantly overwritten, i.e. for a current
+           j
+           all entries E(j') j'<j are for the current line i and all entries
+           j'>j are for the
            line i-1
         */
         PFScoreVector E;
 
         /**
-           For the current pair of left arc ends (al,bl) and current indices (i,j),
-           F is the the partition function of the subsequences seqA(al+1..i) and seqB(bl+1..j)
+           For the current pair of left arc ends (al,bl) and current indices
+           (i,j),
+           F is the the partition function of the subsequences seqA(al+1..i) and
+           seqB(bl+1..j)
            covering only alignments that gap the last position of seqB
 
-           In the algorithm, this is constantly overwritten, i.e. when we compute the entries for (i,j)
-           it will still contain the value of (i,j-1) and is then updated to the value for (i,j)
+           In the algorithm, this is constantly overwritten, i.e. when we
+           compute the entries for (i,j)
+           it will still contain the value of (i,j-1) and is then updated to the
+           value for (i,j)
         */
         pf_score_t F;
 
-
         /**
            For the current pair of left arc ends (al,bl),
-           M(i,j) is the partition function of the subsequences seqA(al+1..i) and seqB(bl+1..j)
+           M(i,j) is the partition function of the subsequences seqA(al+1..i)
+           and seqB(bl+1..j)
         */
         PFScoreMatrix M;
 
-
         /**
            For the current pair of left arc ends (al,bl),
-           Mrev(i,j) is the partition function of the subsequences seqA(i+1..al-1) and seqB(j+1..bl-1)
+           Mrev(i,j) is the partition function of the subsequences
+           seqA(i+1..al-1) and seqB(j+1..bl-1)
         */
         PFScoreMatrix Mrev;
 
@@ -141,7 +148,7 @@ namespace LocARNA {
          * reverse F "matrix"
          * @see Mrev
          */
-        pf_score_t    Frev;
+        pf_score_t Frev;
 
         /**
            for outside optimization, store a complete copy of Erev and Frev
@@ -154,30 +161,34 @@ namespace LocARNA {
         */
         PFScoreMatrix Frev_mat;
 
-
         /**
-           D'(a,b) is the partition function of the subsequences seqA(1..al-1,ar+1..lenA) and seqB(1..bl-1,br+1..lenB)
+           D'(a,b) is the partition function of the subsequences
+           seqA(1..al-1,ar+1..lenA) and seqB(1..bl-1,br+1..lenB)
            times the contribution of the arc match (al,ar);(bl,br)
         */
         PFScoreMatrix Dmatprime;
 
         /**
            For the current pair of left arc ends (al,bl) and line i,
-           E'(j) is the partition function of the subsequences seqA(1..al-1,i+1..lenA) and seqB(1..bl-1,j+1..lenB)
+           E'(j) is the partition function of the subsequences
+           seqA(1..al-1,i+1..lenA) and seqB(1..bl-1,j+1..lenB)
            where i+1 is aligned to a gap
         */
-        PFScoreVector Eprime; // one could slightly optimize space by PFScoreVector &Eprime = E;
+        PFScoreVector Eprime; // one could slightly optimize space by
+                              // PFScoreVector &Eprime = E;
 
         /**
            For the current pair of left arc ends (al,bl) and (i,j),
-           F' is the partition function of the subsequences seqA(1..al-1,i+1..lenA) and seqB(1..bl-1,j+1..lenB)
+           F' is the partition function of the subsequences
+           seqA(1..al-1,i+1..lenA) and seqB(1..bl-1,j+1..lenB)
            where j+1 is aligned to a gap
         */
         pf_score_t Fprime;
 
         /**
            For the current pair of left arc ends (al,bl),
-           M'(i,j) is the partition function of the subsequences seqA(1..al-1,i+1..lenA) and seqB(1..bl-1,j+1..lenB)
+           M'(i,j) is the partition function of the subsequences
+           seqA(1..al-1,i+1..lenA) and seqB(1..bl-1,j+1..lenB)
         */
         PFScoreMatrix Mprime;
 
@@ -187,20 +198,23 @@ namespace LocARNA {
         /**
          * probabilities of base matchs, as computed by the algo.
          * Because we use bm_prob to accumulate conditional partition functions
-         * before dividing by the total partition function to obtain probabilities,
-         * use PFScoreMatrix. We assume that the type is more general than ProbMatrix
+         * before dividing by the total partition function to obtain
+         * probabilities,
+         * use PFScoreMatrix. We assume that the type is more general than
+         * ProbMatrix
          */
         SparsePFScoreMatrix bm_prob;
 
-        bool D_created; //!< flag, is D already created?
+        bool D_created;      //!< flag, is D already created?
         bool Dprime_created; //!< flag, is Dprime already created?
 
-
         //! initialize first column and row of M, for inside recursion
-        void init_M(size_type al, size_type ar, size_type bl, size_type br);
+        void
+        init_M(size_type al, size_type ar, size_type bl, size_type br);
 
         //! initialize E
-        void init_E(size_type al, size_type ar, size_type bl, size_type br);
+        void
+        init_E(size_type al, size_type ar, size_type bl, size_type br);
 
         /**
          * initialize the reversed M matrix, such that
@@ -212,7 +226,8 @@ namespace LocARNA {
          * @param br right position delimiting range of positions in seqB
          * pre: matrix Mrev has size 0..lenA x 0..lenB
          */
-        void init_Mrev(size_type al, size_type ar, size_type bl, size_type br);
+        void
+        init_Mrev(size_type al, size_type ar, size_type bl, size_type br);
 
         /**
          * initialize the reversed E matrix/vector
@@ -224,37 +239,53 @@ namespace LocARNA {
          * @param br right position delimiting range of positions in seqB
          * pre: Erev has size 0..lenB
          */
-        void init_Erev(size_type al, size_type ar, size_type bl, size_type br);
+        void
+        init_Erev(size_type al, size_type ar, size_type bl, size_type br);
 
         //! initialize first column and row of M' for outside recursion
-        // void init_Mprime(size_type al, size_type ar, size_type bl, size_type br);
+        // void init_Mprime(size_type al, size_type ar, size_type bl, size_type
+        // br);
 
         //! initialize first row of E' for outside recursion
-        // void init_Eprime(size_type al, size_type ar, size_type bl, size_type br);
+        // void init_Eprime(size_type al, size_type ar, size_type bl, size_type
+        // br);
 
         //! compute one entry in E (inside recursion cases)
-        pf_score_t comp_E_entry(size_type al, size_type bl, size_type i, size_type j);
+        pf_score_t
+        comp_E_entry(size_type al, size_type bl, size_type i, size_type j);
 
         //! compute one entry in F (inside recursion cases)
-        pf_score_t comp_F_entry(size_type al, size_type bl, size_type i, size_type j);
+        pf_score_t
+        comp_F_entry(size_type al, size_type bl, size_type i, size_type j);
 
         //! compute one entry in M (inside recursion cases)
-        pf_score_t comp_M_entry(size_type al, size_type bl, size_type i, size_type j);
+        pf_score_t
+        comp_M_entry(size_type al, size_type bl, size_type i, size_type j);
 
         //! compute one entry in Mprime (outside recursion cases)
-        pf_score_t comp_Mprime_entry(size_type al, size_type bl, size_type i, size_type j, size_type max_ar, size_type max_br);
+        pf_score_t
+        comp_Mprime_entry(size_type al,
+                          size_type bl,
+                          size_type i,
+                          size_type j,
+                          size_type max_ar,
+                          size_type max_br);
 
         //! compute one entry in Eprime (outside recursion cases)
-        pf_score_t comp_Eprime_entry(size_type al, size_type bl, size_type i, size_type j);
+        pf_score_t
+        comp_Eprime_entry(size_type al, size_type bl, size_type i, size_type j);
 
         //! compute one entry in Fprime (outside recursion cases)
-        pf_score_t comp_Fprime_entry(size_type al, size_type bl, size_type i, size_type j);
+        pf_score_t
+        comp_Fprime_entry(size_type al, size_type bl, size_type i, size_type j);
 
         //! compute one entry in Erev
-        pf_score_t comp_Erev_entry( size_type i, size_type j );
+        pf_score_t
+        comp_Erev_entry(size_type i, size_type j);
 
         //! compute one entry in Frev
-        pf_score_t comp_Frev_entry( size_type i, size_type j );
+        pf_score_t
+        comp_Frev_entry(size_type i, size_type j);
 
         /**
          * compute one entry in Mrev, where
@@ -264,10 +295,12 @@ namespace LocARNA {
          * @param i position in seqA
          * @param j position in seqB
          * assert i<=ar and j<=br.
-         * pre: matrix entries Mrev(i',j') and Erev(j') computed/initialised for i<=i'<=ar, j<=j'<=br, (i,j)!=(i',j')
+         * pre: matrix entries Mrev(i',j') and Erev(j') computed/initialised for
+         * i<=i'<=ar, j<=j'<=br, (i,j)!=(i',j')
          * @returns score of entry M(i,j)
          */
-        pf_score_t comp_Mrev_entry( size_type i, size_type j, size_type ar, size_type br);
+        pf_score_t
+        comp_Mrev_entry(size_type i, size_type j, size_type ar, size_type br);
 
         /**
          * align subsequences enclosed by two arcs
@@ -279,7 +312,11 @@ namespace LocARNA {
          * Computes matrix entries in M, E, F.
          * post: entries (i,j) are valid in the range al<i<ar, bl<j<br
          */
-        void align_inside_arcmatch(size_type al,size_type ar,size_type bl,size_type br);
+        void
+        align_inside_arcmatch(size_type al,
+                              size_type ar,
+                              size_type bl,
+                              size_type br);
 
         /**
          * align outside of an arc-match
@@ -287,12 +324,19 @@ namespace LocARNA {
          * @param ar right end of arc in seqA
          * @param bl left end of arc in seqB
          * @param br right end of arc in seqB
-         * @param max_ar leftmost right end in seqA, for which the score can simply be composed from M and Mrev.
-         * @param max_br leftmost right end in seqB, for which the score can simply be composed from M and Mrev.
+         * @param max_ar leftmost right end in seqA, for which the score can
+         * simply be composed from M and Mrev.
+         * @param max_br leftmost right end in seqB, for which the score can
+         * simply be composed from M and Mrev.
          *
          */
         void
-        align_outside_arcmatch(size_type al,size_type ar,size_type max_ar,size_type bl,size_type br,size_type max_br);
+        align_outside_arcmatch(size_type al,
+                               size_type ar,
+                               size_type max_ar,
+                               size_type bl,
+                               size_type br,
+                               size_type max_br);
 
         /**
          * align reversed. fills matrices Mrev, Erev, Frev, such that
@@ -312,20 +356,27 @@ namespace LocARNA {
          * to each other by respectively performing forward and backward
          * computation!
          */
-        void align_reverse(size_type al, size_type ar, size_type bl, size_type br, bool copy=false);
+        void
+        align_reverse(size_type al,
+                      size_type ar,
+                      size_type bl,
+                      size_type br,
+                      bool copy = false);
 
         /**
          * create the entries in the D matrix.
          * This function is called by align() (unless D_created)
          */
-        void align_D();
+        void
+        align_D();
 
         /**
          * create the entries in the Dprime matrix
          *   This function is called by align() (unless Dprime_created)
          * uses inside recursion
          */
-        void align_Dprime();
+        void
+        align_Dprime();
 
         /**
          *  fill in D the entries with left ends al,bl,
@@ -333,8 +384,7 @@ namespace LocARNA {
          * uses inside recursion
          */
         void
-        fill_D(size_type al, size_type bl,
-               size_type max_ar, size_type max_br);
+        fill_D(size_type al, size_type bl, size_type max_ar, size_type max_br);
 
         /**
          *  fill in D the entries with right ends ar,br,
@@ -342,26 +392,28 @@ namespace LocARNA {
          * uses outside recursion
          */
         void
-        fill_Dprime(size_type al, size_type bl,
-                    size_type min_ar, size_type min_br,
-                    size_type max_ar, size_type max_br
-                    );
+        fill_Dprime(size_type al,
+                    size_type bl,
+                    size_type min_ar,
+                    size_type min_br,
+                    size_type max_ar,
+                    size_type max_br);
 
         //! returns lvalue of matrix D
-        pf_score_t &//SparsePFScoreMatrix::element
-        D(const ArcMatch &am);
+        pf_score_t & // SparsePFScoreMatrix::element
+            D(const ArcMatch &am);
 
         //! returns lvalue of matrix D
-        pf_score_t &//SparsePFScoreMatrix::element
-        D(const Arc &arcA,const Arc &arcB);
+        pf_score_t & // SparsePFScoreMatrix::element
+            D(const Arc &arcA, const Arc &arcB);
 
         //! returns lvalue of matrix D'
-        pf_score_t &//SparsePFScoreMatrix::element
-        Dprime(const ArcMatch &am);
+        pf_score_t & // SparsePFScoreMatrix::element
+            Dprime(const ArcMatch &am);
 
         //! returns lvalue of matrix D'
-        pf_score_t &//SparsePFScoreMatrix::element
-        Dprime(const Arc &arcA,const Arc &arcB);
+        pf_score_t & // SparsePFScoreMatrix::element
+            Dprime(const Arc &arcA, const Arc &arcB);
 
         /**
          * determine leftmost end of an arc that covers the range l..r
@@ -369,11 +421,15 @@ namespace LocARNA {
          * @param bps base pairs
          * @param l sequence position, left end of range
          * @param r sequence position, right end of range
-         * @return leftmost end l'>=s of any arc in bps that covers (l,r). Return l if there is no such arc
+         * @return leftmost end l'>=s of any arc in bps that covers (l,r).
+         * Return l if there is no such arc
          * An arc (l',r') covers (l,r) iff l'<l and r'>r.
          */
         size_type
-        leftmost_covering_arc(size_type s,const BasePairs &bps,size_type l,size_type r) const;
+        leftmost_covering_arc(size_type s,
+                              const BasePairs &bps,
+                              size_type l,
+                              size_type r) const;
 
         /**
          * compute the leftmost left ends of an arc match that covers
@@ -383,19 +439,26 @@ namespace LocARNA {
          * @param bl left end of base pair in seqB
          * @param br right end of base pair in seqB
          */
-        std::pair<size_type,size_type>
-        leftmost_covering_arcmatch(size_type al,size_type bl,size_type ar,size_type br) const;
+        std::pair<size_type, size_type>
+        leftmost_covering_arcmatch(size_type al,
+                                   size_type bl,
+                                   size_type ar,
+                                   size_type br) const;
 
         /**
          * @param bps base pairs
          * @param l sequence position, left end of range
          * @param r sequence position, right end of range
          * @param s sequence position, limit to base pairs left of s or equal
-         * @returns rightmost end r'<=s of an arc in bps that covers (l,r). Return r if there is no such arc
+         * @returns rightmost end r'<=s of an arc in bps that covers (l,r).
+         * Return r if there is no such arc
          * An arc (l',r') covers (l,r) iff l'<l and r'>r.
          */
         size_type
-        rightmost_covering_arc(const BasePairs &bps,size_type l,size_type r,size_type s) const;
+        rightmost_covering_arc(const BasePairs &bps,
+                               size_type l,
+                               size_type r,
+                               size_type s) const;
 
         /**
          * @param al left end of base pair in seqA
@@ -405,9 +468,11 @@ namespace LocARNA {
          * returns the rightmost left ends of an arc match that covers
          * (al,ar);(bl,br) (or smaller positions).
          */
-        std::pair<size_type,size_type>
-        rightmost_covering_arcmatch(size_type al,size_type bl,size_type ar,size_type br) const;
-
+        std::pair<size_type, size_type>
+        rightmost_covering_arcmatch(size_type al,
+                                    size_type bl,
+                                    size_type ar,
+                                    size_type br) const;
 
         //! allocate space for the inside matrices
         void
@@ -418,7 +483,6 @@ namespace LocARNA {
         alloc_outside_matrices();
 
     public:
-
         /**
          * @brief Construct from parameters
          * @param ap parameter for aligner
@@ -440,8 +504,10 @@ namespace LocARNA {
          * @brief create with named parameters
          * @return parameter object
          */
-        static
-        AlignerPParams create() {return AlignerPParams();}
+        static AlignerPParams
+        create() {
+            return AlignerPParams();
+        }
 
         /**
          * compute the partition function by the inside algorithm
@@ -459,11 +525,13 @@ namespace LocARNA {
         void
         align_outside();
 
-        //! computes the probabilitites of all base matches and stores them internally (in a 2D-matrix), no probability filtering
+        //! computes the probabilitites of all base matches and stores them
+        //! internally (in a 2D-matrix), no probability filtering
         void
-        compute_basematch_probabilities( bool basematch_probs_include_arcmatch );
+        compute_basematch_probabilities(bool basematch_probs_include_arcmatch);
 
-        //! computes the probabilitites of all arc matches and stores them internally (in a sparse matrix), no probability filtering
+        //! computes the probabilitites of all arc matches and stores them
+        //! internally (in a sparse matrix), no probability filtering
         void
         compute_arcmatch_probabilities();
 
@@ -475,7 +543,6 @@ namespace LocARNA {
          */
         void
         write_arcmatch_probabilities(std::ostream &out);
-
 
         /**
          * \brief write the base match probabilities to a stream
@@ -502,16 +569,21 @@ namespace LocARNA {
          * @return entry of virtual Mprime matrix
          */
         pf_score_t
-        virtual_Mprime(size_type al, size_type bl, size_type i, size_type j, size_type max_ar, size_type max_br) const;
+        virtual_Mprime(size_type al,
+                       size_type bl,
+                       size_type i,
+                       size_type j,
+                       size_type max_ar,
+                       size_type max_br) const;
 
         // const Matrix *get_basematch_probabilities(){}
         // const SparseMatrix *get_arcmatch_probabilities(){}
 
-
         /**
          * \brief Fragment match probability
          *
-         * Computes the probability that two fragments [i..j] and [k..l] are matched in an alignment.
+         * Computes the probability that two fragments [i..j] and [k..l] are
+         * matched in an alignment.
          *
          * @param i start of first fragment
          * @param j end of first fragment
@@ -521,17 +593,24 @@ namespace LocARNA {
          *
          */
         double
-        compute_fragment_match_prob(size_type i,size_type j,size_type k,size_type l);
-
+        compute_fragment_match_prob(size_type i,
+                                    size_type j,
+                                    size_type k,
+                                    size_type l);
 
         //! free the space of D, take care!
-        void freeD() { Dmat.clear(); }
+        void
+        freeD() {
+            Dmat.clear();
+        }
 
         //! free the space of D, take care!
-        void freeMprime() { Mprime.clear(); }
-
+        void
+        freeMprime() {
+            Mprime.clear();
+        }
     };
 
-} //end namespace
+} // end namespace
 
 #endif

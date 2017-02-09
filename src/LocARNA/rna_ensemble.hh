@@ -2,7 +2,7 @@
 #define LOCARNA_RNA_ENSEMBLE_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <iosfwd>
@@ -39,9 +39,9 @@ namespace LocARNA {
      */
     class RnaEnsemble {
     private:
-        RnaEnsembleImpl *pimpl_;  //!<- pointer to corresponding RnaEnsembleImpl object
+        RnaEnsembleImpl
+            *pimpl_; //!<- pointer to corresponding RnaEnsembleImpl object
     public:
-
         /**
          * @brief folding constructor (from sequence or multiple alignment)
          *
@@ -51,7 +51,8 @@ namespace LocARNA {
          *
          * @param ma the RNA sequence or alignment as MultipleAlignment object
          * @param params pfolding parameters
-         * @param inLoopProbs whether in loop probabilities should be made available
+         * @param inLoopProbs whether in loop probabilities should be made
+         * available
          * @param use_alifold whether alifold should be used
          *
          * @pre unless use_alifold, sequence row number has to be 1
@@ -59,7 +60,7 @@ namespace LocARNA {
         RnaEnsemble(const MultipleAlignment &ma,
                     const PFoldParams &params,
                     bool inLoopProbs,
-                    bool use_alifold=true);
+                    bool use_alifold = true);
 
         /**
          * @brief copy constructor
@@ -73,7 +74,8 @@ namespace LocARNA {
          * @param rna_ensemble object to be assigned
          * Assigns implementation object (not only pointer)
          */
-        RnaEnsemble &operator =(const RnaEnsemble &rna_ensemble);
+        RnaEnsemble &
+        operator=(const RnaEnsemble &rna_ensemble);
 
         /**
          * \brief Clean up.
@@ -81,8 +83,7 @@ namespace LocARNA {
          * In most cases does nothing. If McCaskill
          * matrices are kept, they are freed.
         */
-        virtual
-        ~RnaEnsemble();
+        virtual ~RnaEnsemble();
 
         /**
          * @brief Availability of pair probabilities
@@ -99,7 +100,6 @@ namespace LocARNA {
          */
         bool
         has_stacking_probs() const;
-
 
         /**
          * @brief Availability of "in loop" probabilities
@@ -120,7 +120,8 @@ namespace LocARNA {
          * \brief get length of sequence
          * \return sequence length
          */
-        size_type length() const;
+        size_type
+        length() const;
 
         /**
          * \brief get minimum free energy
@@ -162,7 +163,8 @@ namespace LocARNA {
          * \brief Get joint probability of stacked arcs
          * @param i left sequence position
          * @param j right sequence position
-         * \return probability of basepairs (i,j) and (i+1,j-1) occuring simultaneously
+         * \return probability of basepairs (i,j) and (i+1,j-1) occuring
+         * simultaneously
         */
         double
         arc_2_prob(size_type i, size_type j) const;
@@ -175,8 +177,8 @@ namespace LocARNA {
          * conditional probability Pr[(i,j)|(i+1,j-1)].
          * \pre base pair (i+1,j-1) has probability > 0
         */
-        double arc_stack_prob(size_type i, size_type j) const;
-
+        double
+        arc_stack_prob(size_type i, size_type j) const;
 
         // ------------------------------------------------------------
         // compute probabilities paired upstream, downstream, and unpaired
@@ -185,7 +187,8 @@ namespace LocARNA {
          * \brief Probability that a position is paired upstream
          *
          * \param i sequence position
-         * \return probability that a position i is paired with a position j>i (upstream)
+         * \return probability that a position i is paired with a position j>i
+         * (upstream)
          * @note O(sequence.length()) implementation
          * @see prob_paired_downstream
         */
@@ -196,7 +199,8 @@ namespace LocARNA {
          * \brief Probability that a position is paired downstream
          *
          * \param i sequence position
-         * \return probability that a position i is paired with a position j<i (downstream)
+         * \return probability that a position i is paired with a position j<i
+         * (downstream)
          * @note O(sequence.length()) implementation
          * @see prob_paired_upstream
         */
@@ -229,18 +233,18 @@ namespace LocARNA {
          *
          * @note This method is designed for use in ExpaRNA-P
          *
-         * @note For computing these unpaired probabilities we need access to the
+         * @note For computing these unpaired probabilities we need access to
+         * the
          * dynamic programming matrices of the McCaskill algorithm
          *
          * @pre McCaskill matrices are computed and generated.
-         * @see compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &sequence_, bool keepMcC)
+         * @see compute_McCaskill_matrices(), RnaEnsemble(const
+         * MultipleAlignment &sequence_, bool keepMcC)
          *
          * @note if in loop probs are unavailable, return probability 1.0
          */
         double
-        unpaired_in_loop_prob(size_type k,
-                              size_type i,
-                              size_type j) const;
+        unpaired_in_loop_prob(size_type k, size_type i, size_type j) const;
 
         /**
          * \brief Unpaired probabilty of base in external 'loop'
@@ -251,11 +255,13 @@ namespace LocARNA {
          *
          * @note This method is designed for use in ExpaRNA-P
          *
-         * @note For computing these unpaired probabilities we need access to the
+         * @note For computing these unpaired probabilities we need access to
+         * the
          * dynamic programming matrices of the McCaskill algorithm
          *
          * @pre McCaskill matrices are computed and generated.
-         * @see compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &sequence_, bool keepMcC)
+         * @see compute_McCaskill_matrices(), RnaEnsemble(const
+         * MultipleAlignment &sequence_, bool keepMcC)
          *
          * @note if in loop probs are unavailable, return probability 1.0
          */
@@ -270,7 +276,8 @@ namespace LocARNA {
          * @param i left end of loop enclosing base pair
          * @param j right end of loop enclosing base pair
          *
-         * @return probability that (ip,jp) is inner base pair in the loop closed by i and j
+         * @return probability that (ip,jp) is inner base pair in the loop
+         * closed by i and j
          *
          * Computes the joint probability that there is a base pair
          * (i,j) and a base pair (k,l) (i<k<l<j) that is inner base
@@ -278,11 +285,13 @@ namespace LocARNA {
          *
          * @note This method is designed for use in ExpaRNA-P
          *
-         * @note For computing these unpaired probabilities we need access to the
+         * @note For computing these unpaired probabilities we need access to
+         * the
          * dynamic programming matrices of the McCaskill algorithm
          *
          * @pre McCaskill matrices are computed and generated.
-         * @see compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &sequence_, bool keepMcC)
+         * @see compute_McCaskill_matrices(), RnaEnsemble(const
+         * MultipleAlignment &sequence_, bool keepMcC)
          *
          * @note if in loop probs are unavailable, return probability 1.0
          */
@@ -292,31 +301,30 @@ namespace LocARNA {
                          size_type i,
                          size_type j) const;
 
-
         /**
          * \brief Probability of base pair in the external 'loop'
          *
          * @param i left end of inner base pair
          * @param j right end of inner base pair
          *
-         * @return probability that i and j form a basepair and the base pair is external
+         * @return probability that i and j form a basepair and the base pair is
+         * external
          *
          * @note This method is designed for use in ExpaRNA-P
          *
-         * @note For computing these unpaired probabilities we need access to the
+         * @note For computing these unpaired probabilities we need access to
+         * the
          * dynamic programming matrices of the McCaskill algorithm
          *
          * @pre McCaskill matrices are computed and generated.
-         * @see compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &sequence_, bool keepMcC)
+         * @see compute_McCaskill_matrices(), RnaEnsemble(const
+         * MultipleAlignment &sequence_, bool keepMcC)
          *
          * @note if in loop probs are unavailable, return probability 1.0
          */
         double
-        arc_external_prob(size_type i,
-                          size_type j) const;
-
+        arc_external_prob(size_type i, size_type j) const;
     };
-
 }
 
 #endif // LOCARNA_RNA_ENSEMBLE_HH

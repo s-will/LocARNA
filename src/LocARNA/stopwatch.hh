@@ -2,13 +2,12 @@
 #define LOCARNA_STOPWATCH_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include "aux.hh"
 #include <iosfwd>
 #include <string>
-
 
 namespace LocARNA {
     /**
@@ -17,31 +16,29 @@ namespace LocARNA {
     class StopWatch {
     private:
         struct timer_t {
-            bool running; //!<whether the timer is running
+            bool running;      //!<whether the timer is running
             double last_start; //!< last start time
-            double total; //!< total accumulated time
-            size_t cycles; //!<number of start/stop cycles
+            double total;      //!< total accumulated time
+            size_t cycles;     //!<number of start/stop cycles
 
-            timer_t(): running(false), last_start(0.0), total(0.0), cycles(0) {}
+            timer_t()
+                : running(false), last_start(0.0), total(0.0), cycles(0) {}
         };
 
         //! type of map to store named timers
-        typedef unordered_map<std::string,timer_t>::type map_t;
+        typedef unordered_map<std::string, timer_t>::type map_t;
 
         map_t timers;
 
         bool print_on_exit;
 
     public:
-
         /**
          * @brief Constructor
          *
          * @param print_on_exit whether to automatically print times on exit
          */
-        explicit
-        StopWatch(bool print_on_exit=false);
-
+        explicit StopWatch(bool print_on_exit = false);
 
         /**
          * @brief Destructor
@@ -103,7 +100,8 @@ namespace LocARNA {
          *
          * @return cycles (including started cycle if running)
          */
-        size_t current_cycles(const std::string &name) const;
+        size_t
+        current_cycles(const std::string &name) const;
 
         /**
          * @brief print information for one timer
@@ -116,7 +114,7 @@ namespace LocARNA {
          * @return output stream
          */
         std::ostream &
-        print_info(std::ostream &out,const std::string &name) const;
+        print_info(std::ostream &out, const std::string &name) const;
 
         /**
          * @brief print information for all timers
@@ -128,9 +126,9 @@ namespace LocARNA {
         std::ostream &
         print_info(std::ostream &out) const;
 
-
     private:
-        double current_time () const;
+        double
+        current_time() const;
     };
 }
 #endif

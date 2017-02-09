@@ -2,7 +2,7 @@
 #define LOCARNA_ALIGNER_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include "aux.hh"
@@ -10,7 +10,6 @@
 #include "rna_structure.hh"
 
 #include "params.hh"
-
 
 namespace LocARNA {
 
@@ -38,11 +37,11 @@ namespace LocARNA {
          *
          * @return whether a.second smaller b.second
          */
-        bool operator() (const T& a, const T&b) {
+        bool
+        operator()(const T &a, const T &b) {
             return a.second < b.second;
         }
     };
-
 
     /**
      * \brief Implements locarna alignment algorithm
@@ -68,7 +67,6 @@ namespace LocARNA {
         AlignerImpl *pimpl_;
 
     public:
-
         /**
          * @brief copy constructor
          * @param aligner object to be copied
@@ -81,7 +79,8 @@ namespace LocARNA {
          * @param aligner object to be assigned
          * Assigns implementation object (not only pointer)
          */
-        Aligner &operator =(const Aligner &aligner);
+        Aligner &
+        operator=(const Aligner &aligner);
 
         /**
          * @brief Construct from parameters
@@ -97,8 +96,10 @@ namespace LocARNA {
          * @brief create with named parameters
          * @return parameter object
          */
-        static
-        AlignerParams create() {return AlignerParams();}
+        static AlignerParams
+        create() {
+            return AlignerParams();
+        }
 
         //! destructor
         ~Aligner();
@@ -140,14 +141,14 @@ namespace LocARNA {
         const AlignerRestriction &
         get_restriction() const;
 
-
         /**
          * @brief Enumerate suboptimal local alignments
          *
          * special operation mode for computing the k best alignments.
          * Used in place of calls to align() and trace()
          *
-         * @param k number of suboptimals to be generated (k==-1 means unlimited)
+         * @param k number of suboptimals to be generated (k==-1 means
+         * unlimited)
          * @param threshold
          * @param normalized
          * @param normalized_L
@@ -166,20 +167,20 @@ namespace LocARNA {
                    bool verbose,
                    bool opt_local_out,
                    bool opt_pos_output,
-                   bool opt_write_structure
-                   );
-
+                   bool opt_write_structure);
 
         //! perform normalized local alignment with parameter L
         infty_score_t
         normalized_align(score_t L, bool verbose);
 
-        //! perform local alignment by subtracting a penalty for each alignment position
+        //! perform local alignment by subtracting a penalty for each alignment
+        //! position
         infty_score_t
-    penalized_align(score_t position_penalty);
+        penalized_align(score_t position_penalty);
 
         /**
-         * \brief evaluate the alignment according to scoring and scoring parameters
+         * \brief evaluate the alignment according to scoring and scoring
+         * parameters
          *
          * @return score of the alignment
          */
@@ -193,10 +194,8 @@ namespace LocARNA {
          */
         RnaStructure
         optimize_consensus_structure();
-
-
     };
 
-} //end namespace LocARNA
+} // end namespace LocARNA
 
 #endif // LOCARNA_ALIGNER_HH

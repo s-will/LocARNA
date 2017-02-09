@@ -2,11 +2,10 @@
 #define LOCARNA_BASEPAIRS_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
-
-#include<iosfwd>
+#include <iosfwd>
 
 #include <vector>
 #include <set>
@@ -34,7 +33,8 @@ namespace LocARNA {
      * with prefix BasePairs__.  Using a nested class does not work
      * properly (C++ does not support forward references to nested
      * classes.) Using a namespace instead of prefix should work as well,
-     * but caused problems at first when including the adjecency entry classes in the namespace!
+     * but caused problems at first when including the adjecency entry classes
+     * in the namespace!
      *
      */
     class BasePairs__Arc {
@@ -42,8 +42,8 @@ namespace LocARNA {
         size_t idx_;
         size_t left_;
         size_t right_;
-    public:
 
+    public:
         /**
          * Construct from member values
          *
@@ -51,17 +51,13 @@ namespace LocARNA {
          * @param left  Left position of arc
          * @param right  Right position of arc
          */
-        BasePairs__Arc(size_t idx, size_t left, size_t right):
-            idx_(idx),
-            left_(left),
-            right_(right)
-        {}
+        BasePairs__Arc(size_t idx, size_t left, size_t right)
+            : idx_(idx), left_(left), right_(right) {}
 
         /*
          * @brief Virtual destructor
          */
-        virtual
-        ~BasePairs__Arc();
+        virtual ~BasePairs__Arc();
 
         /**
          * Read access
@@ -69,7 +65,9 @@ namespace LocARNA {
          * @return left arc end
          */
         size_t
-        left() const {return left_;}
+        left() const {
+            return left_;
+        }
 
         /**
          * Read access
@@ -77,7 +75,9 @@ namespace LocARNA {
          * @return right arc end
          */
         size_t
-        right() const {return right_;}
+        right() const {
+            return right_;
+        }
 
         /**
          * Read access
@@ -85,7 +85,9 @@ namespace LocARNA {
          * @return index of arc
          */
         size_t
-        idx() const {return idx_;}
+        idx() const {
+            return idx_;
+        }
     };
 
     // ============================================================
@@ -104,8 +106,7 @@ namespace LocARNA {
      * it knows about its corresponding RnaData object.
      *
      */
-    class BasePairs
-    {
+    class BasePairs {
     private:
         const RnaData *rna_data_;
         double min_prob_;
@@ -134,8 +135,7 @@ namespace LocARNA {
              *
              * @param a arc
              */
-            explicit
-            LeftAdjEntry(const Arc &a): Arc(a) {}
+            explicit LeftAdjEntry(const Arc &a) : Arc(a) {}
         };
 
         /**
@@ -149,8 +149,7 @@ namespace LocARNA {
              *
              * @param a arc
              */
-            explicit
-            RightAdjEntry(const Arc &a): Arc(a) {}
+            explicit RightAdjEntry(const Arc &a) : Arc(a) {}
         };
 
         //! Vector of arcs
@@ -172,7 +171,7 @@ namespace LocARNA {
         typedef SparseMatrix<int> arc_matrix_t;
 
         //! type for pair of positions (base pairs)
-        typedef std::pair<size_type,size_type> bpair_t;
+        typedef std::pair<size_type, size_type> bpair_t;
 
         //! type for set of position pairs
         typedef std::set<bpair_t> bpair_set_t;
@@ -204,7 +203,6 @@ namespace LocARNA {
         sortAdjLists();
 
     public:
-
         /**
          * Construct from rna data
          *
@@ -215,15 +213,14 @@ namespace LocARNA {
          * their probability, an object of BasePairs represents the
          * sparsified set of base pairs (due to min_prob_)
          */
-        BasePairs(const RnaData *rna_data,double min_prob):
-            rna_data_(rna_data),
-            min_prob_(min_prob),
-            len_(get_length_from_rna_data()),
-            left_(),
-            right_(),
-            arc_vec_(),
-            arcs_(-1)
-        {
+        BasePairs(const RnaData *rna_data, double min_prob)
+            : rna_data_(rna_data),
+              min_prob_(min_prob),
+              len_(get_length_from_rna_data()),
+              left_(),
+              right_(),
+              arc_vec_(),
+              arcs_(-1) {
             generateBPLists(*rna_data_);
         }
 
@@ -233,18 +230,18 @@ namespace LocARNA {
          * @param len length of sequence
          * @param bps set of base pairs
          */
-        BasePairs(size_type len, const bpair_set_t &bps ):
-            rna_data_(0),
-            min_prob_(1.0),
-            len_(len),
-            left_(),
-            right_(),
-            arc_vec_(),
-            arcs_(-1)
-        {
+        BasePairs(size_type len, const bpair_set_t &bps)
+            : rna_data_(0),
+              min_prob_(1.0),
+              len_(len),
+              left_(),
+              right_(),
+              arc_vec_(),
+              arcs_(-1) {
             resize(seqlen());
-            for (bpair_set_t::const_iterator it=bps.begin(); bps.end()!=it; ++it) {
-                register_arc(it->first,it->second);
+            for (bpair_set_t::const_iterator it = bps.begin(); bps.end() != it;
+                 ++it) {
+                register_arc(it->first, it->second);
             }
             sortAdjLists();
         }
@@ -270,17 +267,22 @@ namespace LocARNA {
         //! returns the list of arcs with right end i
         const LeftAdjList &
         left_adjlist(int i) const {
-            //std::cout<<"size of left adjlist of "<<i<<"is "<<left_[i].size()<<std::endl;
+            // std::cout<<"size of left adjlist of "<<i<<"is
+            // "<<left_[i].size()<<std::endl;
             return left_[i];
         }
 
         //! returns the list of arcs with left end i
         const RightAdjList &
-        right_adjlist(int i) const { return right_[i];}
+        right_adjlist(int i) const {
+            return right_[i];
+        }
 
         //! accesses basepair by (i,j)
         const Arc &
-        arc(int i,int j) const {return arc_vec_[arcs_(i,j)];}
+        arc(int i, int j) const {
+            return arc_vec_[arcs_(i, j)];
+        }
 
         /**
          * \param idx an arc index
@@ -288,17 +290,21 @@ namespace LocARNA {
          */
         const Arc &
         arc(size_type idx) const {
-            assert(idx<arc_vec_.size());
+            assert(idx < arc_vec_.size());
             return arc_vec_[idx];
         }
 
         //! returns whether basepair (i,j) exists
         bool
-        exists_arc(int i,int j) const {return -1 != arcs_(i,j);}
+        exists_arc(int i, int j) const {
+            return -1 != arcs_(i, j);
+        }
 
         //! returns number of basepairs in the object
         size_type
-        num_bps() const {return arc_vec_.size();}
+        num_bps() const {
+            return arc_vec_.size();
+        }
 
         //! returns length of sequence
         size_type
@@ -318,20 +324,14 @@ namespace LocARNA {
         //     return *rna_data_;
         // }
 
-
     private:
-
         // return length from rna data
         // pre: rna data available
         size_type
         get_length_from_rna_data() const;
-
     };
 
     std::ostream &
-    operator <<(std::ostream &out, const BasePairs::Arc &arc);
-
-
-
+    operator<<(std::ostream &out, const BasePairs::Arc &arc);
 }
 #endif

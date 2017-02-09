@@ -2,9 +2,8 @@
 #define LOCARNA_OPTIONS_HH
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
-
 
 /*------------------------------------------------------------
 
@@ -30,14 +29,14 @@
 namespace LocARNA {
 
 #ifndef FALSE
-#  define FALSE 0
+#define FALSE 0
 #endif
 
 #ifndef TRUE
-#  define TRUE 1
+#define TRUE 1
 #endif
 
-    /* argument types */
+/* argument types */
 #define O_NO_ARG 0
 #define O_ARG_STRING 1
 #define O_ARG_INT 2
@@ -53,19 +52,22 @@ namespace LocARNA {
     /**
        @brief Definition structure of an option
     */
-    typedef
-    struct {
+    typedef struct {
         std::string longname; //!<  long option name
-        char shortname; //!<  short option char
-        bool *flag; //!<  pointer to flag that indicates if option given
-        int arg_type; //!<  type of argument
-        void *argument; //!<  pointer to variable that should hold argument, 0 indicates no arg
-        std::string deflt; //!<  pointer to default argument, if arg optional. otherwise 0
-        std::string argname; //!< optional name for an argument (shown in usage string)
+        char shortname;       //!<  short option char
+        bool *flag;     //!<  pointer to flag that indicates if option given
+        int arg_type;   //!<  type of argument
+        void *argument; //!<  pointer to variable that should hold argument, 0
+                        //!indicates no arg
+        std::string deflt; //!<  pointer to default argument, if arg optional.
+                           //!otherwise 0
+        std::string
+            argname; //!< optional name for an argument (shown in usage string)
         std::string description; //!< optional description (shown in help)
     } option_def;
 
-    /* longname==0 and shortname==0 and arg_type<=O_SECTION is not allowed for regular options definition */
+    /* longname==0 and shortname==0 and arg_type<=O_SECTION is not allowed for
+     * regular options definition */
 
     /*
       Example for option_def array
@@ -79,7 +81,8 @@ namespace LocARNA {
 
       struct option_def my_options[] = {
       {"help",'h',&help,O_NO_ARG,0,O_NODEFAULT,0,"This help"},
-      {"num",'n',&opt_num,O_ARG_INT,&optVal_num,O_NODEFAULT,0,"Some arbitrary number"},
+      {"num",'n',&opt_num,O_ARG_INT,&optVal_num,O_NODEFAULT,0,"Some arbitrary
+      number"},
       {"output",'o',0,O_ARG_STRING,&outputfile,O_NODEFAULT,
       "output-file", "File for output"}, // mandatory
       {"size",'s',0,O_ARG_INT,&optVal_size,"100","size","Size of problem"},
@@ -102,15 +105,18 @@ namespace LocARNA {
     /* prototypes */
 
     /** process options */
-    bool process_options(int argc, char *argv[], option_def options[]);
+    bool
+    process_options(int argc, char *argv[], option_def options[]);
 
     /* print a usage string */
-    void print_usage(char *progname, option_def options[], bool terse=true);
+    void
+    print_usage(char *progname, option_def options[], bool terse = true);
 
     /* print a longer help */
-    void print_help(char *progname, option_def options[]);
+    void
+    print_help(char *progname, option_def options[]);
 
-    const char*
+    const char *
     convert_arg_type(int arg_type);
 
     /**
@@ -127,7 +133,8 @@ namespace LocARNA {
      *
      * @param options options array
      */
-    void print_options(option_def options[]);
+    void
+    print_options(option_def options[]);
 
 } // end namespace LocARNA
 
