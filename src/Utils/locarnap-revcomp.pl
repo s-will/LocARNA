@@ -62,9 +62,9 @@ my $verbose;
 
 ## Getopt::Long::Configure("no_ignore_case");
 
-GetOptions(	   
+GetOptions(
 	   "verbose" => \$verbose,
-	   "quiet" => \$quiet,   
+	   "quiet" => \$quiet,
 	   "help"=> \$help,
 	   "man" => \$man,
 	   ) || pod2usage(2);
@@ -73,17 +73,17 @@ pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 if ($#ARGV<0) {print STDERR "No fasta files given.\n"; pod2usage(-exitstatus => -1);}
- 
+
 my @files=@ARGV;
 
 ## ------------------------------------------------------------
 ##
 sub rev_compl {
     my ($seq)=@_;
-    
+
     my $rcseq=reverse($seq);
     $rcseq =~ tr/ACGUTacgut/TGCAAtgcaa/;
-    
+
     return $rcseq;
 }
 
@@ -96,16 +96,16 @@ sub rev_compl {
 foreach my $file (@files) {
     if ($file =~ /(.+)\.([^\.]+)$/) {
 	my $base=$1; my $suf=$2;
-	
+
 	my $outfile="$base-rc.$suf";
-	
+
 	open(my $IN, "<", "$file") || die "Cannot read $file: $!";
 	open(my $OUT, ">", "$outfile") || die "Cannot write $outfile: $!";
-	
+
 	while(<$IN>=~/^>(\S+)\s+(.+)$/) {
 	    my $name=$1;
 	    my $anno=$2;
-	    
+
  	    if ($anno=~/(.*)left_context=(\d+); right_context=(\d+);(.*)/) {
  		my $before=$1;
  		my $lc=$2;
@@ -113,17 +113,17 @@ foreach my $file (@files) {
  		my $after=$4;
  		$anno = "$before"."left_context=$rc; right_context=$lc;$after";
  	    }
-	    
+
 	    print $OUT ">".$name." ".$anno." strand=-\n";
-	    
+
 	    my $line=<$IN>;
 	    chomp $line;
 	    print $OUT rev_compl($line)."\n";
 	}
-	
+
 	close $OUT;
 	close $IN;
-    }    
+    }
 }
 
 

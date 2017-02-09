@@ -64,39 +64,39 @@ struct command_line_parameters {
     bool subopt;
     bool add_filter;
     bool no_stacking;
-    
+
     bool stopwatch;
 
     double min_prob; // only pairs with a probability of at least min_prob are taken into account
     double out_min_prob; // minimal probability for output
-    
+
     //! maximal ratio of number of base pairs divided by sequence
     //! length. This serves as a second filter on the "significant"
     //! base pairs.
     double max_bps_length_ratio;
-    
+
     double max_uil_length_ratio; // max unpaired in loop length ratio
     double max_bpil_length_ratio; // max base pairs in loop length ratio
-    
+
     bool no_lonely_pairs;
-    
+
     int max_diff; // maximal difference for positions of alignment traces
     // (only used for ends of arcs)
     int max_diff_am; //maximal difference between two arc ends, -1 is off
-    
+
     //! maximal difference for alignment traces, at arc match
     //! positions
     int max_diff_at_am;
-    
+
     // only consider arc matchs where
     //   1. for global (bl-al)>max_diff || (br-ar)<=max_diff    (if max_diff>=0)
     //   2. for local (ar-al)-(br-bl)<=max_diff_am              (if max_diff_am>=0)
     // except when there is no additional computation of M matrices necessary,
     // this occurs if arcs are left-incident with larger arcs where 1 and 2 hold
-    
+
     double prob_unpaired_in_loop_threshold; // threshold for prob_unpaired_in_loop
     double prob_basepair_in_loop_threshold; // threshold for prob_basepair_in_loop
-    
+
     int alpha_1; //parameter for sequential score
     int alpha_2; //parameter for structural score
     int alpha_3; //parameter for stacking score
@@ -106,10 +106,10 @@ struct command_line_parameters {
     long int number_of_EPMs;
     bool inexact_struct_match;
     int struct_mismatch_score;
-    
+
     std::string seq_constraints_A;
     std::string seq_constraints_B;
-    
+
     bool no_chaining;
 
     int max_bp_span;
@@ -208,7 +208,7 @@ option_def my_options[] = {
     {"min-score",0,0,O_ARG_INT,&clp.min_score,"90","score","Minimal score of a traced EPM"},
     {"number-of-EPMs",0,0,O_ARG_INT,&clp.number_of_EPMs,"100","threshold",
      "Maximal number of EPMs for the suboptimal traceback"},
-    
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,O_NODEFAULT,"bool","use --noLP option for folding"},
     {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span","Limit maximum base pair span (default=off)"},
@@ -220,7 +220,7 @@ option_def my_options[] = {
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input files"},
     {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1","Input file 1"},
     {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2","Input file 2"},
-    
+
     {"",0,0,O_TEXT,0,O_NODEFAULT,"",
      "The two input files <Input 1> and <Input 2> specify the input \
 sequences in various, automatically detected formats. Accepted formats are: Fasta, Clustal, Stockholm \
@@ -307,35 +307,35 @@ main(int argc, char **argv) {
 
     ExtRnaData *rna_dataA=0;
     try {
-	rna_dataA = new ExtRnaData(clp.fileA,
-				   std::min(clp.min_prob,clp.out_min_prob),
-				   clp.prob_basepair_in_loop_threshold,
-				   clp.prob_unpaired_in_loop_threshold,
-				   clp.max_bps_length_ratio,
-				   clp.max_uil_length_ratio,
-				   clp.max_bpil_length_ratio,
-				   pfparams);
+        rna_dataA = new ExtRnaData(clp.fileA,
+                                   std::min(clp.min_prob,clp.out_min_prob),
+                                   clp.prob_basepair_in_loop_threshold,
+                                   clp.prob_unpaired_in_loop_threshold,
+                                   clp.max_bps_length_ratio,
+                                   clp.max_uil_length_ratio,
+                                   clp.max_bpil_length_ratio,
+                                   pfparams);
     } catch (failure &f) {
-	std::cerr << "ERROR: failed to read from file "<<clp.fileA <<std::endl
-		  << "       "<< f.what() <<std::endl;
-	return -1;
+        std::cerr << "ERROR: failed to read from file "<<clp.fileA <<std::endl
+                  << "       "<< f.what() <<std::endl;
+        return -1;
     }
-    
+
     ExtRnaData *rna_dataB=0;
     try {
-	rna_dataB = new ExtRnaData(clp.fileB,
-				   std::min(clp.min_prob,clp.out_min_prob),
-				   clp.prob_basepair_in_loop_threshold,
-				   clp.prob_unpaired_in_loop_threshold,
-				   clp.max_bps_length_ratio,
-				   clp.max_uil_length_ratio,
-				   clp.max_bpil_length_ratio,
-				   pfparams);
+        rna_dataB = new ExtRnaData(clp.fileB,
+                                   std::min(clp.min_prob,clp.out_min_prob),
+                                   clp.prob_basepair_in_loop_threshold,
+                                   clp.prob_unpaired_in_loop_threshold,
+                                   clp.max_bps_length_ratio,
+                                   clp.max_uil_length_ratio,
+                                   clp.max_bpil_length_ratio,
+                                   pfparams);
     } catch (failure &f) {
-	std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
-		  << "       "<< f.what() <<std::endl;
-	if (rna_dataA) delete rna_dataA;
-	return -1;
+        std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
+                  << "       "<< f.what() <<std::endl;
+        if (rna_dataA) delete rna_dataA;
+        return -1;
     }
 
     const Sequence &seqA=rna_dataA->sequence();

@@ -87,11 +87,11 @@ sub sum_paired_prob_bm {
     my $sum=0;
 
     foreach my $name_pair (@name_pairs) {
-	foreach my $i ( keys %{ $bmprobs->{$name_pair} } ) {
-	    foreach my $j ( keys %{ $bmprobs->{$name_pair}{$i} } ) {
-		$sum += $bmprobs->{$name_pair}{$i}{$j};
-	    }
-	}
+        foreach my $i ( keys %{ $bmprobs->{$name_pair} } ) {
+            foreach my $j ( keys %{ $bmprobs->{$name_pair}{$i} } ) {
+                $sum += $bmprobs->{$name_pair}{$i}{$j};
+            }
+        }
     }
 
     return $sum;
@@ -113,15 +113,15 @@ sub sum_paired_prob_am {
     my $sum=0;
 
     foreach my $name_pair (@name_pairs) {
-	foreach my $i ( keys %{ $amprobs->{$name_pair} } ) {
-	    foreach my $j ( keys %{ $amprobs->{$name_pair}{$i} } ) {
-		foreach my $k ( keys %{ $amprobs->{$name_pair}{$i}{$j} } ) {
-		    foreach my $l ( keys %{ $amprobs->{$name_pair}{$i}{$j}{$k} } ) {
-			$sum += $amprobs->{$name_pair}{$i}{$j}{$k}{$l};
-		    }
-		}
-	    }
-	}
+        foreach my $i ( keys %{ $amprobs->{$name_pair} } ) {
+            foreach my $j ( keys %{ $amprobs->{$name_pair}{$i} } ) {
+                foreach my $k ( keys %{ $amprobs->{$name_pair}{$i}{$j} } ) {
+                    foreach my $l ( keys %{ $amprobs->{$name_pair}{$i}{$j}{$k} } ) {
+                        $sum += $amprobs->{$name_pair}{$i}{$j}{$k}{$l};
+                    }
+                }
+            }
+        }
     }
 
     return $sum;
@@ -146,24 +146,24 @@ sub average_basematch_probs: prototype($$$) {
     my %r; # result matrix
 
     for my $nameA (@namesA) {
-	for my $nameB (@namesB) {
-	    # projecterei
+        for my $nameB (@namesB) {
+            # projecterei
 
-	    my @posmapA = project_seq($alnA->{$nameA});
-	    my @posmapB = project_seq($alnB->{$nameB});
+            my @posmapA = project_seq($alnA->{$nameA});
+            my @posmapB = project_seq($alnB->{$nameB});
 
-	    my  @bmprobkeys=keys %$bmprobs;
+            my  @bmprobkeys=keys %$bmprobs;
 
-	    my %m = %{ $bmprobs->{MLocarna::nnamepair($nameA,$nameB)} };
+            my %m = %{ $bmprobs->{MLocarna::nnamepair($nameA,$nameB)} };
 
-	    # compute sum over all sequence pairs
+            # compute sum over all sequence pairs
 
-	    foreach my $i (keys %m) {
-		foreach my $j (keys %{ $m{$i} }) {
-		    $r{$posmapA[$i]}{$posmapB[$j]} += $m{$i}{$j};
-		}
-	    }
-	}
+            foreach my $i (keys %m) {
+                foreach my $j (keys %{ $m{$i} }) {
+                    $r{$posmapA[$i]}{$posmapB[$j]} += $m{$i}{$j};
+                }
+            }
+        }
     }
 
     my $nm = ($#namesA+1)*($#namesB+1);
@@ -191,26 +191,26 @@ sub average_arcmatch_probs: prototype($$$) {
     my %r; # result matrix
 
     for my $nameA (@namesA) {
-	for my $nameB (@namesB) {
-	    # projecterei
+        for my $nameB (@namesB) {
+            # projecterei
 
-	    my @posmapA = project_seq($alnA->{$nameA});
-	    my @posmapB = project_seq($alnB->{$nameB});
+            my @posmapA = project_seq($alnA->{$nameA});
+            my @posmapB = project_seq($alnB->{$nameB});
 
-	    my %m = %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)} };
+            my %m = %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)} };
 
-	    # averagerei
+            # averagerei
 
-	    foreach my $i (keys %m) {
-		foreach my $j (keys %{ $m{$i} }) {
-		    foreach my $k (keys %{ $m{$i}{$j} }) {
-			foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-			    $r{$posmapA[$i]}{$posmapA[$j]}{$posmapB[$k]}{$posmapB[$l]} += $m{$i}{$j}{$k}{$l};
-			}
-		    }
-		}
-	    }
-	}
+            foreach my $i (keys %m) {
+                foreach my $j (keys %{ $m{$i} }) {
+                    foreach my $k (keys %{ $m{$i}{$j} }) {
+                        foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+                            $r{$posmapA[$i]}{$posmapA[$j]}{$posmapB[$k]}{$posmapB[$l]} += $m{$i}{$j}{$k}{$l};
+                        }
+                    }
+                }
+            }
+        }
     }
 
     my $nm = ($#namesA+1)*($#namesB+1);
@@ -240,24 +240,24 @@ sub consistency_transform_single_am: prototype($$) {
     my %mAB;
 
     foreach my $p (keys %$mCA) {
-	foreach my $q (keys %{ $mCA->{$p} } ) {
+        foreach my $q (keys %{ $mCA->{$p} } ) {
 
-	    if (exists $mCB->{$p} && exists $mCB->{$p}{$q}) {
+            if (exists $mCB->{$p} && exists $mCB->{$p}{$q}) {
 
-		my %hA = %{ $mCA->{$p}{$q} };
-		my %hB = %{ $mCB->{$p}{$q} };
+                my %hA = %{ $mCA->{$p}{$q} };
+                my %hB = %{ $mCB->{$p}{$q} };
 
-		foreach my $i (keys %hA) {
-		    foreach my $j (keys %{ $hA{$i} }) {
-			foreach my $k (keys %hB) {
-			    foreach my $l (keys %{ $hB{$k} }) {
-				$mAB{$i}{$j}{$k}{$l} += $hA{$i}{$j} * $hB{$k}{$l}
-			    }
-			}
-		    }
-		}
-	    }
-	}
+                foreach my $i (keys %hA) {
+                    foreach my $j (keys %{ $hA{$i} }) {
+                        foreach my $k (keys %hB) {
+                            foreach my $l (keys %{ $hB{$k} }) {
+                                $mAB{$i}{$j}{$k}{$l} += $hA{$i}{$j} * $hB{$k}{$l}
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     return \%mAB;
 }
@@ -286,16 +286,16 @@ sub consistency_transform_single_bm: prototype($$) {
 
     # ATTENTION: actually we need to traverse the cut set of lists keys mCA and keys mCB
     foreach my $k (keys %mCA) {
-	if (exists $mCB{$k}) {
-	    my %hA = %{ $mCA{$k} };
-	    my %hB = %{ $mCB{$k} };
+        if (exists $mCB{$k}) {
+            my %hA = %{ $mCA{$k} };
+            my %hB = %{ $mCB{$k} };
 
-	    foreach my $i (keys %hA) {
-		foreach my $j (keys %hB) {
-		    $mAB{$i}{$j} += $hA{$i} * $hB{$j}
-		}
-	    }
-	}
+            foreach my $i (keys %hA) {
+                foreach my $j (keys %hB) {
+                    $mAB{$i}{$j} += $hA{$i} * $hB{$j}
+                }
+            }
+        }
     }
     return \%mAB;
 }
@@ -329,49 +329,49 @@ sub consistency_transform_bm {
     my @name_pairs = keys %$h;
 
     foreach my $name_pair (@name_pairs) {
-	my ($nameA,$nameB) = dhp($name_pair);
-	if (exists $th{chp($nameB,$nameA)}) {
-	    my %subhash = transpose_sparsematrix_2D( $th{chp($nameB,$nameA)} );
-	    $th{$name_pair} = \%subhash;
-	} else {
-	    my %matrixAB;
+        my ($nameA,$nameB) = dhp($name_pair);
+        if (exists $th{chp($nameB,$nameA)}) {
+            my %subhash = transpose_sparsematrix_2D( $th{chp($nameB,$nameA)} );
+            $th{$name_pair} = \%subhash;
+        } else {
+            my %matrixAB;
 
-	    foreach my $nameC (@$names) {
+            foreach my $nameC (@$names) {
 
-		# careful, names in the hash are normalized!
-		my $nnameC=MLocarna::get_normalized_seqname($nameC);
+                # careful, names in the hash are normalized!
+                my $nnameC=MLocarna::get_normalized_seqname($nameC);
 
-		# transform via $nameC and add to matrix AB
+                # transform via $nameC and add to matrix AB
 
-		my $matrixAB_add;
+                my $matrixAB_add;
 
-		if ($nnameC eq $nameA || $nnameC eq $nameB) {
-		    $matrixAB_add = $h->{$name_pair}
-		} else {
-		    $matrixAB_add =
-			consistency_transform_single_bm( $h->{chp($nnameC,$nameA)},
-							 $h->{chp($nnameC,$nameB)} );
-		}
+                if ($nnameC eq $nameA || $nnameC eq $nameB) {
+                    $matrixAB_add = $h->{$name_pair}
+                } else {
+                    $matrixAB_add =
+                        consistency_transform_single_bm( $h->{chp($nnameC,$nameA)},
+                                                         $h->{chp($nnameC,$nameB)} );
+                }
 
-		add_sparsematrix_2D_inplace ( \%matrixAB, $matrixAB_add );
-	    }
+                add_sparsematrix_2D_inplace ( \%matrixAB, $matrixAB_add );
+            }
 
-	    %matrixAB = filter_sparsematrix_2D( \%matrixAB, $num_seqs * $min_bm_prob);
+            %matrixAB = filter_sparsematrix_2D( \%matrixAB, $num_seqs * $min_bm_prob);
 
-	    divide_sparsematrix_2D_inplace( \%matrixAB, $num_seqs );
+            divide_sparsematrix_2D_inplace( \%matrixAB, $num_seqs );
 
-	    $th{$name_pair} = \%matrixAB;
-	}
+            $th{$name_pair} = \%matrixAB;
+        }
     }
 
     if ($scale_after_ct) {
-	my $paired_prob_ratio = $sum_paired_prob/sum_paired_prob_bm(\%th);
-	# printmsg 1, "Sum paired prob bm ratio: $paired_prob_ratio\n";
+        my $paired_prob_ratio = $sum_paired_prob/sum_paired_prob_bm(\%th);
+        # printmsg 1, "Sum paired prob bm ratio: $paired_prob_ratio\n";
 
-	foreach my $name_pair (@name_pairs) {
-	    my %subhash = scale_sparsematrix_2D($th{$name_pair},$paired_prob_ratio);
-	    $th{$name_pair} = \%subhash;
-	}
+        foreach my $name_pair (@name_pairs) {
+            my %subhash = scale_sparsematrix_2D($th{$name_pair},$paired_prob_ratio);
+            $th{$name_pair} = \%subhash;
+        }
     }
 
     return %th;
@@ -398,20 +398,20 @@ sub read_bm_probs: prototype($) {
     closedir $DIR;
 
     foreach my $file (@files) {
-	if ($file =~ /(.+)-(.+)/) {
-	    my $nameA=$1;
-	    my $nameB=$2;
-	    open(my $MYIN, "<", "$dir/$file") || die "Cannot read $dir/$file: $!";
-	    while (my $line = <$MYIN>) {
-		if ($line =~ /(\d+) (\d+) ([\d.e+-]+)/) {
-		    my $i=$1;
-		    my $j=$2;
-		    my $p=$3;
-		    $bmprobs{MLocarna::chp($nameA,$nameB)}{$i}{$j}=$p;
-		}
-	    }
-	    close $MYIN;
-	}
+        if ($file =~ /(.+)-(.+)/) {
+            my $nameA=$1;
+            my $nameB=$2;
+            open(my $MYIN, "<", "$dir/$file") || die "Cannot read $dir/$file: $!";
+            while (my $line = <$MYIN>) {
+                if ($line =~ /(\d+) (\d+) ([\d.e+-]+)/) {
+                    my $i=$1;
+                    my $j=$2;
+                    my $p=$3;
+                    $bmprobs{MLocarna::chp($nameA,$nameB)}{$i}{$j}=$p;
+                }
+            }
+            close $MYIN;
+        }
     }
 
     return \%bmprobs;
@@ -429,21 +429,21 @@ sub write_bm_probs: prototype($$) {
     my @name_pairs = keys %bmprobs;
 
     for my $name_pair (@name_pairs) {
-	my ($nameA,$nameB) = MLocarna::dhp($name_pair);
+        my ($nameA,$nameB) = MLocarna::dhp($name_pair);
 
-	my $outfile="$dir/$nameA-$nameB";
-	open(my $MYOUT,">", "$outfile") || die "Cannot write to $outfile: $!";
+        my $outfile="$dir/$nameA-$nameB";
+        open(my $MYOUT,">", "$outfile") || die "Cannot write to $outfile: $!";
 
-	my %h = %{ $bmprobs{$name_pair} };
+        my %h = %{ $bmprobs{$name_pair} };
 
-	for my $i (keys %h) {
-	    my %h2 = %{ $h{$i} };
-	    for my $j (keys %h2) {
-		printf $MYOUT "$i $j %.8f\n", $h2{$j};
-	    }
-	}
+        for my $i (keys %h) {
+            my %h2 = %{ $h{$i} };
+            for my $j (keys %h2) {
+                printf $MYOUT "$i $j %.8f\n", $h2{$j};
+            }
+        }
 
-	close $MYOUT;
+        close $MYOUT;
     }
 }
 
@@ -468,17 +468,17 @@ sub read_am_probs: prototype($) {
     closedir $DIR;
 
     foreach my $file (@files) {
-	if ($file =~ /(.*)-(.*)/) {
-	    my $nameA=$1;
-	    my $nameB=$2;
-	    open(my $MYIN, "<", "$dir/$file") || die "Cannot read from $dir/$file: $!";
-	    while (my $line = <$MYIN>) {
-		if ($line =~ /(\d+) (\d+) (\d+) (\d+) ([\d.e+-]+)/) {
-		    $amprobs{MLocarna::chp($nameA,$nameB)}{$1}{$2}{$3}{$4}=$5;
-		}
-	    }
-	    close $MYIN;
-	}
+        if ($file =~ /(.*)-(.*)/) {
+            my $nameA=$1;
+            my $nameB=$2;
+            open(my $MYIN, "<", "$dir/$file") || die "Cannot read from $dir/$file: $!";
+            while (my $line = <$MYIN>) {
+                if ($line =~ /(\d+) (\d+) (\d+) (\d+) ([\d.e+-]+)/) {
+                    $amprobs{MLocarna::chp($nameA,$nameB)}{$1}{$2}{$3}{$4}=$5;
+                }
+            }
+            close $MYIN;
+        }
     }
 
     return \%amprobs;
@@ -496,23 +496,23 @@ sub write_am_probs: prototype($$) {
     my @name_pairs = keys %amprobs;
 
     for my $name_pair (@name_pairs) {
-	my ($nameA,$nameB) = MLocarna::dhp($name_pair);
+        my ($nameA,$nameB) = MLocarna::dhp($name_pair);
 
-	my $outfile="$dir/$nameA-$nameB";
-	open(my $MYOUT,">", "$outfile") || die "Cannot write to $outfile: $!";
+        my $outfile="$dir/$nameA-$nameB";
+        open(my $MYOUT,">", "$outfile") || die "Cannot write to $outfile: $!";
 
-	my %m = %{ $amprobs{$name_pair} };
+        my %m = %{ $amprobs{$name_pair} };
 
-	foreach my $i (keys %m) {
-	    foreach my $j (keys %{ $m{$i} }) {
-		foreach my $k (keys %{ $m{$i}{$j} }) {
-		    foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-			printf $MYOUT "$i $j $k $l %.8f\n",$m{$i}{$j}{$k}{$l};
-		    }
-		}
-	    }
-	}
-	close $MYOUT;
+        foreach my $i (keys %m) {
+            foreach my $j (keys %{ $m{$i} }) {
+                foreach my $k (keys %{ $m{$i}{$j} }) {
+                    foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+                        printf $MYOUT "$i $j $k $l %.8f\n",$m{$i}{$j}{$k}{$l};
+                    }
+                }
+            }
+        }
+        close $MYOUT;
     }
 }
 
@@ -544,70 +544,70 @@ sub compute_bmreliabilities_single_seq {
     my %posmaps;
 
     for my $name (@names) {
-	my @posmap=project_seq($aln->{$name});
-	$posmaps{$name} = [ @posmap ];
+        my @posmap=project_seq($aln->{$name});
+        $posmaps{$name} = [ @posmap ];
     }
 
     ## initialize all $res_bmrel_seq[$i] and $res_bmrel_str[$i]
     for (my $i=1; $i<=$aln_length; $i++) {
-	$res_bmrel_seq[$i] = 0;
-	$res_bmrel_str[$i] = 0;
+        $res_bmrel_seq[$i] = 0;
+        $res_bmrel_str[$i] = 0;
     }
 
     for (my $i=1; $i<=$aln_length; $i++) {
 
-	if (substr($aln->{$nameA},$i-1,1) !~ /[A-Za-z]/ ) {
-	    $res_bmrel_seq[$i]  = 0;
-	    $res_bmrel_str[$i] = 0;
-	    next;
-	}
+        if (substr($aln->{$nameA},$i-1,1) !~ /[A-Za-z]/ ) {
+            $res_bmrel_seq[$i]  = 0;
+            $res_bmrel_str[$i] = 0;
+            next;
+        }
 
-	my @posmapA = @{ $posmaps{$nameA} };
+        my @posmapA = @{ $posmaps{$nameA} };
 
-	for my $nameB (@names) {
-	    if ($nameA eq $nameB) { next; }
+        for my $nameB (@names) {
+            if ($nameA eq $nameB) { next; }
 
-	    if (substr($aln->{$nameB},$i-1,1) !~ /[A-Za-z]/ ) { next; }
+            if (substr($aln->{$nameB},$i-1,1) !~ /[A-Za-z]/ ) { next; }
 
-	    my $pA=$col2pos{$nameA}[$i];
-	    my $pB=$col2pos{$nameB}[$i];
+            my $pA=$col2pos{$nameA}[$i];
+            my $pB=$col2pos{$nameB}[$i];
 
-	    ## 1.) contribution from base match
-	    if (exists $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB}) {
-		$res_bmrel_seq[$i] += $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB};
-	    }
+            ## 1.) contribution from base match
+            if (exists $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB}) {
+                $res_bmrel_seq[$i] += $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB};
+            }
 
-	    ## 2.) contribution from arc matchs
+            ## 2.) contribution from arc matchs
 
-	    my @posmapB = @{ $posmaps{$nameB} };
+            my @posmapB = @{ $posmaps{$nameB} };
 
-	    for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
+            for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
 
-		my $i2 = $posmapA[$pA2];
+                my $i2 = $posmapA[$pA2];
 
-		if ($i2<$i) { next; }
+                if ($i2<$i) { next; }
 
-		if ( substr($aln->{$nameA},$i2-1,1) !~ /[A-Za-z]/ ) { next; }
+                if ( substr($aln->{$nameA},$i2-1,1) !~ /[A-Za-z]/ ) { next; }
 
-		if ( substr($aln->{$nameB},$i2-1,1) !~ /[A-Za-z]/ ) { next; }
+                if ( substr($aln->{$nameB},$i2-1,1) !~ /[A-Za-z]/ ) { next; }
 
-		my $pB2 =  $col2pos{$nameB}[$i2];
+                my $pB2 =  $col2pos{$nameB}[$i2];
 
-		if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+                if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 
-		my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+                my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
 
-		$res_bmrel_str[$i]  += $add_prob;
-		$res_bmrel_str[$i2] += $add_prob;
-	    }
-	}
+                $res_bmrel_str[$i]  += $add_prob;
+                $res_bmrel_str[$i2] += $add_prob;
+            }
+        }
     }
 
     my $numpairs = $#names;
 
     for (my $i=1; $i<=$aln_length; $i++) {
-	$res_bmrel_seq[$i] /= $numpairs;
-	$res_bmrel_str[$i] /= $numpairs;
+        $res_bmrel_seq[$i] /= $numpairs;
+        $res_bmrel_str[$i] /= $numpairs;
     }
 
     return (\@res_bmrel_seq,\@res_bmrel_str);
@@ -647,59 +647,59 @@ sub compute_amreliabilities_single_seq: prototype($$$$) {
     my @posmapA = project_seq($aln->{$nameA});
 
     for (my $i=1; $i<=$aln_length; $i++) {
-	## lookup in alignment string $aln{$nameA} at $i-1 (substr positions 0..strlen-1)
-	if (substr($aln->{$nameA},$i-1,1) !~ /[A-Za-z]/ ) { next; }
+        ## lookup in alignment string $aln{$nameA} at $i-1 (substr positions 0..strlen-1)
+        if (substr($aln->{$nameA},$i-1,1) !~ /[A-Za-z]/ ) { next; }
 
-	for my $nameB (@names) {
-	    if ($nameA eq $nameB) { next; }
+        for my $nameB (@names) {
+            if ($nameA eq $nameB) { next; }
 
-	    if (substr($aln->{$nameB},$i-1,1) !~ /[A-Za-z]/ ) { next; }
+            if (substr($aln->{$nameB},$i-1,1) !~ /[A-Za-z]/ ) { next; }
 
-	    my $pA=$col2pos{$nameA}[$i];
-	    my $pB=$col2pos{$nameB}[$i];
+            my $pA=$col2pos{$nameA}[$i];
+            my $pB=$col2pos{$nameB}[$i];
 
-	    my @posmapB = project_seq($aln->{$nameB});
+            my @posmapB = project_seq($aln->{$nameB});
 
-	    for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
+            for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
 
-		my $i2 = $posmapA[$pA2];
+                my $i2 = $posmapA[$pA2];
 
-		if ($i2<$i) { next; }
+                if ($i2<$i) { next; }
 
-		if ( substr($aln->{$nameA},$i2,1) !~ /[A-Za-z]/ ) { next; }
+                if ( substr($aln->{$nameA},$i2,1) !~ /[A-Za-z]/ ) { next; }
 
-		if ( substr($aln->{$nameB},$i2,1) !~ /[A-Za-z]/ ) { next; }
+                if ( substr($aln->{$nameB},$i2,1) !~ /[A-Za-z]/ ) { next; }
 
-		my $pB2 =  $col2pos{$nameB}[$i2];
+                my $pB2 =  $col2pos{$nameB}[$i2];
 
-		if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+                if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 
-		my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+                my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
 
-		$res_amrel{"$i $i2"} += $add_prob;
-	    }
-	}
+                $res_amrel{"$i $i2"} += $add_prob;
+            }
+        }
     }
 
     ## now add the dot plot of the sequence alone
 
     foreach my $k (keys %$pairprobs) {
-	$k =~ /(\S+) (\S+)/;
-	my $p1=$1; my $p2=$2;
+        $k =~ /(\S+) (\S+)/;
+        my $p1=$1; my $p2=$2;
 
-	my $i1=$posmapA[$p1];
-	my $i2=$posmapA[$p2];
+        my $i1=$posmapA[$p1];
+        my $i2=$posmapA[$p2];
 
-	$res_amrel{"$i1 $i2"} += $pairprobs->{$k};
+        $res_amrel{"$i1 $i2"} += $pairprobs->{$k};
     }
 
     ## finally average in res_amrel
     my $numpairs = @names ;  ## there are edges to k-1 many other
-			     ## sequences and the pair probs from the
-			     ## dot plot of the sequence
+                             ## sequences and the pair probs from the
+                             ## dot plot of the sequence
 
     for my $k (keys %res_amrel) {
-	$res_amrel{$k} /= $numpairs;
+        $res_amrel{$k} /= $numpairs;
     }
 
     return \%res_amrel;
@@ -743,76 +743,76 @@ sub compute_reliability: prototype($$$) {
     my %posmaps;
 
     for my $name (@names) {
-	my @posmap=project_seq($aln->{$name});
-	$posmaps{$name} = [ @posmap ];
+        my @posmap=project_seq($aln->{$name});
+        $posmaps{$name} = [ @posmap ];
     }
 
     ## initialize all $res_bmrel_seq[$i] and $res_bmrel_str[$i]
     for (my $i=1; $i<=$aln_length; $i++) {
-	$res_bmrel_seq[$i] = 0;
-	$res_bmrel_str[$i] = 0;
+        $res_bmrel_seq[$i] = 0;
+        $res_bmrel_str[$i] = 0;
     }
 
     for (my $i=1; $i<=$aln_length; $i++) {
 
-	for my $nameA (@names) {
-	    if (substr($aln->{$nameA},$i-1,1) !~ /[A-Za-z]/ ) { next; }
-	    my @posmapA = @{ $posmaps{$nameA} };
+        for my $nameA (@names) {
+            if (substr($aln->{$nameA},$i-1,1) !~ /[A-Za-z]/ ) { next; }
+            my @posmapA = @{ $posmaps{$nameA} };
 
-	    for my $nameB (@names) {
-		if ($nameA le $nameB) { next; }
+            for my $nameB (@names) {
+                if ($nameA le $nameB) { next; }
 
-		if (substr($aln->{$nameB},$i-1,1) !~ /[A-Za-z]/ ) { next; }
+                if (substr($aln->{$nameB},$i-1,1) !~ /[A-Za-z]/ ) { next; }
 
-		my $pA=$col2pos{$nameA}[$i];
-		my $pB=$col2pos{$nameB}[$i];
+                my $pA=$col2pos{$nameA}[$i];
+                my $pB=$col2pos{$nameB}[$i];
 
-		## 1.) contribution from base match
-		if (exists $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB}) {
-		    $res_bmrel_seq[$i] += $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB};
-		}
+                ## 1.) contribution from base match
+                if (exists $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB}) {
+                    $res_bmrel_seq[$i] += $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB};
+                }
 
-		## 2.) contribution from arc matchs
+                ## 2.) contribution from arc matchs
 
-		my @posmapB = @{ $posmaps{$nameB} };
+                my @posmapB = @{ $posmaps{$nameB} };
 
-		for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
+                for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
 
-		    my $i2 = $posmapA[$pA2];
+                    my $i2 = $posmapA[$pA2];
 
-		    if ($i2<$i) { next; }
+                    if ($i2<$i) { next; }
 
-		    if ( substr($aln->{$nameA},$i2-1,1) !~ /[A-Za-z]/ ) { next; }
+                    if ( substr($aln->{$nameA},$i2-1,1) !~ /[A-Za-z]/ ) { next; }
 
-		    if ( substr($aln->{$nameB},$i2-1,1) !~ /[A-Za-z]/ ) { next; }
+                    if ( substr($aln->{$nameB},$i2-1,1) !~ /[A-Za-z]/ ) { next; }
 
-		    my $pB2 =  $col2pos{$nameB}[$i2];
+                    my $pB2 =  $col2pos{$nameB}[$i2];
 
-		    #printerr "MLocarna::nnamepair($nameA,$nameB) $pA $pA2 $pB $pB2\n";
-		    if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+                    #printerr "MLocarna::nnamepair($nameA,$nameB) $pA $pA2 $pB $pB2\n";
+                    if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 
-		    my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+                    my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
 
-		    $res_amrel{"$i $i2"} += $add_prob;
+                    $res_amrel{"$i $i2"} += $add_prob;
 
-		    #print "add $nameA $nameB $i $i2 [ $pA $pA2 $pB $pB2 ] $add_prob\n";
-		    $res_bmrel_str[$i]  += $add_prob;
-		    $res_bmrel_str[$i2] += $add_prob;
-		}
-	    }
-	}
+                    #print "add $nameA $nameB $i $i2 [ $pA $pA2 $pB $pB2 ] $add_prob\n";
+                    $res_bmrel_str[$i]  += $add_prob;
+                    $res_bmrel_str[$i2] += $add_prob;
+                }
+            }
+        }
     }
 
 
     my $numpairs = ($#names+1)*$#names/2;
 
     for (my $i=1; $i<=$aln_length; $i++) {
-	$res_bmrel_seq[$i] /= $numpairs;
-	$res_bmrel_str[$i] /= $numpairs;
+        $res_bmrel_seq[$i] /= $numpairs;
+        $res_bmrel_str[$i] /= $numpairs;
     }
 
     for my $k (keys %res_amrel) {
-	$res_amrel{$k} /= $numpairs;
+        $res_amrel{$k} /= $numpairs;
     }
 
     return (\@res_bmrel_seq,\@res_bmrel_str, \%res_amrel);
@@ -838,7 +838,7 @@ sub write_bm_reliabilities {
     open(my $BMREL, ">", "$file") || die "Cannot write to $file: $!";
     my $aln_length=@$bmrels_seq-1; # (!)
     for (my $i=1; $i<=$aln_length; $i++) {
-	print $BMREL "$i $bmrels_seq->[$i] $bmrels_str->[$i]\n";
+        print $BMREL "$i $bmrels_seq->[$i] $bmrels_str->[$i]\n";
     }
     close $BMREL;
 }
@@ -855,7 +855,7 @@ sub write_am_reliabilities {
 
     open(my $AMREL,">", "$file")  || die "Cannot write to $file: $!";
     foreach my $k (keys %$amrels) {
-	print $AMREL "$k $amrels->{$k}\n";
+        print $AMREL "$k $amrels->{$k}\n";
     }
     close $AMREL;
 }
@@ -872,21 +872,21 @@ sub write_reliability_bars {
 
     my $reso=10;
     for (my $i=0;$i<$reso; $i++) {
-	print sprintf("-%3d%%              ",100*($i+1)/$reso);
-	my $aln_length=@$bmrels_seq-1; # (!)
-	for (my $j=1; $j<=$aln_length; $j++) {
-	    my $b=$bmrels_seq->[$j];
-	    my $a=$bmrels_str->[$j];# * ($mea_beta/100);
+        print sprintf("-%3d%%              ",100*($i+1)/$reso);
+        my $aln_length=@$bmrels_seq-1; # (!)
+        for (my $j=1; $j<=$aln_length; $j++) {
+            my $b=$bmrels_seq->[$j];
+            my $a=$bmrels_str->[$j];# * ($mea_beta/100);
 
-	    if ($a>$i/$reso) {
-		print "#";
-	    } elsif ($a+$b>$i/$reso) {
-		print "*";
-	    } else {
-		print " ";
-	    }
-	}
-	print "\n";
+            if ($a>$i/$reso) {
+                print "#";
+            } elsif ($a+$b>$i/$reso) {
+                print "*";
+            } else {
+                print " ";
+            }
+        }
+        print "\n";
     }
 }
 
@@ -910,42 +910,42 @@ sub write_dotplot_extended {
 
     my $data="";
     foreach my $k (keys %$pairprobs) {
-	$k =~ /(\d+) (\d+)/ || die "write_dotplot_extended: wrong keys in pairprobs.";
-	my $i=$1;
-	my $j=$2;
-	if ( $i < 1 ) {
-	    printerr "write_dotplot_extended: Out of range i: $i\n";
-	}
-	if ( $j > length($sequence) ) {
-	    printerr "write_dotplot_extended: Out of range j: $j\n";
-	}
+        $k =~ /(\d+) (\d+)/ || die "write_dotplot_extended: wrong keys in pairprobs.";
+        my $i=$1;
+        my $j=$2;
+        if ( $i < 1 ) {
+            printerr "write_dotplot_extended: Out of range i: $i\n";
+        }
+        if ( $j > length($sequence) ) {
+            printerr "write_dotplot_extended: Out of range j: $j\n";
+        }
 
 
-	my @pairprobinfo = split /\s+/,$pairprobs->{$k};
+        my @pairprobinfo = split /\s+/,$pairprobs->{$k};
 
-	my $p1=$pairprobinfo[0];
-	my $p2=$pairprobinfo[1];
-	my $w1=$pairprobinfo[2];
-	my $w2=$pairprobinfo[3];
+        my $p1=$pairprobinfo[0];
+        my $p2=$pairprobinfo[1];
+        my $w1=$pairprobinfo[2];
+        my $w2=$pairprobinfo[3];
 
-	my $colnum1=@$colors1;
-	my $colnum2=@$colors2;
+        my $colnum1=@$colors1;
+        my $colnum2=@$colors2;
 
-	if ($p1!=0) {
-	    if (!defined($w1)) { # do we have a weight for p1
-		$w1=0;
-	    }
-	    $data .= $colors1->[int($w1*($colnum1-1))]." setrgbcolor ";
-	    $data .= "$i $j ".sqrt($p1)." ubox\n";
-	}
+        if ($p1!=0) {
+            if (!defined($w1)) { # do we have a weight for p1
+                $w1=0;
+            }
+            $data .= $colors1->[int($w1*($colnum1-1))]." setrgbcolor ";
+            $data .= "$i $j ".sqrt($p1)." ubox\n";
+        }
 
-	if (defined($p2) && ($p2!=0)) { # do we have a weight for p1
-	    if (!defined($w2)) { # do we have a weight for p1
-		$w2=0;
-	    }
-	    $data .= $colors2->[int($w2*($colnum2-1))]." setrgbcolor ";
-	    $data .= "$i $j ".sqrt($p2)." lbox\n";
-	}
+        if (defined($p2) && ($p2!=0)) { # do we have a weight for p1
+            if (!defined($w2)) { # do we have a weight for p1
+                $w2=0;
+            }
+            $data .= $colors2->[int($w2*($colnum2-1))]." setrgbcolor ";
+            $data .= "$i $j ".sqrt($p2)." lbox\n";
+        }
     }
     my $pscode="%!PS-Adobe-3.0 EPSF-3.0
 %%Title: RNA Dot Plot
@@ -1126,51 +1126,51 @@ sub max_weight_structure: prototype($$$$$) {
 
     ## Nussinov like initialization
     for (my $i=1; $i<=$len; $i++) {
-	$Nmat[$i][$i-1]=0;
-	for (my $k=$i; $k<=$len && $k<$i+$d_min; $k++) {
-	    my $bw = (@$base_weights==0)?0:$base_weights->[$k];
+        $Nmat[$i][$i-1]=0;
+        for (my $k=$i; $k<=$len && $k<$i+$d_min; $k++) {
+            my $bw = (@$base_weights==0)?0:$base_weights->[$k];
 
-	    $Nmat[$i][$k] = $Nmat[$i][$k-1] + $bw;
-	    $Tmat[$i][$k]=0;
-	}
+            $Nmat[$i][$k] = $Nmat[$i][$k-1] + $bw;
+            $Tmat[$i][$k]=0;
+        }
     }
 
     ## Do Nussinov algorithm with candidate list approach in order to use sparsity
     ##
 
     for (my $i=$len; $i>=1; $i--) {
-	my @arc_ends=(); ## candidate list for right ends of arcs (i,k)
+        my @arc_ends=(); ## candidate list for right ends of arcs (i,k)
 
-	for (my $j=$i+$d_min; $j<=$len; $j++) {
+        for (my $j=$i+$d_min; $j<=$len; $j++) {
 
-	    my $bw = (@$base_weights==0)?0:$base_weights->[$i]; ## support 0 base weights by passing empty array of base weights
-	    $Nmat[$i][$j] = $Nmat[$i+1][$j] + $bw;
-	    $Tmat[$i][$j] = -1;
+            my $bw = (@$base_weights==0)?0:$base_weights->[$i]; ## support 0 base weights by passing empty array of base weights
+            $Nmat[$i][$j] = $Nmat[$i+1][$j] + $bw;
+            $Tmat[$i][$j] = -1;
 
-	    foreach my $k (@arc_ends) {
-		if (! defined $Nmat[$k+1][$j]) {
-		    printerr "$i $k $j\n";
-		}
-		my $score = $Nmat[$i+1][$k-1] + $Nmat[$k+1][$j] + $arc_weights->{"$i $k"} * $struct_weight;
+            foreach my $k (@arc_ends) {
+                if (! defined $Nmat[$k+1][$j]) {
+                    printerr "$i $k $j\n";
+                }
+                my $score = $Nmat[$i+1][$k-1] + $Nmat[$k+1][$j] + $arc_weights->{"$i $k"} * $struct_weight;
 
-		if ($score > $Nmat[$i][$j]) {
-		    $Nmat[$i][$j] = $score;
-		    $Tmat[$i][$j] = $k;
-		}
-	    }
+                if ($score > $Nmat[$i][$j]) {
+                    $Nmat[$i][$j] = $score;
+                    $Tmat[$i][$j] = $k;
+                }
+            }
 
-	    if ((exists $arc_weights->{"$i $j"})) {
-		my $score = $Nmat[$i+1][$j-1] + $arc_weights->{"$i $j"} * $struct_weight;
+            if ((exists $arc_weights->{"$i $j"})) {
+                my $score = $Nmat[$i+1][$j-1] + $arc_weights->{"$i $j"} * $struct_weight;
 
-		if ($score > $Nmat[$i][$j]) {
-		    $Nmat[$i][$j] = $score;
-		    $Tmat[$i][$j] = $j;
+                if ($score > $Nmat[$i][$j]) {
+                    $Nmat[$i][$j] = $score;
+                    $Tmat[$i][$j] = $j;
 
-		    push @arc_ends, $j; ## only if there is an arc (i,j) and the score is maximal for N[i][j], we need to consider j as a new candidate
-		                        ## (this follows the "candidate list" idea of Mihal Ziv-Ukelson and co-authors)
-		}
-	    }
-	}
+                    push @arc_ends, $j; ## only if there is an arc (i,j) and the score is maximal for N[i][j], we need to consider j as a new candidate
+                                        ## (this follows the "candidate list" idea of Mihal Ziv-Ukelson and co-authors)
+                }
+            }
+        }
     }
 
     # read total score from Nmat
@@ -1185,35 +1185,35 @@ sub max_weight_structure: prototype($$$$$) {
     my @trace;
     $trace[0]="";
     for (my $i=1; $i<=$len; $i++) {
-	$trace[$i]=".";
+        $trace[$i]=".";
     }
 
     while ($#stack != -1) {
 
-	my $i=$stack[-2];
-	my $j=$stack[-1];
-	$#stack -= 2;
+        my $i=$stack[-2];
+        my $j=$stack[-1];
+        $#stack -= 2;
 
-	if ($i+$d_min>$j) { next; }
+        if ($i+$d_min>$j) { next; }
 
-	if ($Tmat[$i][$j]==-1) {
-	    push @stack,($i+1,$j);
-	} elsif ($Tmat[$i][$j]>0) {
-	    my $k = $Tmat[$i][$j];
-	    if  ($arc_weights->{"$i $k"}>=$threshold) {
-		$trace[$i]="(";
-		$trace[$k]=")";
-	    } elsif ($arc_weights->{"$i $k"}>=$threshold/2) {
-		$trace[$i]="{";
-		$trace[$k]="}";
-	    } else {
-		$trace[$i]="`";
-		$trace[$k]="'";
-	    }
+        if ($Tmat[$i][$j]==-1) {
+            push @stack,($i+1,$j);
+        } elsif ($Tmat[$i][$j]>0) {
+            my $k = $Tmat[$i][$j];
+            if  ($arc_weights->{"$i $k"}>=$threshold) {
+                $trace[$i]="(";
+                $trace[$k]=")";
+            } elsif ($arc_weights->{"$i $k"}>=$threshold/2) {
+                $trace[$i]="{";
+                $trace[$k]="}";
+            } else {
+                $trace[$i]="`";
+                $trace[$k]="'";
+            }
 
-	    push @stack,($i+1,$k-1);
-	    push @stack,($k+1,$j);
-	}
+            push @stack,($i+1,$k-1);
+            push @stack,($k+1,$j);
+        }
     }
 
     return ($total_score,join('', @trace));
@@ -1245,55 +1245,55 @@ sub consistency_transform_am {
     my @name_pairs = keys %$h;
 
     foreach my $name_pair (@name_pairs) {
-	my ($nameA,$nameB) = dhp($name_pair);
+        my ($nameA,$nameB) = dhp($name_pair);
 
-	if ($nameA eq $nameB) {
-	    $th{$name_pair} = $h->{$name_pair};
-	} else {
-	    if (exists $th{chp($nameB,$nameA)}) {
-		my %subhash = transpose_sparsematrix_4D( $th{chp($nameB,$nameA)} );
-		$th{$name_pair} = \%subhash;
-	    } else {
+        if ($nameA eq $nameB) {
+            $th{$name_pair} = $h->{$name_pair};
+        } else {
+            if (exists $th{chp($nameB,$nameA)}) {
+                my %subhash = transpose_sparsematrix_4D( $th{chp($nameB,$nameA)} );
+                $th{$name_pair} = \%subhash;
+            } else {
 
-		my %matrixAB;
+                my %matrixAB;
 
-		foreach my $nameC (@$names) {
+                foreach my $nameC (@$names) {
 
-		    # careful, names in the hash are normalized!
-		    my $nnameC=MLocarna::get_normalized_seqname($nameC);
+                    # careful, names in the hash are normalized!
+                    my $nnameC=MLocarna::get_normalized_seqname($nameC);
 
-		    # transform via $nameC and add to matrix AB
+                    # transform via $nameC and add to matrix AB
 
-		    my $matrixAB_add;
+                    my $matrixAB_add;
 
-		    if ($nnameC eq $nameA || $nnameC eq $nameB) {
-			$matrixAB_add = $h->{$name_pair};
-		    } else {
-			$matrixAB_add = consistency_transform_single_am( $h->{chp($nnameC,$nameA)} , $h->{chp($nnameC,$nameB)} );
-		    }
+                    if ($nnameC eq $nameA || $nnameC eq $nameB) {
+                        $matrixAB_add = $h->{$name_pair};
+                    } else {
+                        $matrixAB_add = consistency_transform_single_am( $h->{chp($nnameC,$nameA)} , $h->{chp($nnameC,$nameB)} );
+                    }
 
-		    %matrixAB = add_sparsematrix_4D ( \%matrixAB, $matrixAB_add );
-		}
+                    %matrixAB = add_sparsematrix_4D ( \%matrixAB, $matrixAB_add );
+                }
 
-		%matrixAB = filter_sparsematrix_4D( \%matrixAB, $num_seqs * $min_am_prob);
+                %matrixAB = filter_sparsematrix_4D( \%matrixAB, $num_seqs * $min_am_prob);
 
-		%matrixAB = divide_sparsematrix_4D( \%matrixAB, $num_seqs );
+                %matrixAB = divide_sparsematrix_4D( \%matrixAB, $num_seqs );
 
-		$th{$name_pair} = \%matrixAB;
-	    }
-	}
+                $th{$name_pair} = \%matrixAB;
+            }
+        }
     }
 
 
     if ($MLocarna::scale_after_ct) {
 
-	my $paired_prob_ratio = $sum_paired_prob/sum_paired_prob_am(\%th);
-	#printmsg 1, "Sum paired prob am ratio: $paired_prob_ratio\n";
+        my $paired_prob_ratio = $sum_paired_prob/sum_paired_prob_am(\%th);
+        #printmsg 1, "Sum paired prob am ratio: $paired_prob_ratio\n";
 
-	foreach my $name_pair (@name_pairs) {
-	    my %subhash = scale_sparsematrix_4D($th{$name_pair},$paired_prob_ratio);
-	    $th{$name_pair} = \%subhash;
-	}
+        foreach my $name_pair (@name_pairs) {
+            my %subhash = scale_sparsematrix_4D($th{$name_pair},$paired_prob_ratio);
+            $th{$name_pair} = \%subhash;
+        }
     }
 
     return %th;
@@ -1329,15 +1329,15 @@ sub alicol2seqpos: prototype($$) {
     my %col2pos;
 
     for my $name (@names) {
-	my @clist;
-	my $c=0;
-	for (my $i=0; $i<$aln_length; $i++) {
-	    if ( substr($aln_ref->{$name},$i,1) =~ /[A-Za-z]/ ) {
-		$c++;
-	    }
-	    $clist[$i+1]=$c;
-	}
-	$col2pos{$name}=\@clist;
+        my @clist;
+        my $c=0;
+        for (my $i=0; $i<$aln_length; $i++) {
+            if ( substr($aln_ref->{$name},$i,1) =~ /[A-Za-z]/ ) {
+                $c++;
+            }
+            $clist[$i+1]=$c;
+        }
+        $col2pos{$name}=\@clist;
     }
     return \%col2pos;
 }
@@ -1363,13 +1363,13 @@ sub evaluate_alignment {
     my $len=aln_length($aln);
 
     my ($bmrels_seq, $bmrels_str, $amrels)
-	= compute_reliability($aln,$bmprobs,$amprobs);
+        = compute_reliability($aln,$bmprobs,$amprobs);
 
     if ($output) {
-	if (3 >= $MLocarna::Aux::verbosemode) {
-	    write_reliability_bars($bmrels_seq, $bmrels_str);
-	}
-	printmsg 3, "\n";
+        if (3 >= $MLocarna::Aux::verbosemode) {
+            write_reliability_bars($bmrels_seq, $bmrels_str);
+        }
+        printmsg 3, "\n";
     }
 
     my ($score,$rel_str)=max_weight_structure($len,$bmrels_seq,$amrels,3.0,0);
@@ -1392,7 +1392,7 @@ sub aln_reliability: prototype($$$) {
     my ($aln,$bmprobs,$amprobs) = @_;
 
     my ($bmrels_seq, $bmrels_str, $amrels)
-	= compute_reliability($aln,$bmprobs,$amprobs);
+        = compute_reliability($aln,$bmprobs,$amprobs);
 
 
     my $score=0;
@@ -1400,10 +1400,10 @@ sub aln_reliability: prototype($$$) {
     my $len=aln_length($aln);
 
     for (my $i=1; $i<=$len; $i++) {
-	my $b=$bmrels_seq->[$i];
-	my $a=$bmrels_str->[$i];
+        my $b=$bmrels_seq->[$i];
+        my $a=$bmrels_str->[$i];
 
-	$score += $a+$b;
+        $score += $a+$b;
     }
 
     $score /= $len;

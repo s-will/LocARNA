@@ -52,7 +52,7 @@ my $threshold=0;
 
 ## Getopt::Long::Configure("no_ignore_case");
 
-GetOptions(	   
+GetOptions(
     "help"=> \$help,
     "man" => \$man,
     "threshold=f" => \$threshold

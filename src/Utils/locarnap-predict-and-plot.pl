@@ -103,7 +103,7 @@ my $output_format="pdf";
 
 ## Getopt::Long::Configure("no_ignore_case");
 
-GetOptions(	   
+GetOptions(
     "verbose" => \$verbose,
     "quiet" => \$quiet,
     "test" => \$test,
@@ -129,36 +129,36 @@ if ( ! -d $output_dir ) {
     print STDERR "Output directory $output_dir does not exist. Make directory ...";
     mkdir $output_dir;
     if ( ! -d $output_dir ) {
-	print STDERR "FAILED.\n"; 
+	print STDERR "FAILED.\n";
 	exit -1;
     }
-    print STDERR "DONE.\n"; 
+    print STDERR "DONE.\n";
 }
 
 
 
 while(<>) {
-    
-    my @l=split /\s+/; 
+
+    my @l=split /\s+/;
 
     ## get left offset!
-    
+
     my $filename="$l[1]:$l[0]";
-    
+
 #    if ($#l>=5 && $l[5] =~ /^MI/) { ## special handling for micro RNA precursor
 #	$filename="$l[0]-$l[10]";
 #    }
-    
+
     if ($revcompl) {
 	$filename.="-rc";
     }
-    
+
     my $offset=0;
-    
+
     if ($#l>=2) {
 	my $left_context;
 	my $sequences="Realign-Sequences/$filename.mfa"; ## name of sequence file in Realign-Sequences
-	
+
 	open(my $SEQ, "<", "$sequences") || die "Cannot read from $sequences: $!";
 	while(<$SEQ>) {if ($_=~/DroMel_CAF1.*left_context=(\d+)/) {$left_context=$1;}}
 	close $SEQ;
@@ -166,10 +166,10 @@ while(<>) {
 	    print STDERR "Could not find left context in $sequences. Assume left context of 100.";
 	    $left_context=100;
 	}
-	
+
 	$offset=$l[2]-$left_context;
     }
-    
+
     my $signals = "";
     for (my $i=2; $i<$#l; $i+=5) {
 	$signals .= "$l[$i] $l[$i+1] ";
@@ -185,12 +185,12 @@ while(<>) {
     for (my $i=6; $i<$#l; $i+=5) {
 	$signal_names .= "$l[$i] ";
     }
-    
+
     my $locus_name="$l[1]_$l[0]";
     my $locus_title_name="$l[1]:$l[0]";
-    
+
     my $outfile="$output_dir/$locus_name".($revcompl?"-rc":"");
-    
+
     my $command="$bindir/reliability-profile.pl ".
 	"--seqname $seqname ".
 	"--structure-weight=$str_weight ".
@@ -207,7 +207,7 @@ while(<>) {
 	"--signals \"$signals\" ".
 	"--offset=$offset ".
 	"--out=\"$outfile\"";
-    
+
     my @res;
     if ($test) {
 	print STDERR "$command\n";
@@ -221,7 +221,7 @@ while(<>) {
     my $orientation=($revcompl)?"-":"+";
 
     my $onoff="";
-    
+
     my $hit_score="";
     my $bg_score="";
 
@@ -238,9 +238,9 @@ while(<>) {
 	    $bg_score=$2;
 	}
     }
-    
+
     print "$locus_name "; ## the locus name
-    
+
     if ($#l>=4) {
 	print "$l[2] $l[3] $l[4] "; ## rnaz hit
     } else {
@@ -254,9 +254,9 @@ while(<>) {
     }
 
     print "$onoff ";
-    
+
     print "$bg_score $hit_score";
-    
+
     print "\n";
 
     #print "@res";

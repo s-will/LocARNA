@@ -49,8 +49,8 @@ my $opt_null;
 my $opt_nohash;
 
 ## Getopt::Long::Configure("no_ignore_case");
-   
-GetOptions(	   
+
+GetOptions(
     "help"=> \$help,
     "man" => \$man,
     "sort" => \$opt_sort,

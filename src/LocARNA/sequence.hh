@@ -10,7 +10,7 @@
 
 
 namespace LocARNA {
-    
+
     /**
      * @brief "Sequence View" of multiple alignment as array of column
      * vectors
@@ -27,55 +27,55 @@ namespace LocARNA {
      * nicer way.
      */
     class Sequence:
-	public MultipleAlignment {
-	
-	// BEWARE: don't define attributes in sequence! In
-	// MultipleAlignment.as_sequence(), we rely on a simple upcast
-	// to convert MultipleAlignment objects to Sequence objects
-	
+        public MultipleAlignment {
+
+        // BEWARE: don't define attributes in sequence! In
+        // MultipleAlignment.as_sequence(), we rely on a simple upcast
+        // to convert MultipleAlignment objects to Sequence objects
+
     public:
-	
-	/** 
-	 * @brief Construct empty
-	 */
- 	Sequence(): MultipleAlignment() {}
-	
-	/** 
-	 * @brief Construct as single sequence
-	 * @param name name of sequence
-	 * @param sequence sequence string
-	 */
-	Sequence(const std::string &name,
-		 const std::string &sequence)
-	    : MultipleAlignment(name,sequence) {
-	}
-	
-	/** 
-	 * @brief Access to columns
-	 * 
-	 * @param col_index column index
-	 * 
-	 * @return alignment column (proxy class)
-	 *
-	 * @note allows array notation via [] operator; this is the
-	 * main difference to MultipleAlignment class
-	 */
-	AliColumn
-	operator [](size_type col_index) const {
-	    return column(col_index);
-	}
-	
-	/** 
-	 * \brief names vector (legacy, deprecated)
-	 * 
-	 * @return vector of sequence names
-	 * @note deprecated: in place of names()[i], rather use seqentry(i).name()
-	 */
-	std::vector<std::string> 
-	names() const;
-	
+
+        /**
+         * @brief Construct empty
+         */
+        Sequence(): MultipleAlignment() {}
+
+        /**
+         * @brief Construct as single sequence
+         * @param name name of sequence
+         * @param sequence sequence string
+         */
+        Sequence(const std::string &name,
+                 const std::string &sequence)
+            : MultipleAlignment(name,sequence) {
+        }
+
+        /**
+         * @brief Access to columns
+         *
+         * @param col_index column index
+         *
+         * @return alignment column (proxy class)
+         *
+         * @note allows array notation via [] operator; this is the
+         * main difference to MultipleAlignment class
+         */
+        AliColumn
+        operator [](size_type col_index) const {
+            return column(col_index);
+        }
+
+        /**
+         * \brief names vector (legacy, deprecated)
+         *
+         * @return vector of sequence names
+         * @note deprecated: in place of names()[i], rather use seqentry(i).name()
+         */
+        std::vector<std::string>
+        names() const;
+
     };
-    
+
 } // end namespace LocARNA
 
 #endif

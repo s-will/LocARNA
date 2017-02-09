@@ -39,18 +39,18 @@ int main(int argc, char **argv) {
 
     string ribname=argv[1];
     string matrixfile=argv[2];
-    
+
     string ccfile=argv[3];
-    
+
     RibosumFreq ribosum(matrixfile);
-    
+
     try {
         ofstream out(ccfile.c_str());
         ribosum.write_ICC_code(out, ribname);
     } catch (std::ofstream::failure &f) {
-	std::cerr << "ERROR: failed to write to file " <<ccfile <<std::endl
-		  << "       "<< f.what() <<std::endl;
-	return -1;
+        std::cerr << "ERROR: failed to write to file " <<ccfile <<std::endl
+                  << "       "<< f.what() <<std::endl;
+        return -1;
     }
 
     return 0;

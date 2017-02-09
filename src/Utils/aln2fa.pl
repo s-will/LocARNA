@@ -16,7 +16,7 @@ Options:
 
 Brief help message
 
-=item  B<--man>                         
+=item  B<--man>
 
 Full documentation
 
@@ -53,12 +53,12 @@ my $verbose;
 
 my $degap;
 
-GetOptions(	   
+GetOptions(
     "verbose" => \$verbose,
     "help"=> \$help,
     "man" => \$man,
 
-    "d|degap" => \$degap 
+    "d|degap" => \$degap
 
     ) || pod2usage(2);
 

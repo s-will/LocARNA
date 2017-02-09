@@ -20,7 +20,7 @@ Add intermediate labels "I#" to inner nodes of a newick tree
 
 Brief help message
 
-=item  B<--man>                         
+=item  B<--man>
 
 Full documentation
 
@@ -59,9 +59,9 @@ my $quiet;
 my $verbose;
 
 
-GetOptions(	   
+GetOptions(
     "verbose" => \$verbose,
-    "quiet" => \$quiet,   
+    "quiet" => \$quiet,
     "help"=> \$help,
     "man" => \$man
     ) || pod2usage(2);
@@ -76,9 +76,9 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 sub postorder_tree_to_newick_with_ilables {
     my ($tree_postorder)=@_;
     my $n=0;
-    
+
     my @stack=();
-    
+
     for my $item (@$tree_postorder) {
 	if ($item eq $MLocarna::Trees::node_sym) {
 	    $n=$n+1;
@@ -94,7 +94,7 @@ sub postorder_tree_to_newick_with_ilables {
 
 while(<>) {
     my $tree_postorder=newick_tree_to_postorder($_);
-    
+
     print postorder_tree_to_newick_with_ilables($tree_postorder).";\n";
 }
 

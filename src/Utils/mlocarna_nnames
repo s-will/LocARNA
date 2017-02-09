@@ -21,7 +21,7 @@ Normalize the names in the fasta file in the way of mlocarna. mlocarna uses the 
 
 Brief help message
 
-=item  B<--man>                         
+=item  B<--man>
 
 Full documentation
 
@@ -53,9 +53,9 @@ my $quiet;
 my $verbose;
 
 
-GetOptions(	   
+GetOptions(
     "verbose" => \$verbose,
-    "quiet" => \$quiet,   
+    "quiet" => \$quiet,
     "help"=> \$help,
     "man" => \$man
     ) || pod2usage(2);

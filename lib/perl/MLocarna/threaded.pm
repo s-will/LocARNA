@@ -16,16 +16,16 @@ use threads::shared;
 
 sub foreach_par {
     my ($sub_ref,$argument_lists_ref,$thread_num) = @_;
-    
+
     my @argument_lists = @{ $argument_lists_ref };
-    
+
     my $job_num=scalar(@argument_lists); ## total number of jobs
-    
+
     my $job_count : shared = 0; ## count already started jobs
-    
+
     my @workers;
     for (my $i=1; $i<=$thread_num; $i++) {
- 	$workers[$i]=
+        $workers[$i]=
           threads->create(
               sub {
                   while(1) {
@@ -48,7 +48,7 @@ sub foreach_par {
     }
 
     for (my $i=1; $i<=$thread_num; $i++) {
-	$workers[$i]->join();
+        $workers[$i]->join();
     }
 }
 

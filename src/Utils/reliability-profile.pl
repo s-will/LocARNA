@@ -36,7 +36,7 @@ Project to sequence name
 
 =item B<--dont-predict>
 
-Turn off predicting. (def=on) 
+Turn off predicting. (def=on)
 
 =item B<--fit-penalty>=penalty
 
@@ -60,10 +60,10 @@ Offset of sequence in genome
 
 =item B<--signals>=list
 
-List of (from,to,orientation) triples. 
+List of (from,to,orientation) triples.
 Show signals in plot and compared infered signal to them.
 Give list as string "from0 to0 orientation0;from1 to1 orientation1 ..."
-Specify multi-range signals by from0a to0a from0b to0b ... 
+Specify multi-range signals by from0a to0a from0b to0b ...
 
 =item B<--structure-weight>=w
 
@@ -174,9 +174,9 @@ my $output_height=4;
 
 ## Getopt::Long::Configure("no_ignore_case");
 
-GetOptions(	   
+GetOptions(
     "verbose" => \$verbose,
-    "quiet" => \$quiet,   
+    "quiet" => \$quiet,
     "help"=> \$help,
     "man" => \$man,
     "seqname=s" => \$seqname,
@@ -210,7 +210,7 @@ if ($#ARGV!=0 && $#ARGV!=1) {print STDERR "Need locarna output directory or file
 my $alnfile;
 my $bmrelfile;
 
-if (@ARGV==1) { 
+if (@ARGV==1) {
     my $dir=$ARGV[0];
     # print STDERR "Use files from LocARNA output directory $dir\n";
     $alnfile = "$dir/results/result.aln";
@@ -301,23 +301,23 @@ my $signal_sizes="c()";
 
 if (defined($signals) && ($signals ne "")) {
     my @signals_list=split /\s*;\s*/,$signals;
-    
+
     my @signal_sizes=();
-    
+
     foreach my $s (@signals_list) {
 	my @s_list = split /\s+/,$s;
 	push @signal_sizes, $#s_list/2;
 	$num_signals++;
-    
+
 	if ($#s_list%2 != 0) {
 	    print STDERR "Require (possibly repeated) \"from\" \"to\" pairs and \"orientation\" (+1/-1) per signal.\n  Got: \"$s\" in \"$signals\".\n";
 	    exit(-1);
 	}
     }
-    
+
     $signals=~s/\s*;\s*/ /g;
     @signals_list=split /\s+/,$signals;
-    
+
     $signals=perl2Rvector(@signals_list);
     $signal_sizes=perl2Rvector(@signal_sizes);
 } else {
@@ -348,15 +348,15 @@ my @relprof=(); ## reliability profile for the reference sequence.
 
 open(my $IN, "<", $bmrelfile) || die "Cannot read from $bmrelfile: $!";
 
-my $len=0; ## determine length of the profile 
+my $len=0; ## determine length of the profile
 while(<$IN>) {
     my @line=split /\s+/,$_;
-    
+
     my $pos=$line[0];
     my $seqrel=$line[1];
     my $strrel=$line[2];
     my $rel = ($seqrel + $structure_weight * $strrel)/($structure_weight);
-    
+
     if ($seqname eq "" || substr($sequence_alistr,$pos-1,1) ne "-") {
 	print $TMP "$rel\n";
 	push @relprof,$rel;
@@ -391,7 +391,7 @@ my @fitlist=split /\s+/,$fit;
 ## ----------------------------------------
 ## compute reliability score for fitted region (for fit_once_on only)
 if ($fit_once_on) {
-    
+
     # for the score, simply add the column reliabilities
     # in the hit region and normalize by hit length
     my $hit_score=0;
@@ -403,18 +403,18 @@ if ($fit_once_on) {
 	$hit_score += $relprof[$i-1]; ## entries in fitlist have offset 1
     }
     my $outside_score = $total_score - $hit_score;
-    
+
     ## compute averages
     $hit_score /= $fitlist[1]-$fitlist[0]+1;
-    
+
     my $outside_len = $len - ($fitlist[1]-$fitlist[0]+1);
     if ($outside_len > 0) {
 	$outside_score /= $outside_len;
-    } 
+    }
     # otherwise $outside_score equals 0 already
-    
+
     $total_score /= $len;
-    
+
     print "SCORE $hit_score $outside_score\n";
 }
 
@@ -426,7 +426,7 @@ if ($fit_once_on) {
 if ( $write_subseq ) {
     my $sequence = $sequence_alistr;
     $sequence =~ s/-//g;
-    
+
     if ($sequence ne "") {
         my $fastanamestr="";
         if ($title ne "") {
@@ -456,9 +456,9 @@ if (($#fitlist+1)%2!=0) {
 if ($revcompl) {
 
     @fitlist = map { $len+1-$_ } @fitlist;
-    
+
     @fitlist= reverse(@fitlist);
-    
+
 }
 
 
@@ -511,7 +511,7 @@ if ( $output_format eq "png" ) {
     $output_width *= $resolution;
     $output_height *= $resolution;
     $format_extra_str=",res=$resolution,bg=\"transparent\",antialias=\"gray\"";
-} elsif ( $output_format eq "pdf" ) { 
+} elsif ( $output_format eq "pdf" ) {
     $format_extra_str=",version=\"1.4\"";
 }
 
@@ -566,7 +566,7 @@ if ($revcompl) {
 par(mar=c(6,2.5,1,1))
 
 # open plot (and draw threshold)
-plot(c(0),c(0),type=\"l\",                                        
+plot(c(0),c(0),type=\"l\",
      xlab=\"\",ylab=\"\",
      xlim=the_xlim,ylim=c(0,maxy),
      yaxp=c(0,1,2))
@@ -605,15 +605,15 @@ colors <- c(
 colors<-c(colors,colors);
 
 if ($num_signals>0) {
-  
+
   for (i in 1:$num_signals) {
     orientation <- signals[signal_starts[i]+signal_sizes[i]*2];
     sig_y  <- maxy-i*anno_space;
-    
+
     for (j in 0:(signal_sizes[i]-1)) {
 
       sig_x <- c(signals[signal_starts[i]+j*2],signals[signal_starts[i]+j*2+1]);
-          
+
       ## draw arrows
       if (orientation!=0) {
         the_code <- 1+(orientation+1)/2;
@@ -627,9 +627,9 @@ if ($num_signals>0) {
 
 #draw inferred on-signal
 hit_color <- rgb(0.1,0.6,0.1,0.9)
-  
+
 if ($dont_predict!=1) {
-  
+
   on  <- $on_list;
   off <- $off_list;
 

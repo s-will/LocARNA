@@ -78,9 +78,9 @@ for (my $i=0; $i<$len; $i++) {
 	$c =~ s/~/-/g;
 	$chars{$c}++;
     }
-    
+
     my $iupac = get_iupac_code(%chars);
-    
+
     print $CONS $iupac;
 }
 
@@ -102,26 +102,26 @@ system("RNAplot <$consfile") == 0 || die "Cannot run RNAplot: $!";
 #
 sub get_iupac_code {
     my (%absfreqs) = @_;
-    
+
     my $threshold=0.1;
 
     my @chars = ("A", "C", "U", "G","-");
-    
+
     my $sum = 0;
     for my $c ( @chars ) {
 	if (exists $absfreqs{$c}) {
 	    $sum += $absfreqs{$c};
 	}
     }
-    
+
     my $code="";
     my %code_tab = (
-		    "A" => "A", 
+		    "A" => "A",
 		    "C" => "C",
-		    "G" => "G", 
+		    "G" => "G",
 		    "U" => "U",
 		    "-" => "-",
-		    
+
 		    "AC" => "M",
 		    "AG" => "R",
 		    "AU" => "W",
@@ -139,7 +139,7 @@ sub get_iupac_code {
 		    "UG" => "K",
 
 		    ## codes for three nucleotides ommited
-		    
+
 		    "-A" => "_",
 		    "-C" => "_",
 		    "-G" => "_",
@@ -161,7 +161,7 @@ sub get_iupac_code {
     for my $c ( @chars ) {
 	if (exists $absfreqs{$c}) {
 	    my $p=$absfreqs{$c}/$sum;
-	    
+
 	    if ($p>$threshold) {
 		if (exists $code_tab{"$code$c"}) {
 		    $code = $code_tab{"$code$c"};

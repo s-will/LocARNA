@@ -6,7 +6,7 @@
 ## generates a postscript drawing
 ##
 ## USAGE: $0 <dp >ps
-## 
+##
 ## ##########################################################
 
 
@@ -33,9 +33,9 @@ my $verbose;
 GetOptions(
     "minprob=f" => \$minprob,
     "probwidth=f" => \$probwidth,
-    
+
     "verbose" => \$verbose,
-    "quiet" => \$quiet,   
+    "quiet" => \$quiet,
     "help"=> \$help,
     "man" => \$man
     ) || pod2usage(2);
@@ -64,7 +64,7 @@ while (my $line = <STDIN>) {
         }
 	chomp $sequence;
         $seqlength = length($sequence);
-    
+
 	print
 "%!PS-Adobe-3.0 EPSF-3.0
 %%CreationDate: Tue Jul 18 16:17:35 CEST 2006
@@ -84,7 +84,7 @@ while (my $line = <STDIN>) {
     /x exch def
     /h y x sub 0.3 mul def
     /o y x sub 0.05 mul def
-    
+
     newpath
     x 0 moveto
     x o add h y o sub h y 0 curveto
@@ -102,7 +102,7 @@ MyDict begin
 -432 432 $seqlength 1 add div add 0 translate
 
 
-%% sequence base line 
+%% sequence base line
 newpath
 -2 0 moveto
 432 $seqlength 1 add div $seqlength 1 sub mul 2 add  0 lineto
@@ -116,12 +116,12 @@ stroke
 
 %% arcs
 ";
-	
+
     } elsif( $line =~ /(\d+)\s+(\d+)\s+([\d.]+)\s+ubox/ ) {
         my $i=$1;
         my $j=$2;
 	my $p=$3*$3;
-	
+
 	if ($probwidth>0) {
 	    my $width=$p * $probwidth;
 	    print "$width setlinewidth\n";
@@ -130,7 +130,7 @@ stroke
 	if ( $p >= $minprob) {
 	    my $x = transformcoor $i;
 	    my $y = transformcoor $j;
-	
+
 	    printf "$x $y arc\n";
 	}
     }
@@ -143,7 +143,7 @@ my $modulo = int(int($seqlength/30)/5)*5;
 if ($modulo==0) {$modulo=1;}
 
 for (my $i=1; $i<=$seqlength; $i++) {
-    
+
 	my $x = transformcoor $i;
 	my $c = substr $sequence,$i-1,1;
 	if ($i%$modulo == 0) {
@@ -155,7 +155,7 @@ for (my $i=1; $i<=$seqlength; $i++) {
 }
 
 
-print 
+print
 "%%PageTrailer
 showpage
 %%Trailer

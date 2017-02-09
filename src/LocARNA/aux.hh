@@ -78,15 +78,15 @@ namespace LocARNA {
      */
     struct pair_of_size_t_hash
     {
-	/**
-	 * @brief Hash function for pairs of size_t
-	 *
-	 * @return hash code
-	 */
-	size_t
-	operator()(std::pair<size_t,size_t> p) const {
-	    return p.first<<(sizeof(size_t)/2) | p.second;
-	}
+        /**
+         * @brief Hash function for pairs of size_t
+         *
+         * @return hash code
+         */
+        size_t
+        operator()(std::pair<size_t,size_t> p) const {
+            return p.first<<(sizeof(size_t)/2) | p.second;
+        }
     };
 
 
@@ -104,45 +104,45 @@ namespace LocARNA {
     class Gap
     {
     private:
-	size_t idx_; //! < index of enumeration value
+        size_t idx_; //! < index of enumeration value
     public:
-	static size_t size; //!< enum size
+        static size_t size; //!< enum size
 
-	 //! regular gap
-	static const Gap regular;
-	//! gap from inserting/deleting a loop (in sparse)
-	static const Gap loop;
-	 //! gap outside of the locally aligned region (sequence and structure local alignment)
-	static const Gap locality;
-	//! other gaps
-	static const Gap other;
+         //! regular gap
+        static const Gap regular;
+        //! gap from inserting/deleting a loop (in sparse)
+        static const Gap loop;
+         //! gap outside of the locally aligned region (sequence and structure local alignment)
+        static const Gap locality;
+        //! other gaps
+        static const Gap other;
 
-	//! @brief init from 0-based index
-	//! @param idx index
-	explicit
-	Gap(size_t idx) : idx_(idx) {}
+        //! @brief init from 0-based index
+        //! @param idx index
+        explicit
+        Gap(size_t idx) : idx_(idx) {}
 
-	//! @brief 0-based index
-	size_t
-	idx() const { return (size_t)idx_; }
+        //! @brief 0-based index
+        size_t
+        idx() const { return (size_t)idx_; }
 
-	/**
-	 * @brief equality
-	 * @param x operand
-	 *
-	 * @return whether object equals operand
-	 */
-	bool
-	operator == (const Gap & x) const { return this->idx_ == x.idx_; }
+        /**
+         * @brief equality
+         * @param x operand
+         *
+         * @return whether object equals operand
+         */
+        bool
+        operator == (const Gap & x) const { return this->idx_ == x.idx_; }
 
-	/**
-	 * @brief inequality
-	 * @param x operand
-	 *
-	 * @return whether object not equals operand
-	 */
-	bool
-	operator != (const Gap & x) const { return this->idx_ != x.idx_; }
+        /**
+         * @brief inequality
+         * @param x operand
+         *
+         * @return whether object not equals operand
+         */
+        bool
+        operator != (const Gap & x) const { return this->idx_ != x.idx_; }
     };
 
 
@@ -166,39 +166,39 @@ namespace LocARNA {
 
     //! Simple exception class that supports a text message
     class failure : public std::exception {
-	//! message that is reported by what
-	std::string msg_;
+        //! message that is reported by what
+        std::string msg_;
     public:
-	/**
-	 * @brief Construct with message
-	 *
-	 * @param msg the message
-	 */
-	explicit
-	failure (const std::string& msg): std::exception(), msg_(msg) {};
+        /**
+         * @brief Construct with message
+         *
+         * @param msg the message
+         */
+        explicit
+        failure (const std::string& msg): std::exception(), msg_(msg) {};
 
-	/**
-	 * @brief Construct empty
-	 */
-	explicit
-	failure (): std::exception(), msg_() {};
+        /**
+         * @brief Construct empty
+         */
+        explicit
+        failure (): std::exception(), msg_() {};
 
-	//! Destruct
-	virtual
-	~failure() throw();
+        //! Destruct
+        virtual
+        ~failure() throw();
 
-	/** @brief Provide message string
-	 * @return message
-	 */
-	virtual
-	const char* what() const throw();
+        /** @brief Provide message string
+         * @return message
+         */
+        virtual
+        const char* what() const throw();
     };
 
     /**
      * @brief thrown, when reading data that is not in the supposed format
      */
     struct wrong_format_failure: public failure {
-	wrong_format_failure():failure("Wrong format") {}
+        wrong_format_failure():failure("Wrong format") {}
     };
 
     /**
@@ -206,16 +206,16 @@ namespace LocARNA {
      */
     struct syntax_error_failure: public failure {
 
-	//! @brief empty constructor
-	syntax_error_failure():failure("Syntax error") {}
+        //! @brief empty constructor
+        syntax_error_failure():failure("Syntax error") {}
 
-	/**
-	 * @brief Construct with message string
-	 *
-	 * @param msg message string
-	 */
+        /**
+         * @brief Construct with message string
+         *
+         * @param msg message string
+         */
         explicit
-	syntax_error_failure(const std::string &msg):failure("Syntax error: "+msg) {}
+        syntax_error_failure(const std::string &msg):failure("Syntax error: "+msg) {}
     };
 
 
@@ -314,7 +314,7 @@ namespace LocARNA {
     inline
     bool
     frag_len_geq(size_t i, size_t j, size_t minlen) {
-	return i+minlen <= j+1;
+        return i+minlen <= j+1;
     }
 
     /**
@@ -328,7 +328,7 @@ namespace LocARNA {
     inline
     size_t
     frag_len(size_t i, size_t j) {
-	return j+1-i;
+        return j+1-i;
     }
 
     /**
@@ -343,7 +343,7 @@ namespace LocARNA {
     inline
     size_t
     bp_span(size_t i, size_t j) {
-	return frag_len(i,j);
+        return frag_len(i,j);
     }
 
     /**
@@ -378,7 +378,7 @@ namespace LocARNA {
      */
     bool
     get_nonempty_line(std::istream &in,
-		      std::string &line);
+                      std::string &line);
 
 
     double

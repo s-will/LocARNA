@@ -21,7 +21,7 @@ Options:
 
 Brief help message
 
-=item  B<--man>                         
+=item  B<--man>
 
 Full documentation
 
@@ -48,7 +48,7 @@ my $help;
 my $man;
 my $verbose;
 
-GetOptions(	   
+GetOptions(
     "verbose" => \$verbose,
     "help"=> \$help,
     "man" => \$man,

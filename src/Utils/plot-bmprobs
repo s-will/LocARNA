@@ -16,9 +16,9 @@ my $verbose;
 
 ## Getopt::Long::Configure("no_ignore_case");
 
-GetOptions(	   
+GetOptions(
 	   "verbose" => \$verbose,
-	   "quiet" => \$quiet,   
+	   "quiet" => \$quiet,
 	   "help"=> \$help,
 	   "man" => \$man
 	   ) || pod2usage(2);
@@ -58,7 +58,7 @@ while(my $line=<$IN>) {
 	my $pij=$3;
 
 	$matrix[$i][$j]=$pij;
-    
+
 	if ($i>$max_i) {$max_i=$i;}
 	if ($j>$max_j) {$max_j=$j;}
     }

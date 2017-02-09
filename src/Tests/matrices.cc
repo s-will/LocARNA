@@ -17,12 +17,12 @@ struct mul2 {
 TEST_CASE("Matrix can be resized, filled, and transformed") {
     size_t x=3;
     size_t y=4;
-    
+
     Matrix<size_t> m;
     m.resize(x,y);
 
     m.fill(2);
-    
+
     for(size_t i=0; i<x; i++) {
         for(size_t j=0; j<y; j++) {
             m(i,j) += i+2*j;
@@ -30,7 +30,7 @@ TEST_CASE("Matrix can be resized, filled, and transformed") {
     }
 
     m.transform(mul2());
-    
+
     bool reread_ok=true;
     for(size_t i=0; i<x; i++) {
         for(size_t j=0; j<y; j++) {
@@ -38,52 +38,52 @@ TEST_CASE("Matrix can be resized, filled, and transformed") {
         }
     }
     REQUIRE(reread_ok);
-    
+
 }
 
-TEST_CASE("OMatrix can be filled and read again") {    
+TEST_CASE("OMatrix can be filled and read again") {
     size_t x=3;
     size_t y=4;
     size_t xo=2;
     size_t yo=1;
-   
+
     SECTION("case xdim<ydim") {
-	OMatrix<size_t> m;
-	
+        OMatrix<size_t> m;
+
         m.resize(x,y,xo,yo);
-        
-	for(size_t i=xo; i<xo+x; i++) {
-	    for(size_t j=yo; j<yo+y; j++) {
-		m(i,j)=i*(j+1);
-	    }
-	}
+
+        for(size_t i=xo; i<xo+x; i++) {
+            for(size_t j=yo; j<yo+y; j++) {
+                m(i,j)=i*(j+1);
+            }
+        }
 
         bool reread_ok=true;
-	for(size_t i=xo; i<xo+x; i++) {
-	    for(size_t j=yo; j<yo+y; j++) {
-		reread_ok &= ( m(i,j) == i*(j+1) );
-	    }
-	}
+        for(size_t i=xo; i<xo+x; i++) {
+            for(size_t j=yo; j<yo+y; j++) {
+                reread_ok &= ( m(i,j) == i*(j+1) );
+            }
+        }
         REQUIRE(reread_ok);
     }
     SECTION("case xdim>ydim"){
-	OMatrix<size_t> m;
-	std::swap(x,y);
-	
-	m.resize(x,y,xo,yo);
-	
+        OMatrix<size_t> m;
+        std::swap(x,y);
+
+        m.resize(x,y,xo,yo);
+
         for(size_t i=xo; i<xo+x; i++) {
-	    for(size_t j=yo; j<yo+y; j++) {
-		m(i,j)=i*(j+1);
-	    }
-	}
+            for(size_t j=yo; j<yo+y; j++) {
+                m(i,j)=i*(j+1);
+            }
+        }
 
         bool reread_ok=true;
-	for(size_t i=xo; i<xo+x; i++) {
-	    for(size_t j=yo; j<yo+y; j++) {
-		reread_ok &= ( m(i,j) == i*(j+1) );
-	    }
-	}
+        for(size_t i=xo; i<xo+x; i++) {
+            for(size_t j=yo; j<yo+y; j++) {
+                reread_ok &= ( m(i,j) == i*(j+1) );
+            }
+        }
         REQUIRE(reread_ok);
     }
 }

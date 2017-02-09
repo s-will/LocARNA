@@ -27,7 +27,7 @@ Options:
 
 prints brief help message and exits.
 
-=item  B<--man>                         
+=item  B<--man>
 
 prints full documentation and exits.
 
@@ -49,10 +49,10 @@ path to output folder where intermediate results are stored.
 
 =item B<--output-time>
 
-print individual times for Preprocessing, ExpaRNA-P and LocARNA.		
+print individual times for Preprocessing, ExpaRNA-P and LocARNA.
 
 =back
-        
+
 =head1 DESCRIPTION
 
  Implementation of the ExpLoc-P pipeline
@@ -83,7 +83,7 @@ GetOptions("exparnap-params=s" => \$exparnap_params,
 		 "help" => \$help,
 		 "man" => \$man
            ) || pod2usage(2);
-           
+
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 1, -verbose => 2) if $man;
 
@@ -98,7 +98,7 @@ if($output_folder ne ""){
 }
 
 my $input_file1 = $ARGV[0];
-my $input_file2 = $ARGV[1]; 
+my $input_file2 = $ARGV[1];
 
 ## check ExpaRNA-P params (output-anchor-pp)
 my @exparnap_params_arr = split(/ /,$exparnap_params);
@@ -161,17 +161,17 @@ print $locarna_out;
 
 if($output_time){
 
-	## parse preprocessing and total time 
+	## parse preprocessing and total time
 	my ($preproc_time, $exparnap_time) = (0,0);
 	extract_times(\$exparnap_out,\$preproc_time,\$exparnap_time);
-	
+
 	## substract preprocessing time from total ExpARNA-P time
 	$exparnap_time -= $preproc_time;
-	
-	## parse total time 
+
+	## parse total time
 	my ($dummy, $locarna_time) = (0,0);
 	extract_times(\$locarna_out,\$dummy,\$locarna_time);
-	
+
 	print "\n";
 	print "------------------------------- \n";
 	print "Stopped Times \n";

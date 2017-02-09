@@ -24,7 +24,7 @@ namespace LocARNA {
     // implementation of classes McC_matrices_base, McC_matrices_t, McC_ali_matrices_t
 
     McC_matrices_base::McC_matrices_base(vrna_fold_compound_t *vc)
-	:
+        :
         vc_(vc)
     {}
 
@@ -35,8 +35,8 @@ namespace LocARNA {
     // ----------------------------------------
 
     McC_matrices_t::McC_matrices_t(vrna_fold_compound_t *vc)
-	:McC_matrices_base(vc)
-    {	
+        :McC_matrices_base(vc)
+    {
         assert( vc->type == VRNA_FC_TYPE_SINGLE );
     }
 
@@ -45,11 +45,11 @@ namespace LocARNA {
 
     // ----------------------------------------
     McC_ali_matrices_t::McC_ali_matrices_t(vrna_fold_compound_t *vc)
-	:McC_matrices_base(vc)
+        :McC_matrices_base(vc)
     {
         assert( vc->type == VRNA_FC_TYPE_COMPARATIVE );
     }
-    
+
     McC_ali_matrices_t::~McC_ali_matrices_t() {
     }
 

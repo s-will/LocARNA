@@ -14,7 +14,7 @@ use strict;
 use warnings;
 
 require Exporter;
-    
+
 # set the version for version checking
 our $VERSION     = 1.00;
 
@@ -61,11 +61,11 @@ our $verbosemode=3;
 ## level 3  = print to screen
 sub printmsg: prototype($$) {
     my ($verblevel, $message) = @_;
-    
+
     ## print LOG "$message";
 
     if ($verblevel>=$verbosemode) {
-	print "$message";
+        print "$message";
     }
 }
 
@@ -73,7 +73,7 @@ sub printmsg: prototype($$) {
 ## print error message
 sub printerr: prototype($) {
     my ($message) = @_;
-    
+
     ## print LOG "$message";
 
     print STDERR "$message";
@@ -93,7 +93,7 @@ sub systemverb: prototype($) {
 sub systemverb_withinput: prototype($$) {
     my ($input,$cmd)=@_;
     printmsg 1,"\"$input\" >>> $cmd\n";
-    
+
     $cmd.=">/dev/null" unless $verbosemode>0;
     system("printf \"$input\" |$cmd");
 }
@@ -122,16 +122,16 @@ sub subtract_list {
     my ($l1, $l2) = @_;
 
     my @res;
-    
+
     foreach my $x (@$l1) {
-	my $found=0;
-	foreach my $y (@$l2) {
-	    if ($x eq $y) {
-		$found=1;
-		last;
-	    }
-	}
-	if ($found==0) { push @res, $x; }
+        my $found=0;
+        foreach my $y (@$l2) {
+            if ($x eq $y) {
+                $found=1;
+                last;
+            }
+        }
+        if ($found==0) { push @res, $x; }
     }
     return @res;
 }
@@ -142,7 +142,7 @@ sub subtract_list {
 ##
 sub is_gap: prototype($) {
     my ($s)=@_;
-    return ($s !~ /^[A-Za-z]$/); 
+    return ($s !~ /^[A-Za-z]$/);
 }
 
 ########################################
@@ -155,19 +155,19 @@ sub is_gap: prototype($) {
 ########################################
 sub project_seq: prototype($) {
     my ($alig_str) = @_;
-    
+
     my @posmap;
-    
+
     my $len=length($alig_str);
-    
+
     my $j=1;
     for (my $i=1; $i<=$len; $i++) {
-	if ( ! is_gap(substr($alig_str,$i-1,1)) ) {
-	    $posmap[$j]=$i;
-	    $j++;
-	}
+        if ( ! is_gap(substr($alig_str,$i-1,1)) ) {
+            $posmap[$j]=$i;
+            $j++;
+        }
     }
-    
+
     return @posmap;
 }
 
@@ -178,13 +178,13 @@ sub project_seq: prototype($) {
 ## ATTENTION: aln is not allowed to contain constraint extensions!
 sub aln_size: prototype($) {
     my $aln = shift;
-    
+
     my @ks = keys %$aln;
 
     #if (grep /#[S,C,LONG]$/,@ks) {
-    #	print STDERR "WARNING: Potentially you discovered a bug in mlocarna. Please avoid sequence names that end in #S, #C or #LONG: @ks\n";
+    #   print STDERR "WARNING: Potentially you discovered a bug in mlocarna. Please avoid sequence names that end in #S, #C or #LONG: @ks\n";
     #}
-    
+
     return $#ks+1;
 }
 
@@ -195,13 +195,13 @@ sub aln_size: prototype($) {
 ## ATTENTION: aln is not allowed to contain constraint extensions!
 sub aln_names: prototype($) {
     my $aln = shift;
-    
+
     my @ks = keys %$aln;
 
     #if (grep /#[S,C,LONG]$/,@ks) {
-    #	print STDERR "WARNING: Potentially you discovered a bug in mlocarna. Please avoid sequence names that end in #S, #C or #LONG: @ks\n";
+    #   print STDERR "WARNING: Potentially you discovered a bug in mlocarna. Please avoid sequence names that end in #S, #C or #LONG: @ks\n";
     #}
-    
+
     return @ks;
 }
 
@@ -214,7 +214,7 @@ sub aln_names: prototype($) {
 ##
 sub aln_size_with_constraints: prototype($) {
     my $aln = shift;
-    
+
     my @ks = keys %$aln;
     @ks = grep !/#/,@ks;
     return $#ks+1;
@@ -237,35 +237,35 @@ sub aln_length: prototype($) {
 #
 sub consensus_sequence {
     my ($aln_ref) = @_;
-       
+
     my $len=aln_length($aln_ref);
     my %aln = %{ $aln_ref };
-        
-    # count occurence of symbols in each alignment column 
+
+    # count occurence of symbols in each alignment column
     # and determine consensus (for each column take best count)
 
     my $consensus="";
-    
+
     for (my $col=0; $col<$len; $col++) {
-	
-	my %counts;
-	
-	foreach my $name (keys %aln) {
-	    my $sym = substr $aln{$name},$col,1;
-	    $counts{$sym}++;
-	}
-	
-	my $best=-1;
-	my $best_sym="_";
-	foreach my $sym (keys %counts) {
-	    if (($counts{$sym} > $best) || (($counts{$sym} == $best) && $sym eq "-")) {
-		$best = $counts{$sym};
-		$best_sym=$sym;
-	    }
-	}
-	$consensus .= $best_sym;
+
+        my %counts;
+
+        foreach my $name (keys %aln) {
+            my $sym = substr $aln{$name},$col,1;
+            $counts{$sym}++;
+        }
+
+        my $best=-1;
+        my $best_sym="_";
+        foreach my $sym (keys %counts) {
+            if (($counts{$sym} > $best) || (($counts{$sym} == $best) && $sym eq "-")) {
+                $best = $counts{$sym};
+                $best_sym=$sym;
+            }
+        }
+        $consensus .= $best_sym;
     }
-    
+
     return $consensus;
 }
 

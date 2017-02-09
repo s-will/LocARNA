@@ -5,9 +5,9 @@
 *
 * LocARNA-P: global and LOCal Alignment of RNA - Partitition function variant
 *
-* Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
+* Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de>
 *               2005-
-* 
+*
 */
 
 
@@ -36,8 +36,8 @@
 using namespace std;
 
 //! Version string (from configure.ac via autoconf system)
-const std::string 
-VERSION_STRING = (std::string)PACKAGE_STRING; 
+const std::string
+VERSION_STRING = (std::string)PACKAGE_STRING;
 
 // ------------------------------------------------------------
 //
@@ -55,10 +55,10 @@ struct command_line_parameters : public MainHelper::std_command_line_parameters 
 
     bool write_arcmatch_probs; //!< write_arcmatch_probs
     bool write_basematch_probs; //!< write_basematch_probs
-    
+
     // ------------------------------------------------------------
     // File arguments
-    
+
     std::string arcmatch_probs_file; //!< arcmatch_probs_file
     std::string basematch_probs_file; //!< basematch_probs_file
 
@@ -67,26 +67,26 @@ struct command_line_parameters : public MainHelper::std_command_line_parameters 
     std::string fragment_match_probs; //!< fragment_match_probs
 
     double min_am_prob; //!< minimal arc match probability
-    
+
     double min_bm_prob;  //!< minimal arc match probability
-        
+
     /**
      * @brief Scale for partition function
-     * 
+     *
      * All partition functions are multiplied by this factor.  Note
      * that this is much less flexible compared to the use of pf_scale
      * in RNAfold, which adapts the scale to the sequence length.
-     * 
+     *
      * @note IMPORTANT: here use double (not pf_score_t), since option
      * parser cannot interpret pf_score_t, when using long double; later
      * this will be converted to pf_score_t.
      * @note renamed to avoid conflict with vrna
      */
-    double pf_scale; 
+    double pf_scale;
 
     int temperature_alipf; //!< temperature for alignment partition functions
 
-    command_line_parameters() 
+    command_line_parameters()
         : MainHelper::std_command_line_parameters()
     {
         help_text["min_am_prob"] =
@@ -105,7 +105,7 @@ struct command_line_parameters : public MainHelper::std_command_line_parameters 
 
 };
 
-//! \brief holds command line parameters of locarna  
+//! \brief holds command line parameters of locarna
 command_line_parameters clp;
 
 //! defines command line parameters
@@ -116,7 +116,7 @@ option_def my_options[] = {
     {"quiet",'q',&clp.quiet,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["quiet"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Scoring parameters"},
-    
+
     {"indel",'i',0,O_ARG_INT,&clp.indel,"-350","score",clp.help_text["indel"]},
     {"indel-opening",0,0,O_ARG_INT,&clp.indel_opening,
      "-500","score",clp.help_text["indel_opening"]},
@@ -178,20 +178,20 @@ option_def my_options[] = {
     {"fragment-match-probs",0,0,O_ARG_STRING,&clp.fragment_match_probs,"","\"i j k l\"",
      "Requests probabilities for the match of fragments [i..j] and [k..l]. "
      "Accepts a ';' separated list of ranges."},
-    
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
     {"maxBPspan",0,0,O_ARG_INT,&clp.max_bp_span,"-1","span",clp.help_text["max_bp_span"]},
     {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["relaxed_anchors"]},
-    
+
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
-    
+
     {"ribofit",0,0,O_ARG_BOOL,&clp.ribofit,"false","bool",clp.help_text["ribofit"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Input files"},
 
     {"",0,0,O_ARG_STRING,&clp.fileA,O_NODEFAULT,"Input 1",clp.help_text["fileA"]},
     {"",0,0,O_ARG_STRING,&clp.fileB,O_NODEFAULT,"Input 2",clp.help_text["fileB"]},
-    
+
     {"",0,0,O_TEXT,0,O_NODEFAULT,"",clp.help_text["files"]},
 
     {"",0,0,0,0,O_NODEFAULT,"",""}
@@ -204,12 +204,12 @@ option_def my_options[] = {
 // ------------------------------------------------------------
 // MAIN
 
-/** 
+/**
  * \brief Main method of executable locarna_p
- * 
+ *
  * @param argc argument counter
  * @param argv argument vector
- * 
+ *
  * @return success
  */
 int
@@ -224,42 +224,42 @@ main(int argc, char **argv) {
     // Process options
 
     bool process_success=process_options(argc,argv,my_options);
-    
+
     if (clp.help) {
-	cout << "locarna_p - pairwise partition function of "
+        cout << "locarna_p - pairwise partition function of "
              << "RNA alignments."<<std::endl;
-	cout << std::endl
+        cout << std::endl
              << "Computes base and base pair match probabilities "<<std::endl
              << "from alignment partitition functions."<<std::endl<<std::endl;
-	
-	//cout << VERSION_STRING<<std::endl;
 
-		
-	print_help(argv[0],my_options);
+        //cout << VERSION_STRING<<std::endl;
 
-	cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<std::endl<<std::endl;
-	return 0;
+
+        print_help(argv[0],my_options);
+
+        cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."<<std::endl<<std::endl;
+        return 0;
     }
 
     if (clp.quiet) { clp.verbose=false;} // quiet overrides verbose
 
     if (clp.version || clp.verbose) {
-	cout << "locarna_p ("<< VERSION_STRING<<")"<<std::endl;
-	if (clp.version) return 0; else cout <<std::endl;
+        cout << "locarna_p ("<< VERSION_STRING<<")"<<std::endl;
+        if (clp.version) return 0; else cout <<std::endl;
     }
 
     if (!process_success) {
-	std::cerr << O_error_msg << std::endl;
-	print_usage(argv[0],my_options);
-	return -1;
+        std::cerr << O_error_msg << std::endl;
+        print_usage(argv[0],my_options);
+        return -1;
     }
 
     if (clp.stopwatch) {
-	stopwatch.set_print_on_exit(true);
+        stopwatch.set_print_on_exit(true);
     }
 
     if (clp.verbose)
-	print_options(my_options);
+        print_options(my_options);
 
 
     // ------------------------------------------------------------
@@ -267,102 +267,102 @@ main(int argc, char **argv) {
     //
 
     PFoldParams pfparams(clp.no_lonely_pairs,clp.stacking,clp.max_bp_span,2);
-    
+
     RnaData *rna_dataA=0;
     try {
-	rna_dataA = new RnaData(clp.fileA,clp.min_prob,clp.max_bps_length_ratio,pfparams);
+        rna_dataA = new RnaData(clp.fileA,clp.min_prob,clp.max_bps_length_ratio,pfparams);
     } catch (failure &f) {
-	std::cerr << "ERROR: failed to read from file "<<clp.fileA <<std::endl
-		  << "       "<<f.what() <<std::endl;
-	return -1;
+        std::cerr << "ERROR: failed to read from file "<<clp.fileA <<std::endl
+                  << "       "<<f.what() <<std::endl;
+        return -1;
     }
-    
+
     RnaData *rna_dataB=0;
     try {
-	rna_dataB = new RnaData(clp.fileB,clp.min_prob,clp.max_bps_length_ratio,pfparams);
+        rna_dataB = new RnaData(clp.fileB,clp.min_prob,clp.max_bps_length_ratio,pfparams);
     } catch (failure &f) {
-	std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
-		  << "       "<<f.what() <<std::endl;
-	if (rna_dataA) delete rna_dataA;
-	return -1;
+        std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
+                  << "       "<<f.what() <<std::endl;
+        if (rna_dataA) delete rna_dataA;
+        return -1;
     }
-    
+
     const Sequence &seqA=rna_dataA->sequence();
     const Sequence &seqB=rna_dataB->sequence();
-    
+
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
     AnchorConstraints seq_constraints(lenA,"",lenB,"",!clp.relaxed_anchors);
-    
+
     // --------------------
     // handle max_diff restriction
-    
+
     // missing: proper error handling in case that lenA, lenB, and
     // max_diff_alignment are incompatible
 
     // do inconsistency checking for max_diff_pw_alignment and max_diff_alignment_file
     //
     if (clp.max_diff_pw_alignment!="" && clp.max_diff_alignment_file!="") {
-	std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt"
+        std::cerr <<"Cannot simultaneously use both options --max-diff-pw-alignemnt"
                   <<" and --max-diff-alignment-file."<<std::endl;
-	return -1;
+        return -1;
     }
 
     // construct TraceController and check inconsistency for with multiplicity of sequences
     //
 
     MultipleAlignment *multiple_ref_alignment=NULL;
-    
+
     if (clp.max_diff_alignment_file!="") {
-	multiple_ref_alignment = new MultipleAlignment(clp.max_diff_alignment_file);
+        multiple_ref_alignment = new MultipleAlignment(clp.max_diff_alignment_file);
     } else if (clp.max_diff_pw_alignment!="") {
-	if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
-	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments."
+        if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
+            std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of alignments."
                       << std::endl;
-	    return -1;
-	}
-	
-	std::vector<std::string> alistr;
-	split_at_separator(clp.max_diff_pw_alignment,'&',alistr);
-	
-	if (alistr.size()!=2) {
-	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; "
+            return -1;
+        }
+
+        std::vector<std::string> alistr;
+        split_at_separator(clp.max_diff_pw_alignment,'&',alistr);
+
+        if (alistr.size()!=2) {
+            std::cerr << "Invalid argument to --max-diff-pw-alignemnt; "
                       <<"require exactly one '&' separating the alignment strings."
-		      << std::endl; 
-	    return -1;
-	}
-    
-	if (alistr[0].length() != alistr[1].length()) {
-	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; "
+                      << std::endl;
+            return -1;
+        }
+
+        if (alistr[0].length() != alistr[1].length()) {
+            std::cerr << "Invalid argument to --max-diff-pw-alignemnt; "
                       <<"alignment strings have unequal lengths."
-		      << std::endl; 
-	    return -1;
-	}
-	
-	multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),
-						       seqB.seqentry(0).name(),
-						       alistr[0],
-						       alistr[1]);
+                      << std::endl;
+            return -1;
+        }
+
+        multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),
+                                                       seqB.seqentry(0).name(),
+                                                       alistr[0],
+                                                       alistr[1]);
     }
 
     // if (multiple_ref_alignment) {
-    // 	std::cout<<"Reference aligment:"<<std::endl;
-    // 	multiple_ref_alignment->print_debug(std::cout);
-    // 	std::cout << std::flush;
+    //  std::cout<<"Reference aligment:"<<std::endl;
+    //  multiple_ref_alignment->print_debug(std::cout);
+    //  std::cout << std::flush;
     // }
-    
+
     TraceController trace_controller(seqA,seqB,multiple_ref_alignment,
                                      clp.max_diff,clp.max_diff_relax);
-    
+
     if (multiple_ref_alignment) {
-	delete multiple_ref_alignment;
+        delete multiple_ref_alignment;
     }
-    
+
     // ----------------------------------------
     // construct set of relevant arc matches
     //
-    
+
     // initialize from RnaData
     ArcMatches *arc_matches = new ArcMatches(*rna_dataA,
                                              *rna_dataB,
@@ -376,12 +376,12 @@ main(int argc, char **argv) {
                                              trace_controller,
                                              seq_constraints
                                              );
-	
+
     // ----------------------------------------
     // report on input in verbose mode
     if (clp.verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
 
-    // ----------------------------------------  
+    // ----------------------------------------
     // Ribosum matrix
     //
     RibosumFreq *ribosum;
@@ -390,164 +390,164 @@ main(int argc, char **argv) {
 
     // ----------------------------------------
     // construct scoring
-   
+
     double my_exp_probA = clp.exp_prob_given?clp.exp_prob:prob_exp_f(lenA);
     double my_exp_probB = clp.exp_prob_given?clp.exp_prob:prob_exp_f(lenB);
 
     ScoringParams scoring_params(clp.match,
-				 clp.mismatch,
-				 clp.indel,
-				 0, //indel__loop_score
-				 clp.indel_opening,
-				 0, 
-				 ribosum,
-				 ribofit,
-				 0, //unpaired_weight
-				 clp.struct_weight,
-				 clp.tau,
-				 0, // exclusion score
-				 my_exp_probA,
-				 my_exp_probB,
-				 clp.temperature_alipf,
-				 false,//stacking,
-				 false,//new_stacking,
-				 false,//mea_alignment,
-				 0,//mea_alpha,
-				 0,//mea_beta,
-				 0,//mea_gamma,
-				 0 //probability_scale
-				 );
-	
+                                 clp.mismatch,
+                                 clp.indel,
+                                 0, //indel__loop_score
+                                 clp.indel_opening,
+                                 0,
+                                 ribosum,
+                                 ribofit,
+                                 0, //unpaired_weight
+                                 clp.struct_weight,
+                                 clp.tau,
+                                 0, // exclusion score
+                                 my_exp_probA,
+                                 my_exp_probB,
+                                 clp.temperature_alipf,
+                                 false,//stacking,
+                                 false,//new_stacking,
+                                 false,//mea_alignment,
+                                 0,//mea_alpha,
+                                 0,//mea_beta,
+                                 0,//mea_gamma,
+                                 0 //probability_scale
+                                 );
+
     Scoring scoring(seqA,seqB,
-		    *rna_dataA,
-		    *rna_dataB,
-		    *arc_matches,
-		    0L,
-		    scoring_params,
-		    true);
-    
+                    *rna_dataA,
+                    *rna_dataB,
+                    *arc_matches,
+                    0L,
+                    scoring_params,
+                    true);
+
     // ------------------------------------------------------------
     // Computation of the alignment score
     //
 
     // initialize aligner-p object, which does the alignment computation
     AlignerP aligner = AlignerP::create()
-	. min_am_prob(clp.min_am_prob)
-	. min_bm_prob(clp.min_bm_prob)
-	. pf_scale((pf_score_t)clp.pf_scale)
-	. seqA(seqA)
-	. seqB(seqB)
-	. arc_matches(*arc_matches)
-	. scoring(scoring)
-	. no_lonely_pairs(false)
-	. struct_local(false)
-	. sequ_local(false)
-	. free_endgaps("")
-	. max_diff_am(clp.max_diff_am)
-	. max_diff_at_am(clp.max_diff_at_am)
-	. trace_controller(trace_controller)
-	. stacking(false)
-	. constraints(seq_constraints);
-    
+        . min_am_prob(clp.min_am_prob)
+        . min_bm_prob(clp.min_bm_prob)
+        . pf_scale((pf_score_t)clp.pf_scale)
+        . seqA(seqA)
+        . seqB(seqB)
+        . arc_matches(*arc_matches)
+        . scoring(scoring)
+        . no_lonely_pairs(false)
+        . struct_local(false)
+        . sequ_local(false)
+        . free_endgaps("")
+        . max_diff_am(clp.max_diff_am)
+        . max_diff_at_am(clp.max_diff_at_am)
+        . trace_controller(trace_controller)
+        . stacking(false)
+        . constraints(seq_constraints);
+
     if (clp.verbose) {
-	std::cout << "Run inside algorithm."<<std::endl;
+        std::cout << "Run inside algorithm."<<std::endl;
 #       ifdef VERY_LARGE_PF
-	std::cout << "Use large partition function type."<<std::endl;
+        std::cout << "Use large partition function type."<<std::endl;
 #       endif
     }
 
     pf_score_t pf=aligner.align_inside();
-    
+
     if (!clp.quiet) {
         std::cout << "Partition function: "<<pf<<std::endl;
     }
-    
+
     if (clp.verbose) {
-	std::cout << "Run outside algorithm."<<std::endl;
+        std::cout << "Run outside algorithm."<<std::endl;
     }
-	
+
     aligner.align_outside();
 
     if (clp.verbose) {
-	std::cout << "Compute probabilities."<<std::endl;
+        std::cout << "Compute probabilities."<<std::endl;
     }
-	
+
     aligner.compute_arcmatch_probabilities();
 
     if (clp.write_arcmatch_probs) {
-	if (clp.verbose) {
-	    std::cout << "Write Arc-match probabilities to file "
-                      <<clp.arcmatch_probs_file<<"."<<std::endl; 
-	}
-	ofstream out(clp.arcmatch_probs_file.c_str());
-	if (out.good()) {
-	    aligner.write_arcmatch_probabilities(out);
-	} else {
-	    cerr << "Cannot write to "<<clp.arcmatch_probs_file<<"! Exit."<<std::endl;
-	    return -1;
-	}
+        if (clp.verbose) {
+            std::cout << "Write Arc-match probabilities to file "
+                      <<clp.arcmatch_probs_file<<"."<<std::endl;
+        }
+        ofstream out(clp.arcmatch_probs_file.c_str());
+        if (out.good()) {
+            aligner.write_arcmatch_probabilities(out);
+        } else {
+            cerr << "Cannot write to "<<clp.arcmatch_probs_file<<"! Exit."<<std::endl;
+            return -1;
+        }
     }
-	
-    
+
+
     aligner.compute_basematch_probabilities(clp.include_am_in_bm);
 
     if (clp.write_basematch_probs) {
-	if (clp.verbose) {
-	    std::cout << "Write Base-match probabilities to file "
-                      << clp.basematch_probs_file<<"."<<std::endl; 
-	}
-	ofstream out(clp.basematch_probs_file.c_str());
-	if (out.good()) {
-	    aligner.write_basematch_probabilities(out);
-	} else {
-	    cerr << "Cannot write to "<<clp.basematch_probs_file<<"! Exit."<<std::endl;
-	    return -1;
-	}
+        if (clp.verbose) {
+            std::cout << "Write Base-match probabilities to file "
+                      << clp.basematch_probs_file<<"."<<std::endl;
+        }
+        ofstream out(clp.basematch_probs_file.c_str());
+        if (out.good()) {
+            aligner.write_basematch_probabilities(out);
+        } else {
+            cerr << "Cannot write to "<<clp.basematch_probs_file<<"! Exit."<<std::endl;
+            return -1;
+        }
     }
 
     // ----------------------------------------
     // optionally, compute probabilities that certain ranges are matched
     //
-    
-    if (clp.fragment_match_probs != "") {
-	// parse the string fragment_match_probs
-	// the string must have the format 
-	// fragment_list ::= empty | pos pos pos pos {; pos pos pos pos}
-	
-	std::istringstream fragments(clp.fragment_match_probs);
-	
-	size_type i;
-	size_type j;
-	size_type k;
-	size_type l;
 
-	while (! fragments.eof()) {
-	    
-	    if (!(fragments >> i >> j >> k >> l)) {
-		std::cerr <<"WARNING: expected 4 positions or end"
+    if (clp.fragment_match_probs != "") {
+        // parse the string fragment_match_probs
+        // the string must have the format
+        // fragment_list ::= empty | pos pos pos pos {; pos pos pos pos}
+
+        std::istringstream fragments(clp.fragment_match_probs);
+
+        size_type i;
+        size_type j;
+        size_type k;
+        size_type l;
+
+        while (! fragments.eof()) {
+
+            if (!(fragments >> i >> j >> k >> l)) {
+                std::cerr <<"WARNING: expected 4 positions or end"
                           <<" when parsing argument fragment-match-probs"
-			  <<"\""<<clp.fragment_match_probs<<"\""
+                          <<"\""<<clp.fragment_match_probs<<"\""
                           <<std::endl;
-		break;
-	    }
-	    
-	    std::cout <<"FRAGMENT_MATCH_PROB "<<i<<" "<<j<<" "<<k<<" "<<l<<" : ";
-	    std::cout.flush();
-	    std::cout << aligner.compute_fragment_match_prob(i,j,k,l) << std::endl;
-	    
-	    if (! fragments.eof()) {
-		char sep;
-		fragments >> sep;
-		if (sep != ';') {
-		    std::cerr << "WARNING: expected ';' or end"
+                break;
+            }
+
+            std::cout <<"FRAGMENT_MATCH_PROB "<<i<<" "<<j<<" "<<k<<" "<<l<<" : ";
+            std::cout.flush();
+            std::cout << aligner.compute_fragment_match_prob(i,j,k,l) << std::endl;
+
+            if (! fragments.eof()) {
+                char sep;
+                fragments >> sep;
+                if (sep != ';') {
+                    std::cerr << "WARNING: expected ';' or end"
                               <<" when parsing argument fragment-match-probs"
                               << std::endl;
-		    break;
-		}
-	    }
-	}
+                    break;
+                }
+            }
+        }
     }
-    
+
     // clean up
     delete arc_matches;
     if (ribosum) delete ribosum;
@@ -557,7 +557,7 @@ main(int argc, char **argv) {
     delete rna_dataB;
 
     stopwatch.stop("total");
-    
+
     // DONE
     return 0;
 }

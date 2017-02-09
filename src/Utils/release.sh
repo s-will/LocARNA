@@ -19,10 +19,10 @@ BINDIR=$(dirname "$(readlink -fn "$0")")
 
 function runcmd {
     if [ "$TEST" = "false" ] ; then
-	echo $*
-	$*
+        echo $*
+        $*
     else
-	echo "DRY: $*"
+        echo "DRY: $*"
     fi
 }
 
@@ -30,10 +30,10 @@ function runcmdto {
     to=$1
     shift
     if [ "$TEST" = "false" ] ; then
-	echo "$* \> $to"
-	$* > $to
+        echo "$* \> $to"
+        $* > $to
     else
-	echo "DRY: $* \> $to"
+        echo "DRY: $* \> $to"
     fi
 }
 
@@ -46,7 +46,7 @@ RELEASE=$1
 if [ -z "$RELEASE" ] ;then
     echo "USAGE: $0 <release>"
     echo "Please specify the release number."
-    
+
     exit -1
 fi
 
@@ -131,7 +131,7 @@ fi
 #
 if [ "$DOXYGEN" = "true" ] ; then
     if cd $BUILDDIR/$PACKAGE-$RELEASE &&\
-	    ./configure && make doxygen-doc
+            ./configure && make doxygen-doc
     then
         echo "Doxygen documentation successfully created."
     else
@@ -173,7 +173,7 @@ runcmd \cp $BUILDDIR/$PACKAGE-$RELEASE/ChangeLog $WEBWORKDIR
 if cd $WEBWORKDIR ; then
     runcmdto index.html.new perl $BINDIR/update_index.pl $RELEASE index.html
     runcmd \cp index.html index.html.bkp
-    runcmd \mv index.html.new index.html 
+    runcmd \mv index.html.new index.html
     if [ "$LOCAL" != "true" ] ; then
         runcmd cvs commit -m "\"Release $PACKAGE-$RELEASE\""
     else
@@ -188,7 +188,7 @@ if [ "$DOXYGEN" = "true" ] ; then
     if [ "$LOCAL" != "true" ] ; then
         ## copy documentation to webserver
         runcmd rsync -av $BUILDDIR/$PACKAGE-$RELEASE/Doc/ $WEBSERVER:$WEBSERVER_BASEDIR/$WEB_LOCARNA_HOME/Doc
-    
+
     else
         echo "Local mode: rsync to local webdir"
         runcmd rsync -av $BUILDDIR/$PACKAGE-$RELEASE/Doc/ $WEBWORKDIR/Doc

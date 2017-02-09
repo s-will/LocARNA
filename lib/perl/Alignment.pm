@@ -1,21 +1,21 @@
 ###########################################################################
-# Copyright (C) 2009 by Wolfgang Otto                      
-# All Rights Reserved.                                     
-#  
+# Copyright (C) 2009 by Wolfgang Otto
+# All Rights Reserved.
+#
 # Permission to use, copy, modify, and distribute this
 # software and its documentation for NON-COMMERCIAL purposes
-# and without fee is hereby granted provided that this     
-# copyright notice appears in all copies.                     
-#                                                             
-# THE AUTHOR AND PUBLISHE MAKE NO REPRESENTATIONS OR          
-# WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE, EITHER    
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE        
-# IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A        
-# PARTICULAR PURPOSE, OR NON-INFRINGEMENT. THE AUTHORS        
-# AND PUBLISHER SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED  
-# BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING 
-# THIS SOFTWARE OR ITS DERIVATIVES.                           
-#                                                             
+# and without fee is hereby granted provided that this
+# copyright notice appears in all copies.
+#
+# THE AUTHOR AND PUBLISHE MAKE NO REPRESENTATIONS OR
+# WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE, EITHER
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE, OR NON-INFRINGEMENT. THE AUTHORS
+# AND PUBLISHER SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED
+# BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING
+# THIS SOFTWARE OR ITS DERIVATIVES.
+#
 ###########################################################################
 
 package locarnate::Alignment;
@@ -106,7 +106,7 @@ my $_process_representation = sub {
 
 my $_sequence_indices = sub {
   my $self = shift(@_);
-  
+
   if (@_ > 3) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -125,7 +125,7 @@ my $_sequence_indices = sub {
   }
 
   # check existence of seq_index
-  if (defined($seq_index) && defined(${$seq_index})) { 
+  if (defined($seq_index) && defined(${$seq_index})) {
     if (${$seq_index} =~ m/^\d+$/) {
       if (${$seq_index} >= @{$self->{'sequences'}->[0]}) {
         locarnate::Error::debug('Sequence index '.${$seq_index}
@@ -144,9 +144,9 @@ my $_sequence_indices = sub {
   }
 
   # check existence of rep_index
-  if (defined($rep_index) && defined(${$rep_index})) { 
+  if (defined($rep_index) && defined(${$rep_index})) {
     if (${$rep_index} =~ m/^\d+$/) {
-      if (${$rep_index} >= 
+      if (${$rep_index} >=
           @{$self->{'sequences'}->[0]->[${$seq_index}]->[1]}) {
         locarnate::Error::debug('Representation index '.${$rep_index}
                           .' is higher then representation number '
@@ -167,7 +167,7 @@ my $_sequence_indices = sub {
   }
 
   # check existence of str_index
-  if (defined($str_index) && defined(${$str_index})) { 
+  if (defined($str_index) && defined(${$str_index})) {
     if (ref($self->{'sequences'}->[0]->[${$seq_index}]
             ->[1]->[${$rep_index}]->[1])) {
       locarnate::Error::debug('Representation is no string');
@@ -186,7 +186,7 @@ my $_sequence_indices = sub {
 
 my $_consensus_indices = sub {
   my $self = shift(@_);
-  
+
   if (@_ > 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -201,7 +201,7 @@ my $_consensus_indices = sub {
   }
 
   # check existence of rep_index
-  if (defined($rep_index) && defined(${$rep_index})) { 
+  if (defined($rep_index) && defined(${$rep_index})) {
     if (${$rep_index} =~ m/^\d+$/) {
       if (${$rep_index} >= @{$self->{'consensus'}->[1]}) {
         locarnate::Error::debug('Representation index '.${$rep_index}
@@ -221,7 +221,7 @@ my $_consensus_indices = sub {
   }
 
   # check existence of str_index
-  if (defined($str_index) && defined(${$str_index})) { 
+  if (defined($str_index) && defined(${$str_index})) {
     if (ref($self->{'consensus'}->[1]->[${$rep_index}]->[1])) {
       locarnate::Error::debug('Representation is no string');
     }
@@ -352,7 +352,7 @@ sub str {
 
 sub append_sequence {
   my $self = shift(@_);
-  
+
   if (@_ < 1 || @_ > 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -409,7 +409,7 @@ sub append_sequence {
 
 sub set_consensus {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -435,7 +435,7 @@ sub set_consensus {
 
 sub set_columns {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -446,7 +446,7 @@ sub set_columns {
 
 sub set_score {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -457,7 +457,7 @@ sub set_score {
 
 sub erase_sequence {
   my $self = shift(@_);
-  
+
   if (@_ < 1 || @_ > 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -473,7 +473,7 @@ sub erase_sequence {
 
   my $seq_tag = $self->{'sequences'}->[0]->[$seq_index]->[0];
   my $rep_tag = undef;
-  if (defined($rep_index)) { 
+  if (defined($rep_index)) {
     $rep_tag = $self->{'sequences'}->[0]->[$seq_index]->
         [1]->[$rep_index]->[0];
   }
@@ -483,7 +483,7 @@ sub erase_sequence {
            $rep_index, 1);
     foreach my $key (keys(%{$self->{'sequences'}
                             ->[0]->[$seq_index]->[2]})) {
-      if ($self->{'sequences'}->[0]->[$seq_index]->[2]->{$key} > 
+      if ($self->{'sequences'}->[0]->[$seq_index]->[2]->{$key} >
           $rep_index) {
         --$self->{'sequences'}->[0]->[$seq_index]->[2]->{$key};
       }
@@ -508,7 +508,7 @@ sub erase_sequence {
 
 sub erase_consensus {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -533,7 +533,7 @@ sub erase_consensus {
 
 sub columns {
   my $self = shift(@_);
-  
+
   if (@_) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -548,7 +548,7 @@ sub columns {
 
 sub sequence_size {
   my $self = shift(@_);
-  
+
   if (@_ > 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -591,7 +591,7 @@ sub consensus_size {
 
   # check existence of indices
   &{$_consensus_indices}($self, \$rep_index);
-  
+
   if (!defined($rep_index)) {
     return(scalar(@{$self->{'consensus'}->[1]}));
   }
@@ -602,7 +602,7 @@ sub consensus_size {
 
 sub sequence_tag {
   my $self = shift(@_);
-  
+
   if (@_ < 1 || @_ > 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -639,7 +639,7 @@ sub sequence_tag {
 
 sub exists_sequence_tag {
   my $self = shift(@_);
-  
+
   if (@_ < 1 || @_ > 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -666,7 +666,7 @@ sub exists_sequence_tag {
   }
 
   # check existence of rep_index
-  if (defined($rep_index)) { 
+  if (defined($rep_index)) {
     if ($rep_index =~ m/^\d+$/) {
       if ($rep_index >= @{$self->{'sequences'}->[0]->[$seq_index]->[1]}) {
         return(0);
@@ -689,7 +689,7 @@ sub exists_sequence_tag {
 
 sub consensus_tag {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -710,7 +710,7 @@ sub consensus_tag {
 
 sub exists_consensus_tag {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -735,7 +735,7 @@ sub exists_consensus_tag {
 
 sub sequence {
   my $self = shift(@_);
-  
+
   if (@_ < 2 || @_ > 3) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -750,7 +750,7 @@ sub sequence {
   # check existence of indices
   &{$_sequence_indices}($self, \$seq_index, \$rep_index, \$str_index);
 
-  if (defined($str_index)) { 
+  if (defined($str_index)) {
     return(substr($self->{'sequences'}->[0]->[$seq_index]
                   ->[1]->[$rep_index]->[1], $str_index, 1));
   }
@@ -762,7 +762,7 @@ sub sequence {
 
 sub consensus {
   my $self = shift(@_);
-  
+
   if (@_ < 1 || @_ > 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -776,8 +776,8 @@ sub consensus {
   # check existence of indices
   &{$_consensus_indices}($self, \$rep_index, \$str_index);
 
-  if (defined($str_index)) { 
-    return(substr($self->{'consensus'}->[1]->[$rep_index]->[1], 
+  if (defined($str_index)) {
+    return(substr($self->{'consensus'}->[1]->[$rep_index]->[1],
                   $str_index, 1));
   }
   else {
@@ -787,7 +787,7 @@ sub consensus {
 
 sub score {
   my $self = shift(@_);
-  
+
   if (@_) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -930,7 +930,7 @@ sub sequence_seq_to_align {
 
 sub erase_empty_columns {
   my $self = shift(@_);
-  
+
   if (@_ != 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -943,7 +943,7 @@ sub erase_empty_columns {
   my @cons_tag_list = keys(%{$cons_tags});
   $self->check(\@seq_tag_list, \@cons_tag_list);
   foreach my $tag (keys(%{$seq_tags})) {
-    if (length($seq_tags->{$tag}) != 1 
+    if (length($seq_tags->{$tag}) != 1
         && length($seq_tags->{$tag}) != 3) {
       locarnate::Error::debug('Tag description have to be single gap char for'.
                         ' sequences or gap, open and close char for'.
@@ -951,7 +951,7 @@ sub erase_empty_columns {
     }
   }
   foreach my $tag (keys(%{$cons_tags})) {
-    if (length($cons_tags->{$tag}) != 1 
+    if (length($cons_tags->{$tag}) != 1
         && length($cons_tags->{$tag}) != 3) {
       locarnate::Error::debug('Tag description have to be single gap char for'.
                         ' sequences or gap, open and close char for'.
@@ -973,7 +973,7 @@ sub erase_empty_columns {
             $is_empty = 0;
             last;
           }
-        } 
+        }
       }
       if (!$is_empty) {
         last;
@@ -990,7 +990,7 @@ sub erase_empty_columns {
   for (my $i = 0; $i < $self->sequence_size(); ++$i) {
     foreach my $tag (keys(%{$seq_tags})) {
       my $syntax = $seq_tags->{$tag};
-      if (length($seq_tags->{$tag}) == 3) { 
+      if (length($seq_tags->{$tag}) == 3) {
         &{$_sequence_indices}($self, \$i, \$tag);
         my $structure = new locarnate::Structure($self->{'sequences'}->[0]->
                                            [$i]->[1]->[$tag]->[1],
@@ -1006,14 +1006,14 @@ sub erase_empty_columns {
             $structure->delete_bp($begin, $pos);
           }
         }
-        $self->{'sequences'}->[0]->[$i]->[1]->[$tag]->[1] = 
+        $self->{'sequences'}->[0]->[$i]->[1]->[$tag]->[1] =
             $structure->string();
       }
     }
   }
   foreach my $tag (keys(%{$cons_tags})) {
     my $syntax = $cons_tags->{$tag};
-    if (length($cons_tags->{$tag}) == 3) { 
+    if (length($cons_tags->{$tag}) == 3) {
       &{$_consensus_indices}($self, \$tag);
       my $structure = new locarnate::Structure($self->{'consensus'}->[1]->
                                          [$tag]->[1], $syntax);
@@ -1042,7 +1042,7 @@ sub erase_empty_columns {
         &{$_sequence_indices}($self, \$i, \$tag);
         my $string = $self->{'sequences'}->[0]->
             [$i]->[1]->[$tag]->[1];
-        $self->{'sequences'}->[0]->[$i]->[1]->[$tag]->[1] = 
+        $self->{'sequences'}->[0]->[$i]->[1]->[$tag]->[1] =
             substr($string, 0, $pos).substr($string, $pos + 1);
       }
     }
