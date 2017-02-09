@@ -135,11 +135,11 @@ if ($revcompl) {$rcsuf="-rc";}
 
 if ( $run_locally ) {
     
-    open (JOBS, $joblist) || die "Cannot read file $joblist";
+    open (my $JOBS, "<", $joblist) || die "Cannot read from $joblist: $!";
     
-    my @jobs=<JOBS>;
+    my @jobs=<$JOBS>;
     
-    close JOBS;
+    close $JOBS;
     
     foreach my $jobline (@jobs) {
 	my @job=split /\s+/,$jobline;
@@ -175,8 +175,8 @@ if ( $run_locally ) {
     my $num_tasks=`wc -l $tmpjoblist | cut -f1 -d' '`;
     chomp $num_tasks;
     
-    open(OUT,">$jobscript") || die "Cannot write jobscript $jobscript.";
-    print OUT "#!/bin/bash
+    open(my $OUT, ">", "$jobscript") || die "Cannot write jobscript $jobscript: $!";
+    print $OUT "#!/bin/bash
 #\$ -e $tmp_dir/stderr
 #\$ -o $tmp_dir/stdout
 #\$ -l h_vmem=4G
@@ -198,7 +198,7 @@ $mlocarna $source_dir/\$name.mfa $mlocarna_options --tgtdir $tgt_dir/\$name.dir 
 if [ $tmp_dir != $tgt_dir ] ; then cp $tmp_dir/\$name.output $tgt_dir; fi
 ";
     
-    close OUT;
+    close $OUT;
 
     my $submission_cmd = "qsub -t 1-$num_tasks $jobscript";
     print "EXEC: $submission_cmd\n";

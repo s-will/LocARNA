@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 require Exporter;
-    
+
 # set the version for version checking
 our $VERSION     = 1.00;
 
@@ -46,13 +46,13 @@ our @EXPORT_OK   = qw(
 ############################################################
 ## operations on 2- and 4-dimensional sparse matrices that are
 ## represented as hashs of hashs
-## 
+##
 
 ########################################
 ## add two 2-dimensional sparse matrices
-sub add_sparsematrix_2D($$) {
+sub add_sparsematrix_2D: prototype($$) {
     my ($m1,$m2) = @_;
-        
+
     my %m3 = %{ $m1 };
 
     foreach my $i (keys %$m2) {
@@ -60,7 +60,7 @@ sub add_sparsematrix_2D($$) {
 	    $m3{$i}{$j} += $m2->{$i}->{$j};
 	}
     }
-    
+
     return %m3;
 }
 
@@ -72,7 +72,7 @@ sub add_sparsematrix_2D($$) {
 ## @post $m1 = $m1 + $m2
 ##
 ########################################
-sub add_sparsematrix_2D_inplace($$) {
+sub add_sparsematrix_2D_inplace: prototype($$) {
     my ($m1,$m2) = @_;
 
     foreach my $i (keys %$m2) {
@@ -86,7 +86,7 @@ sub add_sparsematrix_2D_inplace($$) {
 
 ########################################
 ## add two 4-dimensional sparse matrices
-sub add_sparsematrix_4D($$) {
+sub add_sparsematrix_4D: prototype($$) {
     my ($m1_ref,$m2_ref) = @_;
 
     my %m1 = %{ $m1_ref };
@@ -104,11 +104,11 @@ sub add_sparsematrix_4D($$) {
 	    }
 	}
     }
-    
+
     return %m3;
 }
 
-sub divide_sparsematrix_2D($$) {
+sub divide_sparsematrix_2D: prototype($$) {
     my ($m_ref,$divisor) = @_;
 
     my %m = %{ $m_ref };
@@ -116,11 +116,11 @@ sub divide_sparsematrix_2D($$) {
 
     foreach my $i (keys %m) {
 	foreach my $j (keys %{ $m{$i} }) {
-	    $r{$i}{$j} = $m{$i}{$j} / $divisor; 
+	    $r{$i}{$j} = $m{$i}{$j} / $divisor;
 	}
     }
-    
-    return %r;    
+
+    return %r;
 }
 
 ########################################
@@ -129,18 +129,18 @@ sub divide_sparsematrix_2D($$) {
 ## @post $m /= $divisor
 ##
 ########################################
-sub divide_sparsematrix_2D_inplace($$) {
+sub divide_sparsematrix_2D_inplace: prototype($$) {
     my ($m,$divisor) = @_;
 
     foreach my $i (keys %$m) {
 	foreach my $j (keys %{ $m->{$i} }) {
-	    $m->{$i}{$j} = $m->{$i}{$j} / $divisor; 
+	    $m->{$i}{$j} = $m->{$i}{$j} / $divisor;
 	}
     }
 }
 
 
-sub divide_sparsematrix_4D($$) {
+sub divide_sparsematrix_4D: prototype($$) {
     my ($m_ref,$divisor) = @_;
 
     my %m = %{ $m_ref };
@@ -151,13 +151,13 @@ sub divide_sparsematrix_4D($$) {
 	foreach my $j (keys %{ $m{$i} }) {
 	    foreach my $k (keys %{ $m{$i}{$j} }) {
 		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-		    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} / $divisor; 
+		    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} / $divisor;
 		}
 	    }
 	}
     }
 
-    return %r;    
+    return %r;
 }
 
 
@@ -168,7 +168,7 @@ sub divide_sparsematrix_4D($$) {
 ##
 ## return result sparsematrix
 ########################################
-sub filter_sparsematrix_2D($$) {
+sub filter_sparsematrix_2D: prototype($$) {
     my ($m_ref,$threshold) = @_;
 
     my %m = %{ $m_ref };
@@ -181,8 +181,8 @@ sub filter_sparsematrix_2D($$) {
 	    }
 	}
     }
-    
-    return %r;    
+
+    return %r;
 }
 
 ########################################
@@ -192,7 +192,7 @@ sub filter_sparsematrix_2D($$) {
 ##
 ## return result sparsematrix
 ########################################
-sub filter_sparsematrix_4D($$) {
+sub filter_sparsematrix_4D: prototype($$) {
     my ($m_ref,$threshold) = @_;
 
     my %m = %{ $m_ref };
@@ -214,7 +214,7 @@ sub filter_sparsematrix_4D($$) {
 }
 
 
-sub scale_sparsematrix_2D($$) {
+sub scale_sparsematrix_2D: prototype($$) {
     my ($m_ref,$scale) = @_;
 
     my %m = %{ $m_ref };
@@ -222,14 +222,14 @@ sub scale_sparsematrix_2D($$) {
 
     foreach my $i (keys %m) {
 	foreach my $j (keys %{ $m{$i} }) {
-	    $r{$i}{$j} = $m{$i}{$j} * $scale; 
+	    $r{$i}{$j} = $m{$i}{$j} * $scale;
 	}
     }
-    
-    return %r;    
+
+    return %r;
 }
 
-sub scale_sparsematrix_4D($$) {
+sub scale_sparsematrix_4D: prototype($$) {
     my ($m_ref,$scale) = @_;
 
     my %m = %{ $m_ref };
@@ -240,135 +240,129 @@ sub scale_sparsematrix_4D($$) {
 	foreach my $j (keys %{ $m{$i} }) {
 	    foreach my $k (keys %{ $m{$i}{$j} }) {
 		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-		    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} * $scale; 
+		    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} * $scale;
 		}
 	    }
 	}
     }
 
-    return %r;    
+    return %r;
 }
 
 
-# read from a sparse matrix file as written by locarna --write-match-probs 
-sub read_sparsematrix_2D($) {
+# read from a sparse matrix file as written by locarna --write-match-probs
+sub read_sparsematrix_2D: prototype($) {
     my ($file) = @_;
 
-    local *SM_IN;
-    
-    open(SM_IN,$file);
+    open(my $SM_IN, "<", $file) || die "Cannot read from $file: $!";
 
     my %h;
-    
-    while( my $line=<SM_IN> ) {
+
+    while( my $line=<$SM_IN> ) {
 	if ( $line =~ /(\d+) (\d+) ([\d.e+-]+)/ ) {
 	    $h{$1}{$2} = $3;
 	}
     }
-    
-    close SM_IN;
+
+    close $SM_IN;
 
     return %h;
 }
 
-# read from a sparse matrix file as written by locarna --write-match-probs 
-sub read_sparsematrix_4D($) {
+# read from a sparse matrix file as written by locarna --write-match-probs
+sub read_sparsematrix_4D: prototype($) {
     my ($file) = @_;
 
-    local *SM_IN;
-    
-    open(SM_IN,$file);
+    open(my $SM_IN, "<", $file) || die "Cannot read from $file: $!";
 
     my %h;
-    
-    while( my $line=<SM_IN> ) {
+
+    while( my $line=<$SM_IN> ) {
 	if ( $line =~ /(\d+) (\d+) (\d+) (\d+) ([\d.e+-]+)/ ) {
 	    $h{$1}{$2}{$3}{$4} = $5;
 	}
     }
-    
-    close SM_IN;
+
+    close $SM_IN;
 
     return %h;
 }
 
 
-sub write_sparsematrix_2D($$) {
+sub write_sparsematrix_2D: prototype($$) {
     my ($m_ref,$file)=@_;
     my %m = %{ $m_ref };
 
     local *SM_OUT;
-    
-    open(SM_OUT,">$file") || die "Cannot write to $file."; 
+
+    open(my $SM_OUT,">", "$file") || die "Cannot write to $file: $!";
 
     foreach my $i (keys %m) {
 	foreach my $j (keys %{ $m{$i} }) {
-	    print SM_OUT "$i $j $m{$i}{$j}\n"; 
+	    print $SM_OUT "$i $j $m{$i}{$j}\n";
 	}
     }
-    
-    close SM_OUT;
+
+    close $SM_OUT;
 }
 
-sub print_sparsematrix_2D($$) {
+sub print_sparsematrix_2D: prototype($$) {
     my ($m_ref)=@_;
     my %m = %{ $m_ref };
 
     foreach my $i (keys %m) {
 	foreach my $j (keys %{ $m{$i} }) {
-	    print "$i $j $m{$i}{$j}\n"; 
+	    print "$i $j $m{$i}{$j}\n";
 	}
     }
 }
 
 
-sub write_sparsematrix_4D($$) {
+sub write_sparsematrix_4D: prototype($$) {
     my ($m_ref,$file)=@_;
     my %m = %{ $m_ref };
 
-    local *SM_OUT;
-    
-    open(SM_OUT,">$file") || die "Cannot write to $file."; 
+    open(my $SM_OUT,">", "$file") || die "Cannot write to $file: $!";
 
     foreach my $i (keys %m) {
 	foreach my $j (keys %{ $m{$i} }) {
 	    foreach my $k (keys %{ $m{$i}{$j} }) {
 		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-		    print SM_OUT "$i $j $k $l $m{$i}{$j}{$k}{$l}\n"; 
+		    print $SM_OUT "$i $j $k $l $m{$i}{$j}{$k}{$l}\n";
 		}
 	    }
 	}
     }
-    
-    close SM_OUT;
+
+    close $SM_OUT;
 }
 
 
 # transpose a sparse matrix implemented as hash of hashs
-sub transpose_sparsematrix_2D($) {
+sub transpose_sparsematrix_2D: prototype($) {
     my ($m_ref) = @_;
 
     my %m = %{ $m_ref };
-    
+
     my %r;
-    
+
     foreach my $i (keys %m) {
 	foreach my $j (keys %{ $m{$i} }) {
-	    $r{$j}{$i} = $m{$i}{$j}; 
+	    $r{$j}{$i} = $m{$i}{$j};
 	}
     }
-    
+
     return %r;
 }
 
 # transpose a sparse matrix implemented as hash of hashs
-sub transpose_sparsematrix_4D($) {
+sub transpose_sparsematrix_4D: prototype($) {
     my ($m_ref) = @_;
 
     my %m = %{ $m_ref };
-    
+
     my %r;
-    
+
     foreach my $i (keys %m) {
 	foreach my $j (keys %{ $m{$i} }) {
 	    foreach my $k (keys %{ $m{$i}{$j} }) {
@@ -378,7 +372,7 @@ sub transpose_sparsematrix_4D($) {
 	    }
 	}
     }
-    
+
     return %r;
 }
 

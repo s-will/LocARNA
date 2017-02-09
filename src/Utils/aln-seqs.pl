@@ -69,7 +69,7 @@ my @rows=();
 for my $file (@ARGV) {
     my @row=();
     push @row, "$file";
-    open(my $fh,$file) || die "Cannot read file $file\n";
+    open(my $fh, "<", $file) || die "Cannot read file from $file: $!";
     while(my $line=<$fh>) {
 	if ($line !~ /^CLUSTAL/) {
 	    if ($line =~ /^(\S+)\s+/) {

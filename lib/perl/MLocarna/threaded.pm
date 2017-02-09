@@ -1,3 +1,5 @@
+use strict;
+
 use threads;
 use threads::shared;
 

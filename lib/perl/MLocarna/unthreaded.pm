@@ -1,3 +1,5 @@
+use strict;
+
 ## just do the same as foreach_par but sequentially
 ##
 sub foreach_par {
@@ -13,14 +15,14 @@ sub foreach_par {
 
 
 ## generate a thread-unique filename
-sub threadsafe_name($) {
+sub threadsafe_name: prototype($) {
     my ($name) = @_;
     return $name;
 }
 
 
 #do nothing
-sub share(\[$@%]) {
+sub share: prototype(\[$@%]) {
     return;
 }
 

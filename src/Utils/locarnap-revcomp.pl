@@ -99,10 +99,10 @@ foreach my $file (@files) {
 	
 	my $outfile="$base-rc.$suf";
 	
-	open(IN,$file) || die "Cannot read $file\n";
-	open(OUT,">$outfile") || die "Cannot write $outfile\n";
+	open(my $IN, "<", "$file") || die "Cannot read $file: $!";
+	open(my $OUT, ">", "$outfile") || die "Cannot write $outfile: $!";
 	
-	while(<IN>=~/^>(\S+)\s+(.+)$/) {
+	while(<$IN>=~/^>(\S+)\s+(.+)$/) {
 	    my $name=$1;
 	    my $anno=$2;
 	    
@@ -114,15 +114,15 @@ foreach my $file (@files) {
  		$anno = "$before"."left_context=$rc; right_context=$lc;$after";
  	    }
 	    
-	    print OUT ">".$name." ".$anno." strand=-\n";
+	    print $OUT ">".$name." ".$anno." strand=-\n";
 	    
-	    my $line=<IN>;
+	    my $line=<$IN>;
 	    chomp $line;
-	    print OUT rev_compl($line)."\n";
+	    print $OUT rev_compl($line)."\n";
 	}
 	
-	close OUT;
-	close IN;
+	close $OUT;
+	close $IN;
     }    
 }
 

@@ -323,7 +323,7 @@ sub parseAln{
 #
 ######################################################################
 
-sub sliceAlnByColumn($$$) {
+sub sliceAlnByColumn: prototype($$$) {
 
   my @aln=@{$_[0]};
   shift;
@@ -1130,10 +1130,10 @@ sub getSeq{
 
   $strand='+' unless $strand;
 
-  open(SEQFILE,"<$file") || die("Could not read $file ($!)");
+  open(my $SEQFILE, "<", "$file") || die("Could not read $file: $!");
 
-  my $firstline = <SEQFILE>;
-  my $secondline = <SEQFILE>;
+  my $firstline = <$SEQFILE>;
+  my $secondline = <$SEQFILE>;
 
   my $headerLength = length $firstline; 
   my $defaultLength = length($secondline)-1;
@@ -1143,21 +1143,21 @@ sub getSeq{
   my $endAddress=$headerLength+(int($end/$defaultLength))+$end;
 
   my $seq;
-  seek SEQFILE, $startAddress,0;
+  seek $SEQFILE, $startAddress,0;
 
   if ($startAddress>$endAddress){
 	print "warning!\n";
 	return "";
   }
 
-  read SEQFILE, $seq, ($endAddress-$startAddress); 
+  read $SEQFILE, $seq, ($endAddress-$startAddress); 
 
   $seq =~ s/\n//g; 
 
-  close(SEQFILE);
+  close($SEQFILE);
   if ($strand eq "-"){
 	$seq=reverse $seq;
-	$seq=~tr/AGCTUagctu/TCGAAtcgaat/;
+	$seq=~tr/AGCTUagctu/TCGAAtcgaa/;
   }
   return $seq;
 }
@@ -1178,11 +1178,11 @@ sub blastSeq{
 
   (my $dir, my $db, my $cutoff, my $seq, my $blastExecutable)=@_;
 
-  open(TMP,">/tmp/blast$$.fa");
+  open(my $TMP,">","/tmp/blast$$.fa");
 
-  print TMP ">dummy\n$seq\n";
+  print $TMP ">dummy\n$seq\n";
 
-  close(TMP);
+  close($TMP);
 
   my @results=`$blastExecutable -p blastn -e $cutoff -d $db -m 8 -i /tmp/blast$$.fa`;
 

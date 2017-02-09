@@ -60,16 +60,15 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 sub parse_dp_ps {
     my ($filename) = @_;
-    local *IN;
     
-    open(IN,$filename) || die "Cannot read $filename for parsing as dp-ps file.\n";
+    open(my $IN, "<", $filename) || die "Cannot read $filename for parsing as dp-ps file: $!";
     
     my $seq="";
     my %pairprobs;
     
-    while (my $line=<IN>) {
+    while (my $line=<$IN>) {
 	if ($line =~ /^\/sequence \{ \(/) {
-	    while (defined($line = <IN>) && ($line !~  /\} def/  ))  {
+	    while (defined($line = <$IN>) && ($line !~  /\} def/  ))  {
 		chomp $line;
 		$line =~ s/\\$//;
 		$seq .= $line;
@@ -82,18 +81,18 @@ sub parse_dp_ps {
 	}
     }
     
-    close IN;
+    close $IN;
     
     $seq ne "" || die "Empty sequence in dp.ps file $filename\n";
     
     return ($seq,\%pairprobs);
 }
 
-sub print_matrix($$$) {
+sub print_matrix: prototype($$$) {
     my ($file,$len,$matrix_ref) = @_;
     my %matrix = %{ $matrix_ref };
 
-    open(OUT,">$file") || die "Cannot write tmp file $file.";
+    open(my $OUT, ">", "$file") || die "Cannot write tmp file $file: $!";
     
     for (my $i=1; $i<=$len; $i++) {
 	for (my $j=1; $j<=$len; $j++) {
@@ -103,12 +102,12 @@ sub print_matrix($$$) {
 	    } elsif  (exists ($matrix{$j}{$i})) {
 		$p=$matrix{$j}{$i};
 	    }
-	    print OUT "$p ";
+	    print $OUT "$p ";
 	}
-	print OUT "\n";
+	print $OUT "\n";
     }
 
-    close OUT;
+    close $OUT;
 }
 
 

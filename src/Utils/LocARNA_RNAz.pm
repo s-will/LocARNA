@@ -53,11 +53,11 @@ sub read_alignment {
     my $filename = shift;
 
     my $fh;
-    
+
     if ($filename =~ /\.gz$/) {
-	open($fh,"gunzip -c $filename |") || die "Cannot read or uncompress file $filename.";
+	open($fh, "-|", "gunzip -c $filename") || die "Cannot read or uncompress file $filename: $!";
     } else {
-	open($fh,$filename) || die "Cannot read file $filename.";
+	open($fh, "<", $filename) || die "Cannot read file $filename: $!";
     }
 
     my $alnFormat = checkFormat($fh);
@@ -86,9 +86,9 @@ sub read_alignment_fasta {
     my $fh;
     
     if ($filename =~ /\.gz$/) {
-	open($fh,"gunzip -c $filename |") || die "Cannot read or uncompress file $filename.";
+	open($fh, "-|", "gunzip -c $filename") || die "Cannot read or uncompress file $filename: $!";
     } else {
-	open($fh,$filename) || die "Cannot read file $filename.";
+	open($fh, "<", $filename) || die "Cannot read file $filename: $!";
     }
 
     my @aln;
@@ -156,7 +156,7 @@ sub write_alignment {
     
     my $format_string = formatAln($aln, $format);
 
-    open($fh,">$filename") || die "Cannot write file $filename.";
+    open($fh, ">", "$filename") || die "Cannot write file $filename: $!";
     print $fh $format_string;
     close $fh;
 }

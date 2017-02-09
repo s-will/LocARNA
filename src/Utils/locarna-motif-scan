@@ -110,13 +110,13 @@ sub c_times {
 ## get the length of the motif
 ##
 my $motif_len=0;
-open(IN,"$motif_file");
-while(my $line=<IN>) {
+open(my $IN, "<", "$motif_file") || die "Cannot read from $motif_file: $!";
+while(my $line=<$IN>) {
     if ($line =~ /^([ACGUN]+)\\$/) {
 	$motif_len += length($1);
     }
 }
-close IN;
+close $IN;
 
 ## print "Motif len: $motif_len\n";
 
@@ -130,8 +130,9 @@ if ($win_step <= 0) {
     exit -1;
 }
 
+my $PLOT_OUT;
 if (defined($plot_file)) {
-    open(PLOT_OUT,">$plot_file");
+    open($PLOT_OUT,">","$plot_file");
 }
 
 
@@ -180,10 +181,10 @@ for my $name (keys %seqs) {
 	
 	## generate fasta file with subsequence for RNAplfold
 	my $tmpname="loc$$";
-	open(FASTA,">$tmpname.fasta");
-	print FASTA ">$tmpname\n";
-	print FASTA "$subseq $i\n";
-	close FASTA;
+	open(my $FASTA, ">", "$tmpname.fasta") || die "Cannot write to $tmpname.fasta: $!";
+	print $FASTA ">$tmpname\n";
+	print $FASTA "$subseq $i\n";
+	close $FASTA;
 	
 	my $start_time=c_times();
 	
@@ -199,14 +200,14 @@ for my $name (keys %seqs) {
 	$start_time=c_times();
 	
 	my $dp="_dp.ps";
-	open(IN,"$locarna $locarna_options --kbest $kbest --pos-out $curdir/$motif_file $tmpname$dp | ");
+	open(my $IN, "-|", "$locarna $locarna_options --kbest $kbest --pos-out $curdir/$motif_file $tmpname$dp");
 	
-	my $win_best_score=-10e10; ## - INFTY
+	my $win_best_score=-10e10; ## - $INFTY
 	my $win_best_startB;
 	
 	my $hit_info = ""; ## collect all output before a hit (after the previous one) as hit info
 
-	while (my $line=<IN>) {
+	while (my $line=<$IN>) {
 	    
 	    if ($line =~ /HIT (\d+) (\d+) (\d+) (\d+) (\d+)/) {
 		my $score=$1;
@@ -233,7 +234,7 @@ for my $name (keys %seqs) {
 	    }
 	    
 	}
-	close IN;
+	close $IN;
 
 
 	my $locarna_time=c_times()-$start_time;
@@ -248,27 +249,28 @@ for my $name (keys %seqs) {
 	    push @hitlist, $sorted_hitlist[$j];
 	}
 	
+        my $KBEST_OUT;
 	if (defined($kbest_file)) {
-	    open(KBEST_OUT,">$curdir/$kbest_file.$$.tmp");
+	    open($KBEST_OUT, ">", "$curdir/$kbest_file.$$.tmp") || die "Cannot write to $curdir/$kbest_file.$$.tmp: $!";
 	}
 
 	foreach my $hit (@hitlist) {
 	    my ($score, $startA, $startB, $endA, $endB,$hit_info) = @{ $hit };
 	    print "HIT $score $startB\n$hit_info";
 	    if (defined($kbest_file)) {
-		print KBEST_OUT "HIT $score $startB\n$hit_info";
+		print $KBEST_OUT "HIT $score $startB\n$hit_info";
 	    }
 	}
 
 	if (defined($kbest_file)) {
-	    close KBEST_OUT;
+	    close $KBEST_OUT;
 	    rename "$curdir/$kbest_file.$$.tmp", "$curdir/$kbest_file";
 	}
 	
 	    
 	if (defined($plot_file)) {
 	    my ($score, $startA, $startB, $endA, $endB, $hit_info) = @{ $hitlist[0] };
-	    print PLOT_OUT "$win_best_score $win_best_startB $score $startB\n";
+	    print $PLOT_OUT "$win_best_score $win_best_startB $score $startB\n";
 	}
 
 	if ($verbose) {
@@ -288,7 +290,7 @@ for my $name (keys %seqs) {
 
 
 if (defined($plot_file)) {
-    close PLOT_OUT;
+    close $PLOT_OUT;
 }
 
 ## ------------------------------------------------------------

@@ -1,8 +1,11 @@
-#!/usr/bin/perl -I /home/will/Soft/locarna-1.8.1-alpha/lib/perl
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
 
 use MLocarna;
 
-$inputfilename=$ARGV[0];
+my $inputfilename=$ARGV[0];
 
 my $aln = read_clustalw_alnloh("$inputfilename");
  
