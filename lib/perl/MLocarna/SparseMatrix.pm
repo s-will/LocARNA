@@ -56,9 +56,9 @@ sub add_sparsematrix_2D: prototype($$) {
     my %m3 = %{ $m1 };
 
     foreach my $i (keys %$m2) {
-	foreach my $j (keys %{ $m2->{$i} } ) {
-	    $m3{$i}{$j} += $m2->{$i}->{$j};
-	}
+        foreach my $j (keys %{ $m2->{$i} } ) {
+            $m3{$i}{$j} += $m2->{$i}->{$j};
+        }
     }
 
     return %m3;
@@ -76,9 +76,9 @@ sub add_sparsematrix_2D_inplace: prototype($$) {
     my ($m1,$m2) = @_;
 
     foreach my $i (keys %$m2) {
-	foreach my $j (keys %{ $m2->{$i} } ) {
-	    $m1->{$i}{$j} += $m2->{$i}->{$j};
-	}
+        foreach my $j (keys %{ $m2->{$i} } ) {
+            $m1->{$i}{$j} += $m2->{$i}->{$j};
+        }
     }
 }
 
@@ -96,13 +96,13 @@ sub add_sparsematrix_4D: prototype($$) {
 
 
     foreach my $i (keys %m2) {
-	foreach my $j (keys %{ $m2{$i} }) {
-	    foreach my $k (keys %{ $m2{$i}{$j} }) {
-		foreach my $l (keys %{ $m2{$i}{$j}{$k} }) {
-		    $m3{$i}{$j}{$k}{$l} += $m2{$i}{$j}{$k}{$l};
-		}
-	    }
-	}
+        foreach my $j (keys %{ $m2{$i} }) {
+            foreach my $k (keys %{ $m2{$i}{$j} }) {
+                foreach my $l (keys %{ $m2{$i}{$j}{$k} }) {
+                    $m3{$i}{$j}{$k}{$l} += $m2{$i}{$j}{$k}{$l};
+                }
+            }
+        }
     }
 
     return %m3;
@@ -115,9 +115,9 @@ sub divide_sparsematrix_2D: prototype($$) {
     my %r;
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    $r{$i}{$j} = $m{$i}{$j} / $divisor;
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            $r{$i}{$j} = $m{$i}{$j} / $divisor;
+        }
     }
 
     return %r;
@@ -133,9 +133,9 @@ sub divide_sparsematrix_2D_inplace: prototype($$) {
     my ($m,$divisor) = @_;
 
     foreach my $i (keys %$m) {
-	foreach my $j (keys %{ $m->{$i} }) {
-	    $m->{$i}{$j} = $m->{$i}{$j} / $divisor;
-	}
+        foreach my $j (keys %{ $m->{$i} }) {
+            $m->{$i}{$j} = $m->{$i}{$j} / $divisor;
+        }
     }
 }
 
@@ -148,13 +148,13 @@ sub divide_sparsematrix_4D: prototype($$) {
 
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    foreach my $k (keys %{ $m{$i}{$j} }) {
-		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-		    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} / $divisor;
-		}
-	    }
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            foreach my $k (keys %{ $m{$i}{$j} }) {
+                foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+                    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} / $divisor;
+                }
+            }
+        }
     }
 
     return %r;
@@ -175,11 +175,11 @@ sub filter_sparsematrix_2D: prototype($$) {
     my %r;
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    if ( $m{$i}{$j} >= $threshold ) {
-		$r{$i}{$j} = $m{$i}{$j};
-	    }
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            if ( $m{$i}{$j} >= $threshold ) {
+                $r{$i}{$j} = $m{$i}{$j};
+            }
+        }
     }
 
     return %r;
@@ -199,15 +199,15 @@ sub filter_sparsematrix_4D: prototype($$) {
     my %r;
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    foreach my $k (keys %{ $m{$i}{$j} }) {
-		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-		    if ( $m{$i}{$j}{$k}{$l} >= $threshold ) {
-			$r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l};
-		    }
-		}
-	    }
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            foreach my $k (keys %{ $m{$i}{$j} }) {
+                foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+                    if ( $m{$i}{$j}{$k}{$l} >= $threshold ) {
+                        $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l};
+                    }
+                }
+            }
+        }
     }
 
     return %r;
@@ -221,9 +221,9 @@ sub scale_sparsematrix_2D: prototype($$) {
     my %r;
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    $r{$i}{$j} = $m{$i}{$j} * $scale;
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            $r{$i}{$j} = $m{$i}{$j} * $scale;
+        }
     }
 
     return %r;
@@ -237,13 +237,13 @@ sub scale_sparsematrix_4D: prototype($$) {
 
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    foreach my $k (keys %{ $m{$i}{$j} }) {
-		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-		    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} * $scale;
-		}
-	    }
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            foreach my $k (keys %{ $m{$i}{$j} }) {
+                foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+                    $r{$i}{$j}{$k}{$l} = $m{$i}{$j}{$k}{$l} * $scale;
+                }
+            }
+        }
     }
 
     return %r;
@@ -259,9 +259,9 @@ sub read_sparsematrix_2D: prototype($) {
     my %h;
 
     while( my $line=<$SM_IN> ) {
-	if ( $line =~ /(\d+) (\d+) ([\d.e+-]+)/ ) {
-	    $h{$1}{$2} = $3;
-	}
+        if ( $line =~ /(\d+) (\d+) ([\d.e+-]+)/ ) {
+            $h{$1}{$2} = $3;
+        }
     }
 
     close $SM_IN;
@@ -278,9 +278,9 @@ sub read_sparsematrix_4D: prototype($) {
     my %h;
 
     while( my $line=<$SM_IN> ) {
-	if ( $line =~ /(\d+) (\d+) (\d+) (\d+) ([\d.e+-]+)/ ) {
-	    $h{$1}{$2}{$3}{$4} = $5;
-	}
+        if ( $line =~ /(\d+) (\d+) (\d+) (\d+) ([\d.e+-]+)/ ) {
+            $h{$1}{$2}{$3}{$4} = $5;
+        }
     }
 
     close $SM_IN;
@@ -298,9 +298,9 @@ sub write_sparsematrix_2D: prototype($$) {
     open(my $SM_OUT,">", "$file") || die "Cannot write to $file: $!";
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    print $SM_OUT "$i $j $m{$i}{$j}\n";
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            print $SM_OUT "$i $j $m{$i}{$j}\n";
+        }
     }
 
     close $SM_OUT;
@@ -311,9 +311,9 @@ sub print_sparsematrix_2D: prototype($$) {
     my %m = %{ $m_ref };
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    print "$i $j $m{$i}{$j}\n";
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            print "$i $j $m{$i}{$j}\n";
+        }
     }
 }
 
@@ -325,13 +325,13 @@ sub write_sparsematrix_4D: prototype($$) {
     open(my $SM_OUT,">", "$file") || die "Cannot write to $file: $!";
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    foreach my $k (keys %{ $m{$i}{$j} }) {
-		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-		    print $SM_OUT "$i $j $k $l $m{$i}{$j}{$k}{$l}\n";
-		}
-	    }
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            foreach my $k (keys %{ $m{$i}{$j} }) {
+                foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+                    print $SM_OUT "$i $j $k $l $m{$i}{$j}{$k}{$l}\n";
+                }
+            }
+        }
     }
 
     close $SM_OUT;
@@ -347,9 +347,9 @@ sub transpose_sparsematrix_2D: prototype($) {
     my %r;
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    $r{$j}{$i} = $m{$i}{$j};
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            $r{$j}{$i} = $m{$i}{$j};
+        }
     }
 
     return %r;
@@ -364,13 +364,13 @@ sub transpose_sparsematrix_4D: prototype($) {
     my %r;
 
     foreach my $i (keys %m) {
-	foreach my $j (keys %{ $m{$i} }) {
-	    foreach my $k (keys %{ $m{$i}{$j} }) {
-		foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-		    $r{$k}{$l}{$i}{$j} = $m{$i}{$j}{$k}{$l};
-		}
-	    }
-	}
+        foreach my $j (keys %{ $m{$i} }) {
+            foreach my $k (keys %{ $m{$i}{$j} }) {
+                foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
+                    $r{$k}{$l}{$i}{$j} = $m{$i}{$j}{$k}{$l};
+                }
+            }
+        }
     }
 
     return %r;

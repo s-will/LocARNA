@@ -10,7 +10,7 @@
 #
 #  calls RNAfold -p for predicting matrices of pair
 #  probabilities and hands this to locarna
-#  
+#
 ############################################################
 
 use warnings;
@@ -26,7 +26,7 @@ my $seq2;
 my $basename=`basename $0`;
 chomp $basename;
 my $cmd_dir;
-($cmd_dir = $0) =~ s/$basename$//; 
+($cmd_dir = $0) =~ s/$basename$//;
 $cmd_dir =~ s/\/$//;
 
 
@@ -50,12 +50,12 @@ if ($non_opt_argc==2) {
     $seq1=$ARGV[0];
     $seq2=$ARGV[1];
 
-    shift @ARGV; shift @ARGV;    
+    shift @ARGV; shift @ARGV;
 } elsif ($non_opt_argc==0) {
     print "\n";
     print "Input two times name and sequence (upper or lower case)\n";
     print "....,....1....,....2....,....3....,....4....,....5....,....6....,....7....,....8\n";
-    
+
     (<STDIN> =~ /^>\s*([^\s]*)/) || die "Expected name 1.\n";
     my $line;
     $seq1="";

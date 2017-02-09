@@ -1,10 +1,10 @@
 #!/bin/bash
 
 ########################################
-# mlocarna (and locarnate) tests 
+# mlocarna (and locarnate) tests
 #
 # Test whether some mlocarna and locarnate calls work and produce the
-# expected result. 
+# expected result.
 #
 # (Changes in the header version string of mlocarna are ignored, such
 # that the expected test results don't have to be updated with every
@@ -13,7 +13,7 @@
 
 if [ "$1" = "--generate-references" ] ; then
     GENERATE_OUTPUT=true
-else 
+else
     GENERATE_OUTPUT=false
 fi
 ## Test mlocarna and locarnate
@@ -60,7 +60,7 @@ function calltest {
     reference_resultsfile=$testsdir/$name.testresult
 
     shift 4
-    
+
     echo "============================================================"
     echo TEST $name
     echo CALL $*
@@ -84,7 +84,7 @@ function calltest {
             echo "Write new reference '$reference_resultsfile'."
             \cp $resultfile "$reference_resultsfile"
         fi
-    
+
     else
         echo "==================== FAIL"
         rm -rf $tgtdir

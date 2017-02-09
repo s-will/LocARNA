@@ -75,7 +75,7 @@ my $locarna_bin = "";    ## specify full path to locarna binaries for
 			 ## selecting a specific version as
 			 ## "/home/will/Soft/locarna-1.4.8/bin/" or
 			 ## when mlocarna is not in the search path
-my $mlocarna=$locarna_bin."mlocarna"; 
+my $mlocarna=$locarna_bin."mlocarna";
 my $mlocarna_options="--probabilistic --consistency-transformation --max-diff=100 --struct-weight=200 --mea-beta 400";
 
 ##------------------------------------------------------------
@@ -134,18 +134,18 @@ my $rcsuf=""; ## suffix string in case of reverse complement alignment
 if ($revcompl) {$rcsuf="-rc";}
 
 if ( $run_locally ) {
-    
+
     open (my $JOBS, "<", $joblist) || die "Cannot read from $joblist: $!";
-    
+
     my @jobs=<$JOBS>;
-    
+
     close $JOBS;
-    
+
     foreach my $jobline (@jobs) {
 	my @job=split /\s+/,$jobline;
-	
+
 	my $name = "$job[1]:$job[0]";
-	
+
 	if ($revcompl && (! -e "$source_dir/$name-rc.mfa")) {
 	    my $cmd = $locarna_bin."reverse-complement.pl $mlocarna $source_dir/$name.mfa";
 	    if ($test) {
@@ -157,7 +157,7 @@ if ( $run_locally ) {
 	}
 
 	my $cmd = "$mlocarna $source_dir/$name.mfa $mlocarna_options --tgtdir $tgt_dir/$name.dir  > $tmp_dir/$name.output 2>&1";
-	
+
 	if ($test) {
 	    print $cmd."\n";
 	} else {
@@ -169,12 +169,12 @@ if ( $run_locally ) {
 
     my $tmpjoblist="$tmp_dir/realign.joblist";
     my $jobscript="$tmp_dir/realign.sge";
-    
+
     system "cp",$joblist,$tmpjoblist || die "Cannot read and copy joblist $joblist";
-    
+
     my $num_tasks=`wc -l $tmpjoblist | cut -f1 -d' '`;
     chomp $num_tasks;
-    
+
     open(my $OUT, ">", "$jobscript") || die "Cannot write jobscript $jobscript: $!";
     print $OUT "#!/bin/bash
 #\$ -e $tmp_dir/stderr
@@ -191,13 +191,13 @@ if [ \"$rcsuf\" ne \"\" ] ; then
     ".$locarna_bin."reverse-complement.pl $mlocarna $source_dir/\$name.mfa
   fi
   name=\$name$rcsuf
-fi 
+fi
 
 $mlocarna $source_dir/\$name.mfa $mlocarna_options --tgtdir $tgt_dir/\$name.dir  > $tmp_dir/\$name.output 2>&1;
 
 if [ $tmp_dir != $tgt_dir ] ; then cp $tmp_dir/\$name.output $tgt_dir; fi
 ";
-    
+
     close $OUT;
 
     my $submission_cmd = "qsub -t 1-$num_tasks $jobscript";

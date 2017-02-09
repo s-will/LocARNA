@@ -16,40 +16,40 @@ use Thread::Semaphore;
 #
 sub foreach_par {
     my ($sub_ref,$argument_lists_ref,$thread_num) = @_;
-    
+
     my @argument_lists = @{ $argument_lists_ref };
-    
+
     my $job_num=$#argument_lists+1; ## total number of jobs
 
     my $job_count : shared = 0; ## count already started jobs
 
     my @my_threads;
-    
+
     for (my $i=1; $i<=$thread_num; $i++) {
-	$my_threads[$i]=
-	    threads->create(
- 		sub {
-		    while(1) {
-			# get the job $job_count
-			my $my_job;
-			{
-			    lock($job_count);
-			    $my_job=$job_count;
-			    $job_count++;
-			}
-			
-			## if job number too large then terminate thread
-			if ($my_job >= $job_num) {return;}
-			
-			## start job
-			$sub_ref->(@{ $argument_lists[$my_job] });
-		    }
-		}
-	    );
+        $my_threads[$i]=
+            threads->create(
+                sub {
+                    while(1) {
+                        # get the job $job_count
+                        my $my_job;
+                        {
+                            lock($job_count);
+                            $my_job=$job_count;
+                            $job_count++;
+                        }
+
+                        ## if job number too large then terminate thread
+                        if ($my_job >= $job_num) {return;}
+
+                        ## start job
+                        $sub_ref->(@{ $argument_lists[$my_job] });
+                    }
+                }
+            );
     }
 
     for (my $i=1; $i<=$thread_num; $i++) {
- 	$my_threads[$i]->join();
+        $my_threads[$i]->join();
     }
 }
 

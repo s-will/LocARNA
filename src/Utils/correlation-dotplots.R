@@ -4,7 +4,7 @@ t2<-read.table(gargs[6])
 
 correlations=numeric(length(t1))
 
-for (i in 1:length(t1)) { 
+for (i in 1:length(t1)) {
    x1 <- t1[[i]];
    x2 <- t2[[i]];
    x1[i] <- 1-sum(x1);

@@ -11,7 +11,7 @@ namespace LocARNA {
 
     //! type of the locarna score as defined by the class Scoring
     typedef long int score_t;
-    
+
     //! an extended score_t that can store and calculate with
     //! infinite values (i.p. we use -infty for invalid matrix entries)
     typedef InftyInt infty_score_t;
@@ -27,7 +27,7 @@ namespace LocARNA {
 #endif
 
     class Scoring;
-    
+
 } // end namespace LocARNA
 
 #endif // LOCARNA_SCORING_FWD_HH

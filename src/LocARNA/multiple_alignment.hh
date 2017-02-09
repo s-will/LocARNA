@@ -28,7 +28,7 @@ namespace LocARNA {
     class BasePairs;
     class Scoring;
     class Sequence;
-    
+
 /**
  * @brief Represents a multiple alignment
  *
@@ -38,7 +38,7 @@ namespace LocARNA {
  * Supports traversal of name/sequence pairs. The sequence entries support
  * mapping from columns to positions and back.
  *
- * Names are unique in a multiple alignment object. 
+ * Names are unique in a multiple alignment object.
  *
  * @todo constructors ensure name uniqueness; if constructing as
  * alignment of alignments, names are made unique if needed.
@@ -52,7 +52,7 @@ namespace LocARNA {
  * alignment; it does not check for 'allowed characters' nor transform
  * characters.  However, normalize_rna_bases() is provided to perform
  * a normalization in the case of RNAs, which is generally assumed by
- * the alignment engines and Vienna folding routines. 
+ * the alignment engines and Vienna folding routines.
  *
  * @todo because this class does not know whether it contains RNA, it
  * would be useful to have a derived class RNAMultipleAlignment. This
@@ -60,7 +60,7 @@ namespace LocARNA {
  * sequences. Consequently, we could enforce by the type system that
  * RnaEnsemble is generated only from RNAMultipleAlignment etc.
  *
- * @todo automatically adapt output width for sequence names to longest name 
+ * @todo automatically adapt output width for sequence names to longest name
  */
 class MultipleAlignment {
 
@@ -71,14 +71,14 @@ public:
      * @brief file format type for multiple alignments
      */
     struct FormatType {
-	//! inner type
-	enum type {
+        //! inner type
+        enum type {
             STOCKHOLM, //!< stockholm file format
             PP,        //!< pp format
             CLUSTAL,   //!< (extended) clustal file format
             FASTA      //!< fasta file format
-	};
-        
+        };
+
         //!@brief size of enum
         static size_t
         size() {return 4;}
@@ -87,8 +87,8 @@ public:
     //! @brief type of sequence annotation.
     //! enumerates legal annotation types
     struct AnnoType {
-	//! inner type
-	enum type {
+        //! inner type
+        enum type {
             //! consensus structure annotation (consensus structure)
             consensus_structure,
             //! structure annotation (often, constraint; allowed are
@@ -96,28 +96,28 @@ public:
             structure,
             //! structure annotation (a single structure; used as fixed
             //! structure constraint)
-	    fixed_structure,
+            fixed_structure,
             //! anchor annotation (anchor constraints)
-	    anchors
-	};
-        
+            anchors
+        };
+
         //!@brief size of enum
         static size_t
         size() {return 4;}
     };
-    
+
 private:
     //! prefix strings for annotations (shall be prefix unique)
     //! (no class outside of MultipleAlignment should have to know about this!)
     //!
     //! This is indexed by FormatType and AnnoType.
     typedef std::vector<
-    std::vector<std::string> 
+    std::vector<std::string>
     > annotation_tags_t;
-    
-    static 
+
+    static
     annotation_tags_t annotation_tags;
-    
+
     //! initialize annotation tags
     static
     void
@@ -130,240 +130,240 @@ public:
     static
     size_t
     num_of_annotypes() {
-	return annotation_tags.size();
+        return annotation_tags.size();
     }
-    
+
     /**
      * @brief A row in a multiple alignment
-     * 
+     *
      * pair of a name string and a sequence string; support
-     * projections 
+     * projections
      *
      * @see MultipleAlignment
      */
     class SeqEntry {
     public:
-	typedef MultipleAlignment::size_type size_type; //!< size type
-	
-	typedef std::pair<pos_type,pos_type> pos_pair_t; //!< pair of positions
-	
-    private:	
-	std::string name_; //!< name of the sequence
-	std::string description_; //!< optional sequence description
-	string1 seq_; //<! alignment string of the sequence 
-	
+        typedef MultipleAlignment::size_type size_type; //!< size type
+
+        typedef std::pair<pos_type,pos_type> pos_pair_t; //!< pair of positions
+
+    private:
+        std::string name_; //!< name of the sequence
+        std::string description_; //!< optional sequence description
+        string1 seq_; //<! alignment string of the sequence
+
     public:
 
-	/** 
-	 * @brief Construct from strings name and seq
-	 * 
-	 * @param name Sequence name
-	 * @param seq  Sequence string
-	 * @note empty description
-	 */
-	SeqEntry(const std::string &name,
-		 const std::string &seq)
-	    : name_(name), description_(""), seq_((string1)seq)
-	{}
-	
-	/** 
-	 * @brief Construct from strings name and 1-based string seq
-	 * 
-	 * @param name Sequence name
-	 * @param seq  Sequence string
-	 * @note empty description
-	 */
-	SeqEntry(const std::string &name, const string1 &seq)
-	    : name_(name), description_(""), seq_(seq)
-	{}
-	
-	/** 
-	 * @brief Construct from strings name, description and seq
-	 * 
-	 * @param name Sequence name
-	 * @param description Sequence description
-	 * @param seq  Sequence string
-	 */
-	SeqEntry(const std::string &name, 
-		 const std::string &description,
-		 const std::string &seq)
-	    : name_(name), description_(description), seq_((string1)seq)
-	{}
-	
-	/** 
-	 * @brief Construct from strings name, description and 1-based string seq
-	 * 
-	 * @param name Sequence name
-	 * @param description Sequence description
-	 * @param seq  Sequence string
-	 */
-	SeqEntry(const std::string &name,
-		 const std::string &description,
-		 const string1 &seq)
-	    : name_(name), description_(description), seq_(seq)
-	{}
-	
-	// access
-	
-	//! @brief (read-only) access to name
-	const std::string &
-	name() const {return name_;}
-	
-	//! @brief (read-only) access to description
-	const std::string &
-	description() const {return description_;}
+        /**
+         * @brief Construct from strings name and seq
+         *
+         * @param name Sequence name
+         * @param seq  Sequence string
+         * @note empty description
+         */
+        SeqEntry(const std::string &name,
+                 const std::string &seq)
+            : name_(name), description_(""), seq_((string1)seq)
+        {}
 
-	//! @brief (read-only) access to seq
-	const string1 &
-	seq() const {return seq_;}
+        /**
+         * @brief Construct from strings name and 1-based string seq
+         *
+         * @param name Sequence name
+         * @param seq  Sequence string
+         * @note empty description
+         */
+        SeqEntry(const std::string &name, const string1 &seq)
+            : name_(name), description_(""), seq_(seq)
+        {}
 
-	//! @brief length without gaps
-	size_type
-	length_wogaps() const;
-	
-	//****************************************
-	// projections
-	
-	/**
-	 * @brief map sequence position -> alignment column.
-	 * @note time O(len)
-	 * @param pos position in sequence (without gaps)
-	 * as marginal cases: pos 0 maps to 0 and
-	 * a too large position maps to length+1
-	*/
-	pos_type
-	pos_to_col(pos_type pos) const;
-	
-	/**
-	 * map alignment column -> sequence positions
-	 * @note time O(len)
-	 * @param col column index in aligmnent
-	 * @returns pair of positions (pos1,pos2)
-	 *   if column col contains a non-gap, then pos1=pos2 is the position of the gap
-	 *   if column col contains a gap, then pos1 is the sequence position left of the gap or 0 and pos2 the position right of the gap or sequence length+1
-	*/
-	pos_pair_t
-	col_to_pos(pos_type col) const;
+        /**
+         * @brief Construct from strings name, description and seq
+         *
+         * @param name Sequence name
+         * @param description Sequence description
+         * @param seq  Sequence string
+         */
+        SeqEntry(const std::string &name,
+                 const std::string &description,
+                 const std::string &seq)
+            : name_(name), description_(description), seq_((string1)seq)
+        {}
 
-	/** 
-	 * @brief reverse sequence
-	 * 
-	 */
-	void
-	reverse() {
-	    seq_.reverse();
-	}
-	
-	/** 
-	 * @brief append character to sequence
-	 * @param c character
-	 */
-	void
-	push_back(char c) {
-	    seq_.push_back(c);
-	}
+        /**
+         * @brief Construct from strings name, description and 1-based string seq
+         *
+         * @param name Sequence name
+         * @param description Sequence description
+         * @param seq  Sequence string
+         */
+        SeqEntry(const std::string &name,
+                 const std::string &description,
+                 const string1 &seq)
+            : name_(name), description_(description), seq_(seq)
+        {}
 
-	//! @brief write access to seq
-	void
-	set_seq(const string1 &seq) {seq_=seq;}
+        // access
+
+        //! @brief (read-only) access to name
+        const std::string &
+        name() const {return name_;}
+
+        //! @brief (read-only) access to description
+        const std::string &
+        description() const {return description_;}
+
+        //! @brief (read-only) access to seq
+        const string1 &
+        seq() const {return seq_;}
+
+        //! @brief length without gaps
+        size_type
+        length_wogaps() const;
+
+        //****************************************
+        // projections
+
+        /**
+         * @brief map sequence position -> alignment column.
+         * @note time O(len)
+         * @param pos position in sequence (without gaps)
+         * as marginal cases: pos 0 maps to 0 and
+         * a too large position maps to length+1
+        */
+        pos_type
+        pos_to_col(pos_type pos) const;
+
+        /**
+         * map alignment column -> sequence positions
+         * @note time O(len)
+         * @param col column index in aligmnent
+         * @returns pair of positions (pos1,pos2)
+         *   if column col contains a non-gap, then pos1=pos2 is the position of the gap
+         *   if column col contains a gap, then pos1 is the sequence position left of the gap or 0 and pos2 the position right of the gap or sequence length+1
+        */
+        pos_pair_t
+        col_to_pos(pos_type col) const;
+
+        /**
+         * @brief reverse sequence
+         *
+         */
+        void
+        reverse() {
+            seq_.reverse();
+        }
+
+        /**
+         * @brief append character to sequence
+         * @param c character
+         */
+        void
+        push_back(char c) {
+            seq_.push_back(c);
+        }
+
+        //! @brief write access to seq
+        void
+        set_seq(const string1 &seq) {seq_=seq;}
     };
-    
+
     /**
-     * @brief read only proxy class representing a column of the alignment 
+     * @brief read only proxy class representing a column of the alignment
      *
      * Allow read only access to the symbols in the column by their row index
      */
     class AliColumn {
-	const MultipleAlignment &ma_;
-	size_type col_index_;
+        const MultipleAlignment &ma_;
+        size_type col_index_;
     public:
-	/** 
-	 * @brief Construct from multiple alignment column
-	 * 
-	 * @param ma multiple alignment
-	 * @param col_index column index
-	 */
-	AliColumn(const MultipleAlignment &ma,size_type col_index): ma_(ma),col_index_(col_index) {
-	    assert(1<=col_index);
-	    assert(col_index<=ma.length());
-	}
-	
-	/** 
-	 * @brief element access
-	 * 
-	 * @param row_index 0-based index of alignment row
-	 * 
-	 * @return character at row in the represented column
-	 */
-	const char &
-	operator [](size_type row_index) const {
-	    return ma_.seqentry(row_index).seq()[col_index_];
-	}
+        /**
+         * @brief Construct from multiple alignment column
+         *
+         * @param ma multiple alignment
+         * @param col_index column index
+         */
+        AliColumn(const MultipleAlignment &ma,size_type col_index): ma_(ma),col_index_(col_index) {
+            assert(1<=col_index);
+            assert(col_index<=ma.length());
+        }
 
-	/** 
-	 * @brief Size / Number of rows 
-	 * @return number of rows of the multiple alignment
-	 */
-	size_type 
-	size() const {
-	    return ma_.num_of_rows();
-	}
+        /**
+         * @brief element access
+         *
+         * @param row_index 0-based index of alignment row
+         *
+         * @return character at row in the represented column
+         */
+        const char &
+        operator [](size_type row_index) const {
+            return ma_.seqentry(row_index).seq()[col_index_];
+        }
 
-	/** 
-	 * @brief Test equality
-	 * 
-	 * @param ac second alignment column
-	 * 
-	 * @return whether columns are equal
-	 */
-	bool
-	operator ==(const AliColumn &ac) const {
-	    bool ret = this->size()==ac.size();
-	    for (size_type i=0; ret && i<size(); i++) {
-		ret = ( this->ma_.seqentry(i).seq()[this->col_index_]
-			== 
-			ac.ma_.seqentry(i).seq()[ac.col_index_] );
-	    }
-	    return ret;
-	}
+        /**
+         * @brief Size / Number of rows
+         * @return number of rows of the multiple alignment
+         */
+        size_type
+        size() const {
+            return ma_.num_of_rows();
+        }
 
-	/** 
-	 * @brief Test inequality
-	 * 
-	 * @param ac second alignment column
-	 * 
-	 * @return whether columns are equal
-	 */
-	bool
-	operator !=(const AliColumn &ac) const {
-	    return !(*this == ac);
-	}
+        /**
+         * @brief Test equality
+         *
+         * @param ac second alignment column
+         *
+         * @return whether columns are equal
+         */
+        bool
+        operator ==(const AliColumn &ac) const {
+            bool ret = this->size()==ac.size();
+            for (size_type i=0; ret && i<size(); i++) {
+                ret = ( this->ma_.seqentry(i).seq()[this->col_index_]
+                        ==
+                        ac.ma_.seqentry(i).seq()[ac.col_index_] );
+            }
+            return ret;
+        }
+
+        /**
+         * @brief Test inequality
+         *
+         * @param ac second alignment column
+         *
+         * @return whether columns are equal
+         */
+        bool
+        operator !=(const AliColumn &ac) const {
+            return !(*this == ac);
+        }
 
     };
-    
+
 private:
-    
+
     //! map from string to index
     typedef std::map<std::string,size_type> str2idx_map_t;
-    
+
     //! map annotation type to sequence annotation
     typedef std::map<size_t,SequenceAnnotation> annotation_map_t;
-    
+
     //************************************************************
     // attributes of MultipleAlignment
-    
+
     //! vector of alignment rows
     std::vector<SeqEntry> alig_;
-    
+
     //! alignment/sequence annotation
     annotation_map_t annotations_;
-    
+
     /**
-     * association between names and indices, use to 
+     * association between names and indices, use to
      * locate sequences by name in log time
      */
     str2idx_map_t name2idx_;
-    
+
     // end attributes
     //************************************************************
 
@@ -401,14 +401,14 @@ private:
      * - Lines can be empty or of the form <name> <seq>.
      * - Names may occur multiple times. in this case seq strings <seq> are appended.
      * - The order of first occurrences of names in the stream is preserved.
-     * @note overwrites/clears existing data     
+     * @note overwrites/clears existing data
      */
     void
     read_clustalw(std::istream &in);
 
     /**
      * @brief Read alignment from input stream, expect fasta format.
-     * 
+     *
      * @param in input stream
      *
      * @note Sequence descriptors have the form '>descriptor'. Any
@@ -426,20 +426,20 @@ private:
      */
     void
     read_fasta(std::istream &in);
-    
+
 public:
-    
+
     //! @brief const iterator of sequence entries
     typedef std::vector<SeqEntry>::const_iterator const_iterator;
 
     //! @brief Construct empty
     MultipleAlignment();
-    
+
     /**
      * @brief Construct from file
      *
      * @param file name of input file
-     * @param format file format (@see FormatType) 
+     * @param format file format (@see FormatType)
      * @throw failure on read problems
      * @see MultipleAlignment(std::istream &in)
     */
@@ -449,7 +449,7 @@ public:
      * @brief Construct from stream
      *
      * @param in input stream with alignment in clustalW-like format
-     * @param format file format (@see FormatType) 
+     * @param format file format (@see FormatType)
      * @throw failure on read errors
     */
     MultipleAlignment(std::istream &in, FormatType::type format=FormatType::CLUSTAL);
@@ -460,22 +460,22 @@ public:
      * @param sequence sequence strings
      */
     MultipleAlignment(const std::string &name,
-		      const std::string &sequence);
-    
+                      const std::string &sequence);
+
     /**
      * @brief Construct as pairwise alignment from names and alignment strings
      * @param nameA name of sequence A
      * @param nameB name of sequence B
      * @param alistringA alignment strings of sequence A
      * @param alistringB alignment strings of sequence B
-     * 
+     *
      * @note handling of gap-symbols: use same gap symbols as in given alistrings
      */
     MultipleAlignment(const std::string &nameA,
-		      const std::string &nameB,
-		      const std::string &alistringA,
-		      const std::string &alistringB);
-    
+                      const std::string &nameB,
+                      const std::string &alistringA,
+                      const std::string &alistringB);
+
     /**
      * @brief Construct from Alignment object
      * @param alignment object of type Alignment
@@ -492,7 +492,7 @@ public:
     MultipleAlignment(const Alignment &alignment,
                       bool only_local=false,
                       bool special_gap_symbols=false);
-    
+
     /**
      * @brief Construct from alignment edges and sequences
      * @param edges alignment edges
@@ -505,8 +505,8 @@ public:
      * even if structure annotation of sequences A and B is available.
      */
     MultipleAlignment(const AlignmentEdges &edges,
-		      const Sequence &seqA,
-		      const Sequence &seqB);
+                      const Sequence &seqA,
+                      const Sequence &seqB);
 
 protected:
     /**
@@ -519,9 +519,9 @@ protected:
      */
     void
     init(const AlignmentEdges &edges,
-	 const Sequence &seqA,
-	 const Sequence &seqB,
-	 bool special_gap_symbols);
+         const Sequence &seqA,
+         const Sequence &seqB,
+         bool special_gap_symbols);
 public:
 
     /**
@@ -529,14 +529,14 @@ public:
      */
     virtual
     ~MultipleAlignment();
-    
+
     /**
      * @brief "cast" multiple alignment to sequence
      *
      * @note this works like an upcast; this is ok, as long as
      * sequence does not specify attributes
      */
-    const Sequence & as_sequence() const;  
+    const Sequence & as_sequence() const;
 
     /**
      * @brief normalize rna symbols
@@ -547,27 +547,27 @@ public:
      */
     void
     normalize_rna_symbols();
-    
+
     /**
      * @brief Number of rows of multiple aligment
      * @return number of rows
     */
     size_type
-    num_of_rows() const { 
-	return alig_.size();
+    num_of_rows() const {
+        return alig_.size();
     }
-    
-    /** 
+
+    /**
      * @brief Emptiness check
-     * 
-     * @return whether the object contains no sequences 
+     *
+     * @return whether the object contains no sequences
      *
      * @note an alignment containing one or more empty sequences is
      * not empty in this sense.
      */
     bool
     empty() const {
-	return alig_.empty();
+        return alig_.empty();
     }
 
     /**
@@ -588,11 +588,11 @@ public:
      */
     void
     set_annotation(const AnnoType::type &annotype,
-		   const SequenceAnnotation &annotation) {
-	assert(0<=annotype && annotype<num_of_annotypes());
-	annotations_[(size_t)annotype] = annotation;
+                   const SequenceAnnotation &annotation) {
+        assert(0<=annotype && annotype<num_of_annotypes());
+        annotations_[(size_t)annotype] = annotation;
     }
-    
+
     /**
      * Annotation availability
      * @param prefix annotation prefix
@@ -600,8 +600,8 @@ public:
      */
     bool
     has_annotation(const AnnoType::type &annotype) const {
-	assert(0<=annotype && annotype<num_of_annotypes());
-	return annotations_.find(annotype)!=annotations_.end();
+        assert(0<=annotype && annotype<num_of_annotypes());
+        return annotations_.find(annotype)!=annotations_.end();
     }
 
     /**
@@ -610,7 +610,7 @@ public:
     */
     bool
     is_proper() const;
-    
+
     /**
      * @brief Length of multiple aligment
      *
@@ -618,27 +618,27 @@ public:
      * sequences have the same length!
      * @return length of first sequence in alignment
     */
-    pos_type 
+    pos_type
     length() const { return alig_.empty() ? 0 : alig_[0].seq().length(); }
-    
+
     /**
      * @brief Begin for read-only traversal of name/sequence pairs
      * @return begin iterator
     */
     const_iterator
     begin() const {
-	return alig_.begin();
+        return alig_.begin();
     }
-    
+
     /**
      * @brief End for read-only traversal of name/sequence pairs
      * @return end iterator
     */
     const_iterator
     end() const {
-	return alig_.end();
+        return alig_.end();
     }
-    
+
     /**
      * @brief Test whether name exists
      * @param name name of a sequence
@@ -646,9 +646,9 @@ public:
     */
     bool
     contains(std::string name) const;
-      
+
     /* index access saves time over access by sequence name */
-    
+
     /**
      * @brief Access index by name
      *
@@ -658,11 +658,11 @@ public:
     */
     size_type
     index(const std::string &name) const {
-	str2idx_map_t::const_iterator it = name2idx_.find(name);
-	assert(it!=name2idx_.end());
-	return it->second;
+        str2idx_map_t::const_iterator it = name2idx_.find(name);
+        assert(it!=name2idx_.end());
+        return it->second;
     }
-    
+
     /**
      * @brief Access name/sequence pair by index
      *
@@ -672,9 +672,9 @@ public:
     */
     const SeqEntry &
     seqentry(size_type index) const {
-	return alig_[index];
+        return alig_[index];
     }
-    
+
     /**
      * @brief Access name/sequence pair by name
      *
@@ -683,9 +683,9 @@ public:
     */
     const SeqEntry &
     seqentry(const std::string &name) const {
-	return alig_[index(name)];
+        return alig_[index(name)];
     }
-    
+
 
     /**
      * @brief Deviation of a multiple alignment from a reference alignment
@@ -695,11 +695,11 @@ public:
      * deviation is defined for realignment in limited deviation from a
      * reference alignment as preformed when --max-diff-aln is given with
      * --max-diff to locarna.
-     * @pre the sequences of ma have to occur in the alignment *this 
+     * @pre the sequences of ma have to occur in the alignment *this
     */
     size_type
-    deviation(const MultipleAlignment &ma) const; 
-    
+    deviation(const MultipleAlignment &ma) const;
+
     /**
      * @brief Sum-of-pairs score between a multiple alignment and a reference alignment
      *
@@ -712,11 +712,11 @@ public:
      * counts common matches only, the compalign score additionally
      * counts common indels.
      *
-     * @pre the sequences of ma have to occur in the alignment *this 
+     * @pre the sequences of ma have to occur in the alignment *this
     */
     double
-    sps(const MultipleAlignment &ma, bool compalign=true) const; 
-    
+    sps(const MultipleAlignment &ma, bool compalign=true) const;
+
     /**
      * @brief Cmfinder realignment score of a multiple alignment to a reference alignment
      *
@@ -729,19 +729,19 @@ public:
      * sequence-based alignments: RNA structures in the ENCODE
      * regions. Genome Res. 2008 (Section Realignment calculation)
      *
-     * @pre the sequences of ma have to occur in the alignment *this 
+     * @pre the sequences of ma have to occur in the alignment *this
     */
     double
-    cmfinder_realignment_score(const MultipleAlignment &ma) const; 
+    cmfinder_realignment_score(const MultipleAlignment &ma) const;
 
-    /** 
+    /**
      * @brief Average deviation score
-     * 
+     *
      * @param ma multiple alignment
-     * 
+     *
      * @return average deviation fo alignment ma to reference alignment *this
      *
-     * @pre the sequences of ma have to occur in the alignment *this 
+     * @pre the sequences of ma have to occur in the alignment *this
 
      * @note this is not the same as deviation (and may be even
      * not very similar)!
@@ -749,10 +749,10 @@ public:
     double
     avg_deviation_score(const MultipleAlignment &ma) const;
 
-    
-    /** 
+
+    /**
      * @brief Consensus sequence of multiple alignment
-     * 
+     *
      * Consensus sequence by simple majority in each column. Assume
      * that only ascii < 127 characters occur
      *
@@ -760,22 +760,22 @@ public:
      */
     std::string
     consensus_sequence() const;
-    
-    /** 
+
+    /**
      * @brief Access alignment column
-     * 
-     * @param col_index column index 
-     * 
+     *
+     * @param col_index column index
+     *
      * @return reference to alignment column with index i (1-based)
      */
     AliColumn
     column(size_type col_index) const {
-	return AliColumn(*this,col_index);
+        return AliColumn(*this,col_index);
     }
 
-    /** 
+    /**
      * @brief Append sequence entry
-     * 
+     *
      * @param seqentry new sequence entry
      *
      * @pre *this is empty or entry must have same size as *this
@@ -783,9 +783,9 @@ public:
     void
     append(const SeqEntry &seqentry);
 
-    /** 
+    /**
      * @brief Prepend sequence entry
-     * 
+     *
      * @param seqentry new sequence entry
      *
      * @pre *this is empty or entry must have same size as *this
@@ -795,7 +795,7 @@ public:
      */
     void
     prepend(const SeqEntry &seqentry);
-    
+
     /**
      * @brief Append a column
      *
@@ -803,7 +803,7 @@ public:
      */
     void
     operator += (const AliColumn &c);
-    
+
     /**
      * @brief Append the same character to each row
      *
@@ -811,7 +811,7 @@ public:
      */
     void
     operator += (char c);
-    
+
     /**
      * @brief reverse the multiple alignment
      */
@@ -821,7 +821,7 @@ public:
 
     // ------------------------------------------------------------
     // output
-    
+
     /**
      * @brief Write alignment to stream
      *
@@ -852,7 +852,7 @@ public:
      */
     std::ostream &
     write(std::ostream &out, size_t width, FormatType::type format=MultipleAlignment::FormatType::CLUSTAL) const;
-    
+
     /**
      * @brief Write formatted line of name and sequence
      *
@@ -867,12 +867,12 @@ public:
      */
     std::ostream &
     write_name_sequence_line(std::ostream &out,
-			     const std::string &name,
-			     const std::string &sequence,
+                             const std::string &name,
+                             const std::string &sequence,
                              size_t namewidth) const;
-    
+
     /**
-     * @brief Write sub-alignment to stream 
+     * @brief Write sub-alignment to stream
      *
      * Write from position start to position end to output stream out;
      * write lines "<name> <seq>"
@@ -886,10 +886,10 @@ public:
      */
     std::ostream &
     write(std::ostream &out,
-          size_type start, 
+          size_type start,
           size_type end,
           FormatType::type format=MultipleAlignment::FormatType::CLUSTAL) const;
-    
+
     /**
      * @brief check character constraints
      *
@@ -900,11 +900,11 @@ public:
      *
      * @return whether all characters are in the alphabet
      */
-    bool 
+    bool
     checkAlphabet(const Alphabet<char> &alphabet) const;
-    
+
 private:
-        
+
     /**
      * @brief Deviation of a pairwise alignment from a pairwise reference alignment
      * @param a1 first alignment string of alignment a
@@ -917,21 +917,21 @@ private:
     static
     size_type
     deviation2(const string1 &a1,
-	       const string1 &a2,
-	       const string1 &ref1,
-	       const string1 &ref2
-	       );
+               const string1 &a2,
+               const string1 &ref1,
+               const string1 &ref2
+               );
 
-    
-    /** 
+
+    /**
     * @brief Pairwise match score for calculation of match_sps
-    * 
+    *
     * @param a1 row 1 of test alignment
     * @param a2 row 2 of test alignment
     * @param ref1 row 1 of reference alignment
     * @param ref2 row 2 of reference alignment
     * @param score_common_gaps whehter to score common gaps
-    * 
+    *
     * @return alignment comparison match score for pairwise alignments (a1,a2) and (ref1,ref2)
     *
     * @see sps()
@@ -939,18 +939,18 @@ private:
     static
     double
     pairwise_match_score(const SeqEntry &a1,
-			 const SeqEntry &a2,
-			 const SeqEntry &ref1,
-			 const SeqEntry &ref2,
-			 bool score_common_gaps
-			 );
-    
-    /** 
+                         const SeqEntry &a2,
+                         const SeqEntry &ref1,
+                         const SeqEntry &ref2,
+                         bool score_common_gaps
+                         );
+
+    /**
      * @brief Determine matching positions for each string position
-     * 
+     *
      * @param s string 1
      * @param t string 2
-     * 
+     *
      * @return vector v of length length(s+1), such that for each
      * position i in s (1<=i<=|s|), v[i] is the matching position in t
      * or -1 if there is no match.
@@ -958,14 +958,14 @@ private:
     static
     std::vector<int>
     match_vector(const string1 &s,
-		 const string1 &t);
-    
-    /** 
+                 const string1 &t);
+
+    /**
      * @brief Determine matching positions for each string position
-     * 
+     *
      * @param s string 1
      * @param t string 2
-     * 
+     *
      * @return vector v of length length(s+1), such that for each
      * position i in s (1<=i<=|s|), v[i] is the matching position in t
      * or the position after that i is deleted.
@@ -973,49 +973,49 @@ private:
     static
     std::vector<int>
     match_vector2(const string1 &s,
-		  const string1 &t);
+                  const string1 &t);
 
-    /** 
+    /**
      * @brief Count matches in pairwise alignment
-     * 
+     *
      * @param a1 alignment string 1
      * @param a2 alignment string 2
-     * 
+     *
      * @return number of matches
      */
     static
     size_t
     count_matches(const SeqEntry &a1,
-		  const SeqEntry &a2);
-    
-    /** 
+                  const SeqEntry &a2);
+
+    /**
      * @brief Count matches in pairwise alignment that do not occur in
      * a second alignment
-     * 
+     *
      * @param a1 alignment string 1
-     * @param a2 alignment string1 
+     * @param a2 alignment string1
      * @param ref1 reference alignment string 1
      * @param ref2 reference alignment string 1
-     * 
+     *
      * @return number of matches exclusively in alignment a (and not
      * in reference)
      */
     static
     size_t
     count_exclusive_matches(const SeqEntry &a1,
-			    const SeqEntry &a2,
-			    const SeqEntry &ref1,
-			    const SeqEntry &ref2
-			    );
+                            const SeqEntry &a2,
+                            const SeqEntry &ref1,
+                            const SeqEntry &ref2
+                            );
 
-    /** 
+    /**
      * @brief Average deviation score for pairwise alignment
-     * 
+     *
      * @param a1 alignment string 1
-     * @param a2 alignment string1 
+     * @param a2 alignment string1
      * @param ref1 reference alignment string 1
      * @param ref2 reference alignment string 1
-     * 
+     *
      * @return avg deviation score for alignment (a1,a2) from
      * reference alignment (ref1,ref2)
      *
@@ -1028,21 +1028,21 @@ private:
     static
     double
     pairwise_deviation_score(const SeqEntry &a1,
-			     const SeqEntry &a2,
-			     const SeqEntry &ref1,
-			     const SeqEntry &ref2
-			     );
+                             const SeqEntry &a2,
+                             const SeqEntry &ref1,
+                             const SeqEntry &ref2
+                             );
 
 public:
 
-    /** 
+    /**
      * @brief Print contents of object to stream
      * @param out output stream
      */
     void
     write_debug(std::ostream &out=std::cout) const;
 };
-    
+
     /**
      * @brief Write multiple alignment to stream
      * @param out output stream

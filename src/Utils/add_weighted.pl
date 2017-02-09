@@ -44,9 +44,9 @@ my $verbose;
 
 ## Getopt::Long::Configure("no_ignore_case");
 
-GetOptions(	   
+GetOptions(
 	   "verbose" => \$verbose,
-	   "quiet" => \$quiet,   
+	   "quiet" => \$quiet,
 	   "help"=> \$help,
 	   "man" => \$man
 	   ) || pod2usage(2);
@@ -60,13 +60,13 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 while(my $line = <STDIN>) {
     my @nums = split /\s+/,$line;
-    
+
     my $sum=0;
     for(my $i=0; $i<=$#ARGV; $i++) {
 	#print "$ARGV[$i]*$nums[$i] ";
 	$sum += $ARGV[$i]*$nums[$i];
     }
-    
+
     print "$sum\n";
 }
 

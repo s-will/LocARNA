@@ -12,7 +12,7 @@ use strict;
 ############################################################
 
 sub locarna_compute_pairwise_alignments {
-    
+
   my ($options, $results_path, $sequences, $bindir, $pp_dir) = @_;
 
   my $numSequences = scalar(@{$sequences});
@@ -22,7 +22,7 @@ sub locarna_compute_pairwise_alignments {
 
   my $counter = 0;
   # how many pairwise alignments must be calculated?
-  my $number = $numSequences * 
+  my $number = $numSequences *
       ($numSequences - 1) / 2;
 
   for (my $i = 0; $i < $numSequences - 1; ++$i) {
@@ -55,7 +55,7 @@ sub locarna_compute_pairwise_alignments {
       }
     }
   }
-  
+
   *STDERR->print(' done!'."\n");
 
   *STDERR->print('parse pairwise alignments...'."\r");
@@ -66,7 +66,7 @@ sub locarna_compute_pairwise_alignments {
     for (my $j = $i + 1; $j < $numSequences; ++$j) {
       my $file_name = $results_path.'/pair/S'.($i + 1).
           '_S'.($j + 1).'.aln';
-          
+
       my ($header, $aln) = MLocarna::read_clustalw_aln($file_name);
       my $score;
       if ($header =~ m/Score: ([\d|-]+)/) {
@@ -90,7 +90,7 @@ sub exparna_compute_pairwise_alignments {
 
     my $counter = 0;
     # how many pairwise alignments must be calculated?
-    my $number = $numSequences * 
+    my $number = $numSequences *
       ($numSequences - 1) / 2;
 
     # this has saves an alignment of 2 sequences with the key
@@ -153,12 +153,12 @@ sub parse_exparna_output {
             # iterate over all basepairs of this EPM
             foreach my $p (@pairs) {
                 my ($posA, $posB) = split /:/, $p;
-                
-				if (exists $aln_edges{($posA . "-" . $posB)}) {
-					$aln_edges{($posA . "-" . $posB)} += $score;
+
+                                if (exists $aln_edges{($posA . "-" . $posB)}) {
+                                        $aln_edges{($posA . "-" . $posB)} += $score;
                 }
                 else{
-					$aln_edges{($posA . "-" . $posB)} = $score;
+                                        $aln_edges{($posA . "-" . $posB)} = $score;
                 }
                 #push(@result, {"score" => $score, "posA" => $posA, "posB" => $posB});
             }
@@ -174,7 +174,7 @@ sub exparna_result_to_tcoffee_lib_file {
 
     open(my $FILE, ">", "$filename") || die "Cannot write to file $filename: $!";
     # print headers
-    
+
     print $FILE "! TC_LIB_FORMAT_01\n";
     # print number of sequences
     print $FILE "" . (scalar(@{$sequences})) . "\n";
@@ -188,8 +188,8 @@ sub exparna_result_to_tcoffee_lib_file {
     # iterate over alignments
     #while (my ($key, $value) = each(%{$alignments})) {
      for my $key ( keys %$alignments){
-    
-		my $value = {%$alignments}->{$key};
+
+                my $value = {%$alignments}->{$key};
         my ($s1, $s2) = split /-/, $key;
         $s1++;
         $s2++;
@@ -200,14 +200,14 @@ sub exparna_result_to_tcoffee_lib_file {
         #for(my $i = 0; $i < scalar(@{$value}); $i++) {
         #    print $FILE $value->[$i]->{posA} . " " . $value->[$i]->{posB} . " " . $value->[$i]->{score} . "\n";
         #}
-        for my $alnEdge ( keys %$value ) { 
-			my $score = {%$value}->{$alnEdge};
-			my @pos = split(/-/,$alnEdge);
-			#print "$pos[0] $pos[1] => $score \n";
-			print $FILE "$pos[0] $pos[1] $score \n";
-		}
+        for my $alnEdge ( keys %$value ) {
+                        my $score = {%$value}->{$alnEdge};
+                        my @pos = split(/-/,$alnEdge);
+                        #print "$pos[0] $pos[1] => $score \n";
+                        print $FILE "$pos[0] $pos[1] $score \n";
+                }
     }
-    
+
     print $FILE "! SEQ_1_TO_N\n";
     close($FILE);
 }

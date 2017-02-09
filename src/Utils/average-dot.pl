@@ -12,20 +12,20 @@ Options:
    --help               brief help message
 
    --man                full documentation
-     
+
    --verbose            be verbose
 
    --quiet              be quiet
 
    --alignment <file>   pp file representing the (Lo)Carna alignment
-   
+
    --sequences <file>   pp files for the input sequences
-   
+
    --outfile <file>     output file (DEFAULT: averagedot)
 
-   --threshold <float>  for each given threshold (this option can be specified more than once) 
-                        a copy of the orginal dotplots is created where the dots are 
-                        highlighted that have in the average plot a probability above the 
+   --threshold <float>  for each given threshold (this option can be specified more than once)
+                        a copy of the orginal dotplots is created where the dots are
+                        highlighted that have in the average plot a probability above the
                         threshold.
 
 
@@ -33,7 +33,7 @@ Options:
 
 The following call
 
-./average-dot.pl -t 0.2 -t 0.5 -t 0.75 -a result.pp -s seq1  -s seq2 -s seq3 
+./average-dot.pl -t 0.2 -t 0.5 -t 0.75 -a result.pp -s seq1  -s seq2 -s seq3
 
 creates given a result.pp (as found in the folder "results" of
 mlocarna) and input pp files seq1 seq2 seq3 (as found in the folder
@@ -44,8 +44,8 @@ averagedot_comb_50.pp  # average dot plot of the sequences where dots >=0.5 are 
 averagedot_comb_75.pp  # average dot plot of the sequences where dots >=0.75 are highlighted
 
 seq1.pp         # dot plot of sequence 1 projected to the alignment with no highlights
-seq1_comb_20.pp # dot plot of sequence 1 projected to the alignment and dots highlighted 
-                # that occur in the average with a probability >=0.2 
+seq1_comb_20.pp # dot plot of sequence 1 projected to the alignment and dots highlighted
+                # that occur in the average with a probability >=0.2
                 # in the lower right triangle the average with colored variance info is given
 seq1_comb_50.pp # ... same as previous for probability >=0.5
 seq1_comb_75.pp # ... same as previous for probability >=0.5
@@ -84,7 +84,7 @@ my $alignmentppFile;
 my @sequenceppFiles;
 my @thresholds;
 GetOptions("verbose" => \$verbose,
-	   "quiet" => \$quiet, 
+	   "quiet" => \$quiet,
 	   "help"=> \$help,
 	   "man" => \$man,
 	   "alignment=s" => \$alignmentppFile,
@@ -101,27 +101,27 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 sub write_pp_annotated {
     my ($filename,$sequence,$probUR,$probLL,$threshold,$colorLL)=@_;
-    
+
     open(my $OUT, ">", "$filename") || die "Cannot write to $filename: $!";
-    
+
     print $OUT "#PP 2.0\n\n";
 
     while ( my ($name, $row) = each %$sequence ) {
 	print $OUT "$name\t\t$row\n";
     }
     print $OUT "\n#END\n\n#SECTION BASEPAIRS\n\n";
-    
+
     foreach my $id (keys %{$probUR}){
 	my $highlight = 0;
 	if($probLL->{$id} > $threshold){ $highlight = 1;}
-	
+
 	my $fileLine = "$id $probUR->{$id} $probLL->{$id} $highlight $colorLL->{$id}\n";
 	print $OUT $fileLine;
 	print $fileLine if $verbose;
     }
-    
+
     print $OUT "\n#END\n";
-    
+
     close $OUT;
 }
 
@@ -144,7 +144,7 @@ foreach my $filename (@sequenceppFiles){
     print "Sequence name = $sequenceName\n" if $verbose;
     my %seqDotPlot = read_pp_file_pairprobs($filename);
 
-    
+
     ## convert the indices from sequence space to alignment space
     my $row = $alignment{$sequenceName};
     print "alignment row:$row\n" if $verbose;
@@ -171,7 +171,7 @@ foreach my $filename (@sequenceppFiles){
 	#print "($sx,$sy)-->($ax,$ay)\n" if $verbose;
 	$alnDotPlot{"$ax $ay"} = $seqDotPlot{$k};
     }
-    
+
     $sequenceData{$sequenceName} = \%sequenceHash;
     $sequenceDotPlots{$sequenceName} = \%seqDotPlot;
     $alignmentDotPlots{$sequenceName} = \%alnDotPlot;
@@ -210,11 +210,11 @@ my %scaledDeviation=();
 foreach my $id (keys %sumProbs){
     my $sumProb = $sumProbs{$id};
     my $sumSquareProb = $sumSquareProbs{$id};
-    
+
     my $average = $sumProb/$numSequences;
     my $squaresAverage =  $sumSquareProb/$numSequences;
     my $deviation = sqrt(max(0,$squaresAverage-$average*$average));
-    
+
     $averageProbs{$id}=$average;
     $scaledDeviation{$id}= 1 -2* $deviation;
 }
@@ -240,7 +240,7 @@ foreach my $threshold (@thresholds){
     write_pp_annotated($ofile."_comb_".($threshold*100).".pp",
 		       \%alignment,\%averageProbs,\%averageProbs,
 		       $threshold,\%scaledDeviation);
-    
+
     foreach my $filename (@sequenceppFiles){
 	my %sequenceData = read_pp_file_aln_wo_anno($filename);
 	my $sequenceName = (keys %sequenceData)[0];

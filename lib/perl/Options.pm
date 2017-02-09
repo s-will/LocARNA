@@ -1,21 +1,21 @@
 ###########################################################################
-# Copyright (C) 2009 by Wolfgang Otto                      
-# All Rights Reserved.                                     
-#  
+# Copyright (C) 2009 by Wolfgang Otto
+# All Rights Reserved.
+#
 # Permission to use, copy, modify, and distribute this
 # software and its documentation for NON-COMMERCIAL purposes
-# and without fee is hereby granted provided that this     
-# copyright notice appears in all copies.                     
-#                                                             
-# THE AUTHOR AND PUBLISHE MAKE NO REPRESENTATIONS OR          
-# WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE, EITHER    
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE        
-# IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A        
-# PARTICULAR PURPOSE, OR NON-INFRINGEMENT. THE AUTHORS        
-# AND PUBLISHER SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED  
-# BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING 
-# THIS SOFTWARE OR ITS DERIVATIVES.                           
-#                                                             
+# and without fee is hereby granted provided that this
+# copyright notice appears in all copies.
+#
+# THE AUTHOR AND PUBLISHE MAKE NO REPRESENTATIONS OR
+# WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE, EITHER
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE, OR NON-INFRINGEMENT. THE AUTHORS
+# AND PUBLISHER SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED
+# BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING
+# THIS SOFTWARE OR ITS DERIVATIVES.
+#
 ###########################################################################
 
 package locarnate::Options;
@@ -78,7 +78,7 @@ my $_find_index = sub {
       push(@names, $long_name);
       $definition_index = $index;
     }
-    # (since short names consists of a single char they always 
+    # (since short names consists of a single char they always
     # match exact or they don't match so there is no need for check)
   }
 
@@ -140,7 +140,7 @@ my $_check_definition = sub {
       # this definition is a header
       if ($default_value ne '') {
         # headers can't have a default value
-        my $message = 'Syntax error in definition '.($index + 1) 
+        my $message = 'Syntax error in definition '.($index + 1)
             .': headers can\'t have a default value';
         locarnate::Error::error($message);
       }
@@ -152,14 +152,14 @@ my $_check_definition = sub {
         if ($long_name eq '') {
           if ($default_value ne '' || $description eq '') {
             # unnamed options need a long name as key
-            my $message = 'Syntax error in definition '.($index + 1) 
+            my $message = 'Syntax error in definition '.($index + 1)
                 .': unnamed options need a long name as key';
             locarnate::Error::error($message);
           }
         }
         elsif ($description ne '') {
           # unnamed options can't have a description
-          my $message = 'Syntax error in definition '.($index + 1) 
+          my $message = 'Syntax error in definition '.($index + 1)
               .': unnamed options can\'t have a description';
           locarnate::Error::error($message);
         }
@@ -167,7 +167,7 @@ my $_check_definition = sub {
           # no default value for unnamed option after a
           # former option has one
           my $message = 'Syntax error in definition '
-              .($unnamed_default_index + 1) 
+              .($unnamed_default_index + 1)
               .': unnamed options can only have default values'
               .' at the end';
           locarnate::Error::error($message);
@@ -181,7 +181,7 @@ my $_check_definition = sub {
       }
       elsif (length($short_name) > 1) {
         # short names can only consists of a single char
-        my $message = 'Syntax error in definition '.($index + 1) 
+        my $message = 'Syntax error in definition '.($index + 1)
             .': short names can only consists of a single char';
         locarnate::Error::error($message);
       }
@@ -189,9 +189,9 @@ my $_check_definition = sub {
       # check for multiple names
       if ($long_name ne '') {
         if (exists($used_names{$long_name})) {
-          my $message = 'Syntax error in definition '.($index + 1) 
-              .': options name \''.$long_name 
-              .'\' is already used in definition ' 
+          my $message = 'Syntax error in definition '.($index + 1)
+              .': options name \''.$long_name
+              .'\' is already used in definition '
               .($used_names{$long_name} + 1);
           locarnate::Error::error($message);
         }
@@ -199,9 +199,9 @@ my $_check_definition = sub {
       }
       if ($short_name ne '' && $short_name ne 'NN') {
         if (exists($used_names{$short_name})) {
-          my $message = 'Syntax error in definition '.($index + 1) 
-              .': options name \''.$short_name 
-              .'\' is already used in definition ' 
+          my $message = 'Syntax error in definition '.($index + 1)
+              .': options name \''.$short_name
+              .'\' is already used in definition '
               .($used_names{$short_name} + 1);
           locarnate::Error::error($message);
         }
@@ -210,7 +210,7 @@ my $_check_definition = sub {
     }
     else {
       # only default value is set (because of no end definition)
-      my $message = 'Syntax error in definition '.($index + 1) 
+      my $message = 'Syntax error in definition '.($index + 1)
           .': only default value is set';
       locarnate::Error::error($message);
     }
@@ -276,7 +276,7 @@ my $_create_help_meassage = sub {
   # program_description
   my $length = 0;
   for (my $i = 0; $i < length($program_description); ++$i) {
-    if ($length > $message_columns 
+    if ($length > $message_columns
         && substr($program_description, $i, 1) eq ' ') {
       $message .= "\n";
       $length = 0;
@@ -299,14 +299,14 @@ my $_create_help_meassage = sub {
     my $description = $definition->[$index]->[3];
 
     if ($short_name eq 'NN' || $description eq '') {
-      # unnamed or secret options 
+      # unnamed or secret options
       next;
     }
     elsif ($long_name eq '' && $short_name eq '') {
       # header
       my $length = 0;
       for (my $i = 0; $i < length($description); ++$i) {
-        if ($length > $message_columns 
+        if ($length > $message_columns
             && substr($description, $i, 1) eq ' ') {
           $message .= "\n";
           $length = 0;
@@ -347,7 +347,7 @@ my $_create_help_meassage = sub {
       }
       # description
       for (my $i = 0; $i < length($description); ++$i) {
-        if ($length > $message_columns 
+        if ($length > $message_columns
             && substr($description, $i, 1) eq ' ') {
           $message .= "\n".' 'x($message_indent + 2);
           $length = $message_indent + 2;
@@ -358,7 +358,7 @@ my $_create_help_meassage = sub {
         }
       }
       # default
-      if ($message_defaults && $default_value ne 'FLAG' 
+      if ($message_defaults && $default_value ne 'FLAG'
           && $default_value ne 'REQ' && $default_value ne '') {
         my $default_string = '['.$default_value.']';
         if ($length + 1 + length($default_string) > $message_columns) {
@@ -440,7 +440,7 @@ my $_parse_file = sub {
 
     # remove comments, trim line
     for (my $i = 0; $i < length($line); ++$i) {
-      if (substr($line, $i, 1) eq '#' 
+      if (substr($line, $i, 1) eq '#'
           && ($i == 0 || substr($line, $i - 1, 1) ne '\\')) {
         $line = substr($line, 0, $i);
         last;
@@ -472,14 +472,14 @@ my $_parse_file = sub {
 
     # test for string
     if ((substr($value, 0, 1) eq '"' &&
-         substr($value, length($value) - 1, 1) eq '"') || 
+         substr($value, length($value) - 1, 1) eq '"') ||
         (substr($value, 0, 1) eq '\'' &&
          substr($value, length($value) - 1, 1) eq '\'')) {
       $value = substr($value, 1, length($value) - 2);
     }
 
     # search options that match name
-    my $index = &{$_find_index}($self, $definition, $name, 
+    my $index = &{$_find_index}($self, $definition, $name,
                                 $line_counter, $remote_file);
 
     if ($index < @{$definition}) {
@@ -494,7 +494,7 @@ my $_parse_file = sub {
       }
 
       # test if argument was already used
-      if (exists($used_names{$key})) { 
+      if (exists($used_names{$key})) {
         my $message = 'Error: Option \''.$name.'\' in remote file \''.
             $remote_file.'\'", line '.$line_counter.
             ', is already set in line '.$used_names{$key}.'!'."\n";
@@ -502,7 +502,7 @@ my $_parse_file = sub {
         next;
       }
       $used_names{$key} = $line_counter;
-      
+
       # test syntax of default values and set options
       if ($default_value eq 'FLAG') {
         if ($value eq 'FLAG') {
@@ -556,7 +556,7 @@ my $_parse_named = sub {
       ++$i;
       next;
     }
-    
+
     ++$pos_counter;
 
     # argument is named -> remove it from list
@@ -580,7 +580,7 @@ my $_parse_named = sub {
             }
           }
           else {
-            # concatenation of short names (FLAGs) 
+            # concatenation of short names (FLAGs)
             # -> push remaining short names at begin
             my $corrected_arg = '-'.substr($arg, 2);
             splice(@{$arguments}, $i, 0, $corrected_arg);
@@ -624,7 +624,7 @@ my $_parse_named = sub {
       }
 
       # test if argument was already used
-      if (exists($used_names{$key})) { 
+      if (exists($used_names{$key})) {
         my $message = 'Error: Named command line argument \''.$name
             .'\' at position '.$pos_counter.
             ', is already used at position '.$used_names{$key}.'!'."\n";
@@ -632,7 +632,7 @@ my $_parse_named = sub {
         next;
       }
       $used_names{$key} = $pos_counter;
-      
+
       # test syntax of default values and set options
       if ($default_value eq 'FLAG') {
         if ($value eq 'FLAG') {
@@ -698,7 +698,7 @@ my $_parse_unnamed = sub {
 
     if ($short_name eq 'NN' && $long_name ne '') {
       # this definition is an unnamed option
-      
+
       if (@{$arguments} == 0) {
         last;
       }
@@ -731,7 +731,7 @@ my $_parse_unnamed = sub {
     #   $message .= '\' and \''.$arguments->[@{$arguments} - 1].'\')!';
     # }
     # $message .= "\n";
-    # 
+    #
     # $self->{'error_message'} .= $message;
   }
 };
@@ -825,7 +825,7 @@ sub new {
   # translate empty strings in definition to undef
   for (my $index = 0; $index < @{$definition}; ++$index) {
     for (my $column = 0; $column < 4; ++$column) {
-      if (!defined($definition->[$index]->[$column])) { 
+      if (!defined($definition->[$index]->[$column])) {
         $definition->[$index]->[$column] = '';
       }
     }
@@ -833,7 +833,7 @@ sub new {
 
   &{$_check_definition}($self, $definition);
   &{$_create_version_meassage}($self, $program_name, $version);
-  &{$_create_help_meassage}($self, $definition, $description, 
+  &{$_create_help_meassage}($self, $definition, $description,
                             $program_name);
   &{$_set_defaults}($self, $definition);
   &{$_parse_file}($self, $definition, $remote_file);
@@ -875,7 +875,7 @@ sub str {
     my $value = value($self, $key);
 
     $string .= $ind.'  '.$key.': ';
-    if ($self->{'options'}->{$key} eq 'REQ' 
+    if ($self->{'options'}->{$key} eq 'REQ'
         || $self->{'options'}->{$key} eq 'NN') {
       $string .= 'undef';
     }
@@ -896,7 +896,7 @@ sub str {
 
 sub version_message {
   my $self = shift(@_);
-  
+
   if (@_) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -906,7 +906,7 @@ sub version_message {
 
 sub help_message {
   my $self = shift(@_);
-  
+
   if (@_) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -916,7 +916,7 @@ sub help_message {
 
 sub error {
   my $self = shift(@_);
-  
+
   if (@_) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -926,7 +926,7 @@ sub error {
 
 sub error_message {
   my $self = shift(@_);
-  
+
   if (@_) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -936,13 +936,13 @@ sub error_message {
 
 sub value {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
 
   my $key = $_[0];
-  
+
   unless (exists($self->{'options'}->{$key})) {
     my $message = 'No option with key \''.$key.'\' exists';
     locarnate::Error::debug($message);
@@ -958,7 +958,7 @@ sub value {
 
 sub arguments_size {
   my $self = shift(@_);
-  
+
   if (@_ != 0) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -968,13 +968,13 @@ sub arguments_size {
 
 sub argument {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
 
   my $index = $_[0];
-  
+
   unless ($index < @{$self->{'unparsed_arguments'}}) {
     my $message = 'No argument with index \''.$index.'\' exists';
     locarnate::Error::debug($message);

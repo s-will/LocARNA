@@ -3,7 +3,7 @@
 
 /**
  * define data structures and code common to
- * the driver programs of locarna, locarna_p, sparse, and exparna-p  
+ * the driver programs of locarna, locarna_p, sparse, and exparna-p
  */
 
 #include <string>
@@ -29,49 +29,49 @@ namespace LocARNA {
     namespace MainHelper {
 
         // standard command line parameters common to locarna, locarna_p, sparse
-        struct std_command_line_parameters {            
-            
+        struct std_command_line_parameters {
+
             std::map<std::string,std::string> help_text;
-            
+
             // ----------------------------------------
             // command only parameters
-                        
+
             bool help; //!< whether to print help
 
             bool galaxy_xml; //!< whether to print a galaxy xml wrapper for the parameters
-            
+
             bool version; //!< whether to print version
 
             bool verbose; //!< whether to print verbose output
 
             bool quiet; //!< whether to stay quiet (overrides verbose)
-            
+
             // ----------------------------------------
             // Scoring parameters
-            
+
             int indel; //!< indel extension score
-        
+
             int indel_opening; //!< indel opening score
-            
+
              std::string ribosum_file; //!< ribosum_file
-            
+
             bool use_ribosum; //!< use_ribosum
-    
+
             bool ribofit;
 
             int match; //!< match score
-            
+
             int mismatch; //!< mismatch score
-        
+
             int unpaired_penalty; //!< penalty for unpaired bases
-        
+
              int struct_weight; //!< structure weight
 
             double exp_prob; //!< expected probability of a base pair (null-model)
             bool exp_prob_given; //!< whether exp prob is given
-            
+
             int tau;
-            
+
             int exclusion;
 
             bool stacking; //!< whether to use special stacking arcmatch score
@@ -84,17 +84,17 @@ namespace LocARNA {
 
              bool struct_local;       //!< turns on/off structure locality
             bool struct_local_given; //!< is struct-local mode specified explicitely
-            
+
             bool sequ_local; //!< sequence local alignment; maximize alignment of subsequence
             bool sequ_local_given; //!< is sequ-local mode specified explicitely
-        
+
             std::string free_endgaps; //!< free endgaps specification
 
             // ----------------------------------------
             // Output
 
             int width;
-            
+
             std::string clustal; //!< name of clustal output file
             bool clustal_given; //!< whether to write clustal output to file
 
@@ -109,39 +109,39 @@ namespace LocARNA {
             std::string cons_struct_type; //! type of consensus structure
 
             bool local_output; //!< whether to write local output
-            
+
             bool local_file_output; //!< whether to write local output to files (pp, aln)
-            
+
             bool pos_output; //!< whether to output positions
 
             bool write_structure; //!< whether to write structure
 
-            bool stopwatch; //!< whether to print verbose output           
+            bool stopwatch; //!< whether to print verbose output
 
             // ----------------------------------------
             // Heuristics
 
-            double min_prob; 
-            
+            double min_prob;
+
             double max_bps_length_ratio;
 
             int max_diff_am;
-        
+
             int max_diff;
-        
+
             int max_diff_at_am;
-        
+
             //! reference alignment for max-diff heuristic, name of clustalw
             //! format file
             std::string max_diff_alignment_file;
-            
+
             //! pairwise reference alignment for max-diff heuristic,
             //!separator &
             std::string max_diff_pw_alignment;
-        
+
             //! use relaxed variant of max diff with reference alignment
             bool max_diff_relax;
-            
+
             // ----------------------------------------
             // Constraints
 
@@ -153,19 +153,19 @@ namespace LocARNA {
 
             // ------------------------------------------------------------
             // File arguments
-    
-            //! first input file 
+
+            //! first input file
             std::string fileA;
-    
+
             //! second input file
             std::string fileB;
 
             std_command_line_parameters() {
-                help_text["help"] = 
+                help_text["help"] =
                     "Print this help.";
-                help_text["galaxy_xml"] = 
+                help_text["galaxy_xml"] =
                     "Print galaxy xml wrapper.";
-                help_text["version"] = 
+                help_text["version"] =
                     "Print only version string.";
                 help_text["verbose"] =
                     "Be verbose. Prints input parameters, sequences and "
@@ -289,17 +289,17 @@ namespace LocARNA {
 
 
         struct mea_command_line_parameters {
-            
+
             // ----------------------------------------
             // partition functions, probabilities and mea stuff
-            
+
             bool mea_alignment; //!< whether to perform mea alignment
 
             int match_prob_method; //!< method for computing match probabilities
 
             std::string probcons_file; //!< probcons_file
             bool probcons_file_given; //!< whether to probcons_file
-    
+
             int temperature_alipf; //!< temperature for alignment partition functions
 
             int pf_struct_weight; //!< pf_struct_weight
@@ -313,20 +313,20 @@ namespace LocARNA {
             int mea_gamma; //!< mea gamma
 
             int probability_scale; //!< probability scale
-            
+
             bool write_matchprobs; //!< whether to write_matchprobs
 
             bool read_matchprobs; //!< whether to read_matchprobs
 
             std::string matchprobs_infile; //!< matchprobs input file
             std::string matchprobs_outfile; //!< matchprobs output file
-            
+
             bool write_arcmatch_scores; //!< whether to write arcmatch scores
 
             bool read_arcmatch_scores; //!< whether to read arcmatch scores
-            
+
             bool read_arcmatch_probs; //!< whether to read arcmatch probabilities
-            
+
             std::string arcmatch_scores_infile; //!< arcmatch scores file
             std::string arcmatch_scores_outfile; //!< arcmatch scores file
 
@@ -377,7 +377,7 @@ namespace LocARNA {
         //! @brief write input summary
         void
         report_input(const Sequence &seqA,
-                     const Sequence &seqB, 
+                     const Sequence &seqB,
                      const ArcMatches &arc_matches);
 
 
@@ -393,11 +393,11 @@ namespace LocARNA {
                          Ribofit **ribofit) {
             *ribosum=NULL;
             *ribofit=NULL;
-            
+
             if (clp.ribofit) {
                 *ribofit = new Ribofit_will2014;
             }
-            
+
             if (clp.use_ribosum) {
                 if (clp.ribosum_file == "RIBOSUM85_60") {
                     if (clp.verbose) {
@@ -409,7 +409,7 @@ namespace LocARNA {
                 }
             }
         }
-        
+
         template<class CLP>
         MatchProbs *
         init_match_probs(CLP &clp,
@@ -418,10 +418,10 @@ namespace LocARNA {
                          const Ribosum *ribosum,
                          const Ribofit *ribofit) {
             MatchProbs *match_probs = new MatchProbs;
-            
+
             const Sequence &seqA=rna_dataA->sequence();
             const Sequence &seqB=rna_dataB->sequence();
-            
+
             if (clp.read_matchprobs) {
                 match_probs->read_sparse(clp.matchprobs_infile,seqA.length(),seqB.length());
             } else {
@@ -433,7 +433,7 @@ namespace LocARNA {
                         std::exit(-1);
                     }
                     if (clp.verbose) {
-                        std::cout << "Compute match probabilities using pairHMM."<<std::endl; 
+                        std::cout << "Compute match probabilities using pairHMM."<<std::endl;
                     }
 
                     match_probs->pairHMM_probs(seqA,seqB,clp.probcons_file);
@@ -443,12 +443,12 @@ namespace LocARNA {
                     if (clp.match_prob_method==3) sl=false;
 
                     if (clp.verbose) {
-                        std::cout << "Compute match probabilities using PF sequence alignment."<<std::endl; 
+                        std::cout << "Compute match probabilities using PF sequence alignment."<<std::endl;
                     }
-                
+
                     const Alphabet<char> *alphabet;
                     const Matrix<double> *p_basematch_scores;
-                    Matrix<double> basematch_scores; 
+                    Matrix<double> basematch_scores;
 
                     if (ribosum!=NULL) {
                         alphabet = & ribosum->alphabet();
@@ -461,7 +461,7 @@ namespace LocARNA {
                     } else {
                         assert(false);
                     }
-                
+
                     match_probs->pf_probs(*rna_dataA,*rna_dataB,
                                           *p_basematch_scores,
                                           *alphabet,
@@ -472,19 +472,19 @@ namespace LocARNA {
                                           sl);
                 }
             }
-            
+
             return match_probs;
         }
-        
+
         template<class CLP>
         void
         write_match_probs(const CLP &clp,
                           const MatchProbs *match_probs)  {
             if (clp.verbose) {
                 std::cout << "Write match probabilities to file "
-                          <<clp.matchprobs_outfile<<"."<<std::endl; 
+                          <<clp.matchprobs_outfile<<"."<<std::endl;
             }
-            
+
             match_probs->write_sparse(clp.matchprobs_outfile,
                                       1.0/clp.probability_scale);
         }
@@ -503,15 +503,15 @@ namespace LocARNA {
                   const Alignment &alignment,
                   std::string &consensus_structure
                   )  {
-            
+
             RnaData *consensus=0L;
-                
+
             if (clp.alifold_consensus_dp || clp.cons_struct_type=="alifold") {
                 MultipleAlignment ma(alignment, clp.local_file_output);
-		
+
                 // compute cutoff probability as geometric mean
                 double min_prob = sqrt( rna_dataA->arc_cutoff_prob() * rna_dataB->arc_cutoff_prob() );
-                
+
                 RnaEnsemble ens(ma,pfparams,false,true); // alifold the alignment
 
                 if (clp.cons_struct_type=="alifold") {
@@ -523,22 +523,22 @@ namespace LocARNA {
                                         pfparams); // construct rna data from ensemble
             } else {
                 // compute averaged consensus base pair probabilities
-                
+
                 consensus = new RnaData(*rna_dataA,
                                         *rna_dataB,
                                         alignment,
                                         my_exp_probA,
                                         my_exp_probB,
                                         clp.local_file_output);
-                
+
                 if (clp.cons_struct_type=="mea") {
                     consensus_structure = consensus->mea_structure(1);
                 }
             }
             return consensus;
         }
-        
-        
+
+
         /** @brief write output to file/s (optionally)
          */
         template <class CLP>
@@ -549,81 +549,81 @@ namespace LocARNA {
                         const RnaData *consensus,
                         const Alignment &alignment,
                         const MultipleAlignment *multiple_ref_alignment) {
-            
+
             const Sequence &seqA=alignment.seqA();
             const Sequence &seqB=alignment.seqB();
-            
+
             int return_code=0;
-            
+
             // write MultipleAlignment deviation, if reference alignment given and verbose
             if (clp.verbose && multiple_ref_alignment!=0L) {
                 MultipleAlignment resultMA(alignment);
                 std::cout << "Deviation to reference: "
                           << multiple_ref_alignment->deviation(resultMA)<<std::endl;
             }
-            
+
             if (clp.clustal_given) {
                 std::ofstream out(clp.clustal.c_str());
                 if (out.good()) {
 
                     MultipleAlignment ma(alignment, clp.local_file_output);
-                    
+
                     out << "CLUSTAL W --- "<<PACKAGE_STRING;
-		
-                    // for legacy, clustal files of pairwise alignments contain the score 
+
+                    // for legacy, clustal files of pairwise alignments contain the score
                     if (seqA.num_of_rows()==1 && seqB.num_of_rows()==1)
                         out  <<" --- Score: " << score;
                     out <<std::endl<<std::endl;
-                    
+
                     if (clp.write_structure) {
                         // annotate multiple alignment with structures
                         ma.prepend(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureA(clp.local_file_output)));
                         ma.append(MultipleAlignment::SeqEntry("",alignment.dot_bracket_structureB(clp.local_file_output)));
                     }
-                    
+
                     ma.write(out,clp.width,MultipleAlignment::FormatType::CLUSTAL);
-                    
+
                 } else {
                     std::cerr << "Cannot write to "<<clp.clustal<<"! Exit."<<std::endl;
                     return_code=-1;
                 }
             }
-            
+
             if (clp.stockholm_given) {
                 std::ofstream out(clp.stockholm.c_str());
                 if (out.good()) {
                     MultipleAlignment ma(alignment, clp.local_file_output);
-                    
+
                     if (consensus_structure!="") {
                         ma.set_annotation( MultipleAlignment::AnnoType::consensus_structure,
                                            SequenceAnnotation(consensus_structure)
                                            );
                     }
-                    
+
                     out << "# STOCKHOLM 1.0" << std::endl;
                     out << "#=GF CC " << "Generated by "<<PACKAGE_STRING << std::endl;
                     out << "#=GF SQ " << ma.num_of_rows() << std::endl;
                     out << std::endl;
-                    
+
                     ma.write(out,clp.width,MultipleAlignment::FormatType::STOCKHOLM);
                 } else {
                     std::cerr << "Cannot write to "<<clp.stockholm<<"! Exit."<<std::endl;
                     return_code=-1;
                 }
             }
-	
+
             if (clp.pp_given) {
                 std::ofstream out(clp.pp.c_str());
                 if (out.good()) {
-                    
+
                     consensus->write_pp(out);
-                    
+
                 } else {
                     std::cerr << "Cannot write to "<<clp.pp<<std::endl<<"! Exit.";
                     return_code=-1;
                 }
             }
-            
+
             return return_code;
         }
 
@@ -633,21 +633,21 @@ namespace LocARNA {
                      const ArcMatches &arc_matches) {
             const BasePairs &bpsA = arc_matches.get_base_pairsA();
             const BasePairs &bpsB = arc_matches.get_base_pairsB();
-            
+
             // ----------------------------------------
             // report on input in verbose mode
             std::cout << "Sequence A: "<<std::endl;
             seqA.write(std::cout,MultipleAlignment::FormatType::CLUSTAL);
             std::cout<<" (Length:"<< seqA.length()<<", Basepairs:"<<bpsA.num_bps() << ")" <<std::endl;
-            
+
             std::cout << "Sequence B: "<<std::endl;
             seqB.write(std::cout,MultipleAlignment::FormatType::CLUSTAL);
             std::cout<<" (Length:"<< seqB.length()<<", Basepairs:"<<bpsB.num_bps() << ")" <<std::endl;
-            
-            std::cout <<std::endl 
+
+            std::cout <<std::endl
                       <<"Base Pair Matches: "<<arc_matches.num_arc_matches() << "." <<std::endl;
-            // std::cout << "Base Identity: "<<(seq_identity(seqA,seqB)*100)<<std::endl; 
-            
+            // std::cout << "Base Identity: "<<(seq_identity(seqA,seqB)*100)<<std::endl;
+
         }
 
         double average_pairwise_identity(const Sequence &seqA, const Sequence &seqB) {
@@ -660,7 +660,7 @@ namespace LocARNA {
             }
             return  avg_identity / ( seqA.num_of_rows()*seqB.num_of_rows() );
         }
-        
+
     }
 }
 

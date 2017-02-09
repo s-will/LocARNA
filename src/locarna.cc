@@ -5,8 +5,8 @@
  *
  * LocARNA: global and LOCal Alignment of RNA
  *
- * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de> 
- * 
+ * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de>
+ *
  */
 
 
@@ -38,8 +38,8 @@
 using namespace LocARNA;
 
 //! Version string (from configure.ac via autoconf system)
-const std::string 
-VERSION_STRING = (std::string)PACKAGE_STRING; 
+const std::string
+VERSION_STRING = (std::string)PACKAGE_STRING;
 
 // ------------------------------------------------------------
 // Parameter
@@ -60,14 +60,14 @@ const bool DO_TRACE=true;
 //! Encapsulating all command line parameters in a common structure
 //! avoids name conflicts and makes downstream code more informative.
 //!
-struct command_line_parameters 
+struct command_line_parameters
     : public MainHelper::std_command_line_parameters,
       public MainHelper::mea_command_line_parameters {
-    
+
     //! find suboptimal solution (either k-best or all solutions
     //! better than a threshold)
     bool subopt;
-    
+
     int kbest_k; //!< kbest_k
     int subopt_threshold; //!< subopt_threshold
 
@@ -80,7 +80,7 @@ struct command_line_parameters
 
     bool score_components; //!< whether to report score components
 
-    command_line_parameters() 
+    command_line_parameters()
         : MainHelper::std_command_line_parameters(),
           MainHelper::mea_command_line_parameters(help_text)
     {
@@ -91,7 +91,7 @@ struct command_line_parameters
             "where length is the sum of the lengths of the two locally aligned subsequences. "
             "Thus, the larger L, the larger the local alignment; the size of value L is in the order "
             "of local alignment lengths. Verbose yields info on the iterative optimizations.";
-        help_text["penalized"] = 
+        help_text["penalized"] =
             "Penalized local alignment with penalty PP";
         help_text["normalized_L"] =
             "Parameter L for normalized local alignment. "
@@ -101,7 +101,7 @@ struct command_line_parameters
     }
 };
 
-//! \brief holds command line parameters of locarna  
+//! \brief holds command line parameters of locarna
 command_line_parameters clp;
 
 //! defines command line parameters
@@ -136,7 +136,7 @@ option_def my_options[] = {
     {"exclusion",'E',0,O_ARG_INT,&clp.exclusion,"0","score",clp.help_text["exclusion"]},
     {"stacking",0,&clp.stacking,O_NO_ARG,0,O_NODEFAULT,"",clp.help_text["stacking"]},
     {"new-stacking",0,&clp.new_stacking,O_NO_ARG,0,
-     O_NODEFAULT,"",clp.help_text["new_stacking"]},   
+     O_NODEFAULT,"",clp.help_text["new_stacking"]},
 
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Locality"},
 
@@ -148,7 +148,7 @@ option_def my_options[] = {
      "----","spec",clp.help_text["free_endgaps"]},
     {"normalized",0,&clp.normalized,O_ARG_INT,&clp.normalized_L,
      "0","L",clp.help_text["normalized"]},
-    
+
     {"penalized",0,&clp.penalized,O_ARG_INT,&clp.position_penalty,
      "0","PP",clp.help_text["penalized"]},
 
@@ -176,7 +176,7 @@ option_def my_options[] = {
      O_NODEFAULT,"",clp.help_text["score_components"]},
     {"stopwatch",0,&clp.stopwatch,O_NO_ARG,0,
      O_NODEFAULT,"",clp.help_text["stopwatch"]},
-    
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"",
      "Heuristics for speed accuracy trade off"},
 
@@ -201,7 +201,7 @@ option_def my_options[] = {
      "-1","k","Enumerate k-best alignments"},
     {"better",0,&clp.subopt,O_ARG_INT,&clp.subopt_threshold,
      "-1000000","t","Enumerate alignments better threshold t"},
-    
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","MEA score"},
 
     {"mea-alignment",0,&clp.mea_alignment,O_NO_ARG,0,O_NODEFAULT,"",
@@ -216,7 +216,7 @@ option_def my_options[] = {
     {"pf-struct-weight",0,0,O_ARG_INT,&clp.pf_struct_weight,
      "200","weight",clp.help_text["pf_struct_weight"]},
     {"mea-gapcost",0,&clp.mea_gapcost,O_NO_ARG,0,
-     O_NODEFAULT,"","Use gap cost in mea alignment"},   
+     O_NODEFAULT,"","Use gap cost in mea alignment"},
     {"mea-alpha",0,0,O_ARG_INT,&clp.mea_alpha,
      "0","weight",clp.help_text["mea_alpha"]},
     {"mea-beta",0,0,O_ARG_INT,&clp.mea_beta,
@@ -240,7 +240,7 @@ option_def my_options[] = {
     {"read-arcmatch-probs",0,&clp.read_arcmatch_probs,O_ARG_STRING,
      &clp.arcmatch_scores_infile,O_NODEFAULT,"file",
      clp.help_text["read_arcmatch_probs"]},
-    
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"","Constraints"},
 
     {"noLP",0,&clp.no_lonely_pairs,O_NO_ARG,0,
@@ -249,11 +249,11 @@ option_def my_options[] = {
      "-1","span",clp.help_text["max_bp_span"]},
     {"relaxed-anchors",0,&clp.relaxed_anchors,O_NO_ARG,0,
      O_NODEFAULT,"",clp.help_text["relaxed_anchors"]},
-    
+
     {"",0,0,O_SECTION_HIDE,0,O_NODEFAULT,"","Hidden Options"},
 
     {"ribofit",0,0,O_ARG_BOOL,&clp.ribofit,"false","bool",clp.help_text["ribofit"]},
-    
+
     {"",0,0,O_SECTION,0,O_NODEFAULT,"",
      "Input files"},
 
@@ -272,17 +272,17 @@ option_def my_options[] = {
 // ------------------------------------------------------------
 // MAIN
 
-/** 
+/**
  * \brief Main method of executable locarna
- * 
+ *
  * @param argc argument counter
  * @param argv argument vector
- * 
+ *
  * @return success
  */
 int
 main(int argc, char **argv) {
-    stopwatch.start("total");    
+    stopwatch.start("total");
 
     typedef std::vector<int>::size_type size_type;
 
@@ -292,82 +292,82 @@ main(int argc, char **argv) {
     bool process_success=process_options(argc,argv,my_options);
 
     if (clp.help) {
-	std::cout
+        std::cout
             << "locarna - pairwise (global and local) alignment of RNA."
             <<std::endl<<std::endl;
-	
-	//std::cout << VERSION_STRING<<std::endl<<std::endl;
 
-	print_help(argv[0],my_options);
+        //std::cout << VERSION_STRING<<std::endl<<std::endl;
 
-	std::cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
+        print_help(argv[0],my_options);
+
+        std::cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
                   <<std::endl<<std::endl;
-	return 0;
+        return 0;
     }
 
     if (clp.quiet) { clp.verbose=false;} // quiet overrides verbose
 
     if (clp.galaxy_xml) {
-    	print_galaxy_xml((char *)"locarna",my_options);
-    	return 0;
+        print_galaxy_xml((char *)"locarna",my_options);
+        return 0;
     }
 
     if (clp.version || clp.verbose) {
-	std::cout << VERSION_STRING<<std::endl;
-	if (clp.version) return 0; else std::cout <<std::endl;
+        std::cout << VERSION_STRING<<std::endl;
+        if (clp.version) return 0; else std::cout <<std::endl;
     }
 
     if (!process_success) {
-	std::cerr << "ERROR --- "
-		  <<O_error_msg<<std::endl;
-	print_usage(argv[0],my_options);
-	return -1;
+        std::cerr << "ERROR --- "
+                  <<O_error_msg<<std::endl;
+        print_usage(argv[0],my_options);
+        return -1;
     }
 
     if (clp.stopwatch) {
-	stopwatch.set_print_on_exit(true);
+        stopwatch.set_print_on_exit(true);
     }
-    
+
     if (clp.verbose) {
-	print_options(my_options);
+        print_options(my_options);
     }
-    
+
     // ------------------------------------------------------------
     // parameter consistency
     if (clp.read_arcmatch_scores && clp.read_arcmatch_probs) {
-	std::cerr << "One cannot specify files for arc match scores "
+        std::cerr << "One cannot specify files for arc match scores "
                   << "and probabilities simultaneously."
                   << std::endl;
-	return -1;
+        return -1;
     }
-    
+
     if (clp.probability_scale<=0) {
-	std::cerr << "Probability scale must be greater 0."<<std::endl;
-	return -1;
+        std::cerr << "Probability scale must be greater 0."<<std::endl;
+        return -1;
     }
-    
+
     if (clp.struct_weight<0) {
-	std::cerr << "Structure weight must be greater equal 0."<<std::endl;
-	return -1;
+        std::cerr << "Structure weight must be greater equal 0."<<std::endl;
+        return -1;
     }
 
     if (clp.normalized && clp.penalized) {
-    	std::cerr << "One cannot specify penalized and normalized "
+        std::cerr << "One cannot specify penalized and normalized "
                   << "simultaneously."<<std::endl;
-    	return -1;
+        return -1;
     }
 
     // ----------------------------------------
     // temporarily turn off stacking unless background prob is set
     //
     if (clp.stacking && !clp.exp_prob_given) {
-	std::cerr << "WARNING: stacking turned off. "
-		  << "Stacking requires setting a background probability "
-		  << "explicitely (option --exp-prob)." << std::endl;
-	clp.stacking=false;
+        std::cerr << "WARNING: stacking turned off. "
+                  << "Stacking requires setting a background probability "
+                  << "explicitely (option --exp-prob)." << std::endl;
+        clp.stacking=false;
     }
-    
-    // ------------------------------------------------------------ 
+
+    // ------------------------------------------------------------
     // if normalized or penalized alignment shall be computed,
     // automatically turn on sequ_local unless sequ_local mode was
     // explicitly specified
@@ -375,86 +375,86 @@ main(int argc, char **argv) {
     // important: in the Aligner class, we rely on sequ_local==true in
     // normalized alignment mode
     if (clp.normalized || clp.penalized) {
-	if(!clp.sequ_local_given) {
-	    clp.sequ_local = true;
-	} else {
-	    if (!clp.sequ_local) {
-		std::cerr << "ERROR: Cannot run normalized alignment "
+        if(!clp.sequ_local_given) {
+            clp.sequ_local = true;
+        } else {
+            if (!clp.sequ_local) {
+                std::cerr << "ERROR: Cannot run normalized alignment "
                           << "without --sequ_local on."
                           << std::endl;
-		return -1;
-	    }
-	}
+                return -1;
+            }
+        }
 
-	if (clp.struct_local_given && clp.struct_local) {
-	    std::cerr << "ERROR: Normalized structure local alignment "
+        if (clp.struct_local_given && clp.struct_local) {
+            std::cerr << "ERROR: Normalized structure local alignment "
                       << "not supported."
                       << std::endl;
-	    return -1;
-	} else {
-	    clp.struct_local=false;
-	}
-	
+            return -1;
+        } else {
+            clp.struct_local=false;
+        }
+
     }
-    
-    // ----------------------------------------  
+
+    // ----------------------------------------
     // Ribosum matrix
     //
     RibosumFreq *ribosum;
     Ribofit *ribofit;
-    
+
     MainHelper::init_ribo_matrix(clp,&ribosum,&ribofit);
-    
+
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
 
     PFoldParams pfparams(clp.no_lonely_pairs, clp.stacking || clp.new_stacking, clp.max_bp_span, 2);
-    
+
     RnaData *rna_dataA=0;
     try {
-	rna_dataA = new RnaData(clp.fileA,
-				clp.min_prob,
-				clp.max_bps_length_ratio,
-				pfparams);
+        rna_dataA = new RnaData(clp.fileA,
+                                clp.min_prob,
+                                clp.max_bps_length_ratio,
+                                pfparams);
     } catch (failure &f) {
-	std::cerr << "ERROR:\tfailed to read from file "<<clp.fileA <<std::endl
-		  << "\t"<< f.what() <<std::endl;
-	return -1;
+        std::cerr << "ERROR:\tfailed to read from file "<<clp.fileA <<std::endl
+                  << "\t"<< f.what() <<std::endl;
+        return -1;
     }
-    
+
     RnaData *rna_dataB=0;
     try {
-	rna_dataB = new RnaData(clp.fileB,
-				clp.min_prob,
-				clp.max_bps_length_ratio,
-				pfparams);
+        rna_dataB = new RnaData(clp.fileB,
+                                clp.min_prob,
+                                clp.max_bps_length_ratio,
+                                pfparams);
     } catch (failure &f) {
-	std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
-		  << "       "<< f.what() <<std::endl;
-	if (rna_dataA) delete rna_dataA;
-	return -1;
+        std::cerr << "ERROR: failed to read from file "<<clp.fileB <<std::endl
+                  << "       "<< f.what() <<std::endl;
+        if (rna_dataA) delete rna_dataA;
+        return -1;
     }
-    
+
     const Sequence &seqA=rna_dataA->sequence();
     const Sequence &seqB=rna_dataB->sequence();
-    
+
     size_type lenA=seqA.length();
     size_type lenB=seqB.length();
 
     // --------------------
-    // handle max_diff restriction  
-    
+    // handle max_diff restriction
+
     // missing: proper error handling in case that lenA, lenB, and
     // max_diff_pw_alignment/max_diff_alignment_file are incompatible
-    
+
     // do inconsistency checking for max_diff_pw_alignment and
     // max_diff_alignment_file
     //
     if (clp.max_diff_pw_alignment!="" && clp.max_diff_alignment_file!="") {
-	std::cerr <<"Cannot simultaneously use options --max-diff-pw-alignment"
+        std::cerr <<"Cannot simultaneously use options --max-diff-pw-alignment"
                   <<" and --max-diff-alignment-file."<<std::endl;
-	return -1;
+        return -1;
     }
 
     // construct TraceController and check inconsistency for with
@@ -462,48 +462,48 @@ main(int argc, char **argv) {
     //
 
     MultipleAlignment *multiple_ref_alignment=NULL;
-    
+
     if (clp.max_diff_alignment_file!="") {
-	multiple_ref_alignment = new MultipleAlignment(clp.max_diff_alignment_file);
+        multiple_ref_alignment = new MultipleAlignment(clp.max_diff_alignment_file);
     } else if (clp.max_diff_pw_alignment!="") {
-	if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
-	    std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning "
+        if ( seqA.num_of_rows()!=1 || seqB.num_of_rows()!=1 ) {
+            std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning "
                       << "of alignments."
                       << std::endl;
-	    return -1;
-	}
-	
-	std::vector<std::string> alistr;
-	split_at_separator(clp.max_diff_pw_alignment,'&',alistr);
-	
-	if (alistr.size()!=2) {
-	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt; require "
+            return -1;
+        }
+
+        std::vector<std::string> alistr;
+        split_at_separator(clp.max_diff_pw_alignment,'&',alistr);
+
+        if (alistr.size()!=2) {
+            std::cerr << "Invalid argument to --max-diff-pw-alignemnt; require "
                       << "exactly one '&' separating the alignment strings."
-		      << std::endl; 
-	    return -1;
-	}
-    
-	if (alistr[0].length() != alistr[1].length()) {
-	    std::cerr << "Invalid argument to --max-diff-pw-alignemnt;"
+                      << std::endl;
+            return -1;
+        }
+
+        if (alistr[0].length() != alistr[1].length()) {
+            std::cerr << "Invalid argument to --max-diff-pw-alignemnt;"
                       <<" alignment strings have unequal lengths."
-		      << std::endl; 
-	    return -1;
-	}
-	
-	multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),
-						       seqB.seqentry(0).name(),
-						       alistr[0],
-						       alistr[1]);
+                      << std::endl;
+            return -1;
+        }
+
+        multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),
+                                                       seqB.seqentry(0).name(),
+                                                       alistr[0],
+                                                       alistr[1]);
     }
-    
+
     TraceController trace_controller(seqA,seqB,multiple_ref_alignment,
                                      clp.max_diff,clp.max_diff_relax);
-    
-    
+
+
     // ------------------------------------------------------------
     // Handle constraints (optionally)
-    
-    AnchorConstraints 
+
+    AnchorConstraints
         seq_constraints(lenA,
                         seqA.annotation(MultipleAlignment::AnnoType::anchors)
                         .single_string(),
@@ -512,18 +512,18 @@ main(int argc, char **argv) {
                         .single_string(),
                         !clp.relaxed_anchors
                         );
-    
+
     if (clp.verbose) {
-	if (! seq_constraints.empty()) {
-	    std::cout << "Found sequence constraints."<<std::endl;
-	}
+        if (! seq_constraints.empty()) {
+            std::cout << "Found sequence constraints."<<std::endl;
+        }
     }
-    
+
     // ----------------------------------------
     // construct set of relevant arc matches
     //
     ArcMatches *arc_matches;
-    
+
     // ------------------------------------------------------------
     // handle reading and writing of arcmatch_scores
     //
@@ -531,45 +531,45 @@ main(int argc, char **argv) {
     // transformation of arc match scores)
     //
     if (clp.read_arcmatch_scores || clp.read_arcmatch_probs) {
-	if (clp.verbose) {
-	    std::cout << "Read arcmatch scores from file "
+        if (clp.verbose) {
+            std::cout << "Read arcmatch scores from file "
                       << clp.arcmatch_scores_infile << "." <<std::endl;
-	}
-	arc_matches = new ArcMatches(seqA,
-				     seqB,
-				     clp.arcmatch_scores_infile,
-				     clp.read_arcmatch_probs
-				     ? ((clp.mea_beta*clp.probability_scale)
+        }
+        arc_matches = new ArcMatches(seqA,
+                                     seqB,
+                                     clp.arcmatch_scores_infile,
+                                     clp.read_arcmatch_probs
+                                     ? ((clp.mea_beta*clp.probability_scale)
                                         /100)
-				     : -1,
-				     clp.max_diff_am!=-1
-				     ? (size_type)clp.max_diff_am
-				     : std::max(lenA,lenB),
-				     clp.max_diff_at_am!=-1
-				     ? (size_type)clp.max_diff_at_am
-				     : std::max(lenA,lenB),
-				     trace_controller,
-				     seq_constraints
-				     );
+                                     : -1,
+                                     clp.max_diff_am!=-1
+                                     ? (size_type)clp.max_diff_am
+                                     : std::max(lenA,lenB),
+                                     clp.max_diff_at_am!=-1
+                                     ? (size_type)clp.max_diff_at_am
+                                     : std::max(lenA,lenB),
+                                     trace_controller,
+                                     seq_constraints
+                                     );
     } else {
-	// initialize from RnaData
-	arc_matches = new ArcMatches(*rna_dataA,
-				     *rna_dataB,
-				     clp.min_prob,
-				     clp.max_diff_am!=-1
-				     ? (size_type)clp.max_diff_am
-				     : std::max(lenA,lenB),
-				     clp.max_diff_at_am!=-1
-				     ? (size_type)clp.max_diff_at_am
-				     : std::max(lenA,lenB),
-				     trace_controller,
-				     seq_constraints
-				     );
+        // initialize from RnaData
+        arc_matches = new ArcMatches(*rna_dataA,
+                                     *rna_dataB,
+                                     clp.min_prob,
+                                     clp.max_diff_am!=-1
+                                     ? (size_type)clp.max_diff_am
+                                     : std::max(lenA,lenB),
+                                     clp.max_diff_at_am!=-1
+                                     ? (size_type)clp.max_diff_at_am
+                                     : std::max(lenA,lenB),
+                                     trace_controller,
+                                     seq_constraints
+                                     );
     }
-    
+
     // note: arcmatches has to be assigned ( unless new failed, which
     // we don't catch )
-    
+
     // ----------------------------------------
     // report on input in verbose mode
     if (clp.verbose) MainHelper::report_input(seqA,seqB,*arc_matches);
@@ -581,7 +581,7 @@ main(int argc, char **argv) {
     // perform parameter consistency checks
     if (clp.read_matchprobs && !clp.mea_alignment) {
         std::cerr << "Warning: clp.read_matchprobs ignored for "<<
-            "non-mea alignment.\n"; 
+            "non-mea alignment.\n";
     }
     if ( (clp.write_matchprobs || clp.mea_alignment)
          && ribosum==NULL && ribofit==NULL
@@ -650,82 +650,82 @@ main(int argc, char **argv) {
                        );
     // ------------------------------------------------------------
     // Construct scoring
-    
+
     Scoring scoring(seqA,
-		    seqB,
-		    *rna_dataA,
-		    *rna_dataB,
-		    *arc_matches,
-		    match_probs,
-		    scoring_params,
-		    false // no Boltzmann weights (as required for LocARNA-P)
-		    );    
+                    seqB,
+                    *rna_dataA,
+                    *rna_dataB,
+                    *arc_matches,
+                    match_probs,
+                    scoring_params,
+                    false // no Boltzmann weights (as required for LocARNA-P)
+                    );
 
     if (clp.write_arcmatch_scores) {
-	if (clp.verbose) {
-	    std::cout << "Write arcmatch scores to file "
+        if (clp.verbose) {
+            std::cout << "Write arcmatch scores to file "
                       << clp.arcmatch_scores_outfile<<" and exit."<<std::endl;
-	}
-	arc_matches->write_arcmatch_scores(clp.arcmatch_scores_outfile,scoring);
-	return 0;
+        }
+        arc_matches->write_arcmatch_scores(clp.arcmatch_scores_outfile,scoring);
+        return 0;
     }
-        
+
 
     // ------------------------------------------------------------
     // Computation of the alignment score
     //
-    
+
     // initialize aligner object, which does the alignment computation
     Aligner aligner = Aligner::create()
-	. seqA(seqA)
-	. seqB(seqB)
-	. arc_matches(*arc_matches)
-	. scoring(scoring)
-	. no_lonely_pairs(clp.no_lonely_pairs)
-	. struct_local(clp.struct_local)
-	. sequ_local(clp.sequ_local)
-	. free_endgaps(clp.free_endgaps)
-	. max_diff_am(clp.max_diff_am)
-	. max_diff_at_am(clp.max_diff_at_am)
-	. trace_controller(trace_controller)
-	. stacking(clp.stacking || clp.new_stacking)
-	. constraints(seq_constraints);
+        . seqA(seqA)
+        . seqB(seqB)
+        . arc_matches(*arc_matches)
+        . scoring(scoring)
+        . no_lonely_pairs(clp.no_lonely_pairs)
+        . struct_local(clp.struct_local)
+        . sequ_local(clp.sequ_local)
+        . free_endgaps(clp.free_endgaps)
+        . max_diff_am(clp.max_diff_am)
+        . max_diff_at_am(clp.max_diff_at_am)
+        . trace_controller(trace_controller)
+        . stacking(clp.stacking || clp.new_stacking)
+        . constraints(seq_constraints);
 
     // enumerate suboptimal alignments (using interval splitting)
     if (clp.subopt) {
-	aligner.suboptimal(clp.kbest_k,
-			   clp.subopt_threshold,
-			   clp.normalized,
-			   clp.normalized_L,
-			   clp.width,
-			   clp.verbose,
-			   clp.local_output,
-			   clp.pos_output,
-			   clp.write_structure
-			   );
-	return 0;
+        aligner.suboptimal(clp.kbest_k,
+                           clp.subopt_threshold,
+                           clp.normalized,
+                           clp.normalized_L,
+                           clp.width,
+                           clp.verbose,
+                           clp.local_output,
+                           clp.pos_output,
+                           clp.write_structure
+                           );
+        return 0;
     }
-    
+
     infty_score_t score;
 
     // if option --normalized <L> is given, then do normalized local alignemnt
     if (clp.normalized) {
-		
-	score = aligner.normalized_align(clp.normalized_L,clp.verbose);
-	
+
+        score = aligner.normalized_align(clp.normalized_L,clp.verbose);
+
     } else if (clp.penalized) {
-    	score = aligner.penalized_align(clp.position_penalty);
+        score = aligner.penalized_align(clp.position_penalty);
     }
 
     else {
-	
-	// ========== STANDARD CASE ==========
-	
-	// otherwise compute the best alignment
-	score = aligner.align();
-	
+
+        // ========== STANDARD CASE ==========
+
+        // otherwise compute the best alignment
+        score = aligner.align();
+
     }
-    
+
     // ----------------------------------------
     // report score
     //
@@ -737,94 +737,94 @@ main(int argc, char **argv) {
     // Traceback
     //
     if ((!clp.normalized && !clp.penalized) && DO_TRACE) {
-	
-	aligner.trace();
-	
-	// for debugging:
-	// aligner.get_alignment().write_debug(std::cout);
+
+        aligner.trace();
+
+        // for debugging:
+        // aligner.get_alignment().write_debug(std::cout);
 
 
-	// if score components should be reported
-	if (clp.score_components) {
-	    // get alignment and compute contributions by sequence
-	    // similarity and gap cost
-	    const Alignment &alignment = aligner.get_alignment();
-	    
-	    // experimental: I do the calculations here until I
-	    // decide where to put the code
-	    
-	    std::cout << "WARNING: reporting score components is still "
+        // if score components should be reported
+        if (clp.score_components) {
+            // get alignment and compute contributions by sequence
+            // similarity and gap cost
+            const Alignment &alignment = aligner.get_alignment();
+
+            // experimental: I do the calculations here until I
+            // decide where to put the code
+
+            std::cout << "WARNING: reporting score components is still "
                       << "experimental."
                       << std::endl;
-	    std::cout << "         This does not work properly for certain "
+            std::cout << "         This does not work properly for certain "
                       << "non-standard standard scoring types, "
                       << "e.g. free end gaps." << std::endl;
 
-	    const Alignment::edges_t edges = alignment.alignment_edges(false);
+            const Alignment::edges_t edges = alignment.alignment_edges(false);
 
-	    score_t seq_sim=0;
-	    score_t gap_cost=0; // count linear component of gap cost
-	    score_t gap_numA=0; // count number of gap openings in A
-	    score_t gap_numB=0; // count number of gap openings in B
-	    
-	    bool openA=false; // is a gap open in A
-	    bool openB=false; // is a gap open in B
-	    
-	    for (size_t k=0; k< edges.size(); k++) {
-		if (edges.first[k].is_pos() && edges.second[k].is_pos()) {
-		    seq_sim += scoring.basematch(edges.first[k],
+            score_t seq_sim=0;
+            score_t gap_cost=0; // count linear component of gap cost
+            score_t gap_numA=0; // count number of gap openings in A
+            score_t gap_numB=0; // count number of gap openings in B
+
+            bool openA=false; // is a gap open in A
+            bool openB=false; // is a gap open in B
+
+            for (size_t k=0; k< edges.size(); k++) {
+                if (edges.first[k].is_pos() && edges.second[k].is_pos()) {
+                    seq_sim += scoring.basematch(edges.first[k],
                                                  edges.second[k]);
-		}
-		if (edges.first[k].is_gap()) {
-		    if (!openA) {
-			gap_numA++;
-			openA=true;
-		    }
-		    gap_cost += scoring.gapA(edges.second[k]);
-		} else {
-		    openA=false;
-		}
+                }
+                if (edges.first[k].is_gap()) {
+                    if (!openA) {
+                        gap_numA++;
+                        openA=true;
+                    }
+                    gap_cost += scoring.gapA(edges.second[k]);
+                } else {
+                    openA=false;
+                }
 
-		if (edges.second[k].is_gap()) {
-		    if (!openB) {
-			gap_numB++;
-			openB=true;
-		    }
-		    gap_cost += scoring.gapB(edges.first[k]);
-		} else {
-		    openB=false;
-		}
-	    }
-	    
-	    
-	    score_t total_gap_cost = gap_cost
+                if (edges.second[k].is_gap()) {
+                    if (!openB) {
+                        gap_numB++;
+                        openB=true;
+                    }
+                    gap_cost += scoring.gapB(edges.first[k]);
+                } else {
+                    openB=false;
+                }
+            }
+
+
+            score_t total_gap_cost = gap_cost
                 + (gap_numA+gap_numB)*scoring.indel_opening();
-	    
-	    std::cout << "#SCORE total        "
+
+            std::cout << "#SCORE total        "
                       << std::setw(8) << score<<std::endl;
-	    std::cout << "#SCORE seq_sim      "
+            std::cout << "#SCORE seq_sim      "
                       << std::setw(8) << seq_sim<<std::endl;
-	    std::cout << "#SCORE gap_penalty  "
-		      << std::setw(8) << total_gap_cost<<std::endl;
-	    std::cout << "#SCORE str_contrib  "
+            std::cout << "#SCORE gap_penalty  "
+                      << std::setw(8) << total_gap_cost<<std::endl;
+            std::cout << "#SCORE str_contrib  "
                       << std::setw(8) << score-seq_sim-total_gap_cost
                       << std::endl;
-	}
+        }
     }
-    
+
     int return_code=0;
 
     if (clp.normalized || clp.penalized || DO_TRACE) {
-	// if we did a trace (one way or the other)
-	
-	const Alignment &alignment = aligner.get_alignment();
+        // if we did a trace (one way or the other)
+
+        const Alignment &alignment = aligner.get_alignment();
 
         // ----------------------------------------
-	// write alignment in different output formats to files
-	//
-        
-        std::string consensus_structure=""; 
-        
+        // write alignment in different output formats to files
+        //
+
+        std::string consensus_structure="";
+
         RnaData *consensus =
             MainHelper::consensus(clp,
                                   pfparams,
@@ -832,52 +832,52 @@ main(int argc, char **argv) {
                                   rna_dataA, rna_dataB,
                                   alignment,
                                   consensus_structure);
-        
+
         return_code = MainHelper::write_alignment(clp,
                                                   score,
                                                   consensus_structure,
                                                   consensus,
                                                   alignment,
                                                   multiple_ref_alignment);
-        
+
         // ----------------------------------------
         // write alignment to screen
-                
-	if (clp.pos_output) {
-	    std::cout << "HIT "<<score<<" "
-		      <<alignment.local_startA()<<" "
-		      <<alignment.local_startB()<<" "
-		      <<alignment.local_endA()<<" "
-		      <<alignment.local_endB()<<" "
-		      <<std::endl;
+
+        if (clp.pos_output) {
+            std::cout << "HIT "<<score<<" "
+                      <<alignment.local_startA()<<" "
+                      <<alignment.local_startB()<<" "
+                      <<alignment.local_endA()<<" "
+                      <<alignment.local_endB()<<" "
+                      <<std::endl;
             std::cout << std::endl;
-	}
-        
-	if ((!clp.pos_output && !clp.quiet) || clp.local_output) {
-	    MultipleAlignment ma(alignment,clp.local_output);
-	    
-	    if (clp.write_structure) {
-		// annotate multiple alignment with structures
+        }
+
+        if ((!clp.pos_output && !clp.quiet) || clp.local_output) {
+            MultipleAlignment ma(alignment,clp.local_output);
+
+            if (clp.write_structure) {
+                // annotate multiple alignment with structures
                 std::string structureA =
                     alignment.dot_bracket_structureA(clp.local_output);
                 std::string structureB =
                     alignment.dot_bracket_structureB(clp.local_output);
                 ma.prepend(MultipleAlignment::SeqEntry("",structureA));
-		ma.append(MultipleAlignment::SeqEntry("",structureB));
-	    }
-	    
-	    if (clp.pos_output) {
-		std::cout  << "\t+" << alignment.local_startA() << std::endl
-			   << "\t+" << alignment.local_startB() << std::endl
-			   << std::endl;
+                ma.append(MultipleAlignment::SeqEntry("",structureB));
+            }
+
+            if (clp.pos_output) {
+                std::cout  << "\t+" << alignment.local_startA() << std::endl
+                           << "\t+" << alignment.local_startB() << std::endl
+                           << std::endl;
                 std::cout << std::endl;
             }
-            
+
             if (consensus_structure!="") {
                 if (clp.local_output!=clp.local_file_output) {
                     // recompute consensus structure
                     clp.local_file_output=clp.local_output;
-                    
+
                     if (consensus) { delete consensus; }
                     consensus =
                         MainHelper::consensus(clp,
@@ -891,22 +891,22 @@ main(int argc, char **argv) {
                 ma.append(MultipleAlignment::SeqEntry(clp.cons_struct_type,
                                                       consensus_structure));
             }
-	    ma.write(std::cout,clp.width,
+            ma.write(std::cout,clp.width,
                      MultipleAlignment::FormatType::CLUSTAL);
 
-	    if (clp.pos_output) {
-		std::cout  << std::endl 
-			   << "\t+" << alignment.local_endA() << std::endl
-			   << "\t+" << alignment.local_endB() << std::endl
-			   << std::endl;
-	    }
-            
+            if (clp.pos_output) {
+                std::cout  << std::endl
+                           << "\t+" << alignment.local_endA() << std::endl
+                           << "\t+" << alignment.local_endB() << std::endl
+                           << std::endl;
+            }
+
         }
 
-	if (!clp.quiet) {
+        if (!clp.quiet) {
             std::cout<<std::endl;
-	}
-        
+        }
+
         if (consensus) { delete consensus; }
 
     }
@@ -922,7 +922,7 @@ main(int argc, char **argv) {
 
     delete rna_dataA;
     delete rna_dataB;
-        
+
     stopwatch.stop("total");
 
     // ----------------------------------------

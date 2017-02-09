@@ -29,10 +29,10 @@ def parseCmdLine():
                       help="input format")
 
     (options,args)=parser.parse_args()
-    
+
     if len(args) != 1:
         parser.error("incorrect number of arguments")
-        
+
     return (options,args[0])
 
 
@@ -48,7 +48,7 @@ def readdp(filename,minprob):
     state=''
     sequence=''
     pairs=[]
-    
+
     uboxpat=re.compile('(\d+) (\d+) (\d\.\d+) ubox')
     for line in Lines:
         #print line
@@ -58,7 +58,7 @@ def readdp(filename,minprob):
             else:
                 line=line[:-2]
                 sequence = sequence + line
-        
+
         elif re.match('/sequence.*',line):
             state='sequence'
         else:
@@ -68,7 +68,7 @@ def readdp(filename,minprob):
                 p=float(uboxgr[2])*float(uboxgr[2])
                 if (p>=float(minprob)):
                     pairs.append((int(uboxgr[0]),int(uboxgr[1]),p))
-        
+
     return sequence,pairs
 
 def readsimple(filename,minprob):
@@ -83,7 +83,7 @@ def readsimple(filename,minprob):
     state='sequence'
     sequence=''
     pairs=[]
-    
+
     pat=re.compile('(\d+) (\d+)')
     for line in Lines:
         #print line
@@ -108,13 +108,13 @@ def incident_pairs_from_right(start,end,pairs):
     returns list of basepairs that have right end 'end'
     and left end >= 'start'
     """
-    return filter((lambda p: p[0]>=start and p[1]==end),pairs)         
+    return filter((lambda p: p[0]>=start and p[1]==end),pairs)
 
 def incident_pairs_from_left(start,end,pairs):
     """
     symmetric version of incident_pairs_from_right
     """
-    return filter((lambda p: p[0]==start and p[1]<=end),pairs)         
+    return filter((lambda p: p[0]==start and p[1]<=end),pairs)
 
 
 
@@ -128,7 +128,7 @@ def decideChoiceKlein(start,end,l_incpairs,r_incpairs,pairs):
 
     lsize=max_dist(l_incpairs)
     rsize=max_dist(r_incpairs)
-    
+
     if (lsize<rsize): return 'left'
     else: return 'right'
 
@@ -139,15 +139,15 @@ def count_enclosing_pairs(pos,pairs):
 
 def decideChoice(start,end,pairs):
     "make the choice for reducing left or right --- new experimental way"
-    
+
     lsize=len(filter((lambda p: p[0]<=start and p[1]>start),pairs)) #count_enclosing_pairs(start,pairs)
     rsize=len(filter((lambda p: p[0]<end and p[1]>=end),pairs)) #count_enclosing_pairs(end,pairs)
-    
+
     if (lsize<rsize): return 'left'
     else: return 'right'
 
 
-    
+
 def reduce_subseq(start,end,pairs,seen,strategy):
     "recursively reduce to subsequences from left or right or using sort of Kleins strategy"
 
@@ -173,19 +173,19 @@ def reduce_subseq(start,end,pairs,seen,strategy):
     else:
         # theChoice=decideChoiceKlein(start,end,l_incpairs,r_incpairs,pairs)
         theChoice=decideChoice(start,end,pairs)
-    
+
     if theChoice=='right' :
         for p in r_incpairs:
             reduce_subseq(start,p[0]-1,pairs,seen,strategy)
             reduce_subseq(p[0]+1,p[1]-1,pairs,seen,strategy)
-            
+
         reduce_subseq(start,end-1,pairs,seen,strategy)
 
     elif theChoice=='left':
         for p in l_incpairs:
             reduce_subseq(p[0]+1,p[1]-1,pairs,seen,strategy)
             reduce_subseq(p[1]+1,end,pairs,seen,strategy)
-            
+
         reduce_subseq(start+1,end,pairs,seen,strategy)
 
 ## ============================================================
@@ -198,7 +198,7 @@ if options.informat=='dp':
     (seq,pairs)=readdp(filename,options.minprob)
 else:
     (seq,pairs)=readsimple(filename,options.minprob)
-    
+
 seqlen=len(seq)
 print "seqlen =", seqlen, ", #pairs =",len(pairs)
 print

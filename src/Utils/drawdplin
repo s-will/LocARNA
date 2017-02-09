@@ -6,7 +6,7 @@
 ## generates a postscript drawing
 ##
 ## USAGE: $0 <dp >ps
-## 
+##
 ## ##########################################################
 
 
@@ -36,9 +36,9 @@ GetOptions(
     "probwidth=f" => \$probwidth,
     "write-sequence" => \$write_sequence,
     "fontsize=i" => \$fontsize,
-    
+
     "verbose" => \$verbose,
-    "quiet" => \$quiet,   
+    "quiet" => \$quiet,
     "help"=> \$help,
     "man" => \$man
     ) || pod2usage(2);
@@ -69,7 +69,7 @@ print
     /x exch def
     /h y x sub 0.3 mul def
     /o y x sub 0.05 mul def
-    
+
     newpath
     x 0 moveto
     x o add h y o sub h y 0 curveto
@@ -82,7 +82,7 @@ print
 %%Page: 1 1
 MyDict begin
 
-%% sequence base line 
+%% sequence base line
 newpath
 -2 0 moveto
 502 0 lineto
@@ -118,7 +118,7 @@ while (my $line = <STDIN>) {
         my $i=$1;
         my $j=$2;
 	my $p=$3*$3;
-	
+
 	if ($probwidth>0) {
 	    my $width=$p * $probwidth;
 	    print "$width setlinewidth\n";
@@ -127,7 +127,7 @@ while (my $line = <STDIN>) {
 	if ( $p >= $minprob) {
 	    my $x = transformcoor $i;
 	    my $y = transformcoor $j;
-	
+
 	    printf "$x $y arc\n";
 	}
     }
@@ -144,12 +144,12 @@ for (my $i=1; $i<=$seqlength; $i++) {
     my $c = substr $sequence,$i-1,1;
     if ($i%$modulo == 0) {
 	print "$x 0 moveto $x -2 lineto stroke\n";
-	
+
 	my $c=$i;
 	if ($write_sequence) {
 	    $c=substr $sequence,$i-1,1;
 	}
-	
+
 	my $x1=$x-$fontsize/4*length($c);
 	my $y1=-$fontsize;
 	print "$x1 $y1 moveto ($c) show\n";
@@ -158,7 +158,7 @@ for (my $i=1; $i<=$seqlength; $i++) {
     }
 }
 
-print 
+print
 "90 rotate
 %%PageTrailer
 showpage

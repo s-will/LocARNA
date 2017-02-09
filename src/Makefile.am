@@ -95,7 +95,7 @@ dist_locarna_bin_SOURCES = locarna.cc
 
 locarna_p_SOURCES = locarna_p.cc
 
-exparna_p_SOURCES = exparna_p.cc 
+exparna_p_SOURCES = exparna_p.cc
 
 sparse_SOURCES = sparse.cc
 

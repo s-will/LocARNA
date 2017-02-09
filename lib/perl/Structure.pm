@@ -1,21 +1,21 @@
 ###########################################################################
-# Copyright (C) 2009 by Wolfgang Otto                      
-# All Rights Reserved.                                     
-#  
+# Copyright (C) 2009 by Wolfgang Otto
+# All Rights Reserved.
+#
 # Permission to use, copy, modify, and distribute this
 # software and its documentation for NON-COMMERCIAL purposes
-# and without fee is hereby granted provided that this     
-# copyright notice appears in all copies.                     
-#                                                             
-# THE AUTHOR AND PUBLISHE MAKE NO REPRESENTATIONS OR          
-# WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE, EITHER    
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE        
-# IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A        
-# PARTICULAR PURPOSE, OR NON-INFRINGEMENT. THE AUTHORS        
-# AND PUBLISHER SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED  
-# BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING 
-# THIS SOFTWARE OR ITS DERIVATIVES.                           
-#                                                             
+# and without fee is hereby granted provided that this
+# copyright notice appears in all copies.
+#
+# THE AUTHOR AND PUBLISHE MAKE NO REPRESENTATIONS OR
+# WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE, EITHER
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE, OR NON-INFRINGEMENT. THE AUTHORS
+# AND PUBLISHER SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED
+# BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING
+# THIS SOFTWARE OR ITS DERIVATIVES.
+#
 ###########################################################################
 
 package locarnate::Structure;
@@ -113,7 +113,7 @@ sub new {
   #                    []  $begin_index
 
   &{$_parse_structure}($self);
-  
+
   bless($self, $class);
 
   return($self);
@@ -153,7 +153,7 @@ sub str {
 
 sub string {
   my $self = shift(@_);
-  
+
   if (@_) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -162,7 +162,7 @@ sub string {
 
 sub size {
   my $self = shift(@_);
-  
+
   if (@_) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -172,7 +172,7 @@ sub size {
 
 sub is_begin {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -189,7 +189,7 @@ sub is_begin {
 
 sub is_end {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -206,7 +206,7 @@ sub is_end {
 
 sub is_bp {
   my $self = shift(@_);
-  
+
   if (@_ != 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -233,7 +233,7 @@ sub is_bp {
 
 sub begin_of {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -250,7 +250,7 @@ sub begin_of {
 
 sub end_of {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -267,7 +267,7 @@ sub end_of {
 
 sub begin_to_end {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -284,7 +284,7 @@ sub begin_to_end {
 
 sub end_to_begin {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -301,7 +301,7 @@ sub end_to_begin {
 
 sub add_bp {
   my $self = shift(@_);
-  
+
   if (@_ != 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -335,12 +335,12 @@ sub add_bp {
       $self->{'close'}.
       substr($self->{'string'}, $end + 1);
   for (my $i = $begin + 1; $i < $end; ++$i) {
-    if (defined($self->{'begin_to_end'}->[$i]) 
+    if (defined($self->{'begin_to_end'}->[$i])
         && $self->{'begin_to_end'}->[$i] > $end) {
       locarnate::Error::debug('Structure becomes unnested');
     }
   }
-  
+
   $self->{'begin_to_end'}->[$begin] = $end;
   $self->{'end_to_begin'}->[$end] = $begin;
 
@@ -357,7 +357,7 @@ sub add_bp {
 
 sub delete_bp {
   my $self = shift(@_);
-  
+
   if (@_ > 2) {
     locarnate::Error::debug('Wrong argument number');
   }
@@ -384,7 +384,7 @@ sub delete_bp {
       substr($self->{'string'}, $begin + 1, $end - $begin - 1).
       $self->{'neutral'}.
       substr($self->{'string'}, $end + 1);
-  
+
   $self->{'begin_to_end'}->[$begin] = undef;
   $self->{'end_to_begin'}->[$end] = undef;
 

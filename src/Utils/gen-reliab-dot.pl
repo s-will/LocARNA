@@ -55,12 +55,12 @@ my $scale_prob;
 
 ## Getopt::Long::Configure("no_ignore_case");
 
-GetOptions(	   
+GetOptions(
 	   "verbose" => \$verbose,
-	   "quiet" => \$quiet,   
+	   "quiet" => \$quiet,
 	   "help"=> \$help,
 	   "man" => \$man,
-    
+
            "f=s" => \$pair_file,
            "a=s" => \$align_file,
            "s" => \$scale_prob
@@ -87,7 +87,7 @@ if (! -e "$align_file") {
 ### call RNAalifold
 my @alires = readpipe("RNAalifold -p $align_file 2>/dev/null");
 
-my $seq=$alires[0];    
+my $seq=$alires[0];
 die "Cannot alifold $align_file\n" if !defined($seq);
 
 chomp $seq;
@@ -193,7 +193,7 @@ print "\n";
 print "/sequence { (\\\n";
 
 ################
-### now 
+### now
 print "$seq\\\n";
 ################
 

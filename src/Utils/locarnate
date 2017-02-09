@@ -56,11 +56,11 @@ be given to t-coffee in addition to the one generated during this run
 =item B<--pairwise_aligner>
 
 which pairwise aligner to use (default: locarna)
-        
+
 =item B<--scaling_factor>
 
 each edge from each EPM gets the same weight (exparnap only!)
-        
+
 =item B<--help>
 
 display this help message and exit
@@ -104,7 +104,7 @@ my $base_path = 'results';
 my $ribosum_file = "$prefix/share/locarna/Matrices/RIBOSUM85_60";
 
 ###########################################################################
-# main                                                                    
+# main
 ###########################################################################
 
 ### options ###
@@ -230,7 +230,7 @@ if (!-e $sequence_input) {
 # proceed with preprocessing
 my $sequences;
 # pp_dir is the directory the .pp files can be found
-my $pp_dir; 
+my $pp_dir;
 if (!(-d $sequence_input)) {
     $sequences = MLocarna::read_fasta($ARGV[scalar(@ARGV) - 1]);
 
@@ -269,45 +269,45 @@ if(not $options{library_only}) {
     print "Tcoffee library file written to $libfile\n";
     exit(0);
 }
-#~ 
-#~ my $mult_alignment = parse_mult_alignment($options, $results_path, 
+#~
+#~ my $mult_alignment = parse_mult_alignment($options, $results_path,
                                           #~ $sequences);
-#~ 
-#~ my $cons_rates = determine_cons_rates($options, $sequences, 
+#~
+#~ my $cons_rates = determine_cons_rates($options, $sequences,
                                       #~ $pair_alignments, $mult_alignment);
 #~ # \@cons_rates
 #~ # []  $column_rate
-#~ 
-#~ # determine_exclusions($options, $sequences, $pair_alignments, 
+#~
+#~ # determine_exclusions($options, $sequences, $pair_alignments,
 #~ #                      $mult_alignment, $cons_rates);
-#~ 
-#~ calculate_cons_data($options, $results_path, 
+#~
+#~ calculate_cons_data($options, $results_path,
                     #~ $mult_alignment, $cons_rates);
-#~ 
+#~
 #~ my $cons_data = parse_cons_data($options, $results_path, $cons_rates);
 #~ # \%cons_data
 #~ # {'seq'}    $seq
 #~ # {'struc'}  $struc
-#~ 
-#~ # join_exclusions($options, $sequences, $mult_alignment, 
+#~
+#~ # join_exclusions($options, $sequences, $mult_alignment,
 #~ #                 $cons_rates, $cons_data);
-#~ 
-#~ write_clustal($options, $results_path, $sequences, 
+#~
+#~ write_clustal($options, $results_path, $sequences,
               #~ $mult_alignment, $cons_rates);
-#~ write_fasta($options, $results_path, $sequences, 
+#~ write_fasta($options, $results_path, $sequences,
             #~ $mult_alignment, $cons_rates);
-#~ 
-#~ write_stockholm($options, $results_path, $sequences, 
+#~
+#~ write_stockholm($options, $results_path, $sequences,
                 #~ $mult_alignment, $cons_rates, $cons_data);
-#~ 
-#~ write_flat($options, $results_path, $sequences, 
+#~
+#~ write_flat($options, $results_path, $sequences,
            #~ $mult_alignment, $cons_rates, $cons_data);
-#~ 
+#~
 #~ cleanup($options, $results_path, $sequences);
 
 
 ###########################################################################
-# subs                                                                    
+# subs
 ###########################################################################
 
 # calculates the pairwise base pair probabilities for all input sequences using RNAfold
@@ -329,7 +329,7 @@ sub calculate_basepair_probabilities {
 
     # the filename of the pp file
     my $pp_file = $results_path . "/pp/S" . ($i + 1) . ".pp";
-    
+
     my $sequence = $sequences->[$i]->{seq};
 
     # open pipe to pp tool
@@ -356,7 +356,7 @@ sub parse_pair_alignments {
     for (my $j = $i + 1; $j < $numSequences; ++$j) {
       my $file_name = $results_path.'/pair/S'.($i + 1).
           '_S'.($j + 1).'.aln';
-          
+
       my ($header, $aln) = MLocarna::read_clustalw_aln($file_name);
       my $score;
       if ($header =~ m/Score: ([\d|-]+)/) {
@@ -373,7 +373,7 @@ sub parse_pair_alignments {
 
 sub calculate_mult_alignment {
   my ($options, $results_path, $libFile) = @_;
-  
+
   mkdir($results_path.'/mult');
 
   *STDERR->print('Calculate multiple alignment...'."\r");
@@ -402,7 +402,7 @@ sub calculate_mult_alignment {
   my $code = system($call);
 
   *STDERR->print('Calculate multiple alignment... done!'."\n");
-} 
+}
 
 
 sub check_locarna_params {
@@ -411,9 +411,9 @@ sub check_locarna_params {
     # parameters are ok
     # otherwise the incorrect parameters are returned
     my ($options, $parameters) = @_;
-    
+
     my $call = $options->{Locarna} . " $parameters 2>&1";
-    
+
     my @output = `$call`;
 
     if ($output[0] =~ /ERROR --- Mandatory option and\/or argument missing: <Input 1>/) {
@@ -436,9 +436,9 @@ sub check_tcoffee_params {
     # parameters are ok
     # otherwise the incorrect parameters are returned
     my ($options, $parameters) = @_;
-    
+
     my $call = $options->{TCoffee} . " $parameters 2>&1";
-    
+
     my @output = `$call`;
 
     foreach my $line (@output) {
@@ -454,9 +454,9 @@ sub check_pp_parameters {
     # Runs locarna_rnafol_pp without input file, but with all given parameters
     # and checks if it complains
     my ($options, $parameters) = @_;
-    
+
     my $call = $bindir . "/" .$options->{"BP-Probability-Calculator"} . " $parameters 2>&1";
-    
+
     my @output = `$call hopefully_this_file_does_not_exist.pdf.txt`;
 
     my $error =  $output[0];
@@ -466,14 +466,14 @@ sub check_pp_parameters {
     }
 
     # try to remove bin path
-    
+
     # try to remove the binary path from the error message
     my @errorsplit = split /:/, $error;
     if (scalar(@errorsplit) > 1) {
         $error = $errorsplit[1];
     }
     chomp $error;
-    return $error;   
+    return $error;
 }
 
 sub parse_pp_directory {
@@ -492,7 +492,7 @@ sub parse_pp_directory {
         }
     }
     closedir($DIR);
-    
+
     ## sort sequences according to the order in the original fasta file (S1,S2,...Sn)
     @result = sort { substr($a->{name},1,length($a->{name})) <=> substr($b->{name},1,length($b->{name}))} @result;
     return \@result;

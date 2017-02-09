@@ -101,7 +101,7 @@ my $_set_bps = sub {
   if (@bps_stack) {
     Error::error('No nested structure (missing ")")');
   }
-   
+
   $self->{'bps_begin_to_end'} = \@bps_begin_to_end;
   $self->{'bps_end_to_begin'} = \@bps_end_to_begin;
   $self->{'bps'} = \@bps;
@@ -179,7 +179,7 @@ sub str {
 
 sub id {
   my $self = shift(@_);
-  
+
   if (@_) {
     Error::error('Wrong argument number');
   }
@@ -189,7 +189,7 @@ sub id {
 
 sub seq_size {
   my $self = shift(@_);
-  
+
   if (@_) {
     Error::error('Wrong argument number');
   }
@@ -199,7 +199,7 @@ sub seq_size {
 
 sub sequence {
   my $self = shift(@_);
-  
+
   if (@_) {
     Error::error('Wrong argument number');
   }
@@ -209,7 +209,7 @@ sub sequence {
 
 sub struc_size {
   my $self = shift(@_);
-  
+
   if (@_) {
     Error::error('Wrong argument number');
   }
@@ -219,7 +219,7 @@ sub struc_size {
 
 sub structure {
   my $self = shift(@_);
-  
+
   if (@_) {
     Error::error('Wrong argument number');
   }
@@ -229,7 +229,7 @@ sub structure {
 
 sub pos_align_to_seq {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     Error::error('Wrong argument number');
   }
@@ -245,7 +245,7 @@ sub pos_align_to_seq {
 
 sub pos_seq_to_align {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     Error::error('Wrong argument number');
   }
@@ -261,7 +261,7 @@ sub pos_seq_to_align {
 
 sub bps_size {
   my $self = shift(@_);
-  
+
   if (@_) {
     Error::error('Wrong argument number');
   }
@@ -271,7 +271,7 @@ sub bps_size {
 
 sub bp_begin {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     Error::error('Wrong argument number');
   }
@@ -287,7 +287,7 @@ sub bp_begin {
 
 sub bp_end {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     Error::error('Wrong argument number');
   }
@@ -303,7 +303,7 @@ sub bp_end {
 
 sub bp_begin_to_end {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     Error::error('Wrong argument number');
   }
@@ -319,7 +319,7 @@ sub bp_begin_to_end {
 
 sub bp_end_to_begin {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     Error::error('Wrong argument number');
   }
@@ -335,7 +335,7 @@ sub bp_end_to_begin {
 
 sub set_gap {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     Error::error('Wrong argument number');
   }
@@ -360,7 +360,7 @@ sub set_gap {
 
 sub set_exclusion {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     Error::error('Wrong argument number');
   }
@@ -385,7 +385,7 @@ sub set_exclusion {
 
 sub set_unkown {
   my $self = shift(@_);
-  
+
   if (@_ != 1) {
     Error::error('Wrong argument number');
   }

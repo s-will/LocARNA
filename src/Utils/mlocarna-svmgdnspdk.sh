@@ -4,7 +4,7 @@
 
 ## call mlocarna, where similarity matrix is computed by svmsgdnspdk
 ## (using fasta2shrep_gspan)
-## 
+##
 
 FASTA2SHREP=/usr/local/user/RNAtools/fasta2shrep_gspan.pl
 SVMSGDNSPDK=/home/costa/Projects/svmsgdnspdk/svmsgdnspdk
@@ -26,7 +26,7 @@ SVMSGDNSPDK_DISTANCE=4
 echo "Run $SVMSGDNSPDK -d $FASTA_FILENAME.gspan -R $SVMSGDNSPDK_RADIUS -D $SVMSGDNSPDK_DISTANCE -gt DIRECTED -a MATRIX"
 $SVMSGDNSPDK -d $FASTA_FILENAME.gspan -R $SVMSGDNSPDK_RADIUS -D $SVMSGDNSPDK_DISTANCE -gt DIRECTED -a MATRIX ##-R = radius # -D = distance # -gt = graph type # -a = action
 
-MATRIX_FILENAME="matrix_R${SVMSGDNSPDK_RADIUS}D${SVMSGDNSPDK_DISTANCE}.mtx" # changed in new version to ~  $FASTA_FILENAME_R${SVMSGDNSPDK_RADIUS}D${SVMSGDNSPDK_DISTANCE}.mtx 
+MATRIX_FILENAME="matrix_R${SVMSGDNSPDK_RADIUS}D${SVMSGDNSPDK_DISTANCE}.mtx" # changed in new version to ~  $FASTA_FILENAME_R${SVMSGDNSPDK_RADIUS}D${SVMSGDNSPDK_DISTANCE}.mtx
 
 ## the produced matrix file has entries in [0,1] => convert it
 cat $MATRIX_FILENAME | awk -v FACTOR=10000 '{for(i=1;i<=NF;i++){if (i==NR){printf("0 ")} else{ printf("%d ",$(i)*FACTOR)}} print ""}' > $MATRIX_FILENAME.converted

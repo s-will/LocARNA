@@ -9,7 +9,7 @@
 /*------------------------------------------------------------
 
   Copyright (C) 1999 by Sebastian Will.
-  
+
   ------------------------------------------------------------*/
 
 /**
@@ -17,7 +17,7 @@
  * @brief options -- an interface for getopt_long
  *
  * Interface to getopt
- *  
+ *
  *  - easier to use
  *  - hopefully useable in many cases
  *
@@ -55,14 +55,14 @@ namespace LocARNA {
     */
     typedef
     struct {
-	std::string longname; //!<  long option name 
-	char shortname; //!<  short option char 
-	bool *flag; //!<  pointer to flag that indicates if option given 
-	int arg_type; //!<  type of argument 
-	void *argument; //!<  pointer to variable that should hold argument, 0 indicates no arg 
-	std::string deflt; //!<  pointer to default argument, if arg optional. otherwise 0 
-	std::string argname; //!< optional name for an argument (shown in usage string)
-	std::string description; //!< optional description (shown in help) 
+        std::string longname; //!<  long option name
+        char shortname; //!<  short option char
+        bool *flag; //!<  pointer to flag that indicates if option given
+        int arg_type; //!<  type of argument
+        void *argument; //!<  pointer to variable that should hold argument, 0 indicates no arg
+        std::string deflt; //!<  pointer to default argument, if arg optional. otherwise 0
+        std::string argname; //!< optional name for an argument (shown in usage string)
+        std::string description; //!< optional description (shown in help)
     } option_def;
 
     /* longname==0 and shortname==0 and arg_type<=O_SECTION is not allowed for regular options definition */
@@ -85,7 +85,7 @@ namespace LocARNA {
       {"size",'s',0,O_ARG_INT,&optVal_size,"100","size","Size of problem"},
       {0,0,0,O_ARG_STRING,&inputfile,O_NODEFAULT,"input-file","File for input"},
       {0,0,0,0,0,0,0,0}
-      }; 
+      };
 
       the last entry shows how to define non-option command line
       arguments. If there is more than one such definition, the order of
@@ -110,7 +110,7 @@ namespace LocARNA {
     /* print a longer help */
     void print_help(char *progname, option_def options[]);
 
-    const char* 
+    const char*
     convert_arg_type(int arg_type);
 
     /**
@@ -119,13 +119,13 @@ namespace LocARNA {
      * @param progname Name of program
      * @param options  Options array
      */
-    void 
+    void
     print_galaxy_xml(char *progname, option_def options[]);
 
-    /** 
+    /**
      * Print all options and their settings to standard out
-     * 
-     * @param options options array 
+     *
+     * @param options options array
      */
     void print_options(option_def options[]);
 

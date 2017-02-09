@@ -17,9 +17,9 @@ my $outfile;
 
 ## Getopt::Long::Configure("no_ignore_case");
 
-GetOptions(	   
+GetOptions(
 	   "verbose" => \$verbose,
-	   "quiet" => \$quiet,   
+	   "quiet" => \$quiet,
 	   "help"=> \$help,
 	   "man" => \$man
 	   ) || pod2usage(2);
@@ -49,13 +49,13 @@ sub read_clustal {
     my ($file)=@_;
 
     my %aln;
-    
+
     local *IN;
-    
+
     open(my $IN, "<", $file) || die "Cannot read from $file: $!";
-    
+
     <$IN> =~ /^CLUSTAL/ || die "Not a clustal file: $file";
-    
+
     while(my $line=<$IN>) {
 	if ($line =~ /(\S+)\s+(\S+)/) {
 	    my $name=$1;
