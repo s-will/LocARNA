@@ -175,48 +175,69 @@ namespace LocARNA {
         // -----------------------------------------------------------
         // asking for constraint information
 
-        //! is the alignment edge i~j (i.e. the match of i and j) allowed?
-        //! an alignment edge is allowed, iff it is not in conflict with any
-        //! anchor constraint
+        //! @brief is match allowed
+        //! @param i position/matrix index of first sequence
+        //! @param j position/matrix index of second sequence
+        //! @return true iff allowed
+        //!
+        //! Test whether the alignment edge i~j (i.e. the match of i
+        //! and j) is allowed?  An alignment edge is allowed, iff it
+        //! is not in conflict with any anchor constraint.
         bool
-        allowed_edge(size_type i, size_type j) const {
+        allowed_match(size_type i, size_type j) const {
             assert(i >= 1);
             assert(i < ar_.size());
             return ar_[i].first <= j && j <= ar_[i].second;
         }
 
-        //! matching position in b for position i in a
-        //! @param i position in sequence A
-        //!
-        //! @return j, 1<=j<=lenB, if there is an anchor from A_i to B_j,
-        //! 0 if there is no name for position i in A, and -1 if there is
-        //! a name for A_i, but no match to B
-        int
-        match_to_a(size_type i) const {
-            return a[i];
-        }
-
-        //! matching position in b for position i in a
-        //! @param i position in sequence B
-        //!
-        //! @return j
-        //! @see match_to_a
-        int
-        match_to_b(size_type i) const {
-            return b[i];
-        }
-
-        //! is position i in sequence A aligned to any position in B
+        //! @brief is deletion allowed?
+        //! @param i position/matrix index of first sequence
+        //! @param j position/matrix index of second sequence
+        //! @return true iff allowed
+        //! @see allowed_match()
         bool
-        aligned_in_a(size_type i) const {
-            return match_to_a(i) > 0;
-        }
+        allowed_del(i,j) const;
 
-        //! is position j in sequence B aligned to any position in A
+        //! @brief is insertion allowed?
+        //! @param i position/matrix index of first sequence
+        //! @param j position/matrix index of second sequence
+        //! @return true iff allowed
+        //! @see allowed_match()
         bool
-        aligned_in_b(size_type j) const {
-            return match_to_b(j) > 0;
-        }
+        allowed_ins(i,j) const;
+
+        // //! matching position in b for position i in a
+        // //! @param i position in sequence A
+        // //!
+        // //! @return j, 1<=j<=lenB, if there is an anchor from A_i to B_j,
+        // //! 0 if there is no name for position i in A, and -1 if there is
+        // //! a name for A_i, but no match to B
+        // int
+        // match_to_a(size_type i) const {
+        //     return a[i];
+        // }
+
+        // //! matching position in b for position i in a
+        // //! @param i position in sequence B
+        // //!
+        // //! @return j
+        // //! @see match_to_a
+        // int
+        // match_to_b(size_type i) const {
+        //     return b[i];
+        // }
+
+        // //! is position i in sequence A aligned to any position in B
+        // bool
+        // aligned_in_a(size_type i) const {
+        //     return match_to_a(i) > 0;
+        // }
+
+        // //! is position j in sequence B aligned to any position in A
+        // bool
+        // aligned_in_b(size_type j) const {
+        //     return match_to_b(j) > 0;
+        // }
 
         //! get the name of position i in A
         std::string
