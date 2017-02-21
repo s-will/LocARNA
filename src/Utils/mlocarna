@@ -2174,6 +2174,7 @@ sub perform_multiple_alignment {
     }
 
     rename "alirna.ps", "$results_dir/alirna.ps";
+    rename "aln.ps", "$results_dir/aln.ps";
 
     chdir $current_dir;
 }

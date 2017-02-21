@@ -1,6 +1,10 @@
 ============================================================
 === 2017
-1.9.2pre
+1.9.2pre2
+	mlocarna: write ps files (aln.ps, alirna.ps and if probabilistic,
+          alidot.ps) from alifold call on result alignment to the
+          results output directory;
+          use alifold options --aln --color --mis
 	fix mlocarna: find pw-aligner and pw-aligner-p executables in PATH
 
 1.9.1 (2017-01-22)
