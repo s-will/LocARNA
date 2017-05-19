@@ -1,5 +1,8 @@
 ============================================================
 === 2017
+
+        Fix compatibility '--keep-sequence-order' with anchor constraints
+
 1.9.2pre2
 	mlocarna: write ps files (aln.ps, alirna.ps and if probabilistic,
           alidot.ps) from alifold call on result alignment to the
