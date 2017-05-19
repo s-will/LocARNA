@@ -1247,13 +1247,13 @@ sub clone_hash {
 ## $filename string containing name of an clustalw aln file
 ##
 ## returns the alifold structure for the given aln file
-## as side effect write alirna.ps to current dir
+## as side effect write alirna.ps and aln.ps to current dir
 ##
 ########################################
 sub alifold_structure {
     my ($filename,$RNAfold_args)=@_;
 
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args $filename 2>/dev/null");
+    my @aliout =  readpipe("$RNAalifold $RNAalifold_options --mis --aln --color $RNAfold_args $filename 2>/dev/null");
 
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /([().]+) /) {
@@ -1271,11 +1271,13 @@ sub alifold_structure {
 ##
 ## returns alifold mfe of the alignment in $file
 ##
+## Does not write ps files.
+##
 ########################################+
 sub alifold_mfe {
     my ($file,$RNAfold_args) = @_;
 
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args $file 2>/dev/null");
+    my @aliout =  readpipe("$RNAalifold $RNAalifold_options --noPS $RNAfold_args $file 2>/dev/null");
 
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /[().]+\s+\(\s*([\d.-]+)\s*=\s*([\d.-]+)\s*\+\s*([\d.-]+)\)/) {
@@ -1302,7 +1304,7 @@ sub alifold_mfe {
 sub alifold_pf {
     my ($file,$RNAfold_args) = @_;
 
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options $RNAfold_args -p $file >/dev/null 2>&1");
+    my @aliout =  readpipe("$RNAalifold $RNAalifold_options --color --mis $RNAfold_args -p $file >/dev/null 2>&1");
 
     return \@aliout;
 }
@@ -1699,7 +1701,7 @@ sub loh_names {
 ########################################ä
 ## loh_sort($loh,$names)
 ##
-## $loh ref of list of hash alignemnt or sequences
+## $loh ref of list of hash alignment or sequences
 ## $names ref of list of names
 ##
 ## returns ref of copy of @$loh sorted by $names
@@ -1715,7 +1717,11 @@ sub loh_sort {
     }
 
     for my $seq (@$loh) {
-	$res[$idx{$seq->{name}}] = { %$seq };
+        if (exists $idx{$seq->{name}}) {
+            $res[$idx{$seq->{name}}] = { %$seq };
+        } else {
+            push @res, $seq;
+        }
     }
 
     return \@res;
