@@ -1701,7 +1701,7 @@ sub loh_names {
 ########################################ä
 ## loh_sort($loh,$names)
 ##
-## $loh ref of list of hash alignemnt or sequences
+## $loh ref of list of hash alignment or sequences
 ## $names ref of list of names
 ##
 ## returns ref of copy of @$loh sorted by $names
@@ -1717,7 +1717,11 @@ sub loh_sort {
     }
 
     for my $seq (@$loh) {
-	$res[$idx{$seq->{name}}] = { %$seq };
+        if (exists $idx{$seq->{name}}) {
+            $res[$idx{$seq->{name}}] = { %$seq };
+        } else {
+            push @res, $seq;
+        }
     }
 
     return \@res;
