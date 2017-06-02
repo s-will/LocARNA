@@ -66,8 +66,6 @@ namespace LocARNA {
         if (seqCB!="") transform_input(nameTabB, lenB, seqVecB, strict_);
 
         init_tables(nameTabA, nameTabB);
-
-        //print_debug();
     }
 
     bool
@@ -307,48 +305,4 @@ namespace LocARNA {
             min_named_geq[i] = is_named(len, anchors, i) ? i : min_named_geq[i + 1];
         }
     }
-
-
-    // template <typename T>
-    // std::ostream &operator <<(std::ostream &out, const std::vector<T> &v) {
-    //     for (auto x: v) {out << x << " ";}
-    //     return out;
-    // }
-    // template <typename T1, typename T2>
-    // std::ostream &operator <<(std::ostream &out, const std::pair<T1,T2> &x) {
-    //     out << x.first << "," << x.second;
-    //     return out;
-    // }
-
-    // void
-    // AnchorConstraints::print_debug() {
-    //     std::cerr << "AnchorConstraints::print_debug()" <<std::endl;
-
-    //     std::cerr << "ar_: " << ar_ << std::endl;
-
-
-    //     std::cerr << "anchors_a_: " << anchors_a_ << std::endl;
-    //     std::cerr << "anchors_b_: " << anchors_b_ << std::endl;
-
-    //     std::cerr << "max_named_leq_a_: " << max_named_leq_a_ << std::endl;
-    //     std::cerr << "min_named_geq_a_: " << min_named_geq_a_ << std::endl;
-    //     std::cerr << "max_named_leq_b_: " << max_named_leq_b_ << std::endl;
-    //     std::cerr << "min_named_geq_b_: " << min_named_geq_b_ << std::endl;
-
-    //     std::cerr << "allowed_match:" << std::endl;
-    //     for (auto i=1u; i<=lenA_; ++i) {
-    //         for (auto j=1u; j<=lenB_; ++j) {
-    //             std::cerr << allowed_match(i,j) << " ";
-    //         }
-    //         std::cerr << std::endl;
-    //     }
-
-    //     std::cerr << "allowed_del:" << std::endl;
-    //     for (auto i=1u; i<=lenA_; ++i) {
-    //         for (auto j=0u; j<=lenB_; ++j) {
-    //             std::cerr << allowed_del(i,j) << " ";
-    //         }
-    //         std::cerr << std::endl;
-    //     }
-    //}
 } // end namespace LocARNA
