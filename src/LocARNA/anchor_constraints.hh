@@ -194,12 +194,6 @@ namespace LocARNA {
                 size_type i1 = min_named_geq_a_[i];
                 size_type j1 = max_named_leq_b_[j];
 
-                // std::cerr << "allowed_del("<<i<<","<<j<<"): "
-                //           << i0 << "-" << names_a_[i0] << ", "
-                //           << j0 << "-" << names_b_[j0] << ", "
-                //           << i1 << "-" << names_a_[i1] << ", "
-                //           << j1 << "-" << names_b_[j1] << ", "<< std::endl;
-
                 return
                     names_a_[ i0 ] < names_b_[ j0 ]
                     &&
