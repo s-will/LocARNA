@@ -17,6 +17,8 @@
 #include "sequence.hh"
 #endif
 
+#include "arc_matches.hh"
+
 namespace LocARNA {
 
     //#define MEA_SCORING_OLD
@@ -27,7 +29,6 @@ namespace LocARNA {
     class Sequence;
     class BasePairs;
     class BasePairs__Arc;
-    class ArcMatches;
     class ArcMatch;
     class MatchProbs;
     class RnaData;
@@ -379,10 +380,10 @@ namespace LocARNA {
         Matrix<pf_score_t>
             exp_sigma_tab; //!< precomputed table of exp base match similarities
         pf_score_t exp_indel_opening_score; //!< precomputed value for exp of
-                                            //!indel opening cost
+                                            //! indel opening cost
         pf_score_t exp_indel_opening_loop_score; //!< precomputed value for exp
-                                                 //!of indel opening cost for
-                                                 //!loops
+                                                 //! of indel opening cost for
+        //! loops
         std::vector<pf_score_t>
             exp_gapcost_tabA; //!< table for exp gapcost in A
         std::vector<pf_score_t>
@@ -585,16 +586,15 @@ namespace LocARNA {
         /**
          * @brief Very basic interface, score of aligning a basepair to gap
          *
+         * @note gapAorB whether deleting element in A or B (true for A)
          * @param arc the base pair
-         * @param gapAorB whether deleting element in A or B (true for A)
          * @param stacked whether the base pair is stacked
          *
          * @return
          */
+        template <bool gapAorB>
         score_t
-        arcDel(const BasePairs__Arc &arc,
-               bool gapAorB,
-               bool stacked = false) const;
+        arcDel(const BasePairs__Arc &arc, bool stacked = false) const;
 
         /**
          * @brief Boltzmann weight of score of arc match
@@ -629,13 +629,10 @@ namespace LocARNA {
          *
          * @return score of deletion : posA <--> posB
          */
+        template <bool gapInA>
+        inline
         score_t
-        gapX(size_type alignedToGap, bool gapInA) const {
-            if (gapInA)
-                return gapA(alignedToGap);
-            else
-                return gapB(alignedToGap);
-        }
+        gapX(size_type alignedToGap) const;
 
         /**
          * Score of deletion
@@ -783,6 +780,54 @@ namespace LocARNA {
         is_stackable_am(const ArcMatch &am) const;
 
     }; // end class Scoring
+
+    template <bool isA>
+    score_t
+    Scoring::arcDel(const Arc &arcX,
+                    bool stacked) const { // TODO Important Scoring scheme for
+                                          // aligning an arc to a gap is not
+                                          // defined and implemented!
+
+        if (arc_matches
+                ->explicit_scores()) { // will not take stacking into account!!!
+            std::cerr
+                << "ERROR sparse explicit scores is not supported!"
+                << std::endl; // TODO: Supporting explicit scores for arcgap
+            assert(!arc_matches->explicit_scores());
+        }
+
+        if (!params->mea_scoring) {
+            return
+                // base pair weights
+                loop_indel_score(
+                    gapX<isA>(arcX.left()) +
+                    gapX<isA>(arcX.right())) + // score of aligining base-pair
+                                               // ends wo gap, such that it is
+                                               // multiply by gamma_loop ratio
+                (stacked ? (isA ? stack_weightsA[arcX.idx()]
+                                : stack_weightsB[arcX.idx()])
+                         : (isA ? weightsA[arcX.idx()] : weightsB[arcX.idx()]));
+        } else {
+            std::cerr << "ERROR sparse mea_scoring is not supported!"
+                      << std::endl; // TODO: Supporting mea_scoring for arcgap
+            assert(!params->mea_scoring);
+            return 0;
+        }
+    }
+
+    template <>
+    inline
+    score_t
+    Scoring::gapX<true>(size_type alignedToGap) const {
+        return gapA(alignedToGap);
+    }
+
+    template <>
+    inline
+    score_t
+    Scoring::gapX<false>(size_type alignedToGap) const {
+        return gapB(alignedToGap);
+    }
 
 } // end namespace LocARNA
 
