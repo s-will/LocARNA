@@ -249,20 +249,33 @@ namespace LocARNA {
                     // disallow deleting i completely
                     adr_[i] = std::make_pair(lenB_+1,0);
                 } else {
+                    size_type j0;
                     size_type i0 = max_named_leq_a_[i];
                     size_type i1 = min_named_geq_a_[i];
+                    if (strict_) {
+                        // j0 := position of largest name in B that is smaller than names_a_[ i0 ]
+                        // j1 := position of smallest name in B that is larger than names_a_[ i1 ]
 
-                    // j0 := position of largest name in B that is smaller than names_a_[ i0 ]
-                    // j1 := position of smallest name in B that is larger than names_a_[ i1 ]
+                        while ( names_b_[j1]<names_a_[i1] ) {
+                            j1 = min_named_geq_b_[j1+1];
+                        }
+                        j0 = max_named_leq_b_[j1-1];
+                        while ( names_b_[j0]>names_a_[i0] ) {
+                            j0 = max_named_leq_b_[j0-1];
+                        }
+                    } else {
+                        // non strict semantics
+                        // find closest anchors to the left and to the right of i
 
-                    while ( names_b_[j1]<names_a_[i1] ) {
-                        j1 = min_named_geq_b_[j1+1];
+                        while ( !is_anchored_a(i0) ) {
+                            i0 = max_named_leq_a_[i0-1];
+                        }
+                        while ( !is_anchored_a(i1) ) {
+                            i1 = min_named_geq_a_[i1+1];
+                        }
+                        j0 = anchors_a_[i0];
+                        j1 = anchors_a_[i1];
                     }
-                    size_type j0 = max_named_leq_b_[j1-1];
-                    while ( names_b_[j0]>names_a_[i0] ) {
-                        j0 = max_named_leq_b_[j0-1];
-                    }
-
                     adr_[i] = std::make_pair(j0,j1-1);
                 }
             }
@@ -274,17 +287,27 @@ namespace LocARNA {
                     // disallow inserting j ompletely
                     air_[j] = std::make_pair(lenA_+1,0);
                 } else {
+                    size_type i0;
                     size_type j0 = max_named_leq_b_[j];
                     size_type j1 = min_named_geq_b_[j];
-
-                    while ( names_a_[i1]<names_b_[j1] ) {
-                        i1 = min_named_geq_a_[i1+1];
+                    if (strict_) {
+                        while ( names_a_[i1]<names_b_[j1] ) {
+                            i1 = min_named_geq_a_[i1+1];
+                        }
+                        i0 = max_named_leq_a_[i1-1];
+                        while ( names_a_[i0]>names_b_[j0] ) {
+                            i0 = max_named_leq_a_[i0-1];
+                        }
+                    } else {
+                        while ( !is_anchored_b(j0) ) {
+                            j0 = max_named_leq_b_[j0-1];
+                        }
+                        while ( !is_anchored_b(j1) ) {
+                            j1 = min_named_geq_b_[j1+1];
+                        }
+                        i0 = anchors_b_[j0];
+                        i1 = anchors_b_[j1];
                     }
-                    size_type i0 = max_named_leq_a_[i1-1];
-                    while ( names_a_[i0]>names_b_[j0] ) {
-                        i0 = max_named_leq_a_[i0-1];
-                    }
-
                     air_[j] = std::make_pair(i0,i1-1);
                 }
             }
