@@ -18,6 +18,8 @@ namespace LocARNA {
           lenA_(lenA),
           lenB_(lenB),
           ar_(lenA + 1, range_t(1, lenB)),
+          adr_(lenA + 1, range_t(1, lenB)),
+          air_(lenB + 1, range_t(1, lenA)),
           name_size_(seqVecA.size()) {
         if (seqVecA.size() != seqVecB.size()) {
             throw(
@@ -43,6 +45,8 @@ namespace LocARNA {
           lenA_(lenA),
           lenB_(lenB),
           ar_(lenA + 1, range_t(1, lenB)),
+          adr_(lenA + 1, range_t(1, lenB)),
+          air_(lenB + 1, range_t(1, lenA)),
           name_size_(0) {
 
         std::vector<std::string> seqVecA;
@@ -173,9 +177,11 @@ namespace LocARNA {
         init_named_tables( lenA_, anchors_a_, max_named_leq_a_, min_named_geq_a_);
         init_named_tables( lenB_, anchors_b_, max_named_leq_b_, min_named_geq_b_);
 
-        // matches from a to b
+        // matches, deletions, insertions
 
         if (strict_) {
+
+            // init ranges ar_ for allowed matches
 
             size_type last = 0; // index of largest name in B, which is smaller or equal
                                 // than the last seen name in A
@@ -234,6 +240,89 @@ namespace LocARNA {
                                                 names_b_[ max_named_leq_b_[lenB_] ]);
             names_a_[lenA_+1] = largest_name + "X";
             names_b_[lenB_+1] = largest_name + "X";
+
+
+            // init ranges adr_ for allowed deletions
+
+            for (size_type i = 1, j1=0; i <= lenA_; ++i) {
+                if (is_anchored_a(i)) {
+                    // disallow deleting i completely
+                    adr_[i] = std::make_pair(lenB_+1,0);
+                } else {
+                    size_type i0 = max_named_leq_a_[i];
+                    size_type i1 = min_named_geq_a_[i];
+
+                    // j0 := position of largest name in B that is smaller than names_a_[ i0 ]
+                    // j1 := position of smallest name in B that is larger than names_a_[ i1 ]
+
+                    while ( names_b_[j1]<names_a_[i1] ) {
+                        j1 = min_named_geq_b_[j1+1];
+                    }
+                    size_type j0 = max_named_leq_b_[j1-1];
+                    while ( names_b_[j0]>names_a_[i0] ) {
+                        j0 = max_named_leq_b_[j0-1];
+                    }
+
+
+                    adr_[i] = std::make_pair(j0,j1-1);
+
+                    // //std::cerr << "adr: "<<i<<" "<<j0<<"-"<<j1-1<<std::endl;
+
+                    // size_type minj=lenB_+1;
+                    // size_type maxj=0;
+                    // for (size_type j=0; j<=lenB_; ++j) {
+                    //     if (allowed_del_unopt(i,j)) {
+                    //         minj = std::min(minj,j);
+                    //         maxj = std::max(maxj,j);
+                    //     }
+                    // }
+                    // assert( adr_[i].first == minj );
+                    // assert( adr_[i].second == maxj );
+                    // //std::cerr << "adr: "<<i<<" "<<minj<<"-"<<maxj<<std::endl;
+
+                }
+            }
+
+            // init ranges air_ for allowed insertions
+
+            for (size_type j = 1, i1=0; j <= lenB_; ++j) {
+                if (is_anchored_b(j)) {
+                    // disallow inserting j ompletely
+                    air_[j] = std::make_pair(lenA_+1,0);
+                } else {
+                    size_type j0 = max_named_leq_b_[j];
+                    size_type j1 = min_named_geq_b_[j];
+
+                    while ( names_a_[i1]<names_b_[j1] ) {
+                        i1 = min_named_geq_a_[i1+1];
+                    }
+                    size_type i0 = max_named_leq_a_[i1-1];
+                    while ( names_a_[i0]>names_b_[j0] ) {
+                        i0 = max_named_leq_a_[i0-1];
+                    }
+
+
+                    air_[j] = std::make_pair(i0,i1-1);
+
+                    // //std::cerr << "air: "<<j<<" "<<i0<<"-"<<i1-1<<std::endl;
+
+                    // size_type mini=lenA_+1;
+                    // size_type maxi=0;
+                    // for (size_type i=0; i<=lenA_; ++i) {
+                    //     if (allowed_ins_unopt(i,j)) {
+                    //         mini = std::min(mini,i);
+                    //         maxi = std::max(maxi,i);
+                    //     }
+                    // }
+                    // //std::cerr << "adr: "<<j<<" "<<mini<<"-"<<maxi<<std::endl;
+                    // assert( air_[j].first == mini );
+                    // assert( air_[j].second == maxi );
+
+
+                }
+            }
+
+
 
         } else { // relaxed
             /*

@@ -161,7 +161,7 @@ namespace LocARNA {
             return ar_[i].first <= j && j <= ar_[i].second;
         }
 
-        //! @brief is deletion allowed?
+        //! @brief is deletion allowed? (unoptimized)
         //! @param i position/matrix index of first sequence
         //! @param j position/matrix index of second sequence
         //! @return whether it is allowed to delete i immediately right of j
@@ -181,10 +181,9 @@ namespace LocARNA {
         //!           i~"j+0.5" does not cross (or touch) any edge i'~j', where name_a_[i']=name_b_[j']
         //! @todo profile and potentially optimize
         bool
-        allowed_del(size_type i, size_type j) const {
+        allowed_del_unopt(size_type i, size_type j) const {
             assert(0<=i); assert(i<=lenA_);
             assert(0<=j); assert(j<=lenB_);
-            assert( min_named_geq_b_.size() == lenB_+2 );
 
             if (is_anchored_a(i)) return false;
 
@@ -203,13 +202,28 @@ namespace LocARNA {
             }
         }
 
-        //! @brief is insertion allowed?
+        //! @brief is deletion allowed? (unoptimized version)
+        //! @param i position/matrix index of first sequence
+        //! @param j position/matrix index of second sequence
+        //! @return whether it is allowed to delete i immediately right of j
+        //! @see allowed_del_unopt()
+        bool
+        allowed_del(size_type i, size_type j) const {
+            assert(1<=i); assert(i<=lenA_);
+            assert(0<=j); assert(j<=lenB_);
+            return adr_[i].first<=j && j<=adr_[i].second;
+        }
+
+        //! @brief is insertion allowed? (unoptimized)
         //! @param i position/matrix index of first sequence
         //! @param j position/matrix index of second sequence
         //! @return whether it is allowed to insert j immediately right of i
         //! @see allowed_match(), allowed_del()
         bool
-        allowed_ins(size_type i, size_type j) const {
+        allowed_ins_unopt(size_type i, size_type j) const {
+            assert(0<=i); assert(i<=lenA_);
+            assert(0<=j); assert(j<=lenB_);
+
             if (is_anchored_b(j)) return false;
 
             if (strict_) {
@@ -225,6 +239,18 @@ namespace LocARNA {
             } else {
                 return !conflicts_anchor(i,j);
             }
+        }
+
+        //! @brief is insertion allowed? (unoptimized)
+        //! @param i position/matrix index of first sequence
+        //! @param j position/matrix index of second sequence
+        //! @return whether it is allowed to insert j immediately right of i
+        //! @see allowed_match(), allowed_del()
+        bool
+        allowed_ins(size_type i, size_type j) const {
+            assert(0<=i); assert(i<=lenA_);
+            assert(1<=j); assert(j<=lenB_);
+            return air_[j].first<=i && i<=air_[j].second;
         }
 
         //! get the name of position i in A
@@ -356,6 +382,11 @@ namespace LocARNA {
          *   Def(ar_): edge i~j is allowed iff l_i <= j <= r_i
          */
         range_vec_t ar_;
+
+        /** allowed deletion range */
+        range_vec_t adr_;
+        /** allowed insertion range */
+        range_vec_t air_;
 
         //! map from position to names in a
         name_vec_t names_a_;
