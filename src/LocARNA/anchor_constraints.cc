@@ -263,23 +263,7 @@ namespace LocARNA {
                         j0 = max_named_leq_b_[j0-1];
                     }
 
-
                     adr_[i] = std::make_pair(j0,j1-1);
-
-                    // //std::cerr << "adr: "<<i<<" "<<j0<<"-"<<j1-1<<std::endl;
-
-                    // size_type minj=lenB_+1;
-                    // size_type maxj=0;
-                    // for (size_type j=0; j<=lenB_; ++j) {
-                    //     if (allowed_del_unopt(i,j)) {
-                    //         minj = std::min(minj,j);
-                    //         maxj = std::max(maxj,j);
-                    //     }
-                    // }
-                    // assert( adr_[i].first == minj );
-                    // assert( adr_[i].second == maxj );
-                    // //std::cerr << "adr: "<<i<<" "<<minj<<"-"<<maxj<<std::endl;
-
                 }
             }
 
@@ -301,24 +285,7 @@ namespace LocARNA {
                         i0 = max_named_leq_a_[i0-1];
                     }
 
-
                     air_[j] = std::make_pair(i0,i1-1);
-
-                    // //std::cerr << "air: "<<j<<" "<<i0<<"-"<<i1-1<<std::endl;
-
-                    // size_type mini=lenA_+1;
-                    // size_type maxi=0;
-                    // for (size_type i=0; i<=lenA_; ++i) {
-                    //     if (allowed_ins_unopt(i,j)) {
-                    //         mini = std::min(mini,i);
-                    //         maxi = std::max(maxi,i);
-                    //     }
-                    // }
-                    // //std::cerr << "adr: "<<j<<" "<<mini<<"-"<<maxi<<std::endl;
-                    // assert( air_[j].first == mini );
-                    // assert( air_[j].second == maxi );
-
-
                 }
             }
 
