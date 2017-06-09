@@ -243,11 +243,7 @@ namespace LocARNA {
                         M(arcA->left() - 1, arcB->left() - 1) +
                         sv.D(*arcA, *arcB);
 
-                    if (new_score > max_score) {
-                        // std::cout << *arcA << "-"<< *arcB << ":
-                        // "<<M(arcA->left()-1,arcB->left()-1)<<"+"<<D(*arcA,*arcB)<<"="<<new_score<<std::endl;
-                        max_score = new_score;
-                    }
+                    max_score = std::max(max_score, new_score);
                 }
             }
         }

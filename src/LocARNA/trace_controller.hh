@@ -14,6 +14,7 @@
 namespace LocARNA {
 
     class Sequence;
+    class AnchorConstraints;
 
     /**
      * \brief Represents a range of traces
@@ -44,8 +45,8 @@ namespace LocARNA {
         remove_common_gaps(const SeqEntry &aliA, const SeqEntry &aliB);
 
     protected:
-        std::vector<size_t> min_col_vector_; //!< minimal column in row
-        std::vector<size_t> max_col_vector_; //!< maximal column in row
+        std::vector<size_t> min_col_; //!< minimal column in row
+        std::vector<size_t> max_col_; //!< maximal column in row
         //! \brief Construct empty
         TraceRange() {}
 
@@ -115,7 +116,7 @@ namespace LocARNA {
          */
         size_t
         rows() const {
-            return min_col_vector_.size() - 1;
+            return min_col_.size() - 1;
         }
 
         /**
@@ -125,7 +126,7 @@ namespace LocARNA {
          */
         size_t
         min_col(size_t i) const {
-            return min_col_vector_[i];
+            return min_col_[i];
         }
 
         /**
@@ -135,7 +136,7 @@ namespace LocARNA {
          */
         size_t
         max_col(size_t i) const {
-            return max_col_vector_[i];
+            return max_col_[i];
         }
 
         /**
@@ -218,6 +219,18 @@ namespace LocARNA {
 
         //! \brief Virtual destructor
         virtual ~TraceController();
+
+        /**
+         * @brief Restrict by anchor constraints
+         *
+         * Limits trace ranges due to anchor constraints
+         * @param constraints anchor constraints
+         *
+         * @note surprisingly, this filtering causes no
+         * noticable effect in standard alignment
+         */
+        void
+        restrict_by_anchors(const AnchorConstraints &constraints);
 
         /**
          * test for matrix entries on valid trace
