@@ -177,9 +177,8 @@ namespace LocARNA {
              * @param isA swap arcX/Y parameters
              * @return D matrix entry for match of arcX<->arcY
              */
-            template <bool isA>
             infty_score_t
-            D(const Arc &arcX, const Arc &arcY) {
+            D(bool isA, const Arc &arcX, const Arc &arcY) {
                 if (isA)
                     return D(arcX, arcY);
                 else
