@@ -54,7 +54,7 @@ namespace LocARNA {
 
         const Scoring *scoring; //!< the scores
         Scoring *mod_scoring;   //!< used in normalized scoring, when we need to
-                                //!modify the scoring
+                                //! modify the scoring
         const Sequence &seqA;   //!< sequence A
         const Sequence &seqB;   //!< sequence B
 
@@ -104,13 +104,15 @@ namespace LocARNA {
 
         //! matrix to store cost of deleting/inserting a subsequence
         //! of sequence A, indexed by neighboring positions of the
-        //! range
-        ScoreMatrix gapCostAmat;
+        //! range; the cost does not take into account whether the gap is
+        //! compatible with constraints
+        ScoreMatrix gapCostMatA;
 
         //! matrix to store cost of deleting/inserting a subsequence
         //! of sequence B, indexed by neighboring positions of the
-        //! range
-        ScoreMatrix gapCostBmat;
+        //! range; the cost does not take into account whether the gap is
+        //! compatible with constraints
+        ScoreMatrix gapCostMatB;
 
         int min_i; //!< subsequence of A left end, not used in sparse
         int min_j; //!< subsequence of B left end, not used in sparse
@@ -176,7 +178,7 @@ namespace LocARNA {
              * @return D matrix entry for match of arcX<->arcY
              */
             infty_score_t
-            D(const Arc &arcX, const Arc &arcY, bool isA) {
+            D(bool isA, const Arc &arcX, const Arc &arcY) {
                 if (isA)
                     return D(arcX, arcY);
                 else
@@ -285,7 +287,7 @@ namespace LocARNA {
 
         const UnmodifiedScoringViewN def_scoring_view; //!< Default scoring view
         ModifiedScoringViewN mod_scoring_view; //!< Modified scoring view for
-                                               //!normalized alignment
+                                               //! normalized alignment
 
         // ============================================================
 
@@ -312,45 +314,43 @@ namespace LocARNA {
                    ScoringView sv);
 
         /**
-         * \brief compute and stores score of aligning subsequences to the gap
+         * \brief compute and stores score of aligning subsequences to gaps
          *
          * @param isA a switch to determine the target sequence A or B
          * @param sv the scoring view to be used
          *
+         * @result writes gap costs into gapCost{A,B}mat (depending on isA)
         */
-        template <class ScoringView>
+        template <bool isA, class ScoringView>
         void
-        computeGapCosts(bool isA, ScoringView sv);
+        initGapCostMat(ScoringView sv);
 
         /**
-         * \brief return score of aligning a subsequence to the gap
+         * \brief return score of aligning a subsequence to gaps
          *
          * @param leftSide sequence position before left side of the subsequence
          * @param rightSide sequence position after right side of the
          * subsequence
          * @param isA a switch to determine the target sequence A or B
          */
+        template <bool isA>
         infty_score_t
-        getGapCostBetween(pos_type leftSide, pos_type rightSide, bool isA);
+        getGapCostBetween(pos_type leftSide, pos_type rightSide);
 
         /**
          * \brief compute IA/IB value of single element
          *
+         * @param isA switch to determine IX is IA/IB
          * @param xl position in sequence A/B: left end of current arc match
          * @param arcY arc in sequence B/A, for which score is computed
          * @param i position in sequence A/B, for which score is computed
-         * @param isA switch to determine IX is IA/IB
          * @param sv the scoring view to be used
          * @returns score of IX(i,arcX) for the left end arc element i
          *
          */
-        template <class ScoringView>
+        template <bool isA, class ScoringView>
         infty_score_t
-        compute_IX(pos_type xl,
-                   const Arc &arcY,
-                   pos_type i,
-                   bool isA,
-                   ScoringView sv);
+        compute_IX(pos_type xl, const Arc &arcY, pos_type i, ScoringView sv);
 
         /**
          * \brief fills all IA values using default scoring scheme
@@ -540,9 +540,9 @@ namespace LocARNA {
         * element
         * @param sv scoring view
         */
-        template <class ScoringView>
+        template <bool isA, class ScoringView>
         void
-        trace_IXD(const Arc &arcA, const Arc &arcB, bool isA, ScoringView sv);
+        trace_IXD(const Arc &arcA, const Arc &arcB, ScoringView sv);
 
         /**
          * trace D matrix
@@ -570,13 +570,9 @@ namespace LocARNA {
          * @param isA switch to determine IA/IB
          * @param sv the scoring view to be used
          */
-        template <class ScoringView>
+        template <bool isA, class ScoringView>
         void
-        trace_IX(pos_type xl,
-                 pos_type i,
-                 const Arc &arcY,
-                 bool isA,
-                 ScoringView sv);
+        trace_IX(pos_type xl, pos_type i, const Arc &arcY, ScoringView sv);
 
         /**
            create the entries in the D matrix
@@ -613,8 +609,9 @@ namespace LocARNA {
          * @param isA swap arcX/Y parameters
          * @return D matrix entry for match of arcX<->arcY
          */
+        template <bool isA>
         infty_score_t &
-        D(const Arc &arcX, const Arc &arcY, bool isA) {
+        D(const Arc &arcX, const Arc &arcY) {
             if (isA)
                 return Dmat(arcX.idx(), arcY.idx());
             else
@@ -642,8 +639,9 @@ namespace LocARNA {
          * @param isA switch to determine IA/IB
          * @return IA/IB matrix entry for position k and arc
          */
+        template <bool isA>
         infty_score_t &
-        IX(const pos_type i, const Arc &arc, bool isA) {
+        IX(const pos_type i, const Arc &arc) {
             if (isA)
                 return IAmat(i, arc.idx());
             else
@@ -658,8 +656,9 @@ namespace LocARNA {
          * @param isA switch to determine IA/IB
          * @return IA/IB matrix entry for position k and arc
          */
+        template <bool isA>
         infty_score_t &
-        IXD(const Arc &arc1, const Arc &arc2, bool isA) {
+        IXD(const Arc &arc1, const Arc &arc2) {
             if (isA)
                 return IADmat(arc1.idx(), arc2.idx());
             else

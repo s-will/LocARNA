@@ -10,7 +10,7 @@ test_locarna_lib_SOURCES = test_locarna_lib.cc multiple_alignment.cc	\
                            rna_data.cc ext_rna_data.cc			\
                            rna_structure.cc matrices.cc			\
                            trace_controller.cc rna_ensemble.cc		\
-                           catch.hpp
+                           anchor_constraints.cc catch.hpp
 
 TESTS= $(BINTESTS) $(SCRIPTTESTS)
 

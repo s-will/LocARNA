@@ -600,41 +600,6 @@ namespace LocARNA {
         return score; // modify for normalized alignment
     }
 
-    // Very basic interface
-    score_t
-    Scoring::arcDel(const Arc &arcX,
-                    bool isA,
-                    bool stacked) const { // TODO Important Scoring scheme for
-                                          // aligning an arc to a gap is not
-                                          // defined and implemented!
-
-        if (arc_matches
-                ->explicit_scores()) { // will not take stacking into account!!!
-            std::cerr
-                << "ERROR sparse explicit scores is not supported!"
-                << std::endl; // TODO: Supporting explicit scores for arcgap
-            assert(!arc_matches->explicit_scores());
-        }
-
-        if (!params->mea_scoring) {
-            return
-                // base pair weights
-                loop_indel_score(
-                    gapX(arcX.left(), isA) +
-                    gapX(arcX.right(), isA)) + // score of aligining base-pair
-                                               // ends wo gap, such that it is
-                                               // multiply by gamma_loop ratio
-                (stacked ? (isA ? stack_weightsA[arcX.idx()]
-                                : stack_weightsB[arcX.idx()])
-                         : (isA ? weightsA[arcX.idx()] : weightsB[arcX.idx()]));
-        } else {
-            std::cerr << "ERROR sparse mea_scoring is not supported!"
-                      << std::endl; // TODO: Supporting mea_scoring for arcgap
-            assert(!params->mea_scoring);
-            return 0;
-        }
-    }
-
     bool
     Scoring::is_stackable_arcA(const Arc &a) const {
         return rna_dataA.joint_arc_prob(a.left(), a.right()) > 0;

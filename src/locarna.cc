@@ -517,6 +517,9 @@ main(int argc, char **argv) {
         seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string(),
         !clp.relaxed_anchors);
 
+    //not used, since there seems to be no effect
+    //trace_controller.restrict_by_anchors(seq_constraints);
+
     if (clp.verbose) {
         if (!seq_constraints.empty()) {
             std::cout << "Found sequence constraints." << std::endl;

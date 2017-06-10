@@ -24,8 +24,8 @@ namespace LocARNA {
             ((size_type)abs((int)(arcA.right() - arcA.left()) -
                             (int)(arcB.right() - arcB.left())) <=
              max_length_diff) &&
-            constraints.allowed_edge(arcA.left(), arcB.left()) &&
-            constraints.allowed_edge(arcA.right(), arcB.right()) &&
+            constraints.allowed_match(arcA.left(), arcB.left()) &&
+            constraints.allowed_match(arcA.right(), arcB.right()) &&
             // |i-j|<=delta constraints for left and right ends,
             // transformed to work for unsigned int
             arcA.left() <= arcB.left() + max_diff_at_am &&
