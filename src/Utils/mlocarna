@@ -1402,7 +1402,7 @@ if ($opts{'local-progressive'}) {
     if ($opts{'global-progressive'}) {
 	printerr "Warning: local overrides global progressive alignment!\n"
     }
-    $locarna_params .= " --local-file-output";
+    $locarna_params .= " --local-file-output --local-output";
 }
 
 
