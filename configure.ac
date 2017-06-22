@@ -60,10 +60,13 @@ AC_PROG_CPP
 
 AC_LANG_CPLUSPLUS
 
-dnl uncomment to require c++11
-dnl AX_CXX_COMPILE_STDCXX_11
+dnl require c++14
+AX_CXX_COMPILE_STDCXX_14([noext],[mandatory])
 
 AC_CHECK_PROGS([PERL],[perl])
+
+dnl defines that have to be set when using the LocARNA library
+AC_SUBST(LIBDEFS)
 
 dnl Variable settings for generation of man pages via help2man --
 dnl adapted from gnu hello example
@@ -123,12 +126,6 @@ AC_ARG_WITH([vrna],
 
 dnl require rna lib linking
 ENABLE_LIBRNA=yes
-
-AC_SUBST(LDFLAGS,[""])
-AC_SUBST(CPPFLAGS,[""])
-AC_SUBST(LIBS,[""])
-dnl defines that have to be set when using the LocARNA library
-AC_SUBST(LIBDEFS,[""]) 
 
 
 dnl ------------------------------
