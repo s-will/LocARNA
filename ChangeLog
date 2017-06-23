@@ -1,6 +1,7 @@
 ============================================================
 === 2017
 
+1.9.2pre3
 	Make consensus structure / dotplot types independent [option
 	--consensus-structure alifold (current default) also determined
 	the computation of consensus dotplots. The consensus dot plot is
