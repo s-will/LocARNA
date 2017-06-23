@@ -286,10 +286,11 @@ main(int argc, char **argv) {
 
     PFoldParams pfparams(clp.no_lonely_pairs, clp.stacking, clp.max_bp_span, 2);
 
-    RnaData *rna_dataA = 0;
+    std::unique_ptr<RnaData> rna_dataA;
     try {
-        rna_dataA = new RnaData(clp.fileA, clp.min_prob,
-                                clp.max_bps_length_ratio, pfparams);
+        rna_dataA =
+            std::make_unique<RnaData>(clp.fileA, clp.min_prob,
+                                      clp.max_bps_length_ratio, pfparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileA
                   << std::endl
@@ -297,16 +298,15 @@ main(int argc, char **argv) {
         return -1;
     }
 
-    RnaData *rna_dataB = 0;
+    std::unique_ptr<RnaData> rna_dataB;
     try {
-        rna_dataB = new RnaData(clp.fileB, clp.min_prob,
-                                clp.max_bps_length_ratio, pfparams);
+        rna_dataB =
+            std::make_unique<RnaData>(clp.fileB, clp.min_prob,
+                                      clp.max_bps_length_ratio, pfparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileB
                   << std::endl
                   << "       " << f.what() << std::endl;
-        if (rna_dataA)
-            delete rna_dataA;
         return -1;
     }
 
@@ -338,11 +338,11 @@ main(int argc, char **argv) {
     // of sequences
     //
 
-    MultipleAlignment *multiple_ref_alignment = NULL;
+    std::unique_ptr<MultipleAlignment> multiple_ref_alignment = NULL;
 
     if (clp.max_diff_alignment_file != "") {
         multiple_ref_alignment =
-            new MultipleAlignment(clp.max_diff_alignment_file);
+            std::make_unique<MultipleAlignment>(clp.max_diff_alignment_file);
     } else if (clp.max_diff_pw_alignment != "") {
         if (seqA.num_of_rows() != 1 || seqB.num_of_rows() != 1) {
             std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning of "
@@ -368,9 +368,10 @@ main(int argc, char **argv) {
             return -1;
         }
 
-        multiple_ref_alignment = new MultipleAlignment(seqA.seqentry(0).name(),
-                                                       seqB.seqentry(0).name(),
-                                                       alistr[0], alistr[1]);
+        multiple_ref_alignment =
+            std::make_unique<MultipleAlignment>(seqA.seqentry(0).name(),
+                                                seqB.seqentry(0).name(),
+                                                alistr[0], alistr[1]);
     }
 
     // if (multiple_ref_alignment) {
@@ -379,25 +380,25 @@ main(int argc, char **argv) {
     //  std::cout << std::flush;
     // }
 
-    TraceController trace_controller(seqA, seqB, multiple_ref_alignment,
+    TraceController trace_controller(seqA, seqB, multiple_ref_alignment.get(),
                                      clp.max_diff, clp.max_diff_relax);
 
-    if (multiple_ref_alignment) {
-        delete multiple_ref_alignment;
-    }
+    multiple_ref_alignment.release();
 
     // ----------------------------------------
     // construct set of relevant arc matches
     //
 
     // initialize from RnaData
-    ArcMatches *arc_matches =
-        new ArcMatches(*rna_dataA, *rna_dataB, clp.min_prob,
-                       clp.max_diff_am != -1 ? (size_type)clp.max_diff_am
-                                             : std::max(lenA, lenB),
-                       clp.max_diff_at_am != -1 ? (size_type)clp.max_diff_at_am
-                                                : std::max(lenA, lenB),
-                       trace_controller, seq_constraints);
+    std::unique_ptr<ArcMatches> arc_matches =
+        std::make_unique<ArcMatches>(*rna_dataA.get(), *rna_dataB.get(),
+                                     clp.min_prob, clp.max_diff_am != -1
+                                         ? (size_type)clp.max_diff_am
+                                         : std::max(lenA, lenB),
+                                     clp.max_diff_at_am != -1
+                                         ? (size_type)clp.max_diff_at_am
+                                         : std::max(lenA, lenB),
+                                     trace_controller, seq_constraints);
 
     // ----------------------------------------
     // report on input in verbose mode
@@ -407,9 +408,9 @@ main(int argc, char **argv) {
     // ----------------------------------------
     // Ribosum matrix
     //
-    RibosumFreq *ribosum;
-    Ribofit *ribofit;
-    MainHelper::init_ribo_matrix(clp, &ribosum, &ribofit);
+    std::unique_ptr<RibosumFreq> ribosum;
+    std::unique_ptr<Ribofit> ribofit;
+    MainHelper::init_ribo_matrix(clp, ribosum, ribofit);
 
     // ----------------------------------------
     // construct scoring
@@ -419,7 +420,8 @@ main(int argc, char **argv) {
 
     ScoringParams scoring_params(clp.match, clp.mismatch, clp.indel,
                                  0, // indel__loop_score
-                                 clp.indel_opening, 0, ribosum, ribofit,
+                                 clp.indel_opening, 0, ribosum.get(),
+                                 ribofit.get(),
                                  0, // unpaired_weight
                                  clp.struct_weight, clp.tau,
                                  0, // exclusion score
@@ -560,16 +562,6 @@ main(int argc, char **argv) {
             }
         }
     }
-
-    // clean up
-    delete arc_matches;
-    if (ribosum)
-        delete ribosum;
-    if (ribofit)
-        delete ribofit;
-
-    delete rna_dataA;
-    delete rna_dataB;
 
     stopwatch.stop("total");
 
