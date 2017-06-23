@@ -831,9 +831,9 @@ main(int argc, char **argv) {
                 std::cout << std::endl;
             }
 
+            // recompute consensus structure for screen output, if necessary
             if (consensus_structure != "") {
                 if (clp.local_output != clp.local_file_output) {
-                    // recompute consensus structure
                     clp.local_file_output = clp.local_output;
 
                     if (consensus) {
