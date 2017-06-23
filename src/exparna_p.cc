@@ -343,14 +343,16 @@ main(int argc, char **argv) {
     PFoldParams pfparams(clp.no_lonely_pairs, (!clp.no_stacking),
                          clp.max_bp_span, 2);
 
-    ExtRnaData *rna_dataA = 0;
+    std::unique_ptr<ExtRnaData> rna_dataA = 0;
     try {
         rna_dataA =
-            new ExtRnaData(clp.fileA, std::min(clp.min_prob, clp.out_min_prob),
-                           clp.prob_basepair_in_loop_threshold,
-                           clp.prob_unpaired_in_loop_threshold,
-                           clp.max_bps_length_ratio, clp.max_uil_length_ratio,
-                           clp.max_bpil_length_ratio, pfparams);
+            std::make_unique<ExtRnaData>(clp.fileA, std::min(clp.min_prob,
+                                                             clp.out_min_prob),
+                                         clp.prob_basepair_in_loop_threshold,
+                                         clp.prob_unpaired_in_loop_threshold,
+                                         clp.max_bps_length_ratio,
+                                         clp.max_uil_length_ratio,
+                                         clp.max_bpil_length_ratio, pfparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileA
                   << std::endl
@@ -358,20 +360,20 @@ main(int argc, char **argv) {
         return -1;
     }
 
-    ExtRnaData *rna_dataB = 0;
+    std::unique_ptr<ExtRnaData> rna_dataB = 0;
     try {
         rna_dataB =
-            new ExtRnaData(clp.fileB, std::min(clp.min_prob, clp.out_min_prob),
-                           clp.prob_basepair_in_loop_threshold,
-                           clp.prob_unpaired_in_loop_threshold,
-                           clp.max_bps_length_ratio, clp.max_uil_length_ratio,
-                           clp.max_bpil_length_ratio, pfparams);
+            std::make_unique<ExtRnaData>(clp.fileB, std::min(clp.min_prob,
+                                                             clp.out_min_prob),
+                                         clp.prob_basepair_in_loop_threshold,
+                                         clp.prob_unpaired_in_loop_threshold,
+                                         clp.max_bps_length_ratio,
+                                         clp.max_uil_length_ratio,
+                                         clp.max_bpil_length_ratio, pfparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileB
                   << std::endl
                   << "       " << f.what() << std::endl;
-        if (rna_dataA)
-            delete rna_dataA;
         return -1;
     }
 
@@ -413,15 +415,13 @@ main(int argc, char **argv) {
     //
 
     // initialize from RnaData
-    ArcMatches *arc_matches =
-        new ArcMatches(*rna_dataA, *rna_dataB, clp.min_prob,
-                       (clp.max_diff_am != -1)
-                           ? (size_type)clp.max_diff_am
-                           : std::max(seqA.length(), seqB.length()),
-                       (clp.max_diff_at_am != -1)
-                           ? (size_type)clp.max_diff_at_am
-                           : std::max(seqA.length(), seqB.length()),
-                       trace_controller, seq_constraints);
+    std::unique_ptr<ArcMatches> arc_matches = std::make_unique<ArcMatches>(
+        *rna_dataA, *rna_dataB, clp.min_prob,
+        (clp.max_diff_am != -1) ? (size_type)clp.max_diff_am
+                                : std::max(seqA.length(), seqB.length()),
+        (clp.max_diff_at_am != -1) ? (size_type)clp.max_diff_at_am
+                                   : std::max(seqA.length(), seqB.length()),
+        trace_controller, seq_constraints);
 
     const BasePairs &bpsA = arc_matches->get_base_pairsA();
     const BasePairs &bpsB = arc_matches->get_base_pairsB();
@@ -580,11 +580,6 @@ main(int argc, char **argv) {
 
     // ----------------------------------------
     // DONE
-
-    delete arc_matches;
-
-    delete rna_dataA;
-    delete rna_dataB;
 
     if (clp.verbose) {
         cout << "... Exparna-P finished!" << endl << endl;
