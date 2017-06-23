@@ -129,12 +129,14 @@ mlocarna_calltest mlocarna-probabilistic \
 
 # check many threads, and local folding and max-diff-aln
 mlocarna_calltest mlocarna-threads \
-         bin/mlocarna $exdir/SECIS_15.fa  --threads 32 \
+         bin/mlocarna $exdir/SECIS_15.fa  --threads 32 --alifold \
          --plfold-span 50 --max-diff 10 --max-diff-aln $exdir/SECIS_15_ref.aln
 
 # check anchor constraints from bed file
 mlocarna_calltest mlocarna-bed-anchors \
-         bin/mlocarna  --anchor-constraints $exdir/haca.snoRNA_anchor.bed $exdir/haca.snoRNA.fa
+         bin/mlocarna --alifold \
+         --anchor-constraints $exdir/haca.snoRNA_anchor.bed \
+         $exdir/haca.snoRNA.fa
 
 # check realign
 mlocarna_calltest mlocarna-realign \
@@ -142,9 +144,9 @@ mlocarna_calltest mlocarna-realign \
 
 
 ## ========================================
-## test locarnate (if t_coffee is available)
+## test locarnate (requires t_coffee to succeed)
 ##
-calltest locarnate test_results test_results/mult/tcoffee.aln "--normal" \
+calltest locarnate test_results test_results/mult/tcoffee.aln "-I^CLUSTAL FORMAT for T-COFFEE Version_" \
          bin/locarnate $exdir/archaea.fa
 
 if [ -d "test_results" ] ; then

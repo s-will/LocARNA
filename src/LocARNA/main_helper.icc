@@ -517,22 +517,30 @@ namespace LocARNA {
                 if (clp.cons_struct_type=="alifold") {
                     consensus_structure = ens.min_free_energy_structure();
                 }
-                consensus = new RnaData(ens,
-                                        min_prob,
-                                        0, //don't filter by max_bps_length_ratio
-                                        pfparams); // construct rna data from ensemble
-            } else {
+
+                RnaData *alifold_consensus =
+                    new RnaData(ens, min_prob,
+                                0, // don't filter by max_bps_length_ratio
+                                pfparams); // construct rna data from ensemble
+                if (clp.alifold_consensus_dp) {
+                    consensus = alifold_consensus;
+                }
+            }
+
+            if (!clp.alifold_consensus_dp || clp.cons_struct_type=="mea") {
                 // compute averaged consensus base pair probabilities
 
-                consensus = new RnaData(*rna_dataA,
-                                        *rna_dataB,
-                                        alignment,
-                                        my_exp_probA,
-                                        my_exp_probB,
-                                        clp.local_file_output);
+                RnaData *mea_consensus =
+                    new RnaData(*rna_dataA, *rna_dataB, alignment, my_exp_probA,
+                                my_exp_probB, clp.local_file_output);
 
                 if (clp.cons_struct_type=="mea") {
-                    consensus_structure = consensus->mea_structure(1);
+                    consensus_structure = mea_consensus->mea_structure(1);
+                }
+
+                if(!clp.alifold_consensus_dp) {
+                    assert(consensus == NULL);
+                    consensus = mea_consensus;
                 }
             }
             return consensus;

@@ -1,6 +1,12 @@
 ============================================================
 === 2017
 
+1.9.2pre3
+	Make consensus structure / dotplot types independent [option
+	--consensus-structure alifold (current default) also determined
+	the computation of consensus dotplots. The consensus dot plot is
+	now independent (new default: no alifold consensus dot plot).]
+
 	fix strict semantics for anchor constraints
         fix compatibility '--keep-sequence-order' with anchor constraints
 
