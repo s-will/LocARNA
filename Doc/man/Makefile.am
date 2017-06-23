@@ -59,9 +59,10 @@ include help2man-rules pod2man-rules
 CLEANFILES += help2man-rules pod2man-rules
 
 help2man-rules:
-	for i in $(help2man_prgs1); do\
-	  printf "$$i.1:	$(top_builddir)/src/$$i \$$(wildcard $(srcdir)/$$i.man_include)\n\
-	\t$(HELP2MAN) $(HELP2MANOPTS) -I$(srcdir)/$$i.man_include --output=\$$@ $$<\n\n" ;\
+	for i in $(help2man_prgs1); do \
+	  printf "$$i.1:	$(top_builddir)/src/$$i $(srcdir)/$$i.man_include\n\
+	\t$(HELP2MAN) $(HELP2MANOPTS) -I$(srcdir)/$$i.man_include --output=\$$@ $$<\n\
+	$(srcdir)/$$i.man_include:\n\n" ;\
 	done > $@
 
 pod2man-rules:
@@ -71,10 +72,13 @@ pod2man-rules:
 	done > $@
 
 ## overwrite the rule for locarna
-locarna.1: $(top_builddir)/src/locarna.bin $(wildcard $(srcdir)/locarna.man_include)
+locarna.1: $(top_builddir)/src/locarna.bin $(srcdir)/locarna.man_include
 	$(HELP2MAN) $(HELP2MANOPTS) -I$(srcdir)/locarna.man_include --output=$@ $(top_builddir)/src/locarna.bin
 #	strip .bin (special name handling for locarna binary)
 	sed -i 's/locarna.bin/locarna/g' $@
+
+$(srcdir)/locarna.man_include:
+
 
 CLEANFILES += $(man_MANS)
 endif
