@@ -107,11 +107,6 @@ namespace LocARNA {
      *
      */
     class BasePairs {
-    private:
-        const RnaData *rna_data_;
-        double min_prob_;
-        double len_;
-
     public:
         typedef size_t size_type; //!< size
 
@@ -176,33 +171,6 @@ namespace LocARNA {
         //! type for set of position pairs
         typedef std::set<bpair_t> bpair_set_t;
 
-    private:
-        std::vector<LeftAdjList> left_;
-        std::vector<RightAdjList> right_;
-
-        arc_vec_t arc_vec_;
-        arc_matrix_t arcs_;
-
-        /**
-         * @brief resize data structures
-         * @param seq_len length of sequence
-         *
-         * Resizes the data structures left_ and right_ that allow
-         * fast acces to an arc arcs by its left end, its right end,
-         * or its left and right end
-         */
-        void
-        resize(size_type seq_len);
-
-        //! generate the datastructures that allow fast access to arcs
-        void
-        generateBPLists(const RnaData &rna_data);
-
-        //! sort the adjacency lists as expected by the alignment algorithm
-        void
-        sortAdjLists();
-
-    public:
         /**
          * Construct from rna data
          *
@@ -217,8 +185,8 @@ namespace LocARNA {
             : rna_data_(rna_data),
               min_prob_(min_prob),
               len_(get_length_from_rna_data()),
-              left_(),
-              right_(),
+              left_adjlists_(),
+              right_adjlists_(),
               arc_vec_(),
               arcs_(-1) {
             generateBPLists(*rna_data_);
@@ -234,8 +202,8 @@ namespace LocARNA {
             : rna_data_(0),
               min_prob_(1.0),
               len_(len),
-              left_(),
-              right_(),
+              left_adjlists_(),
+              right_adjlists_(),
               arc_vec_(),
               arcs_(-1) {
             resize(seqlen());
@@ -243,19 +211,10 @@ namespace LocARNA {
                  ++it) {
                 register_arc(it->first, it->second);
             }
-            sortAdjLists();
+
+            sort_adj_lists();
+            add_adj_list_sentinels();
         }
-
-        // /**
-        //  * @brief Copy constructor
-        //  */
-        // BasePairs(const BasePairs &bps);
-
-        // /**
-        //  * @brief Assignment operator
-        //  */
-        // BasePairs &
-        // operator =(const BasePairs &bps);
 
         /**
          * registers a basepair (i,j),
@@ -264,18 +223,28 @@ namespace LocARNA {
         void
         register_arc(int i, int j);
 
-        //! returns the list of arcs with right end i
+        /**
+         * @brief Get left adjacency list with sentinel
+         * @param i position
+         * @return list of arcs with left end i
+         */
         const LeftAdjList &
-        left_adjlist(int i) const {
-            // std::cout<<"size of left adjlist of "<<i<<"is
-            // "<<left_[i].size()<<std::endl;
-            return left_[i];
+        left_adjlist_s(size_type i) const {
+            auto & xs = left_adjlists_[i];
+            assert(xs[xs.size() - 1].right() == len_+1 /* check sentinel */);
+            return xs;
         }
 
-        //! returns the list of arcs with left end i
+        /**
+         * @brief Get right adjacency list with sentinel
+         * @param i position
+         * @return list of arcs with right end i
+         */
         const RightAdjList &
-        right_adjlist(int i) const {
-            return right_[i];
+        right_adjlist_s(size_type i) const {
+            auto & xs = right_adjlists_[i];
+            assert(xs[xs.size() - 1].left() == 0  /* check sentinel */);
+            return xs;
         }
 
         //! accesses basepair by (i,j)
@@ -325,6 +294,39 @@ namespace LocARNA {
         // }
 
     private:
+        const RnaData *rna_data_;
+        double min_prob_;
+        double len_;
+
+        std::vector<LeftAdjList> left_adjlists_;
+        std::vector<RightAdjList> right_adjlists_;
+
+        arc_vec_t arc_vec_;
+        arc_matrix_t arcs_;
+
+        /**
+         * @brief resize data structures
+         * @param seq_len length of sequence
+         *
+         * Resizes the data structures left_ and right_ that allow
+         * fast acces to an arc arcs by its left end, its right end,
+         * or its left and right end
+         */
+        void
+        resize(size_type seq_len);
+
+        //! generate the datastructures that allow fast access to arcs
+        void
+        generateBPLists(const RnaData &rna_data);
+
+        //! sort the adjacency lists as expected by the alignment algorithm
+        void
+        sort_adj_lists();
+
+        //! @brief add sentinels to adjacency lists
+        void
+        add_adj_list_sentinels();
+
         // return length from rna data
         // pre: rna data available
         size_type

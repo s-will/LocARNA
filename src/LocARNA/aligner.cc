@@ -209,17 +209,14 @@ namespace LocARNA {
         //
 
         if (params_->constraints_->allowed_match(i, j)) {
-            const BasePairs::RightAdjList &adjlA = bpsA_.right_adjlist(i);
-            const BasePairs::RightAdjList &adjlB = bpsB_.right_adjlist(j);
+            auto &adjlA = bpsA_.right_adjlist_s(i);
+            auto &adjlB = bpsB_.right_adjlist_s(j);
 
             // for all pairs of arcs in A and B that have right ends i and j,
             // respectively
             //
-            for (BasePairs::RightAdjList::const_iterator arcA = adjlA.begin();
-                 arcA != adjlA.end() && arcA->left() > al; ++arcA) {
-                for (BasePairs::RightAdjList::const_iterator arcB =
-                         adjlB.begin();
-                     arcB != adjlB.end() && arcB->left() > bl; ++arcB) {
+            for (auto arcA = adjlA.begin(); arcA->left() > al; ++arcA) {
+                for (auto arcB = adjlB.begin(); arcB->left() > bl; ++arcB) {
                     // no need to check
                     // (params_->constraints_->allowed_match(arcA->left(),arcB->left()))
                     // or other "constraints"

@@ -257,16 +257,14 @@ namespace LocARNA {
 
         // standard case for arc match (without restriction to lonely pairs)
 
-        const BasePairs::RightAdjList &adjlA = bpsA.right_adjlist(i);
-        const BasePairs::RightAdjList &adjlB = bpsB.right_adjlist(j);
+        const auto &adjlA = bpsA.right_adjlist_s(i);
+        const auto &adjlB = bpsB.right_adjlist_s(j);
 
         // for all pairs of arcs in A and B that have right ends i and j,
         // respectively
         //
-        for (BasePairs::RightAdjList::const_iterator arcA = adjlA.begin();
-             arcA != adjlA.end() && arcA->left() > al; ++arcA) {
-            for (BasePairs::RightAdjList::const_iterator arcB = adjlB.begin();
-                 arcB != adjlB.end() && arcB->left() > bl; ++arcB) {
+        for (auto arcA = adjlA.begin(); arcA->left() > al; ++arcA) {
+            for (auto arcB = adjlB.begin(); arcB->left() > bl; ++arcB) {
                 // consider score for match of basepairs
                 // assert(M(arcA->left()-1, arcB->left()-1) > 0);
 
@@ -562,16 +560,14 @@ namespace LocARNA {
 
         // arc match
         // standard case for arc match (without restriction to lonely pairs)
-        const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(i + 1);
-        const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(j + 1);
+        const auto &adjlA = bpsA.left_adjlist_s(i + 1);
+        const auto &adjlB = bpsB.left_adjlist_s(j + 1);
 
         // for all pairs of arcs in A and B that have right ends i+1 and j+1,
         // respectively
         //
-        for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-             arcA != adjlA.end() && arcA->right() <= ar; ++arcA) {
-            for (BasePairs::LeftAdjList::const_iterator arcB = adjlB.begin();
-                 arcB != adjlB.end() && arcB->right() <= br; ++arcB) {
+        for (auto arcA = adjlA.begin(); arcA->right() <= ar; ++arcA) {
+            for (auto arcB = adjlB.begin(); arcB->right() <= br; ++arcB) {
                 pf += D(*arcA, *arcB) * Mrev(arcA->right(), arcB->right()) *
                     pf_scale;
             }
@@ -661,9 +657,9 @@ namespace LocARNA {
                                     size_type l,
                                     size_type r) const {
         for (size_type i = start; i < l; ++i) {
-            const BasePairs::LeftAdjList &adjl = bps.left_adjlist(i);
-            for (BasePairs::LeftAdjList::const_iterator arc = adjl.begin();
-                 arc != adjl.end(); ++arc) {
+            auto &adjl = bps.left_adjlist_s(i);
+            for (auto arc = adjl.begin();
+                 arc->right() <= bps.seqlen(); ++arc) {
                 if (arc->right() > r) {
                     return i;
                 }
@@ -691,14 +687,17 @@ namespace LocARNA {
                                      size_type l,
                                      size_type r,
                                      size_type stop) const {
+        assert(l>0);
         for (size_type i = stop + 1; i > r + 1;) {
             --i;
-            const BasePairs::RightAdjList &adjl = bps.right_adjlist(i);
-            for (BasePairs::RightAdjList::const_iterator arc = adjl.begin();
-                 arc != adjl.end(); ++arc) {
-                if (arc->left() < l) {
-                    return i;
-                }
+            auto &adjl = bps.right_adjlist_s(i);
+
+            //find arc with left end < l
+            auto arc = adjl.begin();
+            for (;arc->left()>=l; ++arc) {
+            }
+            if (arc->left() != 0) { // sentinel 0
+                return i;
             }
         }
         return r;
@@ -838,18 +837,16 @@ namespace LocARNA {
 
         // arc match, case 4
         {
-            const BasePairs::RightAdjList &adjlA = bpsA.right_adjlist(i + 1);
-            const BasePairs::RightAdjList &adjlB = bpsB.right_adjlist(j + 1);
+            auto &adjlA = bpsA.right_adjlist_s(i + 1);
+            auto &adjlB = bpsB.right_adjlist_s(j + 1);
 
             // for all pairs of arcs in A and B that have right ends i+1 and
             // j+1, respectively
             //
 
-            for (BasePairs::RightAdjList::const_reverse_iterator arcA =
-                     adjlA.rbegin();
+            for (auto arcA = adjlA.rbegin() + 1;
                  arcA != adjlA.rend() && arcA->left() < al; ++arcA) {
-                for (BasePairs::RightAdjList::const_reverse_iterator arcB =
-                         adjlB.rbegin();
+                for (auto arcB = adjlB.rbegin() + 1;
                      arcB != adjlB.rend() && arcB->left() < bl; ++arcB) {
                     // consider score for match of basepair
 
@@ -865,16 +862,13 @@ namespace LocARNA {
 
         // arc match, case 5
         {
-            const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(i + 1);
-            const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(j + 1);
+            auto &adjlA = bpsA.left_adjlist_s(i + 1);
+            auto &adjlB = bpsB.left_adjlist_s(j + 1);
 
             // for all pairs of arcs in A and B that have left ends i+1 and j+1,
             // respectively
-            for (BasePairs::LeftAdjList::const_iterator arcA = adjlA.begin();
-                 arcA != adjlA.end(); ++arcA) {
-                for (BasePairs::LeftAdjList::const_iterator arcB =
-                         adjlB.begin();
-                     arcB != adjlB.end(); ++arcB) {
+            for (auto arcA = adjlA.begin(); arcA->right() <= r.endA(); ++arcA) {
+                for (auto arcB = adjlB.begin(); arcB->right() <= r.endB(); ++arcB) {
                     // consider score for match of basepairs
                     // std::cout << *arcA << "." << *arcB << std::endl;
 
@@ -1238,8 +1232,8 @@ namespace LocARNA {
                 if (!params->trace_controller_->is_valid_match(al, bl))
                     continue;
 
-                const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
-                const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
+                const auto &adjlA = bpsA.left_adjlist_s(al);
+                const auto &adjlB = bpsB.left_adjlist_s(bl);
 
                 if (adjlA.size() > 0 && adjlB.size() > 0) {
                     assert(D_created);
@@ -1253,12 +1247,10 @@ namespace LocARNA {
                     size_type max_ar = al;
                     size_type max_br = bl;
 
-                    for (BasePairs::LeftAdjList::const_iterator arcA =
-                             adjlA.begin();
-                         arcA != adjlA.end(); ++arcA) {
-                        for (BasePairs::LeftAdjList::const_iterator arcB =
-                                 adjlB.begin();
-                             arcB != adjlB.end(); ++arcB) {
+                    for (auto arcA = adjlA.begin(); arcA->right() <= r.endA();
+                         ++arcA) {
+                        for (auto arcB = adjlB.begin();
+                             arcB->right() <= r.endB(); ++arcB) {
                             size_type ar = arcA->right();
                             size_type br = arcB->right();
 
@@ -1281,12 +1273,10 @@ namespace LocARNA {
                     // Align inside limited by the determined maximal ar and br
                     align_inside_arcmatch(al, max_ar, bl, max_br);
 
-                    for (BasePairs::LeftAdjList::const_iterator arcA =
-                             adjlA.begin();
-                         arcA != adjlA.end(); ++arcA) {
-                        for (BasePairs::LeftAdjList::const_iterator arcB =
-                                 adjlB.begin();
-                             arcB != adjlB.end(); ++arcB) {
+                    for (auto arcA = adjlA.begin(); arcA->right() <= r.endA();
+                         ++arcA) {
+                        for (auto arcB = adjlB.begin(); arcB->right() <= r.endB();
+                             ++arcB) {
                             if (am_prob(arcA->idx(), arcB->idx()) >
                                 am_prob_threshold) {
                                 // again note that the above comparison is
