@@ -37,8 +37,8 @@ namespace LocARNA {
         std::vector<FLT_OR_DBL>
             expMLbase_; //!< table for precomputed multi loop terms
 
-        McC_matrices_base *McCmat_; //!< DP matrix data structures of VRNA's
-                                    //!McCaskill algorithm
+        //! DP matrix data structures of VRNA's McCaskill algorithm
+        std::unique_ptr<McC_matrices_base> McCmat_;
 
         //! whether alifold was used to compute the McCaskill matrices
         bool used_alifold_;

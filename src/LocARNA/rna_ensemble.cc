@@ -2,6 +2,7 @@
 #include <sstream>
 #include <map>
 #include <limits>
+#include <functional>
 
 #include "aux.hh"
 #include "rna_ensemble_impl.hh"
@@ -35,9 +36,9 @@ namespace LocARNA {
                              bool inLoopProbs,
                              bool use_alifold)
         : pimpl_(std::make_unique<RnaEnsembleImpl>(sequence,
-                                              params,
-                                              inLoopProbs,
-                                              use_alifold)) {}
+                                                   params,
+                                                   inLoopProbs,
+                                                   use_alifold)) {}
 
     RnaEnsemble::~RnaEnsemble() {
     }
@@ -103,7 +104,7 @@ namespace LocARNA {
           pair_probs_available_(false),
           stacking_probs_available_(false),
           in_loop_probs_available_(false),
-          McCmat_(0L), // 0 pointer
+          McCmat_(nullptr),
           used_alifold_(false),
           min_free_energy_(std::numeric_limits<double>::infinity()),
           min_free_energy_structure_("") {
@@ -112,9 +113,6 @@ namespace LocARNA {
     }
 
     RnaEnsembleImpl::~RnaEnsembleImpl() {
-        if (McCmat_) {
-            delete McCmat_;
-        }
     }
 
     void
@@ -147,24 +145,9 @@ namespace LocARNA {
     RnaEnsembleImpl::compute_McCaskill_matrices(const PFoldParams &params,
                                                 bool inLoopProbs) {
         assert(sequence_.num_of_rows() == 1);
-
-        const vrna_md_t &md = params.model_details();
-
-        vrna_fold_compound_t *vc;
-
-        // use MultipleAlignment to get pointer to c-string of the
-        // first (and only) sequence in object sequence.
-        //
         size_t length = sequence_.length();
 
-        char *c_sequence = new char[length + 1];
-
-        std::string seqstring = sequence_.seqentry(0).seq().str();
-
-        strcpy(c_sequence, seqstring.c_str());
-
-        vc = vrna_fold_compound(c_sequence, &const_cast<vrna_md_t &>(md),
-                                VRNA_OPTION_PF);
+        McCmat_ = std::make_unique<McC_matrices_t>(sequence_, params);
 
         const std::string &structure_anno =
             sequence_.annotation(MultipleAlignment::AnnoType::structure)
@@ -173,12 +156,12 @@ namespace LocARNA {
             !sequence_.has_annotation(MultipleAlignment::AnnoType::structure) ||
             structure_anno.length() == length);
 
-        char *c_structure = new char[length + 1];
+        std::unique_ptr<char []> c_structure(new char[length + 1]);
 
         // copy structure annotation to c_structure to use as
         // constraint for fold
         if (structure_anno.length() == length) {
-            strncpy(c_structure, structure_anno.c_str(), length);
+            strncpy(c_structure.get(), structure_anno.c_str(), length);
             c_structure[length] = 0;
 
             unsigned int constraint_options = 0;
@@ -186,19 +169,18 @@ namespace LocARNA {
                 VRNA_CONSTRAINT_DB_DOT | VRNA_CONSTRAINT_DB_X |
                 VRNA_CONSTRAINT_DB_ANG_BRACK | VRNA_CONSTRAINT_DB_RND_BRACK;
 
-            vrna_constraints_add(vc, (const char *)c_structure,
+            vrna_constraints_add(McCmat_->vc(), (const char *)c_structure.get(),
                                  constraint_options);
         }
 
         // ----------------------------------------
         // call fold for setting the pfscale
-        if (length >
-            0) { // workaround, since fold(char*,char*) fails on empty input
-            // @todo is this still required?
-            min_free_energy_ = vrna_mfe(vc, c_structure);
-            min_free_energy_structure_ = c_structure;
+        if (length > 0) {
+            // workaround, since fold(char*,char*) fails on empty input
+            min_free_energy_ = vrna_mfe(McCmat_->vc(), c_structure.get());
+            min_free_energy_structure_ = std::string(c_structure.get());
 
-            vrna_exp_params_rescale(vc, &min_free_energy_);
+            vrna_exp_params_rescale(McCmat_->vc(), &min_free_energy_);
         } else {
             min_free_energy_ = 0;
             min_free_energy_structure_ = "";
@@ -207,13 +189,8 @@ namespace LocARNA {
         // ----------------------------------------
         // call pf_fold
         if (length > 0) { // workaround for pf_fold() on empty input
-            vrna_pf(vc, NULL);
+            vrna_pf(McCmat_->vc(), NULL);
         }
-
-        // ----------------------------------------
-        // initialize McC matrices object from vrna fold compound
-        //
-        McCmat_ = new McC_matrices_t(vc);
 
         if (inLoopProbs) {
             // precompute qm2 for computation of in-loop probabilities
@@ -222,21 +199,14 @@ namespace LocARNA {
             // compute the Qm2 matrix
             compute_Qm2();
         }
-
-        delete[] c_structure;
-        delete[] c_sequence;
     }
 
     void
     RnaEnsembleImpl::compute_McCaskill_alifold_matrices(
         const PFoldParams &params,
         bool inLoopProbs) {
-        const vrna_md_t &md = params.model_details();
-
-        vrna_fold_compound_t *vc;
 
         size_t length = sequence_.length();
-        size_t n_seq = sequence_.num_of_rows();
 
         // catch special case of length 0 sequence, since the Vienna
         // package does not handle this for us -- sad :(
@@ -247,26 +217,10 @@ namespace LocARNA {
             return;
         }
 
-        // ----------------------------------------
-        // write sequences to array of C-strings
-        MultipleAlignment ma(sequence_);
-        char **sequences = new char *[n_seq + 1];
-        for (size_t i = 0; i < n_seq; i++) {
-            sequences[i] = new char[length + 1];
-            std::string seqstring = ma.seqentry(i).seq().str();
-            strncpy(sequences[i], seqstring.c_str(), length + 1);
-        }
-        sequences[n_seq] =
-            NULL; // sequences has to be NULL terminated for alifold() etc
-
-        const char **c_sequences = const_cast<const char **>(sequences);
-
-        vc = vrna_fold_compound_comparative(c_sequences,
-                                            &const_cast<vrna_md_t &>(md),
-                                            VRNA_OPTION_PF);
+        McCmat_ = std::make_unique<McC_ali_matrices_t>(sequence_, params);
 
         // reserve space for structure
-        char *c_structure = new char[length + 1];
+        std::unique_ptr<char []> c_structure(new char[length + 1]);
 
         // ----------------------------------------
         // handle structure constraints
@@ -281,23 +235,23 @@ namespace LocARNA {
         // copy structure annotation to c_structure to use as
         // constraint for alifold
         if (structure_anno.length() == length) {
-            strncpy(c_structure, structure_anno.c_str(), length);
+            strncpy(c_structure.get(), structure_anno.c_str(), length);
             c_structure[length] = 0;
             unsigned int constraint_options = 0;
             constraint_options |= VRNA_CONSTRAINT_DB | VRNA_CONSTRAINT_DB_PIPE |
                 VRNA_CONSTRAINT_DB_DOT | VRNA_CONSTRAINT_DB_X |
                 VRNA_CONSTRAINT_DB_ANG_BRACK | VRNA_CONSTRAINT_DB_RND_BRACK;
 
-            vrna_constraints_add(vc, (const char *)c_structure,
+            vrna_constraints_add(McCmat_->vc(), (const char *)c_structure.get(),
                                  constraint_options);
         }
 
         // ----------------------------------------
         // call alifold for setting the scale
-        min_free_energy_ = vrna_mfe(vc, c_structure);
-        min_free_energy_structure_ = c_structure;
+        min_free_energy_ = vrna_mfe(McCmat_->vc(), c_structure.get());
+        min_free_energy_structure_ = std::string(c_structure.get());
 
-        vrna_exp_params_rescale(vc, &min_free_energy_);
+        vrna_exp_params_rescale(McCmat_->vc(), &min_free_energy_);
 
         // ----------------------------------------
         // call alifold partition function
@@ -305,12 +259,8 @@ namespace LocARNA {
                           // workaround, since alifold cannot handle
                           // empty sequences)
 
-            vrna_pf(vc, NULL);
+            vrna_pf(McCmat_->vc(), NULL);
         }
-
-        // ----------------------------------------
-        // wrap the fold compound
-        McCmat_ = new McC_ali_matrices_t(vc);
 
         if (inLoopProbs) {
             // precompute qm2 for computation of in-loop probabilities
@@ -319,20 +269,13 @@ namespace LocARNA {
             // compute the Qm2 matrix
             compute_Qm2_ali();
         }
-
-        delete[] c_structure;
-        // free c_sequences and c_structure
-        for (size_t i = 0; i < n_seq; i++) {
-            delete[] c_sequences[i];
-        }
-        delete[] c_sequences;
     }
 
     void
     RnaEnsembleImpl::compute_Qm2() {
         assert(!used_alifold_);
 
-        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_);
+        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_.get());
 
         size_type len = sequence_.length();
 
@@ -393,7 +336,7 @@ namespace LocARNA {
         assert(McCmat_);
 
         McC_ali_matrices_t *MCm =
-            static_cast<McC_ali_matrices_t *>(this->McCmat_);
+            static_cast<McC_ali_matrices_t *>(this->McCmat_.get());
 
         size_type len = sequence_.length();
         size_type n_seq = sequence_.num_of_rows();
@@ -456,7 +399,7 @@ namespace LocARNA {
     RnaEnsembleImpl::ptype_of_admissible_basepair(size_type i,
                                                   size_type j) const {
         assert(!used_alifold_);
-        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_);
+        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_.get());
 
         int type = MCm->ptype(i, j);
 
@@ -477,7 +420,7 @@ namespace LocARNA {
         assert(frag_len_geq(i, j, TURN + 4));
         assert(j <= sequence_.length());
 
-        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(McCmat_);
+        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(McCmat_.get());
 
         if (MCm->qb(i + 1, j - 1) == 0.0) {
             return 0.0;
@@ -500,7 +443,7 @@ namespace LocARNA {
         assert(frag_len_geq(i, j, TURN + 4));
         assert(j <= sequence_.length());
 
-        McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(McCmat_);
+        McC_ali_matrices_t *MCm = static_cast<McC_ali_matrices_t *>(McCmat_.get());
 
         if (MCm->qb(i + 1, j - 1) == 0.0) {
             return 0.0;
@@ -553,7 +496,7 @@ namespace LocARNA {
         assert(in_loop_probs_available_);
 
         McC_ali_matrices_t *MCm =
-            static_cast<McC_ali_matrices_t *>(this->McCmat_);
+            static_cast<McC_ali_matrices_t *>(this->McCmat_.get());
 
         size_t n_seq = sequence_.num_of_rows();
 
@@ -734,7 +677,7 @@ namespace LocARNA {
         assert(!used_alifold_);
         assert(in_loop_probs_available_);
 
-        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(McCmat_);
+        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(McCmat_.get());
 
         const char *c_sequence = MCm->sequence();
 
@@ -861,7 +804,7 @@ namespace LocARNA {
         assert(in_loop_probs_available_);
 
         McC_ali_matrices_t *MCm =
-            static_cast<McC_ali_matrices_t *>(this->McCmat_);
+            static_cast<McC_ali_matrices_t *>(this->McCmat_.get());
 
         size_t n_seq = sequence_.num_of_rows();
 
@@ -991,7 +934,7 @@ namespace LocARNA {
                                             size_type j) const {
         assert(in_loop_probs_available_);
         assert(!used_alifold_);
-        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_);
+        McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_.get());
 
         // note: I and M are computed without factor qb(ip,jp),
         // which is multiplied only in the end.
@@ -1089,13 +1032,13 @@ namespace LocARNA {
 
         if (!pimpl_->used_alifold_) {
             McC_matrices_t *MCm =
-                static_cast<McC_matrices_t *>(pimpl_->McCmat_);
+                static_cast<McC_matrices_t *>(pimpl_->McCmat_.get());
             extloop =
                 exp_E_ExtLoop(MCm->ptype(i, j), i > 1 ? MCm->S1(i - 1) : -1,
                               j < n ? MCm->S1(j + 1) : -1, MCm->exp_params());
         } else {
             McC_ali_matrices_t *MCm =
-                static_cast<McC_ali_matrices_t *>(pimpl_->McCmat_);
+                static_cast<McC_ali_matrices_t *>(pimpl_->McCmat_.get());
 
             size_t n_seq = pimpl_->sequence_.num_of_rows();
 

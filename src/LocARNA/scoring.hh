@@ -307,7 +307,7 @@ namespace LocARNA {
          * @param rna_dataB probability data of second sequence
          * @param arc_matches the (significant) arc matches between the
          * sequences
-         * @param match_probs pointer to base match probabilities (can be 0L for
+         * @param match_probs pointer to base match probabilities (can be nullptr for
          * non-mea scores)
          * @param params a collection of parameters for scoring
          * @param exp_scores only if true, the results of the exp_*
