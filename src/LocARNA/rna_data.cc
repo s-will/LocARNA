@@ -31,7 +31,9 @@ namespace LocARNA {
                      double p_bpcut,
                      double max_bps_length_ratio,
                      const PFoldParams &pfoldparams)
-        : pimpl_(new RnaDataImpl(this, p_bpcut, pfoldparams.max_bp_span())) {
+        : pimpl_(std::make_unique<RnaDataImpl>(this,
+                                               p_bpcut,
+                                               pfoldparams.max_bp_span())) {
         init_from_rna_ensemble(rna_ensemble, pfoldparams);
 
         if (max_bps_length_ratio > 0.0) {
@@ -44,7 +46,9 @@ namespace LocARNA {
                      double p_bpcut,
                      double max_bps_length_ratio,
                      const PFoldParams &pfoldparams)
-        : pimpl_(new RnaDataImpl(this, p_bpcut, pfoldparams.max_bp_span())) {
+        : pimpl_(std::make_unique<RnaDataImpl>(this,
+                                               p_bpcut,
+                                               pfoldparams.max_bp_span())) {
         bool complete = read_autodetect(filename, pfoldparams);
 
         if (!complete) {
@@ -65,7 +69,7 @@ namespace LocARNA {
 
     // do almost nothing
     RnaData::RnaData(double p_bpcut, size_t max_bp_span)
-        : pimpl_(new RnaDataImpl(this, p_bpcut, max_bp_span)) {}
+        : pimpl_(std::make_unique<RnaDataImpl>(this, p_bpcut, max_bp_span)) {}
 
     // "consensus" constructor
     RnaData::RnaData(const RnaData &rna_dataA,
@@ -74,14 +78,17 @@ namespace LocARNA {
                      double p_expA,
                      double p_expB,
                      bool only_local)
-        : pimpl_(new RnaDataImpl(this,
-                                 rna_dataA,
-                                 rna_dataB,
-                                 alignment.alignment_edges(only_local),
-                                 p_expA,
-                                 p_expB)) {}
+        : pimpl_(std::make_unique<RnaDataImpl>(this,
+                                               rna_dataA,
+                                               rna_dataB,
+                                               alignment.alignment_edges(
+                                                   only_local),
+                                               p_expA,
+                                               p_expB)) {}
 
-    RnaData::~RnaData() { delete pimpl_; }
+    RnaData::~RnaData() {
+    }
+
 
     bool
     RnaData::has_stacking() const {
@@ -132,7 +139,8 @@ namespace LocARNA {
                            double max_bpil_length_ratio,
                            const PFoldParams &pfoldparams)
         : RnaData(p_bpcut, pfoldparams.max_bp_span()),
-          ext_pimpl_(new ExtRnaDataImpl(this, p_bpilcut, p_uilcut)) {
+          ext_pimpl_(
+              std::make_unique<ExtRnaDataImpl>(this, p_bpilcut, p_uilcut)) {
         bool complete = read_autodetect(filename, pfoldparams);
 
         if (!complete) {
@@ -156,16 +164,6 @@ namespace LocARNA {
         }
     }
 
-    ExtRnaDataImpl::ExtRnaDataImpl(ExtRnaData *self,
-                                   double p_bpilcut,
-                                   double p_uilcut)
-        : self_(self),
-          p_bpilcut_(p_bpilcut),
-          p_uilcut_(p_uilcut),
-          arc_in_loop_probs_(arc_prob_matrix_t(0.0)),
-          unpaired_in_loop_probs_(arc_prob_vector_t(0.0)),
-          has_in_loop_probs_(false) {}
-
     ExtRnaData::ExtRnaData(const RnaEnsemble &rna_ensemble,
                            double p_bpcut,
                            double p_bpilcut,
@@ -175,7 +173,8 @@ namespace LocARNA {
                            double max_bpil_length_ratio,
                            const PFoldParams &pfoldparams)
         : RnaData(rna_ensemble, p_bpcut, max_bps_length_ratio, pfoldparams),
-          ext_pimpl_(new ExtRnaDataImpl(this, p_bpilcut, p_uilcut)) {
+          ext_pimpl_(
+              std::make_unique<ExtRnaDataImpl>(this, p_bpilcut, p_uilcut)) {
         init_from_rna_ensemble(rna_ensemble, pfoldparams);
 
         if (max_uil_length_ratio > 0.0) {
@@ -186,7 +185,18 @@ namespace LocARNA {
         }
     }
 
-    ExtRnaData::~ExtRnaData() { delete ext_pimpl_; }
+    ExtRnaData::~ExtRnaData() {
+    }
+
+    ExtRnaDataImpl::ExtRnaDataImpl(ExtRnaData *self,
+                                   double p_bpilcut,
+                                   double p_uilcut)
+        : self_(self),
+          p_bpilcut_(p_bpilcut),
+          p_uilcut_(p_uilcut),
+          arc_in_loop_probs_(arc_prob_matrix_t(0.0)),
+          unpaired_in_loop_probs_(arc_prob_vector_t(0.0)),
+          has_in_loop_probs_(false) {}
 
     bool
     RnaData::read_autodetect(const std::string &filename,
@@ -1596,7 +1606,7 @@ namespace LocARNA {
     void
     ExtRnaDataImpl::drop_worst_bps(size_t keep) {
         // access pimpl_ of parent RnaData object
-        RnaDataImpl *rdimpl = static_cast<RnaData *>(self_)->pimpl_;
+        RnaDataImpl *rdimpl = static_cast<RnaData *>(self_)->pimpl_.get();
         rdimpl->drop_worst_bps(keep);
 
         // free unpaired in loop where arc prob is 0

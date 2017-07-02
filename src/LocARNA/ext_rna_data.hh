@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <memory>
 #include <iosfwd>
 #include "aux.hh"
 #include "sparse_matrix.hh"
@@ -34,10 +35,7 @@ namespace LocARNA {
      * can be read as non-extended ones
      */
     class ExtRnaData : public RnaData {
-    private:
         friend class ExtRnaDataImpl;
-        ExtRnaDataImpl
-            *ext_pimpl_; //!<- pointer to corresponding implementation object
     public:
         /**
          * @brief Construct from RnaEnsemble with cutoff probability
@@ -80,27 +78,11 @@ namespace LocARNA {
                    double max_uil_length_ratio,
                    double max_bpil_length_ratio,
                    const PFoldParams &pfoldparams);
-
-    private:
-        /**
-         * @brief copy constructor
-         */
-        ExtRnaData(const ExtRnaData &);
-
-    public:
         /**
          * @brief destructor
          */
         ~ExtRnaData();
 
-    private:
-        /**
-         * @brief assignment operator
-         */
-        ExtRnaData &
-        operator=(const ExtRnaData &);
-
-    public:
         /**
          * @brief Get base pair in loop cutoff probability
          * @return cutoff probability p_bpcut
@@ -240,6 +222,22 @@ namespace LocARNA {
          */
         virtual bool
         inloopprobs_ok() const;
+
+    private:
+        //! pointer to corresponding implementation object
+        std::unique_ptr<ExtRnaDataImpl> ext_pimpl_;
+
+        /**
+         * @brief copy constructor
+         */
+        ExtRnaData(const ExtRnaData &);
+
+        /**
+         * @brief assignment operator
+         */
+        ExtRnaData &
+        operator=(const ExtRnaData &);
+
 
     }; // end class ExtRnaData
 }

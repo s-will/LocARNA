@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <memory>
 #include <iosfwd>
 
 #include "aux.hh"
@@ -39,8 +40,8 @@ namespace LocARNA {
      */
     class RnaEnsemble {
     private:
-        RnaEnsembleImpl
-            *pimpl_; //!<- pointer to corresponding RnaEnsembleImpl object
+        //! pointer to corresponding RnaEnsembleImpl object
+        std::unique_ptr<RnaEnsembleImpl> pimpl_;
     public:
         /**
          * @brief folding constructor (from sequence or multiple alignment)
@@ -69,6 +70,8 @@ namespace LocARNA {
          */
         RnaEnsemble(const RnaEnsemble &rna_ensemble);
 
+        ~RnaEnsemble();
+
         /**
          * @brief assignment operator
          * @param rna_ensemble object to be assigned
@@ -76,14 +79,6 @@ namespace LocARNA {
          */
         RnaEnsemble &
         operator=(const RnaEnsemble &rna_ensemble);
-
-        /**
-         * \brief Clean up.
-         *
-         * In most cases does nothing. If McCaskill
-         * matrices are kept, they are freed.
-        */
-        virtual ~RnaEnsemble();
 
         /**
          * @brief Availability of pair probabilities
