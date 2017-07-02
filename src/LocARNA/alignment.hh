@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <memory>
 #include <iosfwd>
 #include <vector>
 #include "aux.hh"
@@ -97,7 +98,7 @@ namespace LocARNA {
      *  Supports construction of the alignment during traceback.
      */
     class Alignment {
-        AlignmentImpl *pimpl_; //!< implementation pointer
+        std::unique_ptr<AlignmentImpl> pimpl_; //!< implementation pointer
 
     public:
         //! edge end

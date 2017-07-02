@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <memory>
 #include "aux.hh"
 #include "scoring_fwd.hh"
 #include "rna_structure.hh"
@@ -64,7 +65,7 @@ namespace LocARNA {
      * currently not used.
      */
     class Aligner {
-        AlignerImpl *pimpl_;
+        std::unique_ptr<AlignerImpl> pimpl_;
 
     public:
         /**

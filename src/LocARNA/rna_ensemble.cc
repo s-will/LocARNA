@@ -34,15 +34,12 @@ namespace LocARNA {
                              const PFoldParams &params,
                              bool inLoopProbs,
                              bool use_alifold)
-        : pimpl_(new RnaEnsembleImpl( // this,
-              sequence,
-              params,
-              inLoopProbs,
-              use_alifold)) {}
+        : pimpl_(std::make_unique<RnaEnsembleImpl>(sequence,
+                                              params,
+                                              inLoopProbs,
+                                              use_alifold)) {}
 
     RnaEnsemble::~RnaEnsemble() {
-        if (pimpl_)
-            delete pimpl_;
     }
 
     bool

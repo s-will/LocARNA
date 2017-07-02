@@ -65,7 +65,16 @@ namespace LocARNA {
     //
 
     Aligner::Aligner(const Aligner &aligner)
-        : pimpl_(new AlignerImpl(*aligner.pimpl_)) {}
+        : pimpl_(std::make_unique<AlignerImpl>(*(aligner.pimpl_))) {}
+
+    Aligner::Aligner(const AlignerParams &ap)
+        : pimpl_(std::make_unique<AlignerImpl>(*(ap.seqA_),
+                                               *(ap.seqB_),
+                                               *(ap.arc_matches_),
+                                               &ap,
+                                               ap.scoring_)) {}
+
+    Aligner::~Aligner() {}
 
     AlignerImpl::AlignerImpl(const AlignerImpl &a)
         : params_(new AlignerParams(*a.params_)),
@@ -90,13 +99,6 @@ namespace LocARNA {
           def_scoring_view_(this),
           mod_scoring_view_(this),
           free_endgaps_(a.free_endgaps_) {}
-
-    Aligner::Aligner(const AlignerParams &ap)
-        : pimpl_(new AlignerImpl(*(ap.seqA_),
-                                 *(ap.seqB_),
-                                 *(ap.arc_matches_),
-                                 &ap,
-                                 ap.scoring_)) {}
 
     AlignerImpl::AlignerImpl(const Sequence &seqA,
                              const Sequence &seqB,
@@ -144,8 +146,6 @@ namespace LocARNA {
             delete mod_scoring_;
         }
     }
-
-    Aligner::~Aligner() { delete (pimpl_); }
 
     Alignment const &
     Aligner::get_alignment() const {
