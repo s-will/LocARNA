@@ -14,23 +14,10 @@ extern "C" {
 }
 
 namespace LocARNA {
+    class PFoldParams;
+    class MultipleAlignment;
 
     class McC_matrices_base {
-    protected:
-        /** @brief vrna fold compound
-         *
-         * The fold compound holds the DP matrices, input and model
-         * details.  It is freed on destruction of the
-         * McC_matrices_base object.
-         */
-        vrna_fold_compound_t *vc_;
-
-        /**
-         * @brief construct empty
-         */
-        explicit
-        McC_matrices_base(vrna_fold_compound_t *vc);
-
     public:
         /**
          * @brief Destructor
@@ -175,7 +162,30 @@ namespace LocARNA {
             assert(vc_->exp_params);
             return vc_->exp_params->model_details.pair[c][d];
         }
-    };
+
+        vrna_fold_compound_t *vc() {return vc_;}
+
+    protected:
+
+        // /** @brief free vrna fold compound
+        //     @param vc pointer to the fold compound
+        //  */
+        // static
+        // const
+        // auto free_vfc = [](vrna_fold_compound_t *vc) {vrna_fold_compound_free(vc);};
+
+        /** @brief vrna fold compound
+         * The fold compound holds the DP matrices, input and model
+         * details.
+         */
+        vrna_fold_compound_t* vc_;
+
+        /**
+         * @brief construct with fold compound
+         */
+        McC_matrices_base(vrna_fold_compound_t* vc = nullptr);
+
+    }; // end class McC_matrices_base
 
     /** @brief McCaskill matrices
      *
@@ -184,12 +194,12 @@ namespace LocARNA {
     class McC_matrices_t : public McC_matrices_base {
     public:
         /**
-         * @brief Construct from fold compound
+         * @brief Construct from sequence
          *
-         * @param vc vrna fold compound (single)
+         * @param sequence the sequence
+         * @param params locarna partition fold parameters
          */
-        explicit
-        McC_matrices_t(vrna_fold_compound_t *vc);
+        McC_matrices_t(const MultipleAlignment &sequence, const PFoldParams &params);
 
         /**
          * @brief destruct, optionally free local copy
@@ -245,12 +255,12 @@ namespace LocARNA {
     class McC_ali_matrices_t : public McC_matrices_base {
     public:
         /**
-         * @brief Construct from fold compound
+         * @brief Construct from multiple alignment
          *
-         * @param vc vrna fold compound (alignment)
+         * @param ma the multiple alignment
+         * @param params locarna partition fold parameters
          */
-        explicit
-        McC_ali_matrices_t(vrna_fold_compound_t *vc);
+        McC_ali_matrices_t(const MultipleAlignment &ma, const PFoldParams &params);
 
         /**
          * @brief destruct

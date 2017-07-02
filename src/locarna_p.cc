@@ -436,7 +436,7 @@ main(int argc, char **argv) {
                                  0      // probability_scale
                                  );
 
-    Scoring scoring(seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches, 0L,
+    Scoring scoring(seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches, nullptr,
                     scoring_params, true);
 
     // ------------------------------------------------------------

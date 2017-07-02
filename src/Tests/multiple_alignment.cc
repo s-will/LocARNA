@@ -27,9 +27,9 @@ TEST_CASE("2-way multiple alignment can be created from strings") {
 }
 
 TEST_CASE("a multiple alignment can be created from file (clustalw)") {
-    MultipleAlignment *ma = 0L;
+    std::unique_ptr<MultipleAlignment> ma;
 
-    ma = new MultipleAlignment("archaea.aln");
+    REQUIRE_NOTHROW(ma = std::make_unique<MultipleAlignment>("archaea.aln"));
 
     SECTION("the alignment is properly constructed, as intended") {
         REQUIRE(ma->is_proper());
@@ -41,7 +41,6 @@ TEST_CASE("a multiple alignment can be created from file (clustalw)") {
 
     SECTION("a sequence object can be created from the multiple alignment") {
         Sequence seq = (*ma).as_sequence();
-        delete ma;
 
         SECTION(
             "a further alignment string can be appended, after deleting the "
@@ -71,16 +70,15 @@ TEST_CASE("creating multiple alignment from file with wrong format fails") {
 }
 
 TEST_CASE("multiple alignment can be constructed from file (fasta)") {
-    MultipleAlignment *ma;
+    std::unique_ptr<MultipleAlignment> ma;
 
-    ma = new MultipleAlignment("archaea-aln.fa",
-                               MultipleAlignment::FormatType::FASTA);
+    ma = std::make_unique<MultipleAlignment>("archaea-aln.fa",
+                                             MultipleAlignment::FormatType::FASTA);
     REQUIRE(ma->is_proper());
     REQUIRE(!ma->empty());
 
     SECTION("the multiple alignment can be converted to a sequence") {
         Sequence seq = (*ma).as_sequence();
-        delete ma;
 
         SECTION(
             "the sequence is proper and has 6 entries, after deleting the "

@@ -286,20 +286,20 @@ namespace LocARNA {
          * Construct with default parameters
          */
         AlignerParams()
-            : seqA_(0L),
-              seqB_(0L),
-              arc_matches_(0L),
-              scoring_(0L),
+            : seqA_(nullptr),
+              seqB_(nullptr),
+              arc_matches_(nullptr),
+              scoring_(nullptr),
               no_lonely_pairs_(false),
               struct_local_(false),
               sequ_local_(false),
               free_endgaps_(""),
               DO_TRACE_(true),
-              trace_controller_(0L),
+              trace_controller_(nullptr),
               max_diff_am_(-1),
               max_diff_at_am_(-1),
               stacking_(false),
-              constraints_(0L) {}
+              constraints_(nullptr) {}
 
     public:
         virtual ~AlignerParams();
@@ -378,8 +378,8 @@ namespace LocARNA {
          */
         AlignerNParams()
             : AlignerParams(),
-              sparsification_mapperA_(0L),
-              sparsification_mapperB_(0L) {}
+              sparsification_mapperA_(nullptr),
+              sparsification_mapperB_(nullptr) {}
 
     public:
         /**

@@ -1,10 +1,13 @@
 #include <catch.hpp>
 
+
 #include <stdio.h>
 #include <../LocARNA/sequence.hh>
 #include <../LocARNA/rna_ensemble.hh>
 #include <../LocARNA/basepairs.hh>
 #include <../LocARNA/pfold_params.hh>
+
+#include <memory>
 
 using namespace LocARNA;
 
@@ -14,15 +17,15 @@ extern "C" {
 #include <ViennaRNA/energy_const.h> // import TURN
 }
 
-RnaEnsemble *
+std::unique_ptr<RnaEnsemble>
 fold_sequence(const Sequence &seq,
               bool use_alifold,
               bool inloopprobs,
               int maxBPspan = -1) {
     PFoldParams pfoldparams(true, false, maxBPspan, 2);
 
-    RnaEnsemble *rna_ensemble =
-        new RnaEnsemble(seq, pfoldparams, inloopprobs, use_alifold);
+    std::unique_ptr<RnaEnsemble> rna_ensemble =
+        std::make_unique<RnaEnsemble>(seq, pfoldparams, inloopprobs, use_alifold);
 
     if (inloopprobs && !rna_ensemble->has_in_loop_probs()) {
         throw failure("No in loop probabilities could be computed!");
@@ -146,11 +149,9 @@ TEST_CASE("in loop probabilities can be predicted") {
         Sequence seq;
         seq.append(Sequence::SeqEntry("test", testseqstr));
 
-        RnaEnsemble *rna_ensemble = 0L;
+        std::unique_ptr<RnaEnsemble> rna_ensemble;
         REQUIRE_NOTHROW(rna_ensemble = fold_sequence(seq, false, true));
         test_in_loop_probs(seq, *rna_ensemble);
-        if (rna_ensemble)
-            delete rna_ensemble;
     }
 
     SECTION("in loop probs are predicted for alignemnts") {
@@ -176,11 +177,9 @@ TEST_CASE("in loop probabilities can be predicted") {
                 Sequence::SeqEntry(seq_data[2 * i], seq_data[2 * i + 1]));
         }
 
-        RnaEnsemble *mrna_ensemble = 0L;
+        std::unique_ptr<RnaEnsemble> mrna_ensemble;
         REQUIRE_NOTHROW(mrna_ensemble = fold_sequence(mseq, true, true));
         test_in_loop_probs(mseq, *mrna_ensemble);
-        if (mrna_ensemble)
-            delete mrna_ensemble;
     }
 }
 
@@ -229,21 +228,18 @@ TEST_CASE("maxBPspan limits base pair span of predictions") {
                 Sequence::SeqEntry(seq_data[2 * i], seq_data[2 * i + 1]));
         }
 
-        RnaEnsemble *mrna_ensemble = 0L;
+        std::unique_ptr<RnaEnsemble> mrna_ensemble;
 
         SECTION("without inloop probs") {
             REQUIRE_NOTHROW(mrna_ensemble = fold_sequence(mseq, true, false,
                                                           (int)maxBPspan));
-            test_maxBPspan(mrna_ensemble, maxBPspan);
+            test_maxBPspan(mrna_ensemble.get(), maxBPspan);
         }
 
         SECTION("with inloop probs") {
             REQUIRE_NOTHROW(mrna_ensemble = fold_sequence(mseq, true, true,
                                                           (int)maxBPspan));
-            test_maxBPspan(mrna_ensemble, maxBPspan);
+            test_maxBPspan(mrna_ensemble.get(), maxBPspan);
         }
-
-        if (mrna_ensemble)
-            delete mrna_ensemble;
     }
 }

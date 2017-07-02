@@ -605,7 +605,7 @@ namespace LocARNA {
 
             // write MultipleAlignment deviation, if reference alignment given
             // and verbose
-            if (clp.verbose && multiple_ref_alignment != 0L) {
+            if (clp.verbose && multiple_ref_alignment != nullptr) {
                 MultipleAlignment resultMA(alignment);
                 std::cout << "Deviation to reference: "
                           << multiple_ref_alignment->deviation(resultMA)
