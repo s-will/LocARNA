@@ -2525,14 +2525,6 @@ namespace LocARNA {
     }
 
     PatternPairMap::~PatternPairMap() {
-        idMap.clear();
-        int size = patternList.size();
-        for (int i = 0; i < size; i++) {
-            delete patternList.front();
-            patternList.pop_front();
-        }
-        patternList.clear();
-        patternOrderedMap.clear();
     }
 
     void
@@ -2541,10 +2533,9 @@ namespace LocARNA {
                         const SinglePattern &second,
                         const std::string &structure,
                         int score) {
-        PatternPair *p = new PatternPair(id, first, second, structure, score);
-        SelfValuePTR myP = SelfValuePTR(p);
-        patternList.push_back(myP);
-        idMap.insert(make_pair(id, myP));
+        patternList.push_back(std::make_unique<PatternPair>(id, first, second, structure, score));
+        auto p = patternList.back().get();
+        idMap.insert(make_pair(id, p));
         if (p->getSize() < minPatternSize) {
             minPatternSize = p->getSize();
         }
@@ -2552,33 +2543,36 @@ namespace LocARNA {
 
     void
     PatternPairMap::add(const SelfValuePTR value) {
-        SelfValuePTR myP = SelfValuePTR(new PatternPair(*value));
-        patternList.push_back(myP);
-        idMap.insert(make_pair(value->getId(), myP));
-        if (myP->getSize() < minPatternSize) {
-            minPatternSize = myP->getSize();
+        patternList.push_back(std::make_unique<PatternPair>(*value));
+        auto p = patternList.back().get();
+        idMap.insert(make_pair(value->getId(), p));
+        if (p->getSize() < minPatternSize) {
+            minPatternSize = p->getSize();
         }
     }
 
     void
     PatternPairMap::makeOrderedMap() {
         patternOrderedMap.clear();
-        for (patListITER i = patternList.begin(); i != patternList.end(); ++i) {
-            patternOrderedMap.insert(std::make_pair((*i)->getSize(), *i));
+        for ( const auto &x: patternList ) {
+            patternOrderedMap.insert(std::make_pair(x->getSize(), x.get()));
         }
     }
 
-    void
-    PatternPairMap::updateFromMap() {
-        if (!patternOrderedMap.empty()) {
-            idMap.clear();
-            patternList.clear();
-            for (orderedMapITER i = patternOrderedMap.begin();
-                 i != patternOrderedMap.end(); ++i) {
-                add(i->second);
-            }
-        }
-    }
+    // void
+    // PatternPairMap::updateFromMap() {
+    //     if (!patternOrderedMap.empty()) {
+    //         idMap.clear();
+
+    //         @todo this would crash, since patternList holds unique ptrs !
+    //         patternList.clear();
+    //         for (orderedMapITER i = patternOrderedMap.begin();
+    //              i != patternOrderedMap.end(); ++i) {
+    //             add(i->second);
+    //         }
+    //     }
+    // }
+
     const PatternPair &
     PatternPairMap::getPatternPair(const std::string &id) const {
         return *(idMap.find(id)->second);
@@ -2729,22 +2723,21 @@ namespace LocARNA {
         for (unsigned int i = 0; i < EPM_Table2.size(); ++i)
             EPM_Table2[i].resize(seqB.length() + 1);
 
-        for (PatternPairMap::patListCITER myPair = patterns.getList().begin();
-             myPair != patterns.getList().end(); ++myPair) {
-            calculatePatternBoundaries(*myPair);
+        for ( const auto &myPair: patterns.getList() ) {
+            calculatePatternBoundaries(myPair.get());
 
             // add EPM to EPM_table
-            EPM_Table2[(*myPair)->getOutsideBounds().first.second]
-                      [(*myPair)->getOutsideBounds().second.second]
-                          .push_back(*myPair);
+            EPM_Table2[myPair->getOutsideBounds().first.second]
+                      [myPair->getOutsideBounds().second.second]
+                          .push_back(myPair.get());
 
             // add all inside Holes from current EPM to holeOrdering multimap,
             // sorted by holes size and exact position
-            for (IntPPairCITER h = (*myPair)->getInsideBounds().begin();
-                 h != (*myPair)->getInsideBounds().end(); ++h) {
+            for (IntPPairCITER h = myPair->getInsideBounds().begin();
+                 h != myPair->getInsideBounds().end(); ++h) {
                 // insert hole in multimap
                 intPPairPTR myH = &(*h);
-                holeOrdering2.insert(std::make_pair(myH, *myPair));
+                holeOrdering2.insert(std::make_pair(myH, myPair.get()));
             }
         }
     }
