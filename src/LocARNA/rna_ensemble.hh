@@ -39,9 +39,6 @@ namespace LocARNA {
      * e.g. from file or stream or received from other objects
      */
     class RnaEnsemble {
-    private:
-        //! pointer to corresponding RnaEnsembleImpl object
-        std::unique_ptr<RnaEnsembleImpl> pimpl_;
     public:
         /**
          * @brief folding constructor (from sequence or multiple alignment)
@@ -319,6 +316,9 @@ namespace LocARNA {
          */
         double
         arc_external_prob(size_type i, size_type j) const;
+    private:
+        //! pointer to corresponding RnaEnsembleImpl object
+        std::unique_ptr<RnaEnsembleImpl> pimpl_;
     };
 }
 
