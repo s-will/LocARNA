@@ -1,9 +1,9 @@
 #!/bin/bash
 
 ########################################
-# mlocarna (and locarnate) tests
+# test executable programs like mlocarna and locarnate
 #
-# Test whether some mlocarna and locarnate calls work and produce the
+# Test whether selected calls work and produce the
 # expected result.
 #
 # (Changes in the header version string of mlocarna are ignored, such
@@ -36,6 +36,7 @@ ln -sf ../../locarna.bin bin/locarna
 ln -sf ../../locarna_p bin/locarna_p
 ln -sf ../../sparse bin/sparse
 ln -sf ../../locarna_rnafold_pp bin/locarna_rnafold_pp
+ln -sf ../../exparna_p bin/exparna_p
 
 ln -sf $topdir/lib . # also put perl lib modules in the right place
 
@@ -48,14 +49,15 @@ DIFFERENCES=false
 ## and white space, since this is used to derive file names
 ## @param $2 target directory, which is wiped after the test
 ## @param $3 result file, which is compared after test (or used to generate file)
-## @param $4- command to call the test
+## @param $4 options for diff
+## @param $5-$last  command to call
 ##
 ## compare to (or generate) files src/Tests/$name.testresult
 function calltest {
     name="$1"
     tgtdir="$2"
     resultfile="$3"
-    diffopts="$4"
+    diffopts="${4:-"--normal"}"
 
     reference_resultsfile=$testsdir/$name.testresult
 
@@ -146,7 +148,7 @@ mlocarna_calltest mlocarna-realign \
 ## ========================================
 ## test locarnate (requires t_coffee to succeed)
 ##
-calltest locarnate test_results test_results/mult/tcoffee.aln "-I^CLUSTAL FORMAT for T-COFFEE Version_" \
+calltest locarnate test_results test_results/mult/tcoffee.aln -I'^CLUSTAL FORMAT for T-COFFEE Version_' \
          bin/locarnate $exdir/archaea.fa
 
 if [ -d "test_results" ] ; then
@@ -155,6 +157,14 @@ fi
 if [ -e "input.dnd" ] ; then
     rm -f input.dnd
 fi
+
+## ========================================
+## test exparna_p
+##
+
+mkdir exparna_p.out
+calltest exparna_p exparna_p.out exparna_p.out/epmlist "" exparna_p $exdir/mouse.fa $exdir/human.fa -q --output-epm-list=exparna_p.out/epmlist
+
 
 ## cleanup
 rm -rf bin
