@@ -70,19 +70,18 @@ namespace LocARNA {
     Aligner::Aligner(const AlignerParams &ap)
         : pimpl_(std::make_unique<AlignerImpl>(*(ap.seqA_),
                                                *(ap.seqB_),
-                                               *(ap.arc_matches_),
                                                &ap,
                                                ap.scoring_)) {}
 
     Aligner::~Aligner() {}
 
     AlignerImpl::AlignerImpl(const AlignerImpl &a)
-        : params_(new AlignerParams(*a.params_)),
+        : params_(std::make_unique<AlignerParams>(*a.params_)),
           scoring_(a.scoring_),
-          mod_scoring_(0),
+          mod_scoring_(nullptr),
+          arc_matches_(a.arc_matches_),
           seqA_(a.seqA_),
           seqB_(a.seqB_),
-          arc_matches_(a.arc_matches_),
           bpsA_(a.bpsA_),
           bpsB_(a.bpsB_),
           r_(a.r_),
@@ -102,15 +101,14 @@ namespace LocARNA {
 
     AlignerImpl::AlignerImpl(const Sequence &seqA,
                              const Sequence &seqB,
-                             const ArcMatches &arc_matches,
                              const AlignerParams *ap,
                              const Scoring *s)
-        : params_(new AlignerParams(*ap)),
+        : params_(std::make_unique<AlignerParams>(*ap)),
           scoring_(s),
-          mod_scoring_(0),
+          mod_scoring_(nullptr),
+          arc_matches_(*s->arc_matches()),
           seqA_(seqA),
           seqB_(seqB),
-          arc_matches_(arc_matches),
           bpsA_(arc_matches_.get_base_pairsA()),
           bpsB_(arc_matches_.get_base_pairsB()),
           r_(1, 1, seqA.length(), seqB.length()),
@@ -139,12 +137,6 @@ namespace LocARNA {
     }
 
     AlignerImpl::~AlignerImpl() {
-        assert(params_ != 0);
-        delete params_;
-
-        if (mod_scoring_ != 0) {
-            delete mod_scoring_;
-        }
     }
 
     Alignment const &
@@ -1590,10 +1582,8 @@ namespace LocARNA {
         if (!pimpl_->D_created_)
             pimpl_->align_D();
 
-        if (pimpl_->mod_scoring_)
-            delete pimpl_->mod_scoring_;
-        pimpl_->mod_scoring_ = new Scoring(
-            *pimpl_->scoring_); // make mod_scoring point to a copy of scoring
+        // make mod_scoring point to a new copy of scoring
+        pimpl_->mod_scoring_.reset(new Scoring(*pimpl_->scoring_));
 
         // Apply Dinkelbach's algorithm
 
@@ -1664,10 +1654,8 @@ namespace LocARNA {
         if (!pimpl_->D_created_)
             pimpl_->align_D();
 
-        if (pimpl_->mod_scoring_)
-            delete pimpl_->mod_scoring_;
-        pimpl_->mod_scoring_ = new Scoring(
-            *pimpl_->scoring_); // make mod_scoring point to a copy of scoring
+        // make mod_scoring point to a new copy of scoring
+        pimpl_->mod_scoring_.reset(new Scoring(*pimpl_->scoring_));
 
         // modify the scoring by lambda
         pimpl_->mod_scoring_->modify_by_parameter(position_penalty);

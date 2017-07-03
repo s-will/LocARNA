@@ -47,8 +47,8 @@ namespace LocARNA {
          * using McCaskill's algorithm.  Optionally computes
          * additional matrices required for in-loop probabilities.
          *
-         * @param ma the RNA sequence or alignment as MultipleAlignment object
-         * @param params pfolding parameters
+         * @param ma the RNA sequence or alignment as MultipleAlignment object; the object holds a copy of ma
+         * @param params pfolding parameters; implicitely, the object holds a copy of the model details in PFoldParams
          * @param inLoopProbs whether in loop probabilities should be made
          * available
          * @param use_alifold whether alifold should be used
@@ -316,6 +316,7 @@ namespace LocARNA {
          */
         double
         arc_external_prob(size_type i, size_type j) const;
+
     private:
         //! pointer to corresponding RnaEnsembleImpl object
         std::unique_ptr<RnaEnsembleImpl> pimpl_;
