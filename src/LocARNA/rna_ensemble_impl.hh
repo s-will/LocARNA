@@ -8,6 +8,7 @@
 #include "rna_ensemble.hh"
 #include "multiple_alignment.hh"
 #include "sparse_matrix.hh"
+#include "pfold_params.hh"
 
 #include "mcc_matrices.hh"
 
@@ -46,6 +47,12 @@ namespace LocARNA {
         double min_free_energy_; //!< minimum free energy (if computed anyway)
         std::string min_free_energy_structure_; //!< minimum free energy
                                                 //!structure (if computed)
+
+        //! partition folding parameters
+        const PFoldParams pfparams_;
+
+        int
+        revtype(size_t x) const;
 
         /**
          * @brief Construct from sequence or multiple alignment
@@ -86,7 +93,6 @@ namespace LocARNA {
         /**
          * \brief (re)compute the pair probabilities
          *
-         * @param params pfolding parameters
          * @param inLoopProbs whether in loop probabilities should be made
          * available
          * @param use_alifold whether alifold should be used
@@ -94,8 +100,7 @@ namespace LocARNA {
          * @pre unless use_alifold, sequence row number has to be 1
          */
         void
-        compute_ensemble_probs(const PFoldParams &params,
-                               bool inLoopProbs,
+        compute_ensemble_probs(bool inLoopProbs,
                                bool use_alifold);
 
         /**
@@ -231,12 +236,11 @@ namespace LocARNA {
          *
          * @pre sequence_ has exactly one row
          *
-         * @param params parameters for partition folding
          * @param inLoopProbs whether to compute information for in loop
          * probablities
          */
         void
-        compute_McCaskill_matrices(const PFoldParams &params, bool inLoopProbs);
+        compute_McCaskill_matrices(bool inLoopProbs);
 
         /**
          * \brief Computes the McCaskill matrices and keeps them accessible
@@ -244,13 +248,11 @@ namespace LocARNA {
          *
          * Allocates and fills the McCaskill alifold matrices.
          *
-         * @param params parameters for partition folding
          * @param inLoopProbs whether to compute and keep information for in
          * loop probablities
          */
         void
-        compute_McCaskill_alifold_matrices(const PFoldParams &params,
-                                           bool inLoopProbs);
+        compute_McCaskill_alifold_matrices(bool inLoopProbs);
     };
 
 } // end namespace LocARNA
