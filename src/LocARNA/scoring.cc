@@ -25,12 +25,12 @@ namespace LocARNA {
                      const Sequence &seqB_,
                      const RnaData &rna_dataA_,
                      const RnaData &rna_dataB_,
-                     const ArcMatches &arc_matches_,
+                     const ArcMatches &arc_matches,
                      const MatchProbs *match_probs_,
                      const ScoringParams &params_,
                      bool exp_scores)
         : params(&params_),
-          arc_matches(&arc_matches_),
+          arc_matches_(&arc_matches),
           match_probs(match_probs_),
           rna_dataA(rna_dataA_),
           rna_dataB(rna_dataB_),
@@ -269,9 +269,9 @@ namespace LocARNA {
         // score_t weight =
         // score_t cond_weight = probToWeight(cond_prob);
 
-        precompute_weights(rna_dataA, arc_matches->get_base_pairsA(),
+        precompute_weights(rna_dataA, arc_matches_->get_base_pairsA(),
                            params->exp_probA, weightsA, stack_weightsA);
-        precompute_weights(rna_dataB, arc_matches->get_base_pairsB(),
+        precompute_weights(rna_dataB, arc_matches_->get_base_pairsB(),
                            params->exp_probB, weightsB, stack_weightsB);
     }
 
@@ -487,7 +487,7 @@ namespace LocARNA {
     score_t
     Scoring::arcmatch(const Arc &arcA, const Arc &arcB, bool stacked) const {
         // this method is disallowed with explicit arcmatch scores
-        assert(!arc_matches->explicit_scores());
+        assert(!arc_matches_->explicit_scores());
 
         // assert: if stacking score requested, inner arcs must have
         // probability > 0; moreover, there must be a non-zero joint
@@ -587,9 +587,9 @@ namespace LocARNA {
     score_t
     Scoring::arcmatch(const ArcMatch &am, bool stacked) const {
         score_t score;
-        if (arc_matches
+        if (arc_matches_
                 ->explicit_scores()) { // does not take stacking into account!!!
-            score = arc_matches->get_score(am) - 4 * lambda_;
+            score = arc_matches_->get_score(am) - 4 * lambda_;
         } else {
             const Arc &arcA = am.arcA();
             const Arc &arcB = am.arcB();

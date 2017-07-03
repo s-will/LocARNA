@@ -450,7 +450,6 @@ main(int argc, char **argv) {
                            .pf_scale((pf_score_t)clp.pf_scale)
                            .seqA(seqA)
                            .seqB(seqB)
-                           .arc_matches(*arc_matches)
                            .scoring(scoring)
                            .no_lonely_pairs(false)
                            .struct_local(false)

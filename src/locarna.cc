@@ -662,7 +662,6 @@ main(int argc, char **argv) {
     Aligner aligner = Aligner::create()
                           .seqA(seqA)
                           .seqB(seqB)
-                          .arc_matches(*arc_matches)
                           .scoring(scoring)
                           .no_lonely_pairs(clp.no_lonely_pairs)
                           .struct_local(clp.struct_local)
