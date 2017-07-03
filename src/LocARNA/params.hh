@@ -107,8 +107,6 @@ namespace LocARNA {
 
         const Sequence *seqB_; //!< sequence B
 
-        const ArcMatches *arc_matches_; //!< arc matches
-
         const Scoring *scoring_; //!< scoring object
 
         bool no_lonely_pairs_; //!< no lonely pairs option
@@ -155,16 +153,6 @@ namespace LocARNA {
         AlignerParams &
         seqB(const Sequence &seqB) {
             seqB_ = &seqB;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter arc matches
-         * @param seqB arc matches
-         */
-        AlignerParams &
-        arc_matches(const ArcMatches &arc_matches) {
-            arc_matches_ = &arc_matches;
             return *this;
         }
 
@@ -288,7 +276,6 @@ namespace LocARNA {
         AlignerParams()
             : seqA_(nullptr),
               seqB_(nullptr),
-              arc_matches_(nullptr),
               scoring_(nullptr),
               no_lonely_pairs_(false),
               struct_local_(false),

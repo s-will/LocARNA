@@ -5,12 +5,13 @@
 #include <config.h>
 #endif
 
+#include <memory>
+
 #include "aligner.hh"
 
 #include "aligner_restriction.hh"
 #include "scoring.hh"
 #include "alignment.hh"
-#include "arc_matches.hh"
 #include "params.hh"
 
 namespace LocARNA {
@@ -34,17 +35,18 @@ namespace LocARNA {
         //! an arc
         typedef BasePairs__Arc Arc;
 
-        const AlignerParams *params_; //!< the parameter for the alignment
+        const std::unique_ptr<AlignerParams> params_; //!< the parameter for the alignment
 
         const Scoring *scoring_; //!< the scores
-        Scoring *mod_scoring_; //!< used in normalized scoring, when we need to
-                               //!modify the scoring
+
+        //! used in normalized scoring, when we need to modify the scoring
+        std::unique_ptr<Scoring> mod_scoring_;
+
+        //! hold arc matches ref for convenience; equals scoring_->arc_matches()
+        const ArcMatches &arc_matches_;
 
         const Sequence &seqA_; //!< sequence A
         const Sequence &seqB_; //!< sequence B
-
-        const ArcMatches
-            &arc_matches_; //!< the potential arc matches between A and B
 
         const BasePairs &bpsA_; //!< base pairs of A
         const BasePairs &bpsB_; //!< base pairs of B
@@ -236,7 +238,7 @@ namespace LocARNA {
              */
             const Scoring *
             scoring() const {
-                return aligner_impl_->mod_scoring_;
+                return aligner_impl_->mod_scoring_.get();
             }
 
             /**
@@ -287,13 +289,11 @@ namespace LocARNA {
          *
          * @param seqA sequence A
          * @param seqB sequence B
-         * @param arc_matches arc matches
          * @param ap parameter for aligner
          * @param s scoring object
          */
         AlignerImpl(const Sequence &seqA,
                     const Sequence &seqB,
-                    const ArcMatches &arc_matches,
                     const AlignerParams *ap,
                     const Scoring *s);
 

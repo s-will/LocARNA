@@ -163,6 +163,13 @@ namespace LocARNA {
             return vc_->exp_params->model_details.pair[c][d];
         }
 
+        int
+        rtype(size_t x) const {
+            assert(vc_);
+            assert(vc_->exp_params);
+            return vc_->exp_params->model_details.rtype[x];
+        }
+
         vrna_fold_compound_t *vc() {return vc_;}
 
     protected:

@@ -190,6 +190,9 @@ namespace LocARNA {
          * @param beta_factor_
          * @param gamma_factor_
          * @param probability_scale_
+         *
+         * @note Store only pointers to objects passed by pointer; the objects
+         * must be kept alive by the caller
          */
         ScoringParams(score_t basematch_,
                       score_t basemismatch_,
@@ -274,6 +277,12 @@ namespace LocARNA {
      * @todo check proper use of unpaired penalty; e.g. is correction
      * needed for arc match (like for lambda)??
      *
+     * @note holds only pointers and references to passed objects; since no
+     * copies are made,
+     * the caller is responsible to keep the objects alive
+     *
+     * @note the set of possible arc matches is considered part of the scoring
+     * information for alignments
      */
     class Scoring {
     public:
@@ -282,7 +291,7 @@ namespace LocARNA {
     private:
         const ScoringParams *params; //!< a collection of parameters for scoring
 
-        const ArcMatches *arc_matches; //!< arc matches
+        const ArcMatches *arc_matches_; //!< arc matches
 
         const MatchProbs *match_probs; //!< base match probabilities
 
@@ -583,6 +592,13 @@ namespace LocARNA {
                  const BasePairs__Arc &arcB,
                  bool stacked = false) const;
 
+        /** Read access to the stored arc_matches pointer
+         */
+        const ArcMatches *
+        arc_matches() const {
+            return arc_matches_;
+        }
+
         /**
          * @brief Very basic interface, score of aligning a basepair to gap
          *
@@ -788,12 +804,12 @@ namespace LocARNA {
                                           // aligning an arc to a gap is not
                                           // defined and implemented!
 
-        if (arc_matches
+        if (arc_matches_
                 ->explicit_scores()) { // will not take stacking into account!!!
             std::cerr
                 << "ERROR sparse explicit scores is not supported!"
                 << std::endl; // TODO: Supporting explicit scores for arcgap
-            assert(!arc_matches->explicit_scores());
+            assert(!arc_matches_->explicit_scores());
         }
 
         if (!params->mea_scoring) {

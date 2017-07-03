@@ -679,7 +679,6 @@ main(int argc, char **argv) {
             .sparsification_mapperB(mapperB)
             .seqA(seqA)
             .seqB(seqB)
-            .arc_matches(*arc_matches)
             .scoring(scoring)
             //. no_lonely_pairs(clp.no_lonely_pairs)
             .no_lonely_pairs(false) // ignore no lonely pairs in alignment algo
