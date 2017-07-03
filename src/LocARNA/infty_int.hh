@@ -83,7 +83,8 @@ namespace LocARNA {
          * @brief Construct from base type
          * @param x base type value
          */
-        explicit TaintedInftyInt(const base_type &x) : val(x) {}
+        explicit
+        TaintedInftyInt(const base_type &x) : val(x) {}
 
         /**
          * @brief minimum finite value
@@ -351,7 +352,8 @@ namespace LocARNA {
          *
          * @param x value of base type
          */
-        explicit InftyInt(const base_type &x) : TaintedInftyInt(x) {
+        explicit
+        InftyInt(const base_type &x) : TaintedInftyInt(x) {
             assert(is_normal());
         }
 
@@ -360,7 +362,8 @@ namespace LocARNA {
          *
          * @param x value
          */
-        explicit InftyInt(const FiniteInt &x);
+        explicit
+        InftyInt(const FiniteInt &x);
 
         /**
          * @brief Construct from potentially tainted

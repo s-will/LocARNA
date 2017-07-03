@@ -182,8 +182,8 @@ namespace LocARNA {
         //! @todo profile and potentially optimize
         bool
         allowed_del_unopt(size_type i, size_type j) const {
-            assert(0<=i); assert(i<=lenA_);
-            assert(0<=j); assert(j<=lenB_);
+            assert(i<=lenA_);
+            assert(j<=lenB_);
 
             if (is_anchored_a(i)) return false;
 
@@ -210,7 +210,7 @@ namespace LocARNA {
         bool
         allowed_del(size_type i, size_type j) const {
             assert(1<=i); assert(i<=lenA_);
-            assert(0<=j); assert(j<=lenB_);
+            assert(j<=lenB_);
             return adr_[i].first<=j && j<=adr_[i].second;
         }
 
@@ -221,8 +221,8 @@ namespace LocARNA {
         //! @see allowed_match(), allowed_del()
         bool
         allowed_ins_unopt(size_type i, size_type j) const {
-            assert(0<=i); assert(i<=lenA_);
-            assert(0<=j); assert(j<=lenB_);
+            assert(i<=lenA_);
+            assert(j<=lenB_);
 
             if (is_anchored_b(j)) return false;
 
@@ -248,7 +248,7 @@ namespace LocARNA {
         //! @see allowed_match(), allowed_del()
         bool
         allowed_ins(size_type i, size_type j) const {
-            assert(0<=i); assert(i<=lenA_);
+            assert(i<=lenA_);
             assert(1<=j); assert(j<=lenB_);
             return air_[j].first<=i && i<=air_[j].second;
         }
@@ -450,7 +450,7 @@ namespace LocARNA {
         static
         bool
         is_named(size_type len, const int_vec_t &anchors, size_type i) {
-            assert(0<=i); assert(i<=len+1);
+            assert(i<=len+1);
             return i==0 || i==len+1 || anchors[i]!=0;
         };
 
@@ -465,7 +465,7 @@ namespace LocARNA {
         static
         bool
         is_anchored(size_type len, const int_vec_t &anchors, size_type i) {
-            assert(0<=i); assert(i<=len);
+            assert(i<=len);
             return i==0 || i==len+1 || anchors[i]>0;
         }
 

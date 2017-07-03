@@ -766,7 +766,7 @@ namespace LocARNA {
         bool
         matching_wo_gap(index_t idxA,
                         index_t idxB,
-                        matpos_t idx_pos_diag,
+                        const matpos_t &idx_pos_diag,
                         pair_seqpos_t seq_pos_to_be_matched) const {
             pair_seqpos_t pos_diag = pos_in_seq(idxA, idxB, idx_pos_diag);
             return (pos_diag.first + 1 == seq_pos_to_be_matched.first) &&
@@ -954,7 +954,7 @@ namespace LocARNA {
          * @param cur_pos_ matrix position
          */
         void
-        set_cur_pos(matpos_t cur_pos_) {
+        set_cur_pos(const matpos_t &cur_pos_) {
             cur_pos = cur_pos_;
         }
 

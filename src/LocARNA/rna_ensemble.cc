@@ -532,13 +532,7 @@ namespace LocARNA {
         p *= MCm->qb(i + 1, j - 1) / MCm->qb(i, j);
 
         for (size_t s = 0; s < n_seq; s++) {
-            size_t u1 = MCm->a2s(s, i + 1 - 1) - MCm->a2s(s, i);
-            size_t u2 = MCm->a2s(s, j - 1) - MCm->a2s(s, j - 1);
-
-            assert(u1 == 0);
-            assert(u2 == 0);
-
-            p *= exp_E_IntLoop(u1, u2, type[s], rtype[type2[s]], MCm->S3(s, i),
+            p *= exp_E_IntLoop(0, 0, type[s], rtype[type2[s]], MCm->S3(s, i),
                                MCm->S5(s, j), MCm->S5(s, i + 1),
                                MCm->S3(s, j - 1), MCm->exp_params());
         }

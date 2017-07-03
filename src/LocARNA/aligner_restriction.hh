@@ -132,7 +132,7 @@ namespace LocARNA {
      * @note Writes r to out
      */
     inline std::ostream &
-    operator<<(std::ostream &out, AlignerRestriction r) {
+    operator<<(std::ostream &out, const AlignerRestriction &r) {
         return out << r.startA() << " " << r.startB() << " " << r.endA() << " "
                    << r.endB();
     }

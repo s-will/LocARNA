@@ -20,6 +20,7 @@ namespace LocARNA {
          *
          * @param distvec vector defining discrete distribution
          */
+        explicit
         DiscreteDistribution(const std::vector<double> &distvec) {
             if (distvec.size() == 0)
                 return;

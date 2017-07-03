@@ -655,7 +655,7 @@ namespace LocARNA {
          * @return whether sequence with given name exists in multiple alignment
         */
         bool
-        contains(std::string name) const;
+        contains(const std::string &name) const;
 
         /* index access saves time over access by sequence name */
 

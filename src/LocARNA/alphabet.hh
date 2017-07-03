@@ -111,7 +111,7 @@ namespace LocARNA {
      */
     template <class T>
     std::ostream &
-    operator<<(std::ostream &out, Alphabet<T> a);
+    operator<<(std::ostream &out, const Alphabet<T> &a);
 }
 
 #include "alphabet.icc"
