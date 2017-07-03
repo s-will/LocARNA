@@ -78,7 +78,6 @@ namespace LocARNA {
     AlignerImpl::AlignerImpl(const AlignerImpl &a)
         : params_(std::make_unique<AlignerParams>(*a.params_)),
           scoring_(a.scoring_),
-          mod_scoring_(nullptr),
           arc_matches_(a.arc_matches_),
           seqA_(a.seqA_),
           seqB_(a.seqB_),
@@ -96,7 +95,6 @@ namespace LocARNA {
           D_created_(a.D_created_),
           alignment_(a.alignment_),
           def_scoring_view_(this),
-          mod_scoring_view_(this),
           free_endgaps_(a.free_endgaps_) {}
 
     AlignerImpl::AlignerImpl(const Sequence &seqA,
@@ -105,7 +103,6 @@ namespace LocARNA {
                              const Scoring *s)
         : params_(std::make_unique<AlignerParams>(*ap)),
           scoring_(s),
-          mod_scoring_(nullptr),
           arc_matches_(*s->arc_matches()),
           seqA_(seqA),
           seqB_(seqB),
@@ -119,7 +116,6 @@ namespace LocARNA {
           D_created_(false),
           alignment_(seqA, seqB),
           def_scoring_view_(this),
-          mod_scoring_view_(this),
           free_endgaps_(params_->free_endgaps_) {
         Ms_.resize(params_->struct_local_ ? 8 : 1);
         Es_.resize(params_->struct_local_ ? 4 : 1);
@@ -163,7 +159,7 @@ namespace LocARNA {
                             pos_type bl,
                             pos_type i,
                             pos_type j,
-                            ScoringView sv) {
+                            const ScoringView *sv) {
         assert(0 <= state && state < 4);
 
         assert(params_->trace_controller_->is_valid(i, j));
@@ -173,11 +169,10 @@ namespace LocARNA {
         infty_score_t &F = Fs_[state];
 
         // compute E entry
-        if (params_->constraints_->allowed_del(i, j)) {
-            // due to constraints, i can be deleted
-            E[j] = std::max(E[j] + sv.scoring()->gapA(i), M(i - 1, j) +
-                                sv.scoring()->gapA(i) +
-                                sv.scoring()->indel_opening());
+        if (params_->constraints_->allowed_del(i, j)) {// due to constraints, i can be deleted
+            E[j] = std::max(E[j] + sv->scoring()->gapA(i), M(i - 1, j) +
+                                sv->scoring()->gapA(i) +
+                                sv->scoring()->indel_opening());
         } else {
             // due to constraints, i cannot be deleted
             E[j] = infty_score_t::neg_infty;
@@ -186,9 +181,9 @@ namespace LocARNA {
         // compute F entry
         if (params_->constraints_->allowed_ins(i, j)) {
             // due to constraints, j can be inserted
-            F = std::max(F + sv.scoring()->gapB(j), M(i, j - 1) +
-                             sv.scoring()->gapB(j) +
-                             sv.scoring()->indel_opening());
+            F = std::max(F + sv->scoring()->gapB(j), M(i, j - 1) +
+                             sv->scoring()->gapB(j) +
+                             sv->scoring()->indel_opening());
         } else {
             // due to constraints, j cannot be inserted
             F = infty_score_t::neg_infty;
@@ -199,7 +194,7 @@ namespace LocARNA {
 
         // base match
         if (params_->constraints_->allowed_match(i, j)) {
-            max_score = M(i - 1, j - 1) + sv.scoring()->basematch(i, j);
+            max_score = M(i - 1, j - 1) + sv->scoring()->basematch(i, j);
         }
 
         // base del
@@ -229,11 +224,11 @@ namespace LocARNA {
                     // (params_->constraints_->allowed_match(arcA->left(),arcB->left()))
                     // or other "constraints"
                     // because for these arc matches holds that
-                    // sv.D(*arcA,*arcB)==neg_infty
+                    // sv->D(*arcA,*arcB)==neg_infty
 
                     tainted_infty_score_t new_score =
                         M(arcA->left() - 1, arcB->left() - 1) +
-                        sv.D(*arcA, *arcB);
+                        sv->D(*arcA, *arcB);
 
                     if (new_score <= max_score) continue;
 
@@ -331,7 +326,7 @@ namespace LocARNA {
                             bool exclA,
                             bool globalB,
                             bool exclB,
-                            ScoringView sv) {
+                            const ScoringView *sv) {
         // alignments that have empty subsequence in A (i=al) and
         // end with gap in alistr of B do not exist ==> -infty
         if (state < 4) {
@@ -352,9 +347,9 @@ namespace LocARNA {
         // init first col bl
         //
         infty_score_t indel_score =
-            (infty_score_t)sv.scoring()->indel_opening();
+            (infty_score_t)sv->scoring()->indel_opening();
         if (exclA) {
-            indel_score = (infty_score_t)sv.scoring()->exclusion();
+            indel_score = (infty_score_t)sv->scoring()->exclusion();
         } else if (!globalA) {
             indel_score = (infty_score_t)0;
         }
@@ -372,7 +367,7 @@ namespace LocARNA {
                 if (!params_->constraints_->allowed_del(i, bl)) {
                     indel_score = infty_score_t::neg_infty;
                 } else if (!exclA && globalA) {
-                    indel_score += sv.scoring()->gapA(i);
+                    indel_score += sv->scoring()->gapA(i);
                 }
             }
             M(i, bl) = (infty_score_t)indel_score;
@@ -387,9 +382,9 @@ namespace LocARNA {
 
         // init first row al
         //
-        indel_score = (infty_score_t)sv.scoring()->indel_opening();
+        indel_score = (infty_score_t)sv->scoring()->indel_opening();
         if (exclB) {
-            indel_score = (infty_score_t)sv.scoring()->exclusion();
+            indel_score = (infty_score_t)sv->scoring()->exclusion();
         } else if (!globalB) {
             indel_score = (infty_score_t)0;
         }
@@ -402,7 +397,7 @@ namespace LocARNA {
                 if (!params_->constraints_->allowed_ins(al, j)) {
                     indel_score = infty_score_t::neg_infty;
                 } else if (!exclB && globalB && !indel_score.is_neg_infty()) {
-                    indel_score += sv.scoring()->gapB(j);
+                    indel_score += sv->scoring()->gapB(j);
                 }
             }
             M(al, j) = (infty_score_t)indel_score;
@@ -448,25 +443,25 @@ namespace LocARNA {
         // since an exclusion can be introduced.
 
         init_state(E_NO_NO, al, ar, bl, br, true, false, true, false,
-                   def_scoring_view_);
+                   &def_scoring_view_);
 
         if (allow_exclusion) {
             init_state(E_X_NO, al, ar, bl, br, true, true, true, false,
-                       def_scoring_view_);
+                       &def_scoring_view_);
             init_state(E_NO_X, al, ar, bl, br, true, false, true, true,
-                       def_scoring_view_);
+                       &def_scoring_view_);
             init_state(E_X_X, al, ar, bl, br, true, true, true, true,
-                       def_scoring_view_);
+                       &def_scoring_view_);
 
             // open states
             init_state(E_OP_NO, al, ar, bl, br, false, false, true, false,
-                       def_scoring_view_);
+                       &def_scoring_view_);
             init_state(E_NO_OP, al, ar, bl, br, true, false, false, false,
-                       def_scoring_view_);
+                       &def_scoring_view_);
             init_state(E_X_OP, al, ar, bl, br, true, true, false, false,
-                       def_scoring_view_);
+                       &def_scoring_view_);
             init_state(E_OP_X, al, ar, bl, br, false, false, true, true,
-                       def_scoring_view_);
+                       &def_scoring_view_);
         }
 
         // ----------------------------------------
@@ -484,7 +479,7 @@ namespace LocARNA {
 
             for (pos_type j = min_col; j <= max_col; j++) {
                 Ms_[E_NO_NO](i, j) =
-                    align_noex(E_NO_NO, al, bl, i, j, def_scoring_view_);
+                    align_noex(E_NO_NO, al, bl, i, j, &def_scoring_view_);
             }
         }
 
@@ -541,7 +536,7 @@ namespace LocARNA {
                 for (pos_type j = min_col; j <= max_col; j++) {
                     Ms_[state](i, j) =
                         std::max(align_noex(state, al, bl, i, j,
-                                            def_scoring_view_),
+                                            &def_scoring_view_),
                                  Ms_[E_NO_OP](i, j) + scoring_->exclusion());
                 }
             }
@@ -575,7 +570,7 @@ namespace LocARNA {
                 for (pos_type j = min_col; j <= max_col; j++) {
                     Ms_[state](i, j) =
                         std::max(align_noex(state, al, bl, i, j,
-                                            def_scoring_view_),
+                                            &def_scoring_view_),
                                  Ms_[E_OP_NO](i, j) + scoring_->exclusion());
                 }
             }
@@ -608,7 +603,7 @@ namespace LocARNA {
 
                 for (pos_type j = min_col; j <= max_col; j++) {
                     Ms_[state](i, j) = std::max(
-                        align_noex(state, al, bl, i, j, def_scoring_view_),
+                        align_noex(state, al, bl, i, j, &def_scoring_view_),
                         std::max(Ms_[E_OP_X](i, j) + scoring_->exclusion(),
                                  Ms_[E_X_OP](i, j) + scoring_->exclusion()));
                 }
@@ -796,7 +791,7 @@ namespace LocARNA {
 
         init_state(E_NO_NO, r_.startA() - 1, r_.endA() + 1, r_.startB() - 1,
                    r_.endB() + 1, !free_endgaps_.allow_left_2(), false,
-                   !free_endgaps_.allow_left_1(), false, def_scoring_view_);
+                   !free_endgaps_.allow_left_1(), false, &def_scoring_view_);
 
         // need to handle anchor constraints:
         // search maximum to the right of (or at) rightmost anchor constraint
@@ -817,7 +812,7 @@ namespace LocARNA {
 
             for (pos_type j = min_col; j <= max_col; j++) {
                 M(i, j) = align_noex(E_NO_NO, r_.startA() - 1, r_.startB() - 1,
-                                     i, j, def_scoring_view_);
+                                     i, j, &def_scoring_view_);
             }
         }
 
@@ -870,7 +865,7 @@ namespace LocARNA {
     //
     template <class ScoringView>
     infty_score_t
-    AlignerImpl::align_top_level_locally(ScoringView sv) {
+    AlignerImpl::align_top_level_locally(const ScoringView *sv) {
         // std::cout << r << std::endl;
 
         M_matrix_t &M = Ms_[E_NO_NO];
@@ -947,7 +942,7 @@ namespace LocARNA {
 
         M_matrix_t &M=Ms_[E_NO_NO];
         infty_score_t max_score=infty_score_t::neg_infty;
-        init_state(E_NO_NO,r_.startA()-1,r_.endA()+1,r_.startB()-1,r_.endB()+1,true,false,false,false,def_scoring_view_);
+        init_state(E_NO_NO,r_.startA()-1,r_.endA()+1,r_.startB()-1,r_.endB()+1,true,false,false,false,&def_scoring_view_);
 
         for (pos_type i=r_.startA(); i<=r_.endA(); i++) {
 
@@ -961,7 +956,7 @@ namespace LocARNA {
                 M(i,j) =
                     std::max( (infty_score_t)0,
                               align_noex( E_NO_NO,
-                                          r_.startA()-1,r_.startB()-1,i,j,def_scoring_view_
+                                          r_.startA()-1,r_.startB()-1,i,j,&def_scoring_view_
     ) );
                 if (i==r_.endA() && max_score < M(i,j)) {
                     max_score=M(i,j);
@@ -986,7 +981,7 @@ namespace LocARNA {
             align_D();
 
         if (params_->sequ_local_) {
-            return align_top_level_locally(def_scoring_view_);
+            return align_top_level_locally(&def_scoring_view_);
         } else { // sequence global alignment
 
             // align toplevel globally with potentially free endgaps (as given
@@ -1068,12 +1063,12 @@ namespace LocARNA {
         // then, trace in new M
         if (!params_->struct_local_) {
             trace_in_arcmatch(0, al, ar - 1, bl, br - 1, false,
-                              def_scoring_view_);
+                              &def_scoring_view_);
         } else {
             for (pos_type k = 0; k < 4; k++) {
                 if (D(am) == Ms_[k](ar - 1, br - 1) + scoring_->arcmatch(am)) {
                     trace_in_arcmatch(k, al, ar - 1, bl, br - 1, false,
-                                      def_scoring_view_);
+                                      &def_scoring_view_);
                     break;
                 }
             }
@@ -1114,7 +1109,7 @@ namespace LocARNA {
             if (!params_->struct_local_) {
                 trace_in_arcmatch(0, arcAI.left(), arcAI.right() - 1,
                                   arcBI.left(), arcBI.right() - 1, false,
-                                  def_scoring_view_);
+                                  &def_scoring_view_);
             } else {
                 for (pos_type k = 0; k < 4; k++) {
                     if (D(am) ==
@@ -1123,7 +1118,7 @@ namespace LocARNA {
                             scoring_->arcmatch(inner_am)) {
                         trace_in_arcmatch(k, arcAI.left(), arcAI.right() - 1,
                                           arcBI.left(), arcBI.right() - 1,
-                                          false, def_scoring_view_);
+                                          false, &def_scoring_view_);
                         break;
                     }
                 }
@@ -1141,29 +1136,29 @@ namespace LocARNA {
                             pos_type obl,
                             pos_type j,
                             bool tl,
-                            ScoringView sv) {
+                            const ScoringView *sv) {
         M_matrix_t &M = Ms_[state];
 
         // determine where we get M(i,j) from
 
         // std::cout << i << " " << j << " " <<
-        // sv.scoring()->basematch(i,j)<<std::endl;
+        // sv->scoring()->basematch(i,j)<<std::endl;
 
         // match
         if (params_->constraints_->allowed_match(i, j) &&
             params_->trace_controller_->is_valid(i - 1, j - 1) &&
-            M(i, j) == M(i - 1, j - 1) + sv.scoring()->basematch(i, j)) {
+            M(i, j) == M(i - 1, j - 1) + sv->scoring()->basematch(i, j)) {
             trace_in_arcmatch(state, oal, i - 1, obl, j - 1, tl, sv);
             alignment_.append(i, j);
             return;
         }
 
-        if (sv.scoring()->indel_opening() ==
+        if (sv->scoring()->indel_opening() ==
             0) { // base del and ins, linear cost
             // del
             if (params_->constraints_->allowed_del(i, j) &&
                 params_->trace_controller_->is_valid(i - 1, j) &&
-                M(i, j) == M(i - 1, j) + sv.scoring()->gapA(i)) {
+                M(i, j) == M(i - 1, j) + sv->scoring()->gapA(i)) {
                 trace_in_arcmatch(state, oal, i - 1, obl, j, tl, sv);
                 alignment_.append(i, -1);
                 return;
@@ -1171,7 +1166,7 @@ namespace LocARNA {
             // ins
             if (params_->constraints_->allowed_ins(i, j) &&
                 params_->trace_controller_->is_valid(i, j - 1) &&
-                M(i, j) == M(i, j - 1) + sv.scoring()->gapB(j)) {
+                M(i, j) == M(i, j - 1) + sv->scoring()->gapB(j)) {
                 trace_in_arcmatch(state, oal, i, obl, j - 1, tl, sv);
                 alignment_.append(-1, j);
                 return;
@@ -1180,7 +1175,7 @@ namespace LocARNA {
             // since, we didn't store all values in the E and F matrix
             // we do the traceback in linear time per entry
             // base del
-            score_t gap_cost = sv.scoring()->indel_opening();
+            score_t gap_cost = sv->scoring()->indel_opening();
             for (pos_type k = 1; (i >= oal + k) &&
                      params_->constraints_->allowed_del(i - k + 1, j);
                  k++) {
@@ -1190,7 +1185,7 @@ namespace LocARNA {
                 if (!params_->trace_controller_->is_valid(i - k, j))
                     break;
 
-                gap_cost += sv.scoring()->gapA(i - k + 1);
+                gap_cost += sv->scoring()->gapA(i - k + 1);
 
                 if (M(i, j) == M(i - k, j) + gap_cost) {
                     // gap in A of length k
@@ -1203,7 +1198,7 @@ namespace LocARNA {
             }
 
             // base ins
-            gap_cost = sv.scoring()->indel_opening();
+            gap_cost = sv->scoring()->indel_opening();
             for (pos_type k = 1; (j >= obl + k) &&
                      params_->constraints_->allowed_ins(i, j - k + 1);
                  k++) {
@@ -1213,7 +1208,7 @@ namespace LocARNA {
                 if (!params_->trace_controller_->is_valid(i, j - k))
                     break;
 
-                gap_cost += sv.scoring()->gapB(j - k + 1);
+                gap_cost += sv->scoring()->gapB(j - k + 1);
                 if (M(i, j) == M(i, j - k) + gap_cost) {
                     // gap in B of length k
                     trace_in_arcmatch(state, oal, i, obl, j - k, tl, sv);
@@ -1256,7 +1251,7 @@ namespace LocARNA {
             const pos_type al = arcA.left();
             const pos_type bl = arcB.left();
 
-            if (M(i, j) == M(al - 1, bl - 1) + sv.D(am)) {
+            if (M(i, j) == M(al - 1, bl - 1) + sv->D(am)) {
                 //
                 // do the trace for alignment left of the arc match
                 trace_in_arcmatch(state, oal, al - 1, obl, bl - 1, tl, sv);
@@ -1294,7 +1289,7 @@ namespace LocARNA {
                                    int bl,
                                    int j,
                                    bool tl,
-                                   ScoringView sv) {
+                                   const ScoringView *sv) {
         // pre: M matrices for arc computed
         M_matrix_t &M = Ms_[state];
 
@@ -1366,7 +1361,7 @@ namespace LocARNA {
                     trace_in_arcmatch(E_NO_NO, al, i, bl, j, tl, sv);
                 break;
             case E_NO_X:
-                if (M(i, j) == Ms_[E_NO_OP](i, j) + sv.scoring()->exclusion()) {
+                if (M(i, j) == Ms_[E_NO_OP](i, j) + sv->scoring()->exclusion()) {
                     trace_in_arcmatch(E_NO_OP, al, i, bl, j, tl, sv);
                 } else
                     trace_noex(state, al, i, bl, j, tl, sv);
@@ -1379,7 +1374,7 @@ namespace LocARNA {
                     trace_in_arcmatch(E_NO_X, al, i, bl, j, tl, sv);
                 break;
             case E_X_NO:
-                if (M(i, j) == Ms_[E_OP_NO](i, j) + sv.scoring()->exclusion()) {
+                if (M(i, j) == Ms_[E_OP_NO](i, j) + sv->scoring()->exclusion()) {
                     trace_in_arcmatch(E_OP_NO, al, i, bl, j, tl, sv);
                 } else
                     trace_noex(state, al, i, bl, j, tl, sv);
@@ -1392,10 +1387,10 @@ namespace LocARNA {
                     trace_in_arcmatch(E_X_NO, al, i, bl, j, tl, sv);
                 break;
             case E_X_X:
-                if (M(i, j) == Ms_[E_OP_X](i, j) + sv.scoring()->exclusion()) {
+                if (M(i, j) == Ms_[E_OP_X](i, j) + sv->scoring()->exclusion()) {
                     trace_in_arcmatch(E_OP_X, al, i, bl, j, tl, sv);
                 } else if (M(i, j) ==
-                           Ms_[E_X_OP](i, j) + sv.scoring()->exclusion()) {
+                           Ms_[E_X_OP](i, j) + sv->scoring()->exclusion()) {
                     trace_in_arcmatch(E_X_OP, al, i, bl, j, tl, sv);
                 } else
                     trace_noex(state, al, i, bl, j, tl, sv);
@@ -1405,7 +1400,7 @@ namespace LocARNA {
 
     template <class ScoringView>
     void
-    AlignerImpl::trace(ScoringView sv) {
+    AlignerImpl::trace(const ScoringView *sv) {
         // pre: last call
         // align_in_arcmatch(r_.startA()-1,r_.endA()+1,r_.startB()-1,r_.endB()+1);
         //      or align_top_level_locally for sequ_local_ alignent
@@ -1420,7 +1415,7 @@ namespace LocARNA {
 
     void
     Aligner::trace() {
-        pimpl_->trace(pimpl_->def_scoring_view_);
+        pimpl_->trace(&pimpl_->def_scoring_view_);
     }
 
     /* ------------------------------------------------------------
@@ -1575,15 +1570,20 @@ namespace LocARNA {
 
     infty_score_t
     Aligner::normalized_align(score_t L, bool verbose) {
+        return pimpl_->normalized_align(L, verbose);
+    }
+
+    infty_score_t
+    AlignerImpl::normalized_align(score_t L, bool verbose) {
         // The D matrix is filled as in non-normalized alignment. Because
         // alignments of the subsequences enclosed by arcs are essentially
         // global, their scores can be optimized in the same way as for
         // non-normalized alignments.
-        if (!pimpl_->D_created_)
-            pimpl_->align_D();
+        if (!D_created_)
+            align_D();
 
-        // make mod_scoring point to a new copy of scoring
-        pimpl_->mod_scoring_.reset(new Scoring(*pimpl_->scoring_));
+        // make new mod_scoring_view (including a new copy of scoring)
+        auto mod_scoring_view = std::make_unique<ModifiedScoringView>(this);
 
         // Apply Dinkelbach's algorithm
 
@@ -1602,21 +1602,20 @@ namespace LocARNA {
             lambda = new_lambda;
 
             // modify the scoring by lambda
-            pimpl_->mod_scoring_->modify_by_parameter(lambda);
-            pimpl_->mod_scoring_view_.set_lambda(lambda);
+            mod_scoring_view->set_lambda(lambda);
 
             infty_score_t score =
-                pimpl_->align_top_level_locally(pimpl_->mod_scoring_view_);
+                align_top_level_locally(mod_scoring_view.get());
 
-            pimpl_->alignment_.clear();
+            alignment_.clear();
 
             // perform a traceback for normalized alignment
-            pimpl_->trace(pimpl_->mod_scoring_view_);
+            trace(mod_scoring_view.get());
 
             // compute length (of alignment) as sum of lengths of
             // aligned subsequences from the trace
-            pos_type length = pimpl_->max_i_ - pimpl_->min_i_ + 1 +
-                pimpl_->max_j_ - pimpl_->min_j_ + 1;
+            pos_type length = max_i_ - min_i_ + 1 +
+                max_j_ - min_j_ + 1;
 
             // get score for the best alignment in the modified problem
             // but for unmodified scoring. Because for each position,
@@ -1630,7 +1629,7 @@ namespace LocARNA {
                           << " Normalized Score: " << new_lambda << std::endl;
 
             if (verbose) {
-                MultipleAlignment ma(pimpl_->alignment_, true);
+                MultipleAlignment ma(alignment_, true);
                 std::cout << "Score: " << (infty_score_t)new_lambda
                           << std::endl;
                 ma.write(std::cout, 120,
@@ -1645,27 +1644,25 @@ namespace LocARNA {
 
     // ------------------------------------------------------------
     // Penalize predicted local alignment columns by a constant
-    // Returns penalized score
-    //
-
+    // @returns penalized score
     infty_score_t
     Aligner::penalized_align(score_t position_penalty) {
-        // The D matrix is filled
-        if (!pimpl_->D_created_)
-            pimpl_->align_D();
+        return pimpl_->penalized_align(position_penalty);
+    }
 
-        // make mod_scoring point to a new copy of scoring
-        pimpl_->mod_scoring_.reset(new Scoring(*pimpl_->scoring_));
+    infty_score_t
+    AlignerImpl::penalized_align(score_t position_penalty) {
+        if (!D_created_)
+            align_D();
 
-        // modify the scoring by lambda
-        pimpl_->mod_scoring_->modify_by_parameter(position_penalty);
-        pimpl_->mod_scoring_view_.set_lambda(position_penalty);
+        auto mod_scoring_view = std::make_unique<ModifiedScoringView>(this);
+
+        mod_scoring_view->set_lambda(position_penalty);
 
         infty_score_t score =
-            pimpl_->align_top_level_locally(pimpl_->mod_scoring_view_);
+            align_top_level_locally(mod_scoring_view.get());
 
-        // perform a traceback for normalized alignment
-        pimpl_->trace(pimpl_->mod_scoring_view_);
+        trace(mod_scoring_view.get());
 
         return score;
     }
