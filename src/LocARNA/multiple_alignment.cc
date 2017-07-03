@@ -621,7 +621,7 @@ namespace LocARNA {
     }
 
     bool
-    MultipleAlignment::contains(std::string name) const {
+    MultipleAlignment::contains(const std::string &name) const {
         for (std::vector<SeqEntry>::const_iterator it = begin(); it != end();
              ++it) {
             if (name == it->name()) {

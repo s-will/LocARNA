@@ -69,7 +69,7 @@ namespace LocARNA {
              * @param k key/index of entry in given sparse matrix
              *
              */
-            element(SparseMatrix<T> *m, key_t k) : m_(m), k_(k) {}
+            element(SparseMatrix<T> *m, const key_t &k) : m_(m), k_(k) {}
 
             /**
              * @brief Access entry for which the class acts as proxy

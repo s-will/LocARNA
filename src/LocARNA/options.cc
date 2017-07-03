@@ -629,7 +629,7 @@ namespace LocARNA {
 
     void
     print_wrapped(std::string s, size_t offset, size_t width) {
-        size_t tolerance = 16;
+        static const size_t tolerance = 16;
 
         std::string t;
         if (offset + s.length() > width) {
@@ -678,6 +678,8 @@ namespace LocARNA {
      */
     void
     print_help(char *progname, option_def options[]) {
+        static const size_t width = 77;
+
         bool hide_options = false;
 
         int i;
@@ -691,7 +693,6 @@ namespace LocARNA {
             if (options[i].arg_type > O_SECTION) {
                 if (!hide_options && !positional(options, i)) {
                     size_t offset = 4;
-                    size_t width = 77;
                     if (options[i].arg_type != O_TEXT) {
                         printf("  %-5s",
                                sprint_option_name(options, i).c_str());

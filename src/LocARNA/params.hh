@@ -37,7 +37,8 @@ namespace LocARNA {
          * @note the string description is suited to specify free end gaps in
          * this way on the command line
          */
-        explicit FreeEndgapsDescription(const std::string &d) : desc(4) {
+        explicit
+        FreeEndgapsDescription(const std::string &d) : desc(4) {
             if (d.length() >= 4) {
                 for (size_t i = 0; i < 4; i++)
                     desc[i] = (d[i] == '+');
