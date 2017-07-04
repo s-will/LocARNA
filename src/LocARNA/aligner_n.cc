@@ -162,7 +162,6 @@ namespace LocARNA {
 
         const Scoring *scoring = sv.scoring();
 
-        bool constraints_aligned_pos = false;
         const BasePairs &bpsX = isA ? bpsA : bpsB;
         const SparsificationMapper &mapperX = isA ? mapperA : mapperB;
 
@@ -176,21 +175,19 @@ namespace LocARNA {
         infty_score_t max_score = infty_score_t::neg_infty;
 
         // base insertion/deletion
-        if (!constraints_aligned_pos) {
-            infty_score_t gap_score =
-                getGapCostBetween<isA>(i_prev_seq_pos, i_seq_pos) +
-                scoring->gapX<isA>(i_seq_pos);
+        infty_score_t gap_score =
+            getGapCostBetween<isA>(i_prev_seq_pos, i_seq_pos) +
+            scoring->gapX<isA>(i_seq_pos);
 
-            if (gap_score.is_finite()) {
-                // convert the base gap score to the loop gap score
-                gap_score = (infty_score_t)(
-                    scoring->loop_indel_score(gap_score.finite_value()));
-                // todo: unclean interface and casting
-            }
-            infty_score_t base_indel_score =
-                IX<isA>(i_index - 1, arcY) + gap_score;
-            max_score = std::max(max_score, base_indel_score);
+        if (gap_score.is_finite()) {
+            // convert the base gap score to the loop gap score
+            gap_score = (infty_score_t)(
+                scoring->loop_indel_score(gap_score.finite_value()));
+            // todo: unclean interface and casting
         }
+        infty_score_t base_indel_score =
+            IX<isA>(i_index - 1, arcY) + gap_score;
+        max_score = std::max(max_score, base_indel_score);
 
         // arc deletion + align left side of the arc to gap
         for (ArcIdxVec::const_iterator arcIdx = arcIdxVecX.begin();
@@ -975,7 +972,6 @@ namespace LocARNA {
 
         const BasePairs &bpsX = isA ? bpsA : bpsB;
         const SparsificationMapper &mapperX = isA ? mapperA : mapperB;
-        bool constraints_aligned_pos = false;
 
         seq_pos_t i_seq_pos = mapperX.get_pos_in_seq_new(xl, i_index);
         seq_pos_t i_prev_seq_pos = mapperX.get_pos_in_seq_new(xl, i_index - 1);
@@ -995,28 +991,24 @@ namespace LocARNA {
         }
 
         // base del and ins
-
-        if (!constraints_aligned_pos) {
-            infty_score_t gap_score =
-                getGapCostBetween<isA>(i_prev_seq_pos, i_seq_pos) +
-                scoring->gapX<isA>(i_seq_pos);
-            if (gap_score.is_finite()) { // convert the base gap score to the
-                                         // loop gap score
-                gap_score = (infty_score_t)(scoring->loop_indel_score(
-                    gap_score.finite_value())); // todo: unclean interface and
-                                                // casting
-                if (IX<isA>(i_index, arcY) ==
-                    IX<isA>(i_index - 1, arcY) + gap_score) {
-                    trace_IX<isA>(xl, i_index - 1, arcY, sv);
-                    for (size_type k = i_prev_seq_pos + 1; k <= i_seq_pos;
-                         k++) {
-                        if (isA)
-                            alignment.append(k, -2);
-                        else
-                            alignment.append(-2, k);
-                    }
-                    return;
+        infty_score_t gap_score =
+            getGapCostBetween<isA>(i_prev_seq_pos, i_seq_pos) +
+            scoring->gapX<isA>(i_seq_pos);
+        if (gap_score.is_finite()) { // convert the base gap score to the
+                                     // loop gap score
+            gap_score = (infty_score_t)(scoring->loop_indel_score(
+                gap_score.finite_value())); // todo: unclean interface and
+                                            // casting
+            if (IX<isA>(i_index, arcY) ==
+                IX<isA>(i_index - 1, arcY) + gap_score) {
+                trace_IX<isA>(xl, i_index - 1, arcY, sv);
+                for (size_type k = i_prev_seq_pos + 1; k <= i_seq_pos; k++) {
+                    if (isA)
+                        alignment.append(k, -2);
+                    else
+                        alignment.append(-2, k);
                 }
+                return;
             }
         }
 

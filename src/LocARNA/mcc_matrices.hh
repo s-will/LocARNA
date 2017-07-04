@@ -28,6 +28,7 @@ namespace LocARNA {
         /**
          * @brief construct empty
          */
+        explicit
         McC_matrices_base(vrna_fold_compound_t *vc);
 
     public:
@@ -187,6 +188,7 @@ namespace LocARNA {
          *
          * @param vc vrna fold compound (single)
          */
+        explicit
         McC_matrices_t(vrna_fold_compound_t *vc);
 
         /**
@@ -247,6 +249,7 @@ namespace LocARNA {
          *
          * @param vc vrna fold compound (alignment)
          */
+        explicit
         McC_ali_matrices_t(vrna_fold_compound_t *vc);
 
         /**

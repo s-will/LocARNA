@@ -1,16 +1,27 @@
 ============================================================
 === 2017
 
-1.9.2pre3
+1.9.2 (2017-07-04)
+	Improve consensus dotplot computation (avoid accumulation of low
+	  probability base pairs)
+	Some cleanup
+
+	1.9.2pre4
+	Fix left and rightmost anchors (fixed local alignment); add unit tests
+	Optimize maximization in innermost loop
+	Add unit and program tests
+
+	1.9.2pre3
 	Make consensus structure / dotplot types independent [option
-	--consensus-structure alifold (current default) also determined
-	the computation of consensus dotplots. The consensus dot plot is
-	now independent (new default: no alifold consensus dot plot).]
+	  --consensus-structure alifold (current default) used to also
+	  determine the computation of consensus dotplots. The consensus
+	  dot plot is now independent (new default: no alifold consensus
+	  dot plot).]
 
 	fix strict semantics for anchor constraints
         fix compatibility '--keep-sequence-order' with anchor constraints
 
-1.9.2pre2
+	1.9.2pre2
 	mlocarna: write ps files (aln.ps, alirna.ps and if probabilistic,
           alidot.ps) from alifold call on result alignment to the
           results output directory;
@@ -649,5 +660,3 @@ June 2005: extension to local alignment (sequence+structure locality),
 	no_lonely_pairs option
 Nov 2005: command line options
 Dez 2005: recognize and read dot.ps files (in add to formerly used pp-files)
-
-

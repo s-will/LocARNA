@@ -450,16 +450,17 @@ namespace LocARNA {
                     const Matrix<double> *p_basematch_scores;
                     Matrix<double> basematch_scores;
 
-                    if (ribosum!=NULL) {
-                        alphabet = & ribosum->alphabet();
-                        p_basematch_scores = & ribosum->get_basematch_scores();
-                    } else if (ribofit!=NULL) {
-                        double avg_identity = average_pairwise_identity(seqA,seqB);
-                        alphabet = & ribofit->alphabet();
-                        p_basematch_scores = & ribofit->get_basematch_scores(avg_identity,
-                                                                             basematch_scores);
+                    if (ribosum != nullptr) {
+                        alphabet = &ribosum->alphabet();
+                        p_basematch_scores = &ribosum->get_basematch_scores();
                     } else {
-                        assert(false);
+                        assert(ribofit != nullptr);
+                        double avg_identity =
+                            average_pairwise_identity(seqA, seqB);
+                        alphabet = &ribofit->alphabet();
+                        p_basematch_scores =
+                            &ribofit->get_basematch_scores(avg_identity,
+                                                           basematch_scores);
                     }
 
                     match_probs->pf_probs(*rna_dataA,*rna_dataB,

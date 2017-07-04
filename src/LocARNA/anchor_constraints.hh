@@ -182,8 +182,8 @@ namespace LocARNA {
         //! @todo profile and potentially optimize
         bool
         allowed_del_unopt(size_type i, size_type j) const {
-            assert(0<=i); assert(i<=lenA_);
-            assert(0<=j); assert(j<=lenB_);
+            assert(i<=lenA_);
+            assert(j<=lenB_);
 
             if (is_anchored_a(i)) return false;
 
@@ -210,7 +210,7 @@ namespace LocARNA {
         bool
         allowed_del(size_type i, size_type j) const {
             assert(1<=i); assert(i<=lenA_);
-            assert(0<=j); assert(j<=lenB_);
+            assert(j<=lenB_);
             return adr_[i].first<=j && j<=adr_[i].second;
         }
 
@@ -221,8 +221,8 @@ namespace LocARNA {
         //! @see allowed_match(), allowed_del()
         bool
         allowed_ins_unopt(size_type i, size_type j) const {
-            assert(0<=i); assert(i<=lenA_);
-            assert(0<=j); assert(j<=lenB_);
+            assert(i<=lenA_);
+            assert(j<=lenB_);
 
             if (is_anchored_b(j)) return false;
 
@@ -248,7 +248,7 @@ namespace LocARNA {
         //! @see allowed_match(), allowed_del()
         bool
         allowed_ins(size_type i, size_type j) const {
-            assert(0<=i); assert(i<=lenA_);
+            assert(i<=lenA_);
             assert(1<=j); assert(j<=lenB_);
             return air_[j].first<=i && i<=air_[j].second;
         }
@@ -277,27 +277,35 @@ namespace LocARNA {
             return name_size() == 0;
         }
 
-        //! return the positions (i,j) of the rightmost anchor constraint
+        /** @brief Get rightmost anchor
+         *
+         * @return the positions (i,j) of the rightmost anchor constraint
+         *
+         * @note if there are no anchors, return (0,0)
+         */
         size_pair_t
         rightmost_anchor() const {
-            for (size_type i = anchors_a_.size(); i > 1;) { // for i=lenA downto 1
-                --i;
+            for (size_type i = lenA_; i >= 1; --i) {
                 if (anchors_a_[i] > 0)
                     return size_pair_t(i, anchors_a_[i]);
             }
             return size_pair_t(0, 0);
         }
 
-        //! return the positions (i,j) of the leftmost anchor constraint
+        /** @brief Get leftmost anchor
+         *
+         * @return the positions (i,j) of the leftmost anchor constraint
+         *
+         * @note if there are no anchors, return (lenA+1,lenB+1)
+         */
         size_pair_t
         leftmost_anchor() const {
-            for (size_type i = 0; i < anchors_a_.size(); i++) {
+            for (size_type i = 0; i <= lenA_; i++) {
                 if (anchors_a_[i] > 0)
                     return size_pair_t(i, anchors_a_[i]);
             }
-            return size_pair_t(anchors_a_.size() + 1, anchors_b_.size() + 1);
+            return size_pair_t(lenA_ + 1, lenB_ + 1);
         }
-
 
         /**
          * @brief Is position in A anchored?
@@ -442,7 +450,7 @@ namespace LocARNA {
         static
         bool
         is_named(size_type len, const int_vec_t &anchors, size_type i) {
-            assert(0<=i); assert(i<=len+1);
+            assert(i<=len+1);
             return i==0 || i==len+1 || anchors[i]!=0;
         };
 
@@ -457,7 +465,7 @@ namespace LocARNA {
         static
         bool
         is_anchored(size_type len, const int_vec_t &anchors, size_type i) {
-            assert(0<=i); assert(i<=len);
+            assert(i<=len);
             return i==0 || i==len+1 || anchors[i]>0;
         }
 

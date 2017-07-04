@@ -4,7 +4,7 @@ LDADD=../libLocARNA-$(API_VERSION).la
 AM_DEFAULT_SOURCE_EXT = .cc
 
 BINTESTS = test_locarna_lib
-SCRIPTTESTS = test_mlocarna
+SCRIPTTESTS = test_programs
 
 test_locarna_lib_SOURCES = test_locarna_lib.cc multiple_alignment.cc	\
                            rna_data.cc ext_rna_data.cc			\
@@ -22,7 +22,9 @@ MYTESTRESULTS = locarnate.testresult					\
 mlocarna-archaea-alifold.testresult mlocarna-bed-anchors.testresult	\
 mlocarna-haca-constraints.testresult					\
 mlocarna-probabilistic.testresult mlocarna-sparse.testresult		\
-mlocarna-threads.testresult mlocarna-realign.testresult
+mlocarna-threads.testresult mlocarna-realign.testresult			\
+exparna_p.testresult locarna-local.testresult				\
+locarna-normalized.testresult
 
 BUILT_SOURCES = $(MYTESTDATA)
 
@@ -43,5 +45,5 @@ CLEANFILES = $(MYTESTDATA)
 ## generate test results for mlocarna test
 gen-test-results:
 	srcdir=$(srcdir) \
-	$(srcdir)/test_mlocarna --generate-references
+	$(srcdir)/test_programs --generate-references
 
