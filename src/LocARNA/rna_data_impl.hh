@@ -165,6 +165,7 @@ namespace LocARNA {
          * @param rna_dataB rna data B
          * @param p_expA background probability A
          * @param p_expB background probability B
+         * @param f_penalty factor for penalty probability: p_penalty = p_bpcut*f_penalty, @see consensus_probability()
          * @param stacking if true, stacking consensus is computed
          */
         void
@@ -173,6 +174,7 @@ namespace LocARNA {
                                    const RnaData &rna_dataB,
                                    double p_expA,
                                    double p_expB,
+                                   double f_penalty,
                                    bool stacking);
 
         /**
@@ -184,12 +186,23 @@ namespace LocARNA {
          * @param sizeB number of rows in sequence B
          * @param p_expA background probability A
          * @param p_expB background probability B
+         * @param p_penalty penalty probability for
+         *   base pairs with probability below cutoff
          *
-         * @pre p_bpcut_ is initialized
+         * @note Essentially the consensus base pair probabilities are
+         * geometric means of the combined single base pair
+         * probabilties. This is maintained by weighting the pairwise
+         * consensus computations with the respective numbers of
+         * sequences.
          *
-         * Essentially computes a weighted geometric mean; some care
-         * is taken, to avoid total extinction and to restrict the
-         * accumulation of (small) probabilities.
+         * The penalty probability p_penalty has to be chosen
+         * carefully: Assuming 0 probability for base pairs below of
+         * the threshold geometric mean would result in 0 as consensus
+         * probability; thus we assume p_penalty in this case, however
+         * too high p_penalty leads to the accumulation of many base
+         * pairs with small probabilities.
+         *
+         * Reasonably, p_penalty must be a small fraction of p_cutoff_.
          *
          * @return consensus probability
          */
@@ -199,7 +212,8 @@ namespace LocARNA {
                               size_t sizeA,
                               size_t sizeB,
                               double p_expA,
-                              double p_expB) const;
+                              double p_expB,
+                              double p_penalty) const;
 
         template <class KEY>
         class keyvec {

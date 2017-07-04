@@ -108,9 +108,14 @@ namespace LocARNA {
           arc_probs_(0.0),
           arc_2_probs_(0.0),
           has_stacking_(false) {
+
+        double
+            p_penalty_factor = 0.1; //!<@todo this constant should be configurable
+
         init_as_consensus_dot_plot(edges, rna_dataA, rna_dataB, p_expA, p_expB,
+                                   p_penalty_factor,
                                    rna_dataA.has_stacking() &&
-                                       rna_dataB.has_stacking());
+                                   rna_dataB.has_stacking());
     }
 
     // do almost nothing
@@ -1487,6 +1492,7 @@ namespace LocARNA {
                                             const RnaData &rna_dataB,
                                             double p_expA,
                                             double p_expB,
+                                            double f_penalty,
                                             bool stacking) {
         size_t rowsA = rna_dataA.sequence().num_of_rows();
         size_t rowsB = rna_dataB.sequence().num_of_rows();
@@ -1498,6 +1504,7 @@ namespace LocARNA {
             exp((log(p_minA) * rowsA + log(p_minB) * rowsB) / (rowsA + rowsB));
 
         p_bpcut_ = p_minMean;
+        double p_penalty = p_bpcut_ * f_penalty;
 
         for (size_type i = 0; i < edges.size(); i++) {
             for (size_type j = i + 1; j < edges.size(); j++) {
@@ -1513,7 +1520,7 @@ namespace LocARNA {
                     : rna_dataB.arc_prob(edges.second[i], edges.second[j]);
 
                 double p =
-                    consensus_probability(pA, pB, rowsA, rowsB, p_expA, p_expB);
+                    consensus_probability(pA, pB, rowsA, rowsB, p_expA, p_expB, p_penalty);
 
                 if (stacking) {
                     double st_pA =
@@ -1529,7 +1536,7 @@ namespace LocARNA {
                                                    edges.second[j]);
 
                     double st_p = consensus_probability(st_pA, st_pB, rowsA,
-                                                        rowsB, p_expA, p_expB);
+                                                        rowsB, p_expA, p_expB, p_penalty);
 
                     if (p > p_minMean || st_p > p_minMean) {
                         arc_probs_(i + 1, j + 1) = p;
@@ -1551,14 +1558,26 @@ namespace LocARNA {
                                        size_t sizeA,
                                        size_t sizeB,
                                        double p_expA,
-                                       double p_expB) const {
-        pA = std::max(std::min(p_expA, p_bpcut_ * 0.75), pA);
-        pB = std::max(std::min(p_expB, p_bpcut_ * 0.75), pB);
+                                       double p_expB,
+                                       double p_penalty) const {
+
+        pA = std::max(std::min(p_expA, p_penalty), pA);
+        pB = std::max(std::min(p_expB, p_penalty), pB);
 
         // weighted geometric mean
         double p = exp((log(pA) * sizeA + log(pB) * sizeB) /
                        //---------------------------------------------------
                        (sizeA + sizeB));
+
+        // std::cout << "consensus probability: "
+        //           << pA << " "
+        //           << pB << " "
+        //           << p_penalty << " "
+        //           << p_bpcut_ << " "
+        //           << p_expA << " "
+        //           << p_expB << " "
+        //           << " ==> "
+        //           << p << std::endl;
 
         return p;
 
