@@ -277,27 +277,35 @@ namespace LocARNA {
             return name_size() == 0;
         }
 
-        //! return the positions (i,j) of the rightmost anchor constraint
+        /** @brief Get rightmost anchor
+         *
+         * @return the positions (i,j) of the rightmost anchor constraint
+         *
+         * @note if there are no anchors, return (0,0)
+         */
         size_pair_t
         rightmost_anchor() const {
-            for (size_type i = anchors_a_.size(); i > 1;) { // for i=lenA downto 1
-                --i;
+            for (size_type i = lenA_; i >= 1; --i) {
                 if (anchors_a_[i] > 0)
                     return size_pair_t(i, anchors_a_[i]);
             }
             return size_pair_t(0, 0);
         }
 
-        //! return the positions (i,j) of the leftmost anchor constraint
+        /** @brief Get leftmost anchor
+         *
+         * @return the positions (i,j) of the leftmost anchor constraint
+         *
+         * @note if there are no anchors, return (lenA+1,lenB+1)
+         */
         size_pair_t
         leftmost_anchor() const {
-            for (size_type i = 0; i < anchors_a_.size(); i++) {
+            for (size_type i = 0; i <= lenA_; i++) {
                 if (anchors_a_[i] > 0)
                     return size_pair_t(i, anchors_a_[i]);
             }
-            return size_pair_t(anchors_a_.size() + 1, anchors_b_.size() + 1);
+            return size_pair_t(lenA_ + 1, lenB_ + 1);
         }
-
 
         /**
          * @brief Is position in A anchored?
