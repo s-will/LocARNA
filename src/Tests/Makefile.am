@@ -23,7 +23,8 @@ mlocarna-archaea-alifold.testresult mlocarna-bed-anchors.testresult	\
 mlocarna-haca-constraints.testresult					\
 mlocarna-probabilistic.testresult mlocarna-sparse.testresult		\
 mlocarna-threads.testresult mlocarna-realign.testresult			\
-exparna_p.testresult
+exparna_p.testresult locarna-local.testresult				\
+locarna-normalized.testresult
 
 BUILT_SOURCES = $(MYTESTDATA)
 
