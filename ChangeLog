@@ -1,6 +1,10 @@
 ============================================================
 === 2017
 
+1.9.2pre4
+	Fix left and rightmost anchors (fixed local alignment); add unit tests
+	Optimize maximization in innermost loop
+	Add unit and program tests
 1.9.2pre3
 	Make consensus structure / dotplot types independent [option
 	--consensus-structure alifold (current default) also determined
