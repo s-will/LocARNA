@@ -27,8 +27,7 @@ namespace LocARNA {
                      const RnaData &rna_dataB_,
                      const ArcMatches &arc_matches,
                      const MatchProbs *match_probs_,
-                     const ScoringParams &params_,
-                     bool exp_scores)
+                     const ScoringParams &params_)
         : params(&params_),
           arc_matches_(&arc_matches),
           match_probs(match_probs_),
@@ -57,13 +56,6 @@ namespace LocARNA {
         precompute_weights();
 
         apply_unpaired_penalty();
-        if (exp_scores) {
-            exp_indel_opening_score = boltzmann_weight(params->indel_opening);
-            exp_indel_opening_loop_score =
-                boltzmann_weight(params->indel_opening_loop);
-            precompute_exp_sigma();
-            precompute_exp_gapcost();
-        }
     }
 
     void
@@ -144,20 +136,6 @@ namespace LocARNA {
         for (size_type i = 1; i <= lenA; ++i) {
             for (size_type j = 1; j <= lenB; ++j) {
                 sigma_tab(i, j) = sigma_(i, j);
-            }
-        }
-    }
-
-    void
-    Scoring::precompute_exp_sigma() {
-        size_type lenA = seqA.length();
-        size_type lenB = seqB.length();
-
-        exp_sigma_tab.resize(lenA + 1, lenB + 1);
-
-        for (size_type i = 1; i <= lenA; ++i) {
-            for (size_type j = 1; j <= lenB; ++j) {
-                exp_sigma_tab(i, j) = boltzmann_weight(sigma_tab(i, j));
             }
         }
     }
@@ -335,24 +313,6 @@ namespace LocARNA {
 
         for (size_type i = 1; i < lenB + 1; i++) {
             gapcost_tabB[i] = round2score((1 - gapfreqB[i]) * params->indel);
-        }
-    }
-
-    void
-    Scoring::precompute_exp_gapcost() {
-        size_type lenA = seqA.length();
-        size_type lenB = seqB.length();
-
-        // resize and create tables
-        exp_gapcost_tabA.resize(lenA + 1);
-        exp_gapcost_tabB.resize(lenB + 1);
-
-        for (size_type i = 1; i < lenA + 1; i++) {
-            exp_gapcost_tabA[i] = boltzmann_weight(gapcost_tabA[i]);
-        }
-
-        for (size_type i = 1; i < lenB + 1; i++) {
-            exp_gapcost_tabB[i] = boltzmann_weight(gapcost_tabB[i]);
         }
     }
 
