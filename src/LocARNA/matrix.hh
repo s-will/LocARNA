@@ -53,8 +53,8 @@ namespace LocARNA {
          */
         size_type
         addr(size_type i, size_type j) const {
-            assert(0 <= i && i < this->xdim_);
-            assert(0 <= j && j < this->ydim_);
+            //assert(i < this->xdim_);
+            //assert(j < this->ydim_);
             return i * ydim_ + j;
         }
 

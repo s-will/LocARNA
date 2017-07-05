@@ -653,9 +653,7 @@ main(int argc, char **argv) {
         clp.probability_scale);
 
     Scoring scoring(seqA, seqB, *rna_dataA.get(), *rna_dataB.get(),
-                    *arc_matches.get(), match_probs.get(), scoring_params,
-                    false // no Boltzmann weights
-                    );
+                    *arc_matches.get(), match_probs.get(), scoring_params);
 
     if (clp.write_arcmatch_scores) {
         if (clp.verbose) {

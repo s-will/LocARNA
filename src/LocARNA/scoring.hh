@@ -12,11 +12,7 @@
 
 #include "scoring_fwd.hh"
 #include "matrix.hh"
-
-#ifndef NDEBUG
 #include "sequence.hh"
-#endif
-
 #include "arc_matches.hh"
 
 namespace LocARNA {
@@ -36,14 +32,8 @@ namespace LocARNA {
     //! matrix of scores supporting infinity
     typedef std::vector<infty_score_t> ScoreVector;
 
-    //! Vector of partition functions
-    typedef std::vector<pf_score_t> PFScoreVector;
-
     //! matrix of scores supporting infinity
     typedef Matrix<infty_score_t> ScoreMatrix;
-
-    //! Matrix of partition functions
-    typedef Matrix<pf_score_t> PFScoreMatrix;
 
     //! Matrix of probabilities
     typedef Matrix<double> ProbMatrix;
@@ -288,7 +278,7 @@ namespace LocARNA {
     public:
         typedef BasePairs__Arc Arc; //!< arc
 
-    private:
+    protected:
         const ScoringParams *params; //!< a collection of parameters for scoring
 
         const ArcMatches *arc_matches_; //!< arc matches
@@ -319,9 +309,6 @@ namespace LocARNA {
          * @param match_probs pointer to base match probabilities (can be nullptr for
          * non-mea scores)
          * @param params a collection of parameters for scoring
-         * @param exp_scores only if true, the results of the exp_*
-         * scoring functions are defined, otherwise precomputations
-         * can be ommitted.
          */
         Scoring(const Sequence &seqA,
                 const Sequence &seqB,
@@ -329,8 +316,7 @@ namespace LocARNA {
                 const RnaData &rna_dataB,
                 const ArcMatches &arc_matches,
                 const MatchProbs *match_probs,
-                const ScoringParams &params,
-                bool exp_scores = false);
+                const ScoringParams &params);
 
         /**
          * modify scoring by a parameter lambda. Used in the
@@ -365,7 +351,7 @@ namespace LocARNA {
             return lambda_;
         }
 
-    private:
+    protected:
         // ------------------------------
         // tables for precomputed score contributions
         //
@@ -382,21 +368,6 @@ namespace LocARNA {
         //<! pairs in A
         std::vector<score_t> stack_weightsB; //<! weights of stacked base
         //<! pairs in B
-
-        // ------------------------------
-        // tables for precomputed exp score contributions for partition function
-        //
-        Matrix<pf_score_t>
-            exp_sigma_tab; //!< precomputed table of exp base match similarities
-        pf_score_t exp_indel_opening_score; //!< precomputed value for exp of
-                                            //! indel opening cost
-        pf_score_t exp_indel_opening_loop_score; //!< precomputed value for exp
-                                                 //! of indel opening cost for
-        //! loops
-        std::vector<pf_score_t>
-            exp_gapcost_tabA; //!< table for exp gapcost in A
-        std::vector<pf_score_t>
-            exp_gapcost_tabB; //!< table for exp gapcost in B
 
         Matrix<size_t> identity; //!< sequence identities in percent
 
@@ -436,21 +407,9 @@ namespace LocARNA {
         void
         precompute_sigma();
 
-        /**
-         * \brief Precompute all Boltzmann weights of base similarities
-         *
-         * Precomputed similarities are stored in the exp_sigma table.
-         */
-        void
-        precompute_exp_sigma();
-
         //! \brief Precompute the tables for gapcost
         void
         precompute_gapcost();
-
-        //! \brief Precompute the tables for Boltzmann weights of gapcost
-        void
-        precompute_exp_gapcost();
 
         //! \brief Precompute weights/stacked weights for all arcs in A and B
         void
@@ -507,11 +466,6 @@ namespace LocARNA {
         score_t
         riboX_arcmatch_score(const Arc &arcA, const Arc &arcB) const;
 
-        pf_score_t
-        boltzmann_weight(score_t s) const {
-            return exp(s / (pf_score_t)params->temperature_alipf);
-        }
-
         //! subtract from each element of a score_t vector v a value x
         void
         subtract(std::vector<score_t> &v, score_t x) const;
@@ -535,19 +489,6 @@ namespace LocARNA {
         score_t
         basematch(size_type i, size_type j) const {
             return sigma_tab(i, j);
-        }
-
-        /**
-         * \brief Boltzmann weight of score of a base match (without structure)
-         *
-         * @param i position in A
-         * @param j position in B
-         *
-         * @return Boltzmann weight of score of base match i~j
-         */
-        pf_score_t
-        exp_basematch(size_type i, size_type j) const {
-            return exp_sigma_tab(i, j);
         }
 
         /**
@@ -613,18 +554,6 @@ namespace LocARNA {
         arcDel(const BasePairs__Arc &arc, bool stacked = false) const;
 
         /**
-         * @brief Boltzmann weight of score of arc match
-         *
-         * @param am arc match
-         *
-         * @return Boltzmann weight of score of arc match am
-         */
-        pf_score_t
-        exp_arcmatch(const ArcMatch &am) const {
-            return boltzmann_weight(arcmatch(am));
-        }
-
-        /**
          * @brief Score of stacked arc match
          *
          * @param am arc match
@@ -665,19 +594,6 @@ namespace LocARNA {
         }
 
         /**
-         * @brief Boltzmann weight of score of deletion
-         *
-         * @param posA position in A
-         *
-         * @return Boltzmann weight of score of deletion of posA after posB
-         */
-        pf_score_t
-        exp_gapA(size_type posA) const {
-            assert(1 <= posA && posA <= seqA.length());
-            return exp_gapcost_tabA[posA];
-        }
-
-        /**
          * Score of insertion
          *
          * @param posB position in B
@@ -689,20 +605,6 @@ namespace LocARNA {
             assert(1 <= posB && posB <= seqB.length());
 
             return gapcost_tabB[posB];
-        }
-
-        /**
-         * @brief Boltzmann weight of score of insertion
-         *
-         * @param posB position in B
-         *
-         * @return Boltzmann weight of score of insertion of posB after posA
-         */
-        pf_score_t
-        exp_gapB(size_type posB) const {
-            assert(1 <= posB && posB <= seqB.length());
-
-            return exp_gapcost_tabB[posB];
         }
 
         //! cost of an exclusion
@@ -726,18 +628,6 @@ namespace LocARNA {
         score_t
         indel_opening_loop() const {
             return params->indel_opening_loop;
-        }
-
-        //! exp of cost to begin a new indel
-        pf_score_t
-        exp_indel_opening() const {
-            return exp_indel_opening_score;
-        }
-
-        //! exp of cost to begin a new indel in loops
-        pf_score_t
-        exp_indel_opening_loop() const {
-            return exp_indel_opening_loop_score;
         }
 
         //
@@ -843,6 +733,202 @@ namespace LocARNA {
     score_t
     Scoring::gapX<false>(size_type alignedToGap) const {
         return gapB(alignedToGap);
+    }
+
+
+    /**
+     * Scoring for partition function alignment
+     *
+     * @param T type of the partition functions (like float, double, or
+     * long double)
+     */
+    template<typename T>
+    class PFScoring : public Scoring {
+        public:
+        using pf_score_t = T;
+
+        //! Vector of partition functions
+        using PFScoreVector = std::vector<pf_score_t>;
+
+        //! Matrix of partition functions
+        using PFScoreMatrix = Matrix<pf_score_t>;
+
+
+        /**
+         * @brief construct scoring object
+         *
+         * @param seqA first sequence
+         * @param seqB second sequence
+         * @param rna_dataA probability data of first sequence
+         * @param rna_dataB probability data of second sequence
+         * @param arc_matches the (significant) arc matches between the
+         * sequences
+         * @param match_probs pointer to base match probabilities (can be nullptr for
+         * non-mea scores)
+         * @param params a collection of parameters for scoring
+         */
+        PFScoring(const Sequence &seqA,
+                const Sequence &seqB,
+                const RnaData &rna_dataA,
+                const RnaData &rna_dataB,
+                const ArcMatches &arc_matches,
+                const MatchProbs *match_probs,
+                const ScoringParams &params);
+
+        /**
+         * \brief Boltzmann weight of score of a base match (without structure)
+         *
+         * @param i position in A
+         * @param j position in B
+         *
+         * @return Boltzmann weight of score of base match i~j
+         */
+        pf_score_t
+        exp_basematch(size_type i, size_type j) const {
+            return exp_sigma_tab(i, j);
+        }
+
+        /**
+         * @brief Boltzmann weight of score of arc match
+         *
+         * @param am arc match
+         *
+         * @return Boltzmann weight of score of arc match am
+         */
+        pf_score_t
+        exp_arcmatch(const ArcMatch &am) const {
+            return boltzmann_weight(arcmatch(am));
+        }
+
+        /**
+         * @brief Boltzmann weight of score of deletion
+         *
+         * @param posA position in A
+         *
+         * @return Boltzmann weight of score of deletion of posA after posB
+         */
+        pf_score_t
+        exp_gapA(size_type posA) const {
+            assert(1 <= posA && posA <= seqA.length());
+            return exp_gapcost_tabA[posA];
+        }
+
+        /**
+         * @brief Boltzmann weight of score of insertion
+         *
+         * @param posB position in B
+         *
+         * @return Boltzmann weight of score of insertion of posB after posA
+         */
+        pf_score_t
+        exp_gapB(size_type posB) const {
+            assert(1 <= posB && posB <= seqB.length());
+
+            return exp_gapcost_tabB[posB];
+        }
+
+        //! exp of cost to begin a new indel
+        pf_score_t
+        exp_indel_opening() const {
+            return exp_indel_opening_score;
+        }
+
+        //! exp of cost to begin a new indel in loops
+        pf_score_t
+        exp_indel_opening_loop() const {
+            return exp_indel_opening_loop_score;
+        }
+
+
+    protected:
+        //! \brief Precompute the tables for Boltzmann weights of gapcost
+        void
+        precompute_exp_gapcost();
+
+
+        /**
+         * \brief Precompute all Boltzmann weights of base similarities
+         *
+         * Precomputed similarities are stored in the exp_sigma table.
+         */
+        void
+        precompute_exp_sigma();
+
+
+        pf_score_t
+        boltzmann_weight(score_t s) const {
+            return exp(s / (pf_score_t)params->temperature_alipf);
+        }
+
+
+    private:
+        // ------------------------------
+        // tables for precomputed exp score contributions for partition function
+        //
+        Matrix<pf_score_t>
+            exp_sigma_tab; //!< precomputed table of exp base match similarities
+        pf_score_t exp_indel_opening_score; //!< precomputed value for exp of
+                                            //! indel opening cost
+        pf_score_t exp_indel_opening_loop_score; //!< precomputed value for exp
+                                                 //! of indel opening cost for
+        //! loops
+        std::vector<pf_score_t>
+            exp_gapcost_tabA; //!< table for exp gapcost in A
+        std::vector<pf_score_t>
+            exp_gapcost_tabB; //!< table for exp gapcost in B
+
+    };
+
+    template <typename T>
+    PFScoring<T>::PFScoring(const Sequence &seqA,
+                         const Sequence &seqB,
+                         const RnaData &rna_dataA,
+                         const RnaData &rna_dataB,
+                         const ArcMatches &arc_matches,
+                         const MatchProbs *match_probs,
+                         const ScoringParams &params)
+        : Scoring(seqA,seqB,rna_dataA,rna_dataB,
+                  arc_matches,match_probs,params) {
+
+        exp_indel_opening_score = boltzmann_weight(params.indel_opening);
+        exp_indel_opening_loop_score =
+            boltzmann_weight(params.indel_opening_loop);
+        precompute_exp_sigma();
+        precompute_exp_gapcost();
+    }
+
+    template <typename T>
+    void
+    PFScoring<T>::precompute_exp_sigma() {
+        size_type lenA = seqA.length();
+        size_type lenB = seqB.length();
+
+        exp_sigma_tab.resize(lenA + 1, lenB + 1);
+
+        for (size_type i = 1; i <= lenA; ++i) {
+            for (size_type j = 1; j <= lenB; ++j) {
+                exp_sigma_tab(i, j) = boltzmann_weight(sigma_tab(i, j));
+            }
+        }
+    }
+
+    template <typename T>
+    void
+    PFScoring<T>::precompute_exp_gapcost() {
+        size_type lenA = seqA.length();
+        size_type lenB = seqB.length();
+
+        // resize and create tables
+        exp_gapcost_tabA.resize(lenA + 1);
+        exp_gapcost_tabB.resize(lenB + 1);
+
+        for (size_type i = 1; i < lenA + 1; i++) {
+            exp_gapcost_tabA[i] = boltzmann_weight(gapcost_tabA[i]);
+        }
+
+        for (size_type i = 1; i < lenB + 1; i++) {
+            exp_gapcost_tabB[i] = boltzmann_weight(gapcost_tabB[i]);
+        }
     }
 
 } // end namespace LocARNA

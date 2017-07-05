@@ -45,6 +45,10 @@ const std::string VERSION_STRING = (std::string)PACKAGE_STRING;
 
 using namespace LocARNA;
 
+using standard_pf_score_t = double;
+using extended_pf_score_t = long double;
+
+
 // ------------------------------------------------------------
 // Parameter
 
@@ -81,27 +85,33 @@ struct command_line_parameters
      */
     double pf_scale;
 
+    /** @brief Extended precision for partition function values
+     *
+     * If true, use an extended precision type for partition function values (pf_score_t).
+     */
+    bool extended_pf;
+
     int temperature_alipf; //!< temperature for alignment partition functions
 
     command_line_parameters() : MainHelper::std_command_line_parameters() {
         help_text["min_am_prob"] =
             "Minimal arc match probability. Write probabilities for only the "
-            "arc matchs "
-            "of at least this probability.";
+            "arc matchs of at least this probability.";
         help_text["min_bm_prob"] =
             "Minimal base match probability. Write probabilities for only the "
-            "base "
-            "matchs of at least this probability.";
+            "base matchs of at least this probability.";
         help_text["pf_scale"] =
             "Factor for scaling the partition functions. Use in order to avoid "
             "overflow.";
+        help_text["extended_pf"] =
+            "Use extended precision for partition function values. This roughly "
+            "doubles run-time and space, however enables handling larger "
+            "instances.";
         help_text["temperature_alipf"] =
             "Temperature for the /alignment/ partition functions (this "
-            "temperature "
-            "different from the 'physical' temperature of RNA folding!). It "
-            "controls the "
-            "probability distributions of computed base and arc match "
-            "probabilities.";
+            "temperature different from the 'physical' temperature of RNA "
+            "folding!). It controls the probability distributions of computed "
+            "base and arc match probabilities.";
     }
 };
 
@@ -141,8 +151,13 @@ option_def my_options[] =
 
      {"temperature-alipf", 0, 0, O_ARG_INT, &clp.temperature_alipf, "150",
       "int", clp.help_text["temperature_alipf"]},
+
+     {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Partition function representation"},
+
      {"pf-scale", 0, 0, O_ARG_DOUBLE, &clp.pf_scale, "1.0", "scale",
       clp.help_text["pf_scale"]},
+     {"extended-pf", 0, &clp.extended_pf, O_NO_ARG, 0, O_NODEFAULT, "",
+      clp.help_text["extended_pf"]},
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Output"},
 
@@ -215,70 +230,40 @@ option_def my_options[] =
 // ------------------------------------------------------------
 // MAIN
 
+
+template <typename T>
+void
+check_score_t() {}
+
+template <>
+void
+check_score_t<extended_pf_score_t>() {
+    if (clp.verbose) {
+        std::cout << "Use extended precision for partition functions ("
+                  << sizeof(extended_pf_score_t) << "bytes)."
+                  <<std::endl;
+    }
+    if (!(sizeof(extended_pf_score_t) > sizeof(standard_pf_score_t))) {
+        std::cerr << "WARNING: the extended precision type (long double) "
+                  << "is not larger than the standard precision "
+                  << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
+                  <<std::endl
+                  << "This issue is system and compiler dependent."
+                  <<std::endl;
+    }
+}
+
 /**
- * \brief Main method of executable locarna_p
- *
- * @param argc argument counter
- * @param argv argument vector
+ * \brief Helper of main() of executable locarna_p
  *
  * @return success
  */
+template <typename pf_score_t>
 int
-main(int argc, char **argv) {
-    stopwatch.start("total");
-
-    clp.no_lonely_pairs =
-        false; //! @todo currently not a command line option of locarna_p
-
+run_and_report() {
     typedef std::vector<int>::size_type size_type;
 
-    // ------------------------------------------------------------
-    // Process options
-
-    bool process_success = process_options(argc, argv, my_options);
-
-    if (clp.help) {
-        cout << "locarna_p - pairwise partition function of "
-             << "RNA alignments." << std::endl;
-        cout << std::endl
-             << "Computes base and base pair match probabilities " << std::endl
-             << "from alignment partitition functions." << std::endl
-             << std::endl;
-
-        // cout << VERSION_STRING<<std::endl;
-
-        print_help(argv[0], my_options);
-
-        cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
-             << std::endl
-             << std::endl;
-        return 0;
-    }
-
-    if (clp.quiet) {
-        clp.verbose = false;
-    } // quiet overrides verbose
-
-    if (clp.version || clp.verbose) {
-        cout << "locarna_p (" << VERSION_STRING << ")" << std::endl;
-        if (clp.version)
-            return 0;
-        else
-            cout << std::endl;
-    }
-
-    if (!process_success) {
-        std::cerr << O_error_msg << std::endl;
-        print_usage(argv[0], my_options);
-        return -1;
-    }
-
-    if (clp.stopwatch) {
-        stopwatch.set_print_on_exit(true);
-    }
-
-    if (clp.verbose)
-        print_options(my_options);
+    check_score_t<pf_score_t>();
 
     // ------------------------------------------------------------
     // Get input data and generate data objects
@@ -436,36 +421,35 @@ main(int argc, char **argv) {
                                  0      // probability_scale
                                  );
 
-    Scoring scoring(seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches, nullptr,
-                    scoring_params, true);
+
+    PFScoring<pf_score_t> scoring(seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches, nullptr,
+                                  scoring_params);
 
     // ------------------------------------------------------------
     // Computation of the alignment score
     //
 
     // initialize aligner-p object, which does the alignment computation
-    AlignerP aligner = AlignerP::create()
-                           .min_am_prob(clp.min_am_prob)
-                           .min_bm_prob(clp.min_bm_prob)
-                           .pf_scale((pf_score_t)clp.pf_scale)
-                           .seqA(seqA)
-                           .seqB(seqB)
-                           .scoring(scoring)
-                           .no_lonely_pairs(false)
-                           .struct_local(false)
-                           .sequ_local(false)
-                           .free_endgaps("")
-                           .max_diff_am(clp.max_diff_am)
-                           .max_diff_at_am(clp.max_diff_at_am)
-                           .trace_controller(trace_controller)
-                           .stacking(false)
-                           .constraints(seq_constraints);
+    AlignerP<pf_score_t> aligner =
+        AlignerP<pf_score_t>::create()
+        .min_am_prob(clp.min_am_prob)
+        .min_bm_prob(clp.min_bm_prob)
+        .pf_scale((pf_score_t)clp.pf_scale)
+        .seqA(seqA)
+        .seqB(seqB)
+        .scoring(scoring)
+        .no_lonely_pairs(false)
+        .struct_local(false)
+        .sequ_local(false)
+        .free_endgaps("")
+        .max_diff_am(clp.max_diff_am)
+        .max_diff_at_am(clp.max_diff_at_am)
+        .trace_controller(trace_controller)
+        .stacking(false)
+        .constraints(seq_constraints);
 
     if (clp.verbose) {
         std::cout << "Run inside algorithm." << std::endl;
-#ifdef VERY_LARGE_PF
-        std::cout << "Use large partition function type." << std::endl;
-#endif
     }
 
     pf_score_t pf = aligner.align_inside();
@@ -566,4 +550,77 @@ main(int argc, char **argv) {
 
     // DONE
     return 0;
+}
+
+
+/**
+ * \brief Main function of executable locarna_p
+ *
+ * @param argc argument counter
+ * @param argv argument vector
+ *
+ * @return success
+ */
+int
+main(int argc, char **argv) {
+    stopwatch.start("total");
+
+    clp.no_lonely_pairs =
+        false; //! @todo currently not a command line option of locarna_p
+
+    // ------------------------------------------------------------
+    // Process options
+
+    bool process_success = process_options(argc, argv, my_options);
+
+    if (clp.help) {
+        cout << "locarna_p - pairwise partition function of "
+             << "RNA alignments." << std::endl;
+        cout << std::endl
+             << "Computes base and base pair match probabilities " << std::endl
+             << "from alignment partitition functions." << std::endl
+             << std::endl;
+
+        // cout << VERSION_STRING<<std::endl;
+
+        print_help(argv[0], my_options);
+
+        cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
+             << std::endl
+             << std::endl;
+        return 0;
+    }
+
+    if (clp.quiet) {
+        clp.verbose = false;
+    } // quiet overrides verbose
+
+    if (clp.version || clp.verbose) {
+        cout << "locarna_p (" << VERSION_STRING << ")" << std::endl;
+        if (clp.version)
+            return 0;
+        else
+            cout << std::endl;
+    }
+
+    if (!process_success) {
+        std::cerr << O_error_msg << std::endl;
+        print_usage(argv[0], my_options);
+        return -1;
+    }
+
+    if (clp.stopwatch) {
+        stopwatch.set_print_on_exit(true);
+    }
+
+    if (clp.verbose)
+        print_options(my_options);
+
+    if (!clp.extended_pf) {
+        return
+            run_and_report<standard_pf_score_t>();
+    } else {
+        return
+            run_and_report<extended_pf_score_t>();
+    }
 }
