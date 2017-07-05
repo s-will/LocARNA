@@ -9,10 +9,11 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
+    - llvm-toolchain-trusty-4.0
     packages:
     - gcc-7
     - g++-7
-    - clang
+    - clang-4.0
     - help2man
     - libgsl0-dev
     - doxygen
@@ -28,14 +29,14 @@ install:
   - export PATH=$CONDA_PATH/bin:$PATH
   - conda update --yes conda
   - conda install --yes -c bioconda 'python<=3.5' viennarna gcc t_coffee
-
-  # don't use libc++ for now
+  # don't use libc++ with clang---for now
   # - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
+  - if [ "$CXX" == "clang++" ]; then export CC="clang-4.0" CXX="clang++-4.0"; fi
 
 before_script:
 - autoreconf -i
 
-script: 
+script:
 - ./configure --with-vrna=${CONDA_PATH}
 - make -j${CPU_COUNT}
 - make -j${CPU_COUNT} check
