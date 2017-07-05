@@ -21,14 +21,14 @@ extern "C" {
 namespace LocARNA {
 
     Alignment::Alignment(const Sequence &seqA, const Sequence &seqB)
-        : pimpl_(new AlignmentImpl(this, seqA, seqB)) {
+        : pimpl_(std::make_unique<AlignmentImpl>(this, seqA, seqB)) {
         clear();
     }
 
     Alignment::Alignment(const Sequence &seqA,
                          const Sequence &seqB,
                          const edges_t &edges)
-        : pimpl_(new AlignmentImpl(this, seqA, seqB)) {
+        : pimpl_(std::make_unique<AlignmentImpl>(this, seqA, seqB)) {
         // append all non-locality edges
         for (size_t k = 0; k < edges.size(); k++) {
             const edge_end_t &x = edges.first[k];
@@ -52,14 +52,14 @@ namespace LocARNA {
     }
 
     Alignment::Alignment(const Alignment &alignment)
-        : pimpl_(new AlignmentImpl(*alignment.pimpl_)) {}
+        : pimpl_(std::make_unique<AlignmentImpl>(*alignment.pimpl_)) {}
 
     void
     Alignment::swap(Alignment &a1, Alignment &a2) {
         std::swap(a1.pimpl_, a2.pimpl_);
     }
 
-    Alignment::~Alignment() { delete pimpl_; }
+    Alignment::~Alignment() {}
 
     Alignment &
     Alignment::operator=(const Alignment &alignment) {

@@ -53,8 +53,8 @@ namespace LocARNA {
          */
         size_type
         addr(size_type i, size_type j) const {
-            assert(0 <= i && i < this->xdim_);
-            assert(0 <= j && j < this->ydim_);
+            //assert(i < this->xdim_);
+            //assert(j < this->ydim_);
             return i * ydim_ + j;
         }
 
@@ -75,9 +75,9 @@ namespace LocARNA {
          * @note if from given and !=0 initialize from array from
          *
          */
-        Matrix(size_type xdim, size_type ydim, const elem_t *from = 0L)
+        Matrix(size_type xdim, size_type ydim, const elem_t *from = nullptr)
             : mat_(xdim * ydim), xdim_(xdim), ydim_(ydim) {
-            if (from != 0L) {
+            if (from != nullptr) {
                 for (size_type i = 0; i < xdim_; i++) {
                     for (size_type j = 0; j < ydim_; j++) {
                         (*this)(i, j) = from[i * ydim + j];

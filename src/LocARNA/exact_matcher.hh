@@ -264,7 +264,7 @@ namespace LocARNA {
             orderedMapCITER; //!< const iterator for the map
         typedef orderedMapTYPE::iterator
             orderedMapITER;                          //!< iterator for the map
-        typedef std::list<SelfValuePTR> patListTYPE; //!< list of patternPairs
+        typedef std::vector<std::unique_ptr<selfValueTYPE>> patListTYPE; //!< list of patternPairs
         typedef patListTYPE::iterator
             patListITER; //!< iterator for the list of PatternPairs
         typedef patListTYPE::const_iterator
@@ -275,14 +275,15 @@ namespace LocARNA {
         //! Contructor
         PatternPairMap();
 
-        //! Copy Constructor
-        //! @param myPairMap PatternPairMap
-        PatternPairMap(const PatternPairMap &myPairMap)
-            : patternList(myPairMap.patternList),
-              patternOrderedMap(myPairMap.patternOrderedMap),
-              idMap(myPairMap.idMap) {
-            minPatternSize = 100000;
-        };
+        // //! Copy Constructor
+        // //! @param myPairMap PatternPairMap
+        // PatternPairMap(const PatternPairMap &myPairMap)
+        //     : patternList(myPairMap.patternList),
+        //       patternOrderedMap(myPairMap.patternOrderedMap),
+        //       idMap(myPairMap.idMap) {
+        //     minPatternSize = 100000;
+        // };
+        PatternPairMap(const PatternPairMap &myPairMap) = delete;
 
         //! Destructor
         virtual ~PatternPairMap();
@@ -314,9 +315,9 @@ namespace LocARNA {
         void
         makeOrderedMap();
 
-        //! updates the PatternPairMap from the ordered Map
-        void
-        updateFromMap();
+        // //! updates the PatternPairMap from the ordered Map
+        // void
+        // updateFromMap();
 
         /**
          * \brief gets the PatternPair with the Id id
