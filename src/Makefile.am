@@ -39,11 +39,10 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ../LocARNA-$(API_VERSION).pc
 
 library_includedir=$(includedir)/LocARNA-$(API_VERSION)
-nobase_library_include_HEADERS = LocARNA/aux.hh LocARNA/plusvector.hh	\
-	LocARNA/stopwatch.hh LocARNA/options.hh LocARNA/matrix.hh	\
-	LocARNA/matrices.hh LocARNA/sparse_matrix.hh			\
-	LocARNA/sparse_vector.hh LocARNA/sequence.hh			\
-	LocARNA/basepairs.hh LocARNA/alignment.hh			\
+nobase_library_include_HEADERS = LocARNA/aux.hh LocARNA/stopwatch.hh	\
+	LocARNA/options.hh LocARNA/matrix.hh LocARNA/matrices.hh	\
+	LocARNA/sparse_matrix.hh LocARNA/sparse_vector.hh		\
+	LocARNA/sequence.hh LocARNA/basepairs.hh LocARNA/alignment.hh	\
 	LocARNA/alignment_impl.hh LocARNA/rna_ensemble.hh		\
 	LocARNA/rna_ensemble_impl.hh LocARNA/rna_data.hh		\
 	LocARNA/ext_rna_data.hh LocARNA/rna_data_impl.hh		\
@@ -61,11 +60,10 @@ nobase_library_include_HEADERS = LocARNA/aux.hh LocARNA/plusvector.hh	\
 	LocARNA/multiple_alignment.hh LocARNA/rna_structure.hh		\
 	LocARNA/confusion_matrix.hh LocARNA/base_pair_filter.hh		\
 	LocARNA/discrete_distribution.hh LocARNA/string1.hh		\
-	LocARNA/type_wrapper.hh LocARNA/global_stopwatch.hh		\
-	LocARNA/tuples.hh LocARNA/mcc_matrices.hh			\
-	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh		\
-	LocARNA/exact_matcher.hh LocARNA/main_helper.icc		\
-	LocARNA/ribosum85_60.icc
+	LocARNA/global_stopwatch.hh LocARNA/tuples.hh			\
+	LocARNA/mcc_matrices.hh LocARNA/aligner_n.hh			\
+	LocARNA/sparsification_mapper.hh LocARNA/exact_matcher.hh	\
+	LocARNA/main_helper.icc LocARNA/ribosum85_60.icc
 
 ## binary programs
 ##

@@ -10,8 +10,6 @@
 
 namespace LocARNA {
 
-    template <class T>
-    class plusvector;
     class Alignment;
     class Sequence;
     class RnaData;

@@ -10,7 +10,6 @@
 #include "anchor_constraints.hh"
 #include "multiple_alignment.hh"
 #include "string1.hh"
-#include "plusvector.hh"
 
 extern "C" {
 #include <ViennaRNA/data_structures.h>
