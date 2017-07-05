@@ -17,6 +17,7 @@ addons:
     - help2man
     - libgsl0-dev
     - doxygen
+    - graphviz
 
 install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
