@@ -1,3 +1,4 @@
+dist: trusty
 sudo: false
 language: cpp
 compiler:
@@ -8,16 +9,18 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
+    - llvm-toolchain-trusty-4.0
     packages:
-    - gcc-4.8
-    - g++-4.8
-    - clang
+    - gcc-7
+    - g++-7
+    - clang-4.0
     - help2man
     - libgsl0-dev
     - doxygen
+    - graphviz
 
 install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
 
   # install conda to install build requirements
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
@@ -26,15 +29,15 @@ install:
   - export CONDA_PATH=$HOME/miniconda3
   - export PATH=$CONDA_PATH/bin:$PATH
   - conda update --yes conda
-  - conda install --yes -c bioconda 'python<=3.5' viennarna gcc t_coffee
-
-  # don't use libc++ for now
+  - conda install --yes -c bioconda 'python<=3.5' viennarna t_coffee
+  # don't use libc++ with clang---for now
   # - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
+  - if [ "$CXX" == "clang++" ]; then export CC="clang-4.0" CXX="clang++-4.0" LDFLAGS="-fopenmp=libgomp"; fi
 
 before_script:
 - autoreconf -i
 
-script: 
+script:
 - ./configure --with-vrna=${CONDA_PATH}
 - make -j${CPU_COUNT}
 - make -j${CPU_COUNT} check
