@@ -18,8 +18,9 @@ namespace LocARNA {
     //
 
     // allocate space for the inside matrices
+    template <typename T>
     void
-    AlignerP::alloc_inside_matrices() {
+    AlignerP<T>::alloc_inside_matrices() {
         Dmat.resize(bpsA.num_bps(), bpsB.num_bps());
         Dmat.fill((pf_score_t)0); // this is essential, such that we can avoid
                                   // to test validity of arc matches
@@ -39,8 +40,9 @@ namespace LocARNA {
     }
 
     // allocate space for the inside matrices
+    template <typename T>
     void
-    AlignerP::alloc_outside_matrices() {
+    AlignerP<T>::alloc_outside_matrices() {
         Dmatprime.resize(bpsA.num_bps(), bpsB.num_bps());
         Dmatprime.fill((pf_score_t)0);
 
@@ -57,9 +59,10 @@ namespace LocARNA {
     }
 
     //===========================================================================
-    AlignerP::AlignerP(const AlignerParams &ap)
-        : params(new AlignerPParams(dynamic_cast<const AlignerPParams &>(ap))),
-          scoring(params->scoring_),
+    template <typename T>
+    AlignerP<T>::AlignerP(const AlignerParams &ap)
+        : params(new AlignerPParams<T>(dynamic_cast<const AlignerPParams<T> &>(ap))),
+          scoring(static_cast<const PFScoring<T> *>(params->scoring_)),
           seqA(*params->seqA_),
           bpsA(scoring->arc_matches()->get_base_pairsA()),
           seqB(*params->seqB_),
@@ -78,8 +81,9 @@ namespace LocARNA {
           D_created(false),
           Dprime_created(false) {}
 
-    AlignerP::AlignerP(const AlignerP &p)
-        : params(new AlignerPParams(*p.params)),
+    template <typename T>
+    AlignerP<T>::AlignerP(const AlignerP &p)
+        : params(new AlignerPParams<T>(*p.params)),
           scoring(p.scoring),
           seqA(p.seqA),
           bpsA(p.bpsA),
@@ -107,7 +111,8 @@ namespace LocARNA {
           D_created(p.D_created),
           Dprime_created(p.Dprime_created) {}
 
-    AlignerP::~AlignerP() {
+    template <typename T>
+    AlignerP<T>::~AlignerP() {
         assert(params != 0);
         delete params;
     }
@@ -119,14 +124,16 @@ namespace LocARNA {
     // ================================================================================
 
     //! returns lvalue of matrix D
-    pf_score_t & // SparsePFScoreMatrix::element
-        AlignerP::D(const ArcMatch &am) {
+    template <typename T>
+    typename AlignerP<T>::pf_score_t &
+    AlignerP<T>::D(const ArcMatch &am) {
         return Dmat(am.arcA().idx(), am.arcB().idx());
     }
 
     //! returns lvalue of matrix D
-    pf_score_t & // SparsePFScoreMatrix::element
-        AlignerP::D(const Arc &arcA, const Arc &arcB) {
+    template <typename T>
+    typename AlignerP<T>::pf_score_t &
+    AlignerP<T>::D(const Arc &arcA, const Arc &arcB) {
         return Dmat(arcA.idx(), arcB.idx());
     }
 
@@ -140,8 +147,9 @@ namespace LocARNA {
     // initialize all (according to trace controller) invalid matrix
     // entries that can be accessed from valid ones with 0.
     //
+    template <typename T>
     void
-    AlignerP::init_M(size_type al, size_type ar, size_type bl, size_type br) {
+    AlignerP<T>::init_M(size_type al, size_type ar, size_type bl, size_type br) {
         M(al, bl) = ((pf_score_t)1) / pf_scale; // empty alignment
 
         pf_score_t indel_score;
@@ -183,8 +191,9 @@ namespace LocARNA {
         }
     }
 
+    template <typename T>
     void
-    AlignerP::init_E(size_type al, size_type ar, size_type bl, size_type br) {
+    AlignerP<T>::init_E(size_type al, size_type ar, size_type bl, size_type br) {
         //
         // all entries are 0 initially, since there is no alignment
         // with empty subsequence of seqA that ends with a gapped base of seqA
@@ -199,8 +208,9 @@ namespace LocARNA {
     //
 
     // compute entry in E-vector for (i,j)
-    inline pf_score_t
-    AlignerP::comp_E_entry(size_type al,
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::comp_E_entry(size_type al,
                            size_type bl,
                            size_type i,
                            size_type j) {
@@ -210,8 +220,9 @@ namespace LocARNA {
     }
 
     // compute entry in F for (i,j)
-    inline pf_score_t
-    AlignerP::comp_F_entry(size_type al,
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::comp_F_entry(size_type al,
                            size_type bl,
                            size_type i,
                            size_type j) {
@@ -224,8 +235,9 @@ namespace LocARNA {
     // standard cases in alignment: base match, base in/del, arc match
     // for the alignment below of arcs starting at (al,bl)
     // pre: E and F entry is already computed
-    inline pf_score_t
-    AlignerP::comp_M_entry(size_type al,
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::comp_M_entry(size_type al,
                            size_type bl,
                            size_type i,
                            size_type j) {
@@ -274,8 +286,9 @@ namespace LocARNA {
     // pair
     //
 
+    template <typename T>
     void
-    AlignerP::align_inside_arcmatch(size_type al,
+    AlignerP<T>::align_inside_arcmatch(size_type al,
                                     size_type ar,
                                     size_type bl,
                                     size_type br) {
@@ -313,8 +326,9 @@ namespace LocARNA {
     // pre: M matrix is computed by a call to
     //      align_inside_arcmatch(al,max_ar,bl,max_br)
     //
+    template <typename T>
     void
-    AlignerP::fill_D(size_type al,
+    AlignerP<T>::fill_D(size_type al,
                      size_type bl,
                      size_type max_ar,
                      size_type max_br) {
@@ -345,8 +359,9 @@ namespace LocARNA {
     //===========================================================================
     // Compute all entries of D
 
+    template <typename T>
     void
-    AlignerP::align_D() {
+    AlignerP<T>::align_D() {
         // ------------------------------------------------------------
         // General workflow:
         //
@@ -399,8 +414,9 @@ namespace LocARNA {
     // Do the complete inside phase of the partition function computation
     //
 
-    pf_score_t
-    AlignerP::align_inside() {
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::align_inside() {
         // ------------------------------------------------------------
         // computes D matrix and then
         // does the alignment on the top level
@@ -435,8 +451,9 @@ namespace LocARNA {
     // =================================================================
     // init alignment matrix for aligning the fragments seqA(al..ar) and
     // seqB(bl..br)
+    template <typename T>
     void
-    AlignerP::init_Mrev(size_type al,
+    AlignerP<T>::init_Mrev(size_type al,
                         size_type ar,
                         size_type bl,
                         size_type br) {
@@ -494,8 +511,9 @@ namespace LocARNA {
         }
     }
 
+    template <typename T>
     void
-    AlignerP::init_Erev(size_type al,
+    AlignerP<T>::init_Erev(size_type al,
                         size_type ar,
                         size_type bl,
                         size_type br) {
@@ -505,15 +523,17 @@ namespace LocARNA {
         }
     }
 
-    inline pf_score_t
-    AlignerP::comp_Erev_entry(size_type i, size_type j) {
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::comp_Erev_entry(size_type i, size_type j) {
         return Erev[j] * scoring->exp_gapA(i + 1) +
             (Mrev(i + 1, j) - Erev[j]) * scoring->exp_gapA(i + 1) *
             scoring->exp_indel_opening();
     }
 
-    inline pf_score_t
-    AlignerP::comp_Frev_entry(size_type i, size_type j) {
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::comp_Frev_entry(size_type i, size_type j) {
         return Frev * scoring->exp_gapB(j + 1) +
             (Mrev(i, j + 1) - Frev) * scoring->exp_gapB(j + 1) *
             scoring->exp_indel_opening();
@@ -522,8 +542,9 @@ namespace LocARNA {
     // compute reversed M matrix entry; cases: base match, base in/del, arc
     // match
     // compute pf of alignments i+1..ar and j+1..br
-    inline pf_score_t
-    AlignerP::comp_Mrev_entry(size_type i,
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::comp_Mrev_entry(size_type i,
                               size_type j,
                               size_type ar,
                               size_type br) {
@@ -558,8 +579,9 @@ namespace LocARNA {
         return pf;
     }
 
+    template <typename T>
     void
-    AlignerP::align_reverse(size_type al,
+    AlignerP<T>::align_reverse(size_type al,
                             size_type ar,
                             size_type bl,
                             size_type br,
@@ -617,21 +639,24 @@ namespace LocARNA {
     // ================================================================================
 
     //! returns lvalue of matrix D'
-    pf_score_t & // SparsePFScoreMatrix::element
-        AlignerP::Dprime(const ArcMatch &am) {
+    template <typename T>
+    typename AlignerP<T>::pf_score_t & // SparsePFScoreMatrix::element
+        AlignerP<T>::Dprime(const ArcMatch &am) {
         return Dmatprime(am.arcA().idx(), am.arcB().idx());
     }
 
     //! returns lvalue of matrix D'
-    pf_score_t & // SparsePFScoreMatrix::element
-        AlignerP::Dprime(const Arc &arcA, const Arc &arcB) {
+    template <typename T>
+    typename AlignerP<T>::pf_score_t & // SparsePFScoreMatrix::element
+        AlignerP<T>::Dprime(const Arc &arcA, const Arc &arcB) {
         return Dmatprime(arcA.idx(), arcB.idx());
     }
 
     // helper functions for optimization
 
-    AlignerP::size_type
-    AlignerP::leftmost_covering_arc(size_type start,
+    template <typename T>
+    typename AlignerP<T>::size_type
+    AlignerP<T>::leftmost_covering_arc(size_type start,
                                     const BasePairs &bps,
                                     size_type l,
                                     size_type r) const {
@@ -647,8 +672,9 @@ namespace LocARNA {
         return l;
     }
 
-    AlignerP::size_pair
-    AlignerP::leftmost_covering_arcmatch(size_type al,
+    template <typename T>
+    typename AlignerP<T>::size_pair
+    AlignerP<T>::leftmost_covering_arcmatch(size_type al,
                                          size_type bl,
                                          size_type ar,
                                          size_type br) const {
@@ -659,8 +685,9 @@ namespace LocARNA {
         return sp;
     }
 
-    AlignerP::size_type
-    AlignerP::rightmost_covering_arc(const BasePairs &bps,
+    template <typename T>
+    typename AlignerP<T>::size_type
+    AlignerP<T>::rightmost_covering_arc(const BasePairs &bps,
                                      size_type l,
                                      size_type r,
                                      size_type stop) const {
@@ -677,8 +704,9 @@ namespace LocARNA {
         return r;
     }
 
-    AlignerP::size_pair
-    AlignerP::rightmost_covering_arcmatch(size_type al,
+    template <typename T>
+    typename AlignerP<T>::size_pair
+    AlignerP<T>::rightmost_covering_arcmatch(size_type al,
                                           size_type bl,
                                           size_type ar,
                                           size_type br) const {
@@ -700,7 +728,7 @@ namespace LocARNA {
     // to be filled
     // // with prefix alignment scores of the complete sequences.
     // void
-    // AlignerP::init_Mprime(size_type al, size_type ar, size_type bl, size_type
+    // AlignerP<T>::init_Mprime(size_type al, size_type ar, size_type bl, size_type
     // br) {
     //     assert(al>0 && bl>0);
 
@@ -725,7 +753,7 @@ namespace LocARNA {
 
     // inline
     // void
-    // AlignerP::init_Eprime(size_type al, size_type ar, size_type bl, size_type
+    // AlignerP<T>::init_Eprime(size_type al, size_type ar, size_type bl, size_type
     // br) {
     //     for (int j=(int)r.endB()-1; j>=(int)br; j--) {
     //  Eprime[j] = 0;
@@ -733,8 +761,9 @@ namespace LocARNA {
     // }
 
     // compute a single entry of Eprime
-    inline pf_score_t
-    AlignerP::comp_Eprime_entry(size_type al,
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::comp_Eprime_entry(size_type al,
                                 size_type bl,
                                 size_type i,
                                 size_type j) {
@@ -744,8 +773,9 @@ namespace LocARNA {
     }
 
     // compute a single entry of Fprime
-    inline pf_score_t
-    AlignerP::comp_Fprime_entry(size_type al,
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::comp_Fprime_entry(size_type al,
                                 size_type bl,
                                 size_type i,
                                 size_type j) {
@@ -754,8 +784,9 @@ namespace LocARNA {
             scoring->exp_indel_opening();
     }
 
-    pf_score_t
-    AlignerP::virtual_Mprime(size_type al,
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::virtual_Mprime(size_type al,
                              size_type bl,
                              size_type i,
                              size_type j,
@@ -773,8 +804,9 @@ namespace LocARNA {
     // (recursing to larger holes)
     //
     // pre: preceeding values in Mprime, Eprime, Fprime are computed
-    inline pf_score_t
-    AlignerP::comp_Mprime_entry(size_type al,
+    template <typename T>
+    typename AlignerP<T>::pf_score_t
+    AlignerP<T>::comp_Mprime_entry(size_type al,
                                 size_type bl,
                                 size_type i,
                                 size_type j,
@@ -867,8 +899,9 @@ namespace LocARNA {
     // The latter optimization will have best effect, if we compute only
     // the necessary entries in Mprime, Eprime, Fprime.
     //
+    template <typename T>
     void
-    AlignerP::align_outside_arcmatch(size_type al,
+    AlignerP<T>::align_outside_arcmatch(size_type al,
                                      size_type ar,
                                      size_type max_ar,
                                      size_type bl,
@@ -983,8 +1016,9 @@ namespace LocARNA {
     // pre: Mprime matrices are computed by a call to
     //      align_out_arcmatch(al,min_ar,bl,min_br)
     //
+    template <typename T>
     void
-    AlignerP::fill_Dprime(size_type al,
+    AlignerP<T>::fill_Dprime(size_type al,
                           size_type bl,
                           size_type min_ar,
                           size_type min_br,
@@ -1019,8 +1053,9 @@ namespace LocARNA {
     //===========================================================================
 
     // compute all entries Dprime
+    template <typename T>
     void
-    AlignerP::align_Dprime() {
+    AlignerP<T>::align_Dprime() {
         // ------------------------------------------------------------
         // General workflow:
         //
@@ -1083,8 +1118,9 @@ namespace LocARNA {
     //===========================================================================
 
     // perform outside algo, compute Dprime
+    template <typename T>
     void
-    AlignerP::align_outside() {
+    AlignerP<T>::align_outside() {
         if (!Dprime_created) { // computes Dprime matrix, only if not already
                                // created
 
@@ -1119,8 +1155,9 @@ namespace LocARNA {
     //===========================================================================
     // compute arc match probabilities
 
+    template <typename T>
     void
-    AlignerP::compute_arcmatch_probabilities() {
+    AlignerP<T>::compute_arcmatch_probabilities() {
         // cout.precision(2);
 
         /*
@@ -1169,8 +1206,9 @@ namespace LocARNA {
     // compute base match probabilities
 
     // pre: arc match probabilites am_prob are already computed
+    template <typename T>
     void
-    AlignerP::compute_basematch_probabilities(
+    AlignerP<T>::compute_basematch_probabilities(
         bool basematch_probs_include_arcmatch) {
         // std::cout<<"Skip compute_basematch_probabilities"<<std::endl;
         // return;
@@ -1373,8 +1411,9 @@ namespace LocARNA {
     //===========================================================================
     // write base match probabilities
 
+    template <typename T>
     void
-    AlignerP::write_basematch_probabilities(std::ostream &out) {
+    AlignerP<T>::write_basematch_probabilities(std::ostream &out) {
         for (size_type i = 1; i <= r.endA(); i++) {
             for (size_type j = 1; j <= r.endB(); j++) {
                 if (bm_prob(i, j) >= params->min_bm_prob_) {
@@ -1388,8 +1427,9 @@ namespace LocARNA {
     //===========================================================================
     // write arcmatch probabilities
     //
+    template <typename T>
     void
-    AlignerP::write_arcmatch_probabilities(std::ostream &out) {
+    AlignerP<T>::write_arcmatch_probabilities(std::ostream &out) {
         // iterate over all arc matches
         for (ArcMatches::const_iterator it = arc_matches.begin();
              arc_matches.end() != it; ++it) {
@@ -1407,8 +1447,9 @@ namespace LocARNA {
     //===========================================================================
     // fragment match probabilities
     //
+    template <typename T>
     double
-    AlignerP::compute_fragment_match_prob(size_type i,
+    AlignerP<T>::compute_fragment_match_prob(size_type i,
                                           size_type j,
                                           size_type k,
                                           size_type l) {

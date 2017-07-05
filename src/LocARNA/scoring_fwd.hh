@@ -18,13 +18,6 @@ namespace LocARNA {
 
     typedef TaintedInftyInt tainted_infty_score_t;
 
-//! type of partition functions
-#ifdef VERY_LARGE_PF
-    typedef long double pf_score_t;
-#else
-    typedef double pf_score_t;
-#endif
-
     class Scoring;
 
 } // end namespace LocARNA

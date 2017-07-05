@@ -19,6 +19,9 @@ namespace LocARNA {
     class TraceController;
     class SparsificationMapper;
 
+    template <typename T>
+    class AlignerP;
+
     /**
        \brief Description of free end gaps.
 
@@ -295,9 +298,11 @@ namespace LocARNA {
     /**
      * @brief parameters for AlignerP
      */
+    template <typename T>
     class AlignerPParams : public AlignerParams {
-        friend class AlignerP;
+        friend class AlignerP<T>;
 
+        using pf_score_t = T;
     protected:
         double min_am_prob_; //!< minimal probability of an arc match
 

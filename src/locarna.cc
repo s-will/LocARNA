@@ -639,9 +639,7 @@ main(int argc, char **argv) {
     // Construct scoring
 
     Scoring scoring(seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches,
-                    match_probs.get(), scoring_params,
-                    false // no Boltzmann weights (as required for LocARNA-P)
-                    );
+                    match_probs.get(), scoring_params);
 
     if (clp.write_arcmatch_scores) {
         if (clp.verbose) {
