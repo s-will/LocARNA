@@ -19,6 +19,9 @@ namespace LocARNA {
     class TraceController;
     class SparsificationMapper;
 
+    template <typename T>
+    class AlignerP;
+
     /**
        \brief Description of free end gaps.
 
@@ -107,8 +110,6 @@ namespace LocARNA {
 
         const Sequence *seqB_; //!< sequence B
 
-        const ArcMatches *arc_matches_; //!< arc matches
-
         const Scoring *scoring_; //!< scoring object
 
         bool no_lonely_pairs_; //!< no lonely pairs option
@@ -155,16 +156,6 @@ namespace LocARNA {
         AlignerParams &
         seqB(const Sequence &seqB) {
             seqB_ = &seqB;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter arc matches
-         * @param seqB arc matches
-         */
-        AlignerParams &
-        arc_matches(const ArcMatches &arc_matches) {
-            arc_matches_ = &arc_matches;
             return *this;
         }
 
@@ -286,20 +277,19 @@ namespace LocARNA {
          * Construct with default parameters
          */
         AlignerParams()
-            : seqA_(0L),
-              seqB_(0L),
-              arc_matches_(0L),
-              scoring_(0L),
+            : seqA_(nullptr),
+              seqB_(nullptr),
+              scoring_(nullptr),
               no_lonely_pairs_(false),
               struct_local_(false),
               sequ_local_(false),
               free_endgaps_(""),
               DO_TRACE_(true),
-              trace_controller_(0L),
+              trace_controller_(nullptr),
               max_diff_am_(-1),
               max_diff_at_am_(-1),
               stacking_(false),
-              constraints_(0L) {}
+              constraints_(nullptr) {}
 
     public:
         virtual ~AlignerParams();
@@ -308,9 +298,11 @@ namespace LocARNA {
     /**
      * @brief parameters for AlignerP
      */
+    template <typename T>
     class AlignerPParams : public AlignerParams {
-        friend class AlignerP;
+        friend class AlignerP<T>;
 
+        using pf_score_t = T;
     protected:
         double min_am_prob_; //!< minimal probability of an arc match
 
@@ -378,8 +370,8 @@ namespace LocARNA {
          */
         AlignerNParams()
             : AlignerParams(),
-              sparsification_mapperA_(0L),
-              sparsification_mapperB_(0L) {}
+              sparsification_mapperA_(nullptr),
+              sparsification_mapperB_(nullptr) {}
 
     public:
         /**

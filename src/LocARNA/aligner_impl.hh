@@ -5,12 +5,13 @@
 #include <config.h>
 #endif
 
+#include <memory>
+
 #include "aligner.hh"
 
 #include "aligner_restriction.hh"
 #include "scoring.hh"
 #include "alignment.hh"
-#include "arc_matches.hh"
 #include "params.hh"
 
 namespace LocARNA {
@@ -34,17 +35,15 @@ namespace LocARNA {
         //! an arc
         typedef BasePairs__Arc Arc;
 
-        const AlignerParams *params_; //!< the parameter for the alignment
+        const std::unique_ptr<AlignerParams> params_; //!< the parameter for the alignment
 
         const Scoring *scoring_; //!< the scores
-        Scoring *mod_scoring_; //!< used in normalized scoring, when we need to
-                               //!modify the scoring
+
+        //! hold arc matches ref for convenience; equals scoring_->arc_matches()
+        const ArcMatches &arc_matches_;
 
         const Sequence &seqA_; //!< sequence A
         const Sequence &seqB_; //!< sequence B
-
-        const ArcMatches
-            &arc_matches_; //!< the potential arc matches between A and B
 
         const BasePairs &bpsA_; //!< base pairs of A
         const BasePairs &bpsB_; //!< base pairs of B
@@ -190,8 +189,11 @@ namespace LocARNA {
          */
         class ModifiedScoringView {
         private:
-            const AlignerImpl *
-                aligner_impl_; //!< aligner object for that the view is provided
+            //! aligner object for that the view is provided
+            const AlignerImpl *aligner_impl_;
+
+            //! own copy of scoring
+            const std::unique_ptr<Scoring> mod_scoring_;
 
             score_t lambda_; //!< factor for modifying scoring
 
@@ -217,7 +219,10 @@ namespace LocARNA {
              * already
              */
             explicit ModifiedScoringView(const AlignerImpl *aligner_impl)
-                : aligner_impl_(aligner_impl), lambda_(0) {}
+                : aligner_impl_(aligner_impl),
+                  mod_scoring_(
+                      std::make_unique<Scoring>(*aligner_impl->scoring_)),
+                  lambda_(0) {}
 
             /**
              * Change modification factor lambda
@@ -227,16 +232,17 @@ namespace LocARNA {
             void
             set_lambda(score_t lambda) {
                 lambda_ = lambda;
+                mod_scoring_->modify_by_parameter(lambda);
             }
 
             /**
              * Get scoring object
              *
-             * @return modified scoring object of aligner
+             * @return pointer to modified scoring object of aligner
              */
             const Scoring *
             scoring() const {
-                return aligner_impl_->mod_scoring_;
+                return mod_scoring_.get();
             }
 
             /**
@@ -269,8 +275,7 @@ namespace LocARNA {
         };
 
         const UnmodifiedScoringView def_scoring_view_; //!< Default scoring view
-        ModifiedScoringView mod_scoring_view_; //!< Modified scoring view for
-                                               //!normalized alignment
+
         FreeEndgapsDescription free_endgaps_;
 
         // ============================================================
@@ -287,13 +292,11 @@ namespace LocARNA {
          *
          * @param seqA sequence A
          * @param seqB sequence B
-         * @param arc_matches arc matches
          * @param ap parameter for aligner
          * @param s scoring object
          */
         AlignerImpl(const Sequence &seqA,
                     const Sequence &seqB,
-                    const ArcMatches &arc_matches,
                     const AlignerParams *ap,
                     const Scoring *s);
 
@@ -339,7 +342,7 @@ namespace LocARNA {
                    bool exclA,
                    bool globalB,
                    bool exclB,
-                   ScoringView sv);
+                   const ScoringView *sv);
 
         /**
          * \brief standard cases for alignment (without exlusion handling).
@@ -368,7 +371,7 @@ namespace LocARNA {
                    pos_type bl,
                    pos_type i,
                    pos_type j,
-                   ScoringView sv);
+                   const ScoringView *sv);
 
         /**
          * align the loops closed by arcs (al,ar) and (bl,br).
@@ -403,7 +406,7 @@ namespace LocARNA {
          */
         template <class ScoringView>
         infty_score_t
-        align_top_level_locally(ScoringView sv);
+        align_top_level_locally(const ScoringView *sv);
 
         //! align top level in the scanning version
         // infty_score_t align_top_level_localB();
@@ -428,7 +431,7 @@ namespace LocARNA {
                           int bl,
                           int j,
                           bool top_level,
-                          ScoringView sv);
+                          const ScoringView *sv);
 
         /**
          * \brief standard cases in trace back (without handling of exclusions)
@@ -450,7 +453,7 @@ namespace LocARNA {
                    pos_type bl,
                    pos_type j,
                    bool top_level,
-                   ScoringView sv);
+                   const ScoringView *sv);
 
         /**
          * trace an arc match
@@ -526,7 +529,18 @@ namespace LocARNA {
          */
         template <class ScoringView>
         void
-        trace(ScoringView sv);
+        trace(const ScoringView *sv);
+
+
+        //! perform normalized local alignment with parameter L
+        infty_score_t
+        normalized_align(score_t L, bool verbose);
+
+        //! perform local alignment by subtracting a penalty for each alignment
+        //! position
+        infty_score_t
+        penalized_align(score_t position_penalty);
+
     };
 
 } // end namespace LocARNA

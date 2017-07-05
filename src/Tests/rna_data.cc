@@ -1,5 +1,6 @@
 #include "catch.hpp"
 
+#include <memory>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -22,9 +23,9 @@ TEST_CASE("RnaData can fold alignments, write to file and reead again") {
     std::ostringstream sizeinfo2;
 
     SECTION("fold alignment") {
-        RnaData *rna_data = 0L;
+        std::unique_ptr<RnaData> rna_data;
         REQUIRE_NOTHROW(rna_data =
-                            new RnaData("archaea.aln", 0.1, 2, pfparams));
+                            std::make_unique<RnaData>("archaea.aln", 0.1, 2, pfparams));
         rna_data->write_size_info(sizeinfo1);
 
         SECTION("write to pp file") {
@@ -34,10 +35,8 @@ TEST_CASE("RnaData can fold alignments, write to file and reead again") {
             REQUIRE_NOTHROW(rna_data->write_pp(out));
 
             SECTION("and read again") {
-                if (rna_data)
-                    delete rna_data;
                 REQUIRE_NOTHROW(
-                    rna_data = new RnaData("archaea.pp", 0.1, 2, pfparams));
+                    rna_data = std::make_unique<RnaData>("archaea.pp", 0.1, 2, pfparams));
 
                 rna_data->write_size_info(sizeinfo2);
 
@@ -45,7 +44,6 @@ TEST_CASE("RnaData can fold alignments, write to file and reead again") {
             }
             std::remove("archaea.pp");
         }
-        delete rna_data;
     }
 }
 

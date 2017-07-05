@@ -28,9 +28,6 @@ namespace LocARNA {
     //! sparse matrix for storing probabilities
     typedef SparseMatrix<double> SparseProbMatrix;
 
-    //! sparse matrix for storing partition functions
-    typedef SparseMatrix<pf_score_t> SparsePFScoreMatrix;
-
     //! restriction of AlignerP ( same as for Aligner )
     typedef AlignerRestriction AlignerPRestriction;
 
@@ -49,17 +46,25 @@ namespace LocARNA {
        The class knows about the two sequences and the two weighted
        base pair sets.
     */
+    template <typename T>
     class AlignerP {
     public:
+        using pf_score_t = typename PFScoring<T>::pf_score_t;
+        using PFScoreMatrix = typename PFScoring<T>::PFScoreMatrix;
+        using PFScoreVector = typename PFScoring<T>::PFScoreVector;
+
+        //! sparse matrix for storing partition functions
+        typedef SparseMatrix<pf_score_t> SparsePFScoreMatrix;
+
         typedef size_t size_type; //!< size
         typedef std::pair<size_type, size_type>
             size_pair; //!< pair of size_type
 
         typedef BasePairs__Arc Arc; //!< arc
     protected:
-        const AlignerPParams *params; //!< the parameter for the alignment
+        const AlignerPParams<T> *params; //!< the parameter for the alignment
 
-        const Scoring *scoring; //!< the scores
+        const PFScoring<T> *scoring; //!< the scores
 
         const Sequence &seqA;  //!< sequence A
         const BasePairs &bpsA; //!< base pairs A
@@ -400,12 +405,12 @@ namespace LocARNA {
                     size_type max_br);
 
         //! returns lvalue of matrix D
-        pf_score_t & // SparsePFScoreMatrix::element
+        pf_score_t &
             D(const ArcMatch &am);
 
         //! returns lvalue of matrix D
-        pf_score_t & // SparsePFScoreMatrix::element
-            D(const Arc &arcA, const Arc &arcB);
+        pf_score_t &
+        D(const Arc &arcA, const Arc &arcB);
 
         //! returns lvalue of matrix D'
         pf_score_t & // SparsePFScoreMatrix::element
@@ -505,9 +510,9 @@ namespace LocARNA {
          * @brief create with named parameters
          * @return parameter object
          */
-        static AlignerPParams
+        static AlignerPParams<T>
         create() {
-            return AlignerPParams();
+            return AlignerPParams<T>();
         }
 
         /**
@@ -613,5 +618,8 @@ namespace LocARNA {
     };
 
 } // end namespace
+
+
+#include "aligner_p.icc"
 
 #endif

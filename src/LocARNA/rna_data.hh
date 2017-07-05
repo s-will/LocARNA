@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <memory>
 #include <iosfwd>
 #include "aux.hh"
 #include "sparse_matrix.hh"
@@ -41,11 +42,8 @@ namespace LocARNA {
      * e.g. from file or stream
      */
     class RnaData {
-    protected:
         friend class RnaDataImpl;
         friend class ExtRnaDataImpl;
-        RnaDataImpl
-            *pimpl_; //!<- pointer to corresponding implementation object
 
     public:
         //! arc probability matrix
@@ -132,35 +130,11 @@ namespace LocARNA {
                 double p_expB,
                 bool only_local = false);
 
-    protected:
-        /**
-         * @brief Almost empty constructor
-         *
-         * @param p_bpcut cutoff probability
-         * @param max_bp_span maximum base pair span
-         */
-        explicit RnaData(double p_bpcut, size_t max_bp_span);
-
-    private:
-        /**
-         * @brief copy constructor
-         */
-        RnaData(const RnaData &);
-
-    public:
         /**
          * @brief destructor
          */
         virtual ~RnaData();
 
-    private:
-        /**
-         * @brief assignment operator
-         */
-        RnaData &
-        operator=(const RnaData &);
-
-    public:
         /**
          * @brief Get the multiple alignment as sequence
          * @return sequence
@@ -225,27 +199,6 @@ namespace LocARNA {
         vrna_plist_t *
         plist() const;
 
-    protected:
-        //! type of constant iterator over arcs with probability above cutoff
-        typedef arc_prob_matrix_t::const_iterator arc_probs_const_iterator;
-
-        /**
-         * @brief begin of arcs with probability above cutoff
-         * Supports iteration over arcs
-         * @returns constant iterator
-         */
-        arc_probs_const_iterator
-        arc_probs_begin() const;
-
-        /**
-         * @brief begin of arcs with probability above cutoff
-         * Supports iteration over arcs
-         * @returns constant iterator
-         */
-        arc_probs_const_iterator
-        arc_probs_end() const;
-
-    public:
         /**
          * @brief Get arc probability
          * @param i left sequence position
@@ -346,6 +299,37 @@ namespace LocARNA {
         set_anchors(const SequenceAnnotation &anchors);
 
     protected:
+        //! pointer to corresponding implementation object
+        std::unique_ptr<RnaDataImpl> pimpl_;
+
+        /**
+         * @brief Almost empty constructor
+         *
+         * @param p_bpcut cutoff probability
+         * @param max_bp_span maximum base pair span
+         */
+        explicit RnaData(double p_bpcut, size_t max_bp_span);
+
+        //! type of constant iterator over arcs with probability above cutoff
+        typedef arc_prob_matrix_t::const_iterator arc_probs_const_iterator;
+
+        /**
+         * @brief begin of arcs with probability above cutoff
+         * Supports iteration over arcs
+         * @returns constant iterator
+         */
+        arc_probs_const_iterator
+        arc_probs_begin() const;
+
+        /**
+         * @brief begin of arcs with probability above cutoff
+         * Supports iteration over arcs
+         * @returns constant iterator
+         */
+        arc_probs_const_iterator
+        arc_probs_end() const;
+
+
         /**
          * @brief initialize from fixed structure
          *
@@ -496,6 +480,20 @@ namespace LocARNA {
          */
         void
         read_ps(const std::string &filename);
+
+    private:
+        /**
+         * @brief copy constructor
+         */
+        RnaData(const RnaData &);
+
+
+        /**
+         * @brief assignment operator
+         */
+        RnaData &
+        operator=(const RnaData &);
+
 
     }; // end class RnaData
 }
