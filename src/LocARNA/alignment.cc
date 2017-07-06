@@ -20,14 +20,14 @@ extern "C" {
 namespace LocARNA {
 
     Alignment::Alignment(const Sequence &seqA, const Sequence &seqB)
-        : pimpl_(std::make_unique<AlignmentImpl>(this, seqA, seqB)) {
+        : pimpl_(std::make_unique<AlignmentImpl>(seqA, seqB)) {
         clear();
     }
 
     Alignment::Alignment(const Sequence &seqA,
                          const Sequence &seqB,
                          const edges_t &edges)
-        : pimpl_(std::make_unique<AlignmentImpl>(this, seqA, seqB)) {
+        : pimpl_(std::make_unique<AlignmentImpl>(seqA, seqB)) {
         // append all non-locality edges
         for (size_t k = 0; k < edges.size(); k++) {
             const edge_end_t &x = edges.first[k];

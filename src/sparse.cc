@@ -671,28 +671,28 @@ main(int argc, char **argv) {
     //
 
     // initialize aligner object, which does the alignment computation
-    AlignerN aligner =
-        AlignerN::create()
-            .sparsification_mapperA(mapperA)
-            .sparsification_mapperB(mapperB)
-            .seqA(seqA)
-            .seqB(seqB)
-            .scoring(scoring)
-            //. no_lonely_pairs(clp.no_lonely_pairs)
-            .no_lonely_pairs(false) // ignore no lonely pairs in alignment algo
-            .struct_local(clp.struct_local)
-            .sequ_local(clp.sequ_local)
-            .free_endgaps(clp.free_endgaps)
-            .max_diff_am(clp.max_diff_am)
-            .max_diff_at_am(clp.max_diff_at_am)
-            .trace_controller(trace_controller)
-            .stacking(clp.stacking || clp.new_stacking)
-            .constraints(seq_constraints);
+    auto  aligner =
+        std::make_unique<AlignerN>(AlignerN::create()
+                                   .sparsification_mapperA(mapperA)
+                                   .sparsification_mapperB(mapperB)
+                                   .seqA(seqA)
+                                   .seqB(seqB)
+                                   .scoring(scoring)
+                                   //. no_lonely_pairs(clp.no_lonely_pairs)
+                                   .no_lonely_pairs(false) // ignore no lonely pairs in alignment algo
+                                   .struct_local(clp.struct_local)
+                                   .sequ_local(clp.sequ_local)
+                                   .free_endgaps(clp.free_endgaps)
+                                   .max_diff_am(clp.max_diff_am)
+                                   .max_diff_at_am(clp.max_diff_at_am)
+                                   .trace_controller(trace_controller)
+                                   .stacking(clp.stacking || clp.new_stacking)
+                                   .constraints(seq_constraints));
 
     infty_score_t score;
 
     // otherwise compute the best alignment
-    score = aligner.align();
+    score = aligner->align();
 
     // ----------------------------------------
     // report score
@@ -701,48 +701,48 @@ main(int argc, char **argv) {
         std::cout << "Score: " << score << std::endl << std::endl;
     }
 
+    std::unique_ptr<Alignment> alignment;
+    bool return_code = 0;
+
     // ------------------------------------------------------------
     // Traceback
     //
     if (DO_TRACE) {
-        aligner.trace();
-    }
+        aligner->trace();
 
-    bool return_code = 0;
+        alignment = std::make_unique<Alignment>(aligner->get_alignment());
 
-    if (DO_TRACE) { // if we did a trace (one way or
-        // the other)
+        aligner.reset(); // delete the aligner with DP matrices
+        arc_matches.reset(); // delete the arc_matches
 
         // ----------------------------------------
         // write alignment in different output formats
         //
-        const Alignment &alignment = aligner.get_alignment();
-
         std::string consensus_structure = "";
 
         std::unique_ptr<RnaData> consensus =
             MainHelper::consensus(clp, pfparams, my_exp_probA, my_exp_probB,
-                                  rna_dataA.get(), rna_dataB.get(), alignment,
+                                  rna_dataA.get(), rna_dataB.get(), *alignment,
                                   consensus_structure);
 
         return_code =
             MainHelper::write_alignment(clp, score, consensus_structure,
-                                        consensus.get(), alignment,
+                                        consensus.get(), *alignment,
                                         multiple_ref_alignment.get());
 
         // ----------------------------------------
         // write alignment to screen
 
         if (!clp.quiet) {
-            MultipleAlignment ma(alignment, clp.local_output,
+            MultipleAlignment ma(*alignment, clp.local_output,
                                  clp.special_gap_symbols);
 
             if (clp.write_structure) {
                 // annotate multiple alignment with structures
                 std::string structureA =
-                    alignment.dot_bracket_structureA(clp.local_output);
+                    alignment->dot_bracket_structureA(clp.local_output);
                 std::string structureB =
-                    alignment.dot_bracket_structureB(clp.local_output);
+                    alignment->dot_bracket_structureB(clp.local_output);
                 ma.prepend(MultipleAlignment::SeqEntry("", structureA));
                 ma.append(MultipleAlignment::SeqEntry("", structureB));
             }

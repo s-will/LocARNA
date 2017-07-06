@@ -657,23 +657,24 @@ main(int argc, char **argv) {
     //
 
     // initialize aligner object, which does the alignment computation
-    Aligner aligner = Aligner::create()
-                          .seqA(seqA)
-                          .seqB(seqB)
-                          .scoring(scoring)
-                          .no_lonely_pairs(clp.no_lonely_pairs)
-                          .struct_local(clp.struct_local)
-                          .sequ_local(clp.sequ_local)
-                          .free_endgaps(clp.free_endgaps)
-                          .max_diff_am(clp.max_diff_am)
-                          .max_diff_at_am(clp.max_diff_at_am)
-                          .trace_controller(trace_controller)
-                          .stacking(clp.stacking || clp.new_stacking)
-                          .constraints(seq_constraints);
+    auto aligner =
+        std::make_unique<Aligner>(Aligner::create()
+                                  .seqA(seqA)
+                                  .seqB(seqB)
+                                  .scoring(scoring)
+                                  .no_lonely_pairs(clp.no_lonely_pairs)
+                                  .struct_local(clp.struct_local)
+                                  .sequ_local(clp.sequ_local)
+                                  .free_endgaps(clp.free_endgaps)
+                                  .max_diff_am(clp.max_diff_am)
+                                  .max_diff_at_am(clp.max_diff_at_am)
+                                  .trace_controller(trace_controller)
+                                  .stacking(clp.stacking || clp.new_stacking)
+                                  .constraints(seq_constraints));
 
     // enumerate suboptimal alignments (using interval splitting)
     if (clp.subopt) {
-        aligner.suboptimal(clp.kbest_k, clp.subopt_threshold, clp.normalized,
+        aligner->suboptimal(clp.kbest_k, clp.subopt_threshold, clp.normalized,
                            clp.normalized_L, clp.width, clp.verbose,
                            clp.local_output, clp.pos_output,
                            clp.write_structure);
@@ -684,17 +685,17 @@ main(int argc, char **argv) {
 
     // if option --normalized <L> is given, then do normalized local alignemnt
     if (clp.normalized) {
-        score = aligner.normalized_align(clp.normalized_L, clp.verbose);
+        score = aligner->normalized_align(clp.normalized_L, clp.verbose);
 
     } else if (clp.penalized) {
-        score = aligner.penalized_align(clp.position_penalty);
+        score = aligner->penalized_align(clp.position_penalty);
     }
 
     else {
         // ========== STANDARD CASE ==========
 
         // otherwise compute the best alignment
-        score = aligner.align();
+        score = aligner->align();
     }
 
     // ----------------------------------------
@@ -704,20 +705,29 @@ main(int argc, char **argv) {
         std::cout << "Score: " << score << std::endl << std::endl;
     }
 
+    std::unique_ptr<Alignment> alignment;
+
     // ------------------------------------------------------------
     // Traceback
     //
-    if ((!clp.normalized && !clp.penalized) && DO_TRACE) {
-        aligner.trace();
+    if (clp.normalized || clp.penalized || DO_TRACE) {
+        if (!(clp.normalized || clp.penalized)) {
+            aligner->trace();
+        } //otherwise the trace was already computed!
 
-        // for debugging:
-        // aligner.get_alignment().write_debug(std::cout);
+        // copy the alignment from aligner
+        alignment = std::make_unique<Alignment>(aligner->get_alignment());
+    }
+
+    aligner.reset(); // delete the aligner with DP matrices
+    arc_matches.reset(); // delete the arc_matches
+
+    if ((!clp.normalized && !clp.penalized) && DO_TRACE) {
 
         // if score components should be reported
         if (clp.score_components) {
             // get alignment and compute contributions by sequence
             // similarity and gap cost
-            const Alignment &alignment = aligner.get_alignment();
 
             // experimental: I do the calculations here until I
             // decide where to put the code
@@ -728,7 +738,7 @@ main(int argc, char **argv) {
                       << "non-standard standard scoring types, "
                       << "e.g. free end gaps." << std::endl;
 
-            const Alignment::edges_t edges = alignment.alignment_edges(false);
+            const Alignment::edges_t edges = alignment->alignment_edges(false);
 
             score_t seq_sim = 0;
             score_t gap_cost = 0; // count linear component of gap cost
@@ -783,8 +793,6 @@ main(int argc, char **argv) {
     if (clp.normalized || clp.penalized || DO_TRACE) {
         // if we did a trace (one way or the other)
 
-        const Alignment &alignment = aligner.get_alignment();
-
         // ----------------------------------------
         // write alignment in different output formats to files
         //
@@ -793,41 +801,41 @@ main(int argc, char **argv) {
 
         std::unique_ptr<RnaData> consensus =
             MainHelper::consensus(clp, pfparams, my_exp_probA, my_exp_probB,
-                                  rna_dataA.get(), rna_dataB.get(), alignment,
+                                  rna_dataA.get(), rna_dataB.get(), *alignment,
                                   consensus_structure);
 
         return_code =
             MainHelper::write_alignment(clp, score, consensus_structure,
-                                        consensus.get(), alignment,
+                                        consensus.get(), *alignment,
                                         multiple_ref_alignment.get());
 
         // ----------------------------------------
         // write alignment to screen
 
         if (clp.pos_output) {
-            std::cout << "HIT " << score << " " << alignment.local_startA()
-                      << " " << alignment.local_startB() << " "
-                      << alignment.local_endA() << " " << alignment.local_endB()
+            std::cout << "HIT " << score << " " << alignment->local_startA()
+                      << " " << alignment->local_startB() << " "
+                      << alignment->local_endA() << " " << alignment->local_endB()
                       << " " << std::endl;
             std::cout << std::endl;
         }
 
         if ((!clp.pos_output && !clp.quiet) || clp.local_output) {
-            MultipleAlignment ma(alignment, clp.local_output);
+            MultipleAlignment ma(*alignment, clp.local_output);
 
             if (clp.write_structure) {
                 // annotate multiple alignment with structures
                 std::string structureA =
-                    alignment.dot_bracket_structureA(clp.local_output);
+                    alignment->dot_bracket_structureA(clp.local_output);
                 std::string structureB =
-                    alignment.dot_bracket_structureB(clp.local_output);
+                    alignment->dot_bracket_structureB(clp.local_output);
                 ma.prepend(MultipleAlignment::SeqEntry("", structureA));
                 ma.append(MultipleAlignment::SeqEntry("", structureB));
             }
 
             if (clp.pos_output) {
-                std::cout << "\t+" << alignment.local_startA() << std::endl
-                          << "\t+" << alignment.local_startB() << std::endl
+                std::cout << "\t+" << alignment->local_startA() << std::endl
+                          << "\t+" << alignment->local_startB() << std::endl
                           << std::endl;
                 std::cout << std::endl;
             }
@@ -840,7 +848,7 @@ main(int argc, char **argv) {
                     consensus =
                         MainHelper::consensus(clp, pfparams, my_exp_probA,
                                               my_exp_probB, rna_dataA.get(),
-                                              rna_dataB.get(), alignment,
+                                              rna_dataB.get(), *alignment,
                                               consensus_structure);
                     clp.local_file_output = !clp.local_output;
                 }
@@ -852,8 +860,8 @@ main(int argc, char **argv) {
 
             if (clp.pos_output) {
                 std::cout << std::endl
-                          << "\t+" << alignment.local_endA() << std::endl
-                          << "\t+" << alignment.local_endB() << std::endl
+                          << "\t+" << alignment->local_endA() << std::endl
+                          << "\t+" << alignment->local_endB() << std::endl
                           << std::endl;
             }
         }

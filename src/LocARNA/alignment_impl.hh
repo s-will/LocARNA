@@ -7,6 +7,7 @@
 
 #include <iosfwd>
 #include <vector>
+#include "sequence.hh"
 
 namespace LocARNA {
 
@@ -20,10 +21,8 @@ namespace LocARNA {
      */
     class AlignmentImpl {
     public:
-        Alignment *self_; //!< self pointer
-
-        const Sequence &seqA_; //!< sequence A
-        const Sequence &seqB_; //!< sequence B
+        const Sequence seqA_; //!< sequence A
+        const Sequence seqB_; //!< sequence B
 
         /**
          * \brief first components of alignment edges
@@ -59,15 +58,12 @@ namespace LocARNA {
         /**
          * @brief Constructor as empty alignment of two sequences
          *
-         * @param self self pointer
          * @param seqA sequence A
          * @param seqB sequence B
          */
-        AlignmentImpl(Alignment *self,
-                      const Sequence &seqA,
+        AlignmentImpl(const Sequence &seqA,
                       const Sequence &seqB)
-            : self_(self),
-              seqA_(seqA),
+            : seqA_(seqA),
               seqB_(seqB),
               a_(),
               b_(),

@@ -104,9 +104,9 @@ struct command_line_parameters
             "Factor for scaling the partition functions. Use in order to avoid "
             "overflow.";
         help_text["extended_pf"] =
-            "Use extended precision for partition function values. This roughly "
-            "doubles run-time and space, however enables handling larger "
-            "instances.";
+            "Use extended precision for partition function values. This "
+            "increases run-time and space (less than 2x), however enables "
+            "handling significantly larger instances.";
         help_text["temperature_alipf"] =
             "Temperature for the /alignment/ partition functions (this "
             "temperature different from the 'physical' temperature of RNA "
@@ -258,6 +258,83 @@ check_score_t<extended_pf_score_t>() {
  *
  * @return success
  */
+template <typename pf_score_t>
+int
+run_and_report();
+
+/**
+ * \brief Main function of executable locarna_p
+ *
+ * @param argc argument counter
+ * @param argv argument vector
+ *
+ * @return success
+ */
+int
+main(int argc, char **argv) {
+    stopwatch.start("total");
+
+    clp.no_lonely_pairs =
+        false; //! @todo currently not a command line option of locarna_p
+
+    // ------------------------------------------------------------
+    // Process options
+
+    bool process_success = process_options(argc, argv, my_options);
+
+    if (clp.help) {
+        cout << "locarna_p - pairwise partition function of "
+             << "RNA alignments." << std::endl;
+        cout << std::endl
+             << "Computes base and base pair match probabilities " << std::endl
+             << "from alignment partitition functions." << std::endl
+             << std::endl;
+
+        // cout << VERSION_STRING<<std::endl;
+
+        print_help(argv[0], my_options);
+
+        cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
+             << std::endl
+             << std::endl;
+        return 0;
+    }
+
+    if (clp.quiet) {
+        clp.verbose = false;
+    } // quiet overrides verbose
+
+    if (clp.version || clp.verbose) {
+        cout << "locarna_p (" << VERSION_STRING << ")" << std::endl;
+        if (clp.version)
+            return 0;
+        else
+            cout << std::endl;
+    }
+
+    if (!process_success) {
+        std::cerr << O_error_msg << std::endl;
+        print_usage(argv[0], my_options);
+        return -1;
+    }
+
+    if (clp.stopwatch) {
+        stopwatch.set_print_on_exit(true);
+    }
+
+    if (clp.verbose)
+        print_options(my_options);
+
+    if (!clp.extended_pf) {
+        return
+            run_and_report<standard_pf_score_t>();
+    } else {
+        return
+            run_and_report<extended_pf_score_t>();
+    }
+}
+
+
 template <typename pf_score_t>
 int
 run_and_report() {
@@ -550,77 +627,4 @@ run_and_report() {
 
     // DONE
     return 0;
-}
-
-
-/**
- * \brief Main function of executable locarna_p
- *
- * @param argc argument counter
- * @param argv argument vector
- *
- * @return success
- */
-int
-main(int argc, char **argv) {
-    stopwatch.start("total");
-
-    clp.no_lonely_pairs =
-        false; //! @todo currently not a command line option of locarna_p
-
-    // ------------------------------------------------------------
-    // Process options
-
-    bool process_success = process_options(argc, argv, my_options);
-
-    if (clp.help) {
-        cout << "locarna_p - pairwise partition function of "
-             << "RNA alignments." << std::endl;
-        cout << std::endl
-             << "Computes base and base pair match probabilities " << std::endl
-             << "from alignment partitition functions." << std::endl
-             << std::endl;
-
-        // cout << VERSION_STRING<<std::endl;
-
-        print_help(argv[0], my_options);
-
-        cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
-             << std::endl
-             << std::endl;
-        return 0;
-    }
-
-    if (clp.quiet) {
-        clp.verbose = false;
-    } // quiet overrides verbose
-
-    if (clp.version || clp.verbose) {
-        cout << "locarna_p (" << VERSION_STRING << ")" << std::endl;
-        if (clp.version)
-            return 0;
-        else
-            cout << std::endl;
-    }
-
-    if (!process_success) {
-        std::cerr << O_error_msg << std::endl;
-        print_usage(argv[0], my_options);
-        return -1;
-    }
-
-    if (clp.stopwatch) {
-        stopwatch.set_print_on_exit(true);
-    }
-
-    if (clp.verbose)
-        print_options(my_options);
-
-    if (!clp.extended_pf) {
-        return
-            run_and_report<standard_pf_score_t>();
-    } else {
-        return
-            run_and_report<extended_pf_score_t>();
-    }
 }
