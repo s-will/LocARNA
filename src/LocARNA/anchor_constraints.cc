@@ -2,6 +2,7 @@
 #include <sstream>
 
 #include <iostream>
+#include <algorithm>
 
 #include "anchor_constraints.hh"
 #include "aux.hh"
@@ -74,11 +75,8 @@ namespace LocARNA {
 
     bool
     AnchorConstraints::only_dont_care(const std::string &s) {
-        for (std::string::const_iterator it = s.begin(); s.end() != it; ++it) {
-            if (*it != ' ' && *it != '.' && *it != '-')
-                return false;
-        }
-        return true;
+        return std::all_of(s.begin(),s.end(),
+                           [] (char x) {return x == ' ' || x == '.' || x == '-'; });
     }
 
     void
@@ -89,42 +87,40 @@ namespace LocARNA {
         std::vector<std::string>
             vec(seq_len, ""); // vector of names at each sequence position
 
-        for (std::vector<std::string>::const_iterator it = seq.begin();
-             seq.end() != it; ++it) {
-            if (seq_len != it->length()) {
+        for (const auto &x : seq) {
+            if (seq_len != x.length()) {
                 throw(
                     failure("Error during parsing of constraints. Constraint "
                             "string of wrong length."));
             }
 
             for (std::string::size_type i = 0; i < seq_len; i++) {
-                vec[i].push_back((*it)[i]);
+                vec[i].push_back(x[i]);
             }
         }
 
         std::string last_name = "";
         size_type i = 1;
-        for (std::vector<std::string>::iterator it = vec.begin();
-             vec.end() != it; ++it) {
-            if (!only_dont_care(*it)) {
+        for (const auto &x : vec) {
+            if (!only_dont_care(x)) {
                 // check name consistency
                 if (strict) {
-                    if (*it <= last_name) {
+                    if (x <= last_name) {
                         throw(failure(
                             "Error during parsing of constraints. Anchor names "
                             "not in strict lexicographic order at name \"" +
-                            (*it) + "\"."));
+                            x + "\"."));
                     }
-                    last_name = *it;
+                    last_name = x;
                 } else {
-                    if (nameTab.find(*it) != nameTab.end()) {
+                    if (nameTab.find(x) != nameTab.end()) {
                         throw(
                             failure("Error during parsing of constraints. "
                                     "Duplicate constraint name: \"" +
-                                    (*it) + "\"."));
+                                    x + "\"."));
                     }
                 }
-                nameTab[*it] = i;
+                nameTab[x] = i;
             }
             ++i;
         }
@@ -135,11 +131,9 @@ namespace LocARNA {
                                     name_vec_t &names,
                                     const name_tab_t &nameTabA,
                                     const name_tab_t &nameTabB) {
-        for (name_tab_t::const_iterator it = nameTabA.begin();
-             nameTabA.end() != it; ++it) {
-
-            std::string name = it->first;
-            size_type posA = it->second;
+        for (const auto &x : nameTabA) {
+            std::string name = x.first;
+            size_type posA = x.second;
 
             names[posA] = name;
 

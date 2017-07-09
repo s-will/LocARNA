@@ -5,9 +5,9 @@
 #include <config.h>
 #endif
 
-#include <memory>
 #include <iosfwd>
 #include <vector>
+#include <memory>
 #include "aux.hh"
 #include "scoring_fwd.hh"
 
@@ -98,8 +98,6 @@ namespace LocARNA {
      *  Supports construction of the alignment during traceback.
      */
     class Alignment {
-        std::unique_ptr<AlignmentImpl> pimpl_; //!< implementation pointer
-
     public:
         //! edge end
         typedef EdgeEnd edge_end_t;
@@ -155,15 +153,6 @@ namespace LocARNA {
          */
         Alignment &
         operator=(const Alignment &alignment);
-
-        /**
-         * @brief swap two alignments
-         * @param a1 first alignment
-         * @param a2 second alignment
-         * Swaps implementation objects (not only pointer)
-         */
-        void
-        swap(Alignment &a1, Alignment &a2);
 
         /**
          * \brief Set consensus structure of the alignment
@@ -293,6 +282,8 @@ namespace LocARNA {
          */
         const Sequence &
         seqB() const;
+    private:
+        std::unique_ptr<AlignmentImpl> pimpl_; //!< implementation pointer
     };
 }
 #endif

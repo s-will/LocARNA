@@ -53,17 +53,12 @@ namespace LocARNA {
     Alignment::Alignment(const Alignment &alignment)
         : pimpl_(std::make_unique<AlignmentImpl>(*alignment.pimpl_)) {}
 
-    void
-    Alignment::swap(Alignment &a1, Alignment &a2) {
-        std::swap(a1.pimpl_, a2.pimpl_);
-    }
-
     Alignment::~Alignment() {}
 
     Alignment &
     Alignment::operator=(const Alignment &alignment) {
         Alignment temp = Alignment(alignment);
-        swap(temp, *this);
+        std::swap(temp.pimpl_, this->pimpl_);
         return *this;
     }
 
@@ -85,8 +80,8 @@ namespace LocARNA {
     Alignment::clear() {
         pimpl_->strA_.resize(pimpl_->seqA_.length() + 1);
         pimpl_->strB_.resize(pimpl_->seqB_.length() + 1);
-        fill(pimpl_->strA_.begin(), pimpl_->strA_.end(), '.');
-        fill(pimpl_->strB_.begin(), pimpl_->strB_.end(), '.');
+        std::fill(pimpl_->strA_.begin(), pimpl_->strA_.end(), '.');
+        std::fill(pimpl_->strB_.begin(), pimpl_->strB_.end(), '.');
 
         pimpl_->a_.clear();
         pimpl_->b_.clear();

@@ -209,8 +209,8 @@ namespace LocARNA {
         //
 
         if (params_->constraints_->allowed_match(i, j)) {
-            auto &adjlA = bpsA_.right_adjlist_s(i);
-            auto &adjlB = bpsB_.right_adjlist_s(j);
+            const auto &adjlA = bpsA_.right_adjlist_s(i);
+            const auto &adjlB = bpsB_.right_adjlist_s(j);
 
             // for all pairs of arcs in A and B that have right ends i and j,
             // respectively
@@ -617,10 +617,8 @@ namespace LocARNA {
     //
     void
     AlignerImpl::fill_D_entries(pos_type al, pos_type bl) {
-        for (ArcMatchIdxVec::const_iterator it =
-                 arc_matches_.common_left_end_list(al, bl).begin();
-             arc_matches_.common_left_end_list(al, bl).end() != it; ++it) {
-            const ArcMatch &am = arc_matches_.arcmatch(*it);
+        for (const auto &x : arc_matches_.common_left_end_list(al, bl)) {
+            const ArcMatch &am = arc_matches_.arcmatch(x);
 
             const Arc &arcA = am.arcA();
             const Arc &arcB = am.arcB();
@@ -659,11 +657,8 @@ namespace LocARNA {
     AlignerImpl::fill_D_entries_noLP(pos_type al, pos_type bl) {
         // get adj lists of arcs starting in al-1, bl-1
 
-        for (ArcMatchIdxVec::const_iterator it =
-                 arc_matches_.common_left_end_list(al - 1, bl - 1).begin();
-             arc_matches_.common_left_end_list(al - 1, bl - 1).end() != it;
-             ++it) {
-            const ArcMatch &am = arc_matches_.arcmatch(*it);
+        for (const auto &x : arc_matches_.common_left_end_list(al - 1, bl - 1)) {
+            const auto &am = arc_matches_.arcmatch(x);
 
             pos_type ar = am.arcA().right() - 1;
             pos_type br = am.arcB().right() - 1;
@@ -676,7 +671,7 @@ namespace LocARNA {
             // i.e. the joint probabilities have to be greater than 0
             if (arc_matches_.exists_inner_arc_match(am) &&
                 (!scoring_->stacking() || scoring_->is_stackable_am(am))) {
-                const ArcMatch &inner_am = arc_matches_.inner_arc_match(am);
+                const auto &inner_am = arc_matches_.inner_arc_match(am);
 
                 infty_score_t m = Ms_[0](ar - 1, br - 1);
                 if (params_->struct_local_) {
@@ -878,11 +873,9 @@ namespace LocARNA {
         // need to handle anchor constraints:
         // search maximum to the right of (or at) rightmost anchor constraint
         //
-        AnchorConstraints::size_pair_t right_anchor =
-            params_->constraints_->rightmost_anchor();
+        const auto right_anchor = params_->constraints_->rightmost_anchor();
 
-        AnchorConstraints::size_pair_t left_anchor =
-            params_->constraints_->leftmost_anchor();
+        const auto left_anchor = params_->constraints_->leftmost_anchor();
 
         // AnchorConstraints::size_pair_t right_anchor =
         // AnchorConstraints::size_pair_t(r_.startA(),r_.startB());//dummy
@@ -917,10 +910,6 @@ namespace LocARNA {
                 }
             }
         }
-
-        // std::cout << "max: "<<max_i<<","<<max_j<<std::endl;
-
-        // std::cout << M << std::endl;
 
         return max_score;
     }
@@ -1229,15 +1218,13 @@ namespace LocARNA {
         const pos_type &ar = i;
         const pos_type &br = j;
 
-        for (ArcMatchIdxVec::const_iterator it =
-                 arc_matches_.common_right_end_list(ar, br).begin();
-             arc_matches_.common_right_end_list(ar, br).end() != it; ++it) {
-            // NOTES: *it is the arc match index
+        for (const auto &x : arc_matches_.common_right_end_list(ar, br)) {
+            // NOTES: x is the arc match index
             //        we iterate only over valid arc matches, i.e.
             //        constraints (including anchor c. and heuristic ones) are
             //        satisified
 
-            const ArcMatch &am = arc_matches_.arcmatch(*it);
+            const ArcMatch &am = arc_matches_.arcmatch(x);
 
             const Arc &arcA = am.arcA();
             const Arc &arcB = am.arcB();
@@ -1580,7 +1567,7 @@ namespace LocARNA {
             align_D();
 
         // make new mod_scoring_view (including a new copy of scoring)
-        auto mod_scoring_view = std::make_unique<ModifiedScoringView>(this);
+        const auto mod_scoring_view = std::make_unique<ModifiedScoringView>(this);
 
         // Apply Dinkelbach's algorithm
 
