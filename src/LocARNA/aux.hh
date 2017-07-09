@@ -283,14 +283,11 @@ namespace LocARNA {
     split_at_separator(const std::string &s, char sep);
 
     /**
-     * @brief Tokenize string at separator symbol
+     * @brief Concatenate strings, inserting separators
      *
-     * Split at seperator symbol and write to output vector of
-     * strings.
-     *
-     * @param s string
+     * @param v vector of strings
      * @param sep separator
-     * @param v[out] vector of strings
+     * @result string of concatenated strings
      */
     std::string
     concat_with_separator(const std::vector<std::string> &v, char sep);

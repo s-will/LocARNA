@@ -121,8 +121,7 @@ namespace LocARNA {
         if (v.size() == 0)
             return "";
         std::string s = v[0];
-        for (std::vector<std::string>::const_iterator it = v.begin() + 1;
-             v.end() != it; ++it) {
+        for (auto it = v.begin() + 1; v.end() != it; ++it) {
             s += sep + *it;
         }
         return s;

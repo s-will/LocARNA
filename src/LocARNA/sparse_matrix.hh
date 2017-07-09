@@ -310,10 +310,9 @@ namespace LocARNA {
     template <class T>
     inline std::ostream &
     operator<<(std::ostream &out, const SparseMatrix<T> &m) {
-        for (typename SparseMatrix<T>::const_iterator it = m.begin();
-             m.end() != it; ++it) {
-            out << "(" << it->first.first << "," << it->first.second << ") "
-                << it->second << std::endl;
+        for (const auto &x: m) {
+            out << "(" << x.first.first << "," << x.first.second << ") "
+                << x.second << std::endl;
         }
         return out;
     }
