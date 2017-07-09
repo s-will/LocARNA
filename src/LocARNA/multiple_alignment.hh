@@ -69,45 +69,31 @@ namespace LocARNA {
         /**
          * @brief file format type for multiple alignments
          */
-        struct FormatType {
-            //! inner type
-            enum type {
-                STOCKHOLM, //!< stockholm file format
-                PP,        //!< pp format
-                CLUSTAL,   //!< (extended) clustal file format
-                FASTA      //!< fasta file format
-            };
-
-            //!@brief size of enum
-            static size_t
-            size() {
-                return 4;
-            }
+        enum class FormatType {
+            STOCKHOLM, //!< stockholm file format
+            PP,        //!< pp format
+            CLUSTAL,   //!< (extended) clustal file format
+            FASTA      //!< fasta file format
         };
+        //! @brief collection of the format types
+        static const std::vector<FormatType> FormatTypes;
 
         //! @brief type of sequence annotation.
         //! enumerates legal annotation types
-        struct AnnoType {
-            //! inner type
-            enum type {
-                //! consensus structure annotation (consensus structure)
-                consensus_structure,
-                //! structure annotation (often, constraint; allowed are
-                //! Vienna-package structure constraints)
-                structure,
-                //! structure annotation (a single structure; used as fixed
-                //! structure constraint)
-                fixed_structure,
-                //! anchor annotation (anchor constraints)
-                anchors
-            };
-
-            //!@brief size of enum
-            static size_t
-            size() {
-                return 4;
-            }
+        enum class AnnoType {
+            //! consensus structure annotation (consensus structure)
+            consensus_structure,
+            //! structure annotation (often, constraint; allowed are
+            //! Vienna-package structure constraints)
+            structure,
+            //! structure annotation (a single structure; used as fixed
+            //! structure constraint)
+            fixed_structure,
+            //! anchor annotation (anchor constraints)
+            anchors
         };
+        //! @brief collection of the format types
+        static const std::vector<AnnoType> AnnoTypes;
 
     private:
         //! prefix strings for annotations (shall be prefix unique)
@@ -115,13 +101,14 @@ namespace LocARNA {
         //! this!)
         //!
         //! This is indexed by FormatType and AnnoType.
-        typedef std::vector<std::vector<std::string> > annotation_tags_t;
+        class annotation_tags_t : public std::map< FormatType, std::map< AnnoType, std::string> > {
+            //@brief constructor: initialize annotation tags table
+        public:
+            annotation_tags_t();
+        };
 
+        //! @brief table of annotation tags
         static annotation_tags_t annotation_tags;
-
-        //! initialize annotation tags
-        static void
-        init_annotation_tags();
 
     public:
         //! @brief number of annotation types
@@ -351,7 +338,7 @@ namespace LocARNA {
         typedef std::map<std::string, size_type> str2idx_map_t;
 
         //! map annotation type to sequence annotation
-        typedef std::map<size_t, SequenceAnnotation> annotation_map_t;
+        typedef std::map<AnnoType, SequenceAnnotation> annotation_map_t;
 
         //************************************************************
         // attributes of MultipleAlignment
@@ -384,7 +371,7 @@ namespace LocARNA {
          * @note overwrites/clears existing data
          */
         void
-        read_clustallike(std::istream &in, FormatType::type format);
+        read_clustallike(std::istream &in, FormatType format);
 
         /**
          * @brief Read alignment from input stream, expect stockholm format.
@@ -448,7 +435,7 @@ namespace LocARNA {
          * @see MultipleAlignment(std::istream &in)
         */
         MultipleAlignment(const std::string &file,
-                          FormatType::type format = FormatType::CLUSTAL);
+                          FormatType format = FormatType::CLUSTAL);
 
         /**
          * @brief Construct from stream
@@ -458,7 +445,7 @@ namespace LocARNA {
          * @throw failure on read errors
         */
         MultipleAlignment(std::istream &in,
-                          FormatType::type format = FormatType::CLUSTAL);
+                          FormatType format = FormatType::CLUSTAL);
 
         /**
          * @brief Construct as degenerate alignment of one sequence
@@ -585,7 +572,7 @@ namespace LocARNA {
          * @note returns ref to empty annotation if annotation is not available
          */
         const SequenceAnnotation &
-        annotation(const AnnoType::type &annotype) const;
+        annotation(const AnnoType &annotype) const;
 
         /**
          * @brief Write access to annotation
@@ -595,10 +582,9 @@ namespace LocARNA {
          * throw failure if annotation is not valid
          */
         void
-        set_annotation(const AnnoType::type &annotype,
+        set_annotation(const AnnoType &annotype,
                        const SequenceAnnotation &annotation) {
-            assert(0 <= annotype && annotype < num_of_annotypes());
-            annotations_[(size_t)annotype] = annotation;
+            annotations_[annotype] = annotation;
         }
 
         /**
@@ -607,8 +593,7 @@ namespace LocARNA {
          * @return wheter annotions with prefix are available
          */
         bool
-        has_annotation(const AnnoType::type &annotype) const {
-            assert(0 <= annotype && annotype < num_of_annotypes());
+        has_annotation(const AnnoType &annotype) const {
             return annotations_.find(annotype) != annotations_.end();
         }
 
@@ -848,7 +833,7 @@ namespace LocARNA {
          */
         std::ostream &
         write(std::ostream &out,
-              FormatType::type format =
+              FormatType format =
                   MultipleAlignment::FormatType::CLUSTAL) const;
 
         /**
@@ -868,7 +853,7 @@ namespace LocARNA {
         std::ostream &
         write(std::ostream &out,
               size_t width,
-              FormatType::type format =
+              FormatType format =
                   MultipleAlignment::FormatType::CLUSTAL) const;
 
         /**
@@ -906,7 +891,7 @@ namespace LocARNA {
         write(std::ostream &out,
               size_type start,
               size_type end,
-              FormatType::type format =
+              FormatType format =
                   MultipleAlignment::FormatType::CLUSTAL) const;
 
         /**
