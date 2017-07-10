@@ -31,6 +31,7 @@ namespace LocARNA {
         // to convert MultipleAlignment objects to Sequence objects
 
     public:
+
         /**
          * @brief Construct empty
          */
