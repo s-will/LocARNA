@@ -64,8 +64,6 @@ namespace LocARNA {
      */
     class MultipleAlignment {
     public:
-        typedef size_t size_type; //!< size type
-
         /**
          * @brief file format type for multiple alignments
          */
@@ -95,22 +93,6 @@ namespace LocARNA {
         //! @brief collection of the format types
         static const std::vector<AnnoType> AnnoTypes;
 
-    private:
-        //! prefix strings for annotations (shall be prefix unique)
-        //! (no class outside of MultipleAlignment should have to know about
-        //! this!)
-        //!
-        //! This is indexed by FormatType and AnnoType.
-        class annotation_tags_t : public std::map< FormatType, std::map< AnnoType, std::string> > {
-            //@brief constructor: initialize annotation tags table
-        public:
-            annotation_tags_t();
-        };
-
-        //! @brief table of annotation tags
-        static annotation_tags_t annotation_tags;
-
-    public:
         //! @brief number of annotation types
         //! @return number of annotation types
         static size_t
@@ -128,17 +110,10 @@ namespace LocARNA {
          */
         class SeqEntry {
         public:
-            typedef MultipleAlignment::size_type size_type; //!< size type
 
             typedef std::pair<pos_type, pos_type>
                 pos_pair_t; //!< pair of positions
 
-        private:
-            std::string name_;        //!< name of the sequence
-            std::string description_; //!< optional sequence description
-            string1 seq_;             //<! alignment string of the sequence
-
-        public:
             /**
              * @brief Construct from strings name and seq
              *
@@ -258,7 +233,13 @@ namespace LocARNA {
             set_seq(const string1 &seq) {
                 seq_ = seq;
             }
-        };
+
+        private:
+            std::string name_;        //!< name of the sequence
+            std::string description_; //!< optional sequence description
+            string1 seq_;             //<! alignment string of the sequence
+
+        }; //end class SeqEntry
 
         /**
          * @brief read only proxy class representing a column of the alignment
@@ -331,97 +312,13 @@ namespace LocARNA {
             operator!=(const AliColumn &ac) const {
                 return !(*this == ac);
             }
-        };
-
-    private:
-        //! map from string to index
-        typedef std::map<std::string, size_type> str2idx_map_t;
-
-        //! map annotation type to sequence annotation
-        typedef std::map<AnnoType, SequenceAnnotation> annotation_map_t;
-
-        //************************************************************
-        // attributes of MultipleAlignment
-
-        //! vector of alignment rows
-        std::vector<SeqEntry> alig_;
-
-        //! alignment/sequence annotation
-        annotation_map_t annotations_;
-
-        /**
-         * association between names and indices, use to
-         * locate sequences by name in log time
-         */
-        str2idx_map_t name2idx_;
-
-        // end attributes
-        //************************************************************
-
-        //! @brief create the map for translating names to indices
-        void
-        create_name2idx_map();
-
-        /**
-         * @brief Read alignment from input stream; helper for uniform
-         * reading of CLUSTALW, PP and STOCKHOLM
-         *
-         * @param in input stream
-         * @param format format type of input (CLUSTAL, PP, or STOCKHOLM)
-         * @note overwrites/clears existing data
-         */
-        void
-        read_clustallike(std::istream &in, FormatType format);
-
-        /**
-         * @brief Read alignment from input stream, expect stockholm format.
-         *
-         * @param in input stream
-         * @note overwrites/clears existing data
-         */
-        void
-        read_stockholm(std::istream &in);
-
-        /**
-         * @brief Read alignment from input stream, expect clustalw-like format.
-         *
-         * @param in input stream
-         * @note
-         * - A header starting with CLUSTAL is ignored, but not required.
-         * - Lines can be empty or of the form <name> <seq>.
-         * - Names may occur multiple times. in this case seq strings <seq> are
-         * appended.
-         * - The order of first occurrences of names in the stream is preserved.
-         * @note overwrites/clears existing data
-         */
-        void
-        read_clustalw(std::istream &in);
-
-        /**
-         * @brief Read alignment from input stream, expect fasta format.
-         *
-         * @param in input stream
-         *
-         * @note Sequence descriptors have the form '>descriptor'. Any
-         * white space between '>' and the name is ignored.  The sequence
-         * name is the descriptor until the first blank. The rest of the
-         * line is understood as sequence description.
-         *
-         * @note Sequences can be multiline, white space in sequences is
-         * ignored.
-         * @note The order of sequences in the stream is preserved.
-         * @note overwrites/clears existing data
-         *
-         * @todo read_fasta() currently does not read anchor
-         * constraints and structure. Should it? If yes, likely using
-         * special fa headers >#A, >#S.
-         */
-        void
-        read_fasta(std::istream &in);
+        }; // end class AliColumn
 
     public:
         //! @brief const iterator of sequence entries
         typedef std::vector<SeqEntry>::const_iterator const_iterator;
+        //! @brief iterator of sequence entries
+        typedef std::vector<SeqEntry>::iterator iterator;
 
         //! @brief Construct empty
         MultipleAlignment();
@@ -502,23 +399,6 @@ namespace LocARNA {
                           const Sequence &seqA,
                           const Sequence &seqB);
 
-    protected:
-        /**
-         * @brief Initialize from alignment edges and sequences
-         * @param edges alignment edges
-         * @param seqA sequence A
-         * @param seqB sequence B
-         * @param special_gap_symbols if true, use special distinct gap symbols
-         * for gaps due to loop deletion '_' or sparsification '~'
-         *
-         */
-        void
-        init(const AlignmentEdges &edges,
-             const Sequence &seqA,
-             const Sequence &seqB,
-             bool special_gap_symbols);
-
-    public:
         /**
          * @brief virtual destructor
          */
@@ -615,6 +495,9 @@ namespace LocARNA {
         length() const {
             return alig_.empty() ? 0 : alig_[0].seq().length();
         }
+
+        using value_type = SeqEntry;
+
 
         /**
          * @brief Begin for read-only traversal of name/sequence pairs
@@ -907,6 +790,29 @@ namespace LocARNA {
         bool
         checkAlphabet(const Alphabet<char> &alphabet) const;
 
+        /**
+         * @brief Print contents of object to stream
+         * @param out output stream
+         */
+        void
+        write_debug(std::ostream &out = std::cout) const;
+
+    protected:
+        /**
+         * @brief Initialize from alignment edges and sequences
+         * @param edges alignment edges
+         * @param seqA sequence A
+         * @param seqB sequence B
+         * @param special_gap_symbols if true, use special distinct gap symbols
+         * for gaps due to loop deletion '_' or sparsification '~'
+         *
+         */
+        void
+        init(const AlignmentEdges &edges,
+             const Sequence &seqA,
+             const Sequence &seqB,
+             bool special_gap_symbols);
+
     private:
         /**
          * @brief Deviation of a pairwise alignment from a pairwise reference
@@ -1023,13 +929,106 @@ namespace LocARNA {
                                  const SeqEntry &ref1,
                                  const SeqEntry &ref2);
 
-    public:
+        //! prefix strings for annotations (shall be prefix unique)
+        //! (no class outside of MultipleAlignment should have to know about
+        //! this!)
+        //!
+        //! This is indexed by FormatType and AnnoType.
+        class annotation_tags_t : public std::map< FormatType, std::map< AnnoType, std::string> > {
+            //@brief constructor: initialize annotation tags table
+        public:
+            annotation_tags_t();
+        };
+
+        //! @brief table of annotation tags
+        static annotation_tags_t annotation_tags;
+
+        //! map from string to index
+        typedef std::map<std::string, size_type> str2idx_map_t;
+
+        //! map annotation type to sequence annotation
+        typedef std::map<AnnoType, SequenceAnnotation> annotation_map_t;
+
+        //************************************************************
+        // attributes of MultipleAlignment
+
+        //! vector of alignment rows
+        std::vector<SeqEntry> alig_;
+
+        //! alignment/sequence annotation
+        annotation_map_t annotations_;
+
         /**
-         * @brief Print contents of object to stream
-         * @param out output stream
+         * association between names and indices, use to
+         * locate sequences by name in log time
+         */
+        str2idx_map_t name2idx_;
+
+        // end attributes
+        //************************************************************
+
+        //! @brief create the map for translating names to indices
+        void
+        create_name2idx_map();
+
+        /**
+         * @brief Read alignment from input stream; helper for uniform
+         * reading of CLUSTALW, PP and STOCKHOLM
+         *
+         * @param in input stream
+         * @param format format type of input (CLUSTAL, PP, or STOCKHOLM)
+         * @note overwrites/clears existing data
          */
         void
-        write_debug(std::ostream &out = std::cout) const;
+        read_clustallike(std::istream &in, FormatType format);
+
+        /**
+         * @brief Read alignment from input stream, expect stockholm format.
+         *
+         * @param in input stream
+         * @note overwrites/clears existing data
+         */
+        void
+        read_stockholm(std::istream &in);
+
+        /**
+         * @brief Read alignment from input stream, expect clustalw-like format.
+         *
+         * @param in input stream
+         * @note
+         * - A header starting with CLUSTAL is ignored, but not required.
+         * - Lines can be empty or of the form <name> <seq>.
+         * - Names may occur multiple times. in this case seq strings <seq> are
+         * appended.
+         * - The order of first occurrences of names in the stream is preserved.
+         * @note overwrites/clears existing data
+         */
+        void
+        read_clustalw(std::istream &in);
+
+        /**
+         * @brief Read alignment from input stream, expect fasta format.
+         *
+         * @param in input stream
+         *
+         * @note Sequence descriptors have the form '>descriptor'. Any
+         * white space between '>' and the name is ignored.  The sequence
+         * name is the descriptor until the first blank. The rest of the
+         * line is understood as sequence description.
+         *
+         * @note Sequences can be multiline, white space in sequences is
+         * ignored.
+         * @note The order of sequences in the stream is preserved.
+         * @note overwrites/clears existing data
+         *
+         * @todo read_fasta() currently does not read anchor
+         * constraints and structure. Should it? If yes, likely using
+         * special fa headers >#A, >#S.
+         */
+        void
+        read_fasta(std::istream &in);
+
+
     };
 
     /**

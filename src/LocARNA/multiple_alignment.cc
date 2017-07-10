@@ -9,11 +9,14 @@
 #include "alignment.hh"
 #include "multiple_alignment.hh"
 #include "sequence_annotation.hh"
+#include "zip.hh"
 
 #include <limits>
 
 #include <math.h>
 #include <stdlib.h>
+
+
 
 namespace LocARNA {
 
@@ -187,7 +190,7 @@ namespace LocARNA {
         std::vector<std::string> aliA(seqA.num_of_rows(), "");
         std::vector<std::string> aliB(seqB.num_of_rows(), "");
 
-        std::vector<int>::size_type alisize = edges.size();
+        auto alisize = edges.size();
 
         for (size_type i = 0; i < alisize; i++) {
             if (edges.first[i].is_gap()) {
@@ -217,29 +220,28 @@ namespace LocARNA {
         }
 
         // check for name conflicts
-        bool name_clash = false;
-        for (size_type k = 0; k < seqA.num_of_rows(); k++) {
-            if (seqB.contains(seqA.seqentry(k).name())) {
-                name_clash = true;
-            }
-        }
+        bool name_clash =
+            std::any_of(seqA.begin(), seqA.end(), [&seqB](const auto &row) {
+                return seqB.contains(row.name());
+            });
 
         // construct sequences from seqA
-        for (size_type k = 0; k < seqA.num_of_rows(); k++) {
-            std::string name = seqA.seqentry(k).name();
+        for (auto x : zip(seqA, aliA)) {
+            std::string name = x.first.name();
             if (name_clash) {
                 name = "A." + name;
             }
-            alig_.push_back(SeqEntry(name, aliA[k]));
+            alig_.push_back(SeqEntry(name, x.second));
         }
 
+
         // construct sequences from seqB
-        for (size_type k = 0; k < seqB.num_of_rows(); k++) {
-            std::string name = seqB.seqentry(k).name();
+        for (auto x : zip(seqB, aliB)) {
+            std::string name = x.first.name();
             if (name_clash) {
-                name = "B." + name;
+                 name = "B." + name;
             }
-            alig_.push_back(SeqEntry(name, aliB[k]));
+            alig_.push_back(SeqEntry(name, x.second));
         }
 
         create_name2idx_map();
@@ -958,9 +960,8 @@ namespace LocARNA {
 
     void
     MultipleAlignment::write_debug(std::ostream &out) const {
-        for (size_type i = 0; i < alig_.size(); ++i) {
-            out << alig_[i].name() << " \t" << alig_[i].seq().str()
-                << std::endl;
+        for (const auto &row : alig_) {
+            out << row.name() << " \t" << row.seq().str() << std::endl;
         }
     }
 
@@ -972,9 +973,8 @@ namespace LocARNA {
             std::map<char, size_t> tab;
 
             // iterate over sequences and count character
-            for (std::vector<SeqEntry>::const_iterator it = alig_.begin();
-                 alig_.end() != it; ++it) {
-                size_t c = it->seq()[i];
+            for (const auto &row : alig_) {
+                size_t c = row.seq()[i];
                 if (tab.end() == tab.find(c))
                     tab[c] = 0;
                 tab[c]++;
@@ -1017,18 +1017,16 @@ namespace LocARNA {
         assert(1 <= start);
         assert(end + 1 >= start);
 
-        size_t max_name_length = 0;
-        for (std::vector<SeqEntry>::const_iterator it = alig_.begin();
-             alig_.end() != it; ++it) {
-            max_name_length = std::max(max_name_length, it->name().length());
-        }
+        auto max_name_length =
+            maximum(alig_, [](const auto &row) { return row.name().length(); });
+
         size_t namewidth = std::max((size_t)18, max_name_length);
 
-        for (size_type i = 0; i < alig_.size(); i++) {
-            const std::string seq = alig_[i].seq().str();
+        for (const auto &row : alig_) {
+            const std::string seq = row.seq().str();
             assert(end <= seq.length());
 
-            write_name_sequence_line(out, alig_[i].name(),
+            write_name_sequence_line(out, row.name(),
                                      seq.substr(start - 1, end + 1 - start),
                                      namewidth);
         }
@@ -1100,23 +1098,20 @@ namespace LocARNA {
 
     void
     MultipleAlignment::reverse() {
-        for (std::vector<SeqEntry>::iterator it = alig_.begin();
-             alig_.end() != it; ++it) {
-            it->reverse();
+        for (auto &row : alig_) {
+            row.reverse();
         }
     }
 
     bool
     MultipleAlignment::checkAlphabet(const Alphabet<char> &alphabet) const {
-        for (const_iterator it = begin(); end() != it; ++it) {
-            for (size_type i = 1; i <= it->seq().length(); i++) {
-                if (!alphabet.in(it->seq()[i])) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        return std::all_of(alig_.begin(), alig_.end(),
+                           [&alphabet](const auto &row) {
+                               return std::all_of(row.seq().begin(), row.seq().end(),
+                                                  [&alphabet](const auto &c) {
+                                                      return alphabet.in(c);
+                                                  });
+                           });
     }
 
     void
@@ -1143,8 +1138,8 @@ namespace LocARNA {
 
     void
     MultipleAlignment::operator+=(char c) {
-        for (size_type i = 0; i < alig_.size(); ++i) {
-            alig_[i].push_back(c);
+        for (auto &row : alig_) {
+            row.push_back(c);
         }
     }
 
