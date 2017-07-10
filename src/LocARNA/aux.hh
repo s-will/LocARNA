@@ -74,6 +74,28 @@ namespace LocARNA {
 
 namespace LocARNA {
 
+    // some cool TMP shit
+    template <bool F, class T1, class T2>
+    struct select {
+        using type = T2;
+        using else_type = T1;
+    };
+    template <class T1, class T2>
+    struct select<true, T1, T2> {
+        using type = T1;
+        using else_type = T2;
+    };
+
+    template <class T>
+    struct is_const {
+        static constexpr bool flag = false;
+    };
+    template <class T>
+    struct is_const<const T> {
+        static constexpr bool flag = true;
+    };
+
+
     class string1;
 
     /**
@@ -379,6 +401,39 @@ namespace LocARNA {
 
     double
     sequence_identity(const string1 &seqA, const string1 &seqB);
+
+    /**
+     * @brief generic maximum value of iterable
+     * @param x iterable object (e.g. container)
+     * @param key key function
+     * @return max{ key(y) | y in x }
+     */
+    template <class Iterable, typename KeyFun>
+    auto
+    maximum(const Iterable&x, const KeyFun &key) {
+        auto maxelem_it = max_element(x.begin(), x.end(),
+                                      [&key](const auto &x, const auto &y) {
+                                          return key(x) < key(y);
+                                      });
+        return key(*maxelem_it);
+    }
+
+    /**
+     * @brief generic minimum value of iterable
+     * @param x iterable object (e.g. container)
+     * @param key key function
+     * @return min{ key(y) | y in x }
+     */
+    template <class Iterable, typename KeyFun>
+    auto
+    minimum(const Iterable&x, const KeyFun &key) {
+        auto minelem_it = min_element(x.begin(), x.end(),
+                                      [&key](const auto &x, const auto &y) {
+                                          return key(x) < key(y);
+                                      });
+        return key(*minelem_it);
+    }
+
 }
 
 #endif
