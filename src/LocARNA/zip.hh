@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <type_traits>
 #include <utility>
 #include <memory>
 
@@ -15,20 +16,20 @@ namespace LocARNA {
     template <class T1, class T2>
     class Zip : std::pair<T1 &, T2 &> {
     public:
-        using iterator1_t = typename select<is_const<T1>::flag,
+        using iterator1_t = typename select<std::is_const<T1>::value,
                                             typename T1::const_iterator,
                                             typename T1::iterator>::type;
-        using iterator2_t = typename select<is_const<T2>::flag,
+        using iterator2_t = typename select<std::is_const<T2>::value,
                                             typename T2::const_iterator,
                                             typename T2::iterator>::type;
 
         using iparent_t = std::pair<iterator1_t, iterator2_t>;
 
-        using value_type1 = typename select<is_const<T1>::flag,
+        using value_type1 = typename select<std::is_const<T1>::value,
                                             const typename T1::value_type &,
                                             typename T1::value_type &>::type;
 
-        using value_type2 = typename select<is_const<T2>::flag,
+        using value_type2 = typename select<std::is_const<T2>::value,
                                             const typename T2::value_type &,
                                             typename T2::value_type &>::type;
 
