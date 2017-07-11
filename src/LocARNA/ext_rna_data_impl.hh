@@ -6,7 +6,9 @@
 #endif
 
 #include <iosfwd>
+
 #include "ext_rna_data.hh"
+#include "rna_data_impl.hh"
 #include "sequence.hh"
 #include "sparse_vector.hh"
 
