@@ -15,62 +15,22 @@
 #    define nullptr NULL
 #endif
 
-// import and define types for unordered_map/set
-// in a way that is compatible with stdc++ and libc++
-#ifdef _LIBCPP_VERSION
-#include <unordered_map>
-#include <unordered_set>
-namespace LocARNA {
-    template <class Key,                       // unordered_map::key_type
-              class T,                         // unordered_map::mapped_type
-              class Hash = std::hash<Key>,     // unordered_map::hasher
-              class Pred = std::equal_to<Key>, // unordered_map::key_equal
-              class Alloc = std::allocator<
-                  std::pair<const Key, T> > // unordered_map::allocator_type
-              >
-    struct unordered_map {
-        typedef std::unordered_map<Key, T, Hash, Pred, Alloc> type;
-    };
-
-    template <class Key,                   // unordered_set::key_type/value_type
-              class Hash = std::hash<Key>, // unordered_set::hasher
-              class Pred = std::equal_to<Key>,  // unordered_set::key_equal
-              class Alloc = std::allocator<Key> // unordered_set::allocator_type
-              >
-    struct unordered_set {
-        typedef std::unordered_set<Key, Hash, Pred, Alloc> type;
-    };
-}
-// typedef std::unordered_set LocARNA::unordered_set;
-#else
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
-namespace LocARNA {
-    template <class Key,                        // unordered_map::key_type
-              class T,                          // unordered_map::mapped_type
-              class Hash = std::tr1::hash<Key>, // unordered_map::hasher
-              class Pred = std::equal_to<Key>,  // unordered_map::key_equal
-              class Alloc = std::allocator<
-                  std::pair<const Key, T> > // unordered_map::allocator_type
-              >
-    struct unordered_map {
-        typedef std::tr1::unordered_map<Key, T, Hash, Pred, Alloc> type;
-    };
-
-    template <class Key, // unordered_set::key_type/value_type
-              class Hash = std::tr1::hash<Key>, // unordered_set::hasher
-              class Pred = std::equal_to<Key>,  // unordered_set::key_equal
-              class Alloc = std::allocator<Key> // unordered_set::allocator_type
-              >
-    struct unordered_set {
-        typedef std::tr1::unordered_set<Key, Hash, Pred, Alloc> type;
-    };
-}
-#endif
-
 //!
 //! auxilliary types and global constants for use in locarna
 //!
+
+namespace std
+{
+    template <>
+    struct hash<std::pair<size_t, size_t>>
+    {
+        size_t operator()(const std::pair<size_t, size_t>& p) const
+        {
+            auto h = hash<size_t>();
+            return ( h(p.first) ^ ( h(p.second) << 1) ) >> 1;
+        }
+    };
+}
 
 namespace LocARNA {
 
@@ -84,21 +44,6 @@ namespace LocARNA {
     };
 
     class string1;
-
-    /**
-     * @brief Function class definining hash function for pairs of size_t
-     */
-    struct pair_of_size_t_hash {
-        /**
-         * @brief Hash function for pairs of size_t
-         *
-         * @return hash code
-         */
-        size_t
-        operator()(std::pair<size_t, size_t> p) const {
-            return p.first << (sizeof(size_t) / 2) | p.second;
-        }
-    };
 
     //! general size type
     typedef size_t size_type;

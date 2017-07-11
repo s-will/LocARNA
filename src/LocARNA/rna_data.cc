@@ -1600,7 +1600,7 @@ namespace LocARNA {
 
     void
     RnaDataImpl::drop_worst_bps(size_t keep) {
-        typedef keyvec<arc_prob_matrix_t::key_t> kv_t;
+        typedef keyvec<arc_prob_matrix_t::key_type> kv_t;
 
         kv_t::vec_t vec;
 
@@ -1613,7 +1613,7 @@ namespace LocARNA {
         std::make_heap(vec.begin(), vec.end(), kv_t::comp);
 
         while (vec.size() > keep) {
-            const arc_prob_matrix_t::key_t &key = vec.front().first;
+            const arc_prob_matrix_t::key_type &key = vec.front().first;
 
             arc_probs_(key.first, key.second) = 0.0;
             arc_2_probs_(key.first, key.second) = 0.0;
@@ -1632,7 +1632,7 @@ namespace LocARNA {
         for (arc_prob_vector_matrix_t::const_iterator it =
                  unpaired_in_loop_probs_.begin();
              unpaired_in_loop_probs_.end() != it; ++it) {
-            arc_prob_vector_matrix_t::key_t key = it->first;
+            arc_prob_vector_matrix_t::key_type key = it->first;
             if (rdimpl->arc_probs_(key.first, key.second) == 0.0) {
                 if (key.first == 0)
                     continue;
@@ -1644,7 +1644,7 @@ namespace LocARNA {
         for (arc_prob_matrix_matrix_t::const_iterator it =
                  arc_in_loop_probs_.begin();
              arc_in_loop_probs_.end() != it; ++it) {
-            arc_prob_matrix_matrix_t::key_t key = it->first;
+            arc_prob_matrix_matrix_t::key_type key = it->first;
             if (rdimpl->arc_probs_(key.first, key.second) == 0.0) {
                 if (key.first == 0)
                     continue;
@@ -1652,7 +1652,7 @@ namespace LocARNA {
             } else {
                 for (arc_prob_matrix_t::const_iterator it2 = it->second.begin();
                      it->second.end() != it2; ++it2) {
-                    arc_prob_matrix_matrix_t::key_t key2 = it2->first;
+                    arc_prob_matrix_matrix_t::key_type key2 = it2->first;
                     if (rdimpl->arc_probs_(key2.first, key2.second) == 0.0) {
                         arc_in_loop_probs_.ref(key.first, key.second)
                             .reset(key2.first, key2.second);
@@ -1664,11 +1664,11 @@ namespace LocARNA {
 
     void
     ExtRnaDataImpl::drop_worst_uil(size_t keep) {
-        typedef std::pair<arc_prob_vector_matrix_t::key_t,
-                          arc_prob_vector_t::key_t>
-            key_t;
+        typedef std::pair<arc_prob_vector_matrix_t::key_type,
+                          arc_prob_vector_t::key_type>
+            key_type;
 
-        typedef RnaDataImpl::keyvec<key_t> kv_t;
+        typedef RnaDataImpl::keyvec<key_type> kv_t;
 
         kv_t::vec_t vec;
 
@@ -1679,14 +1679,14 @@ namespace LocARNA {
             for (arc_prob_vector_t::const_iterator it2 = it->second.begin();
                  it->second.end() != it2; ++it2) {
                 vec.push_back(
-                    kv_t::kvpair_t(key_t(it->first, it2->first), it2->second));
+                    kv_t::kvpair_t(key_type(it->first, it2->first), it2->second));
             }
         }
 
         std::make_heap(vec.begin(), vec.end(), kv_t::comp);
 
         while (vec.size() > keep) {
-            const key_t &key = vec.front().first;
+            const key_type &key = vec.front().first;
 
             unpaired_in_loop_probs_.ref(key.first.first, key.first.second)
                 .reset(key.second);
@@ -1698,11 +1698,11 @@ namespace LocARNA {
 
     void
     ExtRnaDataImpl::drop_worst_bpil(size_t keep) {
-        typedef std::pair<arc_prob_matrix_matrix_t::key_t,
-                          arc_prob_matrix_t::key_t>
-            key_t;
+        typedef std::pair<arc_prob_matrix_matrix_t::key_type,
+                          arc_prob_matrix_t::key_type>
+            key_type;
 
-        typedef RnaDataImpl::keyvec<key_t> kv_t;
+        typedef RnaDataImpl::keyvec<key_type> kv_t;
 
         kv_t::vec_t vec;
 
@@ -1713,14 +1713,14 @@ namespace LocARNA {
             for (arc_prob_matrix_t::const_iterator it2 = it->second.begin();
                  it->second.end() != it2; ++it2) {
                 vec.push_back(
-                    kv_t::kvpair_t(key_t(it->first, it2->first), it2->second));
+                    kv_t::kvpair_t(key_type(it->first, it2->first), it2->second));
             }
         }
 
         std::make_heap(vec.begin(), vec.end(), kv_t::comp);
 
         while (vec.size() > keep) {
-            const key_t &key = vec.front().first;
+            const key_type &key = vec.front().first;
 
             arc_in_loop_probs_.ref(key.first.first, key.first.second)
                 .reset(key.second.first, key.second.second);
@@ -1732,11 +1732,11 @@ namespace LocARNA {
 
     void
     ExtRnaDataImpl::drop_worst_bpil_precise(double ratio) {
-        typedef std::pair<arc_prob_matrix_matrix_t::key_t,
-                          arc_prob_matrix_t::key_t>
-            key_t;
+        typedef std::pair<arc_prob_matrix_matrix_t::key_type,
+                          arc_prob_matrix_t::key_type>
+            key_type;
 
-        typedef RnaDataImpl::keyvec<key_t> kv_t;
+        typedef RnaDataImpl::keyvec<key_type> kv_t;
 
         // push all uil probs with their key to vector vec
         for (arc_prob_matrix_matrix_t::const_iterator it =
@@ -1747,14 +1747,14 @@ namespace LocARNA {
             for (arc_prob_matrix_t::const_iterator it2 = it->second.begin();
                  it->second.end() != it2; ++it2) {
                 vec.push_back(
-                    kv_t::kvpair_t(key_t(it->first, it2->first), it2->second));
+                    kv_t::kvpair_t(key_type(it->first, it2->first), it2->second));
             }
             double keep = ratio *
                 ((double)(it->first.second) - (double)(it->first.first) + 1);
             if (vec.size() > keep) {
                 std::make_heap(vec.begin(), vec.end(), kv_t::comp);
                 while (vec.size() > keep) {
-                    const key_t &key = vec.front().first;
+                    const key_type &key = vec.front().first;
                     arc_in_loop_probs_.ref(key.first.first, key.first.second)
                         .reset(key.second.first, key.second.second);
 

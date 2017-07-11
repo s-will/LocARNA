@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
 
 #include "scoring_fwd.hh"
 #include "aux.hh"
@@ -598,9 +599,8 @@ namespace LocARNA {
         typedef std::pair<size_type, size_type> idx_pair_t;
 
         //! type of index for mapping arc pairs to arc matchs
-        typedef unordered_map<idx_pair_t,
-                              ArcMatch::idx_type,
-                              pair_of_size_t_hash>::type am_index_type;
+        typedef std::unordered_map<idx_pair_t, ArcMatch::idx_type>
+            am_index_type;
 
         //! index for mapping arc pairs to arc matchs
         am_index_type am_index_;
