@@ -74,27 +74,14 @@ namespace LocARNA {
 
 namespace LocARNA {
 
-    // some cool TMP shit
     template <bool F, class T1, class T2>
     struct select {
         using type = T2;
-        using else_type = T1;
     };
     template <class T1, class T2>
     struct select<true, T1, T2> {
         using type = T1;
-        using else_type = T2;
     };
-
-    template <class T>
-    struct is_const {
-        static constexpr bool flag = false;
-    };
-    template <class T>
-    struct is_const<const T> {
-        static constexpr bool flag = true;
-    };
-
 
     class string1;
 
