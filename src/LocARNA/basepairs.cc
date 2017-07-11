@@ -10,6 +10,7 @@
 
 #include "aux.hh"
 #include "sequence.hh"
+
 #include "basepairs.hh"
 #include "rna_data.hh"
 
@@ -62,6 +63,37 @@ namespace LocARNA {
       * afterwards construct traversal structures
 
       */
+
+
+    BasePairs::BasePairs(const RnaData *rna_data, double min_prob)
+        : rna_data_(rna_data),
+          min_prob_(min_prob),
+          len_(rna_data->length()),
+          left_adjlists_(),
+          right_adjlists_(),
+          arc_vec_(),
+          arcs_(len_+1,-1) {
+        generateBPLists(*rna_data_);
+    }
+
+    BasePairs::BasePairs(size_type len, const bpair_set_t &bps)
+        : rna_data_(0),
+          min_prob_(1.0),
+          len_(len),
+          left_adjlists_(),
+          right_adjlists_(),
+          arc_vec_(),
+          arcs_(len_+1,-1) {
+        resize(seqlen());
+        for (bpair_set_t::const_iterator it = bps.begin(); bps.end() != it;
+             ++it) {
+            register_arc(it->first, it->second);
+        }
+
+        sort_adj_lists();
+        add_adj_list_sentinels();
+    }
+
 
     void
     BasePairs::resize(size_type seq_len) {
@@ -175,12 +207,6 @@ namespace LocARNA {
     BasePairs::size_type
     BasePairs::seqlen() const {
         return len_;
-    }
-
-    BasePairs::size_type
-    BasePairs::get_length_from_rna_data() const {
-        assert(rna_data_ != NULL);
-        return rna_data_->length();
     }
 
     void
