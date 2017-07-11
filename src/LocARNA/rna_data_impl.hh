@@ -218,7 +218,7 @@ namespace LocARNA {
         template <class KEY>
         class keyvec {
         public:
-            typedef std::pair<KEY, arc_prob_matrix_t::value_t> kvpair_t;
+            typedef std::pair<KEY, arc_prob_matrix_t::value_type> kvpair_t;
 
             typedef std::vector<kvpair_t> vec_t;
 

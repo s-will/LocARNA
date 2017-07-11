@@ -72,7 +72,7 @@ namespace LocARNA {
           left_adjlists_(),
           right_adjlists_(),
           arc_vec_(),
-          arcs_(len_+1,-1) {
+          arcs_(-1) {
         generateBPLists(*rna_data_);
     }
 
@@ -83,7 +83,7 @@ namespace LocARNA {
           left_adjlists_(),
           right_adjlists_(),
           arc_vec_(),
-          arcs_(len_+1,-1) {
+          arcs_(-1) {
         resize(seqlen());
         for (bpair_set_t::const_iterator it = bps.begin(); bps.end() != it;
              ++it) {
