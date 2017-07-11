@@ -3,22 +3,22 @@
 
 #include <math.h> // import log
 
-#include <string>
-#include <fstream>
-#include <sstream>
 #include <algorithm>
+#include <fstream>
+#include <memory>
+#include <sstream>
+#include <string>
 
-#include "aux.hh"
-#include "pfold_params.hh"
 #include "alignment.hh"
-#include "rna_ensemble.hh"
-#include "sequence_annotation.hh"
-#include "rna_data_impl.hh"
-#include "ext_rna_data_impl.hh"
-#include "rna_structure.hh"
+#include "aux.hh"
 #include "base_pair_filter.hh"
-
-#include "LocARNA/global_stopwatch.hh"
+#include "ext_rna_data_impl.hh"
+#include "global_stopwatch.hh"
+#include "pfold_params.hh"
+#include "rna_data_impl.hh"
+#include "rna_ensemble.hh"
+#include "rna_structure.hh"
+#include "sequence_annotation.hh"
 
 extern "C" {
 #include <ViennaRNA/energy_const.h> // import TURN
@@ -393,14 +393,13 @@ namespace LocARNA {
                                            const PFoldParams &pfoldparams) {
         p_bpcut_ = 0.99; // this has to be less than 1.0 (to ensure p>bp_cut_)
 
-        for (RnaStructure::const_iterator it = rna_structure.begin();
-             rna_structure.end() != it; ++it) {
-            arc_probs_(it->first, it->second) = 1.0;
+        for (const auto &x : rna_structure) {
+            arc_probs_(x.first, x.second) = 1.0;
 
             if (pfoldparams.stacking()) {
                 if (rna_structure.contains(
-                        RnaStructure::bp_t(it->first + 1, it->second - 1))) {
-                    arc_2_probs_(it->first, it->second) = 1.0;
+                        RnaStructure::bp_t(x.first + 1, x.second - 1))) {
+                    arc_2_probs_(x.first, x.second) = 1.0;
                 }
             }
         }
@@ -425,10 +424,10 @@ namespace LocARNA {
             // check whether k is contained in the loop of (i,j),
             // i.e. there is not other base pair between (i,j) and k
             bool contained = true;
-            for (RnaStructure::const_iterator it2 = rna_structure.begin();
-                 contained && rna_structure.end() != it2; ++it2) {
-                if (i < it2->first && it2->first <= k && k <= it2->second &&
-                    it2->second < j) {
+            for (const auto &x2 : rna_structure) {
+                if (!contained) break;
+                if (i < x2.first && x2.first <= k && k <= x2.second &&
+                    x2.second < j) {
                     contained = false;
                 }
             }
@@ -443,22 +442,21 @@ namespace LocARNA {
         size_t i,
         size_t j,
         const RnaStructure &rna_structure) {
-        for (RnaStructure::const_iterator it2 = rna_structure.begin();
-             rna_structure.end() != it2; ++it2) {
+        for (const auto &x2 : rna_structure) {
             bool contained = true;
 
-            if (it2->first <= i || j <= it2->second) {
+            if (x2.first <= i || j <= x2.second) {
                 contained = false;
             }
-            for (RnaStructure::const_iterator it3 = rna_structure.begin();
-                 contained && rna_structure.end() != it3; ++it3) {
-                if (i < it3->first && it3->first < it2->first &&
-                    it2->second < it3->second && it3->second < j) {
+            for (const auto &x3 : rna_structure) {
+                if (!contained) break;
+                if (i < x3.first && x3.first < x2.first &&
+                    x2.second < x3.second && x3.second < j) {
                     contained = false;
                 }
             }
             if (contained) {
-                arc_in_loop_probs_.ref(i, j)(it2->first, it2->second) = 1.0;
+                arc_in_loop_probs_.ref(i, j)(x2.first, x2.second) = 1.0;
             }
         }
     }
@@ -477,11 +475,10 @@ namespace LocARNA {
         // (which limits run-time to cubic).
         //
 
-        for (RnaStructure::const_iterator it = rna_structure.begin();
-             rna_structure.end() != it; ++it) {
-            init_fixed_unpaired_in_loop(it->first, it->second, rna_structure);
+        for (auto const &x : rna_structure) {
+            init_fixed_unpaired_in_loop(x.first, x.second, rna_structure);
 
-            init_fixed_basepairs_in_loop(it->first, it->second, rna_structure);
+            init_fixed_basepairs_in_loop(x.first, x.second, rna_structure);
         }
 
         // external loop
@@ -567,34 +564,28 @@ namespace LocARNA {
         // map left ends to right ends of all arcs in arc_probs_
         std::vector<std::vector<size_t> > right_ends;
         right_ends.resize(len + 1);
-        for (arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
-             self_->arc_probs_end() != it; ++it) {
-            pos_type i = it->first.first;
-            pos_type j = it->first.second;
+        for (const auto &x : self_->arc_probs()) {
+            pos_type i = x.first.first;
+            pos_type j = x.first.second;
             right_ends[i].push_back(j);
         }
-        for (std::vector<std::vector<size_t> >::iterator it =
-                 right_ends.begin();
-             right_ends.end() != it; ++it) {
-            sort(it->begin(), it->end());
+        for (auto &x : right_ends) {
+            sort(x.begin(), x.end());
         }
         // end constructing helper data structure
 
         // in loop
-        for (arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
-             self_->arc_probs_end() != it; ++it) {
-            pos_type i = it->first.first;
-            pos_type j = it->first.second;
+        for (const auto &x : self_->arc_probs()) {
+            pos_type i = x.first.first;
+            pos_type j = x.first.second;
             arc_prob_matrix_t m_ij(0.0);
 
             for (size_t ip = i + 1; ip < j; ip++) {
                 // for( size_t jp=ip+TURN+1; jp < j; jp++ ) {
-                for (std::vector<size_t>::const_iterator jpit =
-                         right_ends[ip].begin();
-                     right_ends[ip].end() != jpit && *jpit < j; ++jpit) {
-                    size_t jp = *jpit;
+                for (const auto &jp : right_ends[ip]) {
+                    if (jp >= j) break;
 
-                    double p = rna_ensemble.arc_in_loop_prob(ip, jp, i, j);
+                    auto p = rna_ensemble.arc_in_loop_prob(ip, jp, i, j);
 
                     if (p > p_bpilcut_) {
                         m_ij(ip, jp) = p;
@@ -612,12 +603,8 @@ namespace LocARNA {
         // external
         arc_prob_matrix_t m_ext(0.0);
         for (size_t ip = 1; ip < len; ip++) {
-            for (std::vector<size_t>::const_iterator jpit =
-                     right_ends[ip].begin();
-                 right_ends[ip].end() != jpit; ++jpit) {
-                size_t jp = *jpit;
-
-                double p = rna_ensemble.arc_external_prob(ip, jp);
+            for (const auto &jp : right_ends[ip]) {
+                auto p = rna_ensemble.arc_external_prob(ip, jp);
 
                 if (p > p_bpilcut_) {
                     m_ext(ip, jp) = p;
@@ -635,14 +622,13 @@ namespace LocARNA {
         unpaired_in_loop_probs_.clear();
 
         // in loop
-        for (arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
-             self_->arc_probs_end() != it; ++it) {
-            pos_type i = it->first.first;
-            pos_type j = it->first.second;
+        for (const auto &x : self_->arc_probs()) {
+            pos_type i = x.first.first;
+            pos_type j = x.first.second;
             arc_prob_vector_t v_ij(0.0);
 
             for (size_t k = i + 1; k < j; k++) {
-                double p = rna_ensemble.unpaired_in_loop_prob(k, i, j);
+                auto p = rna_ensemble.unpaired_in_loop_prob(k, i, j);
                 if (p > p_uilcut_) {
                     v_ij[k] = p;
                 }
@@ -657,7 +643,7 @@ namespace LocARNA {
         // external
         arc_prob_vector_t v_ext(0.0);
         for (size_t k = 1; k <= len; k++) {
-            double p = rna_ensemble.unpaired_external_prob(k);
+            auto p = rna_ensemble.unpaired_external_prob(k);
 
             if (p > p_uilcut_) {
                 v_ext[k] = p;
@@ -706,14 +692,9 @@ namespace LocARNA {
         return pimpl_->arc_probs_(i, j);
     }
 
-    RnaData::arc_probs_const_iterator
-    RnaData::arc_probs_begin() const {
-        return pimpl_->arc_probs_.begin();
-    }
-
-    RnaData::arc_probs_const_iterator
-    RnaData::arc_probs_end() const {
-        return pimpl_->arc_probs_.end();
+    const RnaData::arc_prob_matrix_t &
+    RnaData::arc_probs() const {
+        return pimpl_->arc_probs_;
     }
 
     double
@@ -944,12 +925,9 @@ namespace LocARNA {
                                 SequenceAnnotation(sequence_anchor_string));
         }
 
-        for (std::map<std::string, std::string>::iterator it = seq_map.begin();
-             it != seq_map.end(); ++it) {
-            // std::cout << "SEQ: " << it->first << " " << it->second <<
-            // std::endl;
+        for (const auto &x : seq_map) {
             pimpl_->sequence_.append(
-                MultipleAlignment::SeqEntry(it->first, it->second));
+                MultipleAlignment::SeqEntry(x.first, x.second));
         }
 
         // ----------------------------------------
@@ -1346,18 +1324,15 @@ namespace LocARNA {
 // assume that for each entry in arc_2_probs_ there is a corresponding entry in
 // arc_probs_
 #ifndef NDEBUG
-        for (arc_prob_matrix_t::const_iterator it = arc_2_probs_.begin();
-             arc_2_probs_.end() != it; ++it) {
-            assert(arc_probs_(it->first.first, it->first.second) != 0.0);
+        for (const auto &x : arc_2_probs_) {
+            assert(arc_probs_(x.first.first, x.first.second) != 0.0);
         }
 #endif
-
-        for (arc_prob_matrix_t::const_iterator it = arc_probs_.begin();
-             arc_probs_.end() != it; ++it) {
-            size_t i = it->first.first;
-            size_t j = it->first.second;
-            if (it->second > p_outbpcut) {
-                out << i << " " << j << " " << format_prob(it->second);
+        for (const auto &x : arc_probs_) {
+            size_t i = x.first.first;
+            size_t j = x.first.second;
+            if (x.second > p_outbpcut) {
+                out << i << " " << j << " " << format_prob(x.second);
                 if (stacking && has_stacking_ &&
                     arc_2_probs_(i, j) > p_bpcut_) {
                     out << " " << format_prob(arc_2_probs_(i, j));
@@ -1387,11 +1362,10 @@ namespace LocARNA {
 
         // write in-loop probabilities for all arcs with probability greater
         // than p_outbpcut
-        for (arc_prob_matrix_t::const_iterator it = self_->arc_probs_begin();
-             self_->arc_probs_end() != it; ++it) {
-            if (it->second > p_outbpcut) {
-                write_pp_in_loop_probability_line(out, it->first.first,
-                                                  it->first.second,
+        for (const auto &x : self_->arc_probs()) {
+            if (x.second > p_outbpcut) {
+                write_pp_in_loop_probability_line(out, x.first.first,
+                                                  x.first.second,
                                                   p_outbpilcut, p_outuilcut);
             }
         }
@@ -1438,11 +1412,10 @@ namespace LocARNA {
         std::ostream &out,
         const arc_prob_matrix_t &probs,
         double p_cut) const {
-        for (arc_prob_matrix_t::const_iterator it = probs.begin();
-             probs.end() != it; ++it) {
-            if (it->second > p_cut) {
-                out << " " << it->first.first << " " << it->first.second << " "
-                    << format_prob(it->second);
+        for (const auto &x : probs) {
+            if (x.second > p_cut) {
+                out << " " << x.first.first << " " << x.first.second << " "
+                    << format_prob(x.second);
             }
         }
         return out;
@@ -1453,10 +1426,9 @@ namespace LocARNA {
         std::ostream &out,
         const arc_prob_vector_t &probs,
         double p_cut) const {
-        for (arc_prob_vector_t::const_iterator it = probs.begin();
-             probs.end() != it; ++it) {
-            if (it->second > p_cut) {
-                out << " " << it->first << " " << format_prob(it->second);
+        for (const auto &x : probs) {
+            if (x.second > p_cut) {
+                out << " " << x.first << " " << format_prob(x.second);
             }
         }
         return out;
@@ -1605,15 +1577,14 @@ namespace LocARNA {
         kv_t::vec_t vec;
 
         // std::copy(arc_probs_.begin(),arc_probs_.end(),vec.begin());
-        for (arc_prob_matrix_t::const_iterator it = arc_probs_.begin();
-             arc_probs_.end() != it; ++it) {
-            vec.push_back(*it);
+        for (const auto &x : arc_probs_) {
+            vec.push_back(x);
         }
 
         std::make_heap(vec.begin(), vec.end(), kv_t::comp);
 
         while (vec.size() > keep) {
-            const arc_prob_matrix_t::key_type &key = vec.front().first;
+            auto &key = vec.front().first;
 
             arc_probs_(key.first, key.second) = 0.0;
             arc_2_probs_(key.first, key.second) = 0.0;
@@ -1629,10 +1600,8 @@ namespace LocARNA {
         rdimpl->drop_worst_bps(keep);
 
         // free unpaired in loop where arc prob is 0
-        for (arc_prob_vector_matrix_t::const_iterator it =
-                 unpaired_in_loop_probs_.begin();
-             unpaired_in_loop_probs_.end() != it; ++it) {
-            arc_prob_vector_matrix_t::key_type key = it->first;
+        for (const auto &x : unpaired_in_loop_probs_) {
+            auto &key = x.first;
             if (rdimpl->arc_probs_(key.first, key.second) == 0.0) {
                 if (key.first == 0)
                     continue;
@@ -1641,18 +1610,15 @@ namespace LocARNA {
         }
 
         // free base pairs in loop where arc prob is 0
-        for (arc_prob_matrix_matrix_t::const_iterator it =
-                 arc_in_loop_probs_.begin();
-             arc_in_loop_probs_.end() != it; ++it) {
-            arc_prob_matrix_matrix_t::key_type key = it->first;
+        for (const auto &x : arc_in_loop_probs_) {
+            auto &key = x.first;
             if (rdimpl->arc_probs_(key.first, key.second) == 0.0) {
                 if (key.first == 0)
                     continue;
                 arc_in_loop_probs_.reset(key.first, key.second);
             } else {
-                for (arc_prob_matrix_t::const_iterator it2 = it->second.begin();
-                     it->second.end() != it2; ++it2) {
-                    arc_prob_matrix_matrix_t::key_type key2 = it2->first;
+                for (const auto &x2 : x.second) {
+                    auto &key2 = x2.first;
                     if (rdimpl->arc_probs_(key2.first, key2.second) == 0.0) {
                         arc_in_loop_probs_.ref(key.first, key.second)
                             .reset(key2.first, key2.second);
@@ -1673,20 +1639,17 @@ namespace LocARNA {
         kv_t::vec_t vec;
 
         // push all uil probs with their key to vector vec
-        for (arc_prob_vector_matrix_t::const_iterator it =
-                 unpaired_in_loop_probs_.begin();
-             unpaired_in_loop_probs_.end() != it; ++it) {
-            for (arc_prob_vector_t::const_iterator it2 = it->second.begin();
-                 it->second.end() != it2; ++it2) {
+        for (const auto &x : unpaired_in_loop_probs_) {
+            for (const auto &x2 : x.second) {
                 vec.push_back(
-                    kv_t::kvpair_t(key_type(it->first, it2->first), it2->second));
+                    kv_t::kvpair_t(key_type(x.first, x2.first), x2.second));
             }
         }
 
         std::make_heap(vec.begin(), vec.end(), kv_t::comp);
 
         while (vec.size() > keep) {
-            const key_type &key = vec.front().first;
+            auto &key = vec.front().first;
 
             unpaired_in_loop_probs_.ref(key.first.first, key.first.second)
                 .reset(key.second);
@@ -1707,13 +1670,10 @@ namespace LocARNA {
         kv_t::vec_t vec;
 
         // push all uil probs with their key to vector vec
-        for (arc_prob_matrix_matrix_t::const_iterator it =
-                 arc_in_loop_probs_.begin();
-             arc_in_loop_probs_.end() != it; ++it) {
-            for (arc_prob_matrix_t::const_iterator it2 = it->second.begin();
-                 it->second.end() != it2; ++it2) {
+        for (const auto &x : arc_in_loop_probs_) {
+            for (const auto &x2 : x.second) {
                 vec.push_back(
-                    kv_t::kvpair_t(key_type(it->first, it2->first), it2->second));
+                    kv_t::kvpair_t(key_type(x.first, x2.first), x2.second));
             }
         }
 
@@ -1739,22 +1699,19 @@ namespace LocARNA {
         typedef RnaDataImpl::keyvec<key_type> kv_t;
 
         // push all uil probs with their key to vector vec
-        for (arc_prob_matrix_matrix_t::const_iterator it =
-                 arc_in_loop_probs_.begin();
-             arc_in_loop_probs_.end() != it; ++it) {
+        for (const auto &x : arc_in_loop_probs_) {
             kv_t::vec_t vec;
             vec.clear();
-            for (arc_prob_matrix_t::const_iterator it2 = it->second.begin();
-                 it->second.end() != it2; ++it2) {
+            for (const auto &x2 : x.second) {
                 vec.push_back(
-                    kv_t::kvpair_t(key_type(it->first, it2->first), it2->second));
+                    kv_t::kvpair_t(key_type(x.first, x2.first), x2.second));
             }
             double keep = ratio *
-                ((double)(it->first.second) - (double)(it->first.first) + 1);
+                ((double)(x.first.second) - (double)(x.first.first) + 1);
             if (vec.size() > keep) {
                 std::make_heap(vec.begin(), vec.end(), kv_t::comp);
                 while (vec.size() > keep) {
-                    const key_type &key = vec.front().first;
+                    auto &key = vec.front().first;
                     arc_in_loop_probs_.ref(key.first.first, key.first.second)
                         .reset(key.second.first, key.second.second);
 
@@ -1765,7 +1722,7 @@ namespace LocARNA {
         }
     }
 
-    vrna_plist_t *
+    std::unique_ptr<vrna_plist_t []>
     RnaData::plist() const {
         std::vector<vrna_plist_t> plist;
         size_type len = length();
@@ -1784,9 +1741,9 @@ namespace LocARNA {
         }
 
         // construct Vienna RNA / C - compatible array
-        vrna_plist_t *c_plist = new vrna_plist_t[plist.size() + 1];
+        auto c_plist = std::make_unique<vrna_plist_t []>(plist.size() + 1);
         // and copy contents of the vecctor to this array
-        copy(plist.begin(), plist.end(), c_plist);
+        copy(plist.begin(), plist.end(), c_plist.get());
         // mark end of list
         c_plist[plist.size()].i = 0;
         c_plist[plist.size()].j = 0;
@@ -1798,24 +1755,18 @@ namespace LocARNA {
 
     std::string
     RnaData::mea_structure(double gamma) const {
-        vrna_plist_t *pl = plist();
+        auto pl = plist();
 
-        char *c_structure = new char[length() + 1];
-        for (size_t i = 0; i < length(); ++i) {
-            c_structure[i] = '.';
-        }
+        auto c_structure = std::make_unique<char []>(length() + 1);
+
+        std::fill(&c_structure[0],&c_structure[length()],'.');
         c_structure[length()] = 0;
 
         // call RNAlib's mea function
         // float mea =
-        MEA(pl, c_structure, gamma);
+        MEA(pl.get(), c_structure.get(), gamma);
 
-        std::string structure(c_structure);
-
-        delete[] c_structure;
-        delete[] pl;
-
-        return structure;
+        return std::string(c_structure.get());
     }
 
 } // end namespace LocARNA
