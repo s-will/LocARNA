@@ -181,16 +181,7 @@ namespace LocARNA {
          * their probability, an object of BasePairs represents the
          * sparsified set of base pairs (due to min_prob_)
          */
-        BasePairs(const RnaData *rna_data, double min_prob)
-            : rna_data_(rna_data),
-              min_prob_(min_prob),
-              len_(get_length_from_rna_data()),
-              left_adjlists_(),
-              right_adjlists_(),
-              arc_vec_(),
-              arcs_(-1) {
-            generateBPLists(*rna_data_);
-        }
+        BasePairs(const RnaData *rna_data, double min_prob);
 
         /**
          * \brief Construct from a set of base pairs
@@ -198,23 +189,7 @@ namespace LocARNA {
          * @param len length of sequence
          * @param bps set of base pairs
          */
-        BasePairs(size_type len, const bpair_set_t &bps)
-            : rna_data_(0),
-              min_prob_(1.0),
-              len_(len),
-              left_adjlists_(),
-              right_adjlists_(),
-              arc_vec_(),
-              arcs_(-1) {
-            resize(seqlen());
-            for (bpair_set_t::const_iterator it = bps.begin(); bps.end() != it;
-                 ++it) {
-                register_arc(it->first, it->second);
-            }
-
-            sort_adj_lists();
-            add_adj_list_sentinels();
-        }
+        BasePairs(size_type len, const bpair_set_t &bps);
 
         /**
          * registers a basepair (i,j),
@@ -326,11 +301,6 @@ namespace LocARNA {
         //! @brief add sentinels to adjacency lists
         void
         add_adj_list_sentinels();
-
-        // return length from rna data
-        // pre: rna data available
-        size_type
-        get_length_from_rna_data() const;
     };
 
     std::ostream &
