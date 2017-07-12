@@ -37,12 +37,9 @@ namespace LocARNA {
          * @param def default value of entries
          */
         explicit
-        SparseVector(const value_type &def) : parent_t(def), the_map_() {}
+        SparseVector(const value_type &def) : parent_t(def) {}
 
-        SparseVector(): parent_t(value_type()), the_map_() {}
-
-    protected:
-        map_type the_map_; //!< internal representation of sparse vector
+        SparseVector(): parent_t(value_type()) {}
     };
 
     /**
