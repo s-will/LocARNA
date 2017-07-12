@@ -249,11 +249,6 @@ namespace LocARNA {
 
     MultipleAlignment::~MultipleAlignment() {}
 
-    const Sequence &
-    MultipleAlignment::as_sequence() const {
-        return static_cast<const Sequence &>(*this);
-    }
-
     void
     MultipleAlignment::create_name2idx_map() {
         for (std::vector<SeqEntry>::size_type i = 0; i < alig_.size(); ++i) {

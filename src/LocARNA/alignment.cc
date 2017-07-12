@@ -218,7 +218,7 @@ namespace LocARNA {
             if (ends[i].is_pos()) {
                 out << ends[i] << " ";
             } else {
-                out << "g" << ends[i].gap().idx() << " ";
+                out << "g" << size_t(ends[i].gap()) << " ";
             }
         }
         out << std::endl;

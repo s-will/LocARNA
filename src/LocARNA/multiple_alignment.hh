@@ -323,6 +323,25 @@ namespace LocARNA {
         //! @brief Construct empty
         MultipleAlignment();
 
+        //! @brief Copy construct
+        MultipleAlignment(const MultipleAlignment &ma) = default;
+
+        //! @brief Move construct
+        MultipleAlignment(MultipleAlignment &&ma) = default;
+
+        //! @brief Copy assignment
+        MultipleAlignment &
+        operator =(const MultipleAlignment &ma) = default;
+        //! @brief Move assignment
+        MultipleAlignment &
+        operator =(MultipleAlignment &&ma) = default;
+
+        /**
+         * @brief virtual destructor
+         */
+        virtual ~MultipleAlignment();
+
+
         /**
          * @brief Construct from file
          *
@@ -398,20 +417,6 @@ namespace LocARNA {
         MultipleAlignment(const AlignmentEdges &edges,
                           const Sequence &seqA,
                           const Sequence &seqB);
-
-        /**
-         * @brief virtual destructor
-         */
-        virtual ~MultipleAlignment();
-
-        /**
-         * @brief "cast" multiple alignment to sequence
-         *
-         * @note this works like an upcast; this is ok, as long as
-         * sequence does not specify attributes
-         */
-        const Sequence &
-        as_sequence() const;
 
         /**
          * @brief normalize rna symbols
@@ -814,6 +819,45 @@ namespace LocARNA {
              bool special_gap_symbols);
 
     private:
+        //! prefix strings for annotations (shall be prefix unique)
+        //! (no class outside of MultipleAlignment needs to know about
+        //! this!)
+        //!
+        //! This is indexed by FormatType and AnnoType.
+        class annotation_tags_t : public std::map< FormatType, std::map< AnnoType, std::string> > {
+            //@brief constructor: initialize annotation tags table
+        public:
+            annotation_tags_t();
+        };
+
+        //! map from string to index
+        typedef std::map<std::string, size_type> str2idx_map_t;
+
+        //! map annotation type to sequence annotation
+        typedef std::map<AnnoType, SequenceAnnotation> annotation_map_t;
+
+        //************************************************************
+        // attributes of MultipleAlignment
+
+        //! @brief table of annotation tags
+        static annotation_tags_t annotation_tags;
+
+        //! vector of alignment rows
+        std::vector<SeqEntry> alig_;
+
+        //! alignment/sequence annotation
+        annotation_map_t annotations_;
+
+        /**
+         * association between names and indices, use to
+         * locate sequences by name in log time
+         */
+        str2idx_map_t name2idx_;
+
+        // end attributes
+        //************************************************************
+
+
         /**
          * @brief Deviation of a pairwise alignment from a pairwise reference
          * alignment
@@ -929,44 +973,6 @@ namespace LocARNA {
                                  const SeqEntry &ref1,
                                  const SeqEntry &ref2);
 
-        //! prefix strings for annotations (shall be prefix unique)
-        //! (no class outside of MultipleAlignment should have to know about
-        //! this!)
-        //!
-        //! This is indexed by FormatType and AnnoType.
-        class annotation_tags_t : public std::map< FormatType, std::map< AnnoType, std::string> > {
-            //@brief constructor: initialize annotation tags table
-        public:
-            annotation_tags_t();
-        };
-
-        //! @brief table of annotation tags
-        static annotation_tags_t annotation_tags;
-
-        //! map from string to index
-        typedef std::map<std::string, size_type> str2idx_map_t;
-
-        //! map annotation type to sequence annotation
-        typedef std::map<AnnoType, SequenceAnnotation> annotation_map_t;
-
-        //************************************************************
-        // attributes of MultipleAlignment
-
-        //! vector of alignment rows
-        std::vector<SeqEntry> alig_;
-
-        //! alignment/sequence annotation
-        annotation_map_t annotations_;
-
-        /**
-         * association between names and indices, use to
-         * locate sequences by name in log time
-         */
-        str2idx_map_t name2idx_;
-
-        // end attributes
-        //************************************************************
-
         //! @brief create the map for translating names to indices
         void
         create_name2idx_map();
@@ -1027,8 +1033,6 @@ namespace LocARNA {
          */
         void
         read_fasta(std::istream &in);
-
-
     };
 
     /**

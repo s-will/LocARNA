@@ -669,7 +669,7 @@ namespace LocARNA {
 
     const Sequence &
     RnaData::sequence() const {
-        return pimpl_->sequence_.as_sequence();
+        return Sequence::view(pimpl_->sequence_);
     }
 
     const MultipleAlignment &
