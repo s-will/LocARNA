@@ -40,9 +40,9 @@ namespace LocARNA {
          * @param def default value of entries
          */
         explicit
-        SparseMatrix(const value_type &def) : parent_t(def), the_map_() {}
+        SparseMatrix(const value_type &def) : parent_t(def) {}
 
-        SparseMatrix() : parent_t(value_type()), the_map_() {}
+        SparseMatrix() : parent_t(value_type()) {}
 
         /**
          * \brief Access to matrix element
@@ -76,10 +76,6 @@ namespace LocARNA {
         reset(size_type i, size_type j) {
             parent_t::reset(key_type(i,j));
         }
-
-
-    protected:
-        map_type the_map_; //!< internal representation of sparse vector
     }; // end class SparseMatrix
 
     /**

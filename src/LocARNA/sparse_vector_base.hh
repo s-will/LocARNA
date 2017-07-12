@@ -13,16 +13,19 @@
 namespace LocARNA {
 
     /**
-     * \brief Base class for sparse vector and matrix
+     * \brief Base class template for sparse vector and matrix
+     *
+     * the first template argument is the derived sparse vector or matrix class
+     * (curiously recurring template pattern)
      *
      */
-    template <typename T,typename ValueType, typename KeyType=size_t, typename MapType=std::unordered_map<KeyType, ValueType>>
+    template <typename Derived,typename ValueType, typename KeyType=size_t>
     class SparseVectorBase {
     public:
-        using vector_type = T;
+        using derived_type = Derived;
         using value_type = ValueType; //!< type of vector entries
         using key_type = KeyType; //!< type of vector index
-        using map_type = MapType;
+        using map_type = std::unordered_map<KeyType, ValueType>;
 
         using size_type = size_t; //!< usual definition of size_type
 
@@ -53,7 +56,7 @@ namespace LocARNA {
              * @param k key/index of entry in given sparse vector
              *
              */
-            element_proxy(vector_type *v, key_type k) : v_(v), k_(k) {}
+            element_proxy(derived_type *v, key_type k) : v_(v), k_(k) {}
 
             /**
              * @brief Access entry for which the class acts as proxy
@@ -123,7 +126,7 @@ namespace LocARNA {
             }
 
         private:
-            vector_type *v_;
+            derived_type *v_;
             key_type k_;
         }; //end class element_proxy
 
@@ -138,7 +141,7 @@ namespace LocARNA {
          * @return proxy to vector entry i
          */
         element_proxy operator[](const key_type &i) {
-            return element_proxy( static_cast<vector_type*>(this), i );
+            return element_proxy( static_cast<derived_type*>(this), i );
         }
 
         /**
@@ -149,9 +152,8 @@ namespace LocARNA {
          * @return vector entry i
          */
         const value_type &operator[](const key_type &i) const {
-            const auto& the_map = static_cast<const vector_type*>(this)->the_map_;
-            const_iterator it = the_map.find(key_type(i));
-            if (it == the_map.end())
+            const_iterator it = the_map_.find(key_type(i));
+            if (it == the_map_.end())
                 return def_;
             else
                 return it->second;
@@ -171,12 +173,11 @@ namespace LocARNA {
          */
         void
         set(const key_type &i, const value_type &val) {
-            auto& the_map = static_cast<vector_type*>(this)->the_map_;
-            typename map_type::iterator it = the_map.find(key_type(i));
-            if (it != the_map.end()) {
+            typename map_type::iterator it = the_map_.find(key_type(i));
+            if (it != the_map_.end()) {
                 it->second = val;
             } else {
-                the_map.insert(typename map_type::value_type(key_type(i), val));
+                the_map_.insert(typename map_type::value_type(key_type(i), val));
             }
         }
 
@@ -191,11 +192,10 @@ namespace LocARNA {
          */
         value_type &
         ref(const key_type &i) {
-            auto& the_map = static_cast<vector_type*>(this)->the_map_;
-            auto it = the_map.find(i);
-            if (it == the_map.end()) {
-                the_map[i] = def_;
-                it = the_map.find(i);
+            auto it = the_map_.find(i);
+            if (it == the_map_.end()) {
+                the_map_[i] = def_;
+                it = the_map_.find(i);
             }
             return it->second;
         }
@@ -207,10 +207,9 @@ namespace LocARNA {
          */
         void
         reset(const key_type &i) {
-            auto& the_map = static_cast<vector_type*>(this)->the_map_;
-            typename map_type::iterator it = the_map.find(key_type(i));
-            if (it != the_map.end()) {
-                the_map.erase(key_type(i));
+            typename map_type::iterator it = the_map_.find(key_type(i));
+            if (it != the_map_.end()) {
+                the_map_.erase(key_type(i));
             }
         }
 
@@ -220,7 +219,7 @@ namespace LocARNA {
          */
         size_type
         size() const {
-            return static_cast<const vector_type*>(this)->the_map_.size();
+            return the_map_.size();
         }
 
         /**
@@ -230,7 +229,7 @@ namespace LocARNA {
          */
         bool
         empty() const {
-            return static_cast<const vector_type*>(this)->the_map_.empty();
+            return the_map_.empty();
         }
 
         /**
@@ -238,7 +237,7 @@ namespace LocARNA {
          */
         void
         clear() {
-            static_cast<vector_type*>(this)->the_map_.clear();
+            the_map_.clear();
         }
 
         /**
@@ -250,7 +249,7 @@ namespace LocARNA {
          */
         const_iterator
         begin() const {
-            return static_cast<const vector_type*>(this)->the_map_.begin();
+            return the_map_.begin();
         }
 
         /**
@@ -261,10 +260,11 @@ namespace LocARNA {
          */
         const_iterator
         end() const {
-            return static_cast<const vector_type*>(this)->the_map_.end();
+            return the_map_.end();
         }
     protected:
         value_type def_;   //!< default value of vector entries
+        map_type the_map_; //!< internal representation of sparse vector
     };
 
 } // end namespace LocARNA
