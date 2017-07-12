@@ -37,7 +37,7 @@ namespace LocARNA {
 
         //!@brief construct as gap
         //!@note used for implicit type cast
-        EdgeEnd(Gap end) : end_(-int(end.idx()) - 1) {}
+        EdgeEnd(Gap end) : end_(-int(end) - 1) {}
 
         //! @brief gap test
         //! @return whether end is gap

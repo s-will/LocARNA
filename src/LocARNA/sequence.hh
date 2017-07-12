@@ -13,17 +13,6 @@ namespace LocARNA {
     /**
      * @brief "Sequence View" of multiple alignment as array of column
      * vectors
-     *
-     * @note use MultipleAlignment::as_sequence() to 'convert' from
-     * MultipleAlignment to Sequence.
-     *
-     * @note the conceptual relation between Sequence and
-     * MultipleAlignent is that the two classes are equivalent views
-     * of a multiple alignment. Therefore, casting between both should
-     * be free of cost, in particular for references! operator [] is
-     * supported, depending on the static type, only for
-     * Sequence. There should be a way to expresse this relation in a
-     * nicer way.
      */
     class Sequence : public MultipleAlignment {
         // BEWARE: don't define attributes in sequence! In
@@ -44,6 +33,28 @@ namespace LocARNA {
          */
         Sequence(const std::string &name, const std::string &sequence)
             : MultipleAlignment(name, sequence) {}
+
+        /**
+         * @brief Obtain sequence view of multiple alignment
+         * @param ma multiple alignemnt
+         * @return sequence
+         */
+        static
+        Sequence &
+        view(MultipleAlignment &ma) {
+            return static_cast<Sequence &>(ma);
+        }
+
+        /**
+         * @brief Obtain const sequence view of multiple alignment
+         * @param ma multiple alignemnt
+         * @return sequence
+         */
+        static
+        const Sequence &
+        view(const MultipleAlignment &ma) {
+            return static_cast<const Sequence &>(ma);
+        }
 
         /**
          * @brief Access to columns

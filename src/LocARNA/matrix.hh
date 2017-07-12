@@ -77,13 +77,9 @@ namespace LocARNA {
          */
         Matrix(size_type xdim, size_type ydim, const elem_t *from = nullptr)
             : mat_(xdim * ydim), xdim_(xdim), ydim_(ydim) {
-            if (from != nullptr) {
-                for (size_type i = 0; i < xdim_; i++) {
-                    for (size_type j = 0; j < ydim_; j++) {
-                        (*this)(i, j) = from[i * ydim + j];
-                    }
-                }
-            }
+            if (from == nullptr) return;
+
+            std::copy(from, from + xdim_ * ydim_, mat_.begin());
         }
 
         /**
