@@ -1492,30 +1492,33 @@ namespace LocARNA {
             for (size_type j = i + 1; j < edges.size(); j++) {
                 // here we compute consensus pair probabilities
 
-                double pA = (edges.first[i].is_gap() || edges.first[j].is_gap())
+                const auto &ei = edges[i];
+                const auto &ej = edges[j];
+
+                double pA = (ei.first.is_gap() || ej.first.is_gap())
                     ? 0
-                    : rna_dataA.arc_prob(edges.first[i], edges.first[j]);
+                    : rna_dataA.arc_prob(ei.first, ej.first);
 
                 double pB =
-                    (edges.second[i].is_gap() || edges.second[j].is_gap())
+                    (ei.second.is_gap() || ej.second.is_gap())
                     ? 0
-                    : rna_dataB.arc_prob(edges.second[i], edges.second[j]);
+                    : rna_dataB.arc_prob(ei.second, ej.second);
 
                 double p =
                     consensus_probability(pA, pB, rowsA, rowsB, p_expA, p_expB, p_penalty);
 
                 if (stacking) {
                     double st_pA =
-                        (edges.first[i].is_gap() || edges.first[j].is_gap())
+                        (ei.first.is_gap() || ej.first.is_gap())
                         ? 0
-                        : rna_dataA.joint_arc_prob(edges.first[i],
-                                                   edges.first[j]);
+                        : rna_dataA.joint_arc_prob(ei.first,
+                                                   ej.first);
 
                     double st_pB =
-                        (edges.second[i].is_gap() || edges.second[j].is_gap())
+                        (ei.second.is_gap() || ej.second.is_gap())
                         ? 0
-                        : rna_dataB.joint_arc_prob(edges.second[i],
-                                                   edges.second[j]);
+                        : rna_dataB.joint_arc_prob(ei.second,
+                                                   ej.second);
 
                     double st_p = consensus_probability(st_pA, st_pB, rowsA,
                                                         rowsB, p_expA, p_expB, p_penalty);

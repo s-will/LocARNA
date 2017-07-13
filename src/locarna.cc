@@ -748,27 +748,27 @@ main(int argc, char **argv) {
             bool openA = false; // is a gap open in A
             bool openB = false; // is a gap open in B
 
-            for (size_t k = 0; k < edges.size(); k++) {
-                if (edges.first[k].is_pos() && edges.second[k].is_pos()) {
+            for ( const auto & edge : edges ) {
+                if (edge.first.is_pos() && edge.second.is_pos()) {
                     seq_sim +=
-                        scoring.basematch(edges.first[k], edges.second[k]);
+                        scoring.basematch(edge.first, edge.second);
                 }
-                if (edges.first[k].is_gap()) {
+                if (edge.first.is_gap()) {
                     if (!openA) {
                         gap_numA++;
                         openA = true;
                     }
-                    gap_cost += scoring.gapA(edges.second[k]);
+                    gap_cost += scoring.gapA(edge.second);
                 } else {
                     openA = false;
                 }
 
-                if (edges.second[k].is_gap()) {
+                if (edge.second.is_gap()) {
                     if (!openB) {
                         gap_numB++;
                         openB = true;
                     }
-                    gap_cost += scoring.gapB(edges.first[k]);
+                    gap_cost += scoring.gapB(edge.first);
                 } else {
                     openB = false;
                 }
@@ -813,9 +813,9 @@ main(int argc, char **argv) {
         // write alignment to screen
 
         if (clp.pos_output) {
-            std::cout << "HIT " << score << " " << alignment->local_startA()
-                      << " " << alignment->local_startB() << " "
-                      << alignment->local_endA() << " " << alignment->local_endB()
+            std::cout << "HIT " << score << " " << alignment->local_start().first
+                      << " " << alignment->local_start().second << " "
+                      << alignment->local_end().first << " " << alignment->local_end().second
                       << " " << std::endl;
             std::cout << std::endl;
         }
@@ -834,8 +834,8 @@ main(int argc, char **argv) {
             }
 
             if (clp.pos_output) {
-                std::cout << "\t+" << alignment->local_startA() << std::endl
-                          << "\t+" << alignment->local_startB() << std::endl
+                std::cout << "\t+" << alignment->local_start().first << std::endl
+                          << "\t+" << alignment->local_start().second << std::endl
                           << std::endl;
                 std::cout << std::endl;
             }
@@ -860,8 +860,8 @@ main(int argc, char **argv) {
 
             if (clp.pos_output) {
                 std::cout << std::endl
-                          << "\t+" << alignment->local_endA() << std::endl
-                          << "\t+" << alignment->local_endB() << std::endl
+                          << "\t+" << alignment->local_end().second << std::endl
+                          << "\t+" << alignment->local_end().second << std::endl
                           << std::endl;
             }
         }

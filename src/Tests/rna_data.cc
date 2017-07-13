@@ -59,10 +59,7 @@ TEST_CASE("RnaData can construct pairwise (averaged) consensus dot plots") {
                       "CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG");
 
         Alignment alignment(seqA, seqB,
-                            Alignment::edges_t(Alignment::alistr_to_edge_ends(
-                                                   alistrA),
-                                               Alignment::alistr_to_edge_ends(
-                                                   alistrB)));
+                            Alignment::alistrs_to_edges(alistrA, alistrB));
 
         REQUIRE(alignment.seqA().is_proper());
         REQUIRE(alignment.seqB().is_proper());

@@ -15,10 +15,6 @@ namespace LocARNA {
      * vectors
      */
     class Sequence : public MultipleAlignment {
-        // BEWARE: don't define attributes in sequence! In
-        // MultipleAlignment.as_sequence(), we rely on a simple upcast
-        // to convert MultipleAlignment objects to Sequence objects
-
     public:
 
         /**
