@@ -193,28 +193,28 @@ namespace LocARNA {
         auto alisize = edges.size();
 
         for (size_type i = 0; i < alisize; i++) {
-            if (edges.first[i].is_gap()) {
+            if (edges[i].first.is_gap()) {
                 for (size_type k = 0; k < seqA.num_of_rows(); k++) {
                     if (special_gap_symbols)
-                        aliA[k] += special_gap_symbol(edges.first[i].gap());
+                        aliA[k] += special_gap_symbol(edges[i].first.gap());
                     else
-                        aliA[k] += gap_symbol(edges.first[i].gap());
+                        aliA[k] += gap_symbol(edges[i].first.gap());
                 }
             } else {
                 for (size_type k = 0; k < seqA.num_of_rows(); k++) {
-                    aliA[k] += seqA.column(edges.first[i])[k];
+                    aliA[k] += seqA.column(edges[i].first)[k];
                 }
             }
-            if (edges.second[i].is_gap()) {
+            if (edges[i].second.is_gap()) {
                 for (size_type k = 0; k < seqB.num_of_rows(); k++) {
                     if (special_gap_symbols)
-                        aliB[k] += special_gap_symbol(edges.second[i].gap());
+                        aliB[k] += special_gap_symbol(edges[i].second.gap());
                     else
-                        aliB[k] += gap_symbol(edges.second[i].gap());
+                        aliB[k] += gap_symbol(edges[i].second.gap());
                 }
             } else {
                 for (size_type k = 0; k < seqB.num_of_rows(); k++) {
-                    aliB[k] += seqB.column(edges.second[i])[k];
+                    aliB[k] += seqB.column(edges[i].second)[k];
                 }
             }
         }

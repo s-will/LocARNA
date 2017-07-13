@@ -1481,10 +1481,10 @@ namespace LocARNA {
                 // reimplement. SW - 2013 Jun 7
                 if (opt_pos_output) {
                     std::cout << "HIT " << task_score
-                              << alignment.local_startA() << " "
-                              << alignment.local_startB() << " "
-                              << alignment.local_endA() << " "
-                              << alignment.local_endB() << " " << std::endl;
+                              << alignment.local_start().first << " "
+                              << alignment.local_start().first << " "
+                              << alignment.local_end().second << " "
+                              << alignment.local_end().second << " " << std::endl;
                 } else {
                     MultipleAlignment ma(alignment, true);
                     std::cout << "Score: " << task_score << std::endl;
@@ -1510,14 +1510,14 @@ namespace LocARNA {
             if (lenA > lenB) {
                 // split A
                 int splitA =
-                    (alignment.local_startA() + alignment.local_endA()) / 2;
+                    (alignment.local_start().first + alignment.local_end().first) / 2;
                 if (verbose)
                     std::cout << "Split A at " << splitA << std::endl;
                 r1.set_endA(splitA);
                 r2.set_startA(splitA);
             } else {
                 int splitB =
-                    (alignment.local_startB() + alignment.local_endB()) / 2;
+                    (alignment.local_start().second + alignment.local_end().second) / 2;
                 if (verbose)
                     std::cout << "Split B at " << splitB << std::endl;
                 r1.set_endB(splitB);
