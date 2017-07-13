@@ -23,12 +23,9 @@ namespace LocARNA {
         if (!annotationA.empty() && !annotationB.empty()) {
             annotation_.resize(annotationA.name_length());
 
-            // assert that edge end vectors have the same size
-            assert(edges.first.size() == edges.second.size());
-
             for (size_type i = 0; i < edges.size(); i++) {
-                const EdgeEnd &eA = edges.first[i];
-                const EdgeEnd &eB = edges.second[i];
+                const EdgeEnd &eA = edges[i].first;
+                const EdgeEnd &eB = edges[i].second;
 
                 name_t name;
 
@@ -132,12 +129,9 @@ namespace LocARNA {
         if (annotationA.empty() || annotationB.empty())
             return false;
 
-        // assert that edge end vectors have the same size
-        assert(edges.first.size() == edges.second.size());
-
         for (size_type i = 0; i < edges.size(); i++) {
-            const EdgeEnd &eA = edges.first[i];
-            const EdgeEnd &eB = edges.second[i];
+            const EdgeEnd &eA = edges[i].first;
+            const EdgeEnd &eB = edges[i].second;
 
             if (!eA.is_gap() && !eB.is_gap()) {
                 const std::string &nameA = annotationA.name(eA);
