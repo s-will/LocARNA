@@ -4,56 +4,53 @@ namespace LocARNA {
 
     template<class T, size_t N>
     Alphabet<T, N>::Alphabet()
-        : std::array<T,N>(),alph_hash_(this) {
+        : std::array<T,N>() {
     }
 
     template <class T, size_t N>
     Alphabet<T, N>::Alphabet(const std::array<T, N> &a)
-        : std::array<T, N>(a), alph_hash_(this) {
+        : std::array<T, N>(a) {
+        sort();
     }
 
     template<class T, size_t N>
     Alphabet<T, N>::Alphabet(const std::vector<value_type> &v)
-        : std::array<T,N>(),alph_hash_(this)
+        : std::array<T,N>()
     {
         std::copy_n(v.begin(), N, this->begin());
-        init_map();
+        sort();
     }
 
     template <class T,size_t N>
     Alphabet<T, N>::Alphabet(const std::string &s)
-        : std::array<char, N>(), alph_hash_(this) {
+        : std::array<char, N>() {
         std::copy_n(s.begin(), N, this->begin());
-        init_map();
+        sort();
     }
 
-    template<class T, size_t N>
+    template <class T, size_t N>
     typename Alphabet<T, N>::size_type
-    Alphabet<T, N>::idx(const value_type &elem) const {
-        assert(alph_hash_.find(elem) != alph_hash_.end());
-        return alph_hash_.find(elem)->second;
+    Alphabet<T, N>::idx(const value_type &x) const {
+        return size_type(std::lower_bound(this->begin(), this->end(), x) - this->begin());
     }
 
-    template<class T, size_t N>
+    template <class T, size_t N>
     bool
-    Alphabet<T, N>::in(const value_type &elem) const {
-        return alph_hash_.find(elem) != alph_hash_.end();
+    Alphabet<T, N>::in(const value_type &x) const {
+        return std::binary_search(this->begin(),this->end(), x);
     }
 
     template <class T, size_t N>
     Alphabet<T, N> &
     Alphabet<T, N>::operator = (const std::array<T, N> &a) {
         std::copy_n(a.begin(), N, this->begin());
-        alph_hash_.clear();
-        init_map();
+        sort();
         return *this;
     }
 
     template<class T, size_t N>
-    void Alphabet<T, N>::init_map() {
-        for(size_type i=0; i < N ; ++i) {
-            alph_hash_[(*this)[i]] = i;
-        }
+    void Alphabet<T, N>::sort() {
+        std::sort(this->begin(),this->end());
     }
 
     template<class T, size_t N>
