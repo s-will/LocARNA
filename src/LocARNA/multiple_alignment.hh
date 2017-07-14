@@ -23,7 +23,7 @@ namespace LocARNA {
 
     class Alignment;
     class AlignmentEdges;
-    template <class T>
+    template <class T, size_t N>
     class Alphabet;
     class BasePairs;
     class Scoring;
@@ -786,14 +786,15 @@ namespace LocARNA {
          * @brief check character constraints
          *
          * Check whether the alignment contains characters from the given
-         * alphabet only and, if warn, print warnings otherwise.
+         * alphabet only
          *
          * @param alphabet alphabet of admissible characters
          *
          * @return whether all characters are in the alphabet
          */
+        template <size_t N>
         bool
-        checkAlphabet(const Alphabet<char> &alphabet) const;
+        checkAlphabet(const Alphabet<char, N> &alphabet) const;
 
         /**
          * @brief Print contents of object to stream
@@ -1043,6 +1044,20 @@ namespace LocARNA {
      */
     std::ostream &
     operator<<(std::ostream &out, const MultipleAlignment &ma);
+
+
+    template <size_t N>
+    bool
+    MultipleAlignment::checkAlphabet(const Alphabet<char, N> &a) const {
+        return std::all_of(alig_.begin(), alig_.end(),
+                           [&a](const auto &row) {
+                               return std::all_of(row.seq().begin(), row.seq().end(),
+                                                  [&a](const auto &c) {
+                                                      return a.in(c);
+                                                  });
+                           });
+    }
+
 
 } // end namespace
 

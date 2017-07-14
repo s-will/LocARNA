@@ -9,12 +9,12 @@
 namespace LocARNA {
 
     Ribosum::Ribosum(const std::string &filename)
-        : name(),
-          bm(),
-          am(),
-          basename_alphabet(),
-          arcname_alphabet(),
-          char_basename_alphabet() {
+        : name_(),
+          bm_(),
+          am_(),
+          basename_alphabet_(),
+          arcname_alphabet_(),
+          char_basename_alphabet_() {
         std::ifstream in(filename.c_str());
         if (!in) {
             std::ostringstream err;
@@ -29,12 +29,12 @@ namespace LocARNA {
     }
 
     Ribosum::Ribosum()
-        : name(),
-          bm(),
-          am(),
-          basename_alphabet(),
-          arcname_alphabet(),
-          char_basename_alphabet() {}
+        : name_(),
+          bm_(),
+          am_(),
+          basename_alphabet_(),
+          arcname_alphabet_(),
+          char_basename_alphabet_() {}
 
     Ribosum::~Ribosum() {}
 
@@ -45,21 +45,16 @@ namespace LocARNA {
 
             if (!std::getline(in, line))
                 throw(std::ifstream::failure("Expecting name."));
-            name = line;
+            name_ = line;
 
             // ------------------------------------------------------------
             // read the 4x4 matrix
 
-            std::vector<std::string> basenames;
-            basenames.push_back("A");
-            basenames.push_back("C");
-            basenames.push_back("G");
-            basenames.push_back("U");
+            std::array<std::string, 4> basenames = {"A", "C", "G", "U"};
+            basename_alphabet_ = base_alphabet_type(basenames);
+            char_basename_alphabet_ = make_char_alphabet();
 
-            basename_alphabet = Alphabet<std::string>(basenames);
-            char_basename_alphabet = make_char_alphabet();
-
-            read_matrix(in, bm, basename_alphabet);
+            read_matrix(in, bm_, basename_alphabet_);
 
             // ignore two lines -- not clean, but we don't need the info
             // currently
@@ -70,16 +65,12 @@ namespace LocARNA {
             // read the 16x16 matrix
 
             std::vector<std::string> arcnames;
-            for (std::vector<std::string>::const_iterator i = basenames.begin();
-                 i != basenames.end(); ++i)
-                for (std::vector<std::string>::const_iterator j =
-                         basenames.begin();
-                     j != basenames.end(); ++j)
-                    arcnames.push_back((*i) + (*j));
+            for (const auto &i : basenames)
+                for (const auto &j : basenames)
+                    arcnames.push_back(i + j);
+            arcname_alphabet_ = arc_alphabet_type(arcnames);
 
-            arcname_alphabet = Alphabet<std::string>(arcnames);
-
-            read_matrix(in, am, arcname_alphabet);
+            read_matrix(in, am_, arcname_alphabet_);
 
             // ignore two lines
             getline(in, line);
@@ -93,68 +84,14 @@ namespace LocARNA {
         }
     }
 
-    Alphabet<char>
+    Ribosum::char_alphabet_type
     Ribosum::make_char_alphabet() const {
         // transform alphabet over singleton strings into one over characters
-        std::vector<char> alphchars;
-        for (Ribosum::alphabet_type::const_iterator it =
-                 basename_alphabet.begin();
-             it != basename_alphabet.end(); ++it)
-            alphchars.push_back((*it)[0]);
-
-        return Alphabet<char>(alphchars);
-    }
-
-    std::istream &
-    Ribosum::read_matrix(std::istream &in,
-                         Matrix<double> &mat,
-                         const Alphabet<std::string> &alph) const {
-        Alphabet<std::string>::size_type siz = alph.size();
-
-        std::string line;
-
-        while (std::getline(in, line) && line == "")
-            ;
-
-        {
-            std::istringstream linestream(line);
-
-            for (size_t i = 0; i < siz; i++) {
-                std::string name;
-                linestream >> name;
-
-                if (name != alph.elem(i))
-                    throw(std::ifstream::failure(
-                        "Expecting correct table header. Found: " + line));
-            }
+        std::array<char, 4> alphchars;
+        for (size_type i=0; i<4; ++i) {
+            alphchars[i] = basename_alphabet_[i][0];
         }
-
-        mat.resize(siz, siz);
-        for (size_t i = 0; i < siz; i++) {
-            std::getline(in, line);
-            std::istringstream linestream(line);
-            std::string base;
-            linestream >> base;
-            if (base != alph.elem(i))
-                throw(std::ifstream::failure("Expecting base name " +
-                                             alph.elem(i) + " as row header"));
-
-            for (size_t j = 0; j <= i; j++) {
-                double number;
-                linestream >> number;
-                mat(i, j) = mat(j, i) = number;
-            }
-        }
-        return in;
-    }
-
-    std::ostream &
-    Ribosum::write_matrix(std::ostream &out,
-                          const Matrix<double> &mat,
-                          const Alphabet<std::string> &alph) const {
-        out << alph << std::endl;
-        out << mat << std::endl;
-        return out;
+        return char_alphabet_type(alphchars);
     }
 
     /**
@@ -167,10 +104,10 @@ namespace LocARNA {
      */
     std::ostream &
     operator<<(std::ostream &out, const Ribosum &ribosum) {
-        out << ribosum.name << std::endl << std::endl;
+        out << ribosum.name_ << std::endl << std::endl;
 
-        ribosum.write_matrix(out, ribosum.bm, ribosum.basename_alphabet);
-        ribosum.write_matrix(out, ribosum.am, ribosum.arcname_alphabet);
+        ribosum.write_matrix(out, ribosum.bm_, ribosum.basename_alphabet_);
+        ribosum.write_matrix(out, ribosum.am_, ribosum.arcname_alphabet_);
 
         return out;
     }
@@ -342,15 +279,11 @@ namespace LocARNA {
             << "    static const double basepair_probs_init[];" << std::endl
             << "    static const double basematch_probs_init[];" << std::endl
             << "    static const double arcmatch_probs_init[];" << std::endl
-            << "    static const std::string basename_alphabet_init[];"
-            << std::endl
-            << "    static const std::string arcname_alphabet_init[];"
-            << std::endl
             << std::endl
             << "  public:" << std::endl
             << "    " << ribname << "(): RibosumFreq() {" << std::endl
-            << "        bm = matrix_t(4,4,bm_init);" << std::endl
-            << "        am = matrix_t(16,16,am_init);" << std::endl
+            << "        bm_ = matrix_t(4,4,bm_init);" << std::endl
+            << "        am_ = matrix_t(16,16,am_init);" << std::endl
 
             << "        base_probs_ = matrix_t(4,1,base_probs_init);"
             << std::endl
@@ -363,9 +296,9 @@ namespace LocARNA {
             << std::endl
             << "        arcmatch_probs_ = matrix_t(16,16,arcmatch_probs_init);"
             << std::endl
-            << "        set_basename_alphabet(basename_alphabet_init);"
+            << "        set_basename_alphabet({\"A\",\"C\",\"G\",\"U\"});"
             << std::endl
-            << "        set_arcname_alphabet(arcname_alphabet_init);"
+            << "        set_arcname_alphabet({\"AA\",\"AC\",\"AG\",\"AU\",\"CA\",\"CC\",\"CG\",\"CU\",\"GA\",\"GC\",\"GG\",\"GU\",\"UA\",\"UC\",\"UG\",\"UU\"});"
             << std::endl
             << "    }" << std::endl
             << "};" << std::endl;
@@ -386,18 +319,7 @@ namespace LocARNA {
         write_CC_matrix(out, ribname, "arcmatch_probs_init", 16, 16,
                         get_arcmatch_probs());
 
-        out << "const std::string " << ribname
-            << "::basename_alphabet_init[] = "
-            << "{\"A\",\"C\",\"G\",\"U\"};" << std::endl
-            << std::endl
-
-            << "const std::string " << ribname << "::arcname_alphabet_init[] = "
-            << "{\"AA\",\"AC\",\"AG\",\"AU\",\"CA\",\"CC\",\"CG\",\"CU\","
-               "\"GA\",\"GC\",\"GG\",\"GU\",\"UA\",\"UC\",\"UG\",\"UU\"};"
-            << std::endl
-            << std::endl
-
-            << "}" << std::endl // end of namespace LocARNA
+        out << "}" << std::endl // end of namespace LocARNA
             << "#endif" << std::endl;
     }
 
@@ -412,13 +334,10 @@ namespace LocARNA {
 
     void
     RibosumFreq::print_basematch_scores_corrected(std::ostream &out) const {
-        for (Alphabet<char>::const_iterator it = char_basename_alphabet.begin();
-             char_basename_alphabet.end() != it; ++it) {
-            out << (*it) << " ";
-            for (Alphabet<char>::const_iterator it2 =
-                     char_basename_alphabet.begin();
-                 char_basename_alphabet.end() != it2; ++it2) {
-                out << basematch_score_corrected(*it, *it2) << " ";
+        for (const auto &x: char_basename_alphabet_) {
+            out << x << " ";
+            for (const auto &y : char_basename_alphabet_) {
+                out << basematch_score_corrected(x,y) << " ";
             }
             out << std::endl;
         }

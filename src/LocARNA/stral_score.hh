@@ -14,8 +14,10 @@ namespace LocARNA {
 
     template <class T>
     class Matrix;
-    template <class T>
+
+    template <class T, size_t N>
     class Alphabet;
+
     class RnaData;
 
     //! \brief Implements the stral-like scoring function
@@ -34,7 +36,7 @@ namespace LocARNA {
         p_vec_t p_unB;   //!< probability unpaired seq B
 
         const Matrix<double> &sim_mat;
-        const Alphabet<char> &alphabet;
+        const Alphabet<char, 4> &alphabet;
         double pf_struct_weight;
         double gap_opening;
         double gap_extension;
@@ -61,7 +63,7 @@ namespace LocARNA {
         StralScore(const RnaData &rnaA,
                    const RnaData &rnaB,
                    const Matrix<double> &sim_mat_,
-                   const Alphabet<char> &alphabet_,
+                   const Alphabet<char, 4> &alphabet_,
                    double pf_struct_weight_,
                    double gap_opening_,
                    double gap_extension_);

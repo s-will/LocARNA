@@ -1098,17 +1098,6 @@ namespace LocARNA {
         }
     }
 
-    bool
-    MultipleAlignment::checkAlphabet(const Alphabet<char> &alphabet) const {
-        return std::all_of(alig_.begin(), alig_.end(),
-                           [&alphabet](const auto &row) {
-                               return std::all_of(row.seq().begin(), row.seq().end(),
-                                                  [&alphabet](const auto &c) {
-                                                      return alphabet.in(c);
-                                                  });
-                           });
-    }
-
     void
     MultipleAlignment::append(const SeqEntry &seqentry) {
         name2idx_[seqentry.name()] =
