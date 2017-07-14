@@ -47,24 +47,28 @@ namespace LocARNA {
         Alphabet<T, N> &
         operator = (const std::array<T, N> &a);
 
-        //! convert element to index
+        /**
+         * @brief index of alphabet element
+         * @param x element of the alphabet
+         * @return index
+         *
+         * @note the result is undefined if !in(x)
+         */
         size_type
-        idx(const value_type &elem) const;
+        idx(const value_type &x) const;
 
-        //! test membership in alphabet
+        /**
+         * @brief test alphabet element membership
+         * @param x element of the alphabet
+         * @return true, if x is element of the alphabet
+         */
         bool
-        in(const value_type &elem) const;
+        in(const value_type &x) const;
 
     private:
-        class map_type : public std::map<T, size_type> {
-        public:
-            map_type(Alphabet<T, N> *parent) { parent->init_map(); }
-        };
-        map_type alph_hash_;
-
-        //! initilize data structures from alphabet vector a
+        //! sort the alphabet vector
         void
-        init_map();
+        sort();
     };
 
     /**
