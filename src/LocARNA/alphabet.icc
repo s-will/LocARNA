@@ -1,69 +1,66 @@
+#include <algorithm>
+
 namespace LocARNA {
 
-
-    template<class T>
-    Alphabet<T>::Alphabet()
-        : alph_vec(),alph_hash() {
+    template<class T, size_t N>
+    Alphabet<T, N>::Alphabet()
+        : std::array<T,N>(),alph_hash_(this) {
     }
 
-    template<class T>
-    Alphabet<T>::Alphabet(const elem_vector_type &a)
-        : alph_vec(),alph_hash()
+    template <class T, size_t N>
+    Alphabet<T, N>::Alphabet(const std::array<T, N> &a)
+        : std::array<T, N>(a), alph_hash_(this) {
+    }
+
+    template<class T, size_t N>
+    Alphabet<T, N>::Alphabet(const std::vector<value_type> &v)
+        : std::array<T,N>(),alph_hash_(this)
     {
-        init(a);
+        std::copy_n(v.begin(), N, this->begin());
+        init_map();
     }
 
-    template<class T>
-    Alphabet<T>::Alphabet(const elem_type *s,int len)
-        : alph_vec(),alph_hash()
-    {
-        vec_t a(s,s+len);
-        init(a);
+    template <class T,size_t N>
+    Alphabet<T, N>::Alphabet(const std::string &s)
+        : std::array<char, N>(), alph_hash_(this) {
+        std::copy_n(s.begin(), N, this->begin());
+        init_map();
     }
 
-    template<class T>
-    typename Alphabet<T>::size_type
-    Alphabet<T>::size() const {
-        return alph_vec.size();
+    template<class T, size_t N>
+    typename Alphabet<T, N>::size_type
+    Alphabet<T, N>::idx(const value_type &elem) const {
+        assert(alph_hash_.find(elem) != alph_hash_.end());
+        return alph_hash_.find(elem)->second;
     }
 
-    template<class T>
-    typename Alphabet<T>::size_type
-    Alphabet<T>::idx(const elem_type &elem) const {
-        assert(alph_hash.find(elem) != alph_hash.end());
-
-        return alph_hash.find(elem)->second;
-    }
-
-    template<class T>
-    const typename Alphabet<T>::elem_type &
-    Alphabet<T>::elem(size_type idx) const {
-        assert(idx<alph_vec.size());
-
-        return alph_vec[idx];
-    }
-
-    template<class T>
+    template<class T, size_t N>
     bool
-    Alphabet<T>::in(const elem_type &elem) const {
-        return alph_hash.find(elem) != alph_hash.end();
+    Alphabet<T, N>::in(const value_type &elem) const {
+        return alph_hash_.find(elem) != alph_hash_.end();
     }
 
-    template<class T>
-    void Alphabet<T>::init(const vec_t &a) {
-        alph_vec=a;
+    template <class T, size_t N>
+    Alphabet<T, N> &
+    Alphabet<T, N>::operator = (const std::array<T, N> &a) {
+        std::copy_n(a.begin(), N, this->begin());
+        alph_hash_.clear();
+        init_map();
+        return *this;
+    }
 
-        for(typename Alphabet<T>::vec_t::size_type i=0; i < a.size() ; ++i) {
-            alph_hash[alph_vec[i]] = i;
+    template<class T, size_t N>
+    void Alphabet<T, N>::init_map() {
+        for(size_type i=0; i < N ; ++i) {
+            alph_hash_[(*this)[i]] = i;
         }
     }
 
-    template<class T>
+    template<class T, size_t N>
     std::ostream &
-    operator << (std::ostream &out, const Alphabet<T> &a) {
-        for (typename Alphabet<T>::elem_vector_type::const_iterator it=a.begin();
-             it!=a.end(); ++it ) {
-            out << (*it) << " ";
+    operator << (std::ostream &out, const Alphabet<T, N> &a) {
+        for (const auto &x: a ) {
+            out << x << " ";
         }
 
         return out;

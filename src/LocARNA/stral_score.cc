@@ -10,7 +10,7 @@ namespace LocARNA {
     StralScore::StralScore(const RnaData &rnaA,
                            const RnaData &rnaB,
                            const Matrix<double> &sim_mat_,
-                           const Alphabet<char> &alphabet_,
+                           const Alphabet<char, 4> &alphabet_,
                            double pf_struct_weight_,
                            double gap_opening_,
                            double gap_extension_)

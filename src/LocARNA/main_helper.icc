@@ -490,7 +490,7 @@ namespace LocARNA {
                                   << std::endl;
                     }
 
-                    const Alphabet<char> *alphabet;
+                    const Ribosum::char_alphabet_type *alphabet;
                     const Matrix<double> *p_basematch_scores;
                     Matrix<double> basematch_scores;
 

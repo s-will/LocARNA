@@ -39,8 +39,8 @@ namespace LocARNA {
 #ifndef NDEBUG
         if (params->ribofit || params->ribosum) {
             // check sequences
-            if (!seqA.checkAlphabet(Alphabet<char>((char *)"ACGUN-", 6)) ||
-                !seqB.checkAlphabet(Alphabet<char>((char *)"ACGUN-", 6))) {
+            if (!seqA.checkAlphabet(Alphabet<char,6>("ACGUN-")) ||
+                !seqB.checkAlphabet(Alphabet<char,6>("ACGUN-"))) {
                 std::cerr << "WARNING: unsupported sequence characters found."
                           << std::endl;
             }
@@ -333,7 +333,7 @@ namespace LocARNA {
         double score = 0;
         int gapless_combinations = 0;
 
-        const Alphabet<char> &alphabet = ribosum->alphabet();
+        auto &alphabet = ribosum->alphabet();
 
         // compute geometric mean
         for (size_type i = 0; i < rowsA;
@@ -388,7 +388,7 @@ namespace LocARNA {
 
         // for simplicity: assume that the ribofit alphabet and the
         // ribosum alphabet contain the same characters
-        const Alphabet<char> &alphabet = ribosum->alphabet();
+        auto &alphabet = ribosum->alphabet();
 
         for (size_type i = 0; i < rowsA;
              i++) { // run through all combinations of rows in A and B

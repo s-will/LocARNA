@@ -13,8 +13,10 @@ namespace LocARNA {
 
     class StralScore;
     class RnaData;
-    template <class T>
+
+    template <class T, size_t N>
     class Alphabet;
+
     class Sequence;
 
     /**
@@ -74,7 +76,7 @@ namespace LocARNA {
         pf_probs(const RnaData &rnaA,
                  const RnaData &rnaB,
                  const Matrix<double> &sim_mat,
-                 const Alphabet<char> &alphabet,
+                 const Alphabet<char, 4> &alphabet,
                  double gap_opening,
                  double gap_extension,
                  double pf_struct_weight,
