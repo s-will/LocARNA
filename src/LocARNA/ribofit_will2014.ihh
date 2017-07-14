@@ -1,6 +1,7 @@
 /* RIBOFIT */
+#include <array>
 
-static const char will2014_nucleotides[4];
+static const std::array<char, 4> will2014_nucleotides;
 
 static const double
 will2014_bmscore_coefficients[11][3];
@@ -13,4 +14,3 @@ will2014_bmscore(size_t i, size_t j,double identity);
 
 static const double
 will2014_amscore(size_t i, size_t j,size_t k, size_t l,double identity);
-

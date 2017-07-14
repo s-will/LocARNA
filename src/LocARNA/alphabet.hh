@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <array>
 #include <vector>
 #include <map>
 #include <iosfwd>
@@ -13,92 +14,57 @@
 namespace LocARNA {
 
     /**
-     * \brief Specifies an alphabet
+     * \brief Specifies an alphabet of static size
      *
-     * maintain an (ordered) alphabet and offer transformation
+     * maintain an alphabet and offer efficient transformation
      * between elements of alphabet and their indices
      *
+     * @todo using map for the index to char map is overkill; rather sort and use binsearch
      */
-    template <class T>
-    class Alphabet {
-        typedef std::vector<T> vec_t;
-
+    template <class T, std::size_t N>
+    class Alphabet : public std::array<T,N> {
     public:
-        typedef typename vec_t::size_type size_type; //!< size type
-    private:
-        typedef std::map<T, size_type> hash_t;
+        using value_type = T;          //!< type of an alphabet element
 
-        vec_t alph_vec;
-        hash_t alph_hash;
-
-    public:
-        typedef size_type index_type; //!< type of index
-        typedef T elem_type;          //!< type of an alphabet element
-        typedef std::vector<T> elem_vector_type; //!< vector of elements
-
-        //! iterator over alphabet elements
-        typedef typename elem_vector_type::iterator iterator;
-
-        //! const iterator over alphabet elements
-        typedef typename elem_vector_type::const_iterator const_iterator;
+        //! inherited size_type
+        using size_type = typename std::array<T,N>::size_type;
 
         //! construct empty
         Alphabet();
 
-        //! construct from vector of alphabet elements
-        explicit Alphabet(const elem_vector_type &a);
+        //! construct from array of alphabet elements
+        explicit
+        Alphabet(const std::array<T,N> &a);
 
-        //! construct from array of alphabet indices with given length
-        Alphabet(const elem_type *s, int len);
+        //! construct from vector
+        explicit
+        Alphabet(const std::vector<T> &v);
 
-        //! get alphabet size
-        size_type
-        size() const;
+        //! construct from string (only T=char)
+        explicit
+        Alphabet(const std::string &s);
+
+        Alphabet<T, N> &
+        operator = (const std::array<T, N> &a);
 
         //! convert element to index
         size_type
-        idx(const elem_type &elem) const;
-
-        /**
-         * @brief convert index to element
-         * @param idx index
-         * @return element with index idx
-         */
-        const elem_type &
-        elem(size_type idx) const;
+        idx(const value_type &elem) const;
 
         //! test membership in alphabet
         bool
-        in(const elem_type &elem) const;
-
-        //! begin for const iteration over elements
-        const_iterator
-        begin() const {
-            return alph_vec.begin();
-        }
-
-        //! end for const iteration over elements
-        const_iterator
-        end() const {
-            return alph_vec.end();
-        }
-
-        //! begin for iteration over elements
-        iterator
-        begin() {
-            return alph_vec.begin();
-        }
-
-        //! end for iteration over elements
-        iterator
-        end() {
-            return alph_vec.end();
-        }
+        in(const value_type &elem) const;
 
     private:
+        class map_type : public std::map<T, size_type> {
+        public:
+            map_type(Alphabet<T, N> *parent) { parent->init_map(); }
+        };
+        map_type alph_hash_;
+
         //! initilize data structures from alphabet vector a
         void
-        init(const vec_t &a);
+        init_map();
     };
 
     /**
@@ -109,9 +75,9 @@ namespace LocARNA {
      *
      * @return output stream after writing alphabet
      */
-    template <class T>
+    template <class T, size_t N>
     std::ostream &
-    operator<<(std::ostream &out, const Alphabet<T> &a);
+    operator<<(std::ostream &out, const Alphabet<T, N> &a);
 }
 
 #include "alphabet.icc"

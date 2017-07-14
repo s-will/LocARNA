@@ -1,7 +1,8 @@
 /* RIBOFIT */
+#include <array>
 
-const char
-Ribofit_will2014::will2014_nucleotides[4] = {'A','C','G','U'};
+const std::array<char, 4>
+Ribofit_will2014::will2014_nucleotides = {'A','C','G','U'};
 
 const double
 Ribofit_will2014::will2014_bmscore_coefficients[11][3] = {
@@ -178,4 +179,3 @@ Ribofit_will2014::will2014_amscore(size_t i, size_t j,size_t k, size_t l, double
         + will2014_amscore_coefficients[idx][1]*log(identity)
         + will2014_amscore_coefficients[idx][2]*log(100-identity);
 }
-
