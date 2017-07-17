@@ -172,7 +172,7 @@ if ( $run_locally ) {
 
     system "cp",$joblist,$tmpjoblist || die "Cannot read and copy joblist $joblist";
 
-    my $num_tasks=`wc -l $tmpjoblist | cut -f1 -d' '`;
+    my $num_tasks=readpipe("wc -l $tmpjoblist | cut -f1 -d' '");
     chomp $num_tasks;
 
     open(my $OUT, ">", "$jobscript") || die "Cannot write jobscript $jobscript: $!";
