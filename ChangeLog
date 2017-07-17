@@ -1,6 +1,8 @@
 ============================================================
 === 2017
 
+	Avoid shell evaluation in mlocarna system calls (security)
+	Use locarna_rnafold_pp for constrained folding in mlocarna
 	Optimize inner loop (add sentinels to left and right adjacency lists)
 1.9.3alpha
 	Reduce memory footprint of locarna
