@@ -22,81 +22,62 @@ our $VERSION     = 1.00;
 our @ISA         = qw(Exporter);
 our @EXPORT      =
   qw(
-        read_fasta
-
-        check_constraints_in_fasta
-        read_anchor_constraints
-
-        sequence_constraint_string
-
-        compute_alignment_from_seqs
-        compute_alignment_score
-        read_dp_ps
-        read_pp_file_aln_wo_anno
-        read_pp_file_aln_w_anno
-        read_pp_file_pairprobs
-        read_pp_file_pairprob_info
-        convert_dp_to_pp_with_constraints
-        convert_alifold_dp_to_pp
-        alifold_structure
-        constrain_sequences_from_reliable_structures
-
-
-        extract_from_clustal_alignment
-
-        project_string_to_alignment_sequence
-        project_structure_to_alignment_sequence
-
-        clone_hash
-
-        read_aln_wo_anno
-        write_aln
-        project_aln
-        project_alnloh
-        aln_h2loh
-        write_clustalw_loh
-        aln_length_atleastonematch
-
-        aln_to_alnloh
-        read_clustalw_alignment
-        read_clustalw_alnloh
-        read_clustalw_aln
-        write_clustalw_alnloh
-        %loh_translate_names
         %loh_associate_nnames_to_names
-        loh_names
-        loh_sort
-
-        sprint_fasta_alnloh
-
-        write_pp
-
-        write_2D_matrix
-
-        read_2D_matrix
-
-        new_intermediate_name
-
-        extract_score_matrix_from_alignments
-
-        aln_reliability_beststruct_fromfile
-        aln_reliability_fromfile
-
-        register_normalized_seqname
-        register_normalized_seqnames
-        get_normalized_seqname
-        forget_normalized_seqnames
-        print_normalized_sequence_names_hash
-
-        nnamepair
-
+        %loh_translate_names
         alifold_mfe
         alifold_pf
-
+        alifold_structure
+        aln_h2loh
+        aln_length_atleastonematch
+        aln_reliability_beststruct_fromfile
+        aln_reliability_fromfile
+        aln_to_alnloh
+        anchor_constraint_string
+        clone_hash
+        compute_alignment_from_seqs
+        compute_alignment_score
+        constraint_annotation_is_valid_or_die
+        constrain_sequences_from_reliable_structures
+        convert_alifold_dp_to_pp
+        convert_dp_to_pp_with_constraints
         convert_fix_structure_to_pp
-
+        extract_from_clustal_alignment
+        extract_score_matrix_from_alignments
         find_in_exec_path
         find_in_exec_path_or_error
+        forget_normalized_seqnames
+        get_normalized_seqname
+        loh_names
+        loh_sort
+        new_intermediate_name
+        nnamepair
+        print_normalized_sequence_names_hash
+        project_aln
+        project_alnloh
+        project_string_to_alignment_sequence
+        project_structure_to_alignment_sequence
+        read_2D_matrix
+        read_aln_wo_anno
+        read_anchor_constraints
+        read_clustalw_alignment
+        read_clustalw_aln
+        read_clustalw_alnloh
+        read_dp_ps
+        read_fasta
+        read_pipe
+        read_pp_file_aln_w_anno
+        read_pp_file_aln_wo_anno
+        read_pp_file_pairprob_info
+        read_pp_file_pairprobs
+        register_normalized_seqname
+        register_normalized_seqnames
+        sprint_fasta_alnloh
+        system_pipein_list
+        write_2D_matrix
+        write_aln
+        write_clustalw_alnloh
+        write_clustalw_loh
+        write_pp
    );
 
 our %EXPORT_TAGS = ();
@@ -114,7 +95,7 @@ our $RNAalifold = "RNAalifold";
 
 ## alifold specific options
 ## turn on ribosum scoring and use "best" factors from the "improved alifold" paper
-our $RNAalifold_options = "--ribosum_scoring --cfactor 0.6 --nfactor 0.5";
+our @RNAalifold_options = ("--ribosum_scoring", "--cfactor" => "0.6", "--nfactor" => "0.5");
 
 our $PACKAGE_STRING = "MLocarna";
 
@@ -364,10 +345,10 @@ sub read_fasta {
 
 
 ########################################
-## check_constraints_in_fasta($fasta)
+## constraint_annotation_is_valid_or_die($fasta)
 ##
-## Checks validity of constraint description in fasta list of hash
-## representation.
+## Checks validity of anchor and structure constraint description in
+## fasta list of hash representation.
 ##
 ## $fasta list of hashs representation
 ##
@@ -380,7 +361,7 @@ sub read_fasta {
 ## die with error message when constraint annotation is invalid
 ##
 ########################################
-sub check_constraints_in_fasta {
+sub constraint_annotation_is_valid_or_die {
     my $fasta=shift;
 
     my $numseqconstraints = -1;
@@ -589,14 +570,14 @@ sub read_anchor_constraints {
 }
 
 ########################################
-## sequence_constraint_string($seq hash ref)
+## anchor_constraint_string($seq hash ref)
 ##
 ## Collect sequence constraint string for $seq entry of a fasta list of hashs
 ##
 ## returns string "<c1>#<c2>#...<cN>", where ci is the constraints description line i
 ##
 ########################################+
-sub sequence_constraint_string {
+sub anchor_constraint_string {
     my $seq=shift;
     my $i=1;
 
@@ -876,42 +857,6 @@ sub convert_alifold_dp_to_pp: prototype($$$) {
 }
 
 
-## compute pairwise alignment for given sequences using RNAfold -p for generating dps
-sub compute_alignment: prototype($$$$$) {
-    my ($bindir,$seqA,$seqB,$locarna_params,$tmpprefix) =  @_;
-
-    local *CA_IN;
-
-    my $tmpfile="$tmpprefix.clustal";
-
-    system("$bindir/locarna.pl $seqA $seqB $locarna_params --clustal=$tmpfile >/dev/null");
-
-    open(CA_IN,"$tmpfile") || die "Cannot read tmp file $tmpfile\n";
-
-    my @content=<CA_IN>;
-
-    close CA_IN;
-
-    unlink $tmpfile;
-
-    return @content;
-}
-
-
-
-sub compute_alignment_score: prototype($$$$$) {
-    my ($bindir,$seqA,$seqB,$locarna_params,$tmpprefix) =  @_;
-
-    my @content=compute_alignment($bindir,$seqA,$seqB,$locarna_params,$tmpprefix);
-    # print "@content\n";
-    $content[0] =~ /Score: ([\d\.\-]+)/ || die "Cannot return score.\n";
-    my $score=$1;
-
-    return $score;
-}
-
-
-
 ########################################
 ## extract_from_clustal_alignment($nameA,$nameB,$alignment)
 ##
@@ -1141,7 +1086,7 @@ sub project_string_to_alignment_sequence: prototype($$$) {
     my ($str,$seq,$gap_symbols)=@_;
 
     die "project_string_to_alignment_sequence: string and alignment sequence must have the same length:\n  $str\n  $seq\n    " if length($str) != length($seq);
-    
+
     my $res="";
     for (my $i=0; $i<length($seq); $i++) {
 	if (substr($seq,$i,1) !~ /[$gap_symbols]/) {
@@ -1240,7 +1185,117 @@ sub clone_hash {
 
 
 ########################################
-## alifold_structure($filename,$RNAfold_args)
+## shell_quote(@args)
+##
+## safer replacement for readpipe that avoids the shell
+##
+## @param  @args command and argument list
+## @return shell-quoted command string
+##
+########################################
+
+sub shell_quote {
+    my @args = @_;
+    my $quoted = "";
+
+    foreach my $arg (@args) {
+        $arg =~ s/'/'\\''/g;
+
+        $arg = "'$arg'";
+
+        $arg =~ s/^''//;
+        $arg =~ s/''$//;
+
+        $quoted .= "$arg ";
+    }
+    $quoted =~ s/\s+$//;
+    return $quoted;
+}
+
+
+########################################
+## readpipe_list
+##
+## safer replacement for readpipe that avoids the shell
+##
+## @param  @_ command and argument list
+## @return reference to list of command output lines
+##
+########################################
+sub readpipe_list {
+    my (@cmdlist) = @_;
+    my $cmd = shell_quote(@cmdlist);
+    $cmd = "$cmd 2>/dev/null";
+    # printmsg 1, "$cmd\n";
+
+    open(my $fh, "$cmd |");
+    my @result = <$fh>;
+    return \@result;
+}
+
+########################################
+## system_pipein_list
+##
+## safer replacement for system call with piped in input
+## that avoids the shell
+##
+## @param  @_ command and argument list
+##
+########################################
+sub system_pipein_list {
+    my ($input, @cmdlist) = @_;
+
+    my $cmd = shell_quote(@cmdlist);
+    $cmd = "echo ".shell_quote($input)." | $cmd >/dev/null";
+    printmsg 1, "$cmd\n";
+
+    system($cmd);
+}
+
+########################################
+## system_pipein_list
+##
+## safer replacement for system call with piped in input
+## that avoids the shell
+##
+## variant of system_pipein_list using perl 'open'
+##
+## @param  @_ command and argument list
+##
+########################################
+sub system_pipein_list_open {
+    my ($input, @cmd) = @_;
+
+    printmsg 1, "@cmd <<< \"$input\"\n";
+
+    {
+        open(my $infh, "|-", @cmd);
+        print $infh $input;
+        close($infh);
+    }
+}
+
+
+########################################
+## readpipe_list_open
+##
+## safer replacement for readpipe that avoids the shell
+##
+## variant of readpipe_list using perl 'open'
+##
+## @param  @_ command and argument list
+## @return reference to list of command output lines
+##
+########################################
+sub readpipe_list_open {
+    open(my $fh, "-|", @_);
+    my @result = <$fh>;
+    return \@result;
+}
+
+
+########################################
+## alifold_structure($filename,@RNAfold_args)
 ##
 ## Run RNAalifold on file
 ##
@@ -1251,9 +1306,12 @@ sub clone_hash {
 ##
 ########################################
 sub alifold_structure {
-    my ($filename,$RNAfold_args)=@_;
+    my ($filename,@RNAfold_args)=@_;
 
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options --mis --aln --color $RNAfold_args $filename 2>/dev/null");
+    my @aliout = @{
+        readpipe_list("$RNAalifold", @RNAalifold_options, "--mis", "--aln", "--color",
+                      @RNAfold_args, "$filename")
+    };
 
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /([().]+) /) {
@@ -1275,9 +1333,9 @@ sub alifold_structure {
 ##
 ########################################+
 sub alifold_mfe {
-    my ($file,$RNAfold_args) = @_;
+    my ($file, @RNAfold_args) = @_;
 
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options --noPS $RNAfold_args $file 2>/dev/null");
+    my @aliout = @{ readpipe_list("$RNAalifold", @RNAalifold_options, "--noPS", @RNAfold_args, "$file") };
 
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /[().]+\s+\(\s*([\d.-]+)\s*=\s*([\d.-]+)\s*\+\s*([\d.-]+)\)/) {
@@ -1302,11 +1360,10 @@ sub alifold_mfe {
 ##
 ########################################+
 sub alifold_pf {
-    my ($file,$RNAfold_args) = @_;
+    my ($file,@RNAfold_args) = @_;
 
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options --color --mis $RNAfold_args -p $file >/dev/null 2>&1");
-
-    return \@aliout;
+    return
+      readpipe_list("$RNAalifold", @RNAalifold_options, "--color", "--mis", @RNAfold_args, "-p", "$file");
 }
 
 
