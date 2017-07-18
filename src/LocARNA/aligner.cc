@@ -168,11 +168,22 @@ namespace LocARNA {
         ScoreVector &E = Es_[state];
         infty_score_t &F = Fs_[state];
 
+        // use tainted type to save operations that normalize infinity
+        tainted_infty_score_t max_score = infty_score_t::neg_infty;
+
+        // base match
+        if (params_->constraints_->allowed_match(i, j)) {
+            max_score = M(i - 1, j - 1) + sv->scoring()->basematch(i, j);
+        }
+
         // compute E entry
         if (params_->constraints_->allowed_del(i, j)) {// due to constraints, i can be deleted
             E[j] = std::max(E[j] + sv->scoring()->gapA(i), M(i - 1, j) +
                                 sv->scoring()->gapA(i) +
                                 sv->scoring()->indel_opening());
+            // base del
+            max_score = std::max(max_score, (tainted_infty_score_t)E[j]);
+
         } else {
             // due to constraints, i cannot be deleted
             E[j] = infty_score_t::neg_infty;
@@ -184,30 +195,17 @@ namespace LocARNA {
             F = std::max(F + sv->scoring()->gapB(j), M(i, j - 1) +
                              sv->scoring()->gapB(j) +
                              sv->scoring()->indel_opening());
+
+            // base ins
+            max_score = std::max(max_score, (tainted_infty_score_t)F);
+
         } else {
             // due to constraints, j cannot be inserted
             F = infty_score_t::neg_infty;
         }
 
-        // use tainted type to save operations that normalize infinity
-        tainted_infty_score_t max_score = infty_score_t::neg_infty;
-
-        // base match
-        if (params_->constraints_->allowed_match(i, j)) {
-            max_score = M(i - 1, j - 1) + sv->scoring()->basematch(i, j);
-        }
-
-        // base del
-        max_score = std::max(max_score, (tainted_infty_score_t)E[j]);
-
-        // base ins
-        max_score = std::max(max_score, (tainted_infty_score_t)F);
-
-        // arc match
-
         // standard case for arc match (without restriction to lonely pairs)
         //
-
         if (params_->constraints_->allowed_match(i, j)) {
             const auto &adjlA = bpsA_.right_adjlist_s(i);
             const auto &adjlB = bpsB_.right_adjlist_s(j);
@@ -221,7 +219,7 @@ namespace LocARNA {
                     // (params_->constraints_->allowed_match(arcA->left(),arcB->left()))
                     // or other "constraints"
                     // because for these arc matches holds that
-                    // sv->D(*arcA,*arcB)==neg_infty
+                    // sv->D(*arcA,*arcB).is_neg_infty()
 
                     tainted_infty_score_t new_score =
                         M(arcA->left() - 1, arcB->left() - 1) +
@@ -233,54 +231,7 @@ namespace LocARNA {
                 }
             }
         }
-
         return max_score;
-
-        // The following code turned out to be much slower than the above one
-
-        //     const ArcMatchVec &right_adj_list =
-        //     arc_matches.common_right_end_list(i,j);
-
-        //     for(ArcMatchVec::const_iterator it=right_adj_list.begin();
-        //     right_adj_list.end() != it; ) {
-
-        //      // NOTES: *it is the arc match index
-        //      //        we iterate only over valid arc matches, i.e.
-        //      //        constraints (including anchor c. and heuristic ones)
-        //      are satisified
-
-        //      const ArcMatch &am = *it;
-
-        //      const Arc &arcA=am.arcA();
-        //      const Arc &arcB=am.arcB();
-
-        //      //if ( arcA.left() <= al || arcB.left() <= bl ) {++it;
-        //      continue;}
-
-        //      // These optimizations assume that the list is sorted
-        //      //  lexicographically descending by (arcA.left, arcB.left)
-        //      //
-        //      if ( arcA.left() <= al ) break;
-
-        //      if ( arcB.left() <= bl ) {
-
-        //          // iterate to the next different al.
-        //          // this could be optimized further using a helper vector
-        //          // that allows to jump directly to this entry
-        //          do {
-        //              it++;
-        //          } while (right_adj_list.end()!=it && it->arcA().left()==al);
-
-        //          continue;
-        //      }
-
-        //      //std::cerr << am.idx() << std::endl;
-
-        //      max_score = std::max( max_score, M(arcA.left()-1,arcB.left()-1)
-        //      + D[am.idx()] );
-
-        //      ++it;
-        //     }
     }
 
     // generic initalization method.
