@@ -1,91 +1,73 @@
 #include "confusion_matrix.hh"
 #include "rna_structure.hh"
 
-#include <vector>
+#include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 namespace LocARNA {
     size_t
     ConfusionMatrix::count_common_bps(const RnaStructure &s1,
                                       const RnaStructure &s2) {
-        size_t count = 0;
-
-        for (RnaStructure::const_iterator it = s1.begin(); s1.end() != it;
-             ++it) {
-            const RnaStructure::bp_t &bp = *it;
-            size_t i = bp.first;
-            size_t j = bp.second;
-            if (filter_(bp)) {
-                if (s2.contains(bp) ||
-                    (slide_ && (s2.contains(RnaStructure::bp_t(i - 1, j)) ||
-                                s2.contains(RnaStructure::bp_t(i + 1, j)) ||
-                                s2.contains(RnaStructure::bp_t(i, j - 1)) ||
-                                s2.contains(RnaStructure::bp_t(i, j + 1))))) {
-                    count++;
-                }
-            }
-        }
-        return count;
+        return std::count_if(
+            s1.begin(), s2.begin(), [this, &s2](const RnaStructure::bp_t &bp) {
+                size_t i = bp.first;
+                size_t j = bp.second;
+                return filter_(bp) &&
+                    (s2.contains(bp) ||
+                     (slide_ && (s2.contains(RnaStructure::bp_t(i - 1, j)) ||
+                                 s2.contains(RnaStructure::bp_t(i + 1, j)) ||
+                                 s2.contains(RnaStructure::bp_t(i, j - 1)) ||
+                                 s2.contains(RnaStructure::bp_t(i, j + 1)))));
+            });
     }
 
     size_t
     ConfusionMatrix::count_tps(const RnaStructure &pred,
                                const RnaStructure &ref) {
-        size_t count = 0;
-
         std::vector<bool> ref_free(ref.length() + 1, true);
 
-        for (RnaStructure::const_iterator it = ref.begin(); ref.end() != it;
-             ++it) {
-            if (filter_(*it)) {
-                ref_free[it->first] = false;
-                ref_free[it->second] = false;
+        for (const auto bp : ref) {
+            if (filter_(bp)) {
+                ref_free[bp.first] = false;
+                ref_free[bp.second] = false;
             }
         }
 
-        for (RnaStructure::const_iterator it = pred.begin(); pred.end() != it;
-             ++it) {
-            const RnaStructure::bp_t &bp = *it;
+        return std::count_if(pred.begin(), pred.end(), [this, &ref, &ref_free](
+                                                           const RnaStructure::
+                                                               bp_t &bp) {
             size_t i = bp.first;
             size_t j = bp.second;
-            if (filter_(bp)) {
-                if (ref.contains(bp) ||
-                    (slide_ && (ref.contains(RnaStructure::bp_t(i - 1, j)) ||
-                                ref.contains(RnaStructure::bp_t(i + 1, j)) ||
-                                ref.contains(RnaStructure::bp_t(i, j - 1)) ||
-                                ref.contains(RnaStructure::bp_t(i, j + 1)))) ||
-                    (conflict_ && (ref_free[i] && ref_free[j]))) {
-                    count++;
-                }
-            }
-        }
-        return count;
+
+            return filter_(bp) &&
+                (ref.contains(bp) ||
+                 (slide_ && (ref.contains(RnaStructure::bp_t(i - 1, j)) ||
+                             ref.contains(RnaStructure::bp_t(i + 1, j)) ||
+                             ref.contains(RnaStructure::bp_t(i, j - 1)) ||
+                             ref.contains(RnaStructure::bp_t(i, j + 1)))) ||
+                 (conflict_ && (ref_free[i] && ref_free[j])));
+        });
     }
 
     size_t
     ConfusionMatrix::count_conflicting_base_pairs(const RnaStructure &s1,
                                                   const RnaStructure &s2) {
-        size_t count = 0;
-
         std::vector<bool> s2free(s2.length() + 1, true);
 
-        for (RnaStructure::const_iterator it = s2.begin(); s2.end() != it;
-             ++it) {
-            if (filter_(*it)) {
-                s2free[it->first] = false;
-                s2free[it->second] = false;
+        for (const auto &bp : s2) {
+            if (filter_(bp)) {
+                s2free[bp.first] = false;
+                s2free[bp.second] = false;
             }
         }
 
-        for (RnaStructure::const_iterator it = s1.begin(); s1.end() != it;
-             ++it) {
-            if (filter_(*it) && !(s2free[it->first] && s2free[it->second])) {
-                count++;
-            }
-        }
-
-        return count;
+        return std::count_if(s1.begin(), s1.end(),
+                             [this,&s2free](const RnaStructure::bp_t &bp) {
+                                 return filter_(bp) &&
+                                     !(s2free[bp.first] && s2free[bp.second]);
+                             });
     }
 
     size_t
@@ -103,13 +85,7 @@ namespace LocARNA {
 
     size_t
     ConfusionMatrix::count_base_pairs(const RnaStructure &s) {
-        size_t count = 0;
-        for (RnaStructure::const_iterator it = s.begin(); s.end() != it; ++it) {
-            if (filter_(*it)) {
-                count++;
-            }
-        }
-        return count;
+        return std::count_if(s.begin(), s.end(), filter_);
     }
 
     void
@@ -156,9 +132,9 @@ namespace LocARNA {
         RnaStructure pred(pred_struct);
 
         if (ref.length() == 0)
-            throw - 1;
+            throw(-1);
         if (pred.length() != ref.length())
-            throw - 2;
+            throw(-2);
 
         compute_confusion_matrix(ref, pred);
     }
@@ -170,7 +146,7 @@ namespace LocARNA {
                                      const BasePairFilter::Filter &filter)
         : slide_(slide), conflict_(conflict), filter_(filter) {
         if (pred.length() != ref.length())
-            throw - 2;
+            throw(-2);
 
         compute_confusion_matrix(ref, pred);
     }
