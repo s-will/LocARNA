@@ -70,6 +70,8 @@ namespace LocARNA {
     };
 
     class AlignmentEdges : public std::vector<std::pair<EdgeEnd,EdgeEnd>> {
+    public:
+        using edge_t = std::pair<EdgeEnd,EdgeEnd>;
     };
 
     /**
