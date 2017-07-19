@@ -9,7 +9,7 @@ SCRIPTTESTS = test_programs
 test_locarna_lib_SOURCES = alphabet.cc anchor_constraints.cc		\
 	catch.hpp ext_rna_data.cc matrices.cc multiple_alignment.cc	\
 	rna_data.cc rna_ensemble.cc rna_structure.cc			\
-	test_locarna_lib.cc trace_controller.cc
+	test_locarna_lib.cc trace_controller.cc zip.cc
 
 TESTS= $(BINTESTS) $(SCRIPTTESTS)
 
