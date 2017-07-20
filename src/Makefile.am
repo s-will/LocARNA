@@ -65,9 +65,10 @@ nobase_library_include_HEADERS = LocARNA/aligner.hh			\
 	LocARNA/scoring_fwd.hh LocARNA/sequence.hh			\
 	LocARNA/sequence_annotation.hh LocARNA/sparse_matrix.hh		\
 	LocARNA/sparse_vector.hh LocARNA/sparse_vector_base.hh		\
-	LocARNA/sparsification_mapper.hh LocARNA/stopwatch.hh		\
-	LocARNA/stral_score.hh LocARNA/string1.hh			\
-	LocARNA/trace_controller.hh LocARNA/tuples.hh LocARNA/zip.hh
+	LocARNA/sparsification_mapper.hh LocARNA/std_help_text.ihh	\
+	LocARNA/stopwatch.hh LocARNA/stral_score.hh			\
+	LocARNA/string1.hh LocARNA/trace_controller.hh			\
+	LocARNA/tuples.hh LocARNA/zip.hh
 
 ## binary programs
 ##

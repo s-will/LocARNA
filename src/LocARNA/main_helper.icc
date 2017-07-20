@@ -29,7 +29,9 @@ namespace LocARNA {
 
         // standard command line parameters common to locarna, locarna_p, sparse
         struct std_command_line_parameters {
-            std::map<std::string, std::string> help_text;
+            std::map<std::string, std::string> help_text = {
+#include      "std_help_text.ihh"
+            };
 
             // ----------------------------------------
             // command only parameters
@@ -162,160 +164,6 @@ namespace LocARNA {
 
             //! second input file
             std::string fileB;
-
-            std_command_line_parameters() {
-                help_text["help"] = "Print this help.";
-                help_text["galaxy_xml"] = "Print galaxy xml wrapper.";
-                help_text["version"] = "Print only version string.";
-                help_text["verbose"] =
-                    "Be verbose. Prints input parameters, sequences and "
-                    "size information.";
-                help_text["quiet"] = "Be quiet.";
-                help_text["indel"] =
-                    "Indel score. Score contribution of each single base "
-                    "insertion or deletion. "
-                    "Indel opening score and indel score define the affine "
-                    "scoring of gaps.";
-                help_text["indel_opening"] =
-                    "Indel opening score. Score contribution of opening an "
-                    "insertion or deletion, "
-                    "i.e. score for a consecutive run of deletions or "
-                    "insertions. Indel opening score and "
-                    "indel score define the affine scoring of gaps.";
-                help_text["ribosum_file"] =
-                    "File specifying the Ribosum base and base-pair "
-                    "similarities. [default: "
-                    "use RIBOSUM85_60 without requiring a Ribosum file.]";
-                help_text["use_ribosum"] =
-                    "Use ribosum scores for scoring base matches and base pair "
-                    "matches; "
-                    "note that tau=0 suppresses any effect on the latter.";
-                help_text["ribofit"] =
-                    "Use Ribofit base and arc match scores adapted to sequence "
-                    "indentity "
-                    "(overrides ribosum-file and use-ribosum).";
-                help_text["match"] =
-                    "Set score contribution of a base match (unless ribosum "
-                    "scoring).";
-                help_text["mismatch"] =
-                    "Set score contribution of a base mismatch (unless ribosum "
-                    "scoring).";
-                help_text["unpaired_penalty"] = "Penalty for unpaired bases";
-                help_text["struct_weight"] =
-                    "Maximal weight of 1/2 arc match. Balances structure vs. "
-                    "sequence score contributions.";
-                help_text["exp_prob"] =
-                    "Expected base pair probability. Used as background "
-                    "probability for "
-                    "base pair scoring [default: calculated from sequence "
-                    "length].";
-                help_text["tau"] =
-                    "Tau factor. Factor for contribution of sequence "
-                    "similarity in an arc "
-                    "match (in percent). tau=0 does not penalize any sequence "
-                    "information "
-                    "including compensatory mutations at arc matches, while "
-                    "tau=100 "
-                    "scores sequence similarity at ends of base matches (if a "
-                    "scoring matrix like ribosum is "
-                    "used, this adds the contributions for base pair match "
-                    "from the matrix). [default tau=0!]";
-                help_text["exclusion"] =
-                    "Score contribution per exclusion in structure local "
-                    "alignment. Set to "
-                    "zero for unrestricted structure locality.";
-                help_text["stacking"] =
-                    "Use stacking terms (requires stack-probs by RNAfold -p2)";
-                help_text["new_stacking"] =
-                    "Use new stacking terms (requires stack-probs by RNAfold "
-                    "-p2)";
-                help_text["struct_local"] =
-                    "Turn on/off structure locality. Allow exclusions in "
-                    "alignments of "
-                    "connected substructures.";
-                help_text["sequ_local"] =
-                    "Turn on/off sequence locality. Find best alignment of "
-                    "arbitrary subsequences "
-                    "of the input sequences.";
-                help_text["free_endgaps"] =
-                    "Control where end gaps are allowed for free. "
-                    "String of four +/- symbols, allowing/disallowing free end "
-                    "gaps at the four sequence ends "
-                    "in the order left end of first sequence, right end of "
-                    "first sequence, "
-                    "left end of second sequence, right end of second "
-                    "sequence. For "
-                    "example, \"+---\" allows free end gaps at "
-                    "the left end of the first alignment string; \"----\" "
-                    "forbids free end gaps [default].";
-                help_text["width"] = "Width of alignment output.";
-                help_text["clustal"] =
-                    "Write alignment in ClustalW (aln) format to given file.";
-                help_text["stockholm"] =
-                    "Write alignment Stockholm format to given file.";
-                help_text["pp"] = "Write alignment in PP format to given file.";
-                help_text["alifold_consensus_dp"] =
-                    "Compute consensus dot plot by alifold.";
-                help_text["cons_struct_type"] =
-                    "Type of consensus structures written to screen and "
-                    "stockholm output [alifold|mea|none]";
-                help_text["local_output"] =
-                    "Output only local sub-alignment (to std out).";
-                help_text["local_file_output"] =
-                    "Write only local sub-alignment to output files.";
-                help_text["pos_output"] =
-                    "Output only local sub-alignment positions.";
-                help_text["write_structure"] =
-                    "Write guidance structure in output.";
-                help_text["stopwatch"] = "Print run time informations.";
-                help_text["min_prob"] =
-                    "Minimal probability. Only base pairs of at least this "
-                    "probability are taken into account.";
-                help_text["max_bps_length_ratio"] =
-                    "Maximal ratio of #base pairs divided by sequence length. "
-                    "This serves "
-                    "as a second filter on the \"significant\" base pairs. "
-                    "[default: 0.0 = no effect].";
-                help_text["max_diff_am"] =
-                    "Maximal difference for sizes of matched arcs. [-1=off]";
-                help_text["max_diff"] =
-                    "Maximal difference for positions of alignment traces (and "
-                    "aligned bases). [-1=off]";
-                help_text["max_diff_at_am"] =
-                    "Maximal difference for positions of alignment traces at "
-                    "arc match ends. [-1=off]";
-                help_text["max_diff_alignment_file"] =
-                    "Maximal difference relative to given alignment (file in "
-                    "clustalw format)";
-                help_text["max_diff_pw_alignment"] =
-                    "Maximal difference relative to given alignment (string, "
-                    "delim=AMPERSAND)";
-                help_text["max_diff_relax"] =
-                    "Relax deviation constraints in multiple aligmnent";
-                help_text["no_lonely_pairs"] =
-                    "Disallow lonely pairs in prediction and alignment.";
-                help_text["max_bp_span"] =
-                    "Limit maximum base pair span [default=off].";
-                help_text["relaxed_anchors"] =
-                    "Use relaxed semantics of anchor constraints "
-                    "[default=strict semantics].";
-                help_text["fileA"] = "Input file 1";
-                help_text["fileB"] = "Input file 2";
-                help_text["files"] =
-                    "The tool is called with two input files <Input 1> and "
-                    "<Input 2>, "
-                    "which specify the two input sequences or input "
-                    "alignments. Different input formats (Fasta, Clustal, "
-                    "Stockholm, "
-                    "LocARNA PP, ViennaRNA postscript dotplots) are accepted "
-                    "and "
-                    "automatically recognized (by file content); the two input "
-                    "files can be "
-                    "in different formats. Extended variants of the Clustal "
-                    "and Stockholm "
-                    "formats enable specifying anchor and structure "
-                    "constraints.";
-            }
         };
 
         struct mea_command_line_parameters {
@@ -360,56 +208,6 @@ namespace LocARNA {
 
             std::string arcmatch_scores_infile;  //!< arcmatch scores file
             std::string arcmatch_scores_outfile; //!< arcmatch scores file
-
-            mea_command_line_parameters(
-                std::map<std::string, std::string> &help_text) {
-                help_text["mea_alignment"] =
-                    "Perform maximum expected accuracy alignment (instead of "
-                    "using the default "
-                    "similarity scoring).";
-                help_text["match_prob_method"] =
-                    "Select method for computing sequence-based base match "
-                    "probablities "
-                    "(to be used for mea-type alignment scores). Methods: "
-                    "1=probcons-style "
-                    "from HMM, 2=probalign-style from PFs, 3=from PFs, local";
-                help_text["probcons_file"] =
-                    "Read parameters for probcons-like calculation of match "
-                    "probabilities "
-                    "from probcons parameter file.";
-                help_text["temperature_alipf"] =
-                    "Temperature for the /alignment/ partition functions used "
-                    "by "
-                    "the probcons-like sequence-based match probability "
-                    "computation "
-                    "(this temperature is different from the 'physical' "
-                    "temperature "
-                    "of RNA folding!).";
-                help_text["pf_struct_weight"] =
-                    "Structure weight in PF computations (for the computation "
-                    "of "
-                    "sequence-based match probabilties from partition "
-                    "functions).";
-                help_text["mea_gapcost"] =
-                    "Add gap cost contributions (indel and indel-opening) to "
-                    "the by default "
-                    "gap-cost-free mea score.";
-                help_text["mea_alpha"] = "Weight alpha for MEA";
-                help_text["mea_beta"] = "Weight beta for MEA";
-                help_text["mea_gamma"] = "Weight gamm for MEA";
-                help_text["probability_scale"] =
-                    "Scale for probabilities/resolution of mea score";
-                help_text["write_matchprobs"] =
-                    "Write match probs to file (don't align!).";
-                help_text["read_matchprobs"] =
-                    "Read match probabilities from file.";
-                help_text["write_arcmatch_scores"] =
-                    "Write arcmatch scores (don't align!)";
-                help_text["read_arcmatch_scores"] = "Read arcmatch scores.";
-                help_text["read_arcmatch_probs"] =
-                    "Read arcmatch probabilities (weighted by factor "
-                    "mea_beta/100)";
-            }
         };
 
         //! @brief write input summary
