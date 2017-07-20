@@ -248,11 +248,10 @@ namespace LocARNA {
          * index
          */
         class AliColumn {
-            const MultipleAlignment &ma_;
-            size_type col_index_;
-
         public:
-            /**
+	    using value_type = char;
+
+	    /**
              * @brief Construct from multiple alignment column
              *
              * @param ma multiple alignment
@@ -312,6 +311,68 @@ namespace LocARNA {
             operator!=(const AliColumn &ac) const {
                 return !(*this == ac);
             }
+
+            // make (forward) iterable
+
+	    /**
+	     * @brief const iterator
+	     */
+	    class const_iterator {
+	    public:
+
+		const_iterator
+                operator ++() {
+                    ++row_index_;
+                    return *this;
+                }
+
+                const char &
+                operator *() {
+                    return col_[row_index_];
+                }
+
+		bool
+		operator != (const const_iterator &it) {
+		    return row_index_ != it.row_index_ || col_!=col_;
+		}
+
+	    private:
+		friend class AliColumn;
+
+		const_iterator(const AliColumn &col, size_type row_index)
+		    : col_(col), row_index_(row_index) {
+		}
+
+                const AliColumn &col_;
+                size_type row_index_;
+            };
+
+	    /**
+	     * @brief iterator
+	     * @note  out of laziness (mostly), do not provide a real non-const iterator;
+	     * however, the type must exist for use with zip/enumerate
+	     */
+	    using iterator = const_iterator;
+
+	    /**
+	     * @brief begin iterator (always const)
+	     */
+	    auto
+	    begin() const {
+		return const_iterator(*this,0);
+	    }
+
+	    /**
+	     * @brief end iterator (always const)
+	     */
+	    auto
+	    end() const {
+		return const_iterator(*this,this->size());
+	    }
+
+        private:
+            const MultipleAlignment &ma_;
+            size_type col_index_;
         }; // end class AliColumn
 
     public:
