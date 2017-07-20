@@ -62,7 +62,8 @@ namespace LocARNA {
          * @note allows array notation via [] operator; this is the
          * main difference to MultipleAlignment class
          */
-        AliColumn operator[](size_type col_index) const {
+        AliColumn
+	operator[](size_type col_index) const {
             return column(col_index);
         }
 
