@@ -1114,9 +1114,9 @@ namespace LocARNA {
     }
 
     void
-    MultipleAlignment::operator+=(const AliColumn &c) {
-        for (size_type i = 0; i < alig_.size(); ++i) {
-            alig_[i].push_back(c[i]);
+    MultipleAlignment::operator+=(const AliColumn &col) {
+        for (const auto &x: zip(alig_,col)) {
+            x.first.push_back(x.second);
         }
     }
 
