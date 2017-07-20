@@ -6,6 +6,7 @@
 #include "match_probs.hh"
 #include "ribosum.hh"
 #include "ribofit.hh"
+#include "zip.hh"
 
 #include <cmath>
 #include <fstream>
@@ -100,13 +101,14 @@ namespace LocARNA {
     void
     Scoring::precompute_sequence_identities() {
         identity.resize(seqA.num_of_rows(), seqB.num_of_rows());
-        for (size_t i = 0; i < seqA.num_of_rows(); i++) {
-            for (size_t j = 0; j < seqB.num_of_rows(); j++) {
-                identity(i, j) = sequence_identity(seqA.seqentry(i).seq(),
-                                                   seqB.seqentry(j).seq());
 
-                // std::cout << "    "<<i<<" "<<j<<"
-                // SI="<<identity(i,j)<<std::endl;
+        for (const auto &rowA : enumerate(seqA)) {
+        //for (size_t i = 0; i < seqA.num_of_rows(); i++) {
+            size_t i = rowA.first;
+            for (const auto &rowB : enumerate(seqB)) {
+                size_t j = rowB.first;
+                identity(i, j) = sequence_identity(rowA.second.seq(),
+                                                   rowB.second.seq());
 
                 // don't use extreme identities!
                 identity(i, j) = std::max(identity(i, j), (size_t)20);
@@ -159,8 +161,8 @@ namespace LocARNA {
         } else {
             // compute average score for aligning the two alignment columns
 
-            const Sequence::AliColumn &colA = seqA[ia];
-            const Sequence::AliColumn &colB = seqB[ib];
+            const auto &colA = seqA[ia];
+            const auto &colB = seqB[ib];
 
             score_t score = 0;
 
@@ -168,8 +170,8 @@ namespace LocARNA {
             // e.g. matching - and - counts as match ...
             // N is a wildcard, matchs with N don't count
             //
-            for (size_t i = 0; i < colA.size(); i++) {
-                for (size_t j = 0; j < colB.size(); j++) {
+            for ( const auto & cA : enumerate(colA) ) {
+                for ( const auto & cB : enumerate(colB) ) {
                     // if we have a ribosum matrix, use it!
                     // !!! if ribosum and characters are not in the ribosum
                     // matrix
@@ -177,22 +179,22 @@ namespace LocARNA {
 
                     //
                     if (params->ribofit_ &&
-                        params->ribofit_->alphabet().in(colA[i]) &&
-                        params->ribofit_->alphabet().in(colB[j])) {
+                        params->ribofit_->alphabet().in(cA.second) &&
+                        params->ribofit_->alphabet().in(cB.second)) {
                         score += round2score(
                             100.0 *
-                            params->ribofit_->basematch_score(colA[i], colB[j],
-                                                             identity(i, j)));
+                            params->ribofit_->basematch_score(cA.second, cB.second,
+                                                             identity(cA.first, cB.first)));
                     } else if (params->ribosum_ &&
-                               params->ribosum_->alphabet().in(colA[i]) &&
-                               params->ribosum_->alphabet().in(colB[j])) {
+                               params->ribosum_->alphabet().in(cA.second) &&
+                               params->ribosum_->alphabet().in(cB.second)) {
                         score += round2score(
                             100.0 *
                             params->ribosum_
-                                ->basematch_score_corrected(colA[i], colB[j]));
+                                ->basematch_score_corrected(cA.second, cB.second));
                     } else {
-                        if (colA[i] != 'N' && colB[j] != 'N') {
-                            score += (colA[i] == colB[j])
+                        if (cA.second != 'N' && cB.second != 'N') {
+                            score += (cA.second == cB.second)
                                 ? params->match_
                                 : params->mismatch_;
                         }
@@ -289,17 +291,17 @@ namespace LocARNA {
         // determine gap frequencies for each column in A and B
 
         for (size_type i = 1; i < lenA + 1; i++) {
-            const Sequence::AliColumn &colA = seqA[i];
-            for (size_type k = 0; k < colA.size(); k++) {
-                gapfreqA[i] += (colA[k] == '-') ? 1 : 0;
+            const auto &colA = seqA[i];
+            for (const auto &x : colA) {
+                gapfreqA[i] += (x == '-') ? 1 : 0;
             }
             gapfreqA[i] /= colA.size();
         }
 
         for (size_type i = 1; i < lenB + 1; i++) {
-            const Sequence::AliColumn &colB = seqB[i];
-            for (size_type k = 0; k < colB.size(); k++) {
-                gapfreqB[i] += (colB[k] == '-') ? 1 : 0;
+            const auto &colB = seqB[i];
+            for (const auto &x : colB) {
+                gapfreqB[i] += (x == '-') ? 1 : 0;
             }
             gapfreqB[i] /= colB.size();
         }
