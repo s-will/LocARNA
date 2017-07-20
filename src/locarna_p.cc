@@ -92,27 +92,6 @@ struct command_line_parameters
     bool extended_pf;
 
     int temperature_alipf; //!< temperature for alignment partition functions
-
-    command_line_parameters() : MainHelper::std_command_line_parameters() {
-        help_text["min_am_prob"] =
-            "Minimal arc match probability. Write probabilities for only the "
-            "arc matchs of at least this probability.";
-        help_text["min_bm_prob"] =
-            "Minimal base match probability. Write probabilities for only the "
-            "base matchs of at least this probability.";
-        help_text["pf_scale"] =
-            "Factor for scaling the partition functions. Use in order to avoid "
-            "overflow.";
-        help_text["extended_pf"] =
-            "Use extended precision for partition function values. This "
-            "increases run-time and space (less than 2x), however enables "
-            "handling significantly larger instances.";
-        help_text["temperature_alipf"] =
-            "Temperature for the /alignment/ partition functions (this "
-            "temperature different from the 'physical' temperature of RNA "
-            "folding!). It controls the probability distributions of computed "
-            "base and arc match probabilities.";
-    }
 };
 
 //! \brief holds command line parameters of locarna

@@ -72,10 +72,6 @@ struct command_line_parameters
 
     bool special_gap_symbols; //!< whether to use special gap
                               //! symbols in the alignment result
-
-    command_line_parameters()
-        : MainHelper::std_command_line_parameters(),
-          MainHelper::mea_command_line_parameters(help_text) {}
 };
 
 //! \brief holds command line parameters of locarna
