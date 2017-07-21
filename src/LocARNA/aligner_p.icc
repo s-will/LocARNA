@@ -60,8 +60,8 @@ namespace LocARNA {
 
     //===========================================================================
     template <typename T>
-    AlignerP<T>::AlignerP(const AlignerParams &ap)
-        : params(new AlignerPParams<T>(dynamic_cast<const AlignerPParams<T> &>(ap))),
+    AlignerP<T>::AlignerP(const AlignerPParams<T> &ap)
+        : params(std::make_unique<AlignerPParams<T>>(ap)),
           scoring(static_cast<const PFScoring<T> *>(params->scoring_)),
           seqA(*params->seqA_),
           bpsA(scoring->arc_matches()->get_base_pairsA()),
@@ -83,7 +83,7 @@ namespace LocARNA {
 
     template <typename T>
     AlignerP<T>::AlignerP(const AlignerP &p)
-        : params(new AlignerPParams<T>(*p.params)),
+        : params(std::make_unique<AlignerPParams<T>>(p.params)),
           scoring(p.scoring),
           seqA(p.seqA),
           bpsA(p.bpsA),
@@ -113,8 +113,6 @@ namespace LocARNA {
 
     template <typename T>
     AlignerP<T>::~AlignerP() {
-        assert(params != 0);
-        delete params;
     }
 
     // ================================================================================

@@ -10,7 +10,7 @@ AC_CONFIG_AUX_DIR(config)
 
 dnl Define here to keep all version information in one place.
 AC_SUBST([SO_VERSION], [1:0:0])
-AC_SUBST([API_VERSION], [2.0])
+AC_SUBST([API_VERSION], [2.1])
 
 
 dnl Package meta information

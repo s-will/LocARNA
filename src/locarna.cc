@@ -419,14 +419,15 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs, clp.stacking || clp.new_stacking,
-                         clp.max_bp_span, 2);
+    PFoldParams pfoldparams(PFoldParams::args::noLP(clp.no_lonely_pairs),
+                            PFoldParams::args::stacking(clp.stacking || clp.new_stacking),
+                            PFoldParams::args::max_bp_span(clp.max_bp_span));
 
     std::unique_ptr<RnaData> rna_dataA;
     try {
         rna_dataA =
             std::make_unique<RnaData>(clp.fileA, clp.min_prob,
-                                      clp.max_bps_length_ratio, pfparams);
+                                      clp.max_bps_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR:\tfailed to read from file " << clp.fileA
                   << std::endl
@@ -434,11 +435,11 @@ main(int argc, char **argv) {
         return -1;
     }
 
-    std::unique_ptr<RnaData> rna_dataB = 0;
+    std::unique_ptr<RnaData> rna_dataB;
     try {
         rna_dataB =
             std::make_unique<RnaData>(clp.fileB, clp.min_prob,
-                                      clp.max_bps_length_ratio, pfparams);
+                                      clp.max_bps_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileB
                   << std::endl
@@ -610,36 +611,45 @@ main(int argc, char **argv) {
     double my_exp_probA = clp.exp_prob_given ? clp.exp_prob : prob_exp_f(lenA);
     double my_exp_probB = clp.exp_prob_given ? clp.exp_prob : prob_exp_f(lenB);
 
-    ScoringParams scoring_params(
-        clp.match, clp.mismatch,
-        // In true mea alignment gaps are only scored
-        // for computing base match probs.
-        // Consequently, we set the indel and indel
-        // opening cost to 0 for the case of mea
-        // alignment!
-        (clp.mea_alignment && !clp.mea_gapcost)
-            ? 0
-            : (clp.indel * (clp.mea_gapcost ? clp.probability_scale / 100 : 1)),
-        0, // indel__loop_score, for
-        // consistency and least modification to
-        // locarna.cc has been set to zero
-        (clp.mea_alignment && !clp.mea_gapcost)
-            ? 0
-            : (clp.indel_opening *
-               (clp.mea_gapcost ? clp.probability_scale / 100 : 1)),
-        0, // indel_opening_loop_score, for
-        // consistency and least modification to
-        // locarna.cc has been set to zero
-        ribosum.get(), ribofit.get(), clp.unpaired_penalty, clp.struct_weight,
-        clp.tau, clp.exclusion, my_exp_probA, my_exp_probB,
-        clp.temperature_alipf, clp.stacking, clp.new_stacking,
-        clp.mea_alignment, clp.mea_alpha, clp.mea_beta, clp.mea_gamma,
-        clp.probability_scale);
     // ------------------------------------------------------------
     // Construct scoring
-
-    Scoring scoring(seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches,
-                    match_probs.get(), scoring_params);
+    Scoring scoring(
+        seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches, match_probs.get(),
+        ScoringParams(ScoringParams::match(clp.match),
+                      ScoringParams::mismatch(clp.mismatch),
+                      // In true mea alignment gaps are only scored
+                      // for computing base match probs.
+                      // Consequently, we set the indel and indel
+                      // opening cost to 0 for the case of mea
+                      // alignment!
+                      ScoringParams::indel(
+                          (clp.mea_alignment && !clp.mea_gapcost)
+                              ? 0
+                              : (clp.indel * (clp.mea_gapcost
+                                                  ? clp.probability_scale / 100
+                                                  : 1))),
+                      ScoringParams::indel_opening(
+                          (clp.mea_alignment && !clp.mea_gapcost)
+                              ? 0
+                              : (clp.indel_opening *
+                                 (clp.mea_gapcost ? clp.probability_scale / 100
+                                                  : 1))),
+                      ScoringParams::ribosum(ribosum.get()),
+                      ScoringParams::ribofit(ribofit.get()),
+                      ScoringParams::unpaired_penalty(clp.unpaired_penalty),
+                      ScoringParams::struct_weight(clp.struct_weight),
+                      ScoringParams::tau_factor(clp.tau),
+                      ScoringParams::exclusion(clp.exclusion),
+                      ScoringParams::exp_probA(my_exp_probA),
+                      ScoringParams::exp_probB(my_exp_probB),
+                      ScoringParams::temperature_alipf(clp.temperature_alipf),
+                      ScoringParams::stacking(clp.stacking),
+                      ScoringParams::new_stacking(clp.new_stacking),
+                      ScoringParams::mea_scoring(clp.mea_alignment),
+                      ScoringParams::mea_alpha(clp.mea_alpha),
+                      ScoringParams::mea_beta(clp.mea_beta),
+                      ScoringParams::mea_gamma(clp.mea_gamma),
+                      ScoringParams::probability_scale(clp.probability_scale)));
 
     if (clp.write_arcmatch_scores) {
         if (clp.verbose) {
@@ -657,20 +667,18 @@ main(int argc, char **argv) {
     //
 
     // initialize aligner object, which does the alignment computation
-    auto aligner =
-        std::make_unique<Aligner>(Aligner::create()
-                                  .seqA(seqA)
-                                  .seqB(seqB)
-                                  .scoring(scoring)
-                                  .no_lonely_pairs(clp.no_lonely_pairs)
-                                  .struct_local(clp.struct_local)
-                                  .sequ_local(clp.sequ_local)
-                                  .free_endgaps(clp.free_endgaps)
-                                  .max_diff_am(clp.max_diff_am)
-                                  .max_diff_at_am(clp.max_diff_at_am)
-                                  .trace_controller(trace_controller)
-                                  .stacking(clp.stacking || clp.new_stacking)
-                                  .constraints(seq_constraints));
+    auto aligner = std::make_unique<Aligner>(
+        AlignerParams(AlignerParams::seqA(&seqA), AlignerParams::seqB(&seqB),
+                      AlignerParams::scoring(&scoring),
+                      AlignerParams::no_lonely_pairs(clp.no_lonely_pairs),
+                      AlignerParams::struct_local(clp.struct_local),
+                      AlignerParams::sequ_local(clp.sequ_local),
+                      AlignerParams::free_endgaps(clp.free_endgaps),
+                      AlignerParams::max_diff_am(clp.max_diff_am),
+                      AlignerParams::max_diff_at_am(clp.max_diff_at_am),
+                      AlignerParams::trace_controller(&trace_controller),
+                      AlignerParams::stacking(clp.stacking || clp.new_stacking),
+                      AlignerParams::constraints(&seq_constraints)));
 
     // enumerate suboptimal alignments (using interval splitting)
     if (clp.subopt) {
@@ -800,7 +808,7 @@ main(int argc, char **argv) {
         std::string consensus_structure = "";
 
         std::unique_ptr<RnaData> consensus =
-            MainHelper::consensus(clp, pfparams, my_exp_probA, my_exp_probB,
+            MainHelper::consensus(clp, pfoldparams, my_exp_probA, my_exp_probB,
                                   rna_dataA.get(), rna_dataB.get(), *alignment,
                                   consensus_structure);
 
@@ -846,7 +854,7 @@ main(int argc, char **argv) {
                     clp.local_file_output = clp.local_output;
 
                     consensus =
-                        MainHelper::consensus(clp, pfparams, my_exp_probA,
+                        MainHelper::consensus(clp, pfoldparams, my_exp_probA,
                                               my_exp_probB, rna_dataA.get(),
                                               rna_dataB.get(), *alignment,
                                               consensus_structure);

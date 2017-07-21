@@ -224,8 +224,10 @@ main(int argc, char **argv) {
                              SequenceAnnotation());
     }
 
-    PFoldParams pfoldparams(clp.no_lonely_pairs, clp.stacking, clp.max_bp_span,
-                            clp.dangling);
+    PFoldParams pfoldparams(PFoldParams::args::noLP(clp.no_lonely_pairs),
+                            PFoldParams::args::stacking(clp.stacking),
+                            PFoldParams::args::max_bp_span(clp.max_bp_span),
+                            PFoldParams::args::dangling(clp.dangling));
 
     RnaEnsemble rna_ensemble(*mseq, pfoldparams, clp.in_loop, use_alifold);
 
