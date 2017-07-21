@@ -340,8 +340,9 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs, (!clp.no_stacking),
-                         clp.max_bp_span, 2);
+    PFoldParams pfoldparams(PFoldParams::args::noLP(clp.no_lonely_pairs),
+                            PFoldParams::args::stacking(!clp.no_stacking),
+                            PFoldParams::args::max_bp_span(clp.max_bp_span));
 
     std::unique_ptr<ExtRnaData> rna_dataA = 0;
     try {
@@ -352,7 +353,7 @@ main(int argc, char **argv) {
                                          clp.prob_unpaired_in_loop_threshold,
                                          clp.max_bps_length_ratio,
                                          clp.max_uil_length_ratio,
-                                         clp.max_bpil_length_ratio, pfparams);
+                                         clp.max_bpil_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileA
                   << std::endl
@@ -369,7 +370,7 @@ main(int argc, char **argv) {
                                          clp.prob_unpaired_in_loop_threshold,
                                          clp.max_bps_length_ratio,
                                          clp.max_uil_length_ratio,
-                                         clp.max_bpil_length_ratio, pfparams);
+                                         clp.max_bpil_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileB
                   << std::endl

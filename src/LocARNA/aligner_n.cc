@@ -23,7 +23,7 @@ namespace LocARNA {
     //
 
     AlignerN::AlignerN(const AlignerN &a)
-        : params(new AlignerNParams(*a.params)),
+        : params(std::make_unique<AlignerNParams>(*a.params)),
           scoring(a.scoring),
           mod_scoring(0),
           seqA(a.seqA),
@@ -53,8 +53,8 @@ namespace LocARNA {
           def_scoring_view(this),
           mod_scoring_view(this) {}
 
-    AlignerN::AlignerN(const AlignerParams &ap_)
-        : params(new AlignerNParams(dynamic_cast<const AlignerNParams &>(ap_))),
+    AlignerN::AlignerN(const AlignerNParams &ap_)
+        : params(std::make_unique<AlignerNParams>(ap_)),
           scoring(params->scoring_),
           mod_scoring(0),
           seqA(*params->seqA_),
@@ -98,8 +98,6 @@ namespace LocARNA {
 
     // destructor
     AlignerN::~AlignerN() {
-        assert(params != 0);
-        delete params;
         if (mod_scoring != 0)
             delete mod_scoring;
     }

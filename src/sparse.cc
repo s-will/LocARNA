@@ -29,6 +29,7 @@
 #include "LocARNA/global_stopwatch.hh"
 #include "LocARNA/pfold_params.hh"
 #include "LocARNA/main_helper.icc"
+#include "LocARNA/params.hh"
 
 using namespace std;
 using namespace LocARNA;
@@ -402,8 +403,9 @@ main(int argc, char **argv) {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs, clp.stacking || clp.new_stacking,
-                         clp.max_bp_span, 2);
+    PFoldParams pfoldparams(PFoldParams::args::noLP(clp.no_lonely_pairs),
+                            PFoldParams::args::stacking(clp.stacking || clp.new_stacking),
+                            PFoldParams::args::max_bp_span(clp.max_bp_span));
 
     std::unique_ptr<ExtRnaData> rna_dataA;
     try {
@@ -413,7 +415,7 @@ main(int argc, char **argv) {
                                          clp.prob_unpaired_in_loop_threshold,
                                          clp.max_bps_length_ratio,
                                          clp.max_uil_length_ratio,
-                                         clp.max_bpil_length_ratio, pfparams);
+                                         clp.max_bpil_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileA
                   << std::endl
@@ -429,7 +431,7 @@ main(int argc, char **argv) {
                                          clp.prob_unpaired_in_loop_threshold,
                                          clp.max_bps_length_ratio,
                                          clp.max_uil_length_ratio,
-                                         clp.max_bpil_length_ratio, pfparams);
+                                         clp.max_bpil_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileB
                   << std::endl
@@ -626,31 +628,51 @@ main(int argc, char **argv) {
     double my_exp_probB = clp.exp_prob_given ? clp.exp_prob : prob_exp_f(lenB);
     //
     ScoringParams scoring_params(
-        clp.match, clp.mismatch,
-        // In true mea alignment gaps are only
-        // scored for computing base match probs.
-        // Consequently, we set the indel and indel opening cost to 0
-        // for the case of mea alignment!
-        (clp.mea_alignment && !clp.mea_gapcost) ? 0 : clp.indel *
-                (clp.mea_gapcost ? clp.probability_scale / 100 : 1),
-        (clp.mea_alignment && !clp.mea_gapcost)
-            ? 0
-            : (clp.indel_loop *
-               (clp.mea_gapcost ? clp.probability_scale / 100 : 1)),
-        (clp.mea_alignment && !clp.mea_gapcost)
-            ? 0
-            : (clp.indel_opening *
-               (clp.mea_gapcost ? clp.probability_scale / 100 : 1)),
-        (clp.mea_alignment && !clp.mea_gapcost)
-            ? 0
-            : (clp.indel_opening_loop *
-               (clp.mea_gapcost ? clp.probability_scale / 100 : 1)),
-        ribosum.get(), ribofit.get(),
-        0, // unpaired_weight
-        clp.struct_weight, clp.tau, clp.exclusion, my_exp_probA, my_exp_probB,
-        clp.temperature_alipf, clp.stacking, clp.new_stacking,
-        clp.mea_alignment, clp.mea_alpha, clp.mea_beta, clp.mea_gamma,
-        clp.probability_scale);
+        ScoringParams::match(clp.match),
+        ScoringParams::mismatch(clp.mismatch),
+        // In true mea alignment gaps are only scored
+        // for computing base match probs.
+        // Consequently, we set the indel and indel
+        // opening cost to 0 for the case of mea
+        // alignment!
+        ScoringParams::indel(
+            (clp.mea_alignment && !clp.mea_gapcost)
+                ? 0
+                : (clp.indel *
+                   (clp.mea_gapcost ? clp.probability_scale / 100 : 1))),
+        ScoringParams::indel_opening(
+            (clp.mea_alignment && !clp.mea_gapcost)
+                ? 0
+                : (clp.indel_opening *
+                   (clp.mea_gapcost ? clp.probability_scale / 100 : 1))),
+        ScoringParams::ribosum(ribosum.get()),
+        ScoringParams::ribofit(ribofit.get()),
+        ScoringParams::unpaired_penalty(clp.unpaired_penalty),
+        ScoringParams::struct_weight(clp.struct_weight),
+        ScoringParams::tau_factor(clp.tau),
+        ScoringParams::exclusion(clp.exclusion),
+        ScoringParams::exp_probA(my_exp_probA),
+        ScoringParams::exp_probB(my_exp_probB),
+        ScoringParams::temperature_alipf(clp.temperature_alipf),
+        ScoringParams::stacking(clp.stacking),
+        ScoringParams::new_stacking(clp.new_stacking),
+        ScoringParams::mea_scoring(clp.mea_alignment),
+        ScoringParams::mea_alpha(clp.mea_alpha),
+        ScoringParams::mea_beta(clp.mea_beta),
+        ScoringParams::mea_gamma(clp.mea_gamma),
+        ScoringParams::probability_scale(clp.probability_scale),
+
+        // sparse specific scoring paramers:
+        ScoringParams::indel_loop(
+            (clp.mea_alignment && !clp.mea_gapcost)
+                ? 0
+                : (clp.indel_loop *
+                   (clp.mea_gapcost ? clp.probability_scale / 100 : 1))),
+        ScoringParams::indel_opening_loop(
+            (clp.mea_alignment && !clp.mea_gapcost)
+                ? 0
+                : (clp.indel_opening_loop *
+                   (clp.mea_gapcost ? clp.probability_scale / 100 : 1))));
 
     Scoring scoring(seqA, seqB, *rna_dataA.get(), *rna_dataB.get(),
                     *arc_matches.get(), match_probs.get(), scoring_params);
@@ -671,23 +693,20 @@ main(int argc, char **argv) {
     //
 
     // initialize aligner object, which does the alignment computation
-    auto  aligner =
-        std::make_unique<AlignerN>(AlignerN::create()
-                                   .sparsification_mapperA(mapperA)
-                                   .sparsification_mapperB(mapperB)
-                                   .seqA(seqA)
-                                   .seqB(seqB)
-                                   .scoring(scoring)
-                                   //. no_lonely_pairs(clp.no_lonely_pairs)
-                                   .no_lonely_pairs(false) // ignore no lonely pairs in alignment algo
-                                   .struct_local(clp.struct_local)
-                                   .sequ_local(clp.sequ_local)
-                                   .free_endgaps(clp.free_endgaps)
-                                   .max_diff_am(clp.max_diff_am)
-                                   .max_diff_at_am(clp.max_diff_at_am)
-                                   .trace_controller(trace_controller)
-                                   .stacking(clp.stacking || clp.new_stacking)
-                                   .constraints(seq_constraints));
+    auto aligner = std::make_unique<AlignerN>(
+        AlignerNParams(AlignerParams::seqA(&seqA), AlignerParams::seqB(&seqB),
+                       AlignerParams::scoring(&scoring),
+                       AlignerParams::struct_local(clp.struct_local),
+                       AlignerParams::sequ_local(clp.sequ_local),
+                       AlignerParams::free_endgaps(clp.free_endgaps),
+                       AlignerParams::max_diff_am(clp.max_diff_am),
+                       AlignerParams::max_diff_at_am(clp.max_diff_at_am),
+                       AlignerParams::trace_controller(&trace_controller),
+                       AlignerParams::stacking(clp.stacking ||
+                                               clp.new_stacking),
+                       AlignerParams::constraints(&seq_constraints),
+                       AlignerNParams::sparsification_mapperA(&mapperA),
+                       AlignerNParams::sparsification_mapperB(&mapperB)));
 
     infty_score_t score;
 
@@ -721,7 +740,7 @@ main(int argc, char **argv) {
         std::string consensus_structure = "";
 
         std::unique_ptr<RnaData> consensus =
-            MainHelper::consensus(clp, pfparams, my_exp_probA, my_exp_probB,
+            MainHelper::consensus(clp, pfoldparams, my_exp_probA, my_exp_probB,
                                   rna_dataA.get(), rna_dataB.get(), *alignment,
                                   consensus_structure);
 

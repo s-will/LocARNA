@@ -5,6 +5,9 @@
 #include <config.h>
 #endif
 
+#include <memory>
+
+
 #include "scoring.hh"
 #include "params.hh"
 
@@ -62,7 +65,7 @@ namespace LocARNA {
 
         typedef BasePairs__Arc Arc; //!< arc
     protected:
-        const AlignerPParams<T> *params; //!< the parameter for the alignment
+        const std::unique_ptr<AlignerPParams<T>> params; //!< the parameter for the alignment
 
         const PFScoring<T> *scoring; //!< the scores
 
@@ -494,7 +497,7 @@ namespace LocARNA {
          * @note ap is copied to allow reference to a temporary
          * @note allow implicit conversion for named parameter idiom
          */
-        AlignerP(const AlignerParams &ap);
+        AlignerP(const AlignerPParams<T> &ap);
 
         /** @brief copy constructor
          * @params p AlignerP object to be copied

@@ -55,13 +55,14 @@ nobase_library_include_HEADERS = LocARNA/aligner.hh			\
 	LocARNA/infty_int.hh LocARNA/main_helper.icc			\
 	LocARNA/match_probs.hh LocARNA/matrices.hh LocARNA/matrix.hh	\
 	LocARNA/mcc_matrices.hh LocARNA/multiple_alignment.hh		\
-	LocARNA/options.hh LocARNA/params.hh LocARNA/pfold_params.hh	\
-	LocARNA/ribofit.hh LocARNA/ribofit_will2014.icc			\
-	LocARNA/ribofit_will2014.ihh LocARNA/ribosum.hh			\
-	LocARNA/ribosum85_60.icc LocARNA/rna_data.hh			\
-	LocARNA/rna_data_impl.hh LocARNA/rna_ensemble.hh		\
-	LocARNA/rna_ensemble_impl.hh LocARNA/rna_structure.hh		\
-	LocARNA/scoring.hh LocARNA/scoring_fwd.hh LocARNA/sequence.hh	\
+	LocARNA/named_arguments.hh LocARNA/options.hh			\
+	LocARNA/params.hh LocARNA/pfold_params.hh LocARNA/ribofit.hh	\
+	LocARNA/ribofit_will2014.icc LocARNA/ribofit_will2014.ihh	\
+	LocARNA/ribosum.hh LocARNA/ribosum85_60.icc			\
+	LocARNA/rna_data.hh LocARNA/rna_data_impl.hh			\
+	LocARNA/rna_ensemble.hh LocARNA/rna_ensemble_impl.hh		\
+	LocARNA/rna_structure.hh LocARNA/scoring.hh			\
+	LocARNA/scoring_fwd.hh LocARNA/sequence.hh			\
 	LocARNA/sequence_annotation.hh LocARNA/sparse_matrix.hh		\
 	LocARNA/sparse_vector.hh LocARNA/sparse_vector_base.hh		\
 	LocARNA/sparsification_mapper.hh LocARNA/stopwatch.hh		\

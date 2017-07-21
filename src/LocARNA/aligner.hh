@@ -93,15 +93,6 @@ namespace LocARNA {
          */
         Aligner(const AlignerParams &ap);
 
-        /**
-         * @brief create with named parameters
-         * @return parameter object
-         */
-        static AlignerParams
-        create() {
-            return AlignerParams();
-        }
-
         //! destructor
         ~Aligner();
 
