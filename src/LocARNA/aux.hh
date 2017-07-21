@@ -36,18 +36,6 @@ namespace std
 
 namespace LocARNA {
 
-    /** @brief type selector
-     *  if F, set type to T1, else set to T2
-     */
-    template <bool F, class T1, class T2>
-    struct select {
-        using type = T2;
-    };
-    template <class T1, class T2>
-    struct select<true, T1, T2> {
-        using type = T1;
-    };
-
     class string1;
 
     //! general size type
