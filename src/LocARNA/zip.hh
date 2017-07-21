@@ -16,22 +16,22 @@ namespace LocARNA {
     template <class T1, class T2>
     class Zip : std::pair<T1 &, T2 &> {
     public:
-        using iterator1_t = typename select<std::is_const<T1>::value,
+        using iterator1_t = std::conditional_t<std::is_const<T1>::value,
                                             typename T1::const_iterator,
-                                            typename T1::iterator>::type;
-        using iterator2_t = typename select<std::is_const<T2>::value,
+                                            typename T1::iterator>;
+        using iterator2_t = std::conditional_t<std::is_const<T2>::value,
                                             typename T2::const_iterator,
-                                            typename T2::iterator>::type;
+                                            typename T2::iterator>;
 
         using iparent_t = std::pair<iterator1_t, iterator2_t>;
 
-        using value_type1 = typename select<std::is_const<T1>::value,
+        using value_type1 = std::conditional_t<std::is_const<T1>::value,
                                             const typename T1::value_type &,
-                                            typename T1::value_type &>::type;
+                                            typename T1::value_type &>;
 
-        using value_type2 = typename select<std::is_const<T2>::value,
+        using value_type2 = std::conditional_t<std::is_const<T2>::value,
                                             const typename T2::value_type &,
-                                            typename T2::value_type &>::type;
+                                            typename T2::value_type &>;
 
         using value_pair_t = std::pair<value_type1, value_type2>;
 
