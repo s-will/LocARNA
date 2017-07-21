@@ -346,13 +346,15 @@ run_and_report() {
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs, clp.stacking, clp.max_bp_span, 2);
+    PFoldParams pfoldparams(PFoldParams::args::noLP(clp.no_lonely_pairs),
+                            PFoldParams::args::stacking(clp.stacking),
+                            PFoldParams::args::max_bp_span(clp.max_bp_span));
 
     std::unique_ptr<RnaData> rna_dataA;
     try {
         rna_dataA =
             std::make_unique<RnaData>(clp.fileA, clp.min_prob,
-                                      clp.max_bps_length_ratio, pfparams);
+                                      clp.max_bps_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileA
                   << std::endl
@@ -364,7 +366,7 @@ run_and_report() {
     try {
         rna_dataB =
             std::make_unique<RnaData>(clp.fileB, clp.min_prob,
-                                      clp.max_bps_length_ratio, pfparams);
+                                      clp.max_bps_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileB
                   << std::endl
@@ -480,24 +482,18 @@ run_and_report() {
     double my_exp_probA = clp.exp_prob_given ? clp.exp_prob : prob_exp_f(lenA);
     double my_exp_probB = clp.exp_prob_given ? clp.exp_prob : prob_exp_f(lenB);
 
-    ScoringParams scoring_params(clp.match, clp.mismatch, clp.indel,
-                                 0, // indel__loop_score
-                                 clp.indel_opening, 0, ribosum.get(),
-                                 ribofit.get(),
-                                 0, // unpaired_weight
-                                 clp.struct_weight, clp.tau,
-                                 0, // exclusion score
-                                 my_exp_probA, my_exp_probB,
-                                 clp.temperature_alipf,
-                                 false, // stacking,
-                                 false, // new_stacking,
-                                 false, // mea_alignment,
-                                 0,     // mea_alpha,
-                                 0,     // mea_beta,
-                                 0,     // mea_gamma,
-                                 0      // probability_scale
-                                 );
-
+    ScoringParams scoring_params(
+        ScoringParams::match(clp.match),
+        ScoringParams::mismatch(clp.mismatch),
+        ScoringParams::indel(clp.indel),
+        ScoringParams::indel_opening(clp.indel_opening),
+        ScoringParams::ribosum(ribosum.get()),
+        ScoringParams::ribofit(ribofit.get()),
+        ScoringParams::struct_weight(clp.struct_weight),
+        ScoringParams::tau_factor(clp.tau),
+        ScoringParams::exp_probA(my_exp_probA),
+        ScoringParams::exp_probB(my_exp_probB),
+        ScoringParams::temperature_alipf(clp.temperature_alipf));
 
     PFScoring<pf_score_t> scoring(seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches, nullptr,
                                   scoring_params);
@@ -506,24 +502,18 @@ run_and_report() {
     // Computation of the alignment score
     //
 
+    using apparams_t =  AlignerPParams<pf_score_t>;
     // initialize aligner-p object, which does the alignment computation
-    AlignerP<pf_score_t> aligner =
-        AlignerP<pf_score_t>::create()
-        .min_am_prob(clp.min_am_prob)
-        .min_bm_prob(clp.min_bm_prob)
-        .pf_scale((pf_score_t)clp.pf_scale)
-        .seqA(seqA)
-        .seqB(seqB)
-        .scoring(scoring)
-        .no_lonely_pairs(false)
-        .struct_local(false)
-        .sequ_local(false)
-        .free_endgaps("")
-        .max_diff_am(clp.max_diff_am)
-        .max_diff_at_am(clp.max_diff_at_am)
-        .trace_controller(trace_controller)
-        .stacking(false)
-        .constraints(seq_constraints);
+    AlignerP<pf_score_t> aligner(
+        apparams_t(AlignerParams::seqA(&seqA), AlignerParams::seqB(&seqB),
+                   AlignerParams::scoring(&scoring),
+                   AlignerParams::max_diff_am(clp.max_diff_am),
+                   AlignerParams::max_diff_at_am(clp.max_diff_at_am),
+                   AlignerParams::trace_controller(&trace_controller),
+                   AlignerParams::constraints(&seq_constraints),
+                   typename apparams_t::min_am_prob(clp.min_am_prob),
+                   typename apparams_t::min_bm_prob(clp.min_bm_prob),
+                   typename apparams_t::pf_scale((pf_score_t)clp.pf_scale)));
 
     if (clp.verbose) {
         std::cout << "Run inside algorithm." << std::endl;

@@ -9,6 +9,8 @@ extern "C" {
 #include <ViennaRNA/data_structures.h>
 }
 
+#include "named_arguments.hh"
+
 #include <limits>
 #include "aux.hh"
 
@@ -28,9 +30,25 @@ namespace LocARNA {
      *
     */
     class PFoldParams {
-        vrna_md_t md_; //!< ViennaRNA model details
-        int stacking_; //!< calculate stacking probabilities
     public:
+        struct args {
+            DEFINE_NAMED_ARG(noLP, bool);
+            DEFINE_NAMED_ARG(stacking, bool);
+            DEFINE_NAMED_ARG(dangling, int);
+            DEFINE_NAMED_ARG(max_bp_span, int);
+            DEFINE_NAMED_ARG(ribo, bool);
+            DEFINE_NAMED_ARG(cv_fact, double);
+            DEFINE_NAMED_ARG(nc_fact, double);
+
+            using valid_args = std::tuple<noLP,
+                                          stacking,
+                                          dangling,
+                                          max_bp_span,
+                                          ribo,
+                                          cv_fact,
+                                          nc_fact>;
+        };
+
         /**
          * Construct with all parameters
          *
@@ -39,7 +57,28 @@ namespace LocARNA {
          * @param max_bp_span maximum base pair span
          * @param dangling ViennaRNA dangling end type
          */
-        PFoldParams(bool noLP, bool stacking, int max_bp_span, int dangling);
+        template <typename... Args>
+        PFoldParams(Args... args) : md_() {
+            static_assert( type_subset_of< std::tuple<Args...> , typename args::valid_args >::value,
+                           "Invalid type in named arguments pack." );
+
+            vrna_md_set_default(&md_);
+
+            md_.noLP = get_named_arg_def<args::noLP>(false, args...) ? 1 : 0;
+
+            md_.max_bp_span = get_named_arg_def<args::max_bp_span>(-1, args...);
+
+            md_.dangles = get_named_arg_def<args::dangling>(2, args...);
+            assert(md_.dangles >= 0);
+            assert(md_.dangles <= 3);
+
+            md_.compute_bpp = 1;
+
+            // set ribosum scoring with "best" parameters
+            md_.ribo    = get_named_arg_def<args::ribo>(true, args...) ? 1 : 0;
+            md_.cv_fact = get_named_arg_def<args::cv_fact>(0.6, args...); // cfactor
+            md_.nc_fact = get_named_arg_def<args::nc_fact>(0.5, args...); // nfactor
+        }
 
         /**
          * @brief get ViennaRNA model details structure
@@ -103,6 +142,9 @@ namespace LocARNA {
         dangling() const {
             return md_.dangles;
         }
+    private:
+        vrna_md_t md_; //!< ViennaRNA model details
+        int stacking_; //!< calculate stacking probabilities
     };
 }
 

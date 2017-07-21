@@ -22,7 +22,9 @@ fold_sequence(const Sequence &seq,
               bool use_alifold,
               bool inloopprobs,
               int maxBPspan = -1) {
-    PFoldParams pfoldparams(true, false, maxBPspan, 2);
+
+    PFoldParams pfoldparams(PFoldParams::args::noLP(true),
+                            PFoldParams::args::max_bp_span(maxBPspan));
 
     std::unique_ptr<RnaEnsemble> rna_ensemble =
         std::make_unique<RnaEnsemble>(seq, pfoldparams, inloopprobs, use_alifold);
