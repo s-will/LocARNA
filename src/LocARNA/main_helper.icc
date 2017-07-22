@@ -227,10 +227,11 @@ namespace LocARNA {
                          std::unique_ptr<RibosumFreq> &ribosum,
                          std::unique_ptr<Ribofit> &ribofit) {
             if (clp.ribofit) {
+                if (clp.verbose) {
+                    std::cout << "Use ribofit." << std::endl;
+                }
                 ribofit = std::make_unique<Ribofit_will2014>();
-            }
-
-            if (clp.use_ribosum) {
+            } else if (clp.use_ribosum) {
                 if (clp.ribosum_file == "RIBOSUM85_60") {
                     if (clp.verbose) {
                         std::cout << "Use built-in ribosum." << std::endl;
