@@ -62,6 +62,8 @@ namespace LocARNA {
             static_assert( type_subset_of< std::tuple<Args...> , typename args::valid_args >::value,
                            "Invalid type in named arguments pack." );
 
+            stacking_ = get_named_arg_def<args::stacking>(false, args...);
+
             vrna_md_set_default(&md_);
 
             md_.noLP = get_named_arg_def<args::noLP>(false, args...) ? 1 : 0;
@@ -79,6 +81,16 @@ namespace LocARNA {
             md_.cv_fact = get_named_arg_def<args::cv_fact>(0.6, args...); // cfactor
             md_.nc_fact = get_named_arg_def<args::nc_fact>(0.5, args...); // nfactor
         }
+
+        /** copy constructor
+         */
+        PFoldParams(const PFoldParams &pfoldparams):
+            md_(),
+            stacking_(pfoldparams.stacking_)
+        {
+            vrna_md_copy(&md_, &pfoldparams.md_);
+        }
+
 
         /**
          * @brief get ViennaRNA model details structure
