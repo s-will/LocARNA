@@ -165,7 +165,7 @@ AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true" ],
 
   dnl if libgomp is available, then add it to VRNA_LIBS; otherwise,
   dnl assume (optimistically) that libRNA works without libgomp
-  AC_CHECK_LIB([gomp],[main],[VRNA_LIBS="$VRNA_LIBS -lgomp"])
+  dnl AC_CHECK_LIB([gomp],[main],[VRNA_LIBS="$VRNA_LIBS -lgomp"])
 
   VRNA_CFLAGS="-I$vrna_prefix/include"
   AC_MSG_NOTICE([Guessing of ViennaRNA flags may be avoided by installing pkg-config.])
@@ -241,11 +241,11 @@ dnl  CPPFLAGS="$CPPFLAGS -Wno-deprecated"
 dnl --------------------
 dnl add linker options for POSIX threads
 dnl (necessary for linking Gecode)
-AX_PTHREAD
-AC_MSG_NOTICE([pthread: $PTHREAD_CFLAGS, $PTHREAD_LIBS])
-LIBS="$PTHREAD_LIBS $LIBS"
-dnl CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-LDFLAGS="$PTHREAD_CFLAGS $LDFLAGS"
+dnl AX_PTHREAD
+dnl AC_MSG_NOTICE([pthread: $PTHREAD_CFLAGS, $PTHREAD_LIBS])
+dnl LIBS="$PTHREAD_LIBS $LIBS"
+dnl dnl CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+dnl LDFLAGS="$PTHREAD_CFLAGS $LDFLAGS"
 
 dnl ----------------------------------------
 dnl Static linking
@@ -281,10 +281,10 @@ AC_MSG_RESULT([$dynamic_liblocarna])
 AM_CONDITIONAL([STATIC_LIBLOCARNA],[test "$link_statically" = "no" -a "$dynamic_liblocarna" = "no"])
 
 dnl for lgomp if all-static
-AS_IF([test "$link_statically" = "yes"],
-[
-        AX_APPEND_FLAG(["-ldl"],[LDFLAGS])
-])
+dnl AS_IF([test "$link_statically" = "yes"],
+dnl [
+dnl         AX_APPEND_FLAG(["-ldl"],[LDFLAGS])
+dnl ])
 
 
 dnl Checks for typedefs, structures, and compiler characteristics.
