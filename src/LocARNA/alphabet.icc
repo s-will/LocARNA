@@ -31,7 +31,8 @@ namespace LocARNA {
     template <class T, size_t N>
     typename Alphabet<T, N>::size_type
     Alphabet<T, N>::idx(const value_type &x) const {
-        return size_type(std::lower_bound(this->begin(), this->end(), x) - this->begin());
+        return static_cast<size_type>(
+            std::lower_bound(this->begin(), this->end(), x) - this->begin());
     }
 
     template <class T, size_t N>
