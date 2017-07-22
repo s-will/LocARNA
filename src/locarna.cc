@@ -589,45 +589,45 @@ main(int argc, char **argv) {
     double my_exp_probA = clp.exp_prob_given ? clp.exp_prob : prob_exp_f(lenA);
     double my_exp_probB = clp.exp_prob_given ? clp.exp_prob : prob_exp_f(lenB);
 
+    auto scoring_params = ScoringParams(
+        ScoringParams::match(clp.match), ScoringParams::mismatch(clp.mismatch),
+        // In true mea alignment gaps are only scored
+        // for computing base match probs.
+        // Consequently, we set the indel and indel
+        // opening cost to 0 for the case of mea
+        // alignment!
+        ScoringParams::indel(
+            (clp.mea_alignment && !clp.mea_gapcost)
+                ? 0
+                : (clp.indel *
+                   (clp.mea_gapcost ? clp.probability_scale / 100 : 1))),
+        ScoringParams::indel_opening(
+            (clp.mea_alignment && !clp.mea_gapcost)
+                ? 0
+                : (clp.indel_opening *
+                   (clp.mea_gapcost ? clp.probability_scale / 100 : 1))),
+        ScoringParams::ribosum(ribosum.get()),
+        ScoringParams::ribofit(ribofit.get()),
+        ScoringParams::unpaired_penalty(clp.unpaired_penalty),
+        ScoringParams::struct_weight(clp.struct_weight),
+        ScoringParams::tau_factor(clp.tau),
+        ScoringParams::exclusion(clp.exclusion),
+        ScoringParams::exp_probA(my_exp_probA),
+        ScoringParams::exp_probB(my_exp_probB),
+        ScoringParams::temperature_alipf(clp.temperature_alipf),
+        ScoringParams::stacking(clp.stacking),
+        ScoringParams::new_stacking(clp.new_stacking),
+        ScoringParams::mea_scoring(clp.mea_alignment),
+        ScoringParams::mea_alpha(clp.mea_alpha),
+        ScoringParams::mea_beta(clp.mea_beta),
+        ScoringParams::mea_gamma(clp.mea_gamma),
+        ScoringParams::probability_scale(clp.probability_scale));
+
     // ------------------------------------------------------------
     // Construct scoring
     Scoring scoring(
         seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches, match_probs.get(),
-        ScoringParams(ScoringParams::match(clp.match),
-                      ScoringParams::mismatch(clp.mismatch),
-                      // In true mea alignment gaps are only scored
-                      // for computing base match probs.
-                      // Consequently, we set the indel and indel
-                      // opening cost to 0 for the case of mea
-                      // alignment!
-                      ScoringParams::indel(
-                          (clp.mea_alignment && !clp.mea_gapcost)
-                              ? 0
-                              : (clp.indel * (clp.mea_gapcost
-                                                  ? clp.probability_scale / 100
-                                                  : 1))),
-                      ScoringParams::indel_opening(
-                          (clp.mea_alignment && !clp.mea_gapcost)
-                              ? 0
-                              : (clp.indel_opening *
-                                 (clp.mea_gapcost ? clp.probability_scale / 100
-                                                  : 1))),
-                      ScoringParams::ribosum(ribosum.get()),
-                      ScoringParams::ribofit(ribofit.get()),
-                      ScoringParams::unpaired_penalty(clp.unpaired_penalty),
-                      ScoringParams::struct_weight(clp.struct_weight),
-                      ScoringParams::tau_factor(clp.tau),
-                      ScoringParams::exclusion(clp.exclusion),
-                      ScoringParams::exp_probA(my_exp_probA),
-                      ScoringParams::exp_probB(my_exp_probB),
-                      ScoringParams::temperature_alipf(clp.temperature_alipf),
-                      ScoringParams::stacking(clp.stacking),
-                      ScoringParams::new_stacking(clp.new_stacking),
-                      ScoringParams::mea_scoring(clp.mea_alignment),
-                      ScoringParams::mea_alpha(clp.mea_alpha),
-                      ScoringParams::mea_beta(clp.mea_beta),
-                      ScoringParams::mea_gamma(clp.mea_gamma),
-                      ScoringParams::probability_scale(clp.probability_scale)));
+        scoring_params);
 
     if (clp.write_arcmatch_scores) {
         if (clp.verbose) {

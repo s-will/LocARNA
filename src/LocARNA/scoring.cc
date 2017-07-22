@@ -7,8 +7,9 @@
 #include "ribosum.hh"
 #include "ribofit.hh"
 
-#include <math.h>
+#include <cmath>
 #include <fstream>
+#include <memory>
 
 namespace LocARNA {
 
@@ -37,7 +38,7 @@ namespace LocARNA {
           seqB(seqB_),
           lambda_(0) {
 #ifndef NDEBUG
-        if (params->ribofit_ || params->ribosum_) {
+        if (params->ribofit_ != nullptr || params->ribosum_ != nullptr) {
             // check sequences
             if (!seqA.checkAlphabet(Alphabet<char,6>("ACGUN-")) ||
                 !seqB.checkAlphabet(Alphabet<char,6>("ACGUN-"))) {
@@ -47,7 +48,7 @@ namespace LocARNA {
         }
 #endif
 
-        if (params->ribofit_) {
+        if (params->ribofit_ != nullptr) {
             precompute_sequence_identities();
         }
 
@@ -322,7 +323,7 @@ namespace LocARNA {
     */
     double
     Scoring::ribosum_arcmatch_prob(const Arc &arcA, const Arc &arcB) const {
-        assert(params->ribosum_ != 0);
+        assert(params->ribosum_ != nullptr);
         // compute average ribosum score
 
         const RibosumFreq *ribosum = params->ribosum_;
@@ -373,7 +374,7 @@ namespace LocARNA {
 
     score_t
     Scoring::riboX_arcmatch_score(const Arc &arcA, const Arc &arcB) const {
-        assert(params->ribosum_ != 0);
+        assert(params->ribosum_ != nullptr || params->ribofit_ != nullptr);
 
         // compute average ribosum score
 
@@ -467,7 +468,7 @@ namespace LocARNA {
         // for mea or if we don't have a ribofit/ribosum matrix, we use sigma
         // otherwise we use a ribosum-like score
         if (params->tau_factor_ != 0) {
-            if (!params->mea_scoring_ && (params->ribofit_ || params->ribosum_)) {
+            if (!params->mea_scoring_ && (params->ribofit_!=nullptr || params->ribosum_!=nullptr)) {
                 sequence_contribution = riboX_arcmatch_score(arcA, arcB);
             } else {
                 sequence_contribution = sigma_tab(arcA.left(), arcB.left()) +
