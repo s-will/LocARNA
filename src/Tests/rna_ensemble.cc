@@ -145,6 +145,31 @@ test_in_loop_probs(const Sequence &seq, const RnaEnsemble &rna_ensemble) {
     REQUIRE(fails == 0);
 }
 
+TEST_CASE("base pair probabilities can be predicted") {
+
+    SECTION("prediction works one") {
+        std::string testseqstr = "CCCCAGGAAAACCGGAAAACCAGGGG";
+        Sequence seq;
+        seq.append(Sequence::SeqEntry("test", testseqstr));
+
+        PFoldParams pfoldparams(PFoldParams::args::noLP(true));
+
+        std::unique_ptr<RnaEnsemble> rna_ensemble1 =
+            std::make_unique<RnaEnsemble>(seq, pfoldparams, false, false);
+
+        SECTION("prediction works twice") {
+        std::string testseq2str = "CCCCAGGAAAACCGGAAAACCAGGGG";
+        Sequence seq2;
+        seq2.append(Sequence::SeqEntry("test", testseq2str));
+
+        std::unique_ptr<RnaEnsemble> rna_ensemble2 =
+                std::make_unique<RnaEnsemble>(seq2, pfoldparams, false, false);
+        }
+    }
+
+}
+
+
 TEST_CASE("in loop probabilities can be predicted") {
     SECTION("in loop probs are predicted for single sequences") {
         std::string testseqstr = "CCCCAGGAAAACCGGAAAACCAGGGG";

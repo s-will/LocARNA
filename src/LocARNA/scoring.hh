@@ -298,6 +298,8 @@ namespace LocARNA {
          * @param match_probs pointer to base match probabilities (can be nullptr for
          * non-mea scores)
          * @param params a collection of parameters for scoring
+         *
+         * @note caller must keep passed objects alive
          */
         Scoring(const Sequence &seqA,
                 const Sequence &seqB,
@@ -308,14 +310,17 @@ namespace LocARNA {
                 const ScoringParams &params);
 
         /**
-         * modify scoring by a parameter lambda. Used in the
-         * computational of normalized local alignment by fractional
+         * @brief modify scoring by a parameter lambda.
+         *
+         * Used in the computational of normalized local alignment by fractional
          * programming in the form of the Dinkelbach algorithm.  The
          * modification is destructive.  modify_by_parameter(0) results
          * in unmodified scoring. Repeated modifications are valid.  The
          * Outcome is *undefined* when the Scoring object is used to
          * obtain exponentiated scores (methods exp_...) as in partition
-         * function alignment.  @param lambda the parameter
+         * function alignment.
+         *
+         * @param lambda the parameter
          */
         void
         modify_by_parameter(score_t lambda);
