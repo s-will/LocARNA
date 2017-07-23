@@ -15,43 +15,6 @@
  * Requires functions with named arguments to use (variadic) templates
  */
 
-/*
-USAGE EXAMPLE:
-
-namespace fp {
-DEFINE_NAMED_ARG(first, int);
-DEFINE_NAMED_ARG(second, int);
-DEFINE_NAMED_ARG(third, double);
-DEFINE_NAMED_ARG(fourth, const std::string &);
-}
-
-
-template <class... Args>
-void f(bool mandatory, Args...  args) {
-    using namespace fp;
-    auto pfirst = GET_NAMED_ARG(first,args);
-    auto psecond = GET_NAMED_ARG(second,args);
-    auto pthird = GET_NAMED_ARG_DEF(third,args,4.5);
-    auto pfourth = GET_NAMED_ARG_DEF(fourth, args, "Hallo Welt!");
-
-    std::cout
-        << mandatory << " "
-        << pfirst << " "
-        << psecond << " "
-        << pthird << " "
-        << pfourth << std::endl;
-}
-
-int main() {
-  f(true,
-    // fp::third(3.5),
-    fp::first(1),
-    // fp::fourth("Hello World!"),
-    // fp::fourth(false),
-    fp::second(2));
-}
-*/
-
 #include <tuple>
 #include <type_traits>
 
@@ -148,36 +111,54 @@ namespace LocARNA {
         name(type value) : NamedArgument<type>(value) {} \
     }
 
-    //! @brief get a named argument from argument pack (the argument must be
-    //! contained!)
-    // #   define GET_NAMED_ARG(name, args)
-    //     std::get<name>(std::make_tuple(args...)).value()
-    template <typename name, typename... Args>
-    auto
-    get_named_arg(Args &&... args) {
-        static_assert(has_type<name, std::tuple<std::remove_reference_t<Args>...>>::value,
-                      "Required named argument missing.");
-        return std::get<name>(std::make_tuple(std::forward<Args>(args)...))
-            .value();
+    //! define a named argument with name, type, and default value
+#   define DEFINE_NAMED_ARG_DEFAULT(name, type, default_value) \
+    struct name : public NamedArgument<type> {              \
+        name() : NamedArgument<type>(default_value) {}      \
+        name(type value) : NamedArgument<type>(value) {}    \
     }
 
-    //! get a named argument from argument pack; return default if argument does not
-    //! exist
-    // #   define GET_NAMED_ARG_DEF(name, args, def)
-    //     get_def<name>(std::make_tuple(args...), name(def)).value()
-    template <typename name, typename ValueType, typename... Args>
+    //! @brief get a mandatory named argument from argument pack;
+    //! ensure that argument is given
+    template <typename name, typename ArgTuple>
     auto
-    get_named_arg_def(ValueType &&def, Args &&... args) {
-        return get_def<name>(std::make_tuple(std::forward<Args>(args)...),
-                             name(std::forward<ValueType>(def))).value();
+    get_named_arg(const ArgTuple &args) {
+        static_assert(has_type<name, ArgTuple>::value,
+                      "Required named argument missing.");
+        return std::get<name>(args).value();
+    }
+
+    // //! get a named argument from argument pack; return default if argument does not
+    // //! exist
+    // template <typename name, typename ValueType, typename ArgsTuple>
+    // auto
+    // get_named_arg_def(ValueType &&def, const ArgsTuple &args) {
+    //     return get_def<name>(args,
+    //                          name(std::forward<ValueType>(def))).value();
+    // }
+
+    //! get an optional named argument from argument pack; return default value
+    //! (empty
+    //! constructor of named parameter class) if argument does not
+    //! exist
+    template <typename name, typename ArgsTuple>
+    auto
+    get_named_arg_opt(const ArgsTuple &args) {
+        return get_def<name>(args,
+                             name()).value();
     }
 
     //! define a named argument with name and type; additionally declare variable
     //! (to be used as class feature)
-#   define DEFINE_NAMED_ARG_FEATURE(name, type) \
-    type name##_;                               \
+#   define DEFINE_NAMED_ARG_FEATURE(name, type)  \
+    type name##_;                                \
     DEFINE_NAMED_ARG(name, type)
 
+    //! define a named argument with name, type, and default; additionally declare variable
+    //! (to be used as class feature)
+#   define DEFINE_NAMED_ARG_DEFAULT_FEATURE(name, type, default_value) \
+    type name##_;                                                   \
+    DEFINE_NAMED_ARG_DEFAULT(name, type, default_value)
 
 } // end namespace LocARNA
 

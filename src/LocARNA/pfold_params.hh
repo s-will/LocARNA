@@ -32,13 +32,13 @@ namespace LocARNA {
     class PFoldParams {
     public:
         struct args {
-            DEFINE_NAMED_ARG(noLP, bool);
-            DEFINE_NAMED_ARG(stacking, bool);
-            DEFINE_NAMED_ARG(dangling, int);
-            DEFINE_NAMED_ARG(max_bp_span, int);
-            DEFINE_NAMED_ARG(ribo, bool);
-            DEFINE_NAMED_ARG(cv_fact, double);
-            DEFINE_NAMED_ARG(nc_fact, double);
+            DEFINE_NAMED_ARG_DEFAULT(noLP, bool, false);
+            DEFINE_NAMED_ARG_DEFAULT(stacking, bool, false);
+            DEFINE_NAMED_ARG_DEFAULT(dangling, int, 2);
+            DEFINE_NAMED_ARG_DEFAULT(max_bp_span, int, -1);
+            DEFINE_NAMED_ARG_DEFAULT(ribo, bool, true);
+            DEFINE_NAMED_ARG_DEFAULT(cv_fact, double, 0.6);
+            DEFINE_NAMED_ARG_DEFAULT(nc_fact, double, 0.5);
 
             using valid_args = std::tuple<noLP,
                                           stacking,
@@ -58,28 +58,30 @@ namespace LocARNA {
          * @param dangling ViennaRNA dangling end type
          */
         template <typename... Args>
-        PFoldParams(Args... args) : md_() {
+        PFoldParams(Args... argpack) : md_() {
             static_assert( type_subset_of< std::tuple<Args...> , typename args::valid_args >::value,
                            "Invalid type in named arguments pack." );
 
-            stacking_ = get_named_arg_def<args::stacking>(false, args...);
+            auto args = std::make_tuple(argpack...);
+
+            stacking_ = get_named_arg_opt<args::stacking>(args);
 
             vrna_md_set_default(&md_);
 
-            md_.noLP = get_named_arg_def<args::noLP>(false, args...) ? 1 : 0;
+            md_.noLP = get_named_arg_opt<args::noLP>(args) ? 1 : 0;
 
-            md_.max_bp_span = get_named_arg_def<args::max_bp_span>(-1, args...);
+            md_.max_bp_span = get_named_arg_opt<args::max_bp_span>(args);
 
-            md_.dangles = get_named_arg_def<args::dangling>(2, args...);
+            md_.dangles = get_named_arg_opt<args::dangling>(args);
             assert(md_.dangles >= 0);
             assert(md_.dangles <= 3);
 
             md_.compute_bpp = 1;
 
             // set ribosum scoring with "best" parameters
-            md_.ribo    = get_named_arg_def<args::ribo>(true, args...) ? 1 : 0;
-            md_.cv_fact = get_named_arg_def<args::cv_fact>(0.6, args...); // cfactor
-            md_.nc_fact = get_named_arg_def<args::nc_fact>(0.5, args...); // nfactor
+            md_.ribo    = get_named_arg_opt<args::ribo>(args) ? 1 : 0;
+            md_.cv_fact = get_named_arg_opt<args::cv_fact>(args); // cfactor
+            md_.nc_fact = get_named_arg_opt<args::nc_fact>(args); // nfactor
         }
 
         /** copy constructor
