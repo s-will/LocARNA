@@ -56,30 +56,30 @@ namespace LocARNA {
          * of base match/mismatch scoring.
          * Can be replaced by RIBOSUM scores.
          */
-        DEFINE_NAMED_ARG_FEATURE(match, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(match, score_t, 50);
 
         //! constant cost of a base mismatch
-        DEFINE_NAMED_ARG_FEATURE(mismatch, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mismatch, score_t, 0);
 
         //! cost per indel (for linear or affine gap cost).
-        DEFINE_NAMED_ARG_FEATURE(indel, score_t);
-
-        //! cost per indel for loops (for linear or affine gap cost).
-        DEFINE_NAMED_ARG_FEATURE(indel_loop, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(indel, score_t, -150);
 
         //! cost per gap (for affine gap-cost). Use affine gap cost if non-zero.
-        DEFINE_NAMED_ARG_FEATURE(indel_opening, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(indel_opening, score_t, -750);
+
+        //! cost per indel for loops (for linear or affine gap cost).
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(indel_loop, score_t, -200);
 
         //! cost per gap for loops(for affine gap-cost). Use affine gap cost if
         //! non-zero.
-        DEFINE_NAMED_ARG_FEATURE(indel_opening_loop, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(indel_opening_loop, score_t, -800);
 
         /**
          * the ribosum matrix, if non-null (and ribofit==null) it is used
          * for base match/mismatch instead of constant values
          * and as contribution for arc-matchs (tau_factor)
          */
-        DEFINE_NAMED_ARG_FEATURE(ribosum, const RibosumFreq *);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(ribosum, const RibosumFreq *, nullptr);
 
         /**
          * the ribofit matrix, if non-null it is used
@@ -87,49 +87,49 @@ namespace LocARNA {
          * and as contribution for arc-matchs (tau_factor).
          * Overrides ribosum
          */
-        DEFINE_NAMED_ARG_FEATURE(ribofit, const Ribofit *);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(ribofit, const Ribofit *, nullptr);
 
         //! penalty/cost for unpaired bases matched/mismatched/gapped
-        DEFINE_NAMED_ARG_FEATURE(unpaired_penalty, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(unpaired_penalty, score_t, 0);
 
         /**
          * Factor for structure contribution in the classic score.
          * Maximal contribution of 1/2 arc match
          */
-        DEFINE_NAMED_ARG_FEATURE(struct_weight, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(struct_weight, score_t, 200);
 
         /**
          * Factor for the contribution of sequence score or
          * ribosum score to arc matchs
          */
-        DEFINE_NAMED_ARG_FEATURE(tau_factor, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(tau_factor, score_t, 50);
 
         //! cost of one exclusion.
-        DEFINE_NAMED_ARG_FEATURE(exclusion, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(exclusion, score_t, 0);
 
         DEFINE_NAMED_ARG_FEATURE(exp_probA, double);
 
         DEFINE_NAMED_ARG_FEATURE(exp_probB, double);
 
-        DEFINE_NAMED_ARG_FEATURE(temperature_alipf, double);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(temperature_alipf, double, 150);
 
         //! turn on/off stacking terms
-        DEFINE_NAMED_ARG_FEATURE(stacking, bool);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(stacking, bool, false);
 
         //! turn on/off new stacking terms
-        DEFINE_NAMED_ARG_FEATURE(new_stacking, bool);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(new_stacking, bool, false);
 
         //! turn on/off mea scoring
-        DEFINE_NAMED_ARG_FEATURE(mea_scoring, bool);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mea_scoring, bool, false);
 
         //! weight for mea contribution "unstructured"
-        DEFINE_NAMED_ARG_FEATURE(mea_alpha, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mea_alpha, score_t, 0);
 
         //! weight for mea contribution "structure"
-        DEFINE_NAMED_ARG_FEATURE(mea_beta, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mea_beta, score_t, 200);
 
         //! weight for mea contribution "consensus"
-        DEFINE_NAMED_ARG_FEATURE(mea_gamma, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mea_gamma, score_t, 100);
 
         /**
          * resolution of the mea score.
@@ -138,7 +138,7 @@ namespace LocARNA {
          * there must be some factor to scale the probabilities
          * in order to get scores.
          */
-        DEFINE_NAMED_ARG_FEATURE(probability_scale, score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(probability_scale, score_t, 10000);
 
         using valid_args = std::tuple<
             match,
@@ -188,34 +188,39 @@ namespace LocARNA {
          * must be kept alive by the caller
          */
         template <typename... Args>
-        ScoringParams(Args... args) {
+        ScoringParams(Args... argpack) {
             static_assert( type_subset_of<
                            std::tuple<Args...>,
                            valid_args>::value,
                            "Invalid type in named arguments pack." );
 
-            match_ = get_named_arg_def<match>(50, args...);
-            mismatch_ = get_named_arg_def<mismatch>(0, args...);
-            indel_ = get_named_arg_def<indel>(-150, args...);
-            indel_loop_ = get_named_arg_def<indel_loop>(-200, args...);
-            indel_opening_ = get_named_arg_def<indel_opening>(-750, args...);
-            indel_opening_loop_ = get_named_arg_def<indel_opening_loop>(-800, args...);
-            ribosum_ = get_named_arg_def<ribosum>(nullptr, args...);
-            ribofit_ = get_named_arg_def<ribofit>(nullptr, args...);
-            unpaired_penalty_ = get_named_arg_def<unpaired_penalty>(0, args...);
-            struct_weight_ = get_named_arg_def<struct_weight>(200, args...);
-            tau_factor_ = get_named_arg_def<tau_factor>(50, args...);
-            exclusion_ = get_named_arg_def<exclusion>(0, args...);
-            exp_probA_ = get_named_arg<exp_probA>(args...);
-            exp_probB_ = get_named_arg<exp_probB>(args...);
-            temperature_alipf_ = get_named_arg_def<temperature_alipf>(150, args...);
-            stacking_ = get_named_arg_def<stacking>(false, args...);
-            new_stacking_ = get_named_arg_def<new_stacking>(false, args...);
-            mea_scoring_ = get_named_arg_def<mea_scoring>(false, args...);
-            mea_alpha_ = get_named_arg_def<mea_alpha>(0, args...);
-            mea_beta_ = get_named_arg_def<mea_beta>(200, args...);
-            mea_gamma_ = get_named_arg_def<mea_gamma>(100, args...);
-            probability_scale_ = get_named_arg_def<probability_scale>(10000, args...);
+            auto args = std::make_tuple(argpack...);
+
+            //mandatory
+            exp_probA_ = get_named_arg<exp_probA>(args);
+            exp_probB_ = get_named_arg<exp_probB>(args);
+
+            //optional
+            match_ = get_named_arg_opt<match>(args);
+            mismatch_ = get_named_arg_opt<mismatch>(args);
+            indel_ = get_named_arg_opt<indel>(args);
+            indel_loop_ = get_named_arg_opt<indel_loop>(args);
+            indel_opening_ = get_named_arg_opt<indel_opening>(args);
+            indel_opening_loop_ = get_named_arg_opt<indel_opening_loop>(args);
+            ribosum_ = get_named_arg_opt<ribosum>(args);
+            ribofit_ = get_named_arg_opt<ribofit>(args);
+            unpaired_penalty_ = get_named_arg_opt<unpaired_penalty>(args);
+            struct_weight_ = get_named_arg_opt<struct_weight>(args);
+            tau_factor_ = get_named_arg_opt<tau_factor>(args);
+            exclusion_ = get_named_arg_opt<exclusion>(args);
+            temperature_alipf_ = get_named_arg_opt<temperature_alipf>(args);
+            stacking_ = get_named_arg_opt<stacking>(args);
+            new_stacking_ = get_named_arg_opt<new_stacking>(args);
+            mea_scoring_ = get_named_arg_opt<mea_scoring>(args);
+            mea_alpha_ = get_named_arg_opt<mea_alpha>(args);
+            mea_beta_ = get_named_arg_opt<mea_beta>(args);
+            mea_gamma_ = get_named_arg_opt<mea_gamma>(args);
+            probability_scale_ = get_named_arg_opt<probability_scale>(args);
         }
     };
 
