@@ -115,16 +115,17 @@ namespace LocARNA {
         DEFINE_NAMED_ARG_FEATURE(seqA, const Sequence *);
         DEFINE_NAMED_ARG_FEATURE(seqB, const Sequence *);
         DEFINE_NAMED_ARG_FEATURE(scoring, const Scoring *);
-        DEFINE_NAMED_ARG_FEATURE(no_lonely_pairs, bool);
-        DEFINE_NAMED_ARG_FEATURE(struct_local, bool);
-        DEFINE_NAMED_ARG_FEATURE(sequ_local, bool);
-        DEFINE_NAMED_ARG_FEATURE(free_endgaps, std::string);
-        DEFINE_NAMED_ARG_FEATURE(DO_TRACE, bool);
         DEFINE_NAMED_ARG_FEATURE(trace_controller, const TraceController *);
-        DEFINE_NAMED_ARG_FEATURE(max_diff_am, int);
-        DEFINE_NAMED_ARG_FEATURE(max_diff_at_am, int);
-        DEFINE_NAMED_ARG_FEATURE(stacking, bool);
-        DEFINE_NAMED_ARG_FEATURE(constraints, const AnchorConstraints *);
+
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(no_lonely_pairs, bool, false);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(struct_local, bool, false);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(sequ_local, bool, false);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(free_endgaps, std::string, "");
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(DO_TRACE, bool, true);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(max_diff_am, int, -1);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(max_diff_at_am, int, -1);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(stacking, bool, false);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(constraints, const AnchorConstraints *, nullptr);
 
         using valid_args = std::tuple<seqA,
                                       seqB,
@@ -144,33 +145,37 @@ namespace LocARNA {
          * Construct with named arguments
          */
         template <class... Args>
-        AlignerParams(Args... args) {
+        AlignerParams(Args... argpack) {
             static_assert( type_subset_of<
                            std::tuple<Args...>,
                            valid_args>::value,
                            "Invalid type in named arguments pack." );
-            construct(args...);
+            construct(std::make_tuple(argpack...));
         }
 
     protected:
         AlignerParams() {}
 
-        template <class... Args>
+        template <class ArgTuple>
         void
-        construct(Args... args) {
-            seqA_ = get_named_arg<seqA>(args...);
-            seqB_ = get_named_arg<seqB>(args...);
-            scoring_ = get_named_arg<scoring>(args...);
-            no_lonely_pairs_ = get_named_arg_def<no_lonely_pairs>(false, args...);
-            struct_local_ = get_named_arg_def<struct_local>(false, args...);
-            sequ_local_ = get_named_arg_def<sequ_local>(false, args...);
-            free_endgaps_ = get_named_arg_def<free_endgaps>("", args...);
-            DO_TRACE_ = get_named_arg_def<DO_TRACE>(true, args...);
-            trace_controller_ = get_named_arg<trace_controller>(args...);
-            max_diff_am_ = get_named_arg_def<max_diff_am>(-1, args...);
-            max_diff_at_am_ = get_named_arg_def<max_diff_at_am>(-1, args...);
-            stacking_ = get_named_arg_def<stacking>(false, args...);
-            constraints_ = get_named_arg_def<constraints>(nullptr, args...);
+        construct(const ArgTuple &args) {
+
+            //mandatory
+            seqA_ = get_named_arg<seqA>(args);
+            seqB_ = get_named_arg<seqB>(args);
+            scoring_ = get_named_arg<scoring>(args);
+            trace_controller_ = get_named_arg<trace_controller>(args);
+
+            //optional
+            no_lonely_pairs_ = get_named_arg_opt<no_lonely_pairs>(args);
+            struct_local_ = get_named_arg_opt<struct_local>(args);
+            sequ_local_ = get_named_arg_opt<sequ_local>(args);
+            free_endgaps_ = get_named_arg_opt<free_endgaps>(args);
+            DO_TRACE_ = get_named_arg_opt<DO_TRACE>(args);
+            max_diff_am_ = get_named_arg_opt<max_diff_am>(args);
+            max_diff_at_am_ = get_named_arg_opt<max_diff_at_am>(args);
+            stacking_ = get_named_arg_opt<stacking>(args);
+            constraints_ = get_named_arg_opt<constraints>(args);
         }
     };
 
@@ -182,9 +187,9 @@ namespace LocARNA {
     public:
         using pf_score_t = T;
 
-        DEFINE_NAMED_ARG_FEATURE(min_am_prob, double);
-        DEFINE_NAMED_ARG_FEATURE(min_bm_prob, double);
-        DEFINE_NAMED_ARG_FEATURE(pf_scale, pf_score_t);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(min_am_prob, double, 0);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(min_bm_prob, double, 0);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(pf_scale, pf_score_t, 1.0);
 
         using valid_args = tuple_cat_type_t<
             AlignerParams::valid_args,
@@ -196,20 +201,21 @@ namespace LocARNA {
          * Construct with named arguments
          */
         template <class... Args>
-        AlignerPParams(Args... args)
+        AlignerPParams(Args... argpack)
             : AlignerParams() {
-
             static_assert( type_subset_of<
                            std::tuple<Args...> ,
                            tuple_cat_type_t<valid_args, AlignerParams::valid_args>
                            >::value,
                            "Invalid type in named arguments pack." );
 
-            AlignerParams::construct(args...);
+            auto args = std::make_tuple(argpack...);
 
-            min_am_prob_ = get_named_arg_def<min_am_prob>(0, args...);
-            min_bm_prob_ = get_named_arg_def<min_bm_prob>(0, args...);
-            pf_scale_ = get_named_arg_def<pf_scale>(pf_score_t(1.0), args...);
+            AlignerParams::construct(args);
+
+            min_am_prob_ = get_named_arg_opt<min_am_prob>(args);
+            min_bm_prob_ = get_named_arg_opt<min_bm_prob>(args);
+            pf_scale_ = get_named_arg_opt<pf_scale>(args);
         }
     };
 
@@ -230,18 +236,19 @@ namespace LocARNA {
          * Construct with named arguments
          */
         template <class... Args>
-        AlignerNParams(Args... args)
+        AlignerNParams(Args... argpack)
             : AlignerParams() {
-
             static_assert( type_subset_of<
                            std::tuple<Args...> ,
                            tuple_cat_type_t<valid_args, AlignerParams::valid_args>
                            >::value,
                            "Invalid type in named arguments pack." );
 
-            AlignerParams::construct(args...);
-            sparsification_mapperA_ = get_named_arg<sparsification_mapperA>(args...);
-            sparsification_mapperB_ = get_named_arg<sparsification_mapperB>(args...);
+            auto args = std::make_tuple(argpack...);
+
+            AlignerParams::construct(args);
+            sparsification_mapperA_ = get_named_arg<sparsification_mapperA>(args);
+            sparsification_mapperB_ = get_named_arg<sparsification_mapperB>(args);
         }
     };
 }
