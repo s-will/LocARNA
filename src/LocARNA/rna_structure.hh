@@ -40,7 +40,7 @@ namespace LocARNA {
         /**
          * @brief construct empty
          */
-        RnaStructure(size_t length=0) : length_(length), bps_() {}
+        RnaStructure(size_t length = 0) : length_(length), bps_() {}
 
         /**
          * @brief construct from dot-bracket string
