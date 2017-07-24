@@ -87,7 +87,7 @@ namespace LocARNA {
 
             std::stack<size_t> st;
 
-            for (const auto &bp : bps_ ) {
+            for (const auto &bp : bps_) {
                 // ignore base pairs, if one or both ends in structure string s
                 // are taken
                 if (s[bp.first - 1] != unpaired_symbol_ ||
