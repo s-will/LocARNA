@@ -37,35 +37,10 @@ namespace LocARNA {
         //! base pair set type
         typedef std::set<bp_t, std::less<bp_t> > bps_t;
 
-    private:
-        size_t length_;
-        bps_t bps_;
-
-        static const char unpaired_symbol_ = '.';
-        static const std::string open_symbols_;
-        static const std::string close_symbols_;
-
-        bool
-        parse(const std::string &s, bps_t &bps, char op, char cl);
-
-        bool
-        parse(const std::string &s,
-              bps_t &bps,
-              const std::string &op_syms,
-              const std::string &cl_syms);
-
-        void
-        assert_valid_bp(const bp_t &bp) {
-            assert(1 <= bp.first);
-            assert(bp.first < bp.second);
-            assert(bp.second <= length_);
-        }
-
-    public:
         /**
          * @brief construct empty
          */
-        RnaStructure() : length_(0), bps_() {}
+        RnaStructure(size_t length=0) : length_(length), bps_() {}
 
         /**
          * @brief construct from dot-bracket string
@@ -212,11 +187,6 @@ namespace LocARNA {
         std::string
         to_string() const;
 
-    private:
-        std::string
-        to_string(const bps_t &bps) const;
-
-    public:
         /**
          * @brief Check base pair set for empty structure / class PLAIN
          *
@@ -306,6 +276,33 @@ namespace LocARNA {
          */
         void
         apply_bpfilter(const BasePairFilter::Filter &filter);
+
+    private:
+        size_t length_;
+        bps_t bps_;
+
+        static const char unpaired_symbol_ = '.';
+        static const std::string open_symbols_;
+        static const std::string close_symbols_;
+
+        bool
+        parse(const std::string &s, bps_t &bps, char op, char cl);
+
+        bool
+        parse(const std::string &s,
+              bps_t &bps,
+              const std::string &op_syms,
+              const std::string &cl_syms);
+
+        void
+        assert_valid_bp(const bp_t &bp) {
+            assert(1 <= bp.first);
+            assert(bp.first < bp.second);
+            assert(bp.second <= length_);
+        }
+
+        std::string
+        to_string(const bps_t &bps) const;
 
     }; // end class RnaStructure
 
