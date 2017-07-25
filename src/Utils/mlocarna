@@ -456,6 +456,16 @@ in probabilistic mode, when reliabilities can be computed.
 
 Use only base match probabilities (no base pair match probabilities).
 
+=item  B<--extended-pf>
+
+ Use extended precision for partition function values. This increases
+ run-time and space (less than 2x), however enables handling
+ significantly larger instances.
+
+=item  B<--quad-pf>
+
+ Use quad precision for partition function values. Even more precision
+ than extended pf, but usually much slower (overrides extended-pf).
 
 =item  B<--pf-scale=<scale>>
 
@@ -953,6 +963,8 @@ my @options = #options that are not or not automatically passed to locarna
 
      "probabilistic",
      "sparse",
+     "extended-pf",
+     "quad-pf",
      "pf-scale=f",
      "only-basematch-probs",
      "fast-mea",
@@ -1308,6 +1320,14 @@ if (defined($MLocarna::MatchProbs::min_bm_prob)) {
 
 if (defined($MLocarna::MatchProbs::min_am_prob)) {
     push @locarna_p_params, "--min-am-prob" => $MLocarna::MatchProbs::min_am_prob;
+}
+
+if (defined($opts{'extended-pf'})) {
+    push @locarna_p_params, "--extended-pf";
+}
+
+if (defined($opts{'quad-pf'})) {
+    push @locarna_p_params, "--quad-pf";
 }
 
 if (defined($opts{'pf-scale'})) {
