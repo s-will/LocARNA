@@ -9,7 +9,7 @@ dnl special dir for aux config files
 AC_CONFIG_AUX_DIR(config)
 
 dnl Define here to keep all version information in one place.
-AC_SUBST([SO_VERSION], [1:1:0])
+AC_SUBST([SO_VERSION], [1:2:0])
 AC_SUBST([API_VERSION], [2.0])
 
 
@@ -38,7 +38,7 @@ AC_SUBST([PACKAGE_SOURCES_URL], ["http://www.bioinf.uni-freiburg.de/Software/Loc
 
 
 dnl minimally required ViennaRNA version
-VRNA_VERSION=2.3.1
+VRNA_VERSION=2.4.0
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -83,7 +83,7 @@ dnl is sufficient, and obviates the need to maintain man pages separately.
 dnl However, this means invoking executables, which we generally cannot do
 dnl when cross-compiling, so we test to avoid that (the variable
 dnl "cross_compiling" is set by AC_PROG_CC).
-AS_IF([test $cross_compiling = no], [
+AS_IF([test "$cross_compiling" = "no"], [
   AM_MISSING_PROG([HELP2MAN], [help2man])
 ], [
   HELP2MAN=:
@@ -246,6 +246,22 @@ dnl AC_MSG_NOTICE([pthread: $PTHREAD_CFLAGS, $PTHREAD_LIBS])
 dnl LIBS="$PTHREAD_LIBS $LIBS"
 dnl dnl CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 dnl LDFLAGS="$PTHREAD_CFLAGS $LDFLAGS"
+
+
+dnl --------------------
+dnl check for quadmath and add linker flag
+dnl
+has_quadmath="no"
+AC_SEARCH_LIBS([expq], [quadmath],
+  [has_quadmath="yes"],
+  [AC_MSG_WARN([Cannot find quadmath library: compile w/o quad-pf support.])
+])
+
+AS_IF([ test "$has_quadmath" == "yes" ], [
+dnl do not use "HAS_QUADMATH" define, but rely on _GLIBCXX_USE_FLOAT128
+dnl AC_DEFINE([HAS_QUADMATH],[1],[Compile with quad-pf support.])
+  LDFLAGS="-lquadmath $LDFLAGS"
+])
 
 dnl ----------------------------------------
 dnl Static linking

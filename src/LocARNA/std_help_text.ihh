@@ -176,6 +176,9 @@
  "Use extended precision for partition function values. This "
  "increases run-time and space (less than 2x), however enables "
  "handling significantly larger instances."},
+{"quad_pf",
+ "Use quad precision for partition function values. Even more precision than "
+ "extended pf, but usually much slower (overrides extended-pf)."},
 {"temperature_alipf",
  "Temperature for the /alignment/ partition functions (this "
  "temperature different from the 'physical' temperature of RNA "

@@ -23,8 +23,6 @@
 #include <iostream>
 #include <fstream>
 
-#include <math.h>
-
 #include <string.h>
 #include <sstream>
 #include <string>

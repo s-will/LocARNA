@@ -1369,7 +1369,7 @@ namespace LocARNA {
                 if (bm_prob(i, j) > 1) {
                     std::ostringstream err;
                     err << "ERROR: bm prob " << i << " " << j << " "
-                        << bm_prob(i, j);
+                        << (double)bm_prob(i, j);
                     throw failure(err.str());
                 }
             }
@@ -1405,7 +1405,7 @@ namespace LocARNA {
         for (size_type i = 1; i <= r.endA(); i++) {
             for (size_type j = 1; j <= r.endB(); j++) {
                 if (bm_prob(i, j) >= params->min_bm_prob_) {
-                    out << i << " " << j << " " << bm_prob(i, j);
+                    out << i << " " << j << " " << (double)bm_prob(i, j);
                     out << std::endl;
                 }
             }

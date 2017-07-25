@@ -133,6 +133,12 @@ mlocarna_calltest mlocarna-probabilistic \
          mlocarna $exdir/archaea.fa --probabilistic \
          --consistency-transformation -p 0.05  --max-diff 10 --stockholm
 
+# check probabilistic mode with extended pf
+mlocarna_calltest mlocarna-probabilistic-ext \
+         mlocarna $exdir/archaea.fa --probabilistic --extended-pf \
+         --consistency-transformation -p 0.05  --max-diff 10 --stockholm
+
+
 # check many threads, and local folding and max-diff-aln
 mlocarna_calltest mlocarna-threads \
          mlocarna $exdir/SECIS_15.fa  --threads 32 --alifold \
