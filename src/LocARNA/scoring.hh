@@ -5,7 +5,6 @@
 #include <config.h>
 #endif
 
-#include <math.h>
 #include <vector>
 
 #include "aux.hh"

@@ -7,6 +7,9 @@
 
 #include <memory>
 
+#if defined( _GLIBCXX_USE_FLOAT128 ) && ! defined(__clang__)
+#  include "quadmath.hh"
+#endif
 
 #include "scoring.hh"
 #include "params.hh"
