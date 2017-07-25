@@ -262,6 +262,17 @@ namespace LocARNA {
         end() const {
             return the_map_.end();
         }
+
+        /**
+         * @brief Default value
+         *
+         * @returns default value
+         */
+        const value_type &
+        def() const {
+            return def_;
+        }
+
     protected:
         value_type def_;   //!< default value of vector entries
         map_type the_map_; //!< internal representation of sparse vector
