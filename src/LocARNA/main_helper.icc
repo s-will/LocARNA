@@ -10,13 +10,14 @@
 #include <map>
 #include <memory>
 #include "sequence.hh"
-#include "match_probs.hh"
+#include "edge_probs.hh"
 #include "rna_data.hh"
 #include "ribosum.hh"
 #include "ribofit.hh"
 #include "multiple_alignment.hh"
 #include "alignment.hh"
 #include "rna_ensemble.hh"
+#include "free_endgaps.hh"
 
 #include "LocARNA/ribosum85_60.icc"
 
@@ -147,6 +148,9 @@ namespace LocARNA {
             //! use relaxed variant of max diff with reference alignment
             bool max_diff_relax;
 
+            //! minimum sequence alignment trace probability
+            double min_trace_probability;
+
             // ----------------------------------------
             // Constraints
 
@@ -194,10 +198,13 @@ namespace LocARNA {
 
             bool write_matchprobs; //!< whether to write_matchprobs
 
+            bool write_traceprobs; //!< whether to write_traceprobs
+
             bool read_matchprobs; //!< whether to read_matchprobs
 
             std::string matchprobs_infile;  //!< matchprobs input file
             std::string matchprobs_outfile; //!< matchprobs output file
+            std::string traceprobs_outfile; //!< traceprobs output file
 
             bool write_arcmatch_scores; //!< whether to write arcmatch scores
 
@@ -244,21 +251,50 @@ namespace LocARNA {
         }
 
         template <class CLP>
+        void
+        select_basematch_scores(CLP &clp,
+                                const Sequence &seqA,
+                                const Sequence &seqB,
+                                const Ribosum *ribosum,
+                                const Ribofit *ribofit,
+                                Matrix<double> &basematch_scores,
+                                Alphabet<char,4> &alphabet) {
+            if (ribosum != nullptr) {
+                alphabet = ribosum->alphabet();
+                basematch_scores = ribosum->get_basematch_scores();
+            } else if (ribofit != nullptr) {
+                double avg_identity =
+                    average_pairwise_identity(seqA, seqB);
+                alphabet = ribofit->alphabet();
+                ribofit->get_basematch_scores(avg_identity,
+                                              basematch_scores);
+            } else {
+                alphabet = Alphabet<char,4>("ACGU");
+                basematch_scores.resize(alphabet.size(), alphabet.size());
+                basematch_scores.fill(clp.mismatch/100.0);
+                for(size_t i=0; i<alphabet.size(); ++i) {
+                    basematch_scores(i,i) = clp.match/100.0;
+                }
+            }
+        }
+
+        template <class CLP>
         std::unique_ptr<MatchProbs>
         init_match_probs(CLP &clp,
                          const RnaData *rna_dataA,
                          const RnaData *rna_dataB,
+                         const TraceController *trace_controller,
                          const Ribosum *ribosum,
                          const Ribofit *ribofit) {
-            std::unique_ptr<MatchProbs> match_probs =
-                std::make_unique<MatchProbs>();
 
             const Sequence &seqA = rna_dataA->sequence();
             const Sequence &seqB = rna_dataB->sequence();
 
             if (clp.read_matchprobs) {
-                match_probs->read_sparse(clp.matchprobs_infile, seqA.length(),
-                                         seqB.length());
+		std::ifstream in(clp.matchprobs_infile);
+                return std::make_unique<MatchProbs>(in,
+						    seqA.length(),
+						    seqB.length());
             } else {
                 if (clp.match_prob_method == 1) {
                     if (!clp.probcons_file_given) {
@@ -275,14 +311,10 @@ namespace LocARNA {
                             << std::endl;
                     }
 
-                    match_probs->pairHMM_probs(seqA, seqB, clp.probcons_file);
+                    return std::make_unique<PairHMMMatchProbs>(
+                        seqA, seqB,
+                        PairHMMMatchProbs::PairHMMParams(clp.probcons_file));
                 } else {
-                    bool sl = clp.sequ_local;
-                    if (clp.match_prob_method == 2)
-                        sl = true;
-                    if (clp.match_prob_method == 3)
-                        sl = false;
-
                     if (clp.verbose) {
                         std::cout << "Compute match probabilities using PF "
                                      "sequence alignment."
@@ -306,17 +338,65 @@ namespace LocARNA {
                                                            basematch_scores);
                     }
 
-                    match_probs->pf_probs(*rna_dataA, *rna_dataB,
-                                          *p_basematch_scores, *alphabet,
-                                          clp.indel_opening / 100.0,
-                                          clp.indel / 100.0,
-                                          clp.pf_struct_weight / 100.0,
-                                          clp.temperature_alipf / 100.0, sl);
+                    return std::make_unique<PFMatchProbs>(
+                        *rna_dataA, *rna_dataB, *trace_controller,
+                        *p_basematch_scores, *alphabet,
+                        clp.indel_opening / 100.0, clp.indel / 100.0,
+                        clp.pf_struct_weight / 100.0,
+                        clp.temperature_alipf / 100.0,
+                        FreeEndgaps(clp.free_endgaps),
+                        clp.sequ_local || (clp.match_prob_method == 3));
                 }
             }
-
-            return match_probs;
         }
+
+        template <class CLP>
+        PFTraceProbs
+        make_trace_probs(CLP &clp,
+                         const RnaData *rna_dataA,
+                         const RnaData *rna_dataB,
+                         const Ribosum *ribosum,
+                         const Ribofit *ribofit,
+                         TraceController *trace_controller) {
+            const auto &seqA = rna_dataA->sequence();
+            const auto &seqB = rna_dataB->sequence();
+
+            Alphabet<char,4> alphabet;
+            Matrix<double> basematch_scores;
+
+            select_basematch_scores(clp, seqA, seqB, ribosum, ribofit,
+                                    basematch_scores, alphabet);
+
+            PFTraceProbs trace_probs(*rna_dataA, *rna_dataB,
+                                     *trace_controller, basematch_scores,
+                                     alphabet, clp.indel_opening / 100.0,
+                                     clp.indel / 100.0,
+                                     clp.struct_weight / 100.0,
+                                     clp.temperature_alipf / 100.0,
+                                     FreeEndgaps(clp.free_endgaps),
+                                     clp.sequ_local);
+            return trace_probs;
+        }
+
+        template <class CLP>
+        void
+        restrict_trace_by_probabilities(CLP &clp,
+                                        const RnaData *rna_dataA,
+                                        const RnaData *rna_dataB,
+                                        const Ribosum *ribosum,
+                                        const Ribofit *ribofit,
+                                        TraceController *trace_controller
+                                        ) {
+            if (clp.min_trace_probability > 0.0) {
+                auto trace_probs =
+                    make_trace_probs(clp, rna_dataA, rna_dataB, ribosum,
+                                     ribofit, trace_controller);
+
+                trace_controller->restrict_by_trace_probabilities(
+                    trace_probs, clp.min_trace_probability);
+            }
+        }
+
 
         template <class CLP>
         void
@@ -326,8 +406,30 @@ namespace LocARNA {
                           << clp.matchprobs_outfile << "." << std::endl;
             }
 
-            match_probs->write_sparse(clp.matchprobs_outfile,
+	    std::ofstream out(clp.matchprobs_outfile);
+            match_probs->write_sparse(out,
                                       1.0 / clp.probability_scale);
+        }
+
+        template <class CLP>
+        void
+        write_trace_probs(const CLP &clp,
+                          const RnaData *rna_dataA,
+                          const RnaData *rna_dataB,
+                          const Ribosum *ribosum,
+                          const Ribofit *ribofit,
+                          TraceController *trace_controller) {
+            if (clp.verbose) {
+                std::cout << "Write trace probabilities to file "
+                          << clp.traceprobs_outfile << "." << std::endl;
+            }
+
+            auto trace_probs =
+                make_trace_probs(clp, rna_dataA, rna_dataB, ribosum, ribofit,
+                                 trace_controller);
+
+            std::ofstream out(clp.traceprobs_outfile);
+            trace_probs.write_sparse(out, 1.0 / clp.probability_scale);
         }
 
         /**

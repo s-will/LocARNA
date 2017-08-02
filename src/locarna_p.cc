@@ -22,7 +22,7 @@
 #include "LocARNA/aligner_p.hh"
 #include "LocARNA/rna_data.hh"
 #include "LocARNA/arc_matches.hh"
-#include "LocARNA/match_probs.hh"
+#include "LocARNA/edge_probs.hh"
 #include "LocARNA/ribosum.hh"
 #include "LocARNA/ribofit.hh"
 #include "LocARNA/anchor_constraints.hh"
@@ -143,7 +143,7 @@ option_def my_options[] =
       O_NODEFAULT, "prob", clp.help_text["exp_prob"]},
      {"tau", 't', 0, O_ARG_INT, &clp.tau, "0", "factor", clp.help_text["tau"]},
 
-     {"temperature-alipf", 0, 0, O_ARG_INT, &clp.temperature_alipf, "150",
+     {"temperature-alipf", 0, 0, O_ARG_INT, &clp.temperature_alipf, "300",
       "int", clp.help_text["temperature_alipf"]},
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Partition function representation"},
@@ -195,6 +195,8 @@ option_def my_options[] =
       "alignment", clp.help_text["max_diff_pw_alignment"]},
      {"max-diff-relax", 0, &clp.max_diff_relax, O_NO_ARG, 0, O_NODEFAULT, "",
       clp.help_text["max_diff_relax"]},
+     {"min-trace-probability", 0, 0, O_ARG_DOUBLE, &clp.min_trace_probability,
+      "1e-5", "probability", clp.help_text["min_trace_probability"]},
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Computed probabilities"},
 
@@ -401,8 +403,6 @@ run_and_report() {
     size_type lenA = seqA.length();
     size_type lenB = seqB.length();
 
-    AnchorConstraints seq_constraints(lenA, "", lenB, "", !clp.relaxed_anchors);
-
     // --------------------
     // handle max_diff restriction
 
@@ -459,14 +459,24 @@ run_and_report() {
                                                 alistr[0], alistr[1]);
     }
 
-    // if (multiple_ref_alignment) {
-    //  std::cout<<"Reference aligment:"<<std::endl;
-    //  multiple_ref_alignment->print_debug(std::cout);
-    //  std::cout << std::flush;
-    // }
+    // ----------------------------------------
+    // Ribosum matrix
+    //
+    std::unique_ptr<RibosumFreq> ribosum;
+    std::unique_ptr<Ribofit> ribofit;
+    MainHelper::init_ribo_matrix(clp, ribosum, ribofit);
+
+
+    AnchorConstraints seq_constraints(lenA, "", lenB, "", !clp.relaxed_anchors);
 
     TraceController trace_controller(seqA, seqB, multiple_ref_alignment.get(),
                                      clp.max_diff, clp.max_diff_relax);
+
+    trace_controller.restrict_by_anchors(seq_constraints);
+
+    restrict_trace_by_probabilities(clp, rna_dataA.get(), rna_dataB.get(),
+                                   ribosum.get(), ribofit.get(),
+                                   &trace_controller);
 
     multiple_ref_alignment.release();
 
@@ -489,13 +499,6 @@ run_and_report() {
     // report on input in verbose mode
     if (clp.verbose)
         MainHelper::report_input(seqA, seqB, *arc_matches);
-
-    // ----------------------------------------
-    // Ribosum matrix
-    //
-    std::unique_ptr<RibosumFreq> ribosum;
-    std::unique_ptr<Ribofit> ribofit;
-    MainHelper::init_ribo_matrix(clp, ribosum, ribofit);
 
     // ----------------------------------------
     // construct scoring

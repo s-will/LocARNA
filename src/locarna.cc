@@ -15,16 +15,14 @@
 #include <vector>
 #include <memory>
 
-//#include <math.h>
-
-#include "LocARNA/sequence.hh"
 #include "LocARNA/scoring.hh"
+#include "LocARNA/sequence.hh"
 #include "LocARNA/basepairs.hh"
 #include "LocARNA/alignment.hh"
 #include "LocARNA/aligner.hh"
 #include "LocARNA/rna_data.hh"
 #include "LocARNA/arc_matches.hh"
-#include "LocARNA/match_probs.hh"
+#include "LocARNA/edge_probs.hh"
 #include "LocARNA/ribosum.hh"
 #include "LocARNA/ribofit.hh"
 #include "LocARNA/anchor_constraints.hh"
@@ -168,7 +166,7 @@ option_def my_options[] =
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "",
       "Heuristics for speed accuracy trade off"},
 
-     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.0005", "prob",
+     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.0005", "probability",
       clp.help_text["min_prob"]},
      {"max-bps-length-ratio", 0, 0, O_ARG_DOUBLE, &clp.max_bps_length_ratio,
       "0.0", "factor", clp.help_text["max_bps_length_ratio"]},
@@ -184,6 +182,8 @@ option_def my_options[] =
       "alignment", clp.help_text["max_diff_pw_alignment"]},
      {"max-diff-relax", 0, &clp.max_diff_relax, O_NO_ARG, 0, O_NODEFAULT, "",
       clp.help_text["max_diff_relax"]},
+     {"min-trace-probability", 0, 0, O_ARG_DOUBLE, &clp.min_trace_probability,
+      "1e-4", "probability", clp.help_text["min_trace_probability"]},
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Special sauce options"},
      {"kbest", 0, &clp.subopt, O_ARG_INT, &clp.kbest_k, "-1", "k",
@@ -199,7 +199,7 @@ option_def my_options[] =
       clp.help_text["match_prob_method"]},
      {"probcons-file", 0, &clp.probcons_file_given, O_ARG_STRING,
       &clp.probcons_file, O_NODEFAULT, "file", clp.help_text["probcons_file"]},
-     {"temperature-alipf", 0, 0, O_ARG_INT, &clp.temperature_alipf, "150",
+     {"temperature-alipf", 0, 0, O_ARG_INT, &clp.temperature_alipf, "300",
       "int", clp.help_text["temperature_alipf"]},
      {"pf-struct-weight", 0, 0, O_ARG_INT, &clp.pf_struct_weight, "200",
       "weight", clp.help_text["pf_struct_weight"]},
@@ -216,6 +216,9 @@ option_def my_options[] =
      {"write-match-probs", 0, &clp.write_matchprobs, O_ARG_STRING,
       &clp.matchprobs_outfile, O_NODEFAULT, "file",
       clp.help_text["write_matchprobs"]},
+     {"write-trace-probs", 0, &clp.write_traceprobs, O_ARG_STRING,
+      &clp.traceprobs_outfile, O_NODEFAULT, "file",
+      clp.help_text["write_traceprobs"]},
      {"read-match-probs", 0, &clp.read_matchprobs, O_ARG_STRING,
       &clp.matchprobs_infile, O_NODEFAULT, "file",
       clp.help_text["read_matchprobs"]},
@@ -270,6 +273,8 @@ option_def my_options[] =
 int
 main(int argc, char **argv) {
     stopwatch.start("total");
+
+    bool skip_aligning = false; // flag for skipping the alignment computation
 
     typedef std::vector<int>::size_type size_type;
 
@@ -345,6 +350,11 @@ main(int argc, char **argv) {
     if (clp.normalized && clp.penalized) {
         std::cerr << "One cannot specify penalized and normalized "
                   << "simultaneously." << std::endl;
+        return -1;
+    }
+
+    if (clp.sequ_local && clp.free_endgaps!="----") {
+        std::cerr << "Free endgaps cannot be combined with local alignment." << std::endl;
         return -1;
     }
 
@@ -446,7 +456,7 @@ main(int argc, char **argv) {
         return -1;
     }
 
-    // construct TraceController and check inconsistency for with
+    // construct TraceController and check inconsistency with
     // multiplicity of sequences
     //
 
@@ -457,7 +467,7 @@ main(int argc, char **argv) {
             std::make_unique<MultipleAlignment>(clp.max_diff_alignment_file);
     } else if (clp.max_diff_pw_alignment != "") {
         if (seqA.num_of_rows() != 1 || seqB.num_of_rows() != 1) {
-            std::cerr << "Cannot use --max-diff-pw-alignemnt for aligning "
+            std::cerr << "Cannot use --max-diff-pw-alignment for aligning "
                       << "of alignments." << std::endl;
             return -1;
         }
@@ -485,9 +495,6 @@ main(int argc, char **argv) {
                                                 alistr[0], alistr[1]);
     }
 
-    TraceController trace_controller(seqA, seqB, multiple_ref_alignment.get(),
-                                     clp.max_diff, clp.max_diff_relax);
-
     // ------------------------------------------------------------
     // Handle constraints (optionally)
 
@@ -498,14 +505,29 @@ main(int argc, char **argv) {
         seqB.annotation(MultipleAlignment::AnnoType::anchors).single_string(),
         !clp.relaxed_anchors);
 
-    // not used, since there seems to be no effect
-    // trace_controller.restrict_by_anchors(seq_constraints);
-
     if (clp.verbose) {
         if (!seq_constraints.empty()) {
             std::cout << "Found sequence constraints." << std::endl;
         }
     }
+
+
+    // setup trace controller and restrict it
+
+    TraceController trace_controller(seqA, seqB, multiple_ref_alignment.get(),
+                                     clp.max_diff, clp.max_diff_relax);
+
+    trace_controller.restrict_by_anchors(seq_constraints);
+
+    if (clp.write_traceprobs) {
+        MainHelper::write_trace_probs(clp, rna_dataA.get(), rna_dataB.get(), ribosum.get(),
+                                      ribofit.get(), &trace_controller);
+        skip_aligning=true;
+    }
+
+    restrict_trace_by_probabilities(clp, rna_dataA.get(), rna_dataB.get(),
+                                   ribosum.get(), ribofit.get(),
+                                   &trace_controller);
 
     // ----------------------------------------
     // construct set of relevant arc matches
@@ -573,13 +595,13 @@ main(int argc, char **argv) {
     if (clp.write_matchprobs || clp.mea_alignment) {
         match_probs =
             MainHelper::init_match_probs(clp, rna_dataA.get(), rna_dataB.get(),
-                                         ribosum.get(), ribofit.get());
+                                         &trace_controller, ribosum.get(),
+                                         ribofit.get());
     }
     if (clp.write_matchprobs) {
         MainHelper::write_match_probs(clp, match_probs.get());
-        if (!clp.write_arcmatch_scores) {
-            return 0;
-        } // return from main()
+
+        skip_aligning = true;
     }
     //
 
@@ -637,7 +659,13 @@ main(int argc, char **argv) {
         }
         arc_matches->write_arcmatch_scores(clp.arcmatch_scores_outfile,
                                            scoring);
-        return 0;
+
+        skip_aligning=true;
+    }
+
+
+    if (skip_aligning) {
+        return 0; // return without aligning
     }
 
     // ------------------------------------------------------------
@@ -651,7 +679,7 @@ main(int argc, char **argv) {
                       AlignerParams::no_lonely_pairs(clp.no_lonely_pairs),
                       AlignerParams::struct_local(clp.struct_local),
                       AlignerParams::sequ_local(clp.sequ_local),
-                      AlignerParams::free_endgaps(clp.free_endgaps),
+                      AlignerParams::free_endgaps(FreeEndgaps(clp.free_endgaps)),
                       AlignerParams::max_diff_am(clp.max_diff_am),
                       AlignerParams::max_diff_at_am(clp.max_diff_at_am),
                       AlignerParams::trace_controller(&trace_controller),

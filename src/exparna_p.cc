@@ -30,7 +30,7 @@
 
 #include "LocARNA/rna_data.hh"
 #include "LocARNA/arc_matches.hh"
-#include "LocARNA/match_probs.hh"
+#include "LocARNA/edge_probs.hh"
 
 #include "LocARNA/anchor_constraints.hh"
 #include "LocARNA/sequence_annotation.hh"

@@ -116,33 +116,31 @@ exdir=$topdir/Data/Examples
 # check standard usage with alifold consensus (similar to web server)
 mlocarna_calltest mlocarna-archaea-alifold \
          mlocarna $exdir/archaea.fa --alifold-cons \
-         -p 0.05 --max-diff 10
+         -p 0.05
 
 # check constraints
 mlocarna_calltest mlocarna-haca-constraints \
-         mlocarna $exdir/haca.snoRNA.fa -p 0.05 \
-         --max-diff 20
+         mlocarna $exdir/haca.snoRNA.fa -p 0.05
 
 # check mlocarna sparse
 mlocarna_calltest mlocarna-sparse \
-         mlocarna $exdir/archaea.fa --sparse -p 0.05 \
-         --max-diff 10
+         mlocarna $exdir/archaea.fa --sparse -p 0.05
 
 # check probabilistic mode and stockholm
 mlocarna_calltest mlocarna-probabilistic \
          mlocarna $exdir/archaea.fa --probabilistic \
-         --consistency-transformation -p 0.05  --max-diff 10 --stockholm
+         --consistency-transformation -p 0.05 --stockholm
 
 # check probabilistic mode with extended pf
 mlocarna_calltest mlocarna-probabilistic-ext \
          mlocarna $exdir/archaea.fa --probabilistic --extended-pf \
-         --consistency-transformation -p 0.05  --max-diff 10 --stockholm
+         --consistency-transformation -p 0.05 --stockholm
 
 
 # check many threads, and local folding and max-diff-aln
 mlocarna_calltest mlocarna-threads \
          mlocarna $exdir/SECIS_15.fa  --threads 32 --alifold \
-         --plfold-span 50 --max-diff 10 --max-diff-aln $exdir/SECIS_15_ref.aln
+         --plfold-span 50 --max-diff-aln $exdir/SECIS_15_ref.aln
 
 # check anchor constraints from bed file
 mlocarna_calltest mlocarna-bed-anchors \

@@ -97,6 +97,9 @@
 {"max_diff_pw_alignment",
  "Maximal difference relative to given alignment (string, delim=AMPERSAND)"},
 {"max_diff_relax", "Relax deviation constraints in multiple aligmnent"},
+{"min_trace_probability",
+ "Minimal sequence alignment probability of potential traces "
+ "(probability-based sequence alignment envelope) [default=1e-4]."},
 {"no_lonely_pairs",
  "Disallow lonely pairs in prediction and alignment."},
 {"max_bp_span", "Limit maximum base pair span [default=off]."},
@@ -125,8 +128,8 @@
  "Read parameters for probcons-like calculation of match probabilities "
  "from probcons parameter file."},
 {"temperature_alipf",
- "Temperature for the /alignment/ partition functions used by "
- "the probcons-like sequence-based match probability computation "
+ "Temperature for the /sequence alignment/ partition functions used by "
+ "the probcons-like sequence-based match/trace probability computation "
  "(this temperature is different from the 'physical' temperature "
  "of RNA folding!)."},
 {"pf_struct_weight",
@@ -137,11 +140,13 @@
  "the by default gap-cost-free mea score."},
 {"mea_alpha", "Weight alpha for MEA"},
 {"mea_beta", "Weight beta for MEA"},
-{"mea_gamma", "Weight gamm for MEA"},
+{"mea_gamma", "Weight gamma for MEA"},
 {"probability_scale",
  "Scale for probabilities/resolution of mea score"},
 {"write_matchprobs",
  "Write match probs to file (don't align!)."},
+{"write_traceprobs",
+ "Write trace probs to file (don't align!)."},
 {"read_matchprobs",
  "Read match probabilities from file."},
 {"write_arcmatch_scores",

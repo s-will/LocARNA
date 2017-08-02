@@ -1,6 +1,13 @@
 ============================================================
 === 2017
 
+2.0.0RC1 (2017-11-29)
+
+	Sequence envelopes for locarna, locarna_p and sparse;
+	  compatible to anchors, local alignment, and free endgaps
+	  new parameter: --min-trace-probability (on by default)
+	Refactor class MatchProbs -> EdgeProbs and sub-classes;
+	  improve interface and docu
 	Support higher precision floating point arithmetic for locarna-p
 	  pf calculation (long double and quad math) selectable dynamically
 	[mlocarna] Fix specifying anchor constraints via bed file

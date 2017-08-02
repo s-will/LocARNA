@@ -4,9 +4,9 @@
 
 mouse              -CAGACGUUCU-CGCCCAGAGUCGCCGCGGUUUCCUGCUUCAACAGUGCUUGAACGGAACCCGGUGCUCGACCCCUCCGACCCCCGCCGGCCGCUUCGAGCCUGAGCCCUUUGCAACUUC
 human              CCAGACGUUCUUCGCCGAGAGUCGUCGGGGUUUCCUGCUUCAACAGUGCUUGGACGGAACCCGGCGCUCGUUCCCC---ACCCCGGCCGGCCGCCCAUAGCC--AGCCCUCCGUCACCUC
-#=GC SS_cons       ((.(((((((((....))))).))))))((((.((.(.(((((......))))))))))))((((((..(((......)))...((((((((((((.((((....((....((......)
+#=GC SS_cons       ...((((......((.(((((.(((((.((((.((.(.(((((......))))))))))))))))))))(((......)))...(((((((........))).).))).)).)).....)
 
-mouse              GUCGUUCCGCCGCUCCAGCGUCGCCACCGCGCCUCGCCCCGCCGCCACC----------------------------------------------------
-human              UUCACCGCACC-CUCGGACUGCCCCAAGGCCCCCGCCGCCGC-------UCCAGCGCCGCGCAGCCACCGCCGCCGCCGCCGCCUCUCCUUAGUCGCCGCC
-#=GC SS_cons       ).....))...))))))))))))....))))....))))))............(((.((.((.((....)).)))).))).....................
+mouse              GUCGUUCCGCCGCUCCAGCGUCGCCACCGCGCCUCGCCCCGCCGCCACC----------------------------------------------
+human              UUCA--CCGCACCCUCGGACUGCCCCAAGGCCCCCGCCGCCGCUCCAGCGCCGCGCAGCCACCGCCGCCGCCGCCGCCUCUCCUUAGUCGCCGCC
+#=GC SS_cons       )))....((((((..(((.(.(((....)))))).)..))))))...(((.((.((.((....)).)))).))).....................
 //
