@@ -9,21 +9,21 @@ namespace LocARNA {
 
     StralScore::StralScore(const RnaData &rnaA,
                            const RnaData &rnaB,
-                           const Matrix<double> &sim_mat_,
-                           const Alphabet<char, 4> &alphabet_,
-                           double pf_struct_weight_,
-                           double gap_opening_,
-                           double gap_extension_)
-        : seqA(rnaA.sequence()),
-          seqB(rnaB.sequence()),
-          sim_mat(sim_mat_),
-          alphabet(alphabet_),
-          pf_struct_weight(pf_struct_weight_),
-          gap_opening(gap_opening_),
-          gap_extension(gap_extension_) {
+                           const Matrix<double> &sim_mat,
+                           const Alphabet<char, 4> &alphabet,
+                           double struct_weight,
+                           double indel_opening,
+                           double indel)
+        : seqA_(rnaA.sequence()),
+          seqB_(rnaB.sequence()),
+          sim_mat_(sim_mat),
+          alphabet_(alphabet),
+          struct_weight_(struct_weight),
+          indel_opening_(indel_opening),
+          indel_(indel) {
         // initialize the vectors
-        init_prob_vecs(rnaA, p_upA, p_downA, p_unA);
-        init_prob_vecs(rnaB, p_upB, p_downB, p_unB);
+        init_prob_vecs(rnaA, p_upA_, p_downA_, p_unA_);
+        init_prob_vecs(rnaB, p_upB_, p_downB_, p_unB_);
     }
 
     double
@@ -32,11 +32,11 @@ namespace LocARNA {
         //
         int pairs = 0;
         double seq_score = 0;
-        for (size_type k = 0; k < seqA.num_of_rows(); k++) {
-            for (size_type l = 0; l < seqB.num_of_rows(); l++) {
-                if (alphabet.in(seqA[i][k]) && alphabet.in(seqB[j][l])) {
-                    seq_score += sim_mat(alphabet.idx(seqA[i][k]),
-                                         alphabet.idx(seqB[j][l]));
+        for (size_type k = 0; k < seqA_.num_of_rows(); k++) {
+            for (size_type l = 0; l < seqB_.num_of_rows(); l++) {
+                if (alphabet_.in(seqA_[i][k]) && alphabet_.in(seqB_[j][l])) {
+                    seq_score += sim_mat_(alphabet_.idx(seqA_[i][k]),
+                                          alphabet_.idx(seqB_[j][l]));
                     pairs++;
                 }
             }
@@ -44,8 +44,8 @@ namespace LocARNA {
         if (pairs != 0)
             seq_score /= pairs;
 
-        double res = pf_struct_weight *
-                (sqrt(p_downA[i] * p_downB[j]) + sqrt(p_upA[i] * p_upB[j]))
+        double res = struct_weight_ *
+                (sqrt(p_downA_[i] * p_downB_[j]) + sqrt(p_upA_[i] * p_upB_[j]))
             //    + sqrt( std::max(0.0,p_unA[i]*p_unB[j]) ) * seq_score;
             + seq_score;
         /* ATTENTION: in the StrAl paper it is claimed that not weighting the
@@ -80,20 +80,20 @@ namespace LocARNA {
     void
     StralScore::reverse() {
         // revert the sequences
-        seqA.reverse();
-        seqB.reverse();
+        seqA_.reverse();
+        seqB_.reverse();
 
         // now revert all vectors (pay attention for index start 1)
 
-        std::reverse(p_upA.begin() + 1, p_upA.end());
-        std::reverse(p_downA.begin() + 1, p_downA.end());
-        std::reverse(p_unA.begin() + 1, p_unA.end());
-        std::reverse(p_upB.begin() + 1, p_upB.end());
-        std::reverse(p_downB.begin() + 1, p_downB.end());
-        std::reverse(p_unB.begin() + 1, p_unB.end());
+        std::reverse(p_upA_.begin() + 1, p_upA_.end());
+        std::reverse(p_downA_.begin() + 1, p_downA_.end());
+        std::reverse(p_unA_.begin() + 1, p_unA_.end());
+        std::reverse(p_upB_.begin() + 1, p_upB_.end());
+        std::reverse(p_downB_.begin() + 1, p_downB_.end());
+        std::reverse(p_unB_.begin() + 1, p_unB_.end());
 
         // and to be precise (in practice a waste of time :))
-        std::swap(p_upA, p_downA);
-        std::swap(p_upB, p_downB);
+        std::swap(p_upA_, p_downA_);
+        std::swap(p_upB_, p_downB_);
     }
 }

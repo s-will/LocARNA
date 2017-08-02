@@ -94,8 +94,7 @@ namespace LocARNA {
           max_j_(a.max_j_),
           D_created_(a.D_created_),
           alignment_(a.alignment_),
-          def_scoring_view_(this),
-          free_endgaps_(a.free_endgaps_) {}
+          def_scoring_view_(this) {}
 
     AlignerImpl::AlignerImpl(const Sequence &seqA,
                              const Sequence &seqB,
@@ -115,8 +114,7 @@ namespace LocARNA {
           max_j_(seqB.length()),
           D_created_(false),
           alignment_(seqA, seqB),
-          def_scoring_view_(this),
-          free_endgaps_(params_->free_endgaps_) {
+          def_scoring_view_(this) {
         Ms_.resize(params_->struct_local_ ? 8 : 1);
         Es_.resize(params_->struct_local_ ? 4 : 1);
         Fs_.resize(params_->struct_local_ ? 4 : 1);
@@ -323,7 +321,14 @@ namespace LocARNA {
 
         // fill entries left of valid entries
         for (; i < ar; i++) {
-            assert(params_->trace_controller_->min_col(i) > bl);
+            if (! (params_->trace_controller_->min_col(i) > bl) ){
+                std::cerr
+                    << i << ": "
+                    << params_->trace_controller_->min_col(i) <<" "
+                    << bl
+                    <<std::endl;
+                assert(false);
+            }
             M(i, params_->trace_controller_->min_col(i) - 1) =
                 infty_score_t::neg_infty;
         }
@@ -733,8 +738,8 @@ namespace LocARNA {
         M_matrix_t &M = Ms_[E_NO_NO];
 
         init_state(E_NO_NO, r_.startA() - 1, r_.endA() + 1, r_.startB() - 1,
-                   r_.endB() + 1, !free_endgaps_.allow_left_2(), false,
-                   !free_endgaps_.allow_left_1(), false, &def_scoring_view_);
+                   r_.endB() + 1, !params_->free_endgaps_.allow_left_2(), false,
+                   !params_->free_endgaps_.allow_left_1(), false, &def_scoring_view_);
 
         // need to handle anchor constraints:
         // search maximum to the right of (or at) rightmost anchor constraint
@@ -765,7 +770,7 @@ namespace LocARNA {
         max_i_ = r_.endA();
         max_j_ = r_.endB();
 
-        if (free_endgaps_.allow_right_2()) {
+        if (params_->free_endgaps_.allow_right_2()) {
             // search maximum in the rightmost row r_.endB()
             // pay attention for anchor constraints AND trace controller
 
@@ -780,7 +785,7 @@ namespace LocARNA {
             }
         }
 
-        if (free_endgaps_.allow_right_1()) {
+        if (params_->free_endgaps_.allow_right_1()) {
             // search maximum in the last column r_.endA()
             // pay attention for anchor constraints AND trace controller
 
@@ -1250,7 +1255,7 @@ namespace LocARNA {
                 // pad with gap edges, unless in special cases (local/semi-local
                 // alignment)
                 if (!(tl &&
-                      (params_->sequ_local_ || free_endgaps_.allow_left_1()))) {
+                      (params_->sequ_local_ || params_->free_endgaps_.allow_left_1()))) {
                     for (int k = bl + 1; k <= j; k++) {
                         alignment_.append(-1, k);
                     }
@@ -1266,7 +1271,7 @@ namespace LocARNA {
                 // pad with gap edges, unless in special cases (local/semi-local
                 // alignment)
                 if (!(tl &&
-                      (params_->sequ_local_ || free_endgaps_.allow_left_2()))) {
+                      (params_->sequ_local_ || params_->free_endgaps_.allow_left_2()))) {
                     for (int k = al + 1; k <= i; k++) {
                         alignment_.append(k, -1);
                     }

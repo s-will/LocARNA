@@ -1,5 +1,5 @@
-#ifndef LOCARNA_PARAMS_HH
-#define LOCARNA_PARAMS_HH
+#ifndef LOCARNA_ALIGNER_PARAMS_HH
+#define LOCARNA_ALIGNER_PARAMS_HH
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -7,6 +7,7 @@
 
 #include "scoring_fwd.hh"
 #include "named_arguments.hh"
+#include "free_endgaps.hh"
 
 #include <vector>
 #include <string>
@@ -35,71 +36,6 @@ namespace LocARNA {
     class AlignerP;
 
     /**
-       \brief Description of free end gaps.
-
-       Decodes the description given by a string of 4 characters '+'/'-'
-       and provides methods with reasonable names.
-    */
-    class FreeEndgapsDescription {
-        std::vector<bool> desc;
-
-    public:
-        /**
-         * @brief Construct from string description
-         *
-         * @param d description given by a string of 4 characters '+'/'-'
-         *
-         * @note the string description is suited to specify free end gaps in
-         * this way on the command line
-         */
-        explicit FreeEndgapsDescription(const std::string &d) : desc(4) {
-            if (d.length() >= 4) {
-                for (size_t i = 0; i < 4; i++)
-                    desc[i] = (d[i] == '+');
-            } else {
-                for (size_t i = 0; i < 4; i++)
-                    desc[i] = false;
-            }
-        }
-
-        /**
-         * Are gaps free at left end of first sequences?
-         * @return whether free end gaps are allowed
-         */
-        bool
-        allow_left_1() const {
-            return desc[0];
-        }
-
-        /**
-         * Are gaps free at right end of first sequences?
-         * @return whether free end gaps are allowed
-         */
-        bool
-        allow_right_1() const {
-            return desc[1];
-        }
-
-        /**
-         * Are gaps free at left end of second sequences?
-         * @return whether free end gaps are allowed
-         */
-        bool
-        allow_left_2() const {
-            return desc[2];
-        }
-
-        /**
-         * Are gaps free at right end of second sequences?
-         * @return whether free end gaps are allowed
-         */
-        bool
-        allow_right_2() const {
-            return desc[3];
-        }
-    };
-
-    /**
        \brief Parameter for alignment by Aligner
 
        Collects the parameters for the aligner object.  These parameters
@@ -120,7 +56,7 @@ namespace LocARNA {
         DEFINE_NAMED_ARG_DEFAULT_FEATURE(no_lonely_pairs, bool, false);
         DEFINE_NAMED_ARG_DEFAULT_FEATURE(struct_local, bool, false);
         DEFINE_NAMED_ARG_DEFAULT_FEATURE(sequ_local, bool, false);
-        DEFINE_NAMED_ARG_DEFAULT_FEATURE(free_endgaps, std::string, "");
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(free_endgaps, FreeEndgaps, FreeEndgaps("----"));
         DEFINE_NAMED_ARG_DEFAULT_FEATURE(DO_TRACE, bool, true);
         DEFINE_NAMED_ARG_DEFAULT_FEATURE(max_diff_am, int, -1);
         DEFINE_NAMED_ARG_DEFAULT_FEATURE(max_diff_at_am, int, -1);
@@ -251,6 +187,6 @@ namespace LocARNA {
             sparsification_mapperB_ = get_named_arg<sparsification_mapperB>(args);
         }
     };
-}
+} // end namespace LocARNA
 
-#endif // LOCARNA_PARAMS_HH
+#endif // LOCARNA_ALIGNER_PARAMS_HH
