@@ -12,7 +12,7 @@
 #include "aligner_restriction.hh"
 #include "scoring.hh"
 #include "alignment.hh"
-#include "params.hh"
+#include "aligner_params.hh"
 
 namespace LocARNA {
 
@@ -275,8 +275,6 @@ namespace LocARNA {
         };
 
         const UnmodifiedScoringView def_scoring_view_; //!< Default scoring view
-
-        FreeEndgapsDescription free_endgaps_;
 
         // ============================================================
 

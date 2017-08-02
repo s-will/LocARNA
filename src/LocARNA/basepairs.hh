@@ -11,7 +11,6 @@
 #include <set>
 #include <assert.h>
 
-#include "params.hh"
 #include "sparse_matrix.hh"
 
 namespace LocARNA {

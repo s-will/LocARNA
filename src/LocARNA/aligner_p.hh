@@ -12,7 +12,7 @@
 #endif
 
 #include "scoring.hh"
-#include "params.hh"
+#include "aligner_params.hh"
 
 #include "matrix.hh"
 

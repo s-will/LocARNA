@@ -1365,13 +1365,15 @@ namespace LocARNA {
 
                 bm_prob(i, j) = bm_prob(i, j) / partFunc;
 
-                // assert(bm_prob(i,j)<=1);
-                if (bm_prob(i, j) > 1) {
+#ifndef NDEBUG
+                // assert(bm_prob(i,j) <= 1 + 1e-8);
+                if (bm_prob(i, j) > 1 + 1e-8) {
                     std::ostringstream err;
                     err << "ERROR: bm prob " << i << " " << j << " "
                         << (double)bm_prob(i, j);
                     throw failure(err.str());
                 }
+#endif
             }
         }
 
