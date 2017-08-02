@@ -303,6 +303,12 @@ the difference to the reference alignment is restricted. [def: off/-1]
 Same restriction as max-diff but only at the ends of arcs in arc
 matches. [def: off/-1]
 
+=item B<--min-trace-probability>=probability
+
+Minimal sequence alignment probability of potential traces
+(probability-based sequence alignment envelope) [default=1e-4,
+moderate filter].
+
 =item B<--max-diff-aln>=file
 
 Computes "realignment" in the environment of the given reference
@@ -1039,6 +1045,8 @@ my @autopass_arg_options =
      "max-diff-am=i",
      "max-diff=i",
      "max-diff-at-am=i",
+
+     "min-trace-probability=f",
 
      "maxBPspan=i",
 

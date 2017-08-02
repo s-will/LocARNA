@@ -18,7 +18,7 @@
 #include "LocARNA/aligner_n.hh"
 #include "LocARNA/rna_data.hh"
 #include "LocARNA/arc_matches.hh"
-#include "LocARNA/match_probs.hh"
+#include "LocARNA/edge_probs.hh"
 #include "LocARNA/ribosum.hh"
 #include "LocARNA/ribofit.hh"
 #include "LocARNA/anchor_constraints.hh"
@@ -29,7 +29,7 @@
 #include "LocARNA/global_stopwatch.hh"
 #include "LocARNA/pfold_params.hh"
 #include "LocARNA/main_helper.icc"
-#include "LocARNA/params.hh"
+#include "LocARNA/aligner_params.hh"
 
 using namespace std;
 using namespace LocARNA;
@@ -187,6 +187,8 @@ option_def my_options[] = {
      "alignment", clp.help_text["max_diff_pw_alignment"]},
     {"max-diff-relax", 0, &clp.max_diff_relax, O_NO_ARG, 0, O_NODEFAULT, "",
      clp.help_text["max_diff_relax"]},
+     {"min-trace-probability", 0, 0, O_ARG_DOUBLE, &clp.min_trace_probability,
+      "1e-8", "probability", clp.help_text["min_trace_probability"]},
 
     {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "MEA score"},
 
@@ -513,9 +515,6 @@ main(int argc, char **argv) {
                                                 alistr[0], alistr[1]);
     }
 
-    TraceController trace_controller(seqA, seqB, multiple_ref_alignment.get(),
-                                     clp.max_diff, clp.max_diff_relax);
-
     // ------------------------------------------------------------
     // Handle constraints (optionally)
 
@@ -531,6 +530,15 @@ main(int argc, char **argv) {
             std::cout << "Found sequence constraints." << std::endl;
         }
     }
+
+    TraceController trace_controller(seqA, seqB, multiple_ref_alignment.get(),
+                                     clp.max_diff, clp.max_diff_relax);
+
+    trace_controller.restrict_by_anchors(seq_constraints);
+
+    restrict_trace_by_probabilities(clp, rna_dataA.get(), rna_dataB.get(),
+                                   ribosum.get(), ribofit.get(),
+                                   &trace_controller);
 
     // ----------------------------------------
     // construct set of relevant arc matches
@@ -605,7 +613,8 @@ main(int argc, char **argv) {
     if (clp.write_matchprobs || clp.mea_alignment) {
         match_probs =
             MainHelper::init_match_probs(clp, rna_dataA.get(), rna_dataB.get(),
-                                         ribosum.get(), ribofit.get());
+                                         &trace_controller, ribosum.get(),
+                                         ribofit.get());
     }
     if (clp.write_matchprobs) {
         MainHelper::write_match_probs(clp, match_probs.get());
@@ -694,7 +703,7 @@ main(int argc, char **argv) {
                        AlignerParams::scoring(&scoring),
                        AlignerParams::struct_local(clp.struct_local),
                        AlignerParams::sequ_local(clp.sequ_local),
-                       AlignerParams::free_endgaps(clp.free_endgaps),
+                       AlignerParams::free_endgaps(FreeEndgaps(clp.free_endgaps)),
                        AlignerParams::max_diff_am(clp.max_diff_am),
                        AlignerParams::max_diff_at_am(clp.max_diff_at_am),
                        AlignerParams::trace_controller(&trace_controller),

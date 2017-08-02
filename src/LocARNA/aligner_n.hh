@@ -11,7 +11,7 @@
 #include "arc_matches.hh"
 #include "alignment.hh"
 
-#include "params.hh"
+#include "aligner_params.hh"
 #include "scoring.hh"
 
 #include "matrix.hh"

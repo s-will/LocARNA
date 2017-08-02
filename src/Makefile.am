@@ -23,10 +23,9 @@ libLocARNA_@API_VERSION@_la_SOURCES = LocARNA/aligner.cc		\
 	LocARNA/aux.cc LocARNA/basepairs.cc				\
 	LocARNA/confusion_matrix.cc LocARNA/exact_matcher.cc		\
 	LocARNA/global_stopwatch.cc LocARNA/infty_int.cc		\
-	LocARNA/match_probs.cc LocARNA/mcc_matrices.cc			\
+	LocARNA/edge_probs.cc LocARNA/mcc_matrices.cc			\
 	LocARNA/multiple_alignment.cc LocARNA/options.cc		\
-	LocARNA/params.cc LocARNA/pfold_params.cc LocARNA/ribofit.cc	\
-	LocARNA/ribosum.cc LocARNA/rna_data.cc				\
+	LocARNA/ribofit.cc LocARNA/ribosum.cc LocARNA/rna_data.cc	\
 	LocARNA/rna_ensemble.cc LocARNA/rna_structure.cc		\
 	LocARNA/scoring.cc LocARNA/sequence.cc				\
 	LocARNA/sequence_annotation.cc					\
@@ -44,19 +43,20 @@ library_includedir=$(includedir)/LocARNA-$(API_VERSION)
 nobase_library_include_HEADERS = LocARNA/aligner.hh			\
 	LocARNA/aligner_impl.hh LocARNA/aligner_n.hh			\
 	LocARNA/aligner_p.hh LocARNA/aligner_p.icc			\
-	LocARNA/aligner_restriction.hh LocARNA/alignment.hh		\
-	LocARNA/alignment_impl.hh LocARNA/alphabet.hh			\
-	LocARNA/alphabet.icc LocARNA/anchor_constraints.hh		\
-	LocARNA/arc_matches.hh LocARNA/aux.hh				\
-	LocARNA/base_pair_filter.hh LocARNA/basepairs.hh		\
-	LocARNA/confusion_matrix.hh LocARNA/discrete_distribution.hh	\
-	LocARNA/exact_matcher.hh LocARNA/ext_rna_data.hh		\
-	LocARNA/ext_rna_data_impl.hh LocARNA/global_stopwatch.hh	\
+	LocARNA/aligner_params.hh LocARNA/aligner_restriction.hh	\
+	LocARNA/alignment.hh LocARNA/alignment_impl.hh			\
+	LocARNA/alphabet.hh LocARNA/alphabet.icc			\
+	LocARNA/anchor_constraints.hh LocARNA/arc_matches.hh		\
+	LocARNA/aux.hh LocARNA/base_pair_filter.hh			\
+	LocARNA/basepairs.hh LocARNA/confusion_matrix.hh		\
+	LocARNA/discrete_distribution.hh LocARNA/exact_matcher.hh	\
+	LocARNA/ext_rna_data.hh LocARNA/ext_rna_data_impl.hh		\
+	LocARNA/free_endgaps.hh LocARNA/global_stopwatch.hh		\
 	LocARNA/infty_int.hh LocARNA/main_helper.icc			\
-	LocARNA/match_probs.hh LocARNA/matrices.hh LocARNA/matrix.hh	\
+	LocARNA/edge_probs.hh LocARNA/matrices.hh LocARNA/matrix.hh	\
 	LocARNA/mcc_matrices.hh LocARNA/multiple_alignment.hh		\
 	LocARNA/named_arguments.hh LocARNA/options.hh			\
-	LocARNA/params.hh LocARNA/pfold_params.hh LocARNA/quadmath.hh	\
+	LocARNA/pfold_params.hh LocARNA/quadmath.hh			\
 	LocARNA/ribofit.hh LocARNA/ribofit_will2014.icc			\
 	LocARNA/ribofit_will2014.ihh LocARNA/ribosum.hh			\
 	LocARNA/ribosum85_60.icc LocARNA/rna_data.hh			\

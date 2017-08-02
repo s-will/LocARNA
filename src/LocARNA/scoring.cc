@@ -3,7 +3,7 @@
 #include "scoring.hh"
 #include "rna_data.hh"
 #include "arc_matches.hh"
-#include "match_probs.hh"
+#include "edge_probs.hh"
 #include "ribosum.hh"
 #include "ribofit.hh"
 #include "zip.hh"

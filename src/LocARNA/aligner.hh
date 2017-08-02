@@ -10,7 +10,7 @@
 #include "scoring_fwd.hh"
 #include "rna_structure.hh"
 
-#include "params.hh"
+#include "aligner_params.hh"
 
 namespace LocARNA {
 
