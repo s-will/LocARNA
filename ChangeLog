@@ -2,6 +2,7 @@
 === 2017
 
 	[mlocarna] Fix specifying anchor constraints via bed file
+	           allow arbitrary order of entries in bed input
 	[mlocarna] Refactor computation of input pp files;
 	           support caching of pp files (--dp-cache)
 
@@ -11,7 +12,7 @@
 	  * named arguments
 	  * zip and enumerate iterators
 	  * fight code rot, more use of C++11/14 features
-	Avoid shell evaluation in mlocarna system calls (security)
+	[security] Avoid shell evaluation in mlocarna system calls
 	Use locarna_rnafold_pp for constrained folding in mlocarna
 	Optimize inner loop (add sentinels to left and right adjacency lists)
 
