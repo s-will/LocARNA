@@ -518,11 +518,11 @@ base pairs with at least one gapped end).
 
 =item  B<--dp-cache>=directory
 
-Use directory <dir> as cache for dp files (useful for avoiding multiple computation).
+Use directory <dir> as cache for dot plot or pp files (useful for avoiding multiple computation).
 
 =item  B<--only-dps>
 
-Compute only the missing dp files, don't align (useful for filling the dp-cache).
+Compute only the missing dot plot files, don't align (useful for filling the dp-cache).
 
 =item  B<--evaluate>=file
 
@@ -2856,214 +2856,353 @@ sub generate_input_files_without_bpps {
 }
 
 ############################################################
-## compute_dotplot(i,seqs)
-## compute probability dotplot for the $ith sequence in $seqs (using RNAfold/RNAplfold)
+## compute dotplot using locarna_rnafold_pp
 ##
-sub compute_dotplot {
-    my ($i,$seqs)=@_;
+## @param $ppfile output file name
+## @param $seq sequence record
+##
+## @result pp file "$ppfile"
+sub compute_dotplot_rnafold_pp {
+    my ($ppfile, $seq) = @_;
 
-    my $tmpname = threadsafe_name("$global_tmpname");
+    my @fold_cmd = ( "$bindir/locarna_rnafold_pp", "-p" => $opts{'min-prob'} );
 
-    my $constraints;
-    if (! $opts{'ignore-constraints'}) {
-	$constraints = anchor_constraint_string($seqs->[$i]);
+    if ($opts{'in-loop-robabilities'}) {
+        push @fold_cmd, "--in-loop";
+    }
+    if ( $opts{'stacking'} || $opts{'new-stacking'} ) {
+        push @fold_cmd, "--stacking";
+    }
+    if (defined($opts{'maxBPspan'}) && $opts{'maxBPspan'} ne "-1") {
+        push @fold_cmd, "--maxBPspan" => $opts{'maxBPspan'};
     }
 
-    my $name = $seqs->[$i]->{name}; # the name of the sequence
+    push @fold_cmd, "-o" => "$ppfile";
 
-    my $ppname="$input_dir/".get_normalized_seqname($name);
+    my $seqname = $seq->{name};
+    my $seq_str = $seq->{seq}; ## the sequence string
 
-    ## RNAfold command/argument list in case of non-local folding by RNAfold
-    my @RNAfoldpNonLocal = ();
+    my $input = "$seqname $seq_str\n";
 
-    ## decide whether we can use locarna_rnafold_pp as a short cut for
-    ## generating pp files by setting these variables:
-    my @RNAfoldp = ();
-    my $convert_to_pp=1;
-    my $seqname;
-    ## Note: in the case of using locarna_rnafold_pp, we directly
-    ## produce the pp file in the input sub-directory. Since no dp file is produced,
-    ## caching of dp files does not work.
-    ##
-    if ((@RNAfold_args==0 ) && (!defined($opts{'plfold-span'}))
-       # && ((! defined($constraints)) || ($constraints eq ""))
-       )
-    {
-	@RNAfoldp = ( "$bindir/locarna_rnafold_pp", "-p" => $opts{'min-prob'} );
-	if ($opts{'in-loop-robabilities'}) {
-	    push @RNAfoldp, "--in-loop";
-	}
-        if ( $opts{'stacking'} || $opts{'new-stacking'} ) {
-            push @RNAfoldp, "--stacking";
-	}
-        if (defined($opts{'maxBPspan'}) && $opts{'maxBPspan'} ne "-1") {
-            push @RNAfoldp, "--maxBPspan" => $opts{'maxBPspan'};
+    if ( not $opts{'ignore-constraints'} ) {
+        my $structure_constraints = $seq->{"ANNO\#S"};
+        if ( defined($structure_constraints) ) {
+            $input = $input."\#S $structure_constraints\n";
+            push @fold_cmd, "-C";
         }
 
-	$convert_to_pp=0;
-	push @RNAfoldp, "-o" => "$ppname";
-	$seqname=$name;
-    } else {
-	if ($opts{'in-loop-probabilities'}) {
-	    print STDERR "Warning: cannot precompute in-loop probabilities.\n";
-	}
-	$seqname=$tmpname;
-        @RNAfoldpNonLocal = ("$RNAfold", "-p2");
-        push  @RNAfoldpNonLocal, @RNAfold_args;
-	if (! defined($opts{'plfold-span'})) {
-	    @RNAfoldp = @RNAfoldpNonLocal;
-            push @RNAfoldp, "-o";
-        } else {
-	    push @RNAfoldp, "RNAplfold",
-              "-L" => $opts{'plfold-span'},
-              "-W" => $opts{'plfold-winsize'}, @RNAfold_args;
-	}
+        my $anchor_constraints = anchor_constraint_string($seq);
+        if ( $anchor_constraints ne "" ) {
+            my $i=0;
+            $input .= join("\n", map {$i++;"#A$i ".$_;} split('#', "$anchor_constraints"));
+        }
     }
 
-    my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
+    system_pipein_list($input, @fold_cmd);
+}
+
+########################################
+## convert dp file to pp file and delete RNA(pl)fold files
+##
+## @param dpname base name of dot plot files
+## @param ppfile name of output pp file
+## @param $seq sequence record
+##
+sub convert_and_move_dpfile_to_pp {
+    my ($dpname,$ppfile,$seq) = @_;
+
+    my @args = ($ppfile);
+    push @args, $seq->{name};
+    push @args, $seq->{seq};
+    push @args, anchor_constraint_string($seq);
+
+    if ( -e "$dpname\_dp2.ps" ) {
+        convert_dp_to_pp_with_constraints("$dpname\_dp2.ps", @args, 1);
+    } else {
+        convert_dp_to_pp_with_constraints("$dpname\_dp.ps", @args, 0);
+    }
+
+    unlink "$dpname\_ss.ps" || printerr "Cannot delete $dpname\_ss.ps\n";
+    unlink "$dpname\_dp.ps" || printerr "Cannot delete $dpname\_dp.ps\n";
+    if ( -e "$dpname\_dp2.ps" ) {
+        unlink "$dpname\_dp2.ps" || printerr "Cannot delete $dpname\_dp2.ps\n";
+    }
+}
+
+
+############################################################
+## compute dotplot using RNAfold
+##
+## @param $ppfile output file name
+## @param $seq sequence record
+##
+## @result pp file "$ppfile"
+sub compute_dotplot_rnafold {
+    my ($ppfile,$seq) = @_;
+
+    my $tmpname = get_normalized_seqname($seq->{name});
+
+    my @fold_cmd = ("$RNAfold", "-p2");
+    push  @fold_cmd, @RNAfold_args;
+
+    my $seq_str = $seq->{seq}; ## the sequence string
+
+    my $input = ">$tmpname\n$seq_str\n";
+
+    my $structure_constraints = $seq->{"ANNO\#S"};
+    if ( not $opts{'ignore-constraints'}
+         and defined($structure_constraints) ) {
+        $input = $input."$structure_constraints\n";
+        push @fold_cmd, "-C";
+    }
+
+    system_pipein_list($input,@fold_cmd);
+
+    convert_and_move_dpfile_to_pp($tmpname, $ppfile, $seq)
+}
+
+############################################################
+## compute dotplot using RNAplfold
+##
+## @param $ppfile output file name
+## @param $seq sequence record
+##
+## ignores structure constraints
+sub compute_dotplot_rnaplfold {
+    my ($ppfile,$seq) = @_;
+
+    my $tmpname = get_normalized_seqname($seq->{name});
+
+    my $seq_str = $seq->{seq}; ## the sequence string
 
     ##
-    ## implement optional skipping of input dot plot files:
+    ## fix -W and -L parameters to avoid warnings of
+    ## RNAplfold if window size is too large for sequence.
+    ##
+    my @fold_cmd = ();
+
+    push @fold_cmd,
+      "RNAplfold",
+      "-L" => $opts{'plfold-span'},
+      "-W" => $opts{'plfold-winsize'}, @RNAfold_args;
+
+    my $slen=length($seq_str);
+    my $win = $slen;
+    for (my $i=0; $i < @fold_cmd; $i++) {
+        if ($fold_cmd[$i] eq "-W") {
+            $i++;
+            $win=$fold_cmd[$i];
+            if ($win>$slen) {
+                $fold_cmd[$i] = $slen;
+                $win=$slen;
+            }
+        }
+    }
+    for (my $i=0; $i < @fold_cmd; $i++) {
+        if ($fold_cmd[$i] eq "-L") {
+            $i++;
+            if ($fold_cmd[$i] > $win) {
+                $fold_cmd[$i] = $win;
+            }
+        }
+    }
+
+    my $input = ">$tmpname\n$seq_str\n";
+    system_pipein_list($input, @fold_cmd);
+
+    convert_and_move_dpfile_to_pp($tmpname, $ppfile, $seq)
+}
+
+############################################################
+## compute_dotplot(i,seqs)
+## compute probability dotplot for the $ith sequence in $seqs (using RNAfold/RNAplfold/locarna_rnafold_pp)
+##
+sub compute_dotplot {
+    ## register delegates here
+    my %delegate_compute_dotplot =
+      (
+       "locarna_rnafold_pp" => \&compute_dotplot_rnafold_pp,
+       "RNAfold" => \&compute_dotplot_rnafold,
+       "RNAplfold" => \&compute_dotplot_rnaplfold,
+      );
+
+    my ($i,$seqs)=@_;
+
+    ## the ith sequence
+    my $seq = $seqs->[$i];
+
+    # the (real) name of the sequence
+    my $seqname = $seq->{name};
+
+    my $seq_str = $seq->{seq};
+
+    ## the file system conformant name of the sequence
+    ## @note this name is used as base for files in the cache!
+    my $seqfilename=$seq->{name};
+    $seqfilename =~ s/[^a-zA-Z0-9]/_/g; # replace special characters by "_"
+
+    ## the file system conformant normalized name of the sequence
+    ## @note this name is used as base for files in the result directory!
+    my $seqnormname=get_normalized_seqname($seqname);
+
+    ## name of the resulting dot plot file in pp format
+    my $ppfile="$input_dir/".$seqnormname;
+
+    my $anchor_constraints;
+    if (! $opts{'ignore-constraints'}) {
+	$anchor_constraints = anchor_constraint_string($seqs->[$i]);
+    }
+
+    ## ------------------------------
+    ## SKIPPING
+    ## decide, whether to fold at all (or skip folding)
+    ##
+    ## Implement optional skipping of input dot plot files:
     ## if skip_pp is given and one of the files $ppname, $ppname\_dp2.ps, or $ppname\_dp.ps
     ## is available, no new dot plot is computed.
     ## Test in the above order, so $ppname overrides $ppname\_dp2.ps overrides or $ppname\_dp.ps
     ##
     ## The latter two cases allow using anchor constraints given in the input mfasta file
     ##
+    if ( $opts{'skip-pp'} ) {
+        if ( -e "$ppfile" )  {
+            # assume that the pp file is in pp format
+            print "Skip $seqname\n" if $opts{'moreverbose'};
+            # skip
+        } elsif ( -e "$ppfile\_dp2.ps" ) {
+            # assume that the file is in dp2 format. Therefore, convert to pp.
+            print "Skip $seqname, convert from $ppfile\_dp2.ps\n"  if $opts{'moreverbose'};
+            convert_dp_to_pp_with_constraints("$ppfile\_dp2.ps", $ppfile,
+                                              $seqname, $seq_str,
+                                              $anchor_constraints, 1);
+        } elsif ( -e "$ppfile\_dp.ps" ) {
+            # assume that the file is in dp format. Therefore, convert to pp.
+            print "Skip $seqname, convert from $ppfile\_dp.ps\n"  if $opts{'moreverbose'};
+            convert_dp_to_pp_with_constraints("$ppfile\_dp.ps", $ppfile,
+                                              $seqname, $seq_str,
+                                              $anchor_constraints, 0);
+        }
+        return;
+    }
+
+    ## ------------------------------
+    ## CACHING
+    ## if caching is enabled, use cached dot plots
+    if ( defined( $opts{'dp-cache'} ) ) {
+        my $cached=0; ## whether dot plot could be retrieved from cache
+
+        my $dpname="$opts{'dp-cache'}/$seqfilename";
+
+        if ( -e "$dpname" ) {
+            copy($dpname, $ppfile);
+            $cached=1;
+        } else {
+            # does the file contain conditional probabilities (stacking)
+            my $has_cond_probs = 0;
+
+            if ( -e $dpname."_dp2.ps" ) {
+                $cached = 1;
+                $has_cond_probs = 1;
+                $dpname = $dpname."_dp2.ps";
+            } elsif ( -e $dpname."_dp.ps" ) {
+                $cached = 1;
+                $dpname = $dpname."_dp.ps";
+            }
+
+            if ($cached) {
+                convert_dp_to_pp_with_constraints($dpname,$ppfile,$seqname,
+                                                  $seq_str,$anchor_constraints,
+                                                  $has_cond_probs);
+            }
+        }
+
+        if ($cached) {
+            return;
+        }
+    }
+
+
+    ## ------------------------------
+    ## FIXED STRUCTURE
+    ## @note fixed structure #FS overrides structure #S
+    # case: fixed structure constraints are given
+    if ((!$opts{'ignore-constraints'})
+        && exists $seqs->[$i]->{"ANNO\#FS"}) {
+        if ($opts{'verbose'}) {
+            print "Fixed structure given for sequence "
+              .$seqs->[$i]->{'name'};
+            print " (ignore local folding)" if ($opts{'plfold-span'});
+            print ".\n";
+        }
+        my $structure = $seqs->[$i]->{"ANNO\#FS"};
+        convert_fix_structure_to_pp($ppfile,$seqname,$seq_str,
+                                    $structure,$anchor_constraints);
+        return;
+    }
+    ## ------------------------------
+
+
+    ## NOTE: only from this point, we actually perform some folding
+
+
+    ## ------------------------------
+    ## select folding tool, based on requested vs supported features;
+    ## preferably use rnafold_pp
     ##
-    if ( $opts{'skip-pp'} && (-e "$ppname") ) {
-	# assume that the pp file is in pp format
-	print "Skip $name\n" if $opts{'moreverbose'};
-        # skip
-    } elsif ( $opts{'skip-pp'} && (-e "$ppname\_dp2.ps") ) {
-	# assume that the file is in dp2 format. Therefore, convert to pp.
-	print "Skip $name, convert from $ppname\_dp2.ps\n"  if $opts{'moreverbose'};
-        convert_dp_to_pp_with_constraints("$ppname\_dp2.ps",$ppname,$name,$seq_str,$constraints,1);
-    } elsif ( $opts{'skip-pp'} && (-e "$ppname\_dp.ps") ) {
-        # assume that the file is in dp format. Therefore, convert to pp.
-	print "Skip $name, convert from $ppname\_dp.ps\n"  if $opts{'moreverbose'};
-	convert_dp_to_pp_with_constraints("$ppname\_dp.ps",$ppname,$name,$seq_str,$constraints,0);
-    } else {
-	## ----------------------------------------
-	# partition folding
-	#
+    my $folding_tool = "locarna_rnafold_pp";
 
-        # whether to convert this to pp
-	my $convert_to_pp_this=$convert_to_pp;
+    my $local_folding_requested = defined($opts{'plfold-span'});
 
-	my $longname=$seqs->[$i]->{name};
-	$longname =~ s/[^a-zA-Z0-9]/_/g; # replace special characters by "_" such that this can be used as filename again
+    ## check whether rnafold_pp cannot be used for any reason
+    my $rnafold_pp_applicable =
+      @RNAfold_args == 0
+      && ! $local_folding_requested ;
 
-	my $dpname;
+    my $structure_constraints_given =
+      exists $seqs->[$i]->{"ANNO\#FS"}
+      || exists $seqs->[$i]->{"ANNO\#S"};
 
-	my $new_dp_computed=0; # whether a new dot plot was computed for $name
-
-	if ( !( (defined($opts{'dp-cache'})) && ( -e "$opts{'dp-cache'}/$longname\_dp2.ps" ) ) ) {
-	    $new_dp_computed=1;
-
-	    ## handle cases where structure constraints are specified
-	    ## fixed structure #FS overrides structure #S
-	    ##
-	    if ((!$opts{'ignore-constraints'})
-                && exists $seqs->[$i]->{"ANNO\#FS"}) {
-                if ($opts{'verbose'}) {
-                  print "Fixed structure given for sequence "
-                    .$seqs->[$i]->{'name'};
-                    print " (ignore local folding)" if ($opts{'plfold-span'});
-                    print ".\n";
-                }
-                my $structure = $seqs->[$i]->{"ANNO\#FS"};
-                convert_fix_structure_to_pp($ppname,$name,$seq_str,
-                                            $structure,$constraints);
-                $convert_to_pp_this=0;
-	    }
-	    elsif ((!$opts{'ignore-constraints'})
-                   && exists $seqs->[$i]->{"ANNO\#S"}) {
-#                if ($opts{'verbose'}) {
-#                    print "Structure constraints given for sequence "
-#                      .$seqs->[$i]->{'name'}."\n";
-#                }
-                ## if verbose, check whether local folding is active;
-                ## warn about override
-                if ($opts{'verbose'} and defined($opts{'plfold-span'})) {
-                    printerr "WARNING: constraints override local folding.\n"
-                }
-
-                # if a structure constraint is defined do constraint folding
-		my $constraint_string = $seqs->[$i]->{"ANNO\#S"};
-
-                ## select call for either RNAfold or
-                ## locarna_rnafold_pp
-		if ( $RNAfoldp[0] =~ /locarna_rnafold_pp/ ) {
-                    my $input = "$seqname $seq_str\n\#S $constraint_string\n";
-
-                    my $i=0;
-                    $input .= join("\n", map {$i++;"#A$i ".$_;} split('#', "$constraints"));
-
-                    system_pipein_list($input,
-                                       @RNAfoldp, "-C");
-		} else { ## some non-standard case, but we cannot apply local folding
-		    system_pipein_list(">$seqname\n$seq_str\n$constraint_string\n",
-                                       @RNAfoldpNonLocal, "-C");
-		}
-	    } else { ## no constraints given; we could apply local folding
-                ##
-                ## fix -W and -L parameters to avoid warnings of
-                ## RNAplfold if window size is too large for sequence.
-                ##
-                my @RNAfoldp_edited = ();
-                push @RNAfoldp_edited, @RNAfoldp;
-
-                my $slen=length($seq_str);
-                my $win = $slen;
-                for (my $i=0; $i < @RNAfoldp_edited; $i++) {
-                    if ($RNAfoldp_edited[$i] eq "-W") {
-                        $i++;
-                        $win=$RNAfoldp_edited[$i];
-                        if ($win>$slen) {
-                            $RNAfoldp_edited[$i] = $slen;
-                            $win=$slen;
-                        }
-                    }
-                }
-                for (my $i=0; $i < @RNAfoldp_edited; $i++) {
-                    if ($RNAfoldp_edited[$i] eq "-L") {
-                        $i++;
-                        if ($RNAfoldp_edited[$i] > $win) {
-                            $RNAfoldp_edited[$i] = $win;
-                        }
-                    }
-                }
-
-                system_pipein_list(">$seqname\n$seq_str\n",
-                                   @RNAfoldp_edited);
-	    }
-
-	    if (defined($opts{'dp-cache'})) {
-		copy("$tmpname\_dp.ps", "$dpname\_dp.ps");
-		if ( -e "$tmpname\_dp2.ps" ) {
-                    copy("$tmpname\_dp2.ps", "$dpname\_dp2.ps");
-                }
-	    }
-
-	    $dpname=$tmpname;
-	} else {
-	    $dpname="$opts{'dp-cache'}/$longname";
+    if (! $rnafold_pp_applicable) {
+        if ($opts{'in-loop-probabilities'}) {
+	    print STDERR "Warning: cannot precompute in-loop probabilities.\n";
 	}
 
-	if ($convert_to_pp_this) {
-	    if ( -e "$dpname\_dp2.ps" ) {
-		convert_dp_to_pp_with_constraints("$dpname\_dp2.ps",$ppname,$name,$seq_str,$constraints,1);
-	    } else {
-		convert_dp_to_pp_with_constraints("$dpname\_dp.ps",$ppname,$name,$seq_str,$constraints,0);
-	    }
+        if ($local_folding_requested
+            and not exists $seqs->[$i]->{"ANNO\#S"}
+           ) {
+            $folding_tool = "RNAplfold";
+        } else {
+            $folding_tool = "RNAfold";
+        }
+    }
+    ## ------------------------------
 
-	    if ($new_dp_computed) {
-		unlink "$dpname\_ss.ps" || printerr "Cannot delete $tmpname\_ss.ps\n";
-		unlink "$dpname\_dp.ps" || printerr "Cannot delete $tmpname\_dp.ps\n";
-		if ( -e "$tmpname\_dp2.ps" )  { unlink "$dpname\_dp2.ps" || printerr "Cannot delete $tmpname\_dp2.ps\n"; }
-	    }
-	}
+    ## warn about if in loop probabilities are requested but cannot be
+    ## computed
+    if (! $rnafold_pp_applicable && $opts{'in-loop-probabilities'}) {
+        print STDERR "Warning: cannot precompute in-loop probabilities.\n";
+    }
+
+    ## if verbose, check whether local folding is active; warn about
+    ## override of constraints over local folding
+    if ($opts{'verbose'}
+        and $local_folding_requested
+        and exists $seq->{"ANNO\#S"}) {
+        printerr "WARNING: structure constraints override local folding.\n";
+    }
+
+    # delegate to folding tool specific method
+    if (not exists $delegate_compute_dotplot{$folding_tool}) {
+        print STDERR "Internal ERROR: unknown folding tool $folding_tool.\n";
+        exit -1;
+    }
+    $delegate_compute_dotplot{$folding_tool}($ppfile, $seq);
+
+    ## CACHING: cache the result, if requested
+    if (defined($opts{'dp-cache'})) {
+        if ( -e "$ppfile" ) {
+            copy("$ppfile", "$opts{'dp-cache'}/$seqfilename");
+        }
     }
 }
 

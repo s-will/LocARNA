@@ -417,6 +417,7 @@ sub max {
 ##
 ## @return ref to list of anchor region names in the order of assigned
 ## anchor ids
+## @result set anchor constraints in $seqs
 ##
 ## Anchor constraints in four-column bed format specify positions of
 ## named anchor regions per sequence. The 'contig' names have to
@@ -473,6 +474,7 @@ sub read_anchor_constraints {
         $seqnames{$F[0]}=1;
         push @bedentries, [ @F ];
     }
+
     ## count sequences with specification; fill name->idx hash
     my $specified_seqs=0;
     my $unknown_seqs="";
@@ -757,7 +759,7 @@ sub parse_mfasta_constraints {
 
 ## convert a dotplot file to a pp file
 ## thereby insert the sequence constraint strings
-sub convert_dp_to_pp_with_constraints: prototype($$$$$$) {
+sub convert_dp_to_pp_with_constraints {
     my ($dpfile,$ppfile,$name,$sequence,$constraints,$read_condprobs) = @_;
 
     open(PP_OUT,">$ppfile") || die "Cannot open $ppfile for writing.";
