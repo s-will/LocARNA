@@ -408,6 +408,210 @@ sub max {
 }
 
 ########################################
+## read in bed file, check 4-column format, check existence of
+## sequence names
+sub read_bed4 {
+    my $filename = shift;
+
+    open(my $fh, $filename)
+      || error_exit "ERROR: Cannot open bed file for reading.\n";
+
+    my @bedentries=(); # entries in the bed file
+    my %seqnames=(); # set of sequence names in the bed file
+    while(<$fh>) {
+        my @F=split /\s+/;
+        if (@F != 4) {
+            error_exit "ERROR: bed file $filename has wrong format. "
+              ."Require four-column bed format (line "
+              .(1 + scalar @bedentries).").\n";
+        }
+        if ($F[1]>$F[2]) {
+            error_exit "ERROR: in bed file $filename, start position greater than end position "
+              ."in line\n  ".(1 + scalar @bedentries).": $_\n";
+        }
+        $seqnames{$F[0]}=1;
+        push @bedentries, [ @F ];
+    }
+
+    return \@bedentries;
+}
+
+## generate lookup hash from list of hashs
+sub gen_lookup_hash_loh {
+    my $loh = shift;
+    my $key = shift;
+
+    my %lookup_hash = ();
+
+    my $idx=0;
+    for my $entry (@$loh) {
+        $lookup_hash{$entry->{$key}}=$idx++;
+    }
+    return \%lookup_hash;
+}
+
+
+
+## check whether region name does not occur right of current index in any bin
+sub is_notgreater_name {
+    my $regname = shift;
+    my $rbins = shift;
+    my $rbinmaps = shift;
+    my $rcur_index = shift;
+
+    for my $bin (keys %$rbins) {
+        if ( exists $rbinmaps->{$bin}{$regname}
+             and $rbinmaps->{$bin}{$regname} > $rcur_index->{$bin} ) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+########################################
+## assign indices to region names
+##
+## Indices are assigned ascending in alignment order.  The alignment
+## order is the order of regions enforced by the requirement to occur
+## in a common multiple alignment (from smaller to larger positions).
+##
+## Failure policy:
+##   Exit with error
+##   * if there is no alignment order
+##   * if regions overlap
+##
+sub assign_region_indices {
+
+    # get bedentries and make copy
+    my $bedentries_in = shift;
+    my $bedentries = [ @{ $bedentries_in } ];
+
+    # constants: positions in (extended) bed entry
+    my $SEQNAME=0;
+    my $START=1;
+    my $END=2;
+    my $REGNAME=3;
+    my $LINENO=4;
+
+    # add line numbers to bed entries (to keep track of input order)
+    for (my $i=0; $i < @$bedentries; $i++) {
+        my @entry = @{ $bedentries->[$i] };
+        push @entry, $i;
+        $bedentries->[$i] = \@entry;
+    }
+
+    for (my $i=0; $i < @$bedentries; $i++) {
+        my @entry = @{ $bedentries->[$i] };
+    }
+
+    # bin bedentries by sequences
+    my %bins = ();
+    for my $bedentry (@$bedentries) {
+        my @bin = ();
+        if (exists $bins{$bedentry->[$SEQNAME]}) {
+            @bin = @{ $bins{$bedentry->[$SEQNAME]} };
+        }
+        push @bin, $bedentry;
+        $bins{$bedentry->[$SEQNAME]} = \@bin;
+    }
+
+
+    # sort bins by first position
+    for my $bin (keys %bins) {
+        $bins{$bin} = [ sort {$a->[$START] <=> $b->[$START]} @{ $bins{$bin} } ];
+    }
+
+    # print "Sorted bins:\n ";
+    # for my $bin (keys %bins) {
+    #     print "BIN $bin ";
+    #     for my $x (@{$bins{$bin}}) {print ", @$x";}
+    #     print "\n";
+    # }
+
+    # detect overlap
+    for my $bin (keys %bins) {
+        my $last_end=0;
+        for my $entry (@{$bins{$bin}}) {
+            if ($entry->[$START] < $last_end) {
+                error_exit ("ERROR: region \"$entry->[$REGNAME]\" overlaps previous region".
+                            " for sequence \"$entry->[$SEQNAME]\" in bed anchor constraints.\n");
+            }
+            $last_end = $entry->[$END];
+        }
+    }
+
+
+    # create name to index map for each bin
+    my %binmaps = ();
+    for my $bin (keys %bins) {
+        my %n2i;
+        for (my $i=0; $i < @{ $bins{$bin} }; $i++) {
+            $n2i{ $bins{$bin}->[$i]->[$REGNAME] } = $i;
+        }
+        $binmaps{$bin} = \%n2i;
+    }
+
+    # print("Name to index map\n");
+    # for my $bin (keys %bins) {
+    #     print "  BIN_N2I $bin ";
+    #     for my $n (keys %{$binmaps{$bin}}) {print ", $n:".$binmaps{$bin}->{$n};}
+    #     print "\n";
+    # }
+
+    # merge bins to construct order or detect inconsistency
+    my $region_name_index = 0;
+    my %region_name_map  = ();
+
+    my %cur_index; #index for each bin
+    for my $bin (keys %bins) {$cur_index{$bin}=0;} #initialize
+
+    while (1) {
+        # determine smallest region name
+        #  * does not occur right of cur index in any bin (is_notgreater_name)
+        #  * has smallest line number
+        my $min_name = undef;
+        my $min_lineno = @{ $bedentries };
+
+        my $done=1;
+        for my $bin (keys %bins) {
+            if ( $cur_index{$bin} >= @{ $bins{$bin} } ) {next;}
+            $done = 0;
+
+            my $cur_entry = $bins{$bin}->[$cur_index{$bin}];
+            if ( is_notgreater_name($cur_entry->[$REGNAME], \%bins, \%binmaps, \%cur_index) ) {
+                if ( $cur_entry->[$LINENO] < $min_lineno ) {
+                    $min_lineno = $cur_entry->[$LINENO];
+                    $min_name = $cur_entry->[$REGNAME];
+                }
+            }
+        }
+        if ($done) {last;}
+
+        ## detect inconsistencies
+        if ( not defined($min_name) ) {
+            error_exit "ERROR: Conflicting anchors in bed file.\n";
+        }
+        if (exists $region_name_map{ $min_name } ) {
+            error_exit "ERROR: Inconsistent anchors in bed file.\n";
+        }
+
+        ## advance current indices of bins where current name is $min_name
+        for my $bin (keys %bins) {
+            if ( $cur_index{$bin} >= @{ $bins{$bin} } ) {next;}
+            my $cur_entry = $bins{$bin}->[$cur_index{$bin}];
+            if ($cur_entry->[$REGNAME] eq $min_name) {
+                $cur_index{$bin}++;
+            }
+        }
+        ## register min name
+        $region_name_map{ $min_name } = $region_name_index++;
+    }
+
+    return \%region_name_map;
+}
+
+########################################
 ## read_anchor_constraints($seqs,$filename)
 ##
 ## Read anchor constraints from bed file and set them in $seqs
@@ -429,21 +633,24 @@ sub max {
 ## The specification of anchors via this option removes all anchor
 ## definitions that may be given directly in the fasta input file!
 ##
-## Details: region names receive name numbers in the order of their
-## appearance in the bed file. As well, positions in a region receive
-## position numbers from left to right. Numbering starts with
-## 0. Anchor names are than composed of region number and position
-## number, both with leading 0s, where the number of digits is choosen
-## minimally to encode all occuring anchor names with the same length.
-## Finally the anchor names are encoded as anchor constraint lines in
-## the same way LocARNA accepts them in the fasta input file.
+## Details: region names receive name numbers in the order the names
+## have to appear in an alignment; inconsistencies are detected. As
+## well, positions in a region receive position numbers from left to
+## right. Numbering starts with 0. Anchor names are than composed of
+## region number and position number, both with leading 0s, where the
+## number of digits is choosen minimally to encode all occuring anchor
+## names with the same length.  Finally the anchor names are encoded
+## as anchor constraint lines in the same way LocARNA accepts them in
+## the fasta input file.
 ##
 ## FAILURE policy:
 ## exit with error message,
 ## * if file cannot be read or has the wrong format.
-## * if bed file does not contain >=2 sequence names in seqs
-## * if some sequence names in bed file do not exist in $seqs
+## * if bed file does not contain >=2 sequence names in $seqs
+## * if some sequence names in the bed file do not exist in $seqs
 ## * if some anchor regions is out of range
+## * if anchor regions conflict with each other (cross or overlap)
+## * if regions of same name have different lengths
 ##
 ## @pre names in $seqs are unique
 ##
@@ -452,40 +659,25 @@ sub read_anchor_constraints {
     my $seqs = shift;
     my $filename = shift;
 
-    open(my $fh, $filename)
-      || error_exit "ERROR: Cannot open anchor constraints file for reading\n";
+    # read entries in the bed file
+    my $bedentries = read_bed4($filename);
 
-    ## read in bed file, check 4-column format, check existence of
-    ## sequence names
-    my @bedentries=(); # entries in the bed file
+    # generate set of sequence names
     my %seqnames=(); # set of sequence names in the bed file
-    while(<$fh>) {
-        my @F=split /\s+/;
-        if (@F != 4) {
-            error_exit "ERROR: anchor constraints file has wrong format. "
-              ."Require four-column bed format (line "
-              .(1 + scalar @bedentries).").\n";
-        }
-        if ($F[1]>$F[2]) {
-            error_exit "ERROR: start position greater than end position "
-              ."in anchor constraints bed entry\n  "
-              .(1 + scalar @bedentries).": $_\n";
-        }
-        $seqnames{$F[0]}=1;
-        push @bedentries, [ @F ];
-    }
+    foreach my $F (@$bedentries) {$seqnames{$F->[0]}=1;}
 
     ## count sequences with specification; fill name->idx hash
+    my $seq_idx_by_name = gen_lookup_hash_loh($seqs,'name');
+
+    ## --------------------
+    ## check input errors
     my $specified_seqs=0;
     my $unknown_seqs="";
-    my %seq_idx_by_name=();
-    my $seq_idx=0;
-    for my $seq (@{$seqs}) {
-        $seq_idx_by_name{$seq->{name}}=$seq_idx++;
-        if (exists $seqnames{$seq->{'name'}}) {
+    for my $k ( keys %$seq_idx_by_name ) {
+        if (exists $seqnames{$k}) {
             $specified_seqs++;
         } else {
-            $unknown_seqs.=$seq->{'name'}." ";
+            $unknown_seqs="$unknown_seqs $k";
         }
     }
     if ($specified_seqs<2) {
@@ -498,19 +690,33 @@ sub read_anchor_constraints {
           ."for unknown sequence(s):\n\t$unknown_seqs\n";
     }
 
-    ## assign numbers to region names
-    my %region_names=();
-    my $region_number=0;
-    for my $bedentry (@bedentries) {
-        if (! exists $region_names{$bedentry->[3]}) {
-            $region_names{$bedentry->[3]} = $region_number++;
+    # check equal length of regions
+    {
+        my %region_lengths=();
+        foreach my $F (@$bedentries) {
+            my $len = $F->[2]-$F->[1]+1;
+            if ( exists $region_lengths{$F->[3]} ) {
+                if ( $region_lengths{$F->[3]} != $len ) {
+                    error_exit "ERROR: Region ".$F->[3]." occurs with ".
+                      "different lengths in anchor constraints.\n";
+                }
+            } else {
+                $region_lengths{$F->[3]} = $len;
+            }
         }
     }
-    my $region_id_width = length($region_number-1);
+
+    ## end check input errors
+    ## --------------------
+
+    ## assign numbers to region names
+    my $region_names = assign_region_indices($bedentries);
+
+    my $region_id_width = length((keys %$region_names)-1);
 
     # determine longest range
     my $position_id_width=0;
-    for my $bedentry (@bedentries) {
+    for my $bedentry (@$bedentries) {
         my $region_len=$bedentry->[2]-$bedentry->[1];
         $position_id_width=max($position_id_width,length($region_len-1));
     }
@@ -537,11 +743,11 @@ sub read_anchor_constraints {
     }
     #
     ## 2) set anchors
-    for my $bedentry (@bedentries) {
-        next unless exists $seq_idx_by_name{$bedentry->[0]};
+    for my $bedentry (@$bedentries) {
+        next unless exists $seq_idx_by_name->{$bedentry->[0]};
 
-        my $seq=$seqs->[$seq_idx_by_name{$bedentry->[0]}];
-        my $rid = $region_names{$bedentry->[3]};
+        my $seq=$seqs->[$seq_idx_by_name->{$bedentry->[0]}];
+        my $rid = $region_names->{$bedentry->[3]};
         my @rid = split //, sprintf("%0${region_id_width}d",$rid);
 
         if ($bedentry->[1]<0 || $bedentry->[2]>length($seq->{'seq'})) {
@@ -565,8 +771,8 @@ sub read_anchor_constraints {
 
     ## get list of region names and return it
     my @regions_names_list;
-    for my $key (keys %region_names) {
-        $regions_names_list[$region_names{$key}]=$key;
+    for my $key (keys %$region_names) {
+        $regions_names_list[$region_names->{$key}]=$key;
     }
     return \@regions_names_list;
 }
