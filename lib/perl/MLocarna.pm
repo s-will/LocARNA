@@ -476,7 +476,11 @@ sub is_notgreater_name {
 ## order is the order of regions enforced by the requirement to occur
 ## in a common multiple alignment (from smaller to larger positions).
 ##
-## If there is no alignment order, exit with failure
+## Failure policy:
+##   Exit with error
+##   * if there is no alignment order
+##   * if regions overlap
+##
 sub assign_region_indices {
 
     # get bedentries and make copy
@@ -525,6 +529,19 @@ sub assign_region_indices {
     #     print "\n";
     # }
 
+    # detect overlap
+    for my $bin (keys %bins) {
+        my $last_end=0;
+        for my $entry (@{$bins{$bin}}) {
+            if ($entry->[$START] < $last_end) {
+                error_exit ("ERROR: region \"$entry->[$REGNAME]\" overlaps previous region".
+                            " for sequence \"$entry->[$SEQNAME]\" in bed anchor constraints.\n");
+            }
+            $last_end = $entry->[$END];
+        }
+    }
+
+
     # create name to index map for each bin
     my %binmaps = ();
     for my $bin (keys %bins) {
@@ -556,14 +573,9 @@ sub assign_region_indices {
         my $min_name = undef;
         my $min_lineno = @{ $bedentries };
 
-        for my $bin (keys %bins) {
-            if ( $cur_index{$bin} >= @{ $bins{$bin} } ) {last;}
-            my $cur_entry = $bins{$bin}->[$cur_index{$bin}];
-        }
-
         my $done=1;
         for my $bin (keys %bins) {
-            if ( $cur_index{$bin} >= @{ $bins{$bin} } ) {last;}
+            if ( $cur_index{$bin} >= @{ $bins{$bin} } ) {next;}
             $done = 0;
 
             my $cur_entry = $bins{$bin}->[$cur_index{$bin}];
@@ -576,18 +588,23 @@ sub assign_region_indices {
         }
         if ($done) {last;}
 
+        ## detect inconsistencies
+        if ( not defined($min_name) ) {
+            error_exit "ERROR: Conflicting anchors in bed file.\n";
+        }
+        if (exists $region_name_map{ $min_name } ) {
+            error_exit "ERROR: Inconsistent anchors in bed file.\n";
+        }
+
         ## advance current indices of bins where current name is $min_name
         for my $bin (keys %bins) {
+            if ( $cur_index{$bin} >= @{ $bins{$bin} } ) {next;}
             my $cur_entry = $bins{$bin}->[$cur_index{$bin}];
             if ($cur_entry->[$REGNAME] eq $min_name) {
                 $cur_index{$bin}++;
             }
         }
-
         ## register min name
-        if (exists $region_name_map{ $min_name } ) {
-            error_exit "Inconsistent anchors in bed file!";
-        }
         $region_name_map{ $min_name } = $region_name_index++;
     }
 
@@ -630,9 +647,10 @@ sub assign_region_indices {
 ## exit with error message,
 ## * if file cannot be read or has the wrong format.
 ## * if bed file does not contain >=2 sequence names in $seqs
-## * if some sequence names in bed file do not exist in $seqs
+## * if some sequence names in the bed file do not exist in $seqs
 ## * if some anchor regions is out of range
-## * if anchor regions conflict with each other
+## * if anchor regions conflict with each other (cross or overlap)
+## * if regions of same name have different lengths
 ##
 ## @pre names in $seqs are unique
 ##
@@ -671,6 +689,23 @@ sub read_anchor_constraints {
         error_exit "ERROR: anchor constraint file contains specifications "
           ."for unknown sequence(s):\n\t$unknown_seqs\n";
     }
+
+    # check equal length of regions
+    {
+        my %region_lengths=();
+        foreach my $F (@$bedentries) {
+            my $len = $F->[2]-$F->[1]+1;
+            if ( exists $region_lengths{$F->[3]} ) {
+                if ( $region_lengths{$F->[3]} != $len ) {
+                    error_exit "ERROR: Region ".$F->[3]." occurs with ".
+                      "different lengths in anchor constraints.\n";
+                }
+            } else {
+                $region_lengths{$F->[3]} = $len;
+            }
+        }
+    }
+
     ## end check input errors
     ## --------------------
 
