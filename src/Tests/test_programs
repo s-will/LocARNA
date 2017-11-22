@@ -142,7 +142,7 @@ mlocarna_calltest mlocarna-probabilistic-ext \
 # check many threads, and local folding and max-diff-aln
 mlocarna_calltest mlocarna-threads \
          mlocarna $exdir/SECIS_15.fa  --threads 32 --alifold \
-         --plfold-span 51 --max-diff 10 --max-diff-aln $exdir/SECIS_15_ref.aln
+         --plfold-span 50 --max-diff 10 --max-diff-aln $exdir/SECIS_15_ref.aln
 
 # check anchor constraints from bed file
 mlocarna_calltest mlocarna-bed-anchors \
