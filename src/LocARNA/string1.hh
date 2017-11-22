@@ -141,6 +141,20 @@ namespace LocARNA {
             assert(pos <= s_.length());
             return string1(s_.substr(pos - 1, len));
         }
+
+        auto begin() const {
+            return s_.begin()+1;
+        };
+        auto end() const {
+            return s_.end();
+        };
+        auto begin() {
+            return s_.begin()+1;
+        };
+        auto end() {
+            return s_.end();
+        };
+
     };
 
 } // end namespace LocARNA

@@ -22,81 +22,62 @@ our $VERSION     = 1.00;
 our @ISA         = qw(Exporter);
 our @EXPORT      =
   qw(
-        read_fasta
-
-        check_constraints_in_fasta
-        read_anchor_constraints
-
-        sequence_constraint_string
-
-        compute_alignment_from_seqs
-        compute_alignment_score
-        read_dp_ps
-        read_pp_file_aln_wo_anno
-        read_pp_file_aln_w_anno
-        read_pp_file_pairprobs
-        read_pp_file_pairprob_info
-        convert_dp_to_pp_with_constraints
-        convert_alifold_dp_to_pp
-        alifold_structure
-        constrain_sequences_from_reliable_structures
-
-
-        extract_from_clustal_alignment
-
-        project_string_to_alignment_sequence
-        project_structure_to_alignment_sequence
-
-        clone_hash
-
-        read_aln_wo_anno
-        write_aln
-        project_aln
-        project_alnloh
-        aln_h2loh
-        write_clustalw_loh
-        aln_length_atleastonematch
-
-        aln_to_alnloh
-        read_clustalw_alignment
-        read_clustalw_alnloh
-        read_clustalw_aln
-        write_clustalw_alnloh
-        %loh_translate_names
         %loh_associate_nnames_to_names
-        loh_names
-        loh_sort
-
-        sprint_fasta_alnloh
-
-        write_pp
-
-        write_2D_matrix
-
-        read_2D_matrix
-
-        new_intermediate_name
-
-        extract_score_matrix_from_alignments
-
-        aln_reliability_beststruct_fromfile
-        aln_reliability_fromfile
-
-        register_normalized_seqname
-        register_normalized_seqnames
-        get_normalized_seqname
-        forget_normalized_seqnames
-        print_normalized_sequence_names_hash
-
-        nnamepair
-
+        %loh_translate_names
         alifold_mfe
         alifold_pf
-
+        alifold_structure
+        aln_h2loh
+        aln_length_atleastonematch
+        aln_reliability_beststruct_fromfile
+        aln_reliability_fromfile
+        aln_to_alnloh
+        anchor_constraint_string
+        clone_hash
+        compute_alignment_from_seqs
+        compute_alignment_score
+        constraint_annotation_is_valid_or_die
+        constrain_sequences_from_reliable_structures
+        convert_alifold_dp_to_pp
+        convert_dp_to_pp_with_constraints
         convert_fix_structure_to_pp
-
+        extract_from_clustal_alignment
+        extract_score_matrix_from_alignments
         find_in_exec_path
         find_in_exec_path_or_error
+        forget_normalized_seqnames
+        get_normalized_seqname
+        loh_names
+        loh_sort
+        new_intermediate_name
+        nnamepair
+        print_normalized_sequence_names_hash
+        project_aln
+        project_alnloh
+        project_string_to_alignment_sequence
+        project_structure_to_alignment_sequence
+        read_2D_matrix
+        read_aln_wo_anno
+        read_anchor_constraints
+        read_clustalw_alignment
+        read_clustalw_aln
+        read_clustalw_alnloh
+        read_dp_ps
+        read_fasta
+        read_pipe
+        read_pp_file_aln_w_anno
+        read_pp_file_aln_wo_anno
+        read_pp_file_pairprob_info
+        read_pp_file_pairprobs
+        register_normalized_seqname
+        register_normalized_seqnames
+        sprint_fasta_alnloh
+        system_pipein_list
+        write_2D_matrix
+        write_aln
+        write_clustalw_alnloh
+        write_clustalw_loh
+        write_pp
    );
 
 our %EXPORT_TAGS = ();
@@ -114,7 +95,7 @@ our $RNAalifold = "RNAalifold";
 
 ## alifold specific options
 ## turn on ribosum scoring and use "best" factors from the "improved alifold" paper
-our $RNAalifold_options = "--ribosum_scoring --cfactor 0.6 --nfactor 0.5";
+our @RNAalifold_options = ("--ribosum_scoring", "--cfactor" => "0.6", "--nfactor" => "0.5");
 
 our $PACKAGE_STRING = "MLocarna";
 
@@ -364,10 +345,10 @@ sub read_fasta {
 
 
 ########################################
-## check_constraints_in_fasta($fasta)
+## constraint_annotation_is_valid_or_die($fasta)
 ##
-## Checks validity of constraint description in fasta list of hash
-## representation.
+## Checks validity of anchor and structure constraint description in
+## fasta list of hash representation.
 ##
 ## $fasta list of hashs representation
 ##
@@ -380,7 +361,7 @@ sub read_fasta {
 ## die with error message when constraint annotation is invalid
 ##
 ########################################
-sub check_constraints_in_fasta {
+sub constraint_annotation_is_valid_or_die {
     my $fasta=shift;
 
     my $numseqconstraints = -1;
@@ -427,6 +408,210 @@ sub max {
 }
 
 ########################################
+## read in bed file, check 4-column format, check existence of
+## sequence names
+sub read_bed4 {
+    my $filename = shift;
+
+    open(my $fh, $filename)
+      || error_exit "ERROR: Cannot open bed file for reading.\n";
+
+    my @bedentries=(); # entries in the bed file
+    my %seqnames=(); # set of sequence names in the bed file
+    while(<$fh>) {
+        my @F=split /\s+/;
+        if (@F != 4) {
+            error_exit "ERROR: bed file $filename has wrong format. "
+              ."Require four-column bed format (line "
+              .(1 + scalar @bedentries).").\n";
+        }
+        if ($F[1]>$F[2]) {
+            error_exit "ERROR: in bed file $filename, start position greater than end position "
+              ."in line\n  ".(1 + scalar @bedentries).": $_\n";
+        }
+        $seqnames{$F[0]}=1;
+        push @bedentries, [ @F ];
+    }
+
+    return \@bedentries;
+}
+
+## generate lookup hash from list of hashs
+sub gen_lookup_hash_loh {
+    my $loh = shift;
+    my $key = shift;
+
+    my %lookup_hash = ();
+
+    my $idx=0;
+    for my $entry (@$loh) {
+        $lookup_hash{$entry->{$key}}=$idx++;
+    }
+    return \%lookup_hash;
+}
+
+
+
+## check whether region name does not occur right of current index in any bin
+sub is_notgreater_name {
+    my $regname = shift;
+    my $rbins = shift;
+    my $rbinmaps = shift;
+    my $rcur_index = shift;
+
+    for my $bin (keys %$rbins) {
+        if ( exists $rbinmaps->{$bin}{$regname}
+             and $rbinmaps->{$bin}{$regname} > $rcur_index->{$bin} ) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+########################################
+## assign indices to region names
+##
+## Indices are assigned ascending in alignment order.  The alignment
+## order is the order of regions enforced by the requirement to occur
+## in a common multiple alignment (from smaller to larger positions).
+##
+## Failure policy:
+##   Exit with error
+##   * if there is no alignment order
+##   * if regions overlap
+##
+sub assign_region_indices {
+
+    # get bedentries and make copy
+    my $bedentries_in = shift;
+    my $bedentries = [ @{ $bedentries_in } ];
+
+    # constants: positions in (extended) bed entry
+    my $SEQNAME=0;
+    my $START=1;
+    my $END=2;
+    my $REGNAME=3;
+    my $LINENO=4;
+
+    # add line numbers to bed entries (to keep track of input order)
+    for (my $i=0; $i < @$bedentries; $i++) {
+        my @entry = @{ $bedentries->[$i] };
+        push @entry, $i;
+        $bedentries->[$i] = \@entry;
+    }
+
+    for (my $i=0; $i < @$bedentries; $i++) {
+        my @entry = @{ $bedentries->[$i] };
+    }
+
+    # bin bedentries by sequences
+    my %bins = ();
+    for my $bedentry (@$bedentries) {
+        my @bin = ();
+        if (exists $bins{$bedentry->[$SEQNAME]}) {
+            @bin = @{ $bins{$bedentry->[$SEQNAME]} };
+        }
+        push @bin, $bedentry;
+        $bins{$bedentry->[$SEQNAME]} = \@bin;
+    }
+
+
+    # sort bins by first position
+    for my $bin (keys %bins) {
+        $bins{$bin} = [ sort {$a->[$START] <=> $b->[$START]} @{ $bins{$bin} } ];
+    }
+
+    # print "Sorted bins:\n ";
+    # for my $bin (keys %bins) {
+    #     print "BIN $bin ";
+    #     for my $x (@{$bins{$bin}}) {print ", @$x";}
+    #     print "\n";
+    # }
+
+    # detect overlap
+    for my $bin (keys %bins) {
+        my $last_end=0;
+        for my $entry (@{$bins{$bin}}) {
+            if ($entry->[$START] < $last_end) {
+                error_exit ("ERROR: region \"$entry->[$REGNAME]\" overlaps previous region".
+                            " for sequence \"$entry->[$SEQNAME]\" in bed anchor constraints.\n");
+            }
+            $last_end = $entry->[$END];
+        }
+    }
+
+
+    # create name to index map for each bin
+    my %binmaps = ();
+    for my $bin (keys %bins) {
+        my %n2i;
+        for (my $i=0; $i < @{ $bins{$bin} }; $i++) {
+            $n2i{ $bins{$bin}->[$i]->[$REGNAME] } = $i;
+        }
+        $binmaps{$bin} = \%n2i;
+    }
+
+    # print("Name to index map\n");
+    # for my $bin (keys %bins) {
+    #     print "  BIN_N2I $bin ";
+    #     for my $n (keys %{$binmaps{$bin}}) {print ", $n:".$binmaps{$bin}->{$n};}
+    #     print "\n";
+    # }
+
+    # merge bins to construct order or detect inconsistency
+    my $region_name_index = 0;
+    my %region_name_map  = ();
+
+    my %cur_index; #index for each bin
+    for my $bin (keys %bins) {$cur_index{$bin}=0;} #initialize
+
+    while (1) {
+        # determine smallest region name
+        #  * does not occur right of cur index in any bin (is_notgreater_name)
+        #  * has smallest line number
+        my $min_name = undef;
+        my $min_lineno = @{ $bedentries };
+
+        my $done=1;
+        for my $bin (keys %bins) {
+            if ( $cur_index{$bin} >= @{ $bins{$bin} } ) {next;}
+            $done = 0;
+
+            my $cur_entry = $bins{$bin}->[$cur_index{$bin}];
+            if ( is_notgreater_name($cur_entry->[$REGNAME], \%bins, \%binmaps, \%cur_index) ) {
+                if ( $cur_entry->[$LINENO] < $min_lineno ) {
+                    $min_lineno = $cur_entry->[$LINENO];
+                    $min_name = $cur_entry->[$REGNAME];
+                }
+            }
+        }
+        if ($done) {last;}
+
+        ## detect inconsistencies
+        if ( not defined($min_name) ) {
+            error_exit "ERROR: Conflicting anchors in bed file.\n";
+        }
+        if (exists $region_name_map{ $min_name } ) {
+            error_exit "ERROR: Inconsistent anchors in bed file.\n";
+        }
+
+        ## advance current indices of bins where current name is $min_name
+        for my $bin (keys %bins) {
+            if ( $cur_index{$bin} >= @{ $bins{$bin} } ) {next;}
+            my $cur_entry = $bins{$bin}->[$cur_index{$bin}];
+            if ($cur_entry->[$REGNAME] eq $min_name) {
+                $cur_index{$bin}++;
+            }
+        }
+        ## register min name
+        $region_name_map{ $min_name } = $region_name_index++;
+    }
+
+    return \%region_name_map;
+}
+
+########################################
 ## read_anchor_constraints($seqs,$filename)
 ##
 ## Read anchor constraints from bed file and set them in $seqs
@@ -436,6 +621,7 @@ sub max {
 ##
 ## @return ref to list of anchor region names in the order of assigned
 ## anchor ids
+## @result set anchor constraints in $seqs
 ##
 ## Anchor constraints in four-column bed format specify positions of
 ## named anchor regions per sequence. The 'contig' names have to
@@ -447,21 +633,24 @@ sub max {
 ## The specification of anchors via this option removes all anchor
 ## definitions that may be given directly in the fasta input file!
 ##
-## Details: region names receive name numbers in the order of their
-## appearance in the bed file. As well, positions in a region receive
-## position numbers from left to right. Numbering starts with
-## 0. Anchor names are than composed of region number and position
-## number, both with leading 0s, where the number of digits is choosen
-## minimally to encode all occuring anchor names with the same length.
-## Finally the anchor names are encoded as anchor constraint lines in
-## the same way LocARNA accepts them in the fasta input file.
+## Details: region names receive name numbers in the order the names
+## have to appear in an alignment; inconsistencies are detected. As
+## well, positions in a region receive position numbers from left to
+## right. Numbering starts with 0. Anchor names are than composed of
+## region number and position number, both with leading 0s, where the
+## number of digits is choosen minimally to encode all occuring anchor
+## names with the same length.  Finally the anchor names are encoded
+## as anchor constraint lines in the same way LocARNA accepts them in
+## the fasta input file.
 ##
 ## FAILURE policy:
 ## exit with error message,
 ## * if file cannot be read or has the wrong format.
-## * if bed file does not contain >=2 sequence names in seqs
-## * if some sequence names in bed file do not exist in $seqs
+## * if bed file does not contain >=2 sequence names in $seqs
+## * if some sequence names in the bed file do not exist in $seqs
 ## * if some anchor regions is out of range
+## * if anchor regions conflict with each other (cross or overlap)
+## * if regions of same name have different lengths
 ##
 ## @pre names in $seqs are unique
 ##
@@ -470,39 +659,25 @@ sub read_anchor_constraints {
     my $seqs = shift;
     my $filename = shift;
 
-    open(my $fh, $filename)
-      || error_exit "ERROR: Cannot open anchor constraints file for reading\n";
+    # read entries in the bed file
+    my $bedentries = read_bed4($filename);
 
-    ## read in bed file, check 4-column format, check existence of
-    ## sequence names
-    my @bedentries=(); # entries in the bed file
+    # generate set of sequence names
     my %seqnames=(); # set of sequence names in the bed file
-    while(<$fh>) {
-        my @F=split /\s+/;
-        if (@F != 4) {
-            error_exit "ERROR: anchor constraints file has wrong format. "
-              ."Require four-column bed format (line "
-              .(1 + scalar @bedentries).").\n";
-        }
-        if ($F[1]>$F[2]) {
-            error_exit "ERROR: start position greater than end position "
-              ."in anchor constraints bed entry\n  "
-              .(1 + scalar @bedentries).": $_\n";
-        }
-        $seqnames{$F[0]}=1;
-        push @bedentries, [ @F ];
-    }
+    foreach my $F (@$bedentries) {$seqnames{$F->[0]}=1;}
+
     ## count sequences with specification; fill name->idx hash
+    my $seq_idx_by_name = gen_lookup_hash_loh($seqs,'name');
+
+    ## --------------------
+    ## check input errors
     my $specified_seqs=0;
     my $unknown_seqs="";
-    my %seq_idx_by_name=();
-    my $seq_idx=0;
-    for my $seq (@{$seqs}) {
-        $seq_idx_by_name{$seq->{name}}=$seq_idx++;
-        if (exists $seqnames{$seq->{'name'}}) {
+    for my $k ( keys %$seq_idx_by_name ) {
+        if (exists $seqnames{$k}) {
             $specified_seqs++;
         } else {
-            $unknown_seqs.=$seq->{'name'}." ";
+            $unknown_seqs="$unknown_seqs $k";
         }
     }
     if ($specified_seqs<2) {
@@ -515,19 +690,33 @@ sub read_anchor_constraints {
           ."for unknown sequence(s):\n\t$unknown_seqs\n";
     }
 
-    ## assign numbers to region names
-    my %region_names=();
-    my $region_number=0;
-    for my $bedentry (@bedentries) {
-        if (! exists $region_names{$bedentry->[3]}) {
-            $region_names{$bedentry->[3]} = $region_number++;
+    # check equal length of regions
+    {
+        my %region_lengths=();
+        foreach my $F (@$bedentries) {
+            my $len = $F->[2]-$F->[1]+1;
+            if ( exists $region_lengths{$F->[3]} ) {
+                if ( $region_lengths{$F->[3]} != $len ) {
+                    error_exit "ERROR: Region ".$F->[3]." occurs with ".
+                      "different lengths in anchor constraints.\n";
+                }
+            } else {
+                $region_lengths{$F->[3]} = $len;
+            }
         }
     }
-    my $region_id_width = length($region_number-1);
+
+    ## end check input errors
+    ## --------------------
+
+    ## assign numbers to region names
+    my $region_names = assign_region_indices($bedentries);
+
+    my $region_id_width = length((keys %$region_names)-1);
 
     # determine longest range
     my $position_id_width=0;
-    for my $bedentry (@bedentries) {
+    for my $bedentry (@$bedentries) {
         my $region_len=$bedentry->[2]-$bedentry->[1];
         $position_id_width=max($position_id_width,length($region_len-1));
     }
@@ -554,11 +743,11 @@ sub read_anchor_constraints {
     }
     #
     ## 2) set anchors
-    for my $bedentry (@bedentries) {
-        next unless exists $seq_idx_by_name{$bedentry->[0]};
+    for my $bedentry (@$bedentries) {
+        next unless exists $seq_idx_by_name->{$bedentry->[0]};
 
-        my $seq=$seqs->[$seq_idx_by_name{$bedentry->[0]}];
-        my $rid = $region_names{$bedentry->[3]};
+        my $seq=$seqs->[$seq_idx_by_name->{$bedentry->[0]}];
+        my $rid = $region_names->{$bedentry->[3]};
         my @rid = split //, sprintf("%0${region_id_width}d",$rid);
 
         if ($bedentry->[1]<0 || $bedentry->[2]>length($seq->{'seq'})) {
@@ -582,21 +771,21 @@ sub read_anchor_constraints {
 
     ## get list of region names and return it
     my @regions_names_list;
-    for my $key (keys %region_names) {
-        $regions_names_list[$region_names{$key}]=$key;
+    for my $key (keys %$region_names) {
+        $regions_names_list[$region_names->{$key}]=$key;
     }
     return \@regions_names_list;
 }
 
 ########################################
-## sequence_constraint_string($seq hash ref)
+## anchor_constraint_string($seq hash ref)
 ##
 ## Collect sequence constraint string for $seq entry of a fasta list of hashs
 ##
 ## returns string "<c1>#<c2>#...<cN>", where ci is the constraints description line i
 ##
 ########################################+
-sub sequence_constraint_string {
+sub anchor_constraint_string {
     my $seq=shift;
     my $i=1;
 
@@ -776,7 +965,7 @@ sub parse_mfasta_constraints {
 
 ## convert a dotplot file to a pp file
 ## thereby insert the sequence constraint strings
-sub convert_dp_to_pp_with_constraints: prototype($$$$$$) {
+sub convert_dp_to_pp_with_constraints {
     my ($dpfile,$ppfile,$name,$sequence,$constraints,$read_condprobs) = @_;
 
     open(PP_OUT,">$ppfile") || die "Cannot open $ppfile for writing.";
@@ -874,42 +1063,6 @@ sub convert_alifold_dp_to_pp: prototype($$$) {
     close $DP_IN;
     close $PP_OUT;
 }
-
-
-## compute pairwise alignment for given sequences using RNAfold -p for generating dps
-sub compute_alignment: prototype($$$$$) {
-    my ($bindir,$seqA,$seqB,$locarna_params,$tmpprefix) =  @_;
-
-    local *CA_IN;
-
-    my $tmpfile="$tmpprefix.clustal";
-
-    system("$bindir/locarna.pl $seqA $seqB $locarna_params --clustal=$tmpfile >/dev/null");
-
-    open(CA_IN,"$tmpfile") || die "Cannot read tmp file $tmpfile\n";
-
-    my @content=<CA_IN>;
-
-    close CA_IN;
-
-    unlink $tmpfile;
-
-    return @content;
-}
-
-
-
-sub compute_alignment_score: prototype($$$$$) {
-    my ($bindir,$seqA,$seqB,$locarna_params,$tmpprefix) =  @_;
-
-    my @content=compute_alignment($bindir,$seqA,$seqB,$locarna_params,$tmpprefix);
-    # print "@content\n";
-    $content[0] =~ /Score: ([\d\.\-]+)/ || die "Cannot return score.\n";
-    my $score=$1;
-
-    return $score;
-}
-
 
 
 ########################################
@@ -1141,7 +1294,7 @@ sub project_string_to_alignment_sequence: prototype($$$) {
     my ($str,$seq,$gap_symbols)=@_;
 
     die "project_string_to_alignment_sequence: string and alignment sequence must have the same length:\n  $str\n  $seq\n    " if length($str) != length($seq);
-    
+
     my $res="";
     for (my $i=0; $i<length($seq); $i++) {
 	if (substr($seq,$i,1) !~ /[$gap_symbols]/) {
@@ -1240,7 +1393,117 @@ sub clone_hash {
 
 
 ########################################
-## alifold_structure($filename,$RNAfold_args)
+## shell_quote(@args)
+##
+## safer replacement for readpipe that avoids the shell
+##
+## @param  @args command and argument list
+## @return shell-quoted command string
+##
+########################################
+
+sub shell_quote {
+    my @args = @_;
+    my $quoted = "";
+
+    foreach my $arg (@args) {
+        $arg =~ s/'/'\\''/g;
+
+        $arg = "'$arg'";
+
+        $arg =~ s/^''//;
+        $arg =~ s/''$//;
+
+        $quoted .= "$arg ";
+    }
+    $quoted =~ s/\s+$//;
+    return $quoted;
+}
+
+
+########################################
+## readpipe_list
+##
+## safer replacement for readpipe that avoids the shell
+##
+## @param  @_ command and argument list
+## @return reference to list of command output lines
+##
+########################################
+sub readpipe_list {
+    my (@cmdlist) = @_;
+    my $cmd = shell_quote(@cmdlist);
+    $cmd = "$cmd 2>/dev/null";
+    # printmsg 1, "$cmd\n";
+
+    open(my $fh, "$cmd |");
+    my @result = <$fh>;
+    return \@result;
+}
+
+########################################
+## system_pipein_list
+##
+## safer replacement for system call with piped in input
+## that avoids the shell
+##
+## @param  @_ command and argument list
+##
+########################################
+sub system_pipein_list {
+    my ($input, @cmdlist) = @_;
+
+    my $cmd = shell_quote(@cmdlist);
+    $cmd = "echo ".shell_quote($input)." | $cmd >/dev/null";
+    printmsg 1, "$cmd\n";
+
+    system($cmd);
+}
+
+########################################
+## system_pipein_list
+##
+## safer replacement for system call with piped in input
+## that avoids the shell
+##
+## variant of system_pipein_list using perl 'open'
+##
+## @param  @_ command and argument list
+##
+########################################
+sub system_pipein_list_open {
+    my ($input, @cmd) = @_;
+
+    printmsg 1, "@cmd <<< \"$input\"\n";
+
+    {
+        open(my $infh, "|-", @cmd);
+        print $infh $input;
+        close($infh);
+    }
+}
+
+
+########################################
+## readpipe_list_open
+##
+## safer replacement for readpipe that avoids the shell
+##
+## variant of readpipe_list using perl 'open'
+##
+## @param  @_ command and argument list
+## @return reference to list of command output lines
+##
+########################################
+sub readpipe_list_open {
+    open(my $fh, "-|", @_);
+    my @result = <$fh>;
+    return \@result;
+}
+
+
+########################################
+## alifold_structure($filename,@RNAfold_args)
 ##
 ## Run RNAalifold on file
 ##
@@ -1251,9 +1514,12 @@ sub clone_hash {
 ##
 ########################################
 sub alifold_structure {
-    my ($filename,$RNAfold_args)=@_;
+    my ($filename,@RNAfold_args)=@_;
 
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options --mis --aln --color $RNAfold_args $filename 2>/dev/null");
+    my @aliout = @{
+        readpipe_list("$RNAalifold", @RNAalifold_options, "--mis", "--aln", "--color",
+                      @RNAfold_args, "$filename")
+    };
 
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /([().]+) /) {
@@ -1275,9 +1541,9 @@ sub alifold_structure {
 ##
 ########################################+
 sub alifold_mfe {
-    my ($file,$RNAfold_args) = @_;
+    my ($file, @RNAfold_args) = @_;
 
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options --noPS $RNAfold_args $file 2>/dev/null");
+    my @aliout = @{ readpipe_list("$RNAalifold", @RNAalifold_options, "--noPS", @RNAfold_args, "$file") };
 
     if ($#aliout>=1) {
 	if ($aliout[1] =~ /[().]+\s+\(\s*([\d.-]+)\s*=\s*([\d.-]+)\s*\+\s*([\d.-]+)\)/) {
@@ -1302,11 +1568,10 @@ sub alifold_mfe {
 ##
 ########################################+
 sub alifold_pf {
-    my ($file,$RNAfold_args) = @_;
+    my ($file,@RNAfold_args) = @_;
 
-    my @aliout =  readpipe("$RNAalifold $RNAalifold_options --color --mis $RNAfold_args -p $file >/dev/null 2>&1");
-
-    return \@aliout;
+    return
+      readpipe_list("$RNAalifold", @RNAalifold_options, "--color", "--mis", @RNAfold_args, "-p", "$file");
 }
 
 

@@ -17,21 +17,22 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
 lib_LTLIBRARIES=libLocARNA-@API_VERSION@.la
 
-libLocARNA_@API_VERSION@_la_SOURCES=LocARNA/aux.cc			\
-	LocARNA/sequence.cc LocARNA/stopwatch.cc LocARNA/options.cc	\
-	LocARNA/basepairs.cc LocARNA/alignment.cc			\
-	LocARNA/rna_ensemble.cc LocARNA/rna_data.cc			\
-	LocARNA/pfold_params.cc LocARNA/scoring.cc			\
-	LocARNA/infty_int.cc LocARNA/match_probs.cc			\
-	LocARNA/ribosum.cc LocARNA/ribofit.cc				\
-	LocARNA/sequence_annotation.cc LocARNA/anchor_constraints.cc	\
-	LocARNA/arc_matches.cc LocARNA/aligner.cc			\
-	LocARNA/stral_score.cc LocARNA/trace_controller.cc		\
-	LocARNA/multiple_alignment.cc LocARNA/rna_structure.cc		\
-	LocARNA/confusion_matrix.cc LocARNA/global_stopwatch.cc		\
-	LocARNA/mcc_matrices.cc LocARNA/aligner_n.cc			\
-	LocARNA/sparsification_mapper.cc LocARNA/exact_matcher.cc	\
-	LocARNA/params.cc
+libLocARNA_@API_VERSION@_la_SOURCES = LocARNA/aligner.cc		\
+	LocARNA/aligner_n.cc LocARNA/alignment.cc			\
+	LocARNA/anchor_constraints.cc LocARNA/arc_matches.cc		\
+	LocARNA/aux.cc LocARNA/basepairs.cc				\
+	LocARNA/confusion_matrix.cc LocARNA/exact_matcher.cc		\
+	LocARNA/global_stopwatch.cc LocARNA/infty_int.cc		\
+	LocARNA/match_probs.cc LocARNA/mcc_matrices.cc			\
+	LocARNA/multiple_alignment.cc LocARNA/options.cc		\
+	LocARNA/params.cc LocARNA/pfold_params.cc LocARNA/ribofit.cc	\
+	LocARNA/ribosum.cc LocARNA/rna_data.cc				\
+	LocARNA/rna_ensemble.cc LocARNA/rna_structure.cc		\
+	LocARNA/scoring.cc LocARNA/sequence.cc				\
+	LocARNA/sequence_annotation.cc					\
+	LocARNA/sparsification_mapper.cc LocARNA/stopwatch.cc		\
+	LocARNA/stral_score.cc LocARNA/trace_controller.cc
+
 
 libLocARNA_@API_VERSION@_la_LDFLAGS = -version-info $(SO_VERSION)
 
@@ -39,33 +40,35 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ../LocARNA-$(API_VERSION).pc
 
 library_includedir=$(includedir)/LocARNA-$(API_VERSION)
-nobase_library_include_HEADERS = LocARNA/aux.hh LocARNA/plusvector.hh	\
-	LocARNA/stopwatch.hh LocARNA/options.hh LocARNA/matrix.hh	\
-	LocARNA/matrices.hh LocARNA/sparse_matrix.hh			\
-	LocARNA/sparse_vector.hh LocARNA/sequence.hh			\
-	LocARNA/basepairs.hh LocARNA/alignment.hh			\
-	LocARNA/alignment_impl.hh LocARNA/rna_ensemble.hh		\
-	LocARNA/rna_ensemble_impl.hh LocARNA/rna_data.hh		\
-	LocARNA/ext_rna_data.hh LocARNA/rna_data_impl.hh		\
-	LocARNA/ext_rna_data_impl.hh LocARNA/params.hh			\
-	LocARNA/pfold_params.hh LocARNA/scoring.hh			\
-	LocARNA/scoring_fwd.hh LocARNA/infty_int.hh			\
-	LocARNA/match_probs.hh LocARNA/alphabet.hh			\
-	LocARNA/alphabet.icc LocARNA/ribosum.hh LocARNA/ribofit.hh	\
-	LocARNA/ribofit_will2014.ihh LocARNA/ribofit_will2014.icc	\
-	LocARNA/sequence_annotation.hh LocARNA/anchor_constraints.hh	\
-	LocARNA/arc_matches.hh LocARNA/aligner_restriction.hh		\
-	LocARNA/aligner.hh LocARNA/aligner_impl.hh			\
+
+nobase_library_include_HEADERS = LocARNA/aligner.hh			\
+	LocARNA/aligner_impl.hh LocARNA/aligner_n.hh			\
 	LocARNA/aligner_p.hh LocARNA/aligner_p.icc			\
-	LocARNA/stral_score.hh LocARNA/trace_controller.hh		\
-	LocARNA/multiple_alignment.hh LocARNA/rna_structure.hh		\
-	LocARNA/confusion_matrix.hh LocARNA/base_pair_filter.hh		\
-	LocARNA/discrete_distribution.hh LocARNA/string1.hh		\
-	LocARNA/type_wrapper.hh LocARNA/global_stopwatch.hh		\
-	LocARNA/tuples.hh LocARNA/mcc_matrices.hh			\
-	LocARNA/aligner_n.hh LocARNA/sparsification_mapper.hh		\
-	LocARNA/exact_matcher.hh LocARNA/main_helper.icc		\
-	LocARNA/ribosum85_60.icc
+	LocARNA/aligner_restriction.hh LocARNA/alignment.hh		\
+	LocARNA/alignment_impl.hh LocARNA/alphabet.hh			\
+	LocARNA/alphabet.icc LocARNA/anchor_constraints.hh		\
+	LocARNA/arc_matches.hh LocARNA/aux.hh				\
+	LocARNA/base_pair_filter.hh LocARNA/basepairs.hh		\
+	LocARNA/confusion_matrix.hh LocARNA/discrete_distribution.hh	\
+	LocARNA/exact_matcher.hh LocARNA/ext_rna_data.hh		\
+	LocARNA/ext_rna_data_impl.hh LocARNA/global_stopwatch.hh	\
+	LocARNA/infty_int.hh LocARNA/main_helper.icc			\
+	LocARNA/match_probs.hh LocARNA/matrices.hh LocARNA/matrix.hh	\
+	LocARNA/mcc_matrices.hh LocARNA/multiple_alignment.hh		\
+	LocARNA/named_arguments.hh LocARNA/options.hh			\
+	LocARNA/params.hh LocARNA/pfold_params.hh LocARNA/quadmath.hh	\
+	LocARNA/ribofit.hh LocARNA/ribofit_will2014.icc			\
+	LocARNA/ribofit_will2014.ihh LocARNA/ribosum.hh			\
+	LocARNA/ribosum85_60.icc LocARNA/rna_data.hh			\
+	LocARNA/rna_data_impl.hh LocARNA/rna_ensemble.hh		\
+	LocARNA/rna_ensemble_impl.hh LocARNA/rna_structure.hh		\
+	LocARNA/scoring.hh LocARNA/scoring_fwd.hh LocARNA/sequence.hh	\
+	LocARNA/sequence_annotation.hh LocARNA/sparse_matrix.hh		\
+	LocARNA/sparse_vector.hh LocARNA/sparse_vector_base.hh		\
+	LocARNA/sparsification_mapper.hh LocARNA/std_help_text.ihh	\
+	LocARNA/stopwatch.hh LocARNA/stral_score.hh			\
+	LocARNA/string1.hh LocARNA/trace_controller.hh			\
+	LocARNA/tuples.hh LocARNA/zip.hh
 
 ## binary programs
 ##

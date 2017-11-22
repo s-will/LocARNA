@@ -1,6 +1,29 @@
 ============================================================
 === 2017
 
+	Support higher precision floating point arithmetic for locarna-p
+	  pf calculation (long double and quad math) selectable dynamically
+	[mlocarna] Fix specifying anchor constraints via bed file
+	  allow arbitrary order of entries in bed input
+	[mlocarna] Refactor computation of input pp files;
+	  support caching of pp files (--dp-cache)
+
+1.9.3beta2 (2017-07-25)
+	Code improvements
+	  * command line help
+	  * named arguments
+	  * zip and enumerate iterators
+	  * fight code rot, more use of C++11/14 features
+	[security] Avoid shell evaluation in mlocarna system calls
+	Use locarna_rnafold_pp for constrained folding in mlocarna
+	Optimize inner loop (add sentinels to left and right adjacency lists)
+
+1.9.3alpha
+	Reduce memory footprint of locarna
+	Enable optional extended double for partition functions without
+	  recompiling (AlignerP/locarna_p)
+	Transition to C++14;  modernized and restructured code
+
 1.9.2 (2017-07-04)
 	Improve consensus dotplot computation (avoid accumulation of low
 	  probability base pairs)

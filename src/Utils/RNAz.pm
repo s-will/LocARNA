@@ -1184,7 +1184,7 @@ sub blastSeq{
 
   close($TMP);
 
-  my @results=`$blastExecutable -p blastn -e $cutoff -d $db -m 8 -i /tmp/blast$$.fa`;
+  my @results = readpipe("$blastExecutable -p blastn -e $cutoff -d $db -m 8 -i /tmp/blast$$.fa");
 
   #print @results;
 

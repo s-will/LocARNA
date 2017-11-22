@@ -6,11 +6,10 @@ AM_DEFAULT_SOURCE_EXT = .cc
 BINTESTS = test_locarna_lib
 SCRIPTTESTS = test_programs
 
-test_locarna_lib_SOURCES = test_locarna_lib.cc multiple_alignment.cc	\
-                           rna_data.cc ext_rna_data.cc			\
-                           rna_structure.cc matrices.cc			\
-                           trace_controller.cc rna_ensemble.cc		\
-                           anchor_constraints.cc catch.hpp
+test_locarna_lib_SOURCES = alphabet.cc anchor_constraints.cc		\
+	catch.hpp ext_rna_data.cc matrices.cc multiple_alignment.cc	\
+	rna_data.cc rna_ensemble.cc rna_structure.cc			\
+	test_locarna_lib.cc trace_controller.cc zip.cc
 
 TESTS= $(BINTESTS) $(SCRIPTTESTS)
 
@@ -18,13 +17,15 @@ check_PROGRAMS = $(BINTESTS)
 
 MYTESTDATA    = archaea.aln archaea-aln.fa archaea-wrong.fa
 
-MYTESTRESULTS = locarnate.testresult					\
-mlocarna-archaea-alifold.testresult mlocarna-bed-anchors.testresult	\
-mlocarna-haca-constraints.testresult					\
-mlocarna-probabilistic.testresult mlocarna-sparse.testresult		\
-mlocarna-threads.testresult mlocarna-realign.testresult			\
-exparna_p.testresult locarna-local.testresult				\
-locarna-normalized.testresult
+MYTESTRESULTS = locarnate.testresult				\
+	mlocarna-archaea-alifold.testresult			\
+	mlocarna-bed-anchors.testresult				\
+	mlocarna-haca-constraints.testresult			\
+	mlocarna-probabilistic.testresult			\
+	mlocarna-probabilistic-ext.testresult			\
+	mlocarna-sparse.testresult mlocarna-threads.testresult	\
+	mlocarna-realign.testresult exparna_p.testresult	\
+	locarna-local.testresult locarna-normalized.testresult
 
 BUILT_SOURCES = $(MYTESTDATA)
 
@@ -46,4 +47,3 @@ CLEANFILES = $(MYTESTDATA)
 gen-test-results:
 	srcdir=$(srcdir) \
 	$(srcdir)/test_programs --generate-references
-

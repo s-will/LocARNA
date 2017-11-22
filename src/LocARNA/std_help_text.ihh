@@ -1,0 +1,186 @@
+//!@file collection of help texts for command line options
+//format: {"option name", "help text"}
+
+{"help", "Print this help."},
+{"galaxy_xml", "Print galaxy xml wrapper."},
+{"version", "Print only version string."},
+{"verbose",
+ "Be verbose. Prints input parameters, sequences and size information."},
+{"quiet", "Be quiet."},
+{"indel",
+ "Indel score. Score contribution of each single base insertion or deletion. "
+ "Indel opening score and indel score define the affine scoring of gaps."},
+{"indel_opening",
+ "Indel opening score. Score contribution of opening an insertion or deletion, "
+ "i.e. score for a consecutive run of deletions or insertions. Indel opening "
+ "score and indel score define the affine scoring of gaps."},
+{"ribosum_file",
+ "File specifying the Ribosum base and base-pair "
+ "similarities. [default: "
+ "use RIBOSUM85_60 without requiring a Ribosum file.]"},
+{"use_ribosum",
+ "Use ribosum scores for scoring base matches and base pair matches; "
+ "note that tau=0 suppresses any effect on the latter."},
+{"ribofit",
+ "Use Ribofit base and arc match scores adapted to sequence indentity "
+ "(overrides ribosum-file and use-ribosum)."},
+{"match",
+ "Set score contribution of a base match (unless ribosum scoring)."},
+{"mismatch",
+ "Set score contribution of a base mismatch (unless ribosum scoring)."},
+{"unpaired_penalty", "Penalty for unpaired bases"},
+{"struct_weight",
+ "Maximal weight of 1/2 arc match. Balances structure vs. sequence score "
+ "contributions."},
+{"exp_prob",
+ "Expected base pair probability. Used as background probability for "
+ "base pair scoring [default: calculated from sequence length]."},
+{"tau",
+ "Tau factor. Factor for contribution of sequence similarity in an arc "
+ "match (in percent). tau=0 does not penalize any sequence information "
+ "including compensatory mutations at arc matches, while tau=100 "
+ "scores sequence similarity at ends of base matches (if a scoring "
+ "matrix like ribosum is used, this adds the contributions for "
+ "base pair match from the matrix). [default tau=0!]"},
+{"exclusion",
+ "Score contribution per exclusion in structure local alignment. Set to "
+ "zero for unrestricted structure locality."},
+{"stacking",
+ "Use stacking terms (requires stack-probs by RNAfold -p2)"},
+{"new_stacking",
+ "Use new stacking terms (requires stack-probs by RNAfold -p2)"},
+{"struct_local",
+ "Turn on/off structure locality. Allow exclusions in alignments of "
+ "connected substructures."},
+{"sequ_local",
+ "Turn on/off sequence locality. Find best alignment of arbitrary "
+ "subsequences of the input sequences."},
+{"free_endgaps",
+ "Control where end gaps are allowed for free. "
+ "String of four +/- symbols, allowing/disallowing free end "
+ "gaps at the four sequence ends "
+ "in the order left end of first sequence, right end of first sequence, "
+ "left end of second sequence, right end of second sequence. For "
+ "example, \"+---\" allows free end gaps at the left end of the first "
+ "alignment string; \"----\" forbids free end gaps [default]."},
+{"width", "Width of alignment output."},
+{"clustal", "Write alignment in ClustalW (aln) format to given file."},
+{"stockholm", "Write alignment Stockholm format to given file."},
+{"pp", "Write alignment in PP format to given file."},
+{"alifold_consensus_dp", "Compute consensus dot plot by alifold."},
+{"cons_struct_type",
+ "Type of consensus structures written to screen and "
+ "stockholm output [alifold|mea|none]"},
+{"local_output", "Output only local sub-alignment (to std out)."},
+{"local_file_output",
+ "Write only local sub-alignment to output files."},
+{"pos_output", "Output only local sub-alignment positions."},
+{"write_structure", "Write guidance structure in output."},
+{"stopwatch", "Print run time informations."},
+{"min_prob",
+ "Minimal probability. Only base pairs of at least this "
+ "probability are taken into account."},
+{"max_bps_length_ratio",
+ "Maximal ratio of #base pairs divided by sequence length. This serves "
+ "as a second filter on the \"significant\" base pairs. [default: 0.0 = "
+ "no effect]."},
+{"max_diff_am",
+ "Maximal difference for sizes of matched arcs. [-1=off]"},
+{"max_diff",
+ "Maximal difference for positions of alignment traces (and aligned bases). "
+ "[-1=off]"},
+{"max_diff_at_am",
+ "Maximal difference for positions of alignment traces at arc match ends. "
+ "[-1=off]"},
+{"max_diff_alignment_file",
+ "Maximal difference relative to given alignment (file in clustalw format)"},
+{"max_diff_pw_alignment",
+ "Maximal difference relative to given alignment (string, delim=AMPERSAND)"},
+{"max_diff_relax", "Relax deviation constraints in multiple aligmnent"},
+{"no_lonely_pairs",
+ "Disallow lonely pairs in prediction and alignment."},
+{"max_bp_span", "Limit maximum base pair span [default=off]."},
+{"relaxed_anchors",
+ "Use relaxed semantics of anchor constraints [default=strict semantics]."},
+{"fileA", "Input file 1"},
+{"fileB", "Input file 2"},
+{"files",
+ "The tool is called with two input files <Input 1> and <Input 2>, "
+ "which specify the two input sequences or input "
+ "alignments. Different input formats (Fasta, Clustal, Stockholm, "
+ "LocARNA PP, ViennaRNA postscript dotplots) are accepted and "
+ "automatically recognized (by file content); the two input files can be "
+ "in different formats. Extended variants of the Clustal and Stockholm "
+ "formats enable specifying anchor and structure constraints."},
+
+//mea help
+{"mea_alignment",
+ "Perform maximum expected accuracy alignment (instead of using the default "
+ "similarity scoring)."},
+{"match_prob_method",
+ "Select method for computing sequence-based base match probablities "
+ "(to be used for mea-type alignment scores). Methods: 1=probcons-style "
+ "from HMM, 2=probalign-style from PFs, 3=from PFs, local"},
+{"probcons_file",
+ "Read parameters for probcons-like calculation of match probabilities "
+ "from probcons parameter file."},
+{"temperature_alipf",
+ "Temperature for the /alignment/ partition functions used by "
+ "the probcons-like sequence-based match probability computation "
+ "(this temperature is different from the 'physical' temperature "
+ "of RNA folding!)."},
+{"pf_struct_weight",
+ "Structure weight in PF computations (for the computation of "
+ "sequence-based match probabilties from partition functions)."},
+{"mea_gapcost",
+ "Add gap cost contributions (indel and indel-opening) to "
+ "the by default gap-cost-free mea score."},
+{"mea_alpha", "Weight alpha for MEA"},
+{"mea_beta", "Weight beta for MEA"},
+{"mea_gamma", "Weight gamm for MEA"},
+{"probability_scale",
+ "Scale for probabilities/resolution of mea score"},
+{"write_matchprobs",
+ "Write match probs to file (don't align!)."},
+{"read_matchprobs",
+ "Read match probabilities from file."},
+{"write_arcmatch_scores",
+ "Write arcmatch scores (don't align!)"},
+{"read_arcmatch_scores", "Read arcmatch scores."},
+{"read_arcmatch_probs",
+ "Read arcmatch probabilities (weighted by factor mea_beta/100)"},
+
+// locarna-specific help
+{"normalized",
+ "Perform normalized local alignment with parameter L. This causes "
+ "locarna to compute the best local alignment according to "
+ "'Score' / ( L + 'length' ), "
+ "where length is the sum of the lengths of the two locally aligned "
+ "subsequences. Thus, the larger L, the larger the local alignment; "
+ "the size of value L is in the order of local alignment lengths. "
+ "Verbose yields info on the iterative optimizations."},
+{"penalized", "Penalized local alignment with penalty PP"},
+{"score_components",
+ "Output components of the score (experimental)."},
+
+// locarna-P-specific help
+{"min_am_prob",
+ "Minimal arc match probability. Write probabilities for only the "
+ "arc matchs of at least this probability."},
+{"min_bm_prob",
+ "Minimal base match probability. Write probabilities for only the "
+ "base matchs of at least this probability."},
+{"pf_scale",
+ "Factor for scaling the partition functions. Use in order to avoid overflow."},
+{"extended_pf",
+ "Use extended precision for partition function values. This "
+ "increases run-time and space (less than 2x), however enables "
+ "handling significantly larger instances."},
+{"quad_pf",
+ "Use quad precision for partition function values. Even more precision than "
+ "extended pf, but usually much slower (overrides extended-pf)."},
+{"temperature_alipf",
+ "Temperature for the /alignment/ partition functions (this "
+ "temperature different from the 'physical' temperature of RNA "
+ "folding!). It controls the probability distributions of computed "
+ "base and arc match probabilities."}

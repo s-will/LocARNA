@@ -6,9 +6,15 @@
 #include "match_probs.hh"
 #include "ribosum.hh"
 #include "ribofit.hh"
+#include "zip.hh"
 
-#include <math.h>
+#if defined( _GLIBCXX_USE_FLOAT128 ) && ! defined(__clang__)
+#  include "quadmath.hh"
+#endif
+
+#include <cmath>
 #include <fstream>
+#include <memory>
 
 namespace LocARNA {
 
@@ -37,17 +43,17 @@ namespace LocARNA {
           seqB(seqB_),
           lambda_(0) {
 #ifndef NDEBUG
-        if (params->ribofit || params->ribosum) {
+        if (params->ribofit_ != nullptr || params->ribosum_ != nullptr) {
             // check sequences
-            if (!seqA.checkAlphabet(Alphabet<char>((char *)"ACGUN-", 6)) ||
-                !seqB.checkAlphabet(Alphabet<char>((char *)"ACGUN-", 6))) {
+            if (!seqA.checkAlphabet(Alphabet<char,6>("ACGUN-")) ||
+                !seqB.checkAlphabet(Alphabet<char,6>("ACGUN-"))) {
                 std::cerr << "WARNING: unsupported sequence characters found."
                           << std::endl;
             }
         }
 #endif
 
-        if (params->ribofit) {
+        if (params->ribofit_ != nullptr) {
             precompute_sequence_identities();
         }
 
@@ -75,9 +81,9 @@ namespace LocARNA {
         // * gapcost_tabA
         // * gapcost_tabB
 
-        subtract(sigma_tab, 2 * params->unpaired_penalty);
-        subtract(gapcost_tabA, params->unpaired_penalty);
-        subtract(gapcost_tabB, params->unpaired_penalty);
+        subtract(sigma_tab, 2 * params->unpaired_penalty_);
+        subtract(gapcost_tabA, params->unpaired_penalty_);
+        subtract(gapcost_tabB, params->unpaired_penalty_);
     }
 
     void
@@ -99,13 +105,14 @@ namespace LocARNA {
     void
     Scoring::precompute_sequence_identities() {
         identity.resize(seqA.num_of_rows(), seqB.num_of_rows());
-        for (size_t i = 0; i < seqA.num_of_rows(); i++) {
-            for (size_t j = 0; j < seqB.num_of_rows(); j++) {
-                identity(i, j) = sequence_identity(seqA.seqentry(i).seq(),
-                                                   seqB.seqentry(j).seq());
 
-                // std::cout << "    "<<i<<" "<<j<<"
-                // SI="<<identity(i,j)<<std::endl;
+        for (const auto &rowA : enumerate(seqA)) {
+        //for (size_t i = 0; i < seqA.num_of_rows(); i++) {
+            size_t i = rowA.first;
+            for (const auto &rowB : enumerate(seqB)) {
+                size_t j = rowB.first;
+                identity(i, j) = sequence_identity(rowA.second.seq(),
+                                                   rowB.second.seq());
 
                 // don't use extreme identities!
                 identity(i, j) = std::max(identity(i, j), (size_t)20);
@@ -122,7 +129,7 @@ namespace LocARNA {
         sigma_tab.resize(lenA + 1, lenB + 1);
 
         // precompute the unpaired probabilities and store in vectors
-        if (params->mea_scoring) {
+        if (params->mea_scoring_) {
             punA_tab.resize(lenA + 1);
             for (size_type i = 1; i <= lenA; ++i) {
                 punA_tab[i] = rna_dataA.prob_unpaired(i);
@@ -145,21 +152,21 @@ namespace LocARNA {
     */
     score_t
     Scoring::sigma_(int ia, int ib) const {
-        if (params->mea_scoring) {
+        if (params->mea_scoring_) {
             // for our mea alignment, we score basematchs
             // by the sum of
             //   the edge probability
             //   and a term for structural accuracy
 
-            return round2score(params->probability_scale *
+            return round2score(params->probability_scale_ *
                                (match_probs->prob(ia, ib) +
-                                (params->alpha_factor / 100.0) *
+                                (params->mea_alpha_ / 100.0) *
                                     (punA_tab[ia] + punB_tab[ib])));
         } else {
             // compute average score for aligning the two alignment columns
 
-            const Sequence::AliColumn &colA = seqA[ia];
-            const Sequence::AliColumn &colB = seqB[ib];
+            const auto &colA = seqA[ia];
+            const auto &colB = seqB[ib];
 
             score_t score = 0;
 
@@ -167,33 +174,33 @@ namespace LocARNA {
             // e.g. matching - and - counts as match ...
             // N is a wildcard, matchs with N don't count
             //
-            for (size_t i = 0; i < colA.size(); i++) {
-                for (size_t j = 0; j < colB.size(); j++) {
+            for ( const auto & cA : enumerate(colA) ) {
+                for ( const auto & cB : enumerate(colB) ) {
                     // if we have a ribosum matrix, use it!
                     // !!! if ribosum and characters are not in the ribosum
                     // matrix
                     // we fall back to match/mismatch scoring !!!
 
                     //
-                    if (params->ribofit &&
-                        params->ribofit->alphabet().in(colA[i]) &&
-                        params->ribofit->alphabet().in(colB[j])) {
+                    if (params->ribofit_ &&
+                        params->ribofit_->alphabet().in(cA.second) &&
+                        params->ribofit_->alphabet().in(cB.second)) {
                         score += round2score(
                             100.0 *
-                            params->ribofit->basematch_score(colA[i], colB[j],
-                                                             identity(i, j)));
-                    } else if (params->ribosum &&
-                               params->ribosum->alphabet().in(colA[i]) &&
-                               params->ribosum->alphabet().in(colB[j])) {
+                            params->ribofit_->basematch_score(cA.second, cB.second,
+                                                             identity(cA.first, cB.first)));
+                    } else if (params->ribosum_ &&
+                               params->ribosum_->alphabet().in(cA.second) &&
+                               params->ribosum_->alphabet().in(cB.second)) {
                         score += round2score(
                             100.0 *
-                            params->ribosum
-                                ->basematch_score_corrected(colA[i], colB[j]));
+                            params->ribosum_
+                                ->basematch_score_corrected(cA.second, cB.second));
                     } else {
-                        if (colA[i] != 'N' && colB[j] != 'N') {
-                            score += (colA[i] == colB[j])
-                                ? params->basematch
-                                : params->basemismatch;
+                        if (cA.second != 'N' && cB.second != 'N') {
+                            score += (cA.second == cB.second)
+                                ? params->match_
+                                : params->mismatch_;
                         }
                     }
                 }
@@ -211,7 +218,7 @@ namespace LocARNA {
                                 std::vector<score_t> &stack_weights) {
         size_type s = bps.num_bps();
         weights.resize(s);
-        if (params->stacking || params->new_stacking)
+        if (params->stacking_ || params->new_stacking_)
             stack_weights.resize(s);
         for (size_type i = 0; i < s; i++) {
             const Arc &a = bps.arc(i);
@@ -219,7 +226,7 @@ namespace LocARNA {
             double p = rna_data.arc_prob(a.left(), a.right());
             weights[i] = probToWeight(p, exp_prob);
 
-            if (params->stacking) {
+            if (params->stacking_) {
                 if (rna_data.arc_prob(a.left() + 1, a.right() - 1) > 0) {
                     double stack_p =
                         rna_data.stacked_arc_prob(a.left(), a.right());
@@ -228,8 +235,8 @@ namespace LocARNA {
                     // stack_weights[i] << std::endl;
                 }
             }
-            if (params->new_stacking) {
-                if (!params->stacking) {
+            if (params->new_stacking_) {
+                if (!params->stacking_) {
                     // if the old stacking is not used together with new one
                     stack_weights[i] = weights[i];
                 }
@@ -248,18 +255,18 @@ namespace LocARNA {
         // score_t cond_weight = probToWeight(cond_prob);
 
         precompute_weights(rna_dataA, arc_matches_->get_base_pairsA(),
-                           params->exp_probA, weightsA, stack_weightsA);
+                           params->exp_probA_, weightsA, stack_weightsA);
         precompute_weights(rna_dataB, arc_matches_->get_base_pairsB(),
-                           params->exp_probB, weightsB, stack_weightsB);
+                           params->exp_probB_, weightsB, stack_weightsB);
     }
 
     score_t
     Scoring::probToWeight(double p, double pe) const {
-        if (params->mea_scoring) {
-            return round2score(params->probability_scale * p);
+        if (params->mea_scoring_) {
+            return round2score(params->probability_scale_ * p);
         } else {
             return round2score(
-                round(params->struct_weight * (1 - log(p) / log(pe))));
+                round(params->struct_weight_ * (1 - log(p) / log(pe))));
             /*
               Score soll 0 sein für p=pe und struct_weight für p=1
 
@@ -288,17 +295,17 @@ namespace LocARNA {
         // determine gap frequencies for each column in A and B
 
         for (size_type i = 1; i < lenA + 1; i++) {
-            const Sequence::AliColumn &colA = seqA[i];
-            for (size_type k = 0; k < colA.size(); k++) {
-                gapfreqA[i] += (colA[k] == '-') ? 1 : 0;
+            const auto &colA = seqA[i];
+            for (const auto &x : colA) {
+                gapfreqA[i] += (x == '-') ? 1 : 0;
             }
             gapfreqA[i] /= colA.size();
         }
 
         for (size_type i = 1; i < lenB + 1; i++) {
-            const Sequence::AliColumn &colB = seqB[i];
-            for (size_type k = 0; k < colB.size(); k++) {
-                gapfreqB[i] += (colB[k] == '-') ? 1 : 0;
+            const auto &colB = seqB[i];
+            for (const auto &x : colB) {
+                gapfreqB[i] += (x == '-') ? 1 : 0;
             }
             gapfreqB[i] /= colB.size();
         }
@@ -308,11 +315,11 @@ namespace LocARNA {
         // compute position specific gap cost
 
         for (size_type i = 1; i < lenA + 1; i++) {
-            gapcost_tabA[i] = round2score((1 - gapfreqA[i]) * params->indel);
+            gapcost_tabA[i] = round2score((1 - gapfreqA[i]) * params->indel_);
         }
 
         for (size_type i = 1; i < lenB + 1; i++) {
-            gapcost_tabB[i] = round2score((1 - gapfreqB[i]) * params->indel);
+            gapcost_tabB[i] = round2score((1 - gapfreqB[i]) * params->indel_);
         }
     }
 
@@ -322,10 +329,10 @@ namespace LocARNA {
     */
     double
     Scoring::ribosum_arcmatch_prob(const Arc &arcA, const Arc &arcB) const {
-        assert(params->ribosum != 0);
+        assert(params->ribosum_ != nullptr);
         // compute average ribosum score
 
-        const RibosumFreq *ribosum = params->ribosum;
+        const RibosumFreq *ribosum = params->ribosum_;
 
         const size_type rowsA = seqA.num_of_rows();
         const size_type rowsB = seqB.num_of_rows();
@@ -333,7 +340,7 @@ namespace LocARNA {
         double score = 0;
         int gapless_combinations = 0;
 
-        const Alphabet<char> &alphabet = ribosum->alphabet();
+        auto &alphabet = ribosum->alphabet();
 
         // compute geometric mean
         for (size_type i = 0; i < rowsA;
@@ -373,12 +380,12 @@ namespace LocARNA {
 
     score_t
     Scoring::riboX_arcmatch_score(const Arc &arcA, const Arc &arcB) const {
-        assert(params->ribosum != 0);
+        assert(params->ribosum_ != nullptr || params->ribofit_ != nullptr);
 
         // compute average ribosum score
 
-        const RibosumFreq *ribosum = params->ribosum;
-        const Ribofit *ribofit = params->ribofit;
+        const RibosumFreq *ribosum = params->ribosum_;
+        const Ribofit *ribofit = params->ribofit_;
 
         const size_type rowsA = seqA.num_of_rows();
         const size_type rowsB = seqB.num_of_rows();
@@ -388,7 +395,7 @@ namespace LocARNA {
 
         // for simplicity: assume that the ribofit alphabet and the
         // ribosum alphabet contain the same characters
-        const Alphabet<char> &alphabet = ribosum->alphabet();
+        auto &alphabet = ribosum->alphabet();
 
         for (size_type i = 0; i < rowsA;
              i++) { // run through all combinations of rows in A and B
@@ -466,8 +473,8 @@ namespace LocARNA {
         // we add a sequence contribution
         // for mea or if we don't have a ribofit/ribosum matrix, we use sigma
         // otherwise we use a ribosum-like score
-        if (params->tau_factor != 0) {
-            if (!params->mea_scoring && (params->ribofit || params->ribosum)) {
+        if (params->tau_factor_ != 0) {
+            if (!params->mea_scoring_ && (params->ribofit_!=nullptr || params->ribosum_!=nullptr)) {
                 sequence_contribution = riboX_arcmatch_score(arcA, arcB);
             } else {
                 sequence_contribution = sigma_tab(arcA.left(), arcB.left()) +
@@ -479,12 +486,12 @@ namespace LocARNA {
             }
         }
 
-        if (!params->mea_scoring) {
+        if (!params->mea_scoring_) {
             return
                 // base match contribution
                 // (also for arc-match add terms for the base match on both
                 // ends, weighted by tau_factor)
-                ((params->tau_factor * sequence_contribution) / 100) +
+                ((params->tau_factor_ * sequence_contribution) / 100) +
                 // base pair weights
                 (stacked
                      ? (stack_weightsA[arcA.idx()] + stack_weightsB[arcB.idx()])
@@ -495,21 +502,21 @@ namespace LocARNA {
                        // base match contribution
                        // (also for arc-match add terms for the base match on
                        // both ends, weighted by tau_factor)
-                       params->probability_scale *
-                           (params->tau_factor / 100.0) *
+                       params->probability_scale_ *
+                           (params->tau_factor_ / 100.0) *
                            sequence_contribution +
 
 #ifdef MEA_SCORING_OLD
-                       params->probability_scale *
+                       params->probability_scale_ *
                            // structure contribution, weighted by beta
-                           (params->beta_factor / 100.0) *
+                           (params->mea_beta_ / 100.0) *
                            (stacked ? (stack_weightsA[arcA.idx()] +
                                        stack_weightsB[arcB.idx()])
                                     : (weightsA[arcA.idx()] +
                                        weightsB[arcB.idx()])) +
                        // consensus contribution
-                       params->probability_scale *
-                           (params->gamma_factor / 100.0) *
+                       params->probability_scale_ *
+                           (params->mea_gamma_ / 100.0) *
                            (match_probs == NULL
                                 ? 1.0
                                 : (match_probs->prob(arcA.left(), arcB.left()) *
@@ -518,10 +525,10 @@ namespace LocARNA {
                            ribosum_arcmatch_prob(arcA, arcB)
 
 #else // NEW MEA SCORING
-                       params->probability_scale *
+                       params->probability_scale_ *
                            // structure and consensus contribution, weighted by
                            // beta
-                           (params->beta_factor / 100.0) *
+                           (params->mea_beta_ / 100.0) *
                            (stacked
                                 ? (rna_dataA.stacked_arc_prob(arcA.left(),
                                                               arcA.right()) +

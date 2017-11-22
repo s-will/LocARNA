@@ -2,15 +2,15 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [1.9.2], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [1.9.3beta2], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 dnl special dir for aux config files
 AC_CONFIG_AUX_DIR(config)
 
 dnl Define here to keep all version information in one place.
-AC_SUBST([SO_VERSION], [2:0:0])
-AC_SUBST([API_VERSION], [1.6])
+AC_SUBST([SO_VERSION], [1:2:0])
+AC_SUBST([API_VERSION], [2.0])
 
 
 dnl Package meta information
@@ -38,7 +38,7 @@ AC_SUBST([PACKAGE_SOURCES_URL], ["http://www.bioinf.uni-freiburg.de/Software/Loc
 
 
 dnl minimally required ViennaRNA version
-VRNA_VERSION=2.3.1
+VRNA_VERSION=2.4.0
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -83,7 +83,7 @@ dnl is sufficient, and obviates the need to maintain man pages separately.
 dnl However, this means invoking executables, which we generally cannot do
 dnl when cross-compiling, so we test to avoid that (the variable
 dnl "cross_compiling" is set by AC_PROG_CC).
-AS_IF([test $cross_compiling = no], [
+AS_IF([test "$cross_compiling" = "no"], [
   AM_MISSING_PROG([HELP2MAN], [help2man])
 ], [
   HELP2MAN=:
@@ -165,7 +165,7 @@ AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true" ],
 
   dnl if libgomp is available, then add it to VRNA_LIBS; otherwise,
   dnl assume (optimistically) that libRNA works without libgomp
-  AC_CHECK_LIB([gomp],[main],[VRNA_LIBS="$VRNA_LIBS -lgomp"])
+  dnl AC_CHECK_LIB([gomp],[main],[VRNA_LIBS="$VRNA_LIBS -lgomp"])
 
   VRNA_CFLAGS="-I$vrna_prefix/include"
   AC_MSG_NOTICE([Guessing of ViennaRNA flags may be avoided by installing pkg-config.])
@@ -241,11 +241,27 @@ dnl  CPPFLAGS="$CPPFLAGS -Wno-deprecated"
 dnl --------------------
 dnl add linker options for POSIX threads
 dnl (necessary for linking Gecode)
-AX_PTHREAD
-AC_MSG_NOTICE([pthread: $PTHREAD_CFLAGS, $PTHREAD_LIBS])
-LIBS="$PTHREAD_LIBS $LIBS"
-dnl CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-LDFLAGS="$PTHREAD_CFLAGS $LDFLAGS"
+dnl AX_PTHREAD
+dnl AC_MSG_NOTICE([pthread: $PTHREAD_CFLAGS, $PTHREAD_LIBS])
+dnl LIBS="$PTHREAD_LIBS $LIBS"
+dnl dnl CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+dnl LDFLAGS="$PTHREAD_CFLAGS $LDFLAGS"
+
+
+dnl --------------------
+dnl check for quadmath and add linker flag
+dnl
+has_quadmath="no"
+AC_SEARCH_LIBS([expq], [quadmath],
+  [has_quadmath="yes"],
+  [AC_MSG_WARN([Cannot find quadmath library: compile w/o quad-pf support.])
+])
+
+AS_IF([ test "$has_quadmath" == "yes" ], [
+dnl do not use "HAS_QUADMATH" define, but rely on _GLIBCXX_USE_FLOAT128
+dnl AC_DEFINE([HAS_QUADMATH],[1],[Compile with quad-pf support.])
+  LDFLAGS="-lquadmath $LDFLAGS"
+])
 
 dnl ----------------------------------------
 dnl Static linking
@@ -281,10 +297,10 @@ AC_MSG_RESULT([$dynamic_liblocarna])
 AM_CONDITIONAL([STATIC_LIBLOCARNA],[test "$link_statically" = "no" -a "$dynamic_liblocarna" = "no"])
 
 dnl for lgomp if all-static
-AS_IF([test "$link_statically" = "yes"],
-[
-        AX_APPEND_FLAG(["-ldl"],[LDFLAGS])
-])
+dnl AS_IF([test "$link_statically" = "yes"],
+dnl [
+dnl         AX_APPEND_FLAG(["-ldl"],[LDFLAGS])
+dnl ])
 
 
 dnl Checks for typedefs, structures, and compiler characteristics.

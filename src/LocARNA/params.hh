@@ -6,11 +6,23 @@
 #endif
 
 #include "scoring_fwd.hh"
+#include "named_arguments.hh"
 
 #include <vector>
 #include <string>
 
 namespace LocARNA {
+
+    //! type of two concattenated tuples
+    template <typename Tuple1, typename Tuple2>
+    struct tuple_cat_type;
+
+    template <typename... Ts, typename... Us>
+    struct tuple_cat_type<std::tuple<Ts...>,std::tuple<Us...>> {using type = std::tuple<Ts...,Us...>;};
+
+    template <typename Tuple1, typename Tuple2>
+    using tuple_cat_type_t = typename tuple_cat_type<Tuple1,Tuple2>::type;
+
 
     class Scoring;
     class Sequence;
@@ -40,8 +52,7 @@ namespace LocARNA {
          * @note the string description is suited to specify free end gaps in
          * this way on the command line
          */
-        explicit
-        FreeEndgapsDescription(const std::string &d) : desc(4) {
+        explicit FreeEndgapsDescription(const std::string &d) : desc(4) {
             if (d.length() >= 4) {
                 for (size_t i = 0; i < 4; i++)
                     desc[i] = (d[i] == '+');
@@ -96,203 +107,76 @@ namespace LocARNA {
        restrictions/constraints on the alignment and certain heuristics.
        Parameters for the score are collected in a different class.
 
-       Class supports the named arguments idiom for setting parameters
-
        @see Aligner
        @see ScoringParams
     */
     class AlignerParams {
-        friend class Aligner;
-        friend class AlignerImpl;
-
-    protected:
-        const Sequence *seqA_; //!< sequence A
-
-        const Sequence *seqB_; //!< sequence B
-
-        const Scoring *scoring_; //!< scoring object
-
-        bool no_lonely_pairs_; //!< no lonely pairs option
-
-        bool struct_local_; //!< allow exclusions for maximizing alignment of
-                            //!connected substructures
-
-        bool sequ_local_; //!< sequence local alignment / maximize alignment of
-                          //!subsequences
-
-        std::string
-            free_endgaps_; //!< description of potentially allowed free end gaps
-
-        bool DO_TRACE_; //!< whether do perfom trace back
-
-        const TraceController *trace_controller_; //!< trace controller
-                                                  //!controlling allowed trace
-                                                  //!cells
-
-        int max_diff_am_; //!< maximal difference of arc lengths in arc match
-
-        int max_diff_at_am_; //!< maximal difference of positions at ends of an
-                             //!arc match
-
-        bool stacking_; //!< whether to use stacking
-
-        const AnchorConstraints *constraints_; //!< anchor constraints
-
     public:
-        /**
-         * @brief set parameter seqeunce A
-         * @param seqA sequence A
-         */
-        AlignerParams &
-        seqA(const Sequence &seqA) {
-            seqA_ = &seqA;
-            return *this;
-        }
+        DEFINE_NAMED_ARG_FEATURE(seqA, const Sequence *);
+        DEFINE_NAMED_ARG_FEATURE(seqB, const Sequence *);
+        DEFINE_NAMED_ARG_FEATURE(scoring, const Scoring *);
+        DEFINE_NAMED_ARG_FEATURE(trace_controller, const TraceController *);
+
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(no_lonely_pairs, bool, false);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(struct_local, bool, false);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(sequ_local, bool, false);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(free_endgaps, std::string, "");
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(DO_TRACE, bool, true);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(max_diff_am, int, -1);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(max_diff_at_am, int, -1);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(stacking, bool, false);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(constraints, const AnchorConstraints *, nullptr);
+
+        using valid_args = std::tuple<seqA,
+                                      seqB,
+                                      scoring,
+                                      no_lonely_pairs,
+                                      struct_local,
+                                      sequ_local,
+                                      free_endgaps,
+                                      DO_TRACE,
+                                      trace_controller,
+                                      max_diff_am,
+                                      max_diff_at_am,
+                                      stacking,
+                                      constraints>;
 
         /**
-         * @brief set parameter seqeunce A
-         * @param seqB sequence B
+         * Construct with named arguments
          */
-        AlignerParams &
-        seqB(const Sequence &seqB) {
-            seqB_ = &seqB;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter scoring
-         * @param scoring scoring object
-         */
-        AlignerParams &
-        scoring(const Scoring &scoring) {
-            scoring_ = &scoring;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter no_lonely_pairs
-         * @param no_lonely_pairs no lonely pairs option
-         */
-        AlignerParams &
-        no_lonely_pairs(bool no_lonely_pairs) {
-            no_lonely_pairs_ = no_lonely_pairs;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter struct_local
-         * @param struct_local allow exclusions for maximizing alignment of
-         * connected substructures
-         */
-        AlignerParams &
-        struct_local(bool struct_local) {
-            struct_local_ = struct_local;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter sequ_local
-         * @param sequ_local  sequence local alignment / maximize alignment of
-         * subsequences
-         */
-        AlignerParams &
-        sequ_local(bool sequ_local) {
-            sequ_local_ = sequ_local;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter free_endgaps
-         * @param free_endgaps  description of potentially allowed free end gaps
-         */
-        AlignerParams &
-        free_endgaps(const std::string &free_endgaps) {
-            free_endgaps_ = free_endgaps;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter DO_TRACE
-         * @param DO_TRACE perform backtrace
-         */
-        AlignerParams &
-        DO_TRACE(bool DO_TRACE) {
-            DO_TRACE_ = DO_TRACE;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter trace_controller
-         * @param trace_controller  trace controller controlling allowed trace
-         * cells
-         */
-        AlignerParams &
-        trace_controller(const TraceController &trace_controller) {
-            trace_controller_ = &trace_controller;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter max_diff_am
-         * @param max_diff_am maximal difference of arc lengths in arc match
-         */
-        AlignerParams &
-        max_diff_am(int max_diff_am) {
-            max_diff_am_ = max_diff_am;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter max_diff_at_am
-         * @param max_diff_at_am maximal difference at arc match positions
-         */
-        AlignerParams &
-        max_diff_at_am(int max_diff_at_am) {
-            max_diff_at_am_ = max_diff_at_am;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter stacking
-         * @param stacking whether to use stacking
-         */
-        AlignerParams &
-        stacking(bool stacking) {
-            stacking_ = stacking;
-            return *this;
-        }
-
-        /**
-         * @brief set parameter constraints
-         * @param constraints  anchor constraints
-         */
-        AlignerParams &
-        constraints(const AnchorConstraints &constraints) {
-            constraints_ = &constraints;
-            return *this;
+        template <class... Args>
+        AlignerParams(Args... argpack) {
+            static_assert( type_subset_of<
+                           std::tuple<Args...>,
+                           valid_args>::value,
+                           "Invalid type in named arguments pack." );
+            construct(std::make_tuple(argpack...));
         }
 
     protected:
-        /**
-         * Construct with default parameters
-         */
-        AlignerParams()
-            : seqA_(nullptr),
-              seqB_(nullptr),
-              scoring_(nullptr),
-              no_lonely_pairs_(false),
-              struct_local_(false),
-              sequ_local_(false),
-              free_endgaps_(""),
-              DO_TRACE_(true),
-              trace_controller_(nullptr),
-              max_diff_am_(-1),
-              max_diff_at_am_(-1),
-              stacking_(false),
-              constraints_(nullptr) {}
+        AlignerParams() {}
 
-    public:
-        virtual ~AlignerParams();
+        template <class ArgTuple>
+        void
+        construct(const ArgTuple &args) {
+
+            //mandatory
+            seqA_ = get_named_arg<seqA>(args);
+            seqB_ = get_named_arg<seqB>(args);
+            scoring_ = get_named_arg<scoring>(args);
+            trace_controller_ = get_named_arg<trace_controller>(args);
+
+            //optional
+            no_lonely_pairs_ = get_named_arg_opt<no_lonely_pairs>(args);
+            struct_local_ = get_named_arg_opt<struct_local>(args);
+            sequ_local_ = get_named_arg_opt<sequ_local>(args);
+            free_endgaps_ = get_named_arg_opt<free_endgaps>(args);
+            DO_TRACE_ = get_named_arg_opt<DO_TRACE>(args);
+            max_diff_am_ = get_named_arg_opt<max_diff_am>(args);
+            max_diff_at_am_ = get_named_arg_opt<max_diff_at_am>(args);
+            stacking_ = get_named_arg_opt<stacking>(args);
+            constraints_ = get_named_arg_opt<constraints>(args);
+        }
     };
 
     /**
@@ -300,103 +184,72 @@ namespace LocARNA {
      */
     template <typename T>
     class AlignerPParams : public AlignerParams {
-        friend class AlignerP<T>;
-
-        using pf_score_t = T;
-    protected:
-        double min_am_prob_; //!< minimal probability of an arc match
-
-        double min_bm_prob_; //!< minimal probability of a base match
-
-        pf_score_t pf_scale_; //!< scaling factor for partition function
-
-        /**
-         * Construct with default parameters
-         */
-        AlignerPParams()
-            : AlignerParams(),
-              min_am_prob_(0),
-              min_bm_prob_(0),
-              pf_scale_((pf_score_t)1) {}
-
     public:
-        /**
-         * @brief set parameter min_am_prob
-         * @param min_am_prob minimal probability of an arc match
-         */
-        AlignerPParams &
-        min_am_prob(double min_am_prob) {
-            min_am_prob_ = min_am_prob;
-            return *this;
-        }
+        using pf_score_t = T;
+
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(min_am_prob, double, 0);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(min_bm_prob, double, 0);
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(pf_scale, pf_score_t, 1.0);
+
+        using valid_args = tuple_cat_type_t<
+            AlignerParams::valid_args,
+            std::tuple<min_am_prob,
+                       min_bm_prob,
+                       pf_scale>>;
 
         /**
-         * @brief set parameter min_bm_prob
-         * @param min_bm_prob  minimal probability of a base match
+         * Construct with named arguments
          */
-        AlignerPParams &
-        min_bm_prob(double min_bm_prob) {
-            min_bm_prob_ = min_bm_prob;
-            return *this;
-        }
+        template <class... Args>
+        AlignerPParams(Args... argpack)
+            : AlignerParams() {
+            static_assert( type_subset_of<
+                           std::tuple<Args...> ,
+                           tuple_cat_type_t<valid_args, AlignerParams::valid_args>
+                           >::value,
+                           "Invalid type in named arguments pack." );
 
-        /**
-         * @brief set parameter pf_scale
-         * @param pf_scale scaling factor for partition function
-         */
-        AlignerPParams &
-        pf_scale(pf_score_t pf_scale) {
-            pf_scale_ = pf_scale;
-            return *this;
-        }
+            auto args = std::make_tuple(argpack...);
 
-        ~AlignerPParams() {}
+            AlignerParams::construct(args);
+
+            min_am_prob_ = get_named_arg_opt<min_am_prob>(args);
+            min_bm_prob_ = get_named_arg_opt<min_bm_prob>(args);
+            pf_scale_ = get_named_arg_opt<pf_scale>(args);
+        }
     };
 
     /**
      * @brief parameters for AlignerN
      */
     class AlignerNParams : public AlignerParams {
-        friend class AlignerN;
-
-    protected:
-        const SparsificationMapper
-            *sparsification_mapperA_; //!<sparsification mapper A
-        const SparsificationMapper
-            *sparsification_mapperB_; //!<sparsification mapper B
-
-        /**
-         * Construct with default parameters
-         */
-        AlignerNParams()
-            : AlignerParams(),
-              sparsification_mapperA_(nullptr),
-              sparsification_mapperB_(nullptr) {}
-
     public:
-        /**
-         * @brief set parameter sparsification mapper
-         * @param sparsification_mapperA scaling sparisification mapper for A
-         */
-        AlignerNParams &
-        sparsification_mapperA(
-            const SparsificationMapper &sparsification_mapperA) {
-            sparsification_mapperA_ = &sparsification_mapperA;
-            return *this;
-        }
+        DEFINE_NAMED_ARG_FEATURE(sparsification_mapperA, const SparsificationMapper *);
+        DEFINE_NAMED_ARG_FEATURE(sparsification_mapperB, const SparsificationMapper *);
+
+        using valid_args = tuple_cat_type_t<
+            AlignerParams::valid_args,
+            std::tuple<AlignerNParams::sparsification_mapperA,
+                       AlignerNParams::sparsification_mapperB>>;
 
         /**
-         * @brief set parameter sparsification mapper
-         * @param sparsification_mapperB scaling sparisification mapper for A
+         * Construct with named arguments
          */
-        AlignerNParams &
-        sparsification_mapperB(
-            const SparsificationMapper &sparsification_mapperB) {
-            sparsification_mapperB_ = &sparsification_mapperB;
-            return *this;
-        }
+        template <class... Args>
+        AlignerNParams(Args... argpack)
+            : AlignerParams() {
+            static_assert( type_subset_of<
+                           std::tuple<Args...> ,
+                           tuple_cat_type_t<valid_args, AlignerParams::valid_args>
+                           >::value,
+                           "Invalid type in named arguments pack." );
 
-        ~AlignerNParams() {}
+            auto args = std::make_tuple(argpack...);
+
+            AlignerParams::construct(args);
+            sparsification_mapperA_ = get_named_arg<sparsification_mapperA>(args);
+            sparsification_mapperB_ = get_named_arg<sparsification_mapperB>(args);
+        }
     };
 }
 
