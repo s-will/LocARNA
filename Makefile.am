@@ -117,3 +117,87 @@ EXTRA_DIST= Data/Examples/archaea.fa Data/Examples/ferritin.fa		\
 
 gen-test-results:
 	make -C src/Tests gen-test-results
+
+########################################
+# BURNIN
+#
+# stress test and benchmark mlocarna
+# with default parameters on pairwise and multi-way alignments
+#
+# requires compalignp and scif in path
+#
+.PHONY: burnin burnin-eval burnin-summary
+
+burnin: install burnin-bralibase.k2 burnin.k2-high_apsi burnin.k2-low_apsi burnin-bralibase.k10 burnin.k10 burnin-summary
+
+burnin-bralibase.%: $(abs_srcdir)/Data/Bralibase2.1/%.tgz
+	bbset=${@:burnin-bralibase.%=%} ;\
+	inputdir=$(abs_builddir)/burnin/input ;\
+	mkdir -p $$inputdir ;\
+	cd $$inputdir; \
+	if [ ! -d $$bbset ] ; then tar xzf $< ; fi
+
+burnin-summary:
+	@echo
+	@echo "=================================================="
+	@cat $(abs_builddir)/burnin/benchmark*.log | grep '#' | sed 's/^#/  /g'
+	@echo "=================================================="
+	@echo
+
+burnin-clean:
+	chmod +w -R $(abs_builddir)/burnin/input
+	$(RM) -r $(abs_builddir)/burnin
+
+burnin.%: Data/Bralibase2.1/instances.%
+	@instances=$< ;\
+	burnindir=$(abs_builddir)/burnin ;\
+	bbdir=$(abs_builddir)/burnin/input;\
+	blog=$$burnindir/${@:burnin.%=benchmark-%}.log ;\
+	if [ ! -d "$$burnindir" ] ; then mkdir "$$burnindir"; fi ;\
+	echo "# ===== $$(date) =====" | tee -a $$blog ;\
+	echo "# VERSION $$($(prefix)/bin/mlocarna --version)" | tee -a $$blog ;\
+	if git status > /dev/null ; then \
+	  echo "# GIT $$(git log -1 | head -n1) $$(git symbolic-ref --short HEAD)" \
+	    | tee -a $$blog ;\
+	fi ;\
+	cat $$instances \
+	  | \time --format '# TIME %U SPACE %M' parallel "mkdir -p $$burnindir/{};\
+	      printf \"\\n\\n====={}\\n\";\
+	      $(prefix)/bin/mlocarna $$bbdir/{} --stockholm --tgtdir $$burnindir/{}" \
+	    2>&1 | cat >>$$blog
+	@make ${@:burnin.%=burnin-eval.%}
+
+burnin-eval.%: Data/Bralibase2.1/instances.%
+	@instances=$< ;\
+	burnindir=$(abs_builddir)/burnin ;\
+	bbdir=$(abs_builddir)/burnin/input;\
+	blog=$$burnindir/${@:burnin-eval.%=benchmark-%.log} ;\
+	spstab=$$burnindir/${@:burnin-eval.%=sps-%.tab} ;\
+	scitab=$$burnindir/${@:burnin-eval.%=sci-%.tab} ;\
+	echo "# SET ${@:burnin-eval.%=%}" | tee -a $$blog ;\
+	echo "# INSTANCES $$(cat $$instances | wc -l)" | tee -a $$blog ;\
+	cat $$instances \
+	  | parallel "\
+	    printf \"{}\\t\";\
+	    $(prefix)/bin/aln2fa.pl $$burnindir/{}/results/result.aln \
+              > $$burnindir/{}/results/result.fa;\
+	    compalignp -r $$bbdir/{=s/.raw.fa/.ref.fa/=} \
+	               -t $$burnindir/{}/results/result.fa \
+	    "\
+            > $$burnindir/sps.tab ;\
+	awk <$$burnindir/sps.tab '\
+	  { SUM+=$$2; N+=1 } \
+	  END { print "# AVG_SPS", SUM/N }\
+	  '\
+	  | tee -a $$blog ;\
+	cat $$instances \
+	  | parallel "\
+	    printf \"{}\\t\";\
+	    scif $$burnindir/{}/results/result.fa \
+	    "\
+            > $$burnindir/sci.tab ;\
+	awk <$$burnindir/sci.tab '\
+	  { SUM+=$$2; N+=1 } \
+	  END { print "# AVG_SCI", SUM/N }\
+	  '\
+	  | tee -a $$blog
