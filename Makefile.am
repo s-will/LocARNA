@@ -99,7 +99,14 @@ Data/Matrices/RIBOSUM95_70 Data/Matrices/RIBOSUM95_75	\
 Data/Matrices/RIBOSUM95_80 Data/Matrices/RIBOSUM95_85	\
 Data/Matrices/RIBOSUM95_90 Data/Matrices/RIBOSUM95_95
 
-matricesdir=$(prefix)/share/locarna/Matrices
+matricesdir = $(prefix)/share/locarna/Matrices
+
+
+benchmark = all.tgz instances.k2-all README instances.k10-all		\
+instances.k2-sel-high_apsi structure-annotation instances.k10-sel	\
+instances.k2-sel-low_apsi
+
+benchmarkdata = $(benchmark:%=Data/Bralibase2.1/%)
 
 EXTRA_DIST= Data/Examples/archaea.fa Data/Examples/ferritin.fa		\
 	Data/Examples/human.fa Data/Examples/mouse.fa			\
@@ -113,7 +120,7 @@ EXTRA_DIST= Data/Examples/archaea.fa Data/Examples/ferritin.fa		\
 	Data/Examples/example-wo-anchors.fa				\
 	Data/Examples/example-realign.aln				\
 	Data/Examples/example-anchors.bed $(matrices_DATA)		\
-	Doc/doxygen.cfg
+	$(benchmarkdata) Doc/doxygen.cfg
 
 gen-test-results:
 	make -C src/Tests gen-test-results

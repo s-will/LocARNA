@@ -1,0 +1,3 @@
+Examples for generating instance files:
+find . -path "k2/*.apsi-[12]*.raw.fa" > instances.k2
+find . -path "k15/*.apsi-[34]*.raw.fa" > instances.k15

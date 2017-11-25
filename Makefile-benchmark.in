@@ -1,0 +1,210 @@
+### -%- makefile -%- ####################
+# BENCHMARK of mlocarna
+#
+# Stress test and benchmark of mlocarna
+# on pairwise and multi-way alignments
+#
+# Set make variables (see below) to configure benchmark settings.  By
+# default, a 'quick' stress test is performed. For more extensive
+# benchmarking, e.g use BENCHMARK_SETS="k2-all k10-all"
+#
+# Additional DEPENDENCIES: scif, compalignp, parallel, R
+#
+
+########################################
+# preliminaries
+#
+srcdir = @srcdir@
+builddir = @builddir@
+abs_srcdir = @abs_srcdir@
+abs_builddir = @abs_builddir@
+top_builddir = @top_builddir@
+top_srcdir = @top_srcdir@
+abs_top_builddir = @abs_top_builddir@
+abs_top_srcdir = @abs_top_srcdir@
+prefix = @prefix@
+
+SHELL = /bin/sh
+.SUFFIXES:
+
+
+.PHONY: benchmark eval summary clean short long parameters plots view list
+.PRECIOUS: $(BENCHMARK_SETS:%=$(BIDDIR)/%.done-eval) $(BENCHMARK_SETS:%=$(BIDDIR)/%.done)
+
+########################################
+# user configurable settings
+
+# options for mlocarna
+LOCARNA_OPTIONS =#empty by default
+
+LOCARNA_VERSION := $(shell $(prefix)/bin/locarna --version)
+
+GITHEAD := $(shell (git log -1 2> /dev/null || echo None) | head -n1 | cut -f2 -d' ')
+
+# BENCHMARK ID (BID)
+# let id depend on git head and given options
+BID := $(shell (echo $(LOCARNA_OPTIONS); echo $(GITHEAD)) | sha256sum | cut -b 1-8)
+
+BIDDIR := benchmark/$(BID)
+
+BENCHMARK_SETS=k2-sel-high_apsi k2-sel-low_apsi k10-sel
+#OR
+# BENCHMARK_SETS="k2-all k10-all"
+
+PDFVIEWER=evince
+
+########################################
+
+########################################
+# user targets
+#
+
+# synonym to benchmark
+all: benchmark
+
+# run benchmark
+benchmark: parameters summary plots
+
+# show parameters
+parameters:
+	@echo LOCARNA_VERSION = $(LOCARNA_VERSION)
+	@echo LOCARNA_OPTIONS = $(LOCARNA_OPTIONS)
+	@echo GITHEAD = $(GITHEAD)
+	@echo BID = $(BID)
+
+# print benchmark result summary
+summary: $(BENCHMARK_SETS:%=$(BIDDIR)/%.done-eval)
+	@echo
+	@echo "=================================================="
+	@cat  $(BIDDIR)/*.log | grep '^#' | sed 's/^#/  /g'
+	@echo "=================================================="
+	@echo
+
+# generate benchmark plots
+plots: $(BENCHMARK_SETS:%=$(BIDDIR)/%-plots.pdf)
+
+# view plots (using PDFVIEWER)
+view: $(BENCHMARK_SETS:%=view-%)
+
+view-%: $(BIDDIR)/%-plots.pdf
+	$(PDFVIEWER) $<
+
+# list the stored benchmark sets
+list:
+	@for i in benchmark/* ; do \
+	  if [ -e $$i/README ] ; then \
+	    echo "===== $$i =====" ;\
+	    cat $$i/README ;\
+	  fi ;\
+	done
+
+# clean (sub)set of benchmark results for current settings
+clean:
+	$(RM) -r $(BIDDIR) $(BIDDIR).dir
+
+# clean all benchmark results
+clean-all:
+	$(RM) -r $(builddir)/benchmark
+
+########################################
+# private targets (usually, these should not be called directly)
+#
+
+input: $(builddir)/benchmark/input
+
+$(BIDDIR)/README:
+	@if [ ! -d $@ ] ; then mkdir -p $(BIDDIR) ; fi
+	@make -f Makefile-benchmark parameters | grep -v "^make" > $@
+
+benchmark/input: $(abs_top_srcdir)/Data/Bralibase2.1/all.tgz
+	@inputdir=$@; \
+	if [ ! -d "$$inputdir" ] ; then \
+	  mkdir -p $$inputdir ;\
+	  cd $$inputdir ;\
+	  tar xzf $< ;\
+	fi
+
+$(BIDDIR)/%.done: $(abs_top_srcdir)/Data/Bralibase2.1/instances.% \
+                  $(BIDDIR)/README benchmark/input
+	@instances=$< ;\
+	benchmarkdir=$(abs_builddir)/$(BIDDIR) ;\
+	bbdir=$(abs_builddir)/benchmark/input ;\
+	bbsource=$(abs_top_srcdir)/Data/Bralibase2.1/all.tgz ;\
+	blog=$$benchmarkdir/$*.log ;\
+	if [ ! -d "$$benchmarkdir" ] ; then mkdir -p "$$benchmarkdir"; fi ;\
+	echo "# ===== $$(date) =====" | tee -a $$blog ;\
+	echo "# VERSION $(LOCARNA_VERSION)" | tee -a $$blog ;\
+	if git status > /dev/null ; then \
+	  echo "# GIT $(GITHEAD) $$(git symbolic-ref --short HEAD)" \
+	    | tee -a $$blog ;\
+	fi ;\
+	if [ "$(LOCARNA_OPTIONS)" != "" ] ; then \
+	  echo "# LOCARNA_OPTIONS $(LOCARNA_OPTIONS)" | tee -a $$blog ;\
+	fi ;\
+	cat $$instances \
+	  | \time --format '# TIME %U SPACE %M' parallel "mkdir -p $$benchmarkdir/{};\
+	      printf \"\\n\\n====={}\\n\";\
+	      $(prefix)/bin/mlocarna $(LOCARNA_OPTIONS) $$bbdir/{} \
+	          --tgtdir $$benchmarkdir/{}" \
+	    2>&1 | cat >>$$blog
+	touch $@
+
+$(BIDDIR)/%.done-eval: $(abs_top_srcdir)/Data/Bralibase2.1/instances.% $(BIDDIR)/%.done
+	@instances=$< ;\
+	id=$* ;\
+	benchmarkdir=$(abs_builddir)/$(BIDDIR) ;\
+	bbdir=$(abs_builddir)/benchmark/input;\
+	blog=$$benchmarkdir/$$id.log ;\
+	spstab=$$benchmarkdir/$$id-sps.tab ;\
+	scitab=$$benchmarkdir/$$id-sci.tab ;\
+	mcctab=$$benchmarkdir/$$id-mcc.tab ;\
+	structure_anno=$(abs_top_srcdir)/Data/Bralibase2.1/structure-annotation;\
+	echo "# SET $$id" | tee -a $$blog ;\
+	echo "# INSTANCES $$(cat $$instances | wc -l)" | tee -a $$blog ;\
+	cat $$instances \
+	  | parallel "\
+	    printf \"{}\\t\";\
+	    $(prefix)/bin/aln2fa.pl $$benchmarkdir/{}/results/result.aln \
+              > $$benchmarkdir/{}/results/result.fa;\
+	    compalignp -r $$bbdir/{=s/.raw.fa/.ref.fa/=} \
+	               -t $$benchmarkdir/{}/results/result.fa \
+	    " \
+	  | tee $$spstab \
+	  | awk '\
+	    { SUM+=$$2; N+=1 } \
+	    END { print "# AVG_SPS", SUM/N }\
+	    '\
+	  | tee -a $$blog ;\
+	cat $$instances \
+	  | parallel "\
+	    printf \"{}\\t\";\
+	    scif $$benchmarkdir/{}/results/result.fa \
+	    " \
+	  | tee $$scitab \
+	  | awk '\
+	      { SUM+=$$2; N+=1 } \
+	      END { print "# AVG_SCI", SUM/N }\
+	      '\
+	  | tee -a $$blog ;\
+	cat $$instances \
+	  | xargs -I{} echo $$benchmarkdir/{}/results/result.aln \
+          | parallel -n16 ${prefix}/bin/locarna_mcc -f $$structure_anno \
+	  | tee $$mcctab \
+          | awk '\
+	      { SUM+=$$7; N+=1 } \
+	      END { print "# AVG_MCC", SUM/N }\
+	      '\
+	  | tee -a $$blog
+	touch $@
+
+$(BIDDIR)/%-plots.pdf: $(BIDDIR)/%-sps.pdf $(BIDDIR)/%-mcc.pdf $(BIDDIR)/%-sci.pdf
+	pdfjoin $^ -o $@
+
+$(BIDDIR)/%-sps.pdf: $(BIDDIR)/%.done-eval
+	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-sps.tab $* SPS 1
+
+$(BIDDIR)/%-sci.pdf: $(BIDDIR)/%.done-eval
+	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-sci.tab  $* SCI 1
+
+$(BIDDIR)/%-mcc.pdf: $(BIDDIR)/%.done-eval
+	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-mcc.tab $* MCC 7

@@ -51,6 +51,8 @@ our @EXPORT      =
         loh_sort
         new_intermediate_name
         nnamepair
+        parse_bracket_structure
+        parse_bracket_structure_single
         print_normalized_sequence_names_hash
         project_aln
         project_alnloh
@@ -1516,9 +1518,18 @@ sub readpipe_list_open {
 sub alifold_structure {
     my ($filename,@RNAfold_args)=@_;
 
+    my @options = @RNAalifold_options;
+
+    push @options, "--mis";
+
+    if ( not (defined($RNAfold_args[-1]) and $RNAfold_args[-1] eq "--noPS" ) ) {
+        push @options, ("--aln", "--color");
+    }
+
+    push @options, @RNAfold_args;
+
     my @aliout = @{
-        readpipe_list("$RNAalifold", @RNAalifold_options, "--mis", "--aln", "--color",
-                      @RNAfold_args, "$filename")
+        readpipe_list("$RNAalifold", @options, "$filename")
     };
 
     if ($#aliout>=1) {
@@ -2502,7 +2513,13 @@ sub aln_reliability_fromfile: prototype($$$) {
 sub parse_bracket_structure_single {
     my ($str,$open,$close,$str_array_ref)=@_;
 
-    my @str_array = @{ $str_array_ref };
+    my @str_array;
+
+    if (defined($str_array_ref)) {
+        @str_array = @{ $str_array_ref };
+    } else {
+        @str_array = (-1)x(length($str));
+    }
 
     my @stack;
 
@@ -2528,11 +2545,7 @@ sub parse_bracket_structure {
     my ($str)=@_;
     my @str_array;
 
-    for (my $i=0; $i<length($str); $i++) {
-	$str_array[$i]=-1;
-    }
-
-    @str_array=parse_bracket_structure_single $str,"(",")",\@str_array;
+    @str_array=parse_bracket_structure_single $str,"(",")";
     @str_array=parse_bracket_structure_single $str,"{","}",\@str_array;
     @str_array=parse_bracket_structure_single $str,"[","]",\@str_array;
     @str_array=parse_bracket_structure_single $str,"<",">",\@str_array;
