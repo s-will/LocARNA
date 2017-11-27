@@ -11,7 +11,7 @@ namespace LocARNA {
     ConfusionMatrix::count_common_bps(const RnaStructure &s1,
                                       const RnaStructure &s2) {
         return std::count_if(
-            s1.begin(), s2.begin(), [this, &s2](const RnaStructure::bp_t &bp) {
+            s1.begin(), s1.end(), [this, &s2](const RnaStructure::bp_t &bp) {
                 size_t i = bp.first;
                 size_t j = bp.second;
                 return filter_(bp) &&
