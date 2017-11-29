@@ -1,8 +1,8 @@
-CLUSTAL W --- LocARNA 1.9.1
+CLUSTAL W --- LocARNA 2.0.0RC1
 
 
 
-fruA               --CCUCGAGGGGAACCCGAA-------------AGGGACCCGAGAGG--
 vhuU               AGCUCACAACCGAACCCAUU-------------UGGGAGGUUGUGAGCU
 fdhA               CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAG-GUGGCG
+fruA               --CCUCGAGGGGAACCCGA-------------AAGGGACCCGAGAGG--
 #A1                ..0...........123.............................4..

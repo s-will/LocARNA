@@ -2,7 +2,7 @@
 === 2017
 
 2.0.0RC1 (2017-11-29)
-
+	Change default parameters for scoring (new gap cost and tau factor)
 	Sequence envelopes for locarna, locarna_p and sparse;
 	  compatible to anchors, local alignment, and free endgaps
 	  new parameter: --min-trace-probability (on by default)
