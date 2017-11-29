@@ -23,7 +23,7 @@ namespace LocARNA {
     //
 
     AlignerN::AlignerN(const AlignerN &a)
-        : params(new AlignerNParams(*a.params)),
+        : params(std::make_unique<AlignerNParams>(*a.params)),
           scoring(a.scoring),
           mod_scoring(0),
           seqA(a.seqA),
@@ -53,8 +53,8 @@ namespace LocARNA {
           def_scoring_view(this),
           mod_scoring_view(this) {}
 
-    AlignerN::AlignerN(const AlignerParams &ap_)
-        : params(new AlignerNParams(dynamic_cast<const AlignerNParams &>(ap_))),
+    AlignerN::AlignerN(const AlignerNParams &ap_)
+        : params(std::make_unique<AlignerNParams>(ap_)),
           scoring(params->scoring_),
           mod_scoring(0),
           seqA(*params->seqA_),
@@ -98,8 +98,6 @@ namespace LocARNA {
 
     // destructor
     AlignerN::~AlignerN() {
-        assert(params != 0);
-        delete params;
         if (mod_scoring != 0)
             delete mod_scoring;
     }
@@ -785,8 +783,8 @@ namespace LocARNA {
             if (trace_debugging_output)
                 std::cout << "align_D al: " << al << std::endl;
 
-            const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist(al);
-            if (adjlA.empty()) {
+            const BasePairs::LeftAdjList &adjlA = bpsA.left_adjlist_s(al);
+            if (adjlA.size()==1) {
                 if (trace_debugging_output)
                     std::cout << "empty left_adjlist(al=)" << al << std::endl;
                 continue;
@@ -804,38 +802,14 @@ namespace LocARNA {
             for (pos_type bl = max_bl + 1; bl > min_bl;) {
                 bl--;
 
-                const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist(bl);
+                const BasePairs::LeftAdjList &adjlB = bpsB.left_adjlist_s(bl);
 
-                if (adjlB.empty()) {
+                if (adjlB.size()==1) {
                     if (trace_debugging_output)
                         std::cout << "empty left_adjlist(bl=)" << bl
                                   << std::endl;
                     continue;
                 }
-
-                // ------------------------------------------------------------
-                // old code for finding maximum arc ends:
-
-                // pos_type max_ar=adjlA.begin()->right();
-                // //tracecontroller not considered
-                // pos_type max_br=adjlB.begin()->right();
-
-                // //find the rightmost possible basepair for left base al
-                // for (BasePairs::LeftAdjList::const_iterator arcA =
-                // adjlA.begin();
-                //       arcA != adjlA.end(); arcA++)
-                //      {
-                //          if (max_ar < arcA->right() )
-                //              max_ar = arcA->right();
-                //      }
-                // //find the rightmost possible basepair for left base bl
-                // for (BasePairs::LeftAdjList::const_iterator arcB =
-                // adjlB.begin();
-                //       arcB != adjlB.end(); arcB++)
-                //      {
-                //          if (max_br < arcB->right() )
-                //              max_br = arcB->right();
-                //      }
 
                 // ------------------------------------------------------------
                 // from aligner.cc: find maximum arc ends
@@ -860,18 +834,14 @@ namespace LocARNA {
 
                 // compute IA
                 //          stopwatch.start("compIA");
-                for (BasePairs::LeftAdjList::const_iterator arcB =
-                         adjlB.begin();
-                     arcB != adjlB.end(); ++arcB) {
+                for (auto arcB = adjlB.begin(); arcB->right() <= r.endB(); ++arcB) {
                     fill_IA_entries(al, *arcB, max_ar);
                 }
                 //          stopwatch.stop("compIA");
 
                 // comput IB
                 //          stopwatch.start("compIB");
-                for (BasePairs::LeftAdjList::const_iterator arcA =
-                         adjlA.begin();
-                     arcA != adjlA.end(); ++arcA) {
+                for (auto arcA = adjlA.begin(); arcA->right() <= r.endA(); ++arcA) {
                     fill_IB_entries(*arcA, bl, max_br);
                 }
                 //          stopwatch.stop("compIB");

@@ -25,21 +25,16 @@ namespace LocARNA {
     class Ribofit {
     public:
         typedef Matrix<double> matrix_t; //!< type of a matrix
+        using base_alphabet_type = Alphabet<char,4>;
 
-    protected:
-        //! alphabet of base names as characters
-        Alphabet<char> alphabet_;
-
-    public:
         /**
          * @brief Construct
          */
-        explicit Ribofit(const char *alphabet) : alphabet_(alphabet, 4) {}
+        explicit Ribofit(std::array<char, 4> alphabet) : alphabet_(alphabet) {}
 
         //! @brief virtual destructor
         virtual ~Ribofit(){};
 
-    public:
         /**
          * @brief ribofit base match score for specific identity
          *
@@ -67,7 +62,7 @@ namespace LocARNA {
         arcmatch_score(char i, char j, char k, char l, double identity)
             const = 0;
 
-        const Alphabet<char> &
+        const base_alphabet_type &
         alphabet() const {
             return alphabet_;
         }
@@ -80,6 +75,12 @@ namespace LocARNA {
          */
         const matrix_t &
         get_basematch_scores(double identity, matrix_t &basematch_scores) const;
+
+
+    protected:
+        //! alphabet of base names as characters
+        base_alphabet_type alphabet_;
+
     };
 
     class Ribofit_will2014 : public Ribofit {

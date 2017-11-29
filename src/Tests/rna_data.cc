@@ -16,16 +16,17 @@ using namespace LocARNA;
 /** @file some unit tests for RnaData and ExtRnaData
 */
 
-PFoldParams pfparams(true, true, -1, 2);
+PFoldParams pfoldparams(PFoldParams::args::noLP(true),
+                        PFoldParams::args::stacking(true));
 
-TEST_CASE("RnaData can fold alignments, write to file and reead again") {
+TEST_CASE("RnaData can fold alignments, write to file and read again") {
     std::ostringstream sizeinfo1;
     std::ostringstream sizeinfo2;
 
     SECTION("fold alignment") {
         std::unique_ptr<RnaData> rna_data;
         REQUIRE_NOTHROW(rna_data =
-                            std::make_unique<RnaData>("archaea.aln", 0.1, 2, pfparams));
+                            std::make_unique<RnaData>("archaea.aln", 0.1, 2, pfoldparams));
         rna_data->write_size_info(sizeinfo1);
 
         SECTION("write to pp file") {
@@ -36,7 +37,7 @@ TEST_CASE("RnaData can fold alignments, write to file and reead again") {
 
             SECTION("and read again") {
                 REQUIRE_NOTHROW(
-                    rna_data = std::make_unique<RnaData>("archaea.pp", 0.1, 2, pfparams));
+                    rna_data = std::make_unique<RnaData>("archaea.pp", 0.1, 2, pfoldparams));
 
                 rna_data->write_size_info(sizeinfo2);
 
@@ -59,19 +60,16 @@ TEST_CASE("RnaData can construct pairwise (averaged) consensus dot plots") {
                       "CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG");
 
         Alignment alignment(seqA, seqB,
-                            Alignment::edges_t(Alignment::alistr_to_edge_ends(
-                                                   alistrA),
-                                               Alignment::alistr_to_edge_ends(
-                                                   alistrB)));
+                            Alignment::alistrs_to_edges(alistrA, alistrB));
 
         REQUIRE(alignment.seqA().is_proper());
         REQUIRE(alignment.seqB().is_proper());
 
         SECTION("and compute the averaged consensus dot plot") {
-            RnaEnsemble ensA(seqA, pfparams, false, true);
-            RnaData rna_dataA(ensA, 0.05, 3, pfparams);
-            RnaEnsemble ensB(seqB, pfparams, false, true);
-            RnaData rna_dataB(ensB, 0.05, 3, pfparams);
+            RnaEnsemble ensA(seqA, pfoldparams, false, true);
+            RnaData rna_dataA(ensA, 0.05, 3, pfoldparams);
+            RnaEnsemble ensB(seqB, pfoldparams, false, true);
+            RnaData rna_dataB(ensB, 0.05, 3, pfoldparams);
 
             RnaData consensus(rna_dataA, rna_dataB, alignment, 0.01, 0.01);
 
@@ -84,7 +82,7 @@ TEST_CASE("RnaData can construct pairwise (averaged) consensus dot plots") {
                 consensus.write_pp(out);
                 out.close();
 
-                RnaData consensus2(filename, 0.1, 2, pfparams);
+                RnaData consensus2(filename, 0.1, 2, pfoldparams);
 
                 std::remove(filename.c_str());
 
@@ -102,9 +100,9 @@ TEST_CASE("RnaData can construct pairwise (averaged) consensus dot plots") {
             "alignment") {
             MultipleAlignment ma(alignment);
 
-            RnaEnsemble ens_ma(ma, pfparams, false, true);
+            RnaEnsemble ens_ma(ma, pfoldparams, false, true);
 
-            RnaData ali_consensus(ens_ma, 0.1, 0, pfparams);
+            RnaData ali_consensus(ens_ma, 0.1, 0, pfoldparams);
 
             // missing test of ensemble
 
@@ -117,7 +115,7 @@ TEST_CASE("RnaData can construct pairwise (averaged) consensus dot plots") {
                 ali_consensus.write_pp(out);
                 out.close();
 
-                RnaData ali_consensus2(filename, 0.1, 2, pfparams);
+                RnaData ali_consensus2(filename, 0.1, 2, pfoldparams);
                 std::remove(filename.c_str());
 
                 std::ostringstream sizeinfo1;
@@ -145,7 +143,8 @@ TEST_CASE(
 
         SECTION(
             "read without maxBPspan restriction and check some base pairs") {
-            PFoldParams pfoldparams(false, false, -1, 2);
+            PFoldParams pfoldparams(PFoldParams::args::noLP(false),
+                                    PFoldParams::args::stacking(false));
             RnaData rd(filename, 0.0, 0.0, pfoldparams);
 
             REQUIRE(rd.arc_prob(2, 6) > 0.99);
@@ -154,7 +153,9 @@ TEST_CASE(
         }
 
         SECTION("read with maxBPspan restriction and check some base pairs") {
-            PFoldParams pfoldparams(false, false, 6, 2);
+            PFoldParams pfoldparams(PFoldParams::args::noLP(false),
+                                    PFoldParams::args::stacking(false),
+                                    PFoldParams::args::max_bp_span(6));
             RnaData rd(filename, 0.0, 0.0, pfoldparams);
 
             REQUIRE(rd.arc_prob(2, 6) > 0.99);

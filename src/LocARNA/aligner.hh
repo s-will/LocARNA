@@ -10,7 +10,7 @@
 #include "scoring_fwd.hh"
 #include "rna_structure.hh"
 
-#include "params.hh"
+#include "aligner_params.hh"
 
 namespace LocARNA {
 
@@ -92,15 +92,6 @@ namespace LocARNA {
          * @note used with implicit type cast (for cleaner syntax)
          */
         Aligner(const AlignerParams &ap);
-
-        /**
-         * @brief create with named parameters
-         * @return parameter object
-         */
-        static AlignerParams
-        create() {
-            return AlignerParams();
-        }
 
         //! destructor
         ~Aligner();
