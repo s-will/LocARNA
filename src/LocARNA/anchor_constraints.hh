@@ -202,7 +202,7 @@ namespace LocARNA {
             }
         }
 
-        //! @brief is deletion allowed? (unoptimized version)
+        //! @brief is deletion allowed?
         //! @param i position/matrix index of first sequence
         //! @param j position/matrix index of second sequence
         //! @return whether it is allowed to delete i immediately right of j
@@ -241,7 +241,7 @@ namespace LocARNA {
             }
         }
 
-        //! @brief is insertion allowed? (unoptimized)
+        //! @brief is insertion allowed?
         //! @param i position/matrix index of first sequence
         //! @param j position/matrix index of second sequence
         //! @return whether it is allowed to insert j immediately right of i

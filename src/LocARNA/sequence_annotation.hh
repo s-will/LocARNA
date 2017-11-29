@@ -22,28 +22,10 @@ namespace LocARNA {
      * consensus of two aligned annotation sequences.
      */
     class SequenceAnnotation {
+    public:
         //! an anchcor name
         typedef std::string name_t;
 
-        //! a vector of annotation strings
-        //! @see annotation_
-        typedef std::vector<std::string> annotation_t;
-
-        /**
-         * @brief vector of annotation name strings
-         *
-         * The strings specify names of uniform length. The name of a
-         * position i is the string astrings_[0][i]+...+astrings_[k-1][i],
-         * where k=astrings_.size()
-         */
-        annotation_t annotation_;
-
-        /**
-         * @brief A static constant empty instance of type SequenceAnnotation
-         */
-        static const SequenceAnnotation empty_instance_;
-
-    public:
         /**
          * @brief Construct empty
          * @param name_length length of names
@@ -205,19 +187,38 @@ namespace LocARNA {
         bool
         duplicate_names() const;
 
-        /*
-         * @brief test for name clashs
+        // /*
+        //  * @brief test for name clashs
+        //  *
+        //  * @param edges alignment edges between A and B
+        //  * @param annotationA annotation A
+        //  * @param annotationB annotation B
+        //  *
+        //  * @return whether names in A and B clash when aligned via edges
+        //  */
+        // static bool
+        // clashing_names(const AlignmentEdges &edges,
+        //                const SequenceAnnotation &annotationA,
+        //                const SequenceAnnotation &annotationB);
+
+    private:
+        //! a vector of annotation strings
+        //! @see annotation_
+        typedef std::vector<std::string> annotation_t;
+
+        /**
+         * @brief vector of annotation name strings
          *
-         * @param edges alignment edges between A and B
-         * @param annotationA annotation A
-         * @param annotationB annotation B
-         *
-         * @return whether names in A and B clash when aligned via edges
+         * The strings specify names of uniform length. The name of a
+         * position i is the string astrings_[0][i]+...+astrings_[k-1][i],
+         * where k=astrings_.size()
          */
-        static bool
-        clashing_names(const AlignmentEdges &edges,
-                       const SequenceAnnotation &annotationA,
-                       const SequenceAnnotation &annotationB);
+        annotation_t annotation_;
+
+        /**
+         * @brief A static constant empty instance of type SequenceAnnotation
+         */
+        static const SequenceAnnotation empty_instance_;
     };
 }
 

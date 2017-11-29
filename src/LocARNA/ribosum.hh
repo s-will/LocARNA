@@ -5,13 +5,15 @@
 #include <config.h>
 #endif
 
+#include <array>
 #include <cstdlib>
-#include <string>
 #include <fstream>
+#include <sstream>
 #include <math.h>
+#include <string>
 
-#include "matrix.hh"
 #include "alphabet.hh"
+#include "matrix.hh"
 
 namespace LocARNA {
 
@@ -22,88 +24,10 @@ namespace LocARNA {
     class Ribosum {
     public:
         typedef Matrix<double> matrix_t; //!< type of a matrix
-    protected:
-        typedef Alphabet<std::string> alphabet_type; //!< type of alphabet
+        typedef Alphabet<std::string, 4> base_alphabet_type; //!< type of alphabet
+        typedef Alphabet<char, 4> char_alphabet_type; //!< type of alphabet
+        typedef Alphabet<std::string, 16> arc_alphabet_type; //!< type of alphabet
 
-        std::string name; //!< name of ribosum
-        matrix_t bm;      //!< scores for base matches, 4x4 matrix
-        matrix_t am;      //!< scores for basepair/arc matches,
-        //!< 16x16 matrix
-
-        alphabet_type basename_alphabet; //!< alphabet of base names
-        alphabet_type arcname_alphabet;  //!< alphabet of arc names
-
-        Alphabet<char>
-            char_basename_alphabet; //!< alphabet of base names as characters
-
-    protected:
-        /**
-         * Read matrix from input stream
-         *
-         * @param in input stream
-         * @param[out] mat matrix to be read
-         * @param names alphabet names provided as Alphabet (of strings)
-         *
-         * @return input stream after reading
-         */
-        std::istream &
-        read_matrix(std::istream &in,
-                    matrix_t &mat,
-                    const alphabet_type &names) const;
-
-        /**
-         * Write matrix to output stream
-         *
-         * @param out output stream
-         * @param mat matrix to be written
-         * @param alph alphabet names provided as Alphabet (of strings)
-         *
-         * @return output stream after writing
-         */
-        std::ostream &
-        write_matrix(std::ostream &out,
-                     const matrix_t &mat,
-                     const alphabet_type &alph) const;
-
-        //! @brief Construct empty
-        Ribosum();
-
-        //! reads the standard ribosum file format
-        //! @param in input stream
-        void
-        read_ribosum(std::istream &in);
-
-    protected:
-        //! transform the basename alphabet to alphabet over characters
-        Alphabet<char>
-        make_char_alphabet() const;
-
-        /**
-         * Set alphabet of base names
-         *
-         * @param a array of strings of the base names
-         * @post basename_alphabet and char_basename_alphabet are initialized
-         */
-        void
-        set_basename_alphabet(const std::string a[]) {
-            basename_alphabet =
-                alphabet_type(std::vector<std::string>(&a[0], &a[4]));
-            char_basename_alphabet = make_char_alphabet();
-        }
-
-        /**
-         * Set alphabet of base names
-         *
-         * @param a array of strings of the arc names
-         * @post arcname_alphabet is initialized
-         */
-        void
-        set_arcname_alphabet(const std::string a[]) {
-            arcname_alphabet =
-                alphabet_type(std::vector<std::string>(&a[0], &a[16]));
-        }
-
-    public:
         /**
          * Construct from file
          *
@@ -120,7 +44,7 @@ namespace LocARNA {
          */
         const matrix_t &
         get_basematch_scores() const {
-            return bm;
+            return bm_;
         }
 
         /**
@@ -129,28 +53,28 @@ namespace LocARNA {
          */
         const matrix_t &
         get_arcmatch_scores() const {
-            return am;
+            return am_;
         }
 
         //! Get the basename alphabet as alphabet over strings
         //! @return alphabet of strings
-        const alphabet_type &
+        const base_alphabet_type &
         string_alphabet() const {
-            return basename_alphabet;
+            return basename_alphabet_;
         }
 
         //! Get the basename alphabet as alphabet over characters
         //! @return basename alphabet
-        const Alphabet<char> &
+        const char_alphabet_type &
         alphabet() const {
-            return char_basename_alphabet;
+            return char_basename_alphabet_;
         }
 
         //! Get name of ribosum
         //! @return name of ribosum
         const std::string &
         get_name() const {
-            return name;
+            return name_;
         }
 
         //! \brief Get base match score
@@ -160,7 +84,7 @@ namespace LocARNA {
         //! @return ribosum score for matching nucleotides i and j.
         double
         basematch_score(char i, char j) const {
-            return bm(alphabet().idx(i), alphabet().idx(j));
+            return bm_(alphabet().idx(i), alphabet().idx(j));
         }
 
         //! \brief Get arc match score
@@ -173,12 +97,88 @@ namespace LocARNA {
         //! with an arc of nucleotides k and l.
         double
         arcmatch_score(char i, char j, char k, char l) const {
-            return am(alphabet().idx(i) * 4 + alphabet().idx(j),
-                      alphabet().idx(k) * 4 + alphabet().idx(l));
+            return am_(alphabet().idx(i) * 4 + alphabet().idx(j),
+                       alphabet().idx(k) * 4 + alphabet().idx(l));
         }
 
         friend std::ostream &
         operator<<(std::ostream &out, const Ribosum &ribosum);
+    protected:
+        std::string name_; //!< name of ribosum
+        matrix_t bm_;      //!< scores for base matches, 4x4 matrix
+        matrix_t am_;      //!< scores for basepair/arc matches,
+        //!< 16x16 matrix
+
+        base_alphabet_type basename_alphabet_; //!< alphabet of base names
+        arc_alphabet_type arcname_alphabet_;  //!< alphabet of arc names
+
+        char_alphabet_type
+            char_basename_alphabet_; //!< alphabet of base names as characters
+
+        /**
+         * Read matrix from input stream
+         *
+         * @param in input stream
+         * @param[out] mat matrix to be read
+         * @param names alphabet names provided as Alphabet (of strings)
+         *
+         * @return input stream after reading
+         */
+        template<size_t N>
+        std::istream &
+        read_matrix(std::istream &in,
+                    matrix_t &mat,
+                    const Alphabet<std::string, N> &names) const;
+
+        /**
+         * Write matrix to output stream
+         *
+         * @param out output stream
+         * @param mat matrix to be written
+         * @param alph alphabet names provided as Alphabet (of strings)
+         *
+         * @return output stream after writing
+         */
+        template<size_t N>
+        std::ostream &
+        write_matrix(std::ostream &out,
+                     const matrix_t &mat,
+                     const Alphabet<std::string, N> &alph) const;
+
+        //! @brief Construct empty
+        Ribosum();
+
+        //! reads the standard ribosum file format
+        //! @param in input stream
+        void
+        read_ribosum(std::istream &in);
+
+        //! transform the basename alphabet to alphabet over characters
+        char_alphabet_type
+        make_char_alphabet() const;
+
+        /**
+         * Set alphabet of base names
+         *
+         * @param a array of strings of the base names
+         * @post basename_alphabet and char_basename_alphabet are initialized
+         */
+        void
+        set_basename_alphabet(const std::array<std::string,4> &a) {
+            basename_alphabet_ = base_alphabet_type(a);
+            char_basename_alphabet_ = make_char_alphabet();
+        }
+
+        /**
+         * Set alphabet of base names
+         *
+         * @param a array of strings of the arc names
+         * @post arcname_alphabet is initialized
+         */
+        void
+        set_arcname_alphabet(const std::array<std::string,16> &a) {
+            arcname_alphabet_ = arc_alphabet_type(a);
+        }
     };
 
     //! @brief Represents ribosum similarity matrices including raw frequencies
@@ -200,17 +200,6 @@ namespace LocARNA {
          */
         explicit RibosumFreq(const std::string &filename);
 
-    protected:
-        RibosumFreq();
-
-        matrix_t base_probs_;           //!< matrix of base probabilities
-        matrix_t base_nonstruct_probs_; //!< matrix of base probabilities in
-                                        //!non-structural context
-        matrix_t basepair_probs_;       //!< matrix of base pair probabilities
-        matrix_t basematch_probs_;      //!< matrix of base match probabilties
-        matrix_t arcmatch_probs_;       //!< matrix of arc match probabilities
-
-    public:
         //! Get probability of a base
         //! @param i nucleotide character
         //! @return probability of nucleotide character
@@ -366,7 +355,16 @@ namespace LocARNA {
         friend std::ostream &
         operator<<(std::ostream &out, const RibosumFreq &ribosum);
 
-    private:
+    protected:
+        RibosumFreq();
+
+        matrix_t base_probs_;           //!< matrix of base probabilities
+        matrix_t base_nonstruct_probs_; //!< matrix of base probabilities in
+                                        //!non-structural context
+        matrix_t basepair_probs_;       //!< matrix of base pair probabilities
+        matrix_t basematch_probs_;      //!< matrix of base match probabilties
+        matrix_t arcmatch_probs_;       //!< matrix of arc match probabilities
+
         void
         write_CC_matrix(std::ostream &out,
                         const std::string &ribname,
@@ -375,9 +373,66 @@ namespace LocARNA {
                         int y,
                         const Ribosum::matrix_t &m) const;
 
+    private:
         void
         read_frequencies(std::istream &in);
     };
+
+
+    template <size_t N>
+    std::istream &
+    Ribosum::read_matrix(std::istream &in,
+                         Matrix<double> &mat,
+                         const Alphabet<std::string, N> &alph) const {
+        auto siz = alph.size();
+
+        std::string line;
+
+        while (std::getline(in, line) && line == "")
+            ;
+
+        {
+            std::istringstream linestream(line);
+
+            for (size_t i = 0; i < siz; i++) {
+                std::string name;
+                linestream >> name;
+
+                if (name != alph[i])
+                    throw(std::ifstream::failure(
+                        "Expecting correct table header. Found: " + line));
+            }
+        }
+
+        mat.resize(siz, siz);
+        for (size_t i = 0; i < siz; i++) {
+            std::getline(in, line);
+            std::istringstream linestream(line);
+            std::string base;
+            linestream >> base;
+            if (base != alph[i])
+                throw(std::ifstream::failure("Expecting base name " +
+                                             alph[i] + " as row header"));
+
+            for (size_t j = 0; j <= i; j++) {
+                double number;
+                linestream >> number;
+                mat(i, j) = mat(j, i) = number;
+            }
+        }
+        return in;
+    }
+
+    template<size_t N>
+    std::ostream &
+    Ribosum::write_matrix(std::ostream &out,
+                          const Matrix<double> &mat,
+                          const Alphabet<std::string, N> &alph) const {
+        out << alph << std::endl;
+        out << mat << std::endl;
+        return out;
+    }
+
 
 } // end namespace LocARNA
 
