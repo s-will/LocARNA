@@ -266,7 +266,7 @@ especially for large alignment instances.
 
 =over 4
 
-=item B<-p,--min-prob>=probability(0.0005)
+=item B<-p,--min-prob>=probability(0.001)
 
 Minimum base pair / arc probability. Arc with lower probability in the
 input RNA structure ensembles are ignored.
@@ -327,11 +327,11 @@ Relax deviation constraints (cf. --max-diff-aln) in multiple
 aligmnent. This option is useful if the default strategy for
 realignment fails.
 
-=item B<-a,--min-am-prob>=probability(0.0005)
+=item B<-a,--min-am-prob>=probability(0.001)
 
 Minimum arc-match probability (filters output of locarna-p)
 
-=item B<-b,--min-bm-prob>=probability(0.0005)
+=item B<-b,--min-bm-prob>=probability(0.001)
 
 Minimum base-match probability (filters output of locarna-p)
 
@@ -1083,7 +1083,7 @@ $opts{'skip-pp'}=0; ## =1 skips the computation of pair probabilities
                     ## for files that exist already
 $opts{'it-reliable-structure'}=0;
 
-$opts{'min-prob'}=0.0005;
+$opts{'min-prob'}=0.001;
 
 $opts{'struct-weight'}=200;
 $opts{'max-diff-am'}=30;

@@ -96,9 +96,9 @@ option_def my_options[] =
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Scoring parameters"},
 
-     {"indel", 'i', 0, O_ARG_INT, &clp.indel, "-350", "score",
+     {"indel", 'i', 0, O_ARG_INT, &clp.indel, "-150", "score",
       clp.help_text["indel"]},
-     {"indel-opening", 0, 0, O_ARG_INT, &clp.indel_opening, "-500", "score",
+     {"indel-opening", 0, 0, O_ARG_INT, &clp.indel_opening, "-750", "score",
       clp.help_text["indel_opening"]},
      {"ribosum-file", 0, 0, O_ARG_STRING, &clp.ribosum_file, "RIBOSUM85_60",
       "f", clp.help_text["ribosum_file"]},
@@ -114,7 +114,7 @@ option_def my_options[] =
       clp.help_text["struct_weight"]},
      {"exp-prob", 'e', &clp.exp_prob_given, O_ARG_DOUBLE, &clp.exp_prob,
       O_NODEFAULT, "prob", clp.help_text["exp_prob"]},
-     {"tau", 't', 0, O_ARG_INT, &clp.tau, "0", "factor", clp.help_text["tau"]},
+     {"tau", 't', 0, O_ARG_INT, &clp.tau, "50", "factor", clp.help_text["tau"]},
      {"exclusion", 'E', 0, O_ARG_INT, &clp.exclusion, "0", "score",
       clp.help_text["exclusion"]},
      {"stacking", 0, &clp.stacking, O_NO_ARG, 0, O_NODEFAULT, "",
@@ -166,7 +166,7 @@ option_def my_options[] =
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "",
       "Heuristics for speed accuracy trade off"},
 
-     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.0005", "probability",
+     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.001", "probability",
       clp.help_text["min_prob"]},
      {"max-bps-length-ratio", 0, 0, O_ARG_DOUBLE, &clp.max_bps_length_ratio,
       "0.0", "factor", clp.help_text["max_bps_length_ratio"]},

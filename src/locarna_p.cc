@@ -125,9 +125,9 @@ option_def my_options[] =
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Scoring parameters"},
 
-     {"indel", 'i', 0, O_ARG_INT, &clp.indel, "-350", "score",
+     {"indel", 'i', 0, O_ARG_INT, &clp.indel, "-150", "score",
       clp.help_text["indel"]},
-     {"indel-opening", 0, 0, O_ARG_INT, &clp.indel_opening, "-500", "score",
+     {"indel-opening", 0, 0, O_ARG_INT, &clp.indel_opening, "-750", "score",
       clp.help_text["indel_opening"]},
      {"ribosum-file", 0, 0, O_ARG_STRING, &clp.ribosum_file, "RIBOSUM85_60",
       "f", clp.help_text["ribosum_file"]},
@@ -141,7 +141,7 @@ option_def my_options[] =
       clp.help_text["struct_weight"]},
      {"exp-prob", 'e', &clp.exp_prob_given, O_ARG_DOUBLE, &clp.exp_prob,
       O_NODEFAULT, "prob", clp.help_text["exp_prob"]},
-     {"tau", 't', 0, O_ARG_INT, &clp.tau, "0", "factor", clp.help_text["tau"]},
+     {"tau", 't', 0, O_ARG_INT, &clp.tau, "50", "factor", clp.help_text["tau"]},
 
      {"temperature-alipf", 0, 0, O_ARG_INT, &clp.temperature_alipf, "300",
       "int", clp.help_text["temperature_alipf"]},
@@ -167,9 +167,9 @@ option_def my_options[] =
      {"write-basematch-probs", 0, &clp.write_basematch_probs, O_ARG_STRING,
       &clp.basematch_probs_file, O_NODEFAULT, "file",
       "Write basematch probabilities"},
-     {"min-am-prob", 'a', 0, O_ARG_DOUBLE, &clp.min_am_prob, "0.0005", "amprob",
+     {"min-am-prob", 'a', 0, O_ARG_DOUBLE, &clp.min_am_prob, "0.001", "amprob",
       clp.help_text["min_am_prob"]},
-     {"min-bm-prob", 'b', 0, O_ARG_DOUBLE, &clp.min_bm_prob, "0.0005", "bmprob",
+     {"min-bm-prob", 'b', 0, O_ARG_DOUBLE, &clp.min_bm_prob, "0.001", "bmprob",
       clp.help_text["min_bm_prob"]},
      {"include-am-in-bm", 0, &clp.include_am_in_bm, O_NO_ARG, 0, O_NODEFAULT,
       "", "Include arc match cases in base match probabilities"},
@@ -179,7 +179,7 @@ option_def my_options[] =
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "",
       "Heuristics for speed accuracy trade off"},
 
-     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.0005", "prob",
+     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.001", "prob",
       clp.help_text["min_prob"]},
      {"max-bps-length-ratio", 0, 0, O_ARG_DOUBLE, &clp.max_bps_length_ratio,
       "0.0", "factor", clp.help_text["max_bps_length_ratio"]},

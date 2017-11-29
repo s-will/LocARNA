@@ -94,11 +94,11 @@ option_def my_options[] = {
 
     {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Scoring parameters"},
 
-    {"indel", 'i', 0, O_ARG_INT, &clp.indel, "-350", "score",
+    {"indel", 'i', 0, O_ARG_INT, &clp.indel, "-150", "score",
      clp.help_text["indel"]},
-    {"indel-loop", 'i', 0, O_ARG_INT, &clp.indel_loop, "-350", "score",
+    {"indel-loop", 'i', 0, O_ARG_INT, &clp.indel_loop, "-300", "score",
      "Score for insertions and deletions of loops per base"},
-    {"indel-opening", 0, 0, O_ARG_INT, &clp.indel_opening, "-600", "score",
+    {"indel-opening", 0, 0, O_ARG_INT, &clp.indel_opening, "-750", "score",
      clp.help_text["indel_opening"]},
     {"indel-opening-loop", 0, 0, O_ARG_INT, &clp.indel_opening_loop, "-900",
      "score", "Opening score for insertions and deletions of loops"},
@@ -156,7 +156,7 @@ option_def my_options[] = {
     {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "",
      "Heuristics for speed accuracy trade off"},
 
-    {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.0005", "prob",
+    {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.001", "prob",
      clp.help_text["min_prob"]},
     {"prob-unpaired-in-loop-threshold", 0, 0, O_ARG_DOUBLE,
      &clp.prob_unpaired_in_loop_threshold, "0.00005", "threshold",
