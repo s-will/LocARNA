@@ -358,6 +358,10 @@ main(int argc, char **argv) {
         return -1;
     }
 
+    if (clp.ribofit) {
+        clp.use_ribosum = false;
+    }
+
     // ----------------------------------------
     // temporarily turn off stacking unless background prob is set
     //
@@ -583,13 +587,7 @@ main(int argc, char **argv) {
         std::cerr << "Warning: clp.read_matchprobs ignored for "
                   << "non-mea alignment.\n";
     }
-    if ((clp.write_matchprobs || clp.mea_alignment) && ribosum == nullptr &&
-        ribofit == nullptr) {
-        std::cerr << "ERROR: Ribosum/fit is required for mea_alignment and "
-                  << "computing matchprobs." << std::endl;
-        exit(-1);
-    }
-    //
+
     std::unique_ptr<MatchProbs> match_probs;
 
     if (clp.write_matchprobs || clp.mea_alignment) {

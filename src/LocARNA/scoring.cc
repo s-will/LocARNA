@@ -381,6 +381,7 @@ namespace LocARNA {
     score_t
     Scoring::riboX_arcmatch_score(const Arc &arcA, const Arc &arcB) const {
         assert(params->ribosum_ != nullptr || params->ribofit_ != nullptr);
+        assert(params->ribosum_ == nullptr || params->ribofit_ == nullptr);
 
         // compute average ribosum score
 
@@ -393,9 +394,7 @@ namespace LocARNA {
         double score = 0;
         int considered_combinations = 0;
 
-        // for simplicity: assume that the ribofit alphabet and the
-        // ribosum alphabet contain the same characters
-        auto &alphabet = ribosum->alphabet();
+        auto &alphabet = ribosum!=nullptr ? ribosum->alphabet() : ribofit->alphabet();
 
         for (size_type i = 0; i < rowsA;
              i++) { // run through all combinations of rows in A and B

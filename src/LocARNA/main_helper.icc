@@ -250,6 +250,7 @@ namespace LocARNA {
             }
         }
 
+
         template <class CLP>
         void
         select_basematch_scores(CLP &clp,
@@ -271,9 +272,9 @@ namespace LocARNA {
             } else {
                 alphabet = Alphabet<char,4>("ACGU");
                 basematch_scores.resize(alphabet.size(), alphabet.size());
-                basematch_scores.fill(clp.mismatch/100.0);
+                basematch_scores.fill(clp.mismatch);
                 for(size_t i=0; i<alphabet.size(); ++i) {
-                    basematch_scores(i,i) = clp.match/100.0;
+                    basematch_scores(i,i) = clp.match;
                 }
             }
         }
@@ -321,28 +322,16 @@ namespace LocARNA {
                                   << std::endl;
                     }
 
-                    const Ribosum::char_alphabet_type *alphabet;
-                    const Matrix<double> *p_basematch_scores;
+                    Alphabet<char,4> alphabet;
                     Matrix<double> basematch_scores;
 
-                    if (ribosum != nullptr) {
-                        alphabet = &ribosum->alphabet();
-                        p_basematch_scores = &ribosum->get_basematch_scores();
-                    } else {
-                        assert(ribofit != nullptr);
-                        double avg_identity =
-                            average_pairwise_identity(seqA, seqB);
-                        alphabet = &ribofit->alphabet();
-                        p_basematch_scores =
-                            &ribofit->get_basematch_scores(avg_identity,
-                                                           basematch_scores);
-                    }
+                    select_basematch_scores(clp, seqA, seqB, ribosum, ribofit,
+                                            basematch_scores, alphabet);
 
                     return std::make_unique<PFMatchProbs>(
                         *rna_dataA, *rna_dataB, *trace_controller,
-                        *p_basematch_scores, *alphabet,
-                        clp.indel_opening / 100.0, clp.indel / 100.0,
-                        clp.pf_struct_weight / 100.0,
+                        basematch_scores, alphabet, clp.indel_opening / 100.0,
+                        clp.indel / 100.0, clp.pf_struct_weight / 100.0,
                         clp.temperature_alipf / 100.0,
                         FreeEndgaps(clp.free_endgaps),
                         clp.sequ_local || (clp.match_prob_method == 3));
@@ -617,7 +606,7 @@ namespace LocARNA {
         average_pairwise_identity(const Sequence &seqA, const Sequence &seqB) {
             double avg_identity = 0;
             for (size_t i = 0; i < seqA.num_of_rows(); i++) {
-                for (size_t j = 0; i < seqB.num_of_rows(); j++) {
+                for (size_t j = 0; j < seqB.num_of_rows(); j++) {
                     avg_identity += sequence_identity(seqA.seqentry(i).seq(),
                                                       seqB.seqentry(j).seq());
                 }

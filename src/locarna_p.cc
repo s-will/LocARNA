@@ -345,6 +345,10 @@ main(int argc, char **argv) {
     if (clp.verbose)
         print_options(my_options);
 
+    if (clp.ribofit) {
+        clp.use_ribosum = false;
+    }
+
     if (clp.quad_pf) {
         return
             run_and_report<quad_pf_score_t>();
