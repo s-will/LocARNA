@@ -390,6 +390,10 @@ main(int argc, char **argv) {
         clp.stacking = false;
     }
 
+    if (clp.ribofit) {
+        clp.use_ribosum = false;
+    }
+
     // ----------------------------------------
     // Ribosum matrix
     //
