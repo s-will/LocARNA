@@ -23,7 +23,7 @@ namespace LocARNA {
 
     class Alignment;
     class AlignmentEdges;
-    template <class T>
+    template <class T, size_t N>
     class Alphabet;
     class BasePairs;
     class Scoring;
@@ -64,66 +64,35 @@ namespace LocARNA {
      */
     class MultipleAlignment {
     public:
-        typedef size_t size_type; //!< size type
-
         /**
          * @brief file format type for multiple alignments
          */
-        struct FormatType {
-            //! inner type
-            enum type {
-                STOCKHOLM, //!< stockholm file format
-                PP,        //!< pp format
-                CLUSTAL,   //!< (extended) clustal file format
-                FASTA      //!< fasta file format
-            };
-
-            //!@brief size of enum
-            static size_t
-            size() {
-                return 4;
-            }
+        enum class FormatType {
+            STOCKHOLM, //!< stockholm file format
+            PP,        //!< pp format
+            CLUSTAL,   //!< (extended) clustal file format
+            FASTA      //!< fasta file format
         };
+        //! @brief collection of the format types
+        static const std::vector<FormatType> FormatTypes;
 
         //! @brief type of sequence annotation.
         //! enumerates legal annotation types
-        struct AnnoType {
-            //! inner type
-            enum type {
-                //! consensus structure annotation (consensus structure)
-                consensus_structure,
-                //! structure annotation (often, constraint; allowed are
-                //! Vienna-package structure constraints)
-                structure,
-                //! structure annotation (a single structure; used as fixed
-                //! structure constraint)
-                fixed_structure,
-                //! anchor annotation (anchor constraints)
-                anchors
-            };
-
-            //!@brief size of enum
-            static size_t
-            size() {
-                return 4;
-            }
+        enum class AnnoType {
+            //! consensus structure annotation (consensus structure)
+            consensus_structure,
+            //! structure annotation (often, constraint; allowed are
+            //! Vienna-package structure constraints)
+            structure,
+            //! structure annotation (a single structure; used as fixed
+            //! structure constraint)
+            fixed_structure,
+            //! anchor annotation (anchor constraints)
+            anchors
         };
+        //! @brief collection of the format types
+        static const std::vector<AnnoType> AnnoTypes;
 
-    private:
-        //! prefix strings for annotations (shall be prefix unique)
-        //! (no class outside of MultipleAlignment should have to know about
-        //! this!)
-        //!
-        //! This is indexed by FormatType and AnnoType.
-        typedef std::vector<std::vector<std::string> > annotation_tags_t;
-
-        static annotation_tags_t annotation_tags;
-
-        //! initialize annotation tags
-        static void
-        init_annotation_tags();
-
-    public:
         //! @brief number of annotation types
         //! @return number of annotation types
         static size_t
@@ -141,17 +110,10 @@ namespace LocARNA {
          */
         class SeqEntry {
         public:
-            typedef MultipleAlignment::size_type size_type; //!< size type
 
             typedef std::pair<pos_type, pos_type>
                 pos_pair_t; //!< pair of positions
 
-        private:
-            std::string name_;        //!< name of the sequence
-            std::string description_; //!< optional sequence description
-            string1 seq_;             //<! alignment string of the sequence
-
-        public:
             /**
              * @brief Construct from strings name and seq
              *
@@ -271,7 +233,13 @@ namespace LocARNA {
             set_seq(const string1 &seq) {
                 seq_ = seq;
             }
-        };
+
+        private:
+            std::string name_;        //!< name of the sequence
+            std::string description_; //!< optional sequence description
+            string1 seq_;             //<! alignment string of the sequence
+
+        }; //end class SeqEntry
 
         /**
          * @brief read only proxy class representing a column of the alignment
@@ -280,11 +248,10 @@ namespace LocARNA {
          * index
          */
         class AliColumn {
-            const MultipleAlignment &ma_;
-            size_type col_index_;
-
         public:
-            /**
+	    using value_type = char;
+
+	    /**
              * @brief Construct from multiple alignment column
              *
              * @param ma multiple alignment
@@ -344,100 +311,97 @@ namespace LocARNA {
             operator!=(const AliColumn &ac) const {
                 return !(*this == ac);
             }
-        };
 
-    private:
-        //! map from string to index
-        typedef std::map<std::string, size_type> str2idx_map_t;
+            // make (forward) iterable
 
-        //! map annotation type to sequence annotation
-        typedef std::map<size_t, SequenceAnnotation> annotation_map_t;
+	    /**
+	     * @brief const iterator
+	     */
+	    class const_iterator {
+	    public:
 
-        //************************************************************
-        // attributes of MultipleAlignment
+		const_iterator
+                operator ++() {
+                    ++row_index_;
+                    return *this;
+                }
 
-        //! vector of alignment rows
-        std::vector<SeqEntry> alig_;
+                const char &
+                operator *() {
+                    return col_[row_index_];
+                }
 
-        //! alignment/sequence annotation
-        annotation_map_t annotations_;
+		bool
+		operator != (const const_iterator &it) {
+		    return row_index_ != it.row_index_ || col_!=col_;
+		}
 
-        /**
-         * association between names and indices, use to
-         * locate sequences by name in log time
-         */
-        str2idx_map_t name2idx_;
+	    private:
+		friend class AliColumn;
 
-        // end attributes
-        //************************************************************
+		const_iterator(const AliColumn &col, size_type row_index)
+		    : col_(col), row_index_(row_index) {
+		}
 
-        //! @brief create the map for translating names to indices
-        void
-        create_name2idx_map();
+                const AliColumn &col_;
+                size_type row_index_;
+            };
 
-        /**
-         * @brief Read alignment from input stream; helper for uniform
-         * reading of CLUSTALW, PP and STOCKHOLM
-         *
-         * @param in input stream
-         * @param format format type of input (CLUSTAL, PP, or STOCKHOLM)
-         * @note overwrites/clears existing data
-         */
-        void
-        read_clustallike(std::istream &in, FormatType::type format);
+	    /**
+	     * @brief iterator
+	     * @note  out of laziness (mostly), do not provide a real non-const iterator;
+	     * however, the type must exist for use with zip/enumerate
+	     */
+	    using iterator = const_iterator;
 
-        /**
-         * @brief Read alignment from input stream, expect stockholm format.
-         *
-         * @param in input stream
-         * @note overwrites/clears existing data
-         */
-        void
-        read_stockholm(std::istream &in);
+	    /**
+	     * @brief begin iterator (always const)
+	     */
+	    auto
+	    begin() const {
+		return const_iterator(*this,0);
+	    }
 
-        /**
-         * @brief Read alignment from input stream, expect clustalw-like format.
-         *
-         * @param in input stream
-         * @note
-         * - A header starting with CLUSTAL is ignored, but not required.
-         * - Lines can be empty or of the form <name> <seq>.
-         * - Names may occur multiple times. in this case seq strings <seq> are
-         * appended.
-         * - The order of first occurrences of names in the stream is preserved.
-         * @note overwrites/clears existing data
-         */
-        void
-        read_clustalw(std::istream &in);
+	    /**
+	     * @brief end iterator (always const)
+	     */
+	    auto
+	    end() const {
+		return const_iterator(*this,this->size());
+	    }
 
-        /**
-         * @brief Read alignment from input stream, expect fasta format.
-         *
-         * @param in input stream
-         *
-         * @note Sequence descriptors have the form '>descriptor'. Any
-         * white space between '>' and the name is ignored.  The sequence
-         * name is the descriptor until the first blank. The rest of the
-         * line is understood as sequence description.
-         *
-         * @note Sequences can be multiline, white space in sequences is
-         * ignored.
-         * @note The order of sequences in the stream is preserved.
-         * @note overwrites/clears existing data
-         *
-         * @todo read_fasta() currently does not read anchor
-         * constraints and structure. Should it? If yes, likely using
-         * special fa headers >#A, >#S.
-         */
-        void
-        read_fasta(std::istream &in);
+        private:
+            const MultipleAlignment &ma_;
+            size_type col_index_;
+        }; // end class AliColumn
 
     public:
         //! @brief const iterator of sequence entries
         typedef std::vector<SeqEntry>::const_iterator const_iterator;
+        //! @brief iterator of sequence entries
+        typedef std::vector<SeqEntry>::iterator iterator;
 
         //! @brief Construct empty
         MultipleAlignment();
+
+        //! @brief Copy construct
+        MultipleAlignment(const MultipleAlignment &ma) = default;
+
+        //! @brief Move construct
+        MultipleAlignment(MultipleAlignment &&ma) = default;
+
+        //! @brief Copy assignment
+        MultipleAlignment &
+        operator =(const MultipleAlignment &ma) = default;
+        //! @brief Move assignment
+        MultipleAlignment &
+        operator =(MultipleAlignment &&ma) = default;
+
+        /**
+         * @brief virtual destructor
+         */
+        virtual ~MultipleAlignment();
+
 
         /**
          * @brief Construct from file
@@ -448,7 +412,7 @@ namespace LocARNA {
          * @see MultipleAlignment(std::istream &in)
         */
         MultipleAlignment(const std::string &file,
-                          FormatType::type format = FormatType::CLUSTAL);
+                          FormatType format = FormatType::CLUSTAL);
 
         /**
          * @brief Construct from stream
@@ -458,7 +422,7 @@ namespace LocARNA {
          * @throw failure on read errors
         */
         MultipleAlignment(std::istream &in,
-                          FormatType::type format = FormatType::CLUSTAL);
+                          FormatType format = FormatType::CLUSTAL);
 
         /**
          * @brief Construct as degenerate alignment of one sequence
@@ -515,37 +479,6 @@ namespace LocARNA {
                           const Sequence &seqA,
                           const Sequence &seqB);
 
-    protected:
-        /**
-         * @brief Initialize from alignment edges and sequences
-         * @param edges alignment edges
-         * @param seqA sequence A
-         * @param seqB sequence B
-         * @param special_gap_symbols if true, use special distinct gap symbols
-         * for gaps due to loop deletion '_' or sparsification '~'
-         *
-         */
-        void
-        init(const AlignmentEdges &edges,
-             const Sequence &seqA,
-             const Sequence &seqB,
-             bool special_gap_symbols);
-
-    public:
-        /**
-         * @brief virtual destructor
-         */
-        virtual ~MultipleAlignment();
-
-        /**
-         * @brief "cast" multiple alignment to sequence
-         *
-         * @note this works like an upcast; this is ok, as long as
-         * sequence does not specify attributes
-         */
-        const Sequence &
-        as_sequence() const;
-
         /**
          * @brief normalize rna symbols
          * @see normalize_rna_sequence()
@@ -585,7 +518,7 @@ namespace LocARNA {
          * @note returns ref to empty annotation if annotation is not available
          */
         const SequenceAnnotation &
-        annotation(const AnnoType::type &annotype) const;
+        annotation(const AnnoType &annotype) const;
 
         /**
          * @brief Write access to annotation
@@ -595,10 +528,9 @@ namespace LocARNA {
          * throw failure if annotation is not valid
          */
         void
-        set_annotation(const AnnoType::type &annotype,
+        set_annotation(const AnnoType &annotype,
                        const SequenceAnnotation &annotation) {
-            assert(0 <= annotype && annotype < num_of_annotypes());
-            annotations_[(size_t)annotype] = annotation;
+            annotations_[annotype] = annotation;
         }
 
         /**
@@ -607,8 +539,7 @@ namespace LocARNA {
          * @return wheter annotions with prefix are available
          */
         bool
-        has_annotation(const AnnoType::type &annotype) const {
-            assert(0 <= annotype && annotype < num_of_annotypes());
+        has_annotation(const AnnoType &annotype) const {
             return annotations_.find(annotype) != annotations_.end();
         }
 
@@ -630,6 +561,9 @@ namespace LocARNA {
         length() const {
             return alig_.empty() ? 0 : alig_[0].seq().length();
         }
+
+        using value_type = SeqEntry;
+
 
         /**
          * @brief Begin for read-only traversal of name/sequence pairs
@@ -848,7 +782,7 @@ namespace LocARNA {
          */
         std::ostream &
         write(std::ostream &out,
-              FormatType::type format =
+              FormatType format =
                   MultipleAlignment::FormatType::CLUSTAL) const;
 
         /**
@@ -868,7 +802,7 @@ namespace LocARNA {
         std::ostream &
         write(std::ostream &out,
               size_t width,
-              FormatType::type format =
+              FormatType format =
                   MultipleAlignment::FormatType::CLUSTAL) const;
 
         /**
@@ -906,23 +840,86 @@ namespace LocARNA {
         write(std::ostream &out,
               size_type start,
               size_type end,
-              FormatType::type format =
+              FormatType format =
                   MultipleAlignment::FormatType::CLUSTAL) const;
 
         /**
          * @brief check character constraints
          *
          * Check whether the alignment contains characters from the given
-         * alphabet only and, if warn, print warnings otherwise.
+         * alphabet only
          *
          * @param alphabet alphabet of admissible characters
          *
          * @return whether all characters are in the alphabet
          */
+        template <size_t N>
         bool
-        checkAlphabet(const Alphabet<char> &alphabet) const;
+        checkAlphabet(const Alphabet<char, N> &alphabet) const;
+
+        /**
+         * @brief Print contents of object to stream
+         * @param out output stream
+         */
+        void
+        write_debug(std::ostream &out = std::cout) const;
+
+    protected:
+        /**
+         * @brief Initialize from alignment edges and sequences
+         * @param edges alignment edges
+         * @param seqA sequence A
+         * @param seqB sequence B
+         * @param special_gap_symbols if true, use special distinct gap symbols
+         * for gaps due to loop deletion '_' or sparsification '~'
+         *
+         */
+        void
+        init(const AlignmentEdges &edges,
+             const Sequence &seqA,
+             const Sequence &seqB,
+             bool special_gap_symbols);
 
     private:
+        //! prefix strings for annotations (shall be prefix unique)
+        //! (no class outside of MultipleAlignment needs to know about
+        //! this!)
+        //!
+        //! This is indexed by FormatType and AnnoType.
+        class annotation_tags_t : public std::map< FormatType, std::map< AnnoType, std::string> > {
+            //@brief constructor: initialize annotation tags table
+        public:
+            annotation_tags_t();
+        };
+
+        //! map from string to index
+        typedef std::map<std::string, size_type> str2idx_map_t;
+
+        //! map annotation type to sequence annotation
+        typedef std::map<AnnoType, SequenceAnnotation> annotation_map_t;
+
+        //************************************************************
+        // attributes of MultipleAlignment
+
+        //! @brief table of annotation tags
+        static annotation_tags_t annotation_tags;
+
+        //! vector of alignment rows
+        std::vector<SeqEntry> alig_;
+
+        //! alignment/sequence annotation
+        annotation_map_t annotations_;
+
+        /**
+         * association between names and indices, use to
+         * locate sequences by name in log time
+         */
+        str2idx_map_t name2idx_;
+
+        // end attributes
+        //************************************************************
+
+
         /**
          * @brief Deviation of a pairwise alignment from a pairwise reference
          * alignment
@@ -1038,13 +1035,66 @@ namespace LocARNA {
                                  const SeqEntry &ref1,
                                  const SeqEntry &ref2);
 
-    public:
+        //! @brief create the map for translating names to indices
+        void
+        create_name2idx_map();
+
         /**
-         * @brief Print contents of object to stream
-         * @param out output stream
+         * @brief Read alignment from input stream; helper for uniform
+         * reading of CLUSTALW, PP and STOCKHOLM
+         *
+         * @param in input stream
+         * @param format format type of input (CLUSTAL, PP, or STOCKHOLM)
+         * @note overwrites/clears existing data
          */
         void
-        write_debug(std::ostream &out = std::cout) const;
+        read_clustallike(std::istream &in, FormatType format);
+
+        /**
+         * @brief Read alignment from input stream, expect stockholm format.
+         *
+         * @param in input stream
+         * @note overwrites/clears existing data
+         */
+        void
+        read_stockholm(std::istream &in);
+
+        /**
+         * @brief Read alignment from input stream, expect clustalw-like format.
+         *
+         * @param in input stream
+         * @note
+         * - A header starting with CLUSTAL is ignored, but not required.
+         * - Lines can be empty or of the form <name> <seq>.
+         * - Names may occur multiple times. in this case seq strings <seq> are
+         * appended.
+         * - The order of first occurrences of names in the stream is preserved.
+         * @note overwrites/clears existing data
+         */
+        void
+        read_clustalw(std::istream &in);
+
+        /**
+         * @brief Read alignment from input stream, expect fasta format.
+         *
+         * @param in input stream
+         *
+         * @note Sequence descriptors have the form '>descriptor'. Any
+         * white space between '>' and the name is ignored.  The sequence
+         * name is the descriptor until the first blank. The rest of the
+         * line is understood as sequence description.
+         *
+         * @note Sequences can be multiline, white space in sequences is
+         * ignored.
+         * @note The order of sequences in the stream is preserved.
+         * @note overwrites/clears existing data
+         *
+         * @todo read_fasta() currently does not read anchor
+         * constraints and structure. Should it? If yes, likely using
+         * special fa headers >#A, >#S.
+         */
+        void
+        read_fasta(std::istream &in);
     };
 
     /**
@@ -1055,6 +1105,20 @@ namespace LocARNA {
      */
     std::ostream &
     operator<<(std::ostream &out, const MultipleAlignment &ma);
+
+
+    template <size_t N>
+    bool
+    MultipleAlignment::checkAlphabet(const Alphabet<char, N> &a) const {
+        return std::all_of(alig_.begin(), alig_.end(),
+                           [&a](const auto &row) {
+                               return std::all_of(row.seq().begin(), row.seq().end(),
+                                                  [&a](const auto &c) {
+                                                      return a.in(c);
+                                                  });
+                           });
+    }
+
 
 } // end namespace
 

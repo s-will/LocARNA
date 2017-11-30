@@ -22,7 +22,9 @@ fold_sequence(const Sequence &seq,
               bool use_alifold,
               bool inloopprobs,
               int maxBPspan = -1) {
-    PFoldParams pfoldparams(true, false, maxBPspan, 2);
+
+    PFoldParams pfoldparams(PFoldParams::args::noLP(true),
+                            PFoldParams::args::max_bp_span(maxBPspan));
 
     std::unique_ptr<RnaEnsemble> rna_ensemble =
         std::make_unique<RnaEnsemble>(seq, pfoldparams, inloopprobs, use_alifold);
@@ -142,6 +144,31 @@ test_in_loop_probs(const Sequence &seq, const RnaEnsemble &rna_ensemble) {
 
     REQUIRE(fails == 0);
 }
+
+TEST_CASE("base pair probabilities can be predicted") {
+
+    SECTION("prediction works one") {
+        std::string testseqstr = "CCCCAGGAAAACCGGAAAACCAGGGG";
+        Sequence seq;
+        seq.append(Sequence::SeqEntry("test", testseqstr));
+
+        PFoldParams pfoldparams(PFoldParams::args::noLP(true));
+
+        std::unique_ptr<RnaEnsemble> rna_ensemble1 =
+            std::make_unique<RnaEnsemble>(seq, pfoldparams, false, false);
+
+        SECTION("prediction works twice") {
+        std::string testseq2str = "CCCCAGGAAAACCGGAAAACCAGGGG";
+        Sequence seq2;
+        seq2.append(Sequence::SeqEntry("test", testseq2str));
+
+        std::unique_ptr<RnaEnsemble> rna_ensemble2 =
+                std::make_unique<RnaEnsemble>(seq2, pfoldparams, false, false);
+        }
+    }
+
+}
+
 
 TEST_CASE("in loop probabilities can be predicted") {
     SECTION("in loop probs are predicted for single sequences") {

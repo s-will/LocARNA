@@ -14,30 +14,37 @@ namespace LocARNA {
 
     template <class T>
     class Matrix;
-    template <class T>
+
+    template <class T, size_t N>
     class Alphabet;
+
     class RnaData;
 
-    //! \brief Implements the stral-like scoring function
+    /**
+     * @brief Implements the stral-like scoring function
+     *
+     * @note unlike the integer scores in locarna, which are scaled by factor
+     * 100, the double scores in this class are usually not scaled.
+     */
     class StralScore {
         typedef std::vector<double> p_vec_t;
 
-        Sequence seqA;
-        Sequence seqB;
+        Sequence seqA_;
+        Sequence seqB_;
 
-        p_vec_t p_upA;   //!< probability paired upstream seq A
-        p_vec_t p_downA; //!< probability paired downstream seq A
-        p_vec_t p_unA;   //!< probability unpaired seq A
+        p_vec_t p_upA_;   //!< probability paired upstream seq A
+        p_vec_t p_downA_; //!< probability paired downstream seq A
+        p_vec_t p_unA_;   //!< probability unpaired seq A
 
-        p_vec_t p_upB;   //!< probability paired upstream seq B
-        p_vec_t p_downB; //!< probability paired downstream seq B
-        p_vec_t p_unB;   //!< probability unpaired seq B
+        p_vec_t p_upB_;   //!< probability paired upstream seq B
+        p_vec_t p_downB_; //!< probability paired downstream seq B
+        p_vec_t p_unB_;   //!< probability unpaired seq B
 
-        const Matrix<double> &sim_mat;
-        const Alphabet<char> &alphabet;
-        double pf_struct_weight;
-        double gap_opening;
-        double gap_extension;
+        const Matrix<double> &sim_mat_;
+        const Alphabet<char, 4> &alphabet_;
+        double struct_weight_;
+        double indel_opening_;
+        double indel_;
 
     private:
         void
@@ -52,19 +59,19 @@ namespace LocARNA {
          *
          * @param rnaA data of first RNA
          * @param rnaB data of second RNA
-         * @param sim_mat_ similarity matrix for bases
-         * @param alphabet_ alphabet
-         * @param pf_struct_weight_ structure weight
-         * @param gap_opening_ gap opening cost
-         * @param gap_extension_ gap extension cost
+         * @param sim_mat similarity matrix for bases
+         * @param alphabet alphabet
+         * @param struct_weight structure weight
+         * @param indel_opening gap opening cost
+         * @param indel gap extension cost
          */
         StralScore(const RnaData &rnaA,
                    const RnaData &rnaB,
-                   const Matrix<double> &sim_mat_,
-                   const Alphabet<char> &alphabet_,
-                   double pf_struct_weight_,
-                   double gap_opening_,
-                   double gap_extension_);
+                   const Matrix<double> &sim_mat,
+                   const Alphabet<char, 4> &alphabet,
+                   double pf_struct_weight,
+                   double indel_opening,
+                   double indel);
 
         /**
          * \brief Compute STRAL-like similarity of two residues in the two RNAs
@@ -72,7 +79,6 @@ namespace LocARNA {
          * @param i position in sequence A
          * @param j position in sequence B
          *
-
          * @note Computes the average similarity over all pairs of
          * alignment rows in the RNA sequence, which are alignments in
          * general.
@@ -91,8 +97,8 @@ namespace LocARNA {
          * @return gap opening cost
          */
         double
-        alpha() const {
-            return gap_opening;
+        indel_opening() const {
+            return indel_opening_;
         }
 
         /**
@@ -101,8 +107,8 @@ namespace LocARNA {
          * @return gap extension cost
          */
         double
-        beta() const {
-            return gap_extension;
+        indel() const {
+            return indel_;
         }
 
         //! \brief Reverse the scoring

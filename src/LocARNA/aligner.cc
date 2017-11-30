@@ -94,8 +94,7 @@ namespace LocARNA {
           max_j_(a.max_j_),
           D_created_(a.D_created_),
           alignment_(a.alignment_),
-          def_scoring_view_(this),
-          free_endgaps_(a.free_endgaps_) {}
+          def_scoring_view_(this) {}
 
     AlignerImpl::AlignerImpl(const Sequence &seqA,
                              const Sequence &seqB,
@@ -115,8 +114,7 @@ namespace LocARNA {
           max_j_(seqB.length()),
           D_created_(false),
           alignment_(seqA, seqB),
-          def_scoring_view_(this),
-          free_endgaps_(params_->free_endgaps_) {
+          def_scoring_view_(this) {
         Ms_.resize(params_->struct_local_ ? 8 : 1);
         Es_.resize(params_->struct_local_ ? 4 : 1);
         Fs_.resize(params_->struct_local_ ? 4 : 1);
@@ -168,11 +166,22 @@ namespace LocARNA {
         ScoreVector &E = Es_[state];
         infty_score_t &F = Fs_[state];
 
+        // use tainted type to save operations that normalize infinity
+        tainted_infty_score_t max_score = infty_score_t::neg_infty;
+
+        // base match
+        if (params_->constraints_->allowed_match(i, j)) {
+            max_score = M(i - 1, j - 1) + sv->scoring()->basematch(i, j);
+        }
+
         // compute E entry
         if (params_->constraints_->allowed_del(i, j)) {// due to constraints, i can be deleted
             E[j] = std::max(E[j] + sv->scoring()->gapA(i), M(i - 1, j) +
                                 sv->scoring()->gapA(i) +
                                 sv->scoring()->indel_opening());
+            // base del
+            max_score = std::max(max_score, (tainted_infty_score_t)E[j]);
+
         } else {
             // due to constraints, i cannot be deleted
             E[j] = infty_score_t::neg_infty;
@@ -184,47 +193,31 @@ namespace LocARNA {
             F = std::max(F + sv->scoring()->gapB(j), M(i, j - 1) +
                              sv->scoring()->gapB(j) +
                              sv->scoring()->indel_opening());
+
+            // base ins
+            max_score = std::max(max_score, (tainted_infty_score_t)F);
+
         } else {
             // due to constraints, j cannot be inserted
             F = infty_score_t::neg_infty;
         }
 
-        // use tainted type to save operations that normalize infinity
-        tainted_infty_score_t max_score = infty_score_t::neg_infty;
-
-        // base match
-        if (params_->constraints_->allowed_match(i, j)) {
-            max_score = M(i - 1, j - 1) + sv->scoring()->basematch(i, j);
-        }
-
-        // base del
-        max_score = std::max(max_score, (tainted_infty_score_t)E[j]);
-
-        // base ins
-        max_score = std::max(max_score, (tainted_infty_score_t)F);
-
-        // arc match
-
         // standard case for arc match (without restriction to lonely pairs)
         //
-
         if (params_->constraints_->allowed_match(i, j)) {
-            const BasePairs::RightAdjList &adjlA = bpsA_.right_adjlist(i);
-            const BasePairs::RightAdjList &adjlB = bpsB_.right_adjlist(j);
+            const auto &adjlA = bpsA_.right_adjlist_s(i);
+            const auto &adjlB = bpsB_.right_adjlist_s(j);
 
             // for all pairs of arcs in A and B that have right ends i and j,
             // respectively
             //
-            for (BasePairs::RightAdjList::const_iterator arcA = adjlA.begin();
-                 arcA != adjlA.end() && arcA->left() > al; ++arcA) {
-                for (BasePairs::RightAdjList::const_iterator arcB =
-                         adjlB.begin();
-                     arcB != adjlB.end() && arcB->left() > bl; ++arcB) {
+            for (auto arcA = adjlA.begin(); arcA->left() > al; ++arcA) {
+                for (auto arcB = adjlB.begin(); arcB->left() > bl; ++arcB) {
                     // no need to check
                     // (params_->constraints_->allowed_match(arcA->left(),arcB->left()))
                     // or other "constraints"
                     // because for these arc matches holds that
-                    // sv->D(*arcA,*arcB)==neg_infty
+                    // sv->D(*arcA,*arcB).is_neg_infty()
 
                     tainted_infty_score_t new_score =
                         M(arcA->left() - 1, arcB->left() - 1) +
@@ -236,54 +229,7 @@ namespace LocARNA {
                 }
             }
         }
-
         return max_score;
-
-        // The following code turned out to be much slower than the above one
-
-        //     const ArcMatchVec &right_adj_list =
-        //     arc_matches.common_right_end_list(i,j);
-
-        //     for(ArcMatchVec::const_iterator it=right_adj_list.begin();
-        //     right_adj_list.end() != it; ) {
-
-        //      // NOTES: *it is the arc match index
-        //      //        we iterate only over valid arc matches, i.e.
-        //      //        constraints (including anchor c. and heuristic ones)
-        //      are satisified
-
-        //      const ArcMatch &am = *it;
-
-        //      const Arc &arcA=am.arcA();
-        //      const Arc &arcB=am.arcB();
-
-        //      //if ( arcA.left() <= al || arcB.left() <= bl ) {++it;
-        //      continue;}
-
-        //      // These optimizations assume that the list is sorted
-        //      //  lexicographically descending by (arcA.left, arcB.left)
-        //      //
-        //      if ( arcA.left() <= al ) break;
-
-        //      if ( arcB.left() <= bl ) {
-
-        //          // iterate to the next different al.
-        //          // this could be optimized further using a helper vector
-        //          // that allows to jump directly to this entry
-        //          do {
-        //              it++;
-        //          } while (right_adj_list.end()!=it && it->arcA().left()==al);
-
-        //          continue;
-        //      }
-
-        //      //std::cerr << am.idx() << std::endl;
-
-        //      max_score = std::max( max_score, M(arcA.left()-1,arcB.left()-1)
-        //      + D[am.idx()] );
-
-        //      ++it;
-        //     }
     }
 
     // generic initalization method.
@@ -375,7 +321,14 @@ namespace LocARNA {
 
         // fill entries left of valid entries
         for (; i < ar; i++) {
-            assert(params_->trace_controller_->min_col(i) > bl);
+            if (! (params_->trace_controller_->min_col(i) > bl) ){
+                std::cerr
+                    << i << ": "
+                    << params_->trace_controller_->min_col(i) <<" "
+                    << bl
+                    <<std::endl;
+                assert(false);
+            }
             M(i, params_->trace_controller_->min_col(i) - 1) =
                 infty_score_t::neg_infty;
         }
@@ -620,10 +573,8 @@ namespace LocARNA {
     //
     void
     AlignerImpl::fill_D_entries(pos_type al, pos_type bl) {
-        for (ArcMatchIdxVec::const_iterator it =
-                 arc_matches_.common_left_end_list(al, bl).begin();
-             arc_matches_.common_left_end_list(al, bl).end() != it; ++it) {
-            const ArcMatch &am = arc_matches_.arcmatch(*it);
+        for (const auto &x : arc_matches_.common_left_end_list(al, bl)) {
+            const ArcMatch &am = arc_matches_.arcmatch(x);
 
             const Arc &arcA = am.arcA();
             const Arc &arcB = am.arcB();
@@ -662,11 +613,8 @@ namespace LocARNA {
     AlignerImpl::fill_D_entries_noLP(pos_type al, pos_type bl) {
         // get adj lists of arcs starting in al-1, bl-1
 
-        for (ArcMatchIdxVec::const_iterator it =
-                 arc_matches_.common_left_end_list(al - 1, bl - 1).begin();
-             arc_matches_.common_left_end_list(al - 1, bl - 1).end() != it;
-             ++it) {
-            const ArcMatch &am = arc_matches_.arcmatch(*it);
+        for (const auto &x : arc_matches_.common_left_end_list(al - 1, bl - 1)) {
+            const auto &am = arc_matches_.arcmatch(x);
 
             pos_type ar = am.arcA().right() - 1;
             pos_type br = am.arcB().right() - 1;
@@ -679,7 +627,7 @@ namespace LocARNA {
             // i.e. the joint probabilities have to be greater than 0
             if (arc_matches_.exists_inner_arc_match(am) &&
                 (!scoring_->stacking() || scoring_->is_stackable_am(am))) {
-                const ArcMatch &inner_am = arc_matches_.inner_arc_match(am);
+                const auto &inner_am = arc_matches_.inner_arc_match(am);
 
                 infty_score_t m = Ms_[0](ar - 1, br - 1);
                 if (params_->struct_local_) {
@@ -790,8 +738,8 @@ namespace LocARNA {
         M_matrix_t &M = Ms_[E_NO_NO];
 
         init_state(E_NO_NO, r_.startA() - 1, r_.endA() + 1, r_.startB() - 1,
-                   r_.endB() + 1, !free_endgaps_.allow_left_2(), false,
-                   !free_endgaps_.allow_left_1(), false, &def_scoring_view_);
+                   r_.endB() + 1, !params_->free_endgaps_.allow_left_2(), false,
+                   !params_->free_endgaps_.allow_left_1(), false, &def_scoring_view_);
 
         // need to handle anchor constraints:
         // search maximum to the right of (or at) rightmost anchor constraint
@@ -822,7 +770,7 @@ namespace LocARNA {
         max_i_ = r_.endA();
         max_j_ = r_.endB();
 
-        if (free_endgaps_.allow_right_2()) {
+        if (params_->free_endgaps_.allow_right_2()) {
             // search maximum in the rightmost row r_.endB()
             // pay attention for anchor constraints AND trace controller
 
@@ -837,7 +785,7 @@ namespace LocARNA {
             }
         }
 
-        if (free_endgaps_.allow_right_1()) {
+        if (params_->free_endgaps_.allow_right_1()) {
             // search maximum in the last column r_.endA()
             // pay attention for anchor constraints AND trace controller
 
@@ -881,11 +829,9 @@ namespace LocARNA {
         // need to handle anchor constraints:
         // search maximum to the right of (or at) rightmost anchor constraint
         //
-        AnchorConstraints::size_pair_t right_anchor =
-            params_->constraints_->rightmost_anchor();
+        const auto right_anchor = params_->constraints_->rightmost_anchor();
 
-        AnchorConstraints::size_pair_t left_anchor =
-            params_->constraints_->leftmost_anchor();
+        const auto left_anchor = params_->constraints_->leftmost_anchor();
 
         // AnchorConstraints::size_pair_t right_anchor =
         // AnchorConstraints::size_pair_t(r_.startA(),r_.startB());//dummy
@@ -920,10 +866,6 @@ namespace LocARNA {
                 }
             }
         }
-
-        // std::cout << "max: "<<max_i<<","<<max_j<<std::endl;
-
-        // std::cout << M << std::endl;
 
         return max_score;
     }
@@ -1232,15 +1174,13 @@ namespace LocARNA {
         const pos_type &ar = i;
         const pos_type &br = j;
 
-        for (ArcMatchIdxVec::const_iterator it =
-                 arc_matches_.common_right_end_list(ar, br).begin();
-             arc_matches_.common_right_end_list(ar, br).end() != it; ++it) {
-            // NOTES: *it is the arc match index
+        for (const auto &x : arc_matches_.common_right_end_list(ar, br)) {
+            // NOTES: x is the arc match index
             //        we iterate only over valid arc matches, i.e.
             //        constraints (including anchor c. and heuristic ones) are
             //        satisified
 
-            const ArcMatch &am = arc_matches_.arcmatch(*it);
+            const ArcMatch &am = arc_matches_.arcmatch(x);
 
             const Arc &arcA = am.arcA();
             const Arc &arcB = am.arcB();
@@ -1315,7 +1255,7 @@ namespace LocARNA {
                 // pad with gap edges, unless in special cases (local/semi-local
                 // alignment)
                 if (!(tl &&
-                      (params_->sequ_local_ || free_endgaps_.allow_left_1()))) {
+                      (params_->sequ_local_ || params_->free_endgaps_.allow_left_1()))) {
                     for (int k = bl + 1; k <= j; k++) {
                         alignment_.append(-1, k);
                     }
@@ -1331,7 +1271,7 @@ namespace LocARNA {
                 // pad with gap edges, unless in special cases (local/semi-local
                 // alignment)
                 if (!(tl &&
-                      (params_->sequ_local_ || free_endgaps_.allow_left_2()))) {
+                      (params_->sequ_local_ || params_->free_endgaps_.allow_left_2()))) {
                     for (int k = al + 1; k <= i; k++) {
                         alignment_.append(k, -1);
                     }
@@ -1497,10 +1437,10 @@ namespace LocARNA {
                 // reimplement. SW - 2013 Jun 7
                 if (opt_pos_output) {
                     std::cout << "HIT " << task_score
-                              << alignment.local_startA() << " "
-                              << alignment.local_startB() << " "
-                              << alignment.local_endA() << " "
-                              << alignment.local_endB() << " " << std::endl;
+                              << alignment.local_start().first << " "
+                              << alignment.local_start().first << " "
+                              << alignment.local_end().second << " "
+                              << alignment.local_end().second << " " << std::endl;
                 } else {
                     MultipleAlignment ma(alignment, true);
                     std::cout << "Score: " << task_score << std::endl;
@@ -1526,14 +1466,14 @@ namespace LocARNA {
             if (lenA > lenB) {
                 // split A
                 int splitA =
-                    (alignment.local_startA() + alignment.local_endA()) / 2;
+                    (alignment.local_start().first + alignment.local_end().first) / 2;
                 if (verbose)
                     std::cout << "Split A at " << splitA << std::endl;
                 r1.set_endA(splitA);
                 r2.set_startA(splitA);
             } else {
                 int splitB =
-                    (alignment.local_startB() + alignment.local_endB()) / 2;
+                    (alignment.local_start().second + alignment.local_end().second) / 2;
                 if (verbose)
                     std::cout << "Split B at " << splitB << std::endl;
                 r1.set_endB(splitB);
@@ -1583,7 +1523,7 @@ namespace LocARNA {
             align_D();
 
         // make new mod_scoring_view (including a new copy of scoring)
-        auto mod_scoring_view = std::make_unique<ModifiedScoringView>(this);
+        const auto mod_scoring_view = std::make_unique<ModifiedScoringView>(this);
 
         // Apply Dinkelbach's algorithm
 

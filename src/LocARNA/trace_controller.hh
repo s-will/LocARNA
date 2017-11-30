@@ -15,6 +15,7 @@ namespace LocARNA {
 
     class Sequence;
     class AnchorConstraints;
+    class TraceProbs;
 
     /**
      * \brief Represents a range of traces
@@ -44,13 +45,6 @@ namespace LocARNA {
         static seqentry_pair_t
         remove_common_gaps(const SeqEntry &aliA, const SeqEntry &aliB);
 
-    protected:
-        std::vector<size_t> min_col_; //!< minimal column in row
-        std::vector<size_t> max_col_; //!< maximal column in row
-        //! \brief Construct empty
-        TraceRange() {}
-
-    public:
         /**
          * \brief Construct from pair of alignment strings
          *
@@ -139,13 +133,37 @@ namespace LocARNA {
             return max_col_[i];
         }
 
+        /** @brief Ranges for reversed sequences
+         *
+         * @returns the "reversed" ranges
+         */
+        TraceRange
+        reverse() const;
+
         /**
          * Print object to ouptut stream for debugging
          *
          * @param out output stream
          */
         void
-        print_debug(std::ostream &out) const;
+        print_debug(std::ostream &out=std::cerr) const;
+
+    protected:
+        /** @brief Construct "empty"
+         *
+         * _only_ sets lengths
+         */
+        TraceRange(size_t lenA, size_t lenB)
+            : lenA_(lenA),
+              lenB_(lenB)
+        {}
+
+        size_t lenA_; //!< length of sequence A
+        size_t lenB_; //!< length of sequence B
+
+        using idx_vec_t = std::vector<size_t>;
+        idx_vec_t min_col_; //!< minimal column in row
+        idx_vec_t max_col_; //!< maximal column in row
     };
 
     //! abstract class that declares the method is_valid_match()
@@ -175,27 +193,6 @@ namespace LocARNA {
      * a maximal difference to a given alignment (trace).
      */
     class TraceController : public TraceRange, public MatchController {
-    private:
-        // The delimiter character separating the two sequences in the alignment
-        // string
-        static const char delimiter = '&';
-
-        /**
-         * merge in the given trace with delta into current trace range
-         * @param tr the trace range to be merged in
-         */
-        void
-        merge_in_trace_range(const TraceRange &tr);
-
-        //! The allowed distance in computing the min and max positions.
-        const size_type delta_;
-
-        // /**
-        //  * switch between strict and relaxed merging of pairwise trace
-        //  * ranges
-        //  */
-        // const bool relaxed_merging_;
-
     public:
         /**
          * \brief Constructs for the general case of alignment of alignments
@@ -225,12 +222,31 @@ namespace LocARNA {
          *
          * Limits trace ranges due to anchor constraints
          * @param constraints anchor constraints
-         *
-         * @note surprisingly, this filtering causes no
-         * noticable effect in standard alignment
          */
         void
         restrict_by_anchors(const AnchorConstraints &constraints);
+
+        /**
+         * @brief Restrict by anchor constraints
+         *
+         * Limits trace ranges due to anchor constraints
+         * @param trace_probs trace probabilities
+         * @param min_prob minimum trace probability
+         *
+         * Limit trace to the ranges that contain all trace cells (i,j)
+         * that have at least the threshold probability min_prob
+         */
+        void
+        restrict_by_trace_probabilities(const TraceProbs &trace_probs,
+                                        double min_prob);
+
+        /** @brief Controller for the reversed sequences
+         *
+         * @note useful for backward alignment e.g. for computing edge
+         * probabilities; for an example @see PFGotoh::PFGotoh()
+         */
+        TraceController
+        reverse() const;
 
         /**
          * test for matrix entries on valid trace
@@ -260,6 +276,29 @@ namespace LocARNA {
         }
 
     private:
+        // The delimiter character separating the two sequences in the alignment
+        // string
+        static const char delimiter = '&';
+
+        /**
+         * merge in the given trace with delta into current trace range
+         * @param tr the trace range to be merged in
+         */
+        void
+        merge_in_trace_range(const TraceRange &tr);
+
+        //! The allowed distance in computing the min and max positions.
+        const size_type delta_;
+
+        TraceController(TraceRange &&trace_range, size_type delta)
+            : TraceRange(trace_range), delta_(delta) {}
+
+        // /**
+        //  * switch between strict and relaxed merging of pairwise trace
+        //  * ranges
+        //  */
+        // const bool relaxed_merging_;
+
         /**
          * For n=lenA>0 and m=lenB>0, constrain the min/max j without reference
          * alignment by

@@ -4,8 +4,8 @@ namespace LocARNA {
     std::vector<std::string>
     Sequence::names() const {
         std::vector<std::string> res;
-        for (const_iterator it = begin(); end() != it; ++it) {
-            res.push_back(it->name());
+        for (const auto &x : *this) {
+            res.push_back(x.name());
         }
         return res;
     }
