@@ -1,35 +1,59 @@
 ============================================================
 === 2017
 
-2.0.0RC1 (2017-11-29)
-	Change default parameters for scoring (new gap cost and tau factor)
-	Sequence envelopes for locarna, locarna_p and sparse;
-	  compatible to anchors, local alignment, and free endgaps
-	  new parameter: --min-trace-probability (on by default)
-	Refactor class MatchProbs -> EdgeProbs and sub-classes;
-	  improve interface and docu
-	Support higher precision floating point arithmetic for locarna-p
-	  pf calculation (long double and quad math) selectable dynamically
-	[mlocarna] Fix specifying anchor constraints via bed file
-	  allow arbitrary order of entries in bed input
-	[mlocarna] Refactor computation of input pp files;
-	  support caching of pp files (--dp-cache)
+2.0.0RC1 (2017-12-13)
 
-1.9.3beta2 (2017-07-25)
-	Code improvements
-	  * command line help
-	  * named arguments
-	  * zip and enumerate iterators
-	  * fight code rot, more use of C++11/14 features
-	[security] Avoid shell evaluation in mlocarna system calls
-	Use locarna_rnafold_pp for constrained folding in mlocarna
-	Optimize inner loop (add sentinels to left and right adjacency lists)
+	Features / functionality:
+	-------------------------
+	  Sequence envelopes for locarna, locarna_p and sparse;
+	    - Compatible to anchors, local alignment, and free endgaps
+	    - New parameter: --min-trace-probability (on by default)
+	    - Refactor class MatchProbs -> EdgeProbs and sub-classes;
+	      improve interface and docu
+	    - use sequence envelopes by default
 
-1.9.3alpha
-	Reduce memory footprint of locarna
-	Enable optional extended double for partition functions without
-	  recompiling (AlignerP/locarna_p)
-	Transition to C++14;  modernized and restructured code
+	  Change default parameters for scoring (new gap cost and tau factor)
+
+	  Support higher precision floating point arithmetic for locarna-p
+	    pf calculation (long double and quad math) selectable dynamically
+	    without recompiling
+	    support extended (long double) and quad precision (quadmath)
+
+	  Support caching of pp files (--dp-cache)
+
+	  Support in-package benchmarking (measuring sps, sci, and mcc)
+
+	Security:
+	---------
+	  Avoid shell evaluation in mlocarna system calls
+
+	Optimizations and code improvements:
+	------------------------------------
+	  Modernize and restructure code:
+	    Transition to C++14 standard
+	      -- ; use of unique_ptr, auto types,
+	           range loops, template meta programmin using type_traits, ...
+	    Systematic clean up of the library classes
+	    Introduce named arguments; zip and enumerate iterators
+	    Improved organization of command line help; reduce redundancies
+	    Improve handling of format and annotation types in MultipleAlignment
+
+	  Optimize inner loop: add sentinels to left and right adjacency lists
+	  Reduce memory footprint of locarna
+
+	  Anchor constraints restrict trace controller
+
+	  Refactor computation of input pp files [mlocarna]
+	  Use locarna_rnafold_pp for constrained folding [mlocarna]
+
+	  Update travis CI test
+
+	Bugfixes:
+	---------
+	    Fix specifying anchor constraints via bed file [mlocarna]
+	      allow arbitrary order of entries in bed input
+	    Fix ribofit code (make experimental ribofit scoring usable)
+	    Fix confusion matrix: count_common_bps()
 
 1.9.2 (2017-07-04)
 	Improve consensus dotplot computation (avoid accumulation of low
