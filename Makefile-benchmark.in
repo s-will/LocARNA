@@ -8,7 +8,7 @@
 # default, a 'quick' stress test is performed. For more extensive
 # benchmarking, e.g use BENCHMARK_SETS="k2-all k10-all"
 #
-# Additional DEPENDENCIES: scif, compalignp, parallel, R
+# Additional DEPENDENCIES: compalignp, parallel, R
 #
 
 ########################################
@@ -27,9 +27,7 @@ prefix = @prefix@
 SHELL = /bin/sh
 .SUFFIXES:
 
-
 .PHONY: benchmark eval summary clean short long parameters plots view list
-.PRECIOUS: $(BENCHMARK_SETS:%=$(BIDDIR)/%.done-eval) $(BENCHMARK_SETS:%=$(BIDDIR)/%.done)
 
 ########################################
 # user configurable settings
@@ -53,12 +51,15 @@ BENCHMARK_SETS=k2-sel-high_apsi k2-sel-low_apsi k10-sel
 
 PDFVIEWER=evince
 
+# Alifold options (for computing the sci)
+#ALIFOLD_OPTIONS=--ribosum_scoring --cfactor 0.6 --nfactor 0.5
+ALIFOLD_OPTIONS=
+##
 ########################################
 
 ########################################
 # user targets
 #
-
 # synonym to benchmark
 all: benchmark
 
@@ -177,8 +178,10 @@ $(BIDDIR)/%.done-eval: $(abs_top_srcdir)/Data/Bralibase2.1/instances.% $(BIDDIR)
 	  | tee -a $$blog ;\
 	cat $$instances \
 	  | parallel "\
-	    printf \"{}\\t\";\
-	    scif $$benchmarkdir/{}/results/result.fa \
+	    printf \"{}\\t\"; \
+	    RNAalifold $(ALIFOLD_OPTIONS) --sci \
+	      $$benchmarkdir/{}/results/result.fa 2>/dev/null \
+	      | grep sci | sed 's/.*\[sci = \([0123456789.]*\)\]/\1/' \
 	    " \
 	  | tee $$scitab \
 	  | awk '\
