@@ -28,20 +28,24 @@ my $quiet;
 my $verbose;
 my $write_sequence;
 my $fontsize=3;
+my $vertical;
+my $web;
+my $nolabels;
 
 ## Getopt::Long::Configure("no_ignore_case");
 
-GetOptions(
-    "minprob=f" => \$minprob,
-    "probwidth=f" => \$probwidth,
-    "write-sequence" => \$write_sequence,
-    "fontsize=i" => \$fontsize,
-
-    "verbose" => \$verbose,
-    "quiet" => \$quiet,
-    "help"=> \$help,
-    "man" => \$man
-    ) || pod2usage(2);
+GetOptions("minprob=f" => \$minprob,
+           "probwidth=f" => \$probwidth,
+           "write-sequence" => \$write_sequence,
+           "fontsize=i" => \$fontsize,
+           "vertical" => \$vertical,
+           "nolabels" => \$nolabels,
+           "web" => \$web,
+           "verbose" => \$verbose,
+           "quiet" => \$quiet,
+           "help"=> \$help,
+           "man" => \$man
+          ) || pod2usage(2);
 
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
@@ -49,7 +53,53 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 ## ------------------------------------------------------------
 ## main part
 
+my $stretch = 500;
+
 my $date=`date`;
+
+my $seqlength;
+
+my $fontoffset=$fontsize+2;
+
+if ($web) {
+    $vertical=1;
+    $nolabels=1;
+}
+
+my $sequence="";
+while (my $line = <STDIN>) {
+    if ( $line =~ /^\/sequence/ ) {
+        while (($line=<STDIN>) !~ /def$/ ) {
+            $line =~ s/[^A-Za-z-]//g;
+            $sequence.=$line;
+        }
+	chomp $sequence;
+        $seqlength = length($sequence);
+        last;
+    }
+}
+
+my $bounding_box="-10 -$fontoffset 510 125";
+my $rotate="";
+my $rotate_back="90 rotate";
+my $lengthadd=0;
+
+if (defined($vertical)) {
+    $stretch = 432.0;
+    $rotate="%% rotate and translate the page
+-90 rotate
+-$stretch $stretch $seqlength 1 add div add 0 translate
+";
+    $rotate_back="";
+
+    $bounding_box="-$fontoffset -10 125 $stretch";
+    $lengthadd=2;
+}
+
+sub transformcoor {
+    my ($i) = @_;
+    return ($i-1) * $stretch/($seqlength-1+$lengthadd);
+}
 
 print
 "%!PS-Adobe-3.0 EPSF-3.0
@@ -57,7 +107,7 @@ print
 %%Title: rna
 %%Creator: Sebastian Will
 %%Pages: 1
-%%BoundingBox: -10 -$fontsize 510 125
+%%BoundingBox: $bounding_box
 %%EndComments
 
 %%BeginProlog
@@ -82,10 +132,12 @@ print
 %%Page: 1 1
 MyDict begin
 
+$rotate
+
 %% sequence base line
 newpath
 -2 0 moveto
-502 0 lineto
+$stretch $seqlength 1 sub $lengthadd add div $seqlength 1 sub mul 2 add  0 lineto
 stroke
 
 0.25 setlinewidth
@@ -98,23 +150,8 @@ stroke
 ";
 
 
-my $seqlength;
-
-sub transformcoor {
-    my ($i) = @_;
-    return ($i-1) * 500.0/($seqlength-1);
-}
-
-my $sequence="";
 while (my $line = <STDIN>) {
-    if ( $line =~ /^\/sequence/ ) {
-        while (($line=<STDIN>) !~ /def$/ ) {
-            $line =~ s/[^A-Za-z-]//g;
-            $sequence.=$line;
-        }
-	chomp $sequence;
-        $seqlength = length($sequence);
-    } elsif( $line =~ /(\d+)\s+(\d+)\s+([\d.]+)\s+ubox/ ) {
+    if( $line =~ /(\d+)\s+(\d+)\s+([\d.]+)\s+ubox/ ) {
         my $i=$1;
         my $j=$2;
 	my $p=$3*$3;
@@ -152,14 +189,16 @@ for (my $i=1; $i<=$seqlength; $i++) {
 
 	my $x1=$x-$fontsize/4*length($c);
 	my $y1=-$fontsize;
-	print "$x1 $y1 moveto ($c) show\n";
+        if (! defined($nolabels) ) {
+            print "$x1 $y1 moveto ($c) show\n";
+        }
     } else {
 	print "$x 0 moveto $x -1 lineto stroke\n";
     }
 }
 
 print
-"90 rotate
+"$rotate_back
 %%PageTrailer
 showpage
 %%Trailer
@@ -185,6 +224,10 @@ Options:
         --minprob        cutoff probability
         --probwidth      depency of arc drawing on their probability
         --write-sequence output sequence labels instead of position indices
+        --fontsize       set font size
+        --vertical       draw vertical
+        --nolabels       suppress labels
+        --web            use exact settings for CARNA web server
 
         --help           brief help message
         --man            full documentation
