@@ -259,6 +259,15 @@ option_def my_options[] = {
 // MAIN
 
 /**
+ * \brief Helper of main() of executable locarna_p
+ *
+ * @return success
+ */
+template <typename pf_score_t>
+int
+run_and_report();
+
+/**
  * \brief Main method of executable locarna
  *
  * @param argc argument counter
@@ -281,8 +290,6 @@ main(int argc, char **argv) {
     // clp.normalized=0;
     clp.stacking = false;
     clp.new_stacking = false;
-
-    typedef std::vector<int>::size_type size_type;
 
     // ------------------------------------------------------------
     // Process options
@@ -393,6 +400,24 @@ main(int argc, char **argv) {
     if (clp.ribofit) {
         clp.use_ribosum = false;
     }
+
+    if (clp.quad_pf) {
+        return
+            run_and_report<quad_pf_score_t>();
+    } else if (clp.extended_pf) {
+        return
+            run_and_report<extended_pf_score_t>();
+    } else {
+        return
+            run_and_report<standard_pf_score_t>();
+    }
+}
+
+template <typename pf_score_t>
+int
+run_and_report() {
+
+    typedef std::vector<int>::size_type size_type;
 
     // ----------------------------------------
     // Ribosum matrix
@@ -541,8 +566,9 @@ main(int argc, char **argv) {
     trace_controller.restrict_by_anchors(seq_constraints);
 
     restrict_trace_by_probabilities(clp, rna_dataA.get(), rna_dataB.get(),
-                                   ribosum.get(), ribofit.get(),
-                                   &trace_controller);
+                                    ribosum.get(), ribofit.get(),
+                                    &trace_controller,
+                                    pf_score_t());
 
     // ----------------------------------------
     // construct set of relevant arc matches
@@ -618,7 +644,7 @@ main(int argc, char **argv) {
         match_probs =
             MainHelper::init_match_probs(clp, rna_dataA.get(), rna_dataB.get(),
                                          &trace_controller, ribosum.get(),
-                                         ribofit.get());
+                                         ribofit.get(), pf_score_t());
     }
     if (clp.write_matchprobs) {
         MainHelper::write_match_probs(clp, match_probs.get());

@@ -82,6 +82,23 @@ namespace LocARNA {
             bool new_stacking; //!< whether to use new stacking contributions
 
             // ----------------------------------------
+            // partition function representation
+
+            /** @brief Extended precision for partition function values
+             *
+             * If true, use an extended precision type for partition function values (pf_score_t).
+             */
+            bool extended_pf;
+
+            /** @brief Quad precision for partition function values
+             *
+             * If true, use quad precision type for partition function values
+             * (pf_score_t) if available; override
+             * extended pf.
+             */
+            bool quad_pf;
+
+            // ----------------------------------------
             // Locality
 
             bool struct_local;       //!< turns on/off structure locality
@@ -168,6 +185,7 @@ namespace LocARNA {
 
             //! second input file
             std::string fileB;
+
         };
 
         struct mea_command_line_parameters {
@@ -279,14 +297,15 @@ namespace LocARNA {
             }
         }
 
-        template <class CLP>
+        template <class CLP,class pf_score_t>
         std::unique_ptr<MatchProbs>
         init_match_probs(CLP &clp,
                          const RnaData *rna_dataA,
                          const RnaData *rna_dataB,
                          const TraceController *trace_controller,
                          const Ribosum *ribosum,
-                         const Ribofit *ribofit) {
+                         const Ribofit *ribofit,
+                         const pf_score_t &dummy) {
 
             const Sequence &seqA = rna_dataA->sequence();
             const Sequence &seqB = rna_dataB->sequence();
@@ -328,7 +347,7 @@ namespace LocARNA {
                     select_basematch_scores(clp, seqA, seqB, ribosum, ribofit,
                                             basematch_scores, alphabet);
 
-                    return std::make_unique<PFMatchProbs>(
+                    return std::make_unique<PFMatchProbs<pf_score_t>>(
                         *rna_dataA, *rna_dataB, *trace_controller,
                         basematch_scores, alphabet, clp.indel_opening / 100.0,
                         clp.indel / 100.0, clp.pf_struct_weight / 100.0,
@@ -339,14 +358,15 @@ namespace LocARNA {
             }
         }
 
-        template <class CLP>
-        PFTraceProbs
+        template <class CLP, class pf_score_t>
+        PFTraceProbs<pf_score_t>
         make_trace_probs(CLP &clp,
                          const RnaData *rna_dataA,
                          const RnaData *rna_dataB,
                          const Ribosum *ribosum,
                          const Ribofit *ribofit,
-                         TraceController *trace_controller) {
+                         TraceController *trace_controller,
+                         const pf_score_t &dummy) {
             const auto &seqA = rna_dataA->sequence();
             const auto &seqB = rna_dataB->sequence();
 
@@ -356,30 +376,31 @@ namespace LocARNA {
             select_basematch_scores(clp, seqA, seqB, ribosum, ribofit,
                                     basematch_scores, alphabet);
 
-            PFTraceProbs trace_probs(*rna_dataA, *rna_dataB,
-                                     *trace_controller, basematch_scores,
-                                     alphabet, clp.indel_opening / 100.0,
-                                     clp.indel / 100.0,
-                                     clp.struct_weight / 100.0,
-                                     clp.temperature_alipf / 100.0,
-                                     FreeEndgaps(clp.free_endgaps),
-                                     clp.sequ_local);
+            PFTraceProbs<pf_score_t> trace_probs(*rna_dataA, *rna_dataB,
+                                                 *trace_controller, basematch_scores,
+                                                 alphabet, clp.indel_opening / 100.0,
+                                                 clp.indel / 100.0,
+                                                 clp.struct_weight / 100.0,
+                                                 clp.temperature_alipf / 100.0,
+                                                 FreeEndgaps(clp.free_endgaps),
+                                                 clp.sequ_local);
             return trace_probs;
         }
 
-        template <class CLP>
+        template <class pf_score_t,class CLP>
         void
         restrict_trace_by_probabilities(CLP &clp,
                                         const RnaData *rna_dataA,
                                         const RnaData *rna_dataB,
                                         const Ribosum *ribosum,
                                         const Ribofit *ribofit,
-                                        TraceController *trace_controller
+                                        TraceController *trace_controller,
+                                        const pf_score_t &dummy
                                         ) {
             if (clp.min_trace_probability > 0.0) {
                 auto trace_probs =
                     make_trace_probs(clp, rna_dataA, rna_dataB, ribosum,
-                                     ribofit, trace_controller);
+                                     ribofit, trace_controller, pf_score_t());
 
                 trace_controller->restrict_by_trace_probabilities(
                     trace_probs, clp.min_trace_probability);
@@ -400,14 +421,16 @@ namespace LocARNA {
                                       1.0 / clp.probability_scale);
         }
 
-        template <class CLP>
+        template <class CLP, class pf_score_t>
         void
         write_trace_probs(const CLP &clp,
                           const RnaData *rna_dataA,
                           const RnaData *rna_dataB,
                           const Ribosum *ribosum,
                           const Ribofit *ribofit,
-                          TraceController *trace_controller) {
+                          TraceController *trace_controller,
+                          const pf_score_t &dummy
+                          ) {
             if (clp.verbose) {
                 std::cout << "Write trace probabilities to file "
                           << clp.traceprobs_outfile << "." << std::endl;
@@ -415,7 +438,7 @@ namespace LocARNA {
 
             auto trace_probs =
                 make_trace_probs(clp, rna_dataA, rna_dataB, ribosum, ribofit,
-                                 trace_controller);
+                                 trace_controller, pf_score_t());
 
             std::ofstream out(clp.traceprobs_outfile);
             trace_probs.write_sparse(out, 1.0 / clp.probability_scale);

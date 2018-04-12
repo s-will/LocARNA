@@ -45,16 +45,6 @@ const std::string VERSION_STRING = (std::string)PACKAGE_STRING;
 
 using namespace LocARNA;
 
-using standard_pf_score_t = double;
-using extended_pf_score_t = long double;
-
-#if defined(_GLIBCXX_USE_FLOAT128) && ! defined(__clang__)
-#include "LocARNA/quadmath.hh"
-using quad_pf_score_t = __float128;
-#else
-using quad_pf_score_t = long double;
-#endif
-
 // ------------------------------------------------------------
 // Parameter
 
@@ -90,21 +80,6 @@ struct command_line_parameters
      * @note renamed to avoid conflict with vrna
      */
     double pf_scale;
-
-    /** @brief Extended precision for partition function values
-     *
-     * If true, use an extended precision type for partition function values (pf_score_t).
-     */
-    bool extended_pf;
-
-    /** @brief Quad precision for partition function values
-     *
-     * If true, use quad precision type for partition function values
-     * (pf_score_t) if available; override
-     * extended pf.
-     */
-    bool quad_pf;
-
 
     int temperature_alipf; //!< temperature for alignment partition functions
 };
@@ -233,46 +208,6 @@ option_def my_options[] =
 // MAIN
 
 
-template <typename T>
-void
-check_score_t() {}
-
-template <>
-void
-check_score_t<extended_pf_score_t>() {
-    if (clp.verbose) {
-        std::cout << "Use extended precision for partition functions ("
-                  << sizeof(extended_pf_score_t) << " bytes; usually 80bit precision)."
-                  <<std::endl;
-    }
-    if (!(sizeof(extended_pf_score_t) > sizeof(standard_pf_score_t))) {
-        std::cerr << "WARNING: the extended precision type (long double) "
-                  << "is not larger than the standard precision "
-                  << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
-                  <<std::endl
-                  << "This issue is system and compiler dependent."
-                  <<std::endl;
-    }
-}
-
-#if defined( _GLIBCXX_USE_FLOAT128 ) && ! defined( __clang__ )
-template <>
-void
-check_score_t<quad_pf_score_t>() {
-    if (clp.verbose) {
-        std::cout << "Use quad precision for partition functions ("
-                  << sizeof(quad_pf_score_t) << " bytes; 128bit precision)."
-                  <<std::endl;
-    }
-    if (!(sizeof(quad_pf_score_t) > sizeof(standard_pf_score_t))) {
-        std::cerr << "WARNING: the quad precision type (__float128) "
-                  << "is not larger than the standard precision "
-                  << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
-                  <<std::endl;
-    }
-}
-#endif
-
 /**
  * \brief Helper of main() of executable locarna_p
  *
@@ -367,7 +302,7 @@ int
 run_and_report() {
     typedef std::vector<int>::size_type size_type;
 
-    check_score_t<pf_score_t>();
+    check_score_t<pf_score_t> check(clp);
 
     // ------------------------------------------------------------
     // Get input data and generate data objects
@@ -479,8 +414,8 @@ run_and_report() {
     trace_controller.restrict_by_anchors(seq_constraints);
 
     restrict_trace_by_probabilities(clp, rna_dataA.get(), rna_dataB.get(),
-                                   ribosum.get(), ribofit.get(),
-                                   &trace_controller);
+                                    ribosum.get(), ribofit.get(),
+                                    &trace_controller,pf_score_t());
 
     multiple_ref_alignment.release();
 

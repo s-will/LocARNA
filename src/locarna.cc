@@ -122,6 +122,18 @@ option_def my_options[] =
      {"new-stacking", 0, &clp.new_stacking, O_NO_ARG, 0, O_NODEFAULT, "",
       clp.help_text["new_stacking"]},
 
+
+     {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Partition function representation (for sequence envelopes)"},
+
+     {"extended-pf", 0, &clp.extended_pf, O_NO_ARG, 0, O_NODEFAULT, "",
+      clp.help_text["extended_pf"]},
+     {"quad-pf", 0, &clp.quad_pf, O_NO_ARG, 0, O_NODEFAULT, "",
+      clp.help_text["quad_pf"]
+#if !defined(_GLIBCXX_USE_FLOAT128) || defined(__clang__)
+      +" Quad precision (128 bit, __float128) is not available for your binary. Falls back to extended-pf."
+#endif
+     },
+
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Locality"},
 
      {"struct-local", 0, &clp.struct_local_given, O_ARG_BOOL, &clp.struct_local,
@@ -263,6 +275,15 @@ option_def my_options[] =
 // MAIN
 
 /**
+ * \brief Helper of main() of executable locarna_p
+ *
+ * @return success
+ */
+template <typename pf_score_t>
+int
+run_and_report();
+
+/**
  * \brief Main method of executable locarna
  *
  * @param argc argument counter
@@ -273,10 +294,6 @@ option_def my_options[] =
 int
 main(int argc, char **argv) {
     stopwatch.start("total");
-
-    bool skip_aligning = false; // flag for skipping the alignment computation
-
-    typedef std::vector<int>::size_type size_type;
 
     // ------------------------------------------------------------
     // Process options
@@ -361,6 +378,27 @@ main(int argc, char **argv) {
     if (clp.ribofit) {
         clp.use_ribosum = false;
     }
+
+
+    if (clp.quad_pf) {
+        return
+            run_and_report<quad_pf_score_t>();
+    } else if (clp.extended_pf) {
+        return
+            run_and_report<extended_pf_score_t>();
+    } else {
+        return
+            run_and_report<standard_pf_score_t>();
+    }
+}
+
+template <typename pf_score_t>
+int
+run_and_report() {
+
+    bool skip_aligning = false; // flag for skipping the alignment computation
+
+    typedef std::vector<int>::size_type size_type;
 
     // ----------------------------------------
     // temporarily turn off stacking unless background prob is set
@@ -523,15 +561,20 @@ main(int argc, char **argv) {
 
     trace_controller.restrict_by_anchors(seq_constraints);
 
+
     if (clp.write_traceprobs) {
-        MainHelper::write_trace_probs(clp, rna_dataA.get(), rna_dataB.get(), ribosum.get(),
-                                      ribofit.get(), &trace_controller);
+        MainHelper::write_trace_probs(clp, rna_dataA.get(),
+                                      rna_dataB.get(),
+                                      ribosum.get(), ribofit.get(),
+                                      &trace_controller,
+                                      pf_score_t());
         skip_aligning=true;
     }
 
     restrict_trace_by_probabilities(clp, rna_dataA.get(), rna_dataB.get(),
-                                   ribosum.get(), ribofit.get(),
-                                   &trace_controller);
+                                    ribosum.get(), ribofit.get(),
+                                    &trace_controller,
+                                    pf_score_t());
 
     // ----------------------------------------
     // construct set of relevant arc matches
@@ -594,7 +637,8 @@ main(int argc, char **argv) {
         match_probs =
             MainHelper::init_match_probs(clp, rna_dataA.get(), rna_dataB.get(),
                                          &trace_controller, ribosum.get(),
-                                         ribofit.get());
+                                         ribofit.get(),
+                                         pf_score_t());
     }
     if (clp.write_matchprobs) {
         MainHelper::write_match_probs(clp, match_probs.get());

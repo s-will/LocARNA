@@ -112,6 +112,7 @@ namespace LocARNA {
      * The matrices ZA and ZB represent alignments that end in a gap in
      * seqA or seqB, resp.
      */
+    template <class pf_score_t>
     class PFGotoh {
     public:
         using size_type=size_t; //!< size
@@ -155,20 +156,20 @@ namespace LocARNA {
 
 	bool flag_local_;
 
-	double z_;
+	pf_score_t z_;
 
 	//! pfs over alignments ending in match i~j
-	Matrix<double> zM_;
+	Matrix<pf_score_t> zM_;
 
 	//! pfs over alignments ending w/ gap in A
-        Matrix<double> zA_;
+        Matrix<pf_score_t> zA_;
 
 	//! pfs over alignments ending w/ gap in B
-        Matrix<double> zB_;
+        Matrix<pf_score_t> zB_;
 
-        Matrix<double> zMr_; //!< reverse zM_
-        Matrix<double> zAr_; //!< reverse zA_
-        Matrix<double> zBr_; //!< reverse zB_
+        Matrix<pf_score_t> zMr_; //!< reverse zM_
+        Matrix<pf_score_t> zAr_; //!< reverse zA_
+        Matrix<pf_score_t> zBr_; //!< reverse zB_
 
         /**
          * @brief perform the partition version of Gotoh's algorithm
@@ -183,9 +184,9 @@ namespace LocARNA {
          * is provided by the scoring object
          */
         void
-        pf_gotoh(Matrix<double> &zM,
-                 Matrix<double> &zA,
-                 Matrix<double> &zB,
+        pf_gotoh(Matrix<pf_score_t> &zM,
+                 Matrix<pf_score_t> &zA,
+                 Matrix<pf_score_t> &zB,
                  const TraceController &trace_controller,
                  const StralScore &score,
                  const FreeEndgaps &free_endgaps);
@@ -216,7 +217,8 @@ namespace LocARNA {
      * This approach supports Stral-like scoring (using pf_struct_weight
      * as "alpha")
      */
-    class PFMatchProbs : public MatchProbs, PFGotoh {
+    template <class  pf_score_t>
+    class PFMatchProbs : public MatchProbs, PFGotoh<pf_score_t> {
     public:
 	using size_type=EdgeProbs::size_type; //!< size type
 
@@ -257,7 +259,8 @@ namespace LocARNA {
      * @brief Provide match probabilities calculated by pf approach
      * @see PFMatchProbs
      */
-    class PFTraceProbs : public TraceProbs, PFGotoh {
+    template <class pf_score_t>
+    class PFTraceProbs : public TraceProbs, PFGotoh<pf_score_t> {
     public:
         using size_type=TraceProbs::size_type; //!< size type
 
@@ -376,7 +379,9 @@ namespace LocARNA {
                       const Sequence &seqB,
                       const PairHMMParams &params);
     };
-
 }
+
+#include "edge_probs.icc"
+
 
 #endif // LOCARNA_EDGE_PROBS

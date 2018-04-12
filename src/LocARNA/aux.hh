@@ -34,7 +34,90 @@ namespace std
     };
 }
 
+#if defined(_GLIBCXX_USE_FLOAT128) && ! defined(__clang__)
+#  include "quadmath.hh"
+#endif
+
 namespace LocARNA {
+
+    using standard_pf_score_t = double;
+    using extended_pf_score_t = long double;
+
+#if defined(_GLIBCXX_USE_FLOAT128) && ! defined(__clang__)
+    using quad_pf_score_t = __float128;
+#else
+    using quad_pf_score_t = long double;
+#endif
+
+    template <typename T>
+    struct check_score_t {
+        template<class CLP>
+        check_score_t(const CLP &clp) {}
+    };
+
+    template <>
+    struct check_score_t<extended_pf_score_t> {
+        template <class CLP>
+        check_score_t(const CLP &clp) {
+            if (clp.verbose) {
+                std::cout << "Use extended precision for partition functions ("
+                          << sizeof(extended_pf_score_t) << " bytes; usually 80bit precision)."
+                          <<std::endl;
+            }
+            if (!(sizeof(extended_pf_score_t) > sizeof(standard_pf_score_t))) {
+                std::cerr << "WARNING: the extended precision type (long double) "
+                          << "is not larger than the standard precision "
+                          << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
+                          <<std::endl
+                          << "This issue is system and compiler dependent."
+                          <<std::endl;
+            }
+        }
+    };
+
+
+    // template <typename T, class CLP>
+    // void
+    // check_score_t(const CLP &clp) {}
+
+    // template <class CLP>
+    // void
+    // check_score_t<extended_pf_score_t,CLP>(const CLP &clp) {
+    //     if (clp.verbose) {
+    //         std::cout << "Use extended precision for partition functions ("
+    //                   << sizeof(extended_pf_score_t) << " bytes; usually 80bit precision)."
+    //                   <<std::endl;
+    //     }
+    //     if (!(sizeof(extended_pf_score_t) > sizeof(standard_pf_score_t))) {
+    //         std::cerr << "WARNING: the extended precision type (long double) "
+    //                   << "is not larger than the standard precision "
+    //                   << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
+    //                   <<std::endl
+    //                   << "This issue is system and compiler dependent."
+    //                   <<std::endl;
+    //     }
+    // }
+
+#if defined( _GLIBCXX_USE_FLOAT128 ) && ! defined( __clang__ )
+    template <>
+    struct check_score_t<quad_pf_score_t> {
+        template <class CLP>
+        check_score_t(const CLP &clp) {
+            if (clp.verbose) {
+                std::cout << "Use quad precision for partition functions ("
+                          << sizeof(quad_pf_score_t) << " bytes; 128bit precision)."
+                          <<std::endl;
+            }
+            if (!(sizeof(quad_pf_score_t) > sizeof(standard_pf_score_t))) {
+                std::cerr << "WARNING: the quad precision type (__float128) "
+                          << "is not larger than the standard precision "
+                          << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
+                          <<std::endl;
+            }
+        }
+    };
+#endif
+
 
     class string1;
 
