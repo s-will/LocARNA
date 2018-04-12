@@ -735,6 +735,7 @@ namespace LocARNA {
     //
     infty_score_t
     AlignerImpl::align_top_level_free_endgaps() {
+
         M_matrix_t &M = Ms_[E_NO_NO];
 
         init_state(E_NO_NO, r_.startA() - 1, r_.endA() + 1, r_.startB() - 1,
@@ -769,6 +770,13 @@ namespace LocARNA {
         infty_score_t max_score = M(r_.endA(), r_.endB());
         max_i_ = r_.endA();
         max_j_ = r_.endB();
+
+        if (params_->free_endgaps_.allow_right_1() ||
+            params_->free_endgaps_.allow_right_2()) {
+            max_score = infty_score_t::neg_infty;
+            max_i_ = r_.startA()-1;
+            max_j_ = r_.startB()-1;
+        }
 
         if (params_->free_endgaps_.allow_right_2()) {
             // search maximum in the rightmost row r_.endB()
@@ -1232,11 +1240,6 @@ namespace LocARNA {
                                    const ScoringView *sv) {
         // pre: M matrices for arc computed
         M_matrix_t &M = Ms_[state];
-
-        // string state_text[]={"E_NO_NO", "E_X_NO", "E_NO_X", "E_X_X",
-        //                       "E_OP_NO", "E_NO_OP", "E_OP_X", "E_X_OP"};
-        // cout << "trace_in_arcmatch "<<state_text[state]<<" al:"<<al<<" i:"<<i
-        //       <<" bl:"<<bl<<" j:"<<j<<" :: "<< M(i,j) <<endl;
 
         assert(params_->trace_controller_->is_valid(i, j));
 
