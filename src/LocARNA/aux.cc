@@ -83,6 +83,9 @@ namespace LocARNA {
                        std::vector<std::string> &v) {
         std::string str = s;
         v.clear();
+
+        if (str.empty()) return;
+
         size_t pos;
         while ((pos = str.find(sep)) != std::string::npos) {
             if (pos > 0) {
