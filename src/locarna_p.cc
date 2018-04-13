@@ -15,8 +15,6 @@
 #include <sstream>
 #include <vector>
 
-#include <math.h>
-
 #include "LocARNA/sequence.hh"
 #include "LocARNA/basepairs.hh"
 #include "LocARNA/aligner_p.hh"

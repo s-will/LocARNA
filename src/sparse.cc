@@ -124,6 +124,17 @@ option_def my_options[] = {
     {"new-stacking", 0, &clp.new_stacking, O_NO_ARG, 0, O_NODEFAULT, "",
      clp.help_text["new_stacking"]},
 
+    {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Partition function representation (for sequence envelopes)"},
+
+    {"extended-pf", 0, &clp.extended_pf, O_NO_ARG, 0, O_NODEFAULT, "",
+     clp.help_text["extended_pf_sequence_only"]+" [default]"},
+    {"quad-pf", 0, &clp.quad_pf, O_NO_ARG, 0, O_NODEFAULT, "",
+     clp.help_text["quad_pf"]
+#if !defined(_GLIBCXX_USE_FLOAT128) || defined(__clang__)
+     +" Quad precision (128 bit, __float128) is not available for your binary. Falls back to extended-pf."
+#endif
+    },
+
     {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Controlling_output"},
 
     {"width", 'w', 0, O_ARG_INT, &clp.width, "120", "columns",
@@ -400,6 +411,8 @@ main(int argc, char **argv) {
     if (clp.ribofit) {
         clp.use_ribosum = false;
     }
+
+    clp.extended_pf = 1; //default on
 
     if (clp.quad_pf) {
         return

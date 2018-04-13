@@ -8,9 +8,7 @@
 #include "ribofit.hh"
 #include "zip.hh"
 
-#if defined( _GLIBCXX_USE_FLOAT128 ) && ! defined(__clang__)
-#  include "quadmath.hh"
-#endif
+#include "quadmath.hh"
 
 #include <cmath>
 #include <fstream>

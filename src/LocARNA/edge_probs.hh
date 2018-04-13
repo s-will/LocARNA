@@ -6,7 +6,9 @@
 #endif
 
 #include <string>
+#include <cmath>
 
+#include "aux.hh"
 #include "matrix.hh"
 
 namespace LocARNA {
@@ -190,6 +192,9 @@ namespace LocARNA {
                  const TraceController &trace_controller,
                  const StralScore &score,
                  const FreeEndgaps &free_endgaps);
+
+        bool fail() {return z_==0 || isnan(z_) || isinf(z_);}
+
     };
 
     /**
@@ -252,6 +257,8 @@ namespace LocARNA {
 		     double temp,
                      const FreeEndgaps &free_endgaps,
 		     bool flag_local);
+
+        bool fail() {return PFGotoh<pf_score_t>::fail();}
     };
 
 
@@ -292,6 +299,8 @@ namespace LocARNA {
 		     double temp,
                      const FreeEndgaps &free_endgaps,
 		     bool flag_local);
+
+        bool fail() {return PFGotoh<pf_score_t>::fail();}
     };
 
     /*

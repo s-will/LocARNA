@@ -1,6 +1,9 @@
 #ifndef LOCARNA_QUADMATH_HH
 #define LOCARNA_QUADMATH_HH
 
+// include only if Gnu's float128 is available
+#if defined( _GLIBCXX_USE_FLOAT128 ) && ! defined(__clang__)
+
 //! @file LocARNA Quadmath header
 //! include the quadmath library header and define
 //! a few __float128 overloads for convenience
@@ -26,9 +29,10 @@ operator << (std::ostream &out, __float128 x) {
 // We overload the used quadmath functions for __float128, such that we do not need
 // to rename them elsewhere
 //
-// NOTE: exp and log are the only math functions that we use on partition functions;
-// luckily the overloads are required (otherwise, one gets 'ambigous overload'
-// compiler errors when using math functions)
+// NOTE: the defined functions are the only math functions that we use on
+// partition functions;
+// comfortably, since the overloads are required, one gets 'ambigous overload'
+// compiler errors when using other math functions
 
 //! @brief quadmath exp
 inline
@@ -38,5 +42,15 @@ __float128 exp(__float128 x) {return expq(x);}
 inline
 __float128 log(__float128 x) {return logq(x);}
 
+// @brief quadmath isinf
+inline
+__float128 isinf(__float128 x) {return isinfq(x);}
+
+// @brief quadmath isnan
+inline
+__float128 isnan(__float128 x) {return isnanq(x);}
+
+
+#endif
 
 #endif
