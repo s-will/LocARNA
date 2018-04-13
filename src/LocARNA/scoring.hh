@@ -5,6 +5,7 @@
 #include <config.h>
 #endif
 
+#include <cmath>
 #include <vector>
 
 #include "aux.hh"
@@ -855,7 +856,7 @@ namespace LocARNA {
 
         pf_score_t
         boltzmann_weight(score_t s) const {
-            return exp(s / (pf_score_t)params->temperature_alipf_);
+            return std::exp(s / (pf_score_t)params->temperature_alipf_);
         }
 
 
