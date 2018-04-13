@@ -34,6 +34,7 @@ operator << (std::ostream &out, __float128 x) {
 // comfortably, since the overloads are required, one gets 'ambigous overload'
 // compiler errors when using other math functions
 
+namespace std {
 //! @brief quadmath exp
 inline
 __float128 exp(__float128 x) {return expq(x);}
@@ -49,7 +50,7 @@ __float128 isinf(__float128 x) {return isinfq(x);}
 // @brief quadmath isnan
 inline
 __float128 isnan(__float128 x) {return isnanq(x);}
-
+}
 
 #endif
 

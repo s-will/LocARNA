@@ -333,7 +333,7 @@ namespace LocARNA {
 
 		bool
 		operator != (const const_iterator &it) {
-		    return row_index_ != it.row_index_ || col_!=col_;
+		    return row_index_ != it.row_index_ || col_!=it.col_;
 		}
 
 	    private:

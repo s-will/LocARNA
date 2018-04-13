@@ -5,7 +5,7 @@
 #include <config.h>
 #endif
 
-#include <iosfwd>
+#include <iostream>
 #include <exception>
 #include <string>
 #include <vector>

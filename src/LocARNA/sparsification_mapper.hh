@@ -455,7 +455,7 @@ namespace LocARNA {
     std::ostream &
     operator<<(std::ostream &out, const std::vector<T> &vec) {
         for (typename std::vector<T>::const_iterator it = vec.begin();
-             it != vec.end(); it++) {
+             it != vec.end(); ++it) {
             out << *it << " ";
         }
         return out;
