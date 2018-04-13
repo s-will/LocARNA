@@ -161,7 +161,7 @@ option_def my_options[] =
      {"alifold-consensus-dp", 0, &clp.alifold_consensus_dp, O_NO_ARG, 0,
       O_NODEFAULT, "", clp.help_text["alifold_consensus_dp"]},
      {"consensus-structure", 0, 0, O_ARG_STRING, &clp.cons_struct_type,
-      "alifold", "type", clp.help_text["cons_struct_type"]},
+      "none", "type", clp.help_text["cons_struct_type"]},
      {"local-output", 'L', &clp.local_output, O_NO_ARG, 0, O_NODEFAULT, "",
       clp.help_text["local_output"]},
      {"local-file-output", 0, &clp.local_file_output, O_NO_ARG, 0, O_NODEFAULT,
@@ -854,16 +854,15 @@ run_and_report() {
         // write alignment in different output formats to files
         //
 
-        std::string consensus_structure = "";
-
-        std::unique_ptr<RnaData> consensus =
-            MainHelper::consensus(clp, pfoldparams, my_exp_probA, my_exp_probB,
-                                  rna_dataA.get(), rna_dataB.get(), *alignment,
-                                  consensus_structure);
+        auto delayed_cp = make_delay<MainHelper::consensus_pair_t>::fun([&] {
+            return MainHelper::consensus(clp, pfoldparams, my_exp_probA,
+                                         my_exp_probB, rna_dataA.get(),
+                                         rna_dataB.get(), *alignment,
+                                         clp.local_file_output);
+        });
 
         return_code =
-            MainHelper::write_alignment(clp, score, consensus_structure,
-                                        consensus.get(), *alignment,
+            MainHelper::write_alignment(clp, score, delayed_cp, *alignment,
                                         multiple_ref_alignment.get());
 
         // ----------------------------------------
@@ -897,21 +896,30 @@ run_and_report() {
                 std::cout << std::endl;
             }
 
-            // recompute consensus structure for screen output, if necessary
-            if (consensus_structure != "") {
-                if (clp.local_output != clp.local_file_output) {
-                    clp.local_file_output = clp.local_output;
+            // check whether the consensus for screen output is different
+            // from what we (potentially) already computed for file output
 
-                    consensus =
-                        MainHelper::consensus(clp, pfoldparams, my_exp_probA,
-                                              my_exp_probB, rna_dataA.get(),
-                                              rna_dataB.get(), *alignment,
-                                              consensus_structure);
-                    clp.local_file_output = !clp.local_output;
-                }
-                ma.append(MultipleAlignment::SeqEntry(clp.cons_struct_type,
-                                                      consensus_structure));
+            MainHelper::consensus_pair_t local_cp = std::make_pair(nullptr,"");
+
+            if (clp.local_output != clp.local_file_output) {
+                local_cp =
+                    MainHelper::consensus(clp, pfoldparams, my_exp_probA,
+                                          my_exp_probB, rna_dataA.get(),
+                                          rna_dataB.get(), *alignment,
+                                          clp.local_output
+                                          );
             }
+
+            const MainHelper::consensus_pair_t &consensus_pair =
+                (clp.local_output == clp.local_file_output)
+                ? delayed_cp.get()
+                : local_cp;
+
+            if (consensus_pair.first != nullptr && consensus_pair.second != "") {
+                ma.append(MultipleAlignment::SeqEntry(clp.cons_struct_type,
+                                                      consensus_pair.second));
+            }
+
             ma.write(std::cout, clp.width,
                      MultipleAlignment::FormatType::CLUSTAL);
 

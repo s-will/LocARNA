@@ -785,16 +785,15 @@ run_and_report() {
         // ----------------------------------------
         // write alignment in different output formats
         //
-        std::string consensus_structure = "";
-
-        std::unique_ptr<RnaData> consensus =
-            MainHelper::consensus(clp, pfoldparams, my_exp_probA, my_exp_probB,
-                                  rna_dataA.get(), rna_dataB.get(), *alignment,
-                                  consensus_structure);
+        auto delayed_cp = make_delay<MainHelper::consensus_pair_t>::fun([&] {
+            return MainHelper::consensus(clp, pfoldparams, my_exp_probA,
+                                         my_exp_probB, rna_dataA.get(),
+                                         rna_dataB.get(), *alignment,
+                                         clp.local_file_output);
+        });
 
         return_code =
-            MainHelper::write_alignment(clp, score, consensus_structure,
-                                        consensus.get(), *alignment,
+            MainHelper::write_alignment(clp, score, delayed_cp, *alignment,
                                         multiple_ref_alignment.get());
 
         // ----------------------------------------
@@ -814,9 +813,11 @@ run_and_report() {
                 ma.append(MultipleAlignment::SeqEntry("", structureB));
             }
 
-            if (consensus_structure != "") {
+            const auto &consensus_pair = delayed_cp.get();
+
+            if (consensus_pair.second != "") {
                 ma.append(MultipleAlignment::SeqEntry(clp.cons_struct_type,
-                                                      consensus_structure));
+                                                      consensus_pair.second));
             }
 
             ma.write(std::cout, clp.width,
