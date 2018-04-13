@@ -263,7 +263,15 @@ namespace LocARNA {
                     }
                     ribosum = std::make_unique<Ribosum85_60>();
                 } else {
-                    ribosum = std::make_unique<RibosumFreq>(clp.ribosum_file);
+                    try {
+                        ribosum = std::make_unique<RibosumFreq>(clp.ribosum_file);
+                    } catch (std::ifstream::failure &e) {
+                        std::cerr << "ERROR: " << e.what() << std::endl;
+                        exit(-1);
+                    } catch (failure &e) {
+                        std::cerr << "ERROR: " << e.what() << std::endl;
+                        exit(-1);
+                    }
                 }
             }
         }
@@ -384,6 +392,14 @@ namespace LocARNA {
                                                  clp.temperature_alipf / 100.0,
                                                  FreeEndgaps(clp.free_endgaps),
                                                  clp.sequ_local);
+
+            if (trace_probs.fail()) {
+                std::cerr << "WARNING: no valid trace probabilities could be "
+                             "computed with the requested floating point "
+                             "precision."
+                          << std::endl;
+            }
+
             return trace_probs;
         }
 
@@ -444,11 +460,14 @@ namespace LocARNA {
             trace_probs.write_sparse(out, 1.0 / clp.probability_scale);
         }
 
+        using consensus_pair_t =
+            std::pair<std::unique_ptr<RnaData>, std::string>;
+
         /**
          * @brief consensus ensemble
          */
         template <class CLP>
-        std::unique_ptr<RnaData>
+        consensus_pair_t
         consensus(const CLP &clp,
                   const PFoldParams &pfparams,
                   double my_exp_probA,
@@ -456,11 +475,23 @@ namespace LocARNA {
                   const RnaData *rna_dataA,
                   const RnaData *rna_dataB,
                   const Alignment &alignment,
-                  std::string &consensus_structure) {
+                  bool local
+                  ) {
             std::unique_ptr<RnaData> consensus;
 
+            std::string consensus_structure="";
+
             if (clp.alifold_consensus_dp || clp.cons_struct_type == "alifold") {
-                MultipleAlignment ma(alignment, clp.local_file_output);
+                MultipleAlignment ma(alignment, local);
+
+                if (ma.length()>2000) {
+                    std::cerr
+                        << "WARNING: Skip alifold consensus computation "
+                           "(alignment too long: "
+                        << ma.length() << "nt; see --consensus-structure)."
+                        << std::endl;
+                    return std::make_pair(nullptr,"");
+                }
 
                 // compute cutoff probability as geometric mean
                 double min_prob = sqrt(rna_dataA->arc_cutoff_prob() *
@@ -487,7 +518,7 @@ namespace LocARNA {
                 std::unique_ptr<RnaData> mea_consensus =
                     std::make_unique<RnaData>(*rna_dataA, *rna_dataB, alignment,
                                               my_exp_probA, my_exp_probB,
-                                              clp.local_file_output);
+                                              local);
 
                 if (clp.cons_struct_type == "mea") {
                     consensus_structure = mea_consensus->mea_structure(1);
@@ -497,20 +528,19 @@ namespace LocARNA {
                     consensus = std::move(mea_consensus);
                 }
             }
-
-            return consensus;
+            return std::make_pair(std::move(consensus), consensus_structure);
         }
 
         /** @brief write output to file/s (optionally)
          */
-        template <class CLP>
+        template <class CLP, class DelayedCP>
         int
         write_alignment(const CLP &clp,
                         infty_score_t score,
-                        const std::string &consensus_structure,
-                        const RnaData *consensus,
+                        DelayedCP &delayed_cp,
                         const Alignment &alignment,
                         const MultipleAlignment *multiple_ref_alignment) {
+
             const Sequence &seqA = alignment.seqA();
             const Sequence &seqB = alignment.seqB();
 
@@ -552,7 +582,7 @@ namespace LocARNA {
                              MultipleAlignment::FormatType::CLUSTAL);
 
                 } else {
-                    std::cerr << "Cannot write to " << clp.clustal << "! Exit."
+                    std::cerr << "ERROR: Cannot write to " << clp.clustal << "."
                               << std::endl;
                     return_code = -1;
                 }
@@ -563,10 +593,12 @@ namespace LocARNA {
                 if (out.good()) {
                     MultipleAlignment ma(alignment, clp.local_file_output);
 
-                    if (consensus_structure != "") {
+                    const auto &cp = delayed_cp.get();
+
+                    if (cp.second != "") {
                         ma.set_annotation(
                             MultipleAlignment::AnnoType::consensus_structure,
-                            SequenceAnnotation(consensus_structure));
+                            SequenceAnnotation(cp.second));
                     }
 
                     out << "# STOCKHOLM 1.0" << std::endl;
@@ -578,8 +610,8 @@ namespace LocARNA {
                     ma.write(out, clp.width,
                              MultipleAlignment::FormatType::STOCKHOLM);
                 } else {
-                    std::cerr << "Cannot write to " << clp.stockholm
-                              << "! Exit." << std::endl;
+                    std::cerr << "ERROR: Cannot write to " << clp.stockholm << "."
+                              << std::endl;
                     return_code = -1;
                 }
             }
@@ -587,11 +619,17 @@ namespace LocARNA {
             if (clp.pp_given) {
                 std::ofstream out(clp.pp.c_str());
                 if (out.good()) {
-                    consensus->write_pp(out);
-
+                    const auto &cp = delayed_cp.get();
+                    if (cp.first) {
+                        cp.first->write_pp(out);
+                    } else {
+                        std::cerr << "ERROR: Cannot write pp, since "
+                                     "consensus cannot be computed."
+                                  << std::endl;
+                        return_code = -1;
+                    }
                 } else {
-                    std::cerr << "Cannot write to " << clp.pp << std::endl
-                              << "! Exit.";
+                    std::cerr << "ERROR: Cannot write to " << clp.pp << std::endl;
                     return_code = -1;
                 }
             }

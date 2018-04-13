@@ -124,9 +124,7 @@ namespace LocARNA {
           arcmatch_probs_() {
         std::ifstream in(filename.c_str());
         if (!in.is_open()) {
-            std::cerr << "Cannot open file " << filename
-                      << " for reading ribosum data." << std::endl;
-            exit(-1);
+            throw failure("Cannot read ribosum data from file \""+filename+"\".");
         }
         read_ribosum(in);
 
