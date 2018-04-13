@@ -5,9 +5,9 @@
 #include <config.h>
 #endif
 
-#include <memory>
 #include <iosfwd>
 #include <vector>
+#include <memory>
 #include "aux.hh"
 #include "scoring_fwd.hh"
 
@@ -37,7 +37,7 @@ namespace LocARNA {
 
         //!@brief construct as gap
         //!@note used for implicit type cast
-        EdgeEnd(Gap end) : end_(-int(end.idx()) - 1) {}
+        EdgeEnd(Gap end) : end_(-int(end) - 1) {}
 
         //! @brief gap test
         //! @return whether end is gap
@@ -69,27 +69,9 @@ namespace LocARNA {
         }
     };
 
-    //! @brief vector of alignment edge ends
-    typedef std::vector<EdgeEnd> Alignment__edge_ends_t;
-
-    //! @brief pair of vector of alignment edges
-    class AlignmentEdges
-        : public std::pair<Alignment__edge_ends_t, Alignment__edge_ends_t> {
-        typedef Alignment__edge_ends_t edge_ends_t;
-        typedef std::pair<edge_ends_t, edge_ends_t> parent_t;
-
+    class AlignmentEdges : public std::vector<std::pair<EdgeEnd,EdgeEnd>> {
     public:
-        //! @brief Construct asserting equal length
-        AlignmentEdges(const edge_ends_t &x, const edge_ends_t &y)
-            : parent_t(x, y) {
-            assert(x.size() == y.size());
-        };
-
-        //! @brief Size
-        size_t
-        size() const {
-            return first.size();
-        }
+        using edge_t = std::pair<EdgeEnd,EdgeEnd>;
     };
 
     /**
@@ -98,25 +80,26 @@ namespace LocARNA {
      *  Supports construction of the alignment during traceback.
      */
     class Alignment {
-        std::unique_ptr<AlignmentImpl> pimpl_; //!< implementation pointer
-
     public:
         //! edge end
         typedef EdgeEnd edge_end_t;
 
         //! edge ends
-        typedef Alignment__edge_ends_t edge_ends_t;
+        using edge_ends_t = std::vector<EdgeEnd>;
+
+        using edge_end_pair_t = std::pair<EdgeEnd,EdgeEnd>;
 
         //! description of alignment edges
-        typedef AlignmentEdges edges_t;
+        using edges_t = AlignmentEdges;
 
         /**
          * @brief convert alignemnt string to edge end vector
          * @param alistr alignment string
          * @return vector of edge ends corresponding to alistr
          */
-        static edge_ends_t
-        alistr_to_edge_ends(const std::string &alistr);
+        static edges_t
+        alistrs_to_edges(const std::string &alistrA,
+                         const std::string &alistrB);
 
         /**
          * Construct empty alignment from sequences
@@ -155,15 +138,6 @@ namespace LocARNA {
          */
         Alignment &
         operator=(const Alignment &alignment);
-
-        /**
-         * @brief swap two alignments
-         * @param a1 first alignment
-         * @param a2 second alignment
-         * Swaps implementation objects (not only pointer)
-         */
-        void
-        swap(Alignment &a1, Alignment &a2);
 
         /**
          * \brief Set consensus structure of the alignment
@@ -224,7 +198,7 @@ namespace LocARNA {
          *
          * @param only_local if true, return only local edges
          *
-         * @return pair of vectors of alignment edges
+         * @return vector of alignment edges
          *
          * If !only_local, the returned vector contains all positions
          * of the sequence. We distinguish different gaps, in
@@ -244,21 +218,13 @@ namespace LocARNA {
            (this is used when finding k-best alignments in Aligner)
          */
 
-        //! get first position of A that is locally aligned to something
-        size_type
-        local_startA() const;
+        //! get pair of first positions that are locally aligned
+        edge_end_pair_t
+        local_start() const;
 
-        //! get last position of A that is locally aligned to something
-        size_type
-        local_endA() const;
-
-        //! get first position of B that is locally aligned to something
-        size_type
-        local_startB() const;
-
-        //! get last position of B that is locally aligned to something
-        size_type
-        local_endB() const;
+        //! get pair of last positions that are locally aligned
+        edge_end_pair_t
+        local_end() const;
 
         /**
          * @brief Structure A
@@ -293,6 +259,12 @@ namespace LocARNA {
          */
         const Sequence &
         seqB() const;
+    private:
+        std::unique_ptr<AlignmentImpl> pimpl_; //!< implementation pointer
+
+        template <int i>
+        std::string
+        dot_bracket_structure(const std::string &, bool only_local) const;
     };
 }
 #endif

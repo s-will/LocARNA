@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <iterator>
 
 #include "aux.hh"
 #include "sequence.hh"
@@ -11,9 +12,10 @@
 #include "multiple_alignment.hh"
 #include "matrix.hh"
 #include "anchor_constraints.hh"
+#include "edge_probs.hh"
 
-#include <math.h>
-#include <assert.h>
+#include <cmath>
+#include <cassert>
 
 namespace LocARNA {
 
@@ -42,16 +44,17 @@ namespace LocARNA {
                            const SeqEntry &pseqB,
                            const SeqEntry &paliA,
                            const SeqEntry &paliB,
-                           size_type delta) {
+                           size_type delta)
+        : lenA_(pseqA.seq().length()),
+          lenB_(pseqB.seq().length())
+    {
         // pseqA and pseqB can contain gaps, therefore we call these strings
         // profile sequences
 
         assert(paliA.seq().length() == paliB.seq().length());
 
-        size_t plenA = pseqA.seq().length();
-
-        min_col_.resize(plenA + 1);
-        max_col_.resize(plenA + 1);
+        min_col_.resize(lenA_ + 1);
+        max_col_.resize(lenA_ + 1);
 
         seqentry_pair_t ali = remove_common_gaps(paliA, paliB);
 
@@ -65,8 +68,8 @@ namespace LocARNA {
 
         size_t lenAli = aliA.seq().length();
 
-// std::cout << plenA << " "
-//            << plenB << " "
+// std::cout << lenA_ << " "
+//            << lenB_ << " "
 //            << lenA << " "
 //            << lenB << " "
 //            << lenAli << " "
@@ -78,14 +81,14 @@ namespace LocARNA {
         // Delta
 
         // iterate over positions in sequence A
-        for (size_t pi = 0; pi <= plenA; pi++) {
+        for (size_t pi = 0; pi <= lenA_; pi++) {
             size_t left_i =
                 pseqA.col_to_pos(pi)
                     .first; // left_i is the position in seqA left of the gap
             size_t right_i =
                 pseqA.col_to_pos(pi + 1)
                     .second; // right_i is a position in seqA right of the gap
-            // a gap starting at position pi in plenA corresponds to a gap
+            // a gap starting at position pi in lenA_ corresponds to a gap
             // between positions left_i, right_i in seqA
 
             size_t left_col = aliA.pos_to_col(left_i);
@@ -109,13 +112,12 @@ namespace LocARNA {
         // of the alignment deviation that limits the position cut distance to
         // Delta
 
-        size_t plenB = pseqB.seq().length();
-        size_t lenA = pseqA.length_wogaps();
-        size_t lenB = pseqB.length_wogaps();
+        size_t lenAwog = pseqA.length_wogaps();
+        size_t lenBwog = pseqB.length_wogaps();
 
         // initialize col vectors
-        for (size_t pi = 0; pi <= plenA; pi++) {
-            min_col_[pi] = plenB;
+        for (size_t pi = 0; pi <= lenA_; pi++) {
+            min_col_[pi] = lenB_;
             max_col_[pi] = 0;
         }
 
@@ -151,9 +153,9 @@ namespace LocARNA {
 
             // determine the positions in delta distance
             size_t i_minus = std::max(delta, i) - delta;
-            size_t i_plus = std::min(lenA, i + delta);
+            size_t i_plus = std::min(lenAwog, i + delta);
             size_t j_minus = std::max(delta, j) - delta;
-            size_t j_plus = std::min(lenB, j + delta);
+            size_t j_plus = std::min(lenBwog, j + delta);
 
             // std::cout <<"  "
             //    << i_minus << " "
@@ -243,7 +245,10 @@ namespace LocARNA {
     TraceRange::TraceRange(size_type lenA,
                            size_type lenB,
                            const std::vector<TraceRange> &trs,
-                           size_type delta) {
+                           size_type delta)
+            : lenA_(lenA),
+              lenB_(lenB)
+    {
         Matrix<size_type> C(lenA + 1, lenB + 1);
         Matrix<size_type> T(lenA + 1, lenB + 1);
 
@@ -309,6 +314,27 @@ namespace LocARNA {
                     break;
             }
         }
+    }
+
+    TraceRange
+    TraceRange::reverse() const {
+        TraceRange rev_tr(lenA_,lenB_);
+
+        using bii_t = std::back_insert_iterator<std::vector<size_t>>;
+
+        // transform and copy "swapped"
+        std::transform(min_col_.begin(), min_col_.end(),
+                       bii_t(rev_tr.max_col_),
+                       [this](size_t x) { return lenB_ - x; });
+        std::transform(max_col_.begin(), max_col_.end(),
+                       bii_t(rev_tr.min_col_),
+                       [this](size_t x) { return lenB_ - x; });
+
+        //reverse
+        std::reverse(rev_tr.min_col_.begin(), rev_tr.min_col_.end());
+        std::reverse(rev_tr.max_col_.begin(), rev_tr.max_col_.end());
+
+        return rev_tr;
     }
 
     void
@@ -382,25 +408,22 @@ namespace LocARNA {
                                      const MultipleAlignment *ma,
                                      int delta,
                                      bool relaxed_merging)
-        : TraceRange(),
+        : TraceRange(seqA.length(), seqB.length()),
           delta_(delta)
     //,relaxed_merging_(relaxed_merging)
     {
-        size_type lenA = seqA.length();
-        size_type lenB = seqB.length();
-
-        min_col_.resize(lenA + 1);
-        max_col_.resize(lenA + 1);
+        min_col_.resize(lenA_ + 1);
+        max_col_.resize(lenA_ + 1);
 
         // initialize vectors least constrained
         fill(min_col_.begin(), min_col_.end(), 0);
-        fill(max_col_.begin(), max_col_.end(), lenB);
+        fill(max_col_.begin(), max_col_.end(), lenB_);
 
         if (delta == -1) { // no constraints!
             // do nothing
         } else if (ma == NULL) {
             // constraints due to delta but no reference alignment
-            constrain_wo_ref(lenA, lenB, (size_type)delta_);
+            constrain_wo_ref(lenA_, lenB_, (size_type)delta_);
         } else {
             // HERE: delta >= 0 and reference alignment ma is given
 
@@ -460,25 +483,25 @@ namespace LocARNA {
             }
 
             if (relaxed_merging) {
-                TraceRange tr(lenA, lenB, trs, delta_);
+                TraceRange tr(lenA_, lenB_, trs, delta_);
 
                 // tr.print_debug(std::cout);
 
                 // initialize vectors most constrained
-                fill(min_col_.begin(), min_col_.end(), lenB);
+                fill(min_col_.begin(), min_col_.end(), lenB_);
                 fill(max_col_.begin(), max_col_.end(), 0);
 
                 // blow up by delta
-                for (size_type i = 0; i <= lenA; i++) {
+                for (size_type i = 0; i <= lenA_; i++) {
                     min_col_[i] =
                         std::min(std::max(tr.min_col(i), delta_) - delta_,
                                  min_col_[i]);
                     max_col_[i] =
-                        std::max(std::min(tr.max_col(i) + delta_, lenB),
+                        std::max(std::min(tr.max_col(i) + delta_, lenB_),
                                  max_col_[i]);
 
                     size_type i_minus = std::max(delta_, i) - delta_;
-                    size_type i_plus = std::min(i + delta_, lenA);
+                    size_type i_plus = std::min(i + delta_, lenA_);
 
                     min_col_[i] = std::min(tr.min_col(i_minus), min_col_[i]);
                     max_col_[i] = std::max(tr.max_col(i_plus), max_col_[i]);
@@ -533,10 +556,50 @@ namespace LocARNA {
                 }
             }
 
-            //min_col_[i] = std::max(min_col_[i], constr_min);
-            //max_col_[i] = std::min(max_col_[i], constr_max);
+            min_col_[i] = std::max(min_col_[i], constr_min);
+            max_col_[i] = std::min(max_col_[i], constr_max);
             //std::cerr <<"=="<< i <<"==>"<< min_col_[i]<<" "<<max_col_[i]<<std::endl;
         }
+    }
+
+    void
+    TraceController::restrict_by_trace_probabilities(const TraceProbs &trace_probs,
+                                                     double min_prob) {
+        for (size_type i = 0; i <= rows(); ++i) {
+
+            size_type new_min = max_col_[i];
+            size_type new_max = min_col_[i];
+
+            for (size_type j = min_col_[i]; j <= max_col_[i]; ++j) {
+                if (trace_probs.prob(i,j) >= min_prob) {
+                    new_min = std::min(new_min, j);
+                    new_max = std::max(new_max, j);
+                }
+            }
+
+            min_col_[i] = std::max(min_col_[i], new_min);
+            max_col_[i] = std::min(max_col_[i], new_max);
+        }
+
+        // make monotone
+        size_type max_col=0;
+        for (size_type i = 0; i <= rows(); ++i) {
+            max_col_[i] = std::max(max_col_[i],max_col);
+            max_col = max_col_[i];
+        }
+
+        size_type min_col=max_col_[rows()];
+        for (size_type i = rows()+1; i>0 ; ) {
+            --i;
+            min_col_[i] = std::min(min_col_[i],min_col);
+            min_col = min_col_[i];
+        }
+    }
+
+    TraceController
+    TraceController::reverse() const {
+        auto tr_rev = TraceRange::reverse();
+        return TraceController(std::move(tr_rev),delta_);
     }
 
     void
