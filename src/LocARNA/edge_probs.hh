@@ -193,7 +193,7 @@ namespace LocARNA {
                  const StralScore &score,
                  const FreeEndgaps &free_endgaps);
 
-        bool fail() {return z_==0 || isnan(z_) || isinf(z_);}
+        bool fail() {return z_==0 || std::isnan(z_) || std::isinf(z_);}
 
     };
 
