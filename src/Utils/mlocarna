@@ -1406,6 +1406,9 @@ if ($opts{'probabilistic'}) {
     }
 }
 
+# do not compute consensus structures
+push @locarna_params, "--consensus-structure" => "none";
+
 ## copy to tree params
 my @locarna_params_tree = ();
 push @locarna_params_tree, @locarna_params;

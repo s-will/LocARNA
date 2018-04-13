@@ -402,6 +402,42 @@ namespace LocARNA {
         return key(*minelem_it);
     }
 
+    // @brief delay the evaluation of a function
+    template <class Value, class Function>
+    class Delay {
+    public:
+        Delay(Function fun)
+            : fun_(fun), evaluated_(false)
+        {};
+
+        const Value &
+        get() {
+            if (!evaluated_) {
+                val_ = fun_();
+            }
+            evaluated_ = true;
+            return val_;
+        }
+
+    private:
+        Value val_;
+        Function fun_;
+        bool evaluated_;
+    };
+
+    // @brief make object of Delay
+    // @note work around partial specialization of functions
+    template <class Value>
+    class make_delay {
+    public:
+        template <class Function>
+        static auto
+        fun(Function fun_) {
+            return Delay<Value, Function>(fun_);
+        }
+    };
+
+
 }
 
 #endif

@@ -69,11 +69,10 @@
     {"stockholm", "Write alignment Stockholm format to given file."},
     {"pp", "Write alignment in PP format to given file."},
     {"alifold_consensus_dp",
-     "Compute consensus dot plot by alifold (limited to length<=2000)."},
+     "Compute consensus dot plot by alifold (warning: this may fail for long sequences)."},
     {"cons_struct_type",
      "Type of consensus structures written to screen and "
-     "stockholm output [alifold|mea|none]. (alifold is limited to "
-     "length<=2000.)"},
+     "stockholm output [alifold|mea|none] (default: none)."},
     {"local_output", "Output only local sub-alignment (to std out)."},
     {"local_file_output", "Write only local sub-alignment to output files."},
     {"pos_output", "Output only local sub-alignment positions."},
