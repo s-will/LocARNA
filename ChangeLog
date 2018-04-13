@@ -1,8 +1,34 @@
 ============================================================
+=== 2018
+
+2.0.0RC2 (2018-04-16)
+	Bugfixes:
+	---------
+	  Fix free endgaps bug
+	     (negative alignment scores were handled incorrectly)
+	  Fix empty anchor constraint
+	     (correctly recognize/report when anchors are specified)
+
+	Features / Improvements:
+	------------------------
+          [Both improvements were introduced to handle large instances]
+	  Improve alifold consensus computation
+	    - limit alifold computation to alignment length <=2000
+	    - handle the cases where consensus cannot be computed
+	    - warn if consensus is not computed / fail if explicitely required (pp)
+	    - handle recomputation of consensus if file/screen output differ (local out)
+	  Support sequence envelope computation with extended precision
+	    - set the default to extended precision
+	    - recognize failing partition function calculation
+	    -   (for sequence trace and match probabilities)
+	    - extend LocARNA's quadmath.hh header and simplify its use
+	    - use templates for partition function type
+	    - support extended (long double) and quad precision (float128)
+
+============================================================
 === 2017
 
 2.0.0RC1 (2017-12-13)
-
 	Features / functionality:
 	-------------------------
 	  Sequence envelopes for locarna, locarna_p and sparse;
