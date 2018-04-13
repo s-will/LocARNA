@@ -190,6 +190,7 @@ namespace LocARNA {
         /**
          * @brief construct with fold compound
          */
+        explicit
         McC_matrices_base(vrna_fold_compound_t* vc = nullptr);
 
     }; // end class McC_matrices_base

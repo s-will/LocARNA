@@ -58,8 +58,8 @@ namespace LocARNA {
         //! return the match probability for the two bases
         double
         prob(size_t i, size_t j) const {
-            assert(0 <= i && i < probs_.sizes().first);
-            assert(0 <= j && j < probs_.sizes().second);
+            assert(i < probs_.sizes().first);
+            assert(j < probs_.sizes().second);
 
             return probs_(i, j);
         }
@@ -193,7 +193,7 @@ namespace LocARNA {
                  const StralScore &score,
                  const FreeEndgaps &free_endgaps);
 
-        bool fail() {return z_==0 || isnan(z_) || isinf(z_);}
+        bool fail() {return z_==0 || std::isnan(z_) || std::isinf(z_);}
 
     };
 
