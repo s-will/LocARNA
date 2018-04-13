@@ -135,9 +135,8 @@ if (defined($plot_file)) {
     open($PLOT_OUT,">","$plot_file");
 }
 
-
-my $curdir=`pwd`;
-chomp $curdir;
+use Cwd;
+my $curdir=getcwd;
 
 my %seqs = parse_mfasta("$seq_file");
 

@@ -1,4 +1,3 @@
-
 #include <string>
 #include <fstream>
 #include <map>
@@ -11,6 +10,7 @@
 
 #include "aux.hh"
 #include "sequence.hh"
+
 #include "basepairs.hh"
 #include "rna_data.hh"
 
@@ -64,10 +64,41 @@ namespace LocARNA {
 
       */
 
+
+    BasePairs::BasePairs(const RnaData *rna_data, double min_prob)
+        : rna_data_(rna_data),
+          min_prob_(min_prob),
+          len_(rna_data->length()),
+          left_adjlists_(),
+          right_adjlists_(),
+          arc_vec_(),
+          arcs_(-1) {
+        generateBPLists(*rna_data_);
+    }
+
+    BasePairs::BasePairs(size_type len, const bpair_set_t &bps)
+        : rna_data_(0),
+          min_prob_(1.0),
+          len_(len),
+          left_adjlists_(),
+          right_adjlists_(),
+          arc_vec_(),
+          arcs_(-1) {
+        resize(seqlen());
+        for (bpair_set_t::const_iterator it = bps.begin(); bps.end() != it;
+             ++it) {
+            register_arc(it->first, it->second);
+        }
+
+        sort_adj_lists();
+        add_adj_list_sentinels();
+    }
+
+
     void
     BasePairs::resize(size_type seq_len) {
-        left_.resize(seq_len + 1);
-        right_.resize(seq_len + 1);
+        left_adjlists_.resize(seq_len + 1);
+        right_adjlists_.resize(seq_len + 1);
     }
 
     double
@@ -75,36 +106,18 @@ namespace LocARNA {
         return min_prob_;
     }
 
-    /*
-      possible simplification:
-      store in LeftAdjEntry and RightAdjEntry only the index
-      consequence: sorting has to be rewritten (cannot easily use stl's sort
-      anymore)
-    */
-
-    /*! compare right ends of arcs (for sorting) */
-    bool
-    operator<(const BasePairs::LeftAdjEntry &e1,
-              const BasePairs::LeftAdjEntry &e2) {
-        return e1.right() < e2.right();
-    }
-
-    /*! compare left ends of arcs (for sorting) */
-    bool
-    operator<(const BasePairs::RightAdjEntry &e1,
-              const BasePairs::RightAdjEntry &e2) {
-        return e1.left() > e2.left();
-    }
-
     //! sort all adjacency lists in left_ and right_
     void
-    BasePairs::sortAdjLists() {
-        for (size_type i = 0; i < left_.size(); ++i) {
-            sort(left_[i].begin(), left_[i].end());
+    BasePairs::sort_adj_lists() {
+        for (auto &x : left_adjlists_) {
+            sort(x.begin(), x.end(), [](const auto &e1, const auto &e2) {
+                return e1.right() < e2.right();
+            });
         }
-
-        for (size_type i = 0; i < right_.size(); ++i) {
-            sort(right_[i].begin(), right_[i].end());
+        for (auto &x: right_adjlists_) {
+            sort(x.begin(), x.end(), [](const auto &e1, const auto &e2) {
+                return e1.left() > e2.left();
+            });
         }
     }
 
@@ -119,8 +132,8 @@ namespace LocARNA {
         // std::cout <<"Left and right of arc registered "
         // <<LeftAdjEntry(arc_vec_[idx])<<"
         // "<<RightAdjEntry(arc_vec_[idx])<<std::endl;
-        left_[i].push_back(LeftAdjEntry(arc_vec_[idx]));
-        right_[j].push_back(RightAdjEntry(arc_vec_[idx]));
+        left_adjlists_[i].push_back(LeftAdjEntry(arc_vec_[idx]));
+        right_adjlists_[j].push_back(RightAdjEntry(arc_vec_[idx]));
 
         // std::cout<<"left and right  built: for locations "<<i<<"  and "<<j<<"
         // size of left "<<left_[i].size()<<"  of
@@ -186,7 +199,9 @@ namespace LocARNA {
                 }
             }
         }
-        sortAdjLists();
+
+        sort_adj_lists();
+        add_adj_list_sentinels();
     }
 
     BasePairs::size_type
@@ -194,10 +209,14 @@ namespace LocARNA {
         return len_;
     }
 
-    BasePairs::size_type
-    BasePairs::get_length_from_rna_data() const {
-        assert(rna_data_ != NULL);
-        return rna_data_->length();
+    void
+    BasePairs::add_adj_list_sentinels() {
+        for (auto &x : left_adjlists_) {
+            x.push_back(LeftAdjEntry(Arc(0,len_+1,len_+1)));
+        }
+        for (auto &x : right_adjlists_) {
+            x.push_back(RightAdjEntry(Arc(0,0,0)));
+        }
     }
 
     /**

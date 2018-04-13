@@ -7,6 +7,7 @@
 
 #include "aux.hh"
 #include <iosfwd>
+#include <unordered_map>
 #include <string>
 
 namespace LocARNA {
@@ -26,7 +27,7 @@ namespace LocARNA {
         };
 
         //! type of map to store named timers
-        typedef unordered_map<std::string, timer_t>::type map_t;
+        typedef std::unordered_map<std::string, timer_t> map_t;
 
         map_t timers;
 

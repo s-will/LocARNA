@@ -5,18 +5,20 @@
 #include <config.h>
 #endif
 
-#include <iostream>
-#include <sstream>
-#include <list>
 #include <algorithm>
-#include <limits>
+#include <iostream>
 #include <iterator>
-#include "trace_controller.hh"
-#include "sparsification_mapper.hh"
-#include "tuples.hh"
-#include "scoring.hh"
-#include "ext_rna_data.hh"
+#include <list>
+#include <limits>
+#include <sstream>
+#include <unordered_map>
+
 #include "aux.hh"
+#include "ext_rna_data.hh"
+#include "scoring.hh"
+#include "sparsification_mapper.hh"
+#include "trace_controller.hh"
+#include "tuples.hh"
 
 extern "C" {
 #include <ViennaRNA/fold_vars.h>
@@ -269,7 +271,7 @@ namespace LocARNA {
             patListITER; //!< iterator for the list of PatternPairs
         typedef patListTYPE::const_iterator
             patListCITER; //!< const iterator for the list of PatternPairs
-        typedef unordered_map<std::string, SelfValuePTR>::type
+        typedef std::unordered_map<std::string, SelfValuePTR>
             PatternIdMapTYPE; //!< map type patternId -> pointer to PatternPair
 
         //! Contructor
@@ -1342,9 +1344,8 @@ namespace LocARNA {
 
         //! a map that stores for pairs of arc indices the tolerance
         //! that is used for backtracing and the found EPMs
-        typedef unordered_map<PairArcIdx,
-                              el_map_am_to_do_t,
-                              pair_of_size_t_hash>::type map_am_to_do_t;
+        typedef std::unordered_map<PairArcIdx, el_map_am_to_do_t>
+            map_am_to_do_t;
 
     private:
         //! a quintuple for storing the state, max tolerance left, current

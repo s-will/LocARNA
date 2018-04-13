@@ -1,21 +1,21 @@
-CLUSTAL FORMAT for T-COFFEE Version_11.00.8cbe486 [http://www.tcoffee.org] [MODE:  ], CPU=0.00 sec, SCORE=879, Nseq=7, Len=51 
+CLUSTAL FORMAT for T-COFFEE Version_11.00.8cbe486 [http://www.tcoffee.org] [MODE:  ], CPU=0.00 sec, SCORE=883, Nseq=7, Len=51 
 
-S1              c---cucgaggggaaccc------------ga-aagggacccgagag--g
-S2              cgc-cacccugcgaacccaauauaaaauaauacaagggagcagguggcg-
-S3              agc-ucacaaccgaaccc------------au-uugggagguugugagcu
-S4              gg--caccacucgaaggc------------u--aagccaaaguggug-c-
-S5              gu--ucucucgggaaccc------------gucaagggaccgagaga-ac
-S6              uuacgaugugccgaaccc------------uuuaagggaggcacaucgaa
-S7              aug-uuggaggggaaccc------------gu-aagggacccuccaagau
+S1              c---cucgaggggaacccga-------------aagggacccgagag---
+S2              cgc-cacccugcgaacccaauauaaaauaauacaagggagcag-guggc-
+S3              agc-ucacaaccgaacccau-------------uugggagguugugagc-
+S4              ggc--accacucgaaggc-u-------------aagccaaaguggug-c-
+S5              guu--cucucgggaacccgu------------caagggaccgagaga-a-
+S6              uuacgaugugccgaacccuu------------uaagggaggcacaucgaa
+S7              aug-uuggaggggaacccgu-------------aagggacccuccaaga-
                             ***  *                 *  *           
 
-S1              -
-S2              -
-S3              -
+S1              g
+S2              g
+S3              u
 S4              u
-S5              -
+S5              c
 S6              a
-S7              -
+S7              u
                  
 
 

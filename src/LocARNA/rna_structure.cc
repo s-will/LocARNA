@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 #include <iostream>
+#include <unordered_set>
 
 #include "aux.hh"
 #include "rna_structure.hh"
@@ -86,25 +87,25 @@ namespace LocARNA {
 
             std::stack<size_t> st;
 
-            for (bps_t::const_iterator it = begin(); end() != it; ++it) {
+            for (const auto &bp : bps_) {
                 // ignore base pairs, if one or both ends in structure string s
                 // are taken
-                if (s[it->first - 1] != unpaired_symbol_ ||
-                    s[it->second - 1] != unpaired_symbol_) {
+                if (s[bp.first - 1] != unpaired_symbol_ ||
+                    s[bp.second - 1] != unpaired_symbol_) {
                     continue;
                 }
 
-                while (!st.empty() && it->first > st.top()) {
+                while (!st.empty() && bp.first > st.top()) {
                     st.pop();
                 }
 
-                if (st.empty() || it->second < st.top()) {
-                    s[it->first - 1] = open_symbols_[pk_level];
-                    s[it->second - 1] = close_symbols_[pk_level];
+                if (st.empty() || bp.second < st.top()) {
+                    s[bp.first - 1] = open_symbols_[pk_level];
+                    s[bp.second - 1] = close_symbols_[pk_level];
 
                     num_selected++;
 
-                    st.push(it->second);
+                    st.push(bp.second);
                 }
             }
 
@@ -127,17 +128,17 @@ namespace LocARNA {
         // note how the code checks for no crossing base pairs
         // including "no incident base pair ends"
         //
-        for (bps_t::const_iterator it = bps.begin(); bps.end() != it; ++it) {
-            while (!st.empty() && it->first > st.top()) {
+        for (const auto &bp : bps) {
+            while (!st.empty() && bp.first > st.top()) {
                 st.pop();
             }
-            if (!st.empty() && it->first == st.top())
+            if (!st.empty() && bp.first == st.top())
                 return false;
 
-            if (!st.empty() && it->second >= st.top()) {
+            if (!st.empty() && bp.second >= st.top()) {
                 return false;
             }
-            st.push(it->second);
+            st.push(bp.second);
         }
 
         return true;
@@ -145,12 +146,12 @@ namespace LocARNA {
 
     bool
     RnaStructure::crossing(const bps_t &bps) {
-        unordered_set<size_t>::type seen_position;
+        std::unordered_set<size_t> seen_position;
 
-        for (bps_t::const_iterator it = bps.begin(); bps.end() != it; ++it) {
-            if (!seen_position.insert(it->first).second)
+        for (const auto &bp : bps) {
+            if (!seen_position.insert(bp.first).second)
                 return false;
-            if (!seen_position.insert(it->second).second)
+            if (!seen_position.insert(bp.second).second)
                 return false;
         }
 

@@ -5,6 +5,7 @@
 #include "sequence_annotation.hh"
 #include "alignment.hh"
 #include "aux.hh"
+#include "zip.hh"
 
 namespace LocARNA {
 
@@ -23,12 +24,9 @@ namespace LocARNA {
         if (!annotationA.empty() && !annotationB.empty()) {
             annotation_.resize(annotationA.name_length());
 
-            // assert that edge end vectors have the same size
-            assert(edges.first.size() == edges.second.size());
-
-            for (size_type i = 0; i < edges.size(); i++) {
-                const EdgeEnd &eA = edges.first[i];
-                const EdgeEnd &eB = edges.second[i];
+            for (auto &e : edges ) {
+                auto &eA = e.first;
+                auto &eB = e.second;
 
                 name_t name;
 
@@ -66,21 +64,19 @@ namespace LocARNA {
 
     bool
     SequenceAnnotation::is_neutral(const name_t &name) {
-        for (name_t::const_iterator it = name.begin(); name.end() != it; ++it) {
-            if (!is_neutral_char(*it))
-                return false;
-        }
-        return true;
+        return std::all_of(name.begin(),name.end(),
+                           is_neutral_char);
     }
 
     bool
     SequenceAnnotation::is_neutral_pos(size_t i) const {
         assert(1 <= i && i <= length());
-        for (size_t k = 0; k < annotation_.size(); k++) {
-            if (!is_neutral_char(annotation_[k][i - 1]))
-                return false;
-        }
-        return true;
+
+        return std::all_of(annotation_.begin(),
+                           annotation_.end(),
+                           [&i] (std::string s) {
+                               return is_neutral_char(s[i-1]);
+                           });
     }
 
     std::string
@@ -99,8 +95,8 @@ namespace LocARNA {
     void
     SequenceAnnotation::push_back_name(const name_t &name) {
         assert(name.size() == annotation_.size());
-        for (size_t k = 0; k < annotation_.size(); k++) {
-            annotation_[k] += name[k];
+        for (const auto &x : zip(annotation_, name)) {
+            x.first += x.second;
         }
     }
 
@@ -122,34 +118,28 @@ namespace LocARNA {
         return false;
     }
 
-    bool
-    SequenceAnnotation::clashing_names(const AlignmentEdges &edges,
-                                       const SequenceAnnotation &annotationA,
-                                       const SequenceAnnotation &annotationB) {
-        // assert that names are of equal size
-        assert(annotationA.name_length() == annotationB.name_length());
+    // bool
+    // SequenceAnnotation::clashing_names(const AlignmentEdges &edges,
+    //                                    const SequenceAnnotation &annotationA,
+    //                                    const SequenceAnnotation &annotationB) {
+    //     // assert that names are of equal size
+    //     assert(annotationA.name_length() == annotationB.name_length());
 
-        if (annotationA.empty() || annotationB.empty())
-            return false;
+    //     if (annotationA.empty() || annotationB.empty())
+    //         return false;
 
-        // assert that edge end vectors have the same size
-        assert(edges.first.size() == edges.second.size());
+    //     auto clashs = [&annotationA,
+    //                    &annotationB](const AlignmentEdges::edge_t &e) {
+    //         const EdgeEnd &eA = e.first;
+    //         const EdgeEnd &eB = e.second;
+    //         const std::string &nameA = annotationA.name(eA);
+    //         const std::string &nameB = annotationB.name(eB);
 
-        for (size_type i = 0; i < edges.size(); i++) {
-            const EdgeEnd &eA = edges.first[i];
-            const EdgeEnd &eB = edges.second[i];
+    //         return !(eA.is_gap() || eB.is_gap()) &&
+    //             !(is_neutral(nameA) || is_neutral(nameB)) && (nameA != nameB);
+    //     };
 
-            if (!eA.is_gap() && !eB.is_gap()) {
-                const std::string &nameA = annotationA.name(eA);
-                const std::string &nameB = annotationB.name(eB);
-                if (!is_neutral(nameA) && !is_neutral(nameB)) {
-                    if (nameA != nameB)
-                        return true;
-                }
-            }
-        }
-
-        return false;
-    }
+    //     return std::any_of(edges.begin(), edges.end(), clashs);
+    // }
 
 } // end namespace LocARNA

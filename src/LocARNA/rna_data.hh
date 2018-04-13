@@ -194,9 +194,9 @@ namespace LocARNA {
          *
          * @note the plist has to be deleted by the caller
          *
-         * @return pointer to plist
+         * @return unique pointer to plist
          */
-        vrna_plist_t *
+        std::unique_ptr<vrna_plist_t []>
         plist() const;
 
         /**
@@ -310,25 +310,11 @@ namespace LocARNA {
          */
         explicit RnaData(double p_bpcut, size_t max_bp_span);
 
-        //! type of constant iterator over arcs with probability above cutoff
-        typedef arc_prob_matrix_t::const_iterator arc_probs_const_iterator;
-
         /**
-         * @brief begin of arcs with probability above cutoff
-         * Supports iteration over arcs
-         * @returns constant iterator
+         * @brief arcs with probability above cutoff
          */
-        arc_probs_const_iterator
-        arc_probs_begin() const;
-
-        /**
-         * @brief begin of arcs with probability above cutoff
-         * Supports iteration over arcs
-         * @returns constant iterator
-         */
-        arc_probs_const_iterator
-        arc_probs_end() const;
-
+        const arc_prob_matrix_t &
+        arc_probs() const;
 
         /**
          * @brief initialize from fixed structure
