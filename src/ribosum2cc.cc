@@ -9,7 +9,7 @@ using namespace std;
 using namespace LocARNA;
 
 void
-help(std::string prgname) {
+help(const std::string &prgname) {
     std::cout << "ribosum2cc - ribosum to c++-class compiler" << std::endl
               << std::endl
               << "Usage: " << prgname << " ribosum-name ribosum-file\n"

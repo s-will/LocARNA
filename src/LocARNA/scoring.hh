@@ -5,7 +5,7 @@
 #include <config.h>
 #endif
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 
 #include "aux.hh"
@@ -14,6 +14,7 @@
 #include "matrix.hh"
 #include "sequence.hh"
 #include "arc_matches.hh"
+#include "named_arguments.hh"
 
 namespace LocARNA {
 
@@ -55,30 +56,30 @@ namespace LocARNA {
          * of base match/mismatch scoring.
          * Can be replaced by RIBOSUM scores.
          */
-        const score_t basematch;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(match, score_t, 50);
 
         //! constant cost of a base mismatch
-        const score_t basemismatch;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mismatch, score_t, 0);
 
         //! cost per indel (for linear or affine gap cost).
-        const score_t indel;
-
-        //! cost per indel for loops (for linear or affine gap cost).
-        const score_t indel_loop;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(indel, score_t, -150);
 
         //! cost per gap (for affine gap-cost). Use affine gap cost if non-zero.
-        const score_t indel_opening;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(indel_opening, score_t, -750);
+
+        //! cost per indel for loops (for linear or affine gap cost).
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(indel_loop, score_t, -200);
 
         //! cost per gap for loops(for affine gap-cost). Use affine gap cost if
         //! non-zero.
-        const score_t indel_opening_loop;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(indel_opening_loop, score_t, -800);
 
         /**
          * the ribosum matrix, if non-null (and ribofit==null) it is used
          * for base match/mismatch instead of constant values
          * and as contribution for arc-matchs (tau_factor)
          */
-        const RibosumFreq *ribosum;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(ribosum, const RibosumFreq *, nullptr);
 
         /**
          * the ribofit matrix, if non-null it is used
@@ -86,49 +87,49 @@ namespace LocARNA {
          * and as contribution for arc-matchs (tau_factor).
          * Overrides ribosum
          */
-        const Ribofit *ribofit;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(ribofit, const Ribofit *, nullptr);
 
         //! penalty/cost for unpaired bases matched/mismatched/gapped
-        const score_t unpaired_penalty;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(unpaired_penalty, score_t, 0);
 
         /**
          * Factor for structure contribution in the classic score.
          * Maximal contribution of 1/2 arc match
          */
-        const score_t struct_weight;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(struct_weight, score_t, 200);
 
         /**
          * Factor for the contribution of sequence score or
          * ribosum score to arc matchs
          */
-        const score_t tau_factor;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(tau_factor, score_t, 50);
 
         //! cost of one exclusion.
-        const score_t exclusion;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(exclusion, score_t, 0);
 
-        const double exp_probA;
+        DEFINE_NAMED_ARG_FEATURE(exp_probA, double);
 
-        const double exp_probB;
+        DEFINE_NAMED_ARG_FEATURE(exp_probB, double);
 
-        const double temperature_alipf;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(temperature_alipf, double, 150);
 
         //! turn on/off stacking terms
-        const bool stacking;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(stacking, bool, false);
 
         //! turn on/off new stacking terms
-        const bool new_stacking;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(new_stacking, bool, false);
 
         //! turn on/off mea scoring
-        const bool mea_scoring;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mea_scoring, bool, false);
 
         //! weight for mea contribution "unstructured"
-        const score_t alpha_factor;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mea_alpha, score_t, 0);
 
         //! weight for mea contribution "structure"
-        const score_t beta_factor;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mea_beta, score_t, 200);
 
         //! weight for mea contribution "consensus"
-        const score_t gamma_factor;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(mea_gamma, score_t, 100);
 
         /**
          * resolution of the mea score.
@@ -137,97 +138,90 @@ namespace LocARNA {
          * there must be some factor to scale the probabilities
          * in order to get scores.
          */
-        const score_t probability_scale;
+        DEFINE_NAMED_ARG_DEFAULT_FEATURE(probability_scale, score_t, 10000);
+
+        using valid_args = std::tuple<
+            match,
+            mismatch,
+            indel,
+            indel_loop,
+            indel_opening,
+            indel_opening_loop,
+            ribosum,
+            ribofit,
+            unpaired_penalty,
+            struct_weight,
+            tau_factor,
+            exclusion,
+            exp_probA,
+            exp_probB,
+            temperature_alipf,
+            stacking,
+            new_stacking,
+            mea_scoring,
+            mea_alpha,
+            mea_beta,
+            mea_gamma,
+            probability_scale
+            >;
 
         /*
           The mea score is composed in the following way:
 
-          params->probability_scale *
+          params->probability_scale_ *
           (
           sum_basematchs (i,j)
           P(i~j)
-          + alpha_factor/100 * (P(i unstructured) + P(j unstructured))
+          + mea_alpha/100 * (P(i unstructured) + P(j unstructured))
           +
           sum_arcmatchs (a,b)
-          beta_factor/100 * (P(a)+P(b)) * P(al~bl) * P(ar~br) *
+          mea_beta/100 * (P(a)+P(b)) * P(al~bl) * P(ar~br) *
           ribosum_arcmatch(a,b)
           )
         */
 
     public:
         /**
-         * Construct with all scoring parameters
-         *
-         * @param basematch_
-         * @param basemismatch_
-         * @param indel_
-         * @param indel_loop_
-         * @param indel_opening_
-         * @param indel_opening_loop_
-         * @param ribosum_
-         * @param ribofit_
-         * @param unpaired_penalty_
-         * @param struct_weight_
-         * @param tau_factor_
-         * @param exclusion_
-         * @param exp_probA_
-         * @param exp_probB_
-         * @param temp_
-         * @param stacking_
-         * @param new_stacking_
-         * @param mea_scoring_
-         * @param alpha_factor_
-         * @param beta_factor_
-         * @param gamma_factor_
-         * @param probability_scale_
+         * Construct with scoring parameters
          *
          * @note Store only pointers to objects passed by pointer; the objects
          * must be kept alive by the caller
          */
-        ScoringParams(score_t basematch_,
-                      score_t basemismatch_,
-                      score_t indel_,
-                      score_t indel_loop_,
-                      score_t indel_opening_,
-                      score_t indel_opening_loop_,
-                      RibosumFreq *ribosum_,
-                      Ribofit *ribofit_,
-                      score_t unpaired_penalty_,
-                      score_t struct_weight_,
-                      score_t tau_factor_,
-                      score_t exclusion_,
-                      double exp_probA_,
-                      double exp_probB_,
-                      double temp_,
-                      bool stacking_,
-                      bool new_stacking_,
-                      bool mea_scoring_,
-                      score_t alpha_factor_,
-                      score_t beta_factor_,
-                      score_t gamma_factor_,
-                      score_t probability_scale_)
-            : basematch(basematch_),
-              basemismatch(basemismatch_),
-              indel(indel_),
-              indel_loop(indel_loop_),
-              indel_opening(indel_opening_),
-              indel_opening_loop(indel_opening_loop_),
-              ribosum(ribosum_),
-              ribofit(ribofit_),
-              unpaired_penalty(unpaired_penalty_),
-              struct_weight(struct_weight_),
-              tau_factor(tau_factor_),
-              exclusion(exclusion_),
-              exp_probA(exp_probA_),
-              exp_probB(exp_probB_),
-              temperature_alipf(temp_),
-              stacking(stacking_),
-              new_stacking(new_stacking_),
-              mea_scoring(mea_scoring_),
-              alpha_factor(alpha_factor_),
-              beta_factor(beta_factor_),
-              gamma_factor(gamma_factor_),
-              probability_scale(probability_scale_) {}
+        template <typename... Args>
+        ScoringParams(Args... argpack) {
+            static_assert( type_subset_of<
+                           std::tuple<Args...>,
+                           valid_args>::value,
+                           "Invalid type in named arguments pack." );
+
+            auto args = std::make_tuple(argpack...);
+
+            //mandatory
+            exp_probA_ = get_named_arg<exp_probA>(args);
+            exp_probB_ = get_named_arg<exp_probB>(args);
+
+            //optional
+            match_ = get_named_arg_opt<match>(args);
+            mismatch_ = get_named_arg_opt<mismatch>(args);
+            indel_ = get_named_arg_opt<indel>(args);
+            indel_loop_ = get_named_arg_opt<indel_loop>(args);
+            indel_opening_ = get_named_arg_opt<indel_opening>(args);
+            indel_opening_loop_ = get_named_arg_opt<indel_opening_loop>(args);
+            ribosum_ = get_named_arg_opt<ribosum>(args);
+            ribofit_ = get_named_arg_opt<ribofit>(args);
+            unpaired_penalty_ = get_named_arg_opt<unpaired_penalty>(args);
+            struct_weight_ = get_named_arg_opt<struct_weight>(args);
+            tau_factor_ = get_named_arg_opt<tau_factor>(args);
+            exclusion_ = get_named_arg_opt<exclusion>(args);
+            temperature_alipf_ = get_named_arg_opt<temperature_alipf>(args);
+            stacking_ = get_named_arg_opt<stacking>(args);
+            new_stacking_ = get_named_arg_opt<new_stacking>(args);
+            mea_scoring_ = get_named_arg_opt<mea_scoring>(args);
+            mea_alpha_ = get_named_arg_opt<mea_alpha>(args);
+            mea_beta_ = get_named_arg_opt<mea_beta>(args);
+            mea_gamma_ = get_named_arg_opt<mea_gamma>(args);
+            probability_scale_ = get_named_arg_opt<probability_scale>(args);
+        }
     };
 
     /**
@@ -309,6 +303,8 @@ namespace LocARNA {
          * @param match_probs pointer to base match probabilities (can be nullptr for
          * non-mea scores)
          * @param params a collection of parameters for scoring
+         *
+         * @note caller must keep passed objects alive
          */
         Scoring(const Sequence &seqA,
                 const Sequence &seqB,
@@ -319,14 +315,17 @@ namespace LocARNA {
                 const ScoringParams &params);
 
         /**
-         * modify scoring by a parameter lambda. Used in the
-         * computational of normalized local alignment by fractional
+         * @brief modify scoring by a parameter lambda.
+         *
+         * Used in the computational of normalized local alignment by fractional
          * programming in the form of the Dinkelbach algorithm.  The
          * modification is destructive.  modify_by_parameter(0) results
          * in unmodified scoring. Repeated modifications are valid.  The
          * Outcome is *undefined* when the Scoring object is used to
          * obtain exponentiated scores (methods exp_...) as in partition
-         * function alignment.  @param lambda the parameter
+         * function alignment.
+         *
+         * @param lambda the parameter
          */
         void
         modify_by_parameter(score_t lambda);
@@ -610,24 +609,24 @@ namespace LocARNA {
         //! cost of an exclusion
         score_t
         exclusion() const {
-            return params->exclusion;
+            return params->exclusion_;
         }
 
         //! cost to begin a new indel
         score_t
         indel_opening() const {
-            return params->indel_opening;
+            return params->indel_opening_;
         }
 
         //! multiply an score by the ratio of indel_loop/indel
         score_t
         loop_indel_score(const score_t score) const {
-            return round2score(score * params->indel_loop / params->indel);
+            return round2score(score * params->indel_loop_ / params->indel_);
         }
         //! cost to begin a new indel
         score_t
         indel_opening_loop() const {
-            return params->indel_opening_loop;
+            return params->indel_opening_loop_;
         }
 
         //
@@ -652,7 +651,7 @@ namespace LocARNA {
          */
         bool
         stacking() const {
-            return params->stacking || params->new_stacking;
+            return params->stacking_ || params->new_stacking_;
         }
 
         /**
@@ -702,7 +701,7 @@ namespace LocARNA {
             assert(!arc_matches_->explicit_scores());
         }
 
-        if (!params->mea_scoring) {
+        if (!params->mea_scoring_) {
             return
                 // base pair weights
                 loop_indel_score(
@@ -716,7 +715,7 @@ namespace LocARNA {
         } else {
             std::cerr << "ERROR sparse mea_scoring is not supported!"
                       << std::endl; // TODO: Supporting mea_scoring for arcgap
-            assert(!params->mea_scoring);
+            assert(!params->mea_scoring_);
             return 0;
         }
     }
@@ -857,7 +856,7 @@ namespace LocARNA {
 
         pf_score_t
         boltzmann_weight(score_t s) const {
-            return exp(s / (pf_score_t)params->temperature_alipf);
+            return std::exp(s / (pf_score_t)params->temperature_alipf_);
         }
 
 
@@ -890,9 +889,9 @@ namespace LocARNA {
         : Scoring(seqA,seqB,rna_dataA,rna_dataB,
                   arc_matches,match_probs,params) {
 
-        exp_indel_opening_score = boltzmann_weight(params.indel_opening);
+        exp_indel_opening_score = boltzmann_weight(params.indel_opening_);
         exp_indel_opening_loop_score =
-            boltzmann_weight(params.indel_opening_loop);
+            boltzmann_weight(params.indel_opening_loop_);
         precompute_exp_sigma();
         precompute_exp_gapcost();
     }

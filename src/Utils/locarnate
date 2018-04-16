@@ -159,7 +159,7 @@ if($options{pairwise_aligner} eq "locarna" && $options{scaling_factor} ne -1){
 ## require that executable programm exists in search path
 sub require_prog_exists_path {
     my $prg=shift;
-    my $prgpath = `which $prg`;
+    my $prgpath = readpipe("which $prg");
     if ( $prgpath eq ""  ) {
         print STDERR "ERROR: Programm $prg cannot be found in search path!\n";
         print STDERR "    Please install and/or set path.\n";
@@ -414,7 +414,7 @@ sub check_locarna_params {
 
     my $call = $options->{Locarna} . " $parameters 2>&1";
 
-    my @output = `$call`;
+    my @output = readpipe("$call");
 
     if ($output[0] =~ /ERROR --- Mandatory option and\/or argument missing: <Input 1>/) {
         return "";
@@ -439,7 +439,7 @@ sub check_tcoffee_params {
 
     my $call = $options->{TCoffee} . " $parameters 2>&1";
 
-    my @output = `$call`;
+    my @output = readpipe("$call");
 
     foreach my $line (@output) {
         if( $line =~ /needs a value/ or $line =~ /IS NOT A PARAMETER/) {
@@ -451,13 +451,13 @@ sub check_tcoffee_params {
 }
 
 sub check_pp_parameters {
-    # Runs locarna_rnafol_pp without input file, but with all given parameters
+    # Runs locarna_rnafold_pp without input file, but with all given parameters
     # and checks if it complains
     my ($options, $parameters) = @_;
 
     my $call = $bindir . "/" .$options->{"BP-Probability-Calculator"} . " $parameters 2>&1";
 
-    my @output = `$call hopefully_this_file_does_not_exist.pdf.txt`;
+    my @output = readpipe("$call hopefully_this_file_does_not_exist.pdf.txt");
 
     my $error =  $output[0];
 

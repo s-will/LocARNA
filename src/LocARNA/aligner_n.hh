@@ -11,7 +11,7 @@
 #include "arc_matches.hh"
 #include "alignment.hh"
 
-#include "params.hh"
+#include "aligner_params.hh"
 #include "scoring.hh"
 
 #include "matrix.hh"
@@ -48,9 +48,8 @@ namespace LocARNA {
         //! type of matrix M
         typedef ScoreMatrix M_matrix_t;
 
-    private:
     protected:
-        const AlignerNParams *params; //!< the parameter for the alignment
+        const std::unique_ptr<AlignerNParams> params; //!< the parameter for the alignment
 
         const Scoring *scoring; //!< the scores
         Scoring *mod_scoring;   //!< used in normalized scoring, when we need to
@@ -708,16 +707,7 @@ namespace LocARNA {
          * @note ap is copied to allow reference to a temporary
          * @note for implicit type cast
          */
-        AlignerN(const AlignerParams &ap);
-
-        /**
-         * @brief create with named parameters
-         * @return parameter object
-         */
-        static AlignerNParams
-        create() {
-            return AlignerNParams();
-        }
+        AlignerN(const AlignerNParams &ap);
 
         //! destructor
         ~AlignerN();

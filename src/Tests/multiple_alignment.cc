@@ -39,8 +39,17 @@ TEST_CASE("a multiple alignment can be created from file (clustalw)") {
         REQUIRE(ma->contains("fruA"));
     }
 
-    SECTION("a sequence object can be created from the multiple alignment") {
-        Sequence seq = (*ma).as_sequence();
+    SECTION("it can be copied and looks still proper") {
+        MultipleAlignment ma2(*ma);
+        REQUIRE(ma2.is_proper());
+        REQUIRE(!ma2.empty());
+        REQUIRE(ma2.num_of_rows() == 6);
+        REQUIRE(ma2.contains("fdhA"));
+        REQUIRE(ma2.contains("fruA"));
+    }
+
+    SECTION("the multiple alignment can be viewed as sequence") {
+        Sequence &seq = Sequence::view(*ma);
 
         SECTION(
             "a further alignment string can be appended, after deleting the "
@@ -77,8 +86,8 @@ TEST_CASE("multiple alignment can be constructed from file (fasta)") {
     REQUIRE(ma->is_proper());
     REQUIRE(!ma->empty());
 
-    SECTION("the multiple alignment can be converted to a sequence") {
-        Sequence seq = (*ma).as_sequence();
+    SECTION("the multiple alignment can be copied into a sequence") {
+        Sequence seq = Sequence::view(*ma);
 
         SECTION(
             "the sequence is proper and has 6 entries, after deleting the "

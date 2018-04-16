@@ -1,5 +1,85 @@
 ============================================================
+=== 2018
+
+2.0.0RC2 (2018-04-16)
+	Bugfixes:
+	---------
+	  Fix free endgaps bug
+	     (negative alignment scores were handled incorrectly)
+	  Fix empty anchor constraint
+	     (correctly recognize/report when anchors are specified)
+
+	Features / Improvements:
+	------------------------
+          [Both improvements were introduced to handle large instances]
+	  Improve alifold consensus computation
+	    - limit alifold computation to alignment length <=2000
+	    - handle the cases where consensus cannot be computed
+	    - warn if consensus is not computed / fail if explicitely required (pp)
+	    - handle recomputation of consensus if file/screen output differ (local out)
+	  Support sequence envelope computation with extended precision
+	    - set the default to extended precision
+	    - recognize failing partition function calculation
+	    -   (for sequence trace and match probabilities)
+	    - extend LocARNA's quadmath.hh header and simplify its use
+	    - use templates for partition function type
+	    - support extended (long double) and quad precision (float128)
+
+============================================================
 === 2017
+
+2.0.0RC1 (2017-12-13)
+	Features / functionality:
+	-------------------------
+	  Sequence envelopes for locarna, locarna_p and sparse;
+	    - Compatible to anchors, local alignment, and free endgaps
+	    - New parameter: --min-trace-probability (on by default)
+	    - Refactor class MatchProbs -> EdgeProbs and sub-classes;
+	      improve interface and docu
+	    - use sequence envelopes by default
+
+	  Change default parameters for scoring (new gap cost and tau factor)
+
+	  Support higher precision floating point arithmetic for locarna-p
+	    pf calculation (long double and quad math) selectable dynamically
+	    without recompiling
+	    support extended (long double) and quad precision (quadmath)
+
+	  Support caching of pp files (--dp-cache)
+
+	  Support in-package benchmarking (measuring sps, sci, and mcc)
+
+	Security:
+	---------
+	  Avoid shell evaluation in mlocarna system calls
+
+	Optimizations and code improvements:
+	------------------------------------
+	  Modernize and restructure code:
+	    Transition to C++14 standard
+	      -- ; use of unique_ptr, auto types,
+	           range loops, template meta programmin using type_traits, ...
+	    Systematic clean up of the library classes
+	    Introduce named arguments; zip and enumerate iterators
+	    Improved organization of command line help; reduce redundancies
+	    Improve handling of format and annotation types in MultipleAlignment
+
+	  Optimize inner loop: add sentinels to left and right adjacency lists
+	  Reduce memory footprint of locarna
+
+	  Anchor constraints restrict trace controller
+
+	  Refactor computation of input pp files [mlocarna]
+	  Use locarna_rnafold_pp for constrained folding [mlocarna]
+
+	  Update travis CI test
+
+	Bugfixes:
+	---------
+	    Fix specifying anchor constraints via bed file [mlocarna]
+	      allow arbitrary order of entries in bed input
+	    Fix ribofit code (make experimental ribofit scoring usable)
+	    Fix confusion matrix: count_common_bps()
 
 1.9.2 (2017-07-04)
 	Improve consensus dotplot computation (avoid accumulation of low
