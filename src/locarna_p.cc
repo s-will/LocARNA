@@ -15,14 +15,12 @@
 #include <sstream>
 #include <vector>
 
-#include <math.h>
-
 #include "LocARNA/sequence.hh"
 #include "LocARNA/basepairs.hh"
 #include "LocARNA/aligner_p.hh"
 #include "LocARNA/rna_data.hh"
 #include "LocARNA/arc_matches.hh"
-#include "LocARNA/match_probs.hh"
+#include "LocARNA/edge_probs.hh"
 #include "LocARNA/ribosum.hh"
 #include "LocARNA/ribofit.hh"
 #include "LocARNA/anchor_constraints.hh"
@@ -44,10 +42,6 @@ const std::string VERSION_STRING = (std::string)PACKAGE_STRING;
 #include "LocARNA/options.hh"
 
 using namespace LocARNA;
-
-using standard_pf_score_t = double;
-using extended_pf_score_t = long double;
-
 
 // ------------------------------------------------------------
 // Parameter
@@ -85,34 +79,7 @@ struct command_line_parameters
      */
     double pf_scale;
 
-    /** @brief Extended precision for partition function values
-     *
-     * If true, use an extended precision type for partition function values (pf_score_t).
-     */
-    bool extended_pf;
-
     int temperature_alipf; //!< temperature for alignment partition functions
-
-    command_line_parameters() : MainHelper::std_command_line_parameters() {
-        help_text["min_am_prob"] =
-            "Minimal arc match probability. Write probabilities for only the "
-            "arc matchs of at least this probability.";
-        help_text["min_bm_prob"] =
-            "Minimal base match probability. Write probabilities for only the "
-            "base matchs of at least this probability.";
-        help_text["pf_scale"] =
-            "Factor for scaling the partition functions. Use in order to avoid "
-            "overflow.";
-        help_text["extended_pf"] =
-            "Use extended precision for partition function values. This roughly "
-            "doubles run-time and space, however enables handling larger "
-            "instances.";
-        help_text["temperature_alipf"] =
-            "Temperature for the /alignment/ partition functions (this "
-            "temperature different from the 'physical' temperature of RNA "
-            "folding!). It controls the probability distributions of computed "
-            "base and arc match probabilities.";
-    }
 };
 
 //! \brief holds command line parameters of locarna
@@ -131,9 +98,9 @@ option_def my_options[] =
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Scoring parameters"},
 
-     {"indel", 'i', 0, O_ARG_INT, &clp.indel, "-350", "score",
+     {"indel", 'i', 0, O_ARG_INT, &clp.indel, "-150", "score",
       clp.help_text["indel"]},
-     {"indel-opening", 0, 0, O_ARG_INT, &clp.indel_opening, "-500", "score",
+     {"indel-opening", 0, 0, O_ARG_INT, &clp.indel_opening, "-750", "score",
       clp.help_text["indel_opening"]},
      {"ribosum-file", 0, 0, O_ARG_STRING, &clp.ribosum_file, "RIBOSUM85_60",
       "f", clp.help_text["ribosum_file"]},
@@ -147,9 +114,9 @@ option_def my_options[] =
       clp.help_text["struct_weight"]},
      {"exp-prob", 'e', &clp.exp_prob_given, O_ARG_DOUBLE, &clp.exp_prob,
       O_NODEFAULT, "prob", clp.help_text["exp_prob"]},
-     {"tau", 't', 0, O_ARG_INT, &clp.tau, "0", "factor", clp.help_text["tau"]},
+     {"tau", 't', 0, O_ARG_INT, &clp.tau, "50", "factor", clp.help_text["tau"]},
 
-     {"temperature-alipf", 0, 0, O_ARG_INT, &clp.temperature_alipf, "150",
+     {"temperature-alipf", 0, 0, O_ARG_INT, &clp.temperature_alipf, "300",
       "int", clp.help_text["temperature_alipf"]},
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Partition function representation"},
@@ -158,6 +125,12 @@ option_def my_options[] =
       clp.help_text["pf_scale"]},
      {"extended-pf", 0, &clp.extended_pf, O_NO_ARG, 0, O_NODEFAULT, "",
       clp.help_text["extended_pf"]},
+     {"quad-pf", 0, &clp.quad_pf, O_NO_ARG, 0, O_NODEFAULT, "",
+      clp.help_text["quad_pf"]
+#if !defined(_GLIBCXX_USE_FLOAT128) || defined(__clang__)
+      +" Quad precision (128 bit, __float128) is not available for your binary. Falls back to extended-pf."
+#endif
+     },
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Output"},
 
@@ -167,9 +140,9 @@ option_def my_options[] =
      {"write-basematch-probs", 0, &clp.write_basematch_probs, O_ARG_STRING,
       &clp.basematch_probs_file, O_NODEFAULT, "file",
       "Write basematch probabilities"},
-     {"min-am-prob", 'a', 0, O_ARG_DOUBLE, &clp.min_am_prob, "0.0005", "amprob",
+     {"min-am-prob", 'a', 0, O_ARG_DOUBLE, &clp.min_am_prob, "0.001", "amprob",
       clp.help_text["min_am_prob"]},
-     {"min-bm-prob", 'b', 0, O_ARG_DOUBLE, &clp.min_bm_prob, "0.0005", "bmprob",
+     {"min-bm-prob", 'b', 0, O_ARG_DOUBLE, &clp.min_bm_prob, "0.001", "bmprob",
       clp.help_text["min_bm_prob"]},
      {"include-am-in-bm", 0, &clp.include_am_in_bm, O_NO_ARG, 0, O_NODEFAULT,
       "", "Include arc match cases in base match probabilities"},
@@ -179,7 +152,7 @@ option_def my_options[] =
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "",
       "Heuristics for speed accuracy trade off"},
 
-     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.0005", "prob",
+     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.001", "prob",
       clp.help_text["min_prob"]},
      {"max-bps-length-ratio", 0, 0, O_ARG_DOUBLE, &clp.max_bps_length_ratio,
       "0.0", "factor", clp.help_text["max_bps_length_ratio"]},
@@ -195,6 +168,8 @@ option_def my_options[] =
       "alignment", clp.help_text["max_diff_pw_alignment"]},
      {"max-diff-relax", 0, &clp.max_diff_relax, O_NO_ARG, 0, O_NODEFAULT, "",
       clp.help_text["max_diff_relax"]},
+     {"min-trace-probability", 0, 0, O_ARG_DOUBLE, &clp.min_trace_probability,
+      "1e-5", "probability", clp.help_text["min_trace_probability"]},
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Computed probabilities"},
 
@@ -231,28 +206,6 @@ option_def my_options[] =
 // MAIN
 
 
-template <typename T>
-void
-check_score_t() {}
-
-template <>
-void
-check_score_t<extended_pf_score_t>() {
-    if (clp.verbose) {
-        std::cout << "Use extended precision for partition functions ("
-                  << sizeof(extended_pf_score_t) << "bytes)."
-                  <<std::endl;
-    }
-    if (!(sizeof(extended_pf_score_t) > sizeof(standard_pf_score_t))) {
-        std::cerr << "WARNING: the extended precision type (long double) "
-                  << "is not larger than the standard precision "
-                  << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
-                  <<std::endl
-                  << "This issue is system and compiler dependent."
-                  <<std::endl;
-    }
-}
-
 /**
  * \brief Helper of main() of executable locarna_p
  *
@@ -260,22 +213,108 @@ check_score_t<extended_pf_score_t>() {
  */
 template <typename pf_score_t>
 int
+run_and_report();
+
+/**
+ * \brief Main function of executable locarna_p
+ *
+ * @param argc argument counter
+ * @param argv argument vector
+ *
+ * @return success
+ */
+int
+main(int argc, char **argv) {
+    stopwatch.start("total");
+
+    clp.no_lonely_pairs =
+        false; //! @todo currently not a command line option of locarna_p
+
+    // ------------------------------------------------------------
+    // Process options
+
+    bool process_success = process_options(argc, argv, my_options);
+
+    if (clp.help) {
+        cout << "locarna_p - pairwise partition function of "
+             << "RNA alignments." << std::endl;
+        cout << std::endl
+             << "Computes base and base pair match probabilities " << std::endl
+             << "from alignment partitition functions." << std::endl
+             << std::endl;
+
+        // cout << VERSION_STRING<<std::endl;
+
+        print_help(argv[0], my_options);
+
+        cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
+             << std::endl
+             << std::endl;
+        return 0;
+    }
+
+    if (clp.quiet) {
+        clp.verbose = false;
+    } // quiet overrides verbose
+
+    if (clp.version || clp.verbose) {
+        cout << "locarna_p (" << VERSION_STRING << ")" << std::endl;
+        if (clp.version)
+            return 0;
+        else
+            cout << std::endl;
+    }
+
+    if (!process_success) {
+        std::cerr << O_error_msg << std::endl;
+        print_usage(argv[0], my_options);
+        return -1;
+    }
+
+    if (clp.stopwatch) {
+        stopwatch.set_print_on_exit(true);
+    }
+
+    if (clp.verbose)
+        print_options(my_options);
+
+    if (clp.ribofit) {
+        clp.use_ribosum = false;
+    }
+
+    if (clp.quad_pf) {
+        return
+            run_and_report<quad_pf_score_t>();
+    } else if (clp.extended_pf) {
+        return
+            run_and_report<extended_pf_score_t>();
+    } else {
+        return
+            run_and_report<standard_pf_score_t>();
+    }
+}
+
+
+template <typename pf_score_t>
+int
 run_and_report() {
     typedef std::vector<int>::size_type size_type;
 
-    check_score_t<pf_score_t>();
+    check_score_t<pf_score_t> check(clp);
 
     // ------------------------------------------------------------
     // Get input data and generate data objects
     //
 
-    PFoldParams pfparams(clp.no_lonely_pairs, clp.stacking, clp.max_bp_span, 2);
+    PFoldParams pfoldparams(PFoldParams::args::noLP(clp.no_lonely_pairs),
+                            PFoldParams::args::stacking(clp.stacking),
+                            PFoldParams::args::max_bp_span(clp.max_bp_span));
 
     std::unique_ptr<RnaData> rna_dataA;
     try {
         rna_dataA =
             std::make_unique<RnaData>(clp.fileA, clp.min_prob,
-                                      clp.max_bps_length_ratio, pfparams);
+                                      clp.max_bps_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileA
                   << std::endl
@@ -287,7 +326,7 @@ run_and_report() {
     try {
         rna_dataB =
             std::make_unique<RnaData>(clp.fileB, clp.min_prob,
-                                      clp.max_bps_length_ratio, pfparams);
+                                      clp.max_bps_length_ratio, pfoldparams);
     } catch (failure &f) {
         std::cerr << "ERROR: failed to read from file " << clp.fileB
                   << std::endl
@@ -300,8 +339,6 @@ run_and_report() {
 
     size_type lenA = seqA.length();
     size_type lenB = seqB.length();
-
-    AnchorConstraints seq_constraints(lenA, "", lenB, "", !clp.relaxed_anchors);
 
     // --------------------
     // handle max_diff restriction
@@ -359,14 +396,24 @@ run_and_report() {
                                                 alistr[0], alistr[1]);
     }
 
-    // if (multiple_ref_alignment) {
-    //  std::cout<<"Reference aligment:"<<std::endl;
-    //  multiple_ref_alignment->print_debug(std::cout);
-    //  std::cout << std::flush;
-    // }
+    // ----------------------------------------
+    // Ribosum matrix
+    //
+    std::unique_ptr<RibosumFreq> ribosum;
+    std::unique_ptr<Ribofit> ribofit;
+    MainHelper::init_ribo_matrix(clp, ribosum, ribofit);
+
+
+    AnchorConstraints seq_constraints(lenA, "", lenB, "", !clp.relaxed_anchors);
 
     TraceController trace_controller(seqA, seqB, multiple_ref_alignment.get(),
                                      clp.max_diff, clp.max_diff_relax);
+
+    trace_controller.restrict_by_anchors(seq_constraints);
+
+    restrict_trace_by_probabilities(clp, rna_dataA.get(), rna_dataB.get(),
+                                    ribosum.get(), ribofit.get(),
+                                    &trace_controller,pf_score_t());
 
     multiple_ref_alignment.release();
 
@@ -391,36 +438,23 @@ run_and_report() {
         MainHelper::report_input(seqA, seqB, *arc_matches);
 
     // ----------------------------------------
-    // Ribosum matrix
-    //
-    std::unique_ptr<RibosumFreq> ribosum;
-    std::unique_ptr<Ribofit> ribofit;
-    MainHelper::init_ribo_matrix(clp, ribosum, ribofit);
-
-    // ----------------------------------------
     // construct scoring
 
     double my_exp_probA = clp.exp_prob_given ? clp.exp_prob : prob_exp_f(lenA);
     double my_exp_probB = clp.exp_prob_given ? clp.exp_prob : prob_exp_f(lenB);
 
-    ScoringParams scoring_params(clp.match, clp.mismatch, clp.indel,
-                                 0, // indel__loop_score
-                                 clp.indel_opening, 0, ribosum.get(),
-                                 ribofit.get(),
-                                 0, // unpaired_weight
-                                 clp.struct_weight, clp.tau,
-                                 0, // exclusion score
-                                 my_exp_probA, my_exp_probB,
-                                 clp.temperature_alipf,
-                                 false, // stacking,
-                                 false, // new_stacking,
-                                 false, // mea_alignment,
-                                 0,     // mea_alpha,
-                                 0,     // mea_beta,
-                                 0,     // mea_gamma,
-                                 0      // probability_scale
-                                 );
-
+    ScoringParams scoring_params(
+        ScoringParams::match(clp.match),
+        ScoringParams::mismatch(clp.mismatch),
+        ScoringParams::indel(clp.indel),
+        ScoringParams::indel_opening(clp.indel_opening),
+        ScoringParams::ribosum(ribosum.get()),
+        ScoringParams::ribofit(ribofit.get()),
+        ScoringParams::struct_weight(clp.struct_weight),
+        ScoringParams::tau_factor(clp.tau),
+        ScoringParams::exp_probA(my_exp_probA),
+        ScoringParams::exp_probB(my_exp_probB),
+        ScoringParams::temperature_alipf(clp.temperature_alipf));
 
     PFScoring<pf_score_t> scoring(seqA, seqB, *rna_dataA, *rna_dataB, *arc_matches, nullptr,
                                   scoring_params);
@@ -429,24 +463,18 @@ run_and_report() {
     // Computation of the alignment score
     //
 
+    using apparams_t =  AlignerPParams<pf_score_t>;
     // initialize aligner-p object, which does the alignment computation
-    AlignerP<pf_score_t> aligner =
-        AlignerP<pf_score_t>::create()
-        .min_am_prob(clp.min_am_prob)
-        .min_bm_prob(clp.min_bm_prob)
-        .pf_scale((pf_score_t)clp.pf_scale)
-        .seqA(seqA)
-        .seqB(seqB)
-        .scoring(scoring)
-        .no_lonely_pairs(false)
-        .struct_local(false)
-        .sequ_local(false)
-        .free_endgaps("")
-        .max_diff_am(clp.max_diff_am)
-        .max_diff_at_am(clp.max_diff_at_am)
-        .trace_controller(trace_controller)
-        .stacking(false)
-        .constraints(seq_constraints);
+    AlignerP<pf_score_t> aligner(
+        apparams_t(AlignerParams::seqA(&seqA), AlignerParams::seqB(&seqB),
+                   AlignerParams::scoring(&scoring),
+                   AlignerParams::max_diff_am(clp.max_diff_am),
+                   AlignerParams::max_diff_at_am(clp.max_diff_at_am),
+                   AlignerParams::trace_controller(&trace_controller),
+                   AlignerParams::constraints(&seq_constraints),
+                   typename apparams_t::min_am_prob(clp.min_am_prob),
+                   typename apparams_t::min_bm_prob(clp.min_bm_prob),
+                   typename apparams_t::pf_scale((pf_score_t)clp.pf_scale)));
 
     if (clp.verbose) {
         std::cout << "Run inside algorithm." << std::endl;
@@ -550,77 +578,4 @@ run_and_report() {
 
     // DONE
     return 0;
-}
-
-
-/**
- * \brief Main function of executable locarna_p
- *
- * @param argc argument counter
- * @param argv argument vector
- *
- * @return success
- */
-int
-main(int argc, char **argv) {
-    stopwatch.start("total");
-
-    clp.no_lonely_pairs =
-        false; //! @todo currently not a command line option of locarna_p
-
-    // ------------------------------------------------------------
-    // Process options
-
-    bool process_success = process_options(argc, argv, my_options);
-
-    if (clp.help) {
-        cout << "locarna_p - pairwise partition function of "
-             << "RNA alignments." << std::endl;
-        cout << std::endl
-             << "Computes base and base pair match probabilities " << std::endl
-             << "from alignment partitition functions." << std::endl
-             << std::endl;
-
-        // cout << VERSION_STRING<<std::endl;
-
-        print_help(argv[0], my_options);
-
-        cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
-             << std::endl
-             << std::endl;
-        return 0;
-    }
-
-    if (clp.quiet) {
-        clp.verbose = false;
-    } // quiet overrides verbose
-
-    if (clp.version || clp.verbose) {
-        cout << "locarna_p (" << VERSION_STRING << ")" << std::endl;
-        if (clp.version)
-            return 0;
-        else
-            cout << std::endl;
-    }
-
-    if (!process_success) {
-        std::cerr << O_error_msg << std::endl;
-        print_usage(argv[0], my_options);
-        return -1;
-    }
-
-    if (clp.stopwatch) {
-        stopwatch.set_print_on_exit(true);
-    }
-
-    if (clp.verbose)
-        print_options(my_options);
-
-    if (!clp.extended_pf) {
-        return
-            run_and_report<standard_pf_score_t>();
-    } else {
-        return
-            run_and_report<extended_pf_score_t>();
-    }
 }

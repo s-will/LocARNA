@@ -1,0 +1,556 @@
+#!/usr/bin/perl -w
+
+# This script is part of the locarna package
+# (C) Sebastian Will, 2017
+
+=head1 NAME
+
+locarna_mcc
+
+=head1 SYNOPSIS
+
+locarna_mcc -f=<annotation_file> [options] aln_file(s)
+
+Computes the MCC (Mathew's correlation coefficient) along with several
+other secondary structure prediction performance measures for
+structures predicted by RNAalifold from one or several alignments in
+CLUSTAL W format.
+
+Options:
+
+=over 1
+
+=item  B<-f=<annotation_file>>
+
+    Structure annotation file. Mandatory argument.
+
+=item  B<-P=<param_file>>
+
+    Parameter file for RNAalifold
+
+=item  B<--alifold-args>
+
+    Alifold arguments (default: same as mlocarna)
+
+=item  B<--assume-fasta>
+
+    Assume that input is in fasta format (instead of clustalw aln)
+
+=item  B<--help>
+
+    Brief help message
+
+=item  B<--man>
+
+    Full documentation
+
+=item  B<-v, --verbose>
+
+    Verbose
+
+=item  B<-q, --quiet>
+
+    Quiet
+
+=back
+
+=head1 DESCRIPTION
+
+For each file produce an output line
+<name> <tp> <fp> <fn> <tn> <ppv> <sens> <mcc> <sqrt($sens*$ppv)>
+
+The structure annotation file contains lines of <name> <sequence>
+<structure> and must contain an entry for each sequence in the
+alignment.
+
+=cut
+
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+my $prefix= "$FindBin::Bin/..";
+my $bindir = "$FindBin::Bin";
+
+use MLocarna;
+
+
+my $username=$ENV{"USER"};
+
+##------------------------------------------------------------
+## options
+use Getopt::Long;
+use Pod::Usage;
+
+my $help;
+my $man;
+my $quiet;
+my $verbose;
+
+my $assume_fasta;
+
+my $annotation_file;
+
+my $no_slide;
+
+my $parameterfile;
+
+my $alifold_args="";
+
+## Getopt::Long::Configure("no_ignore_case");
+
+GetOptions(
+    "verbose" => \$verbose,
+    "quiet" => \$quiet,
+    "help"=> \$help,
+    "man" => \$man,
+
+    "f|annotation=s" => \$annotation_file,
+    "assume-fasta" => \$assume_fasta,
+    "no-slide" => \$no_slide,
+    "alifold-args" => \$alifold_args,
+
+    "P=s"      => \$parameterfile
+
+    ) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+if (!defined($annotation_file))
+{
+    print STDERR "Annotation file is required.\n\n";
+    pod2usage(1);
+}
+
+# By default slide base pairs are allowed
+my $slide = 1;
+if (defined $no_slide) {$slide = 0;}
+
+
+if ($#ARGV<0) {
+    print STDERR "Please give file(s) for comparison.\n";
+    pod2usage(1);
+}
+
+
+## ------------------------------------------------------------
+## fwd ref subs
+sub proj_aln_str;
+sub convert_fasta_to_aln($$);
+
+## ------------------------------------------------------------
+## main part
+
+if (defined($parameterfile)) {
+    $alifold_args.=" -P $parameterfile";
+}
+
+my $bp_open = "(";
+my $bp_close = ")";
+my $gap = "-";
+my $single = ".";
+
+# Read the correct annotation from a file
+my %annotation;
+read_annotation($annotation_file, \%annotation);
+
+my @annokeys=keys %annotation;
+# print "@annokeys\n";
+
+sub unique_name {
+    my ($name,$seq) = @_;
+
+    my $sname = substr $name,0,14;
+    $sname =~ s/[^A-Za-z0-9]/_/g;
+
+    $sname = uc $sname;
+    $seq = uc $seq;
+
+    return "$sname $seq";
+}
+
+
+
+for my $file (@ARGV) {
+
+    if ( ! -f "$file" ) {
+	print STDERR "$file is not a file.";
+    }
+
+    ## get consensus structure of $file by RNAalifold
+
+    my $aln_file=$file;
+    if ($assume_fasta) {
+	$aln_file="/tmp/aln_mcc.alnfile.$username-$$";
+	convert_fasta_to_aln($file,$aln_file);
+    }
+
+    my $consensus = alifold_structure("$aln_file", split(/ /,$alifold_args), "--noPS" );
+
+    defined($consensus) || die "Could not compute consensus for $aln_file";
+
+    my %aln=%{ read_clustalw_aln("$aln_file") };
+
+    my @avg_idxs = (0,1,2,3,4,5,7,8);
+
+    my @avg;
+
+    my $count=0;
+
+    for my $name (keys %aln) {
+
+	my %paln = proj_aln_str(\%aln,$consensus);
+
+	my $seq=$paln{$name};
+	my $struct=$paln{"$name#S"};
+
+	my %prediction;
+	&parsestruc($seq, $struct, \%prediction, $gap, $bp_open, $bp_close, $single);
+
+	if (! exists( $annotation{unique_name($name, $seq)} )) {
+	    print STDERR "Found no annotation for ".unique_name($name, $seq)."\n";
+	} else  {
+	    my $comp_result = compare($name, \%prediction, \%{$annotation{unique_name($name, $seq)}}, "", $slide);
+
+	    my @entries=split / /,$comp_result;
+
+	    $count++;
+	    for my $i (@avg_idxs) {
+		$avg[$i]+=$entries[$i];
+	    }
+	}
+    }
+
+
+    for my $i (@avg_idxs) {
+	$avg[$i]/=$count;
+    }
+
+    $avg[6]=$avg[7];
+    $avg[7]=$avg[8];
+
+    print "$file";
+
+    for (my $i=0; $i<8; $i++) {
+	printf " %4.2f", $avg[$i];
+    }
+    print "\n";
+
+    if ( $assume_fasta ) {
+	unlink $aln_file;
+    }
+}
+
+
+
+## ------------------------------------------------------------
+# subs
+
+# convert fasta format file to aln format file
+sub convert_fasta_to_aln($$) {
+    my ($fasta_file,$aln_file) = @_;
+
+    my $clustal_header="CLUSTAL W (1.83) multiple sequence alignment";
+
+    my %mfasta = read_fasta($fasta_file);
+
+    my $out;
+
+    open($out, ">", $aln_file) || die "Cannot write to $aln_file";
+
+    print $out "$clustal_header\n\n";
+    for my $k (keys %mfasta) {
+	print $out "$k $mfasta{$k}\n";
+    }
+
+    close $out;
+}
+
+
+## project alignment and structure to the columns without gaps
+## projects the consensus structure to each single sequence
+sub proj_aln_str {
+    my ($h_ref,$cons)=@_;
+
+    my %h = %{ $h_ref };
+
+    ## result hash and consensus string
+    my %rh;
+
+    my @struct = parse_bracket_structure_single $cons, $bp_open, $bp_close;
+
+    for my $name ( keys %h ) {
+	my $seq=$h{$name};
+	my @pos;
+
+	my $pseq="";
+	my $pstruct="";
+
+	for (my $i=0; $i<length($seq); $i++) {
+	    my $c = substr $seq,$i,1;
+	    if ($c ne "-") {
+
+		my $j = $struct[$i];
+
+		$pseq.=$c;
+
+		my $sc=".";
+
+		if (defined($j) and $j != -1) {
+		    if ((substr($seq,$j,1)) ne "-") {
+			if ($j>$i) {
+			    $sc="(";
+			} else {
+			    $sc=")";
+			}
+		    }
+		}
+
+		$pstruct.=$sc;
+	    }
+	}
+	$rh{$name} = $pseq;
+	$rh{"$name#S"} = $pstruct;
+
+    }
+    return %rh;
+}
+
+
+
+###########################################################################
+# all remaing code is copied and slightly modified from structureCC
+# (/original/ Bralibase code)
+#
+
+sub read_annotation {
+
+	my ($fname, $struc) = @_;
+
+	open(IN, $fname);
+
+	my %hash;
+
+	while (<IN>) {
+
+		my ($name, $dna, $anno, $comm) = split(/\s+/, $_, 4);
+
+		# Just a check
+		if (defined $$struc{unique_name($name, $dna)}) {
+		    if ($anno ne $hash{unique_name($name, $dna)}) {
+			warn "The annotation names are not uniq! \"".unique_name($name, $dna)."\" is already known with differing structure. Output for this name cannot be trusted.\n$anno\n".$hash{unique_name($name, $dna)}."\n";
+		    }
+		}
+
+		$hash{unique_name($name, $dna)} = $anno;
+
+		&parsestruc($dna, $anno, \%{$$struc{unique_name($name, $dna)}}, $gap, $bp_open, $bp_close, $single);
+
+	}
+
+	close IN;
+}
+
+
+sub compare{
+
+	#################################################
+	#                                               #
+	# Compare a global prediction to an annotation. #
+	#                                               #
+	#################################################
+
+	my ($name, $pred, $anno, $comm, $slide) = @_;
+
+	my ($tp, $fp, $fn, $tn);
+	$tp = $fp = $fn = $tn = 0;
+
+	# Foreach pair of positions in the prediction / annotation
+	# A true positive is a pair which is basepaired in both prediction and
+	# annotation (slide rule may be used)
+	# A false positive is a pair predicted to basepair but not annotationed.
+	# A false negative is a pair annotated to basepair but not predicted.
+	# A true negative is a pair which is neither annotated nor predicted as base pairing.
+
+
+	my @pos = sort num keys %{$anno};
+	my $length = $pos[-1];
+
+	foreach my $left (@pos) {
+
+		unless (defined $$pred{$left}) {
+			warn "The position $left for sequence $name does not have a prediction. Predictions must be global.\n";
+			return;
+		}
+
+
+		# Hopefully every downstream position is a true negative.
+		$tn += $length - $left;
+
+		if ($$pred{$left} > $left) {
+
+			# Predicted to basepair downstream
+
+			# One of the hopefully true negatives is a positive (true or false)
+			$tn--;
+
+			if (&truePos($left, $pred, $anno, $slide)) {
+				# True positive
+				$tp++;
+			}
+			else {
+				# The base pair is a false positive
+				$fp++;
+
+				if ($$anno{$left} > $left) {
+					# This position is annotated to be base paired downstream and
+					# it is therefore a false negative.
+					$fn++;
+
+					# The position with which this position should base pair is not
+					# a correct true negative.
+					$tn--;
+				}
+				# if the position is annotated as unpaired then $fn and tn is correct
+				# if the position is annotated as base paired upstream then the fn
+				# and tn were already corrected when the left side of the base pair
+				# was encountered.
+			}
+		}
+		elsif ($$anno{$left} > $left) {
+			# Annotation pairs downstream
+
+			# The base pair is missing and is therefore a false negative
+			$fn++;
+
+			# One of the hopefully true negatives is not a true negative
+			$tn--;
+		}
+
+	}
+
+	my $ppv = 0;
+	if (($tp+$fp) != 0) {$ppv = ($tp/($tp+$fp));}
+	my $sens = 0;
+	if (($tp+$fn) != 0) {$sens = ($tp/($tp+$fn));}
+
+	my $dom = ($tp + $fp)*($tp + $fn)*($tn + $fp)*($tn + $fn);
+	my $cc = 0;
+	if ($dom > 0) {$cc=($tp*$tn - $fp*$fn)/sqrt($dom);}
+
+
+	my $res = sprintf "$tp $fp $fn $tn %1.3f %1.3f $name %1.3f %1.3f $comm\n", $ppv, $sens, $cc, sqrt($sens*$ppv);
+	return $res;
+}
+
+sub truePos {
+
+	###############################################################
+	#                                                             #
+	# Returns true if a base pair is both predicted and annotated #
+	#                                                             #
+	###############################################################
+
+	my ($pos, $pred, $anno, $slide) = @_;
+
+	if ($$pred{$pos} == $$anno{$pos}) {
+		# This is a normally annotated and predicted base pair
+		return 1;
+	}
+	elsif ($slide and $$anno{$pos} > 0 and
+	   ((defined $$pred{$pos -1} and $$pred{$pos -1} == $$anno{$pos}) or
+		 (defined $$pred{$pos +1} and $$pred{$pos +1} == $$anno{$pos}) or
+		 ($$pred{$pos} -1) == $$anno{$pos} or
+		 ($$pred{$pos} +1) == $$anno{$pos})) {
+		# The slide base pairs
+		return 1;
+	}
+
+	# Not true positive base pair
+	return 0;
+}
+
+sub num {$a <=> $b;}
+
+
+sub parsestruc {
+	###################################
+	# Parse the basepairing structure #
+	###################################
+
+	my ($seq, $anno, $data, $gap, $open, $close, $singel) = @_; # The annotation and the structure
+
+	my $len = length($seq);
+	my $begin = 1; # No local structures
+	my $end = $len;
+	my @lager;   # A stack
+	my $n;
+	my $countbp=0;
+
+	# Erase any old structure
+	undef(%$data);
+
+	for(my $i=$begin-1; $i<$end; $i++) {
+		$n=$i+1;
+
+		if (substr($anno,$i,1) eq $open) {
+
+			# This is the left side of a base pair
+
+			if (substr($seq, $i,1) eq $gap) {
+				# Gaps can not base pair
+				$$data{$n} = -1;
+			}
+			# If its the left part of a basepair put it in the stack
+			push(@lager, $n);
+		}
+		elsif (substr($anno,$i,1) eq $close) {
+
+			# This is the right side of a base pair
+
+			# The left side of a basepair
+			my $start;
+
+			if ($#lager < 0) {print STDERR "Could not parse stack. Underflow error\n";$start = 0;}
+			else {
+				# Get the left side from the stack
+				$start = pop(@lager);
+			}
+
+			if ((defined $$data{$start}) and ($$data{$start} == -1)) {
+				# The left side of the base pair is a gap. This position is not base
+				# paired.
+				$$data{$n} = -1;
+			}
+			else {
+				if (substr($seq, $i,1) eq $gap) {
+					# This position is a gap.
+					$$data{$n} = -1;
+					# The left side of the base pair no longer base pairs.
+					$$data{$start} = -1;
+				}
+				else {
+					# Put the complementary positions into the structure
+					$$data{$start} = $n;
+					$$data{$n} = $start;
+					$countbp++;
+				}
+			}
+		}
+		else {
+			# No basepairing
+			if (substr($anno, $i, 1) eq $singel) {
+				$$data{$n} = -1;
+			}
+			else {
+				warn "Im not sure this point should ever be reached\n";
+			}
+		}
+	}
+	if ($#lager != -1) {print STDERR "Could not parse stack. $#lager elements left in the stack\n";}
+	while (my $start = pop(@lager)) {$$data{$start} = -2; warn "The base pair stack is not empty\n";}
+	return $countbp;
+}

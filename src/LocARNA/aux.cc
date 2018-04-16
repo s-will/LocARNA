@@ -8,10 +8,10 @@
 #include <iostream>
 
 namespace LocARNA {
-    failure::~failure() throw() {}
+    failure::~failure() {}
 
     const char *
-    failure::what() const throw() {
+    failure::what() const  noexcept {
         // exception::what();
         return msg_.c_str();
     }
@@ -20,15 +20,12 @@ namespace LocARNA {
     // gaps
 
     // gap symbols
-    const std::string the_gap_symbols = "-_~.";
+    const
+    std::string the_gap_symbols = "-_~.";
     // simplified gap symbols
-    const std::string simplified_gap_symbols = "---.";
-
-    size_t Gap::size = 0;
-    const Gap Gap::regular = Gap(Gap::size++);
-    const Gap Gap::loop = Gap(Gap::size++);
-    const Gap Gap::locality = Gap(Gap::size++);
-    const Gap Gap::other = Gap(Gap::size++);
+    const
+    std::string
+    simplified_gap_symbols = "---.";
 
     bool
     is_gap_symbol(char c) {
@@ -37,12 +34,12 @@ namespace LocARNA {
 
     char
     gap_symbol(Gap gap) {
-        return simplified_gap_symbols[gap.idx()];
+        return simplified_gap_symbols[size_t(gap)];
     }
 
     char
     special_gap_symbol(Gap gap) {
-        return the_gap_symbols[gap.idx()];
+        return the_gap_symbols[size_t(gap)];
     }
 
     Gap
@@ -58,27 +55,18 @@ namespace LocARNA {
      *
      * Function class used by transform_toupper().
      */
-    class ToUpper {
-    public:
-        //! convert to upper case
-        char
-        operator()(char c) const {
-            return std::toupper(c);
-        }
-    };
 
     void
     transform_toupper(std::string &s) {
-        std::transform(s.begin(), s.end(), s.begin(), ToUpper());
+        std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::toupper(c); });
     }
 
     void
     normalize_rna_sequence(std::string &seq) {
         transform_toupper(seq);
-        for (size_type i = 0; i < seq.length(); i++) {
-            if (seq[i] == 'T')
-                seq[i] = 'U';
-        }
+
+        transform(seq.begin(), seq.end(), seq.begin(),
+                  [](char c) { return c == 'T' ? 'U' : c; });
     }
 
     bool
@@ -95,6 +83,9 @@ namespace LocARNA {
                        std::vector<std::string> &v) {
         std::string str = s;
         v.clear();
+
+        if (str.empty()) return;
+
         size_t pos;
         while ((pos = str.find(sep)) != std::string::npos) {
             if (pos > 0) {
@@ -121,8 +112,7 @@ namespace LocARNA {
         if (v.size() == 0)
             return "";
         std::string s = v[0];
-        for (std::vector<std::string>::const_iterator it = v.begin() + 1;
-             v.end() != it; ++it) {
+        for (auto it = v.begin() + 1; v.end() != it; ++it) {
             s += sep + *it;
         }
         return s;

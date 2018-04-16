@@ -5,91 +5,119 @@
 #include <config.h>
 #endif
 
-#include <iosfwd>
+#include <iostream>
 #include <exception>
 #include <string>
 #include <vector>
 #include <cassert>
 
+//!
+//! auxilliary functions and classes for use in locarna
+//!
+
 #if __cplusplus < 201100L
 #    define nullptr NULL
 #endif
 
-// import and define types for unordered_map/set
-// in a way that is compatible with stdc++ and libc++
-#ifdef _LIBCPP_VERSION
-#include <unordered_map>
-#include <unordered_set>
-namespace LocARNA {
-    template <class Key,                       // unordered_map::key_type
-              class T,                         // unordered_map::mapped_type
-              class Hash = std::hash<Key>,     // unordered_map::hasher
-              class Pred = std::equal_to<Key>, // unordered_map::key_equal
-              class Alloc = std::allocator<
-                  std::pair<const Key, T> > // unordered_map::allocator_type
-              >
-    struct unordered_map {
-        typedef std::unordered_map<Key, T, Hash, Pred, Alloc> type;
-    };
-
-    template <class Key,                   // unordered_set::key_type/value_type
-              class Hash = std::hash<Key>, // unordered_set::hasher
-              class Pred = std::equal_to<Key>,  // unordered_set::key_equal
-              class Alloc = std::allocator<Key> // unordered_set::allocator_type
-              >
-    struct unordered_set {
-        typedef std::unordered_set<Key, Hash, Pred, Alloc> type;
-    };
-}
-// typedef std::unordered_set LocARNA::unordered_set;
-#else
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
-namespace LocARNA {
-    template <class Key,                        // unordered_map::key_type
-              class T,                          // unordered_map::mapped_type
-              class Hash = std::tr1::hash<Key>, // unordered_map::hasher
-              class Pred = std::equal_to<Key>,  // unordered_map::key_equal
-              class Alloc = std::allocator<
-                  std::pair<const Key, T> > // unordered_map::allocator_type
-              >
-    struct unordered_map {
-        typedef std::tr1::unordered_map<Key, T, Hash, Pred, Alloc> type;
-    };
-
-    template <class Key, // unordered_set::key_type/value_type
-              class Hash = std::tr1::hash<Key>, // unordered_set::hasher
-              class Pred = std::equal_to<Key>,  // unordered_set::key_equal
-              class Alloc = std::allocator<Key> // unordered_set::allocator_type
-              >
-    struct unordered_set {
-        typedef std::tr1::unordered_set<Key, Hash, Pred, Alloc> type;
-    };
-}
-#endif
-
-//!
-//! auxilliary types and global constants for use in locarna
-//!
-
-namespace LocARNA {
-
-    class string1;
-
-    /**
-     * @brief Function class definining hash function for pairs of size_t
-     */
-    struct pair_of_size_t_hash {
-        /**
-         * @brief Hash function for pairs of size_t
-         *
-         * @return hash code
-         */
+namespace std
+{
+    //!@brief hash function for pairs
+    template <class T1, class T2>
+    struct hash<std::pair<T1, T2>>
+    {
         size_t
-        operator()(std::pair<size_t, size_t> p) const {
-            return p.first << (sizeof(size_t) / 2) | p.second;
+        operator()(const std::pair<T1, T2> &p) const
+            noexcept(noexcept(hash<T1>()(p.first)) &&
+                     noexcept(hash<T2>()(p.second))) {
+            return hash<T1>()(p.first) ^ (hash<T2>()(p.second) << 1);
         }
     };
+}
+
+#include "quadmath.hh"
+
+namespace LocARNA {
+
+    using standard_pf_score_t = double;
+    using extended_pf_score_t = long double;
+
+#if defined(_GLIBCXX_USE_FLOAT128) && ! defined(__clang__)
+    using quad_pf_score_t = __float128;
+#else
+    using quad_pf_score_t = long double;
+#endif
+
+    template <typename T>
+    struct check_score_t {
+        template<class CLP>
+        check_score_t(const CLP &clp) {}
+    };
+
+    template <>
+    struct check_score_t<extended_pf_score_t> {
+        template <class CLP>
+        check_score_t(const CLP &clp) {
+            if (clp.verbose) {
+                std::cout << "Use extended precision for partition functions ("
+                          << sizeof(extended_pf_score_t) << " bytes; usually 80bit precision)."
+                          <<std::endl;
+            }
+            if (!(sizeof(extended_pf_score_t) > sizeof(standard_pf_score_t))) {
+                std::cerr << "WARNING: the extended precision type (long double) "
+                          << "is not larger than the standard precision "
+                          << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
+                          <<std::endl
+                          << "This issue is system and compiler dependent."
+                          <<std::endl;
+            }
+        }
+    };
+
+
+    // template <typename T, class CLP>
+    // void
+    // check_score_t(const CLP &clp) {}
+
+    // template <class CLP>
+    // void
+    // check_score_t<extended_pf_score_t,CLP>(const CLP &clp) {
+    //     if (clp.verbose) {
+    //         std::cout << "Use extended precision for partition functions ("
+    //                   << sizeof(extended_pf_score_t) << " bytes; usually 80bit precision)."
+    //                   <<std::endl;
+    //     }
+    //     if (!(sizeof(extended_pf_score_t) > sizeof(standard_pf_score_t))) {
+    //         std::cerr << "WARNING: the extended precision type (long double) "
+    //                   << "is not larger than the standard precision "
+    //                   << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
+    //                   <<std::endl
+    //                   << "This issue is system and compiler dependent."
+    //                   <<std::endl;
+    //     }
+    // }
+
+#if defined( _GLIBCXX_USE_FLOAT128 ) && ! defined( __clang__ )
+    template <>
+    struct check_score_t<quad_pf_score_t> {
+        template <class CLP>
+        check_score_t(const CLP &clp) {
+            if (clp.verbose) {
+                std::cout << "Use quad precision for partition functions ("
+                          << sizeof(quad_pf_score_t) << " bytes; 128bit precision)."
+                          <<std::endl;
+            }
+            if (!(sizeof(quad_pf_score_t) > sizeof(standard_pf_score_t))) {
+                std::cerr << "WARNING: the quad precision type (__float128) "
+                          << "is not larger than the standard precision "
+                          << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
+                          <<std::endl;
+            }
+        }
+    };
+#endif
+
+
+    class string1;
 
     //! general size type
     typedef size_t size_type;
@@ -100,54 +128,12 @@ namespace LocARNA {
     // ------------------------------------------------------------
     // define gap codes and symbols
 
-    //! @brief "enum class" of gaps in alignment edges
-    class Gap {
-    private:
-        size_t idx_; //! < index of enumeration value
-    public:
-        static size_t size; //!< enum size
-
-        //! regular gap
-        static const Gap regular;
-        //! gap from inserting/deleting a loop (in sparse)
-        static const Gap loop;
-        //! gap outside of the locally aligned region (sequence and structure
-        //! local alignment)
-        static const Gap locality;
-        //! other gaps
-        static const Gap other;
-
-        //! @brief init from 0-based index
-        //! @param idx index
-        explicit Gap(size_t idx) : idx_(idx) {}
-
-        //! @brief 0-based index
-        size_t
-        idx() const {
-            return (size_t)idx_;
-        }
-
-        /**
-         * @brief equality
-         * @param x operand
-         *
-         * @return whether object equals operand
-         */
-        bool
-        operator==(const Gap &x) const {
-            return this->idx_ == x.idx_;
-        }
-
-        /**
-         * @brief inequality
-         * @param x operand
-         *
-         * @return whether object not equals operand
-         */
-        bool
-        operator!=(const Gap &x) const {
-            return this->idx_ != x.idx_;
-        }
+    //! @brief different types of gaps
+    enum class Gap {
+        regular,
+        loop,
+        locality,
+        other
     };
 
     //! @brief Test for gap symbol
@@ -190,13 +176,13 @@ namespace LocARNA {
         explicit failure() : std::exception(), msg_(){};
 
         //! Destruct
-        virtual ~failure() throw();
+        virtual ~failure();
 
         /** @brief Provide message string
          * @return message
          */
         virtual const char *
-        what() const throw();
+        what() const noexcept;
     };
 
     /**
@@ -227,6 +213,7 @@ namespace LocARNA {
      * @note magic formula for expected probability (aka background); actually
      * questionable
      */
+    constexpr
     inline double
     prob_exp_f(int seqlen) {
         return 1.0 / (2.0 * seqlen);
@@ -283,14 +270,11 @@ namespace LocARNA {
     split_at_separator(const std::string &s, char sep);
 
     /**
-     * @brief Tokenize string at separator symbol
+     * @brief Concatenate strings, inserting separators
      *
-     * Split at seperator symbol and write to output vector of
-     * strings.
-     *
-     * @param s string
+     * @param v vector of strings
      * @param sep separator
-     * @param v[out] vector of strings
+     * @result string of concatenated strings
      */
     std::string
     concat_with_separator(const std::vector<std::string> &v, char sep);
@@ -315,6 +299,7 @@ namespace LocARNA {
      *
      * @return whether fragment has at least length minlen
      */
+    constexpr
     inline bool
     frag_len_geq(size_t i, size_t j, size_t minlen) {
         return i + minlen <= j + 1;
@@ -328,6 +313,7 @@ namespace LocARNA {
      *
      * @return number of bases in range i..j
      */
+    constexpr
     inline size_t
     frag_len(size_t i, size_t j) {
         return j + 1 - i;
@@ -342,6 +328,7 @@ namespace LocARNA {
      * @return span of base pair (i,j), i.e. the number of bases in
      * the range i..j
      */
+    constexpr
     inline size_t
     bp_span(size_t i, size_t j) {
         return frag_len(i, j);
@@ -382,6 +369,75 @@ namespace LocARNA {
 
     double
     sequence_identity(const string1 &seqA, const string1 &seqB);
+
+    /**
+     * @brief generic maximum value of iterable
+     * @param x iterable object (e.g. container)
+     * @param key key function
+     * @return max{ key(y) | y in x }
+     */
+    template <class Iterable, typename KeyFun>
+    auto
+    maximum(const Iterable&x, const KeyFun &key) {
+        auto maxelem_it = max_element(x.begin(), x.end(),
+                                      [&key](const auto &x, const auto &y) {
+                                          return key(x) < key(y);
+                                      });
+        return key(*maxelem_it);
+    }
+
+    /**
+     * @brief generic minimum value of iterable
+     * @param x iterable object (e.g. container)
+     * @param key key function
+     * @return min{ key(y) | y in x }
+     */
+    template <class Iterable, typename KeyFun>
+    auto
+    minimum(const Iterable&x, const KeyFun &key) {
+        auto minelem_it = min_element(x.begin(), x.end(),
+                                      [&key](const auto &x, const auto &y) {
+                                          return key(x) < key(y);
+                                      });
+        return key(*minelem_it);
+    }
+
+    // @brief delay the evaluation of a function
+    template <class Value, class Function>
+    class Delay {
+    public:
+        Delay(Function fun)
+            : fun_(fun), evaluated_(false)
+        {};
+
+        const Value &
+        get() {
+            if (!evaluated_) {
+                val_ = fun_();
+            }
+            evaluated_ = true;
+            return val_;
+        }
+
+    private:
+        Value val_;
+        Function fun_;
+        bool evaluated_;
+    };
+
+    // @brief make object of Delay
+    // @note work around partial specialization of functions
+    template <class Value>
+    class make_delay {
+    public:
+        template <class Function>
+        static auto
+        fun(Function fun_) {
+            return Delay<Value, Function>(fun_);
+        }
+    };
+
+
 }
 
 #endif

@@ -12,7 +12,8 @@ using namespace LocARNA;
 */
 
 TEST_CASE("ExtRnaData can fold alignments, write to file and read again") {
-    PFoldParams pfparams(true, true, -1, 2);
+    PFoldParams pfoldparams(PFoldParams::args::noLP(true),
+                        PFoldParams::args::stacking(true));
 
     std::ostringstream sizeinfo1;
     std::ostringstream sizeinfo2;
@@ -24,7 +25,7 @@ TEST_CASE("ExtRnaData can fold alignments, write to file and read again") {
         REQUIRE_NOTHROW(rna_data =
                             std::make_unique<ExtRnaData>("archaea.aln", 0.01,
                                                          0.0001, 0.0001, 5, 10,
-                                                         10, pfparams));
+                                                         10, pfoldparams));
 
         rna_data->write_size_info(sizeinfo1);
 
@@ -41,7 +42,7 @@ TEST_CASE("ExtRnaData can fold alignments, write to file and read again") {
             SECTION("and read again") {
                 REQUIRE_NOTHROW(rna_data = std::make_unique<ExtRnaData>(outfilename, 0.01,
                                                                         0.0001, 0.0001, 5, 10,
-                                                                        10, pfparams));
+                                                                        10, pfoldparams));
 
                 rna_data->write_size_info(sizeinfo2);
 
@@ -66,7 +67,8 @@ TEST_CASE(
 
         SECTION(
             "read without maxBPspan restriction and check some base pairs") {
-            PFoldParams pfoldparams(false, false, -1, 2);
+            PFoldParams pfoldparams(PFoldParams::args::noLP(false),
+                                    PFoldParams::args::stacking(false));
             ExtRnaData rd(filename, 0.0, 0.0, 0.0, -1, -1, -1, pfoldparams);
 
             REQUIRE(rd.arc_prob(2, 6) > 0.99);
@@ -84,7 +86,10 @@ TEST_CASE(
         }
 
         SECTION("read with maxBPspan restriction and check some base pairs") {
-            PFoldParams pfoldparams(false, false, 6, 2);
+            PFoldParams pfoldparams(PFoldParams::args::noLP(false),
+                                    PFoldParams::args::stacking(false),
+                                    PFoldParams::args::max_bp_span(6));
+
             ExtRnaData rd(filename, 0.0, 0.0, 0.0, -1, -1, -1, pfoldparams);
 
             REQUIRE(rd.arc_prob(2, 6) > 0.99);

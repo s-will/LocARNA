@@ -137,7 +137,7 @@ my $exparnap_call = $bindir."/exparna_p " . $exparnap_params;
 
 if($verbose){ print "ExparnaP call: $exparnap_call \n \n"; }
 
-my $exparnap_out = `$exparnap_call 2>&1`;
+my $exparnap_out = readpipe( "$exparnap_call 2>&1" );
 
 if($verbose){ print $exparnap_out . "\n";}
 
@@ -155,7 +155,7 @@ my $locarna_call = $bindir."/locarna " . $locarna_params . " " . $anchor_pp_A . 
 
 if($verbose){ print "LocARNA call: $locarna_call \n";}
 
-my $locarna_out = `$locarna_call 2>&1`;
+my $locarna_out = readpipe("$locarna_call 2>&1");
 
 print $locarna_out;
 

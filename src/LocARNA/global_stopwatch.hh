@@ -9,7 +9,7 @@
 
 namespace LocARNA {
     //! global StopWatch object
-    extern LocARNA::StopWatch stopwatch;
+    extern StopWatch stopwatch;
 }
 
 #endif // LOCARNA_GLOBAL_STOPWATCH

@@ -12,9 +12,6 @@
 #include "basepairs.hh"
 #include "ext_rna_data.hh"
 
-// use for type safe index_t
-// #include "type_wrapper.hh"
-
 namespace LocARNA {
 
     // print a pair
@@ -37,12 +34,6 @@ namespace LocARNA {
         typedef std::vector<ArcIdx> ArcIdxVec; //!< vector of arc indices
         typedef pos_type matidx_t;             //!< type for a matrix position
         typedef pos_type seq_pos_t;            //!< type for a sequence position
-
-        // note: the type safe index_t breaks current code, since
-        // casts to size_t need to be explicite (using index_t's val()-method)
-        // //! type-safe index type this is useful to distinguish index type
-        // //! from other types that are defined as unsigned int
-        // typedef type_wrapper<size_t> index_t;
 
         typedef size_t index_t; //!< type for an index
 
@@ -464,7 +455,7 @@ namespace LocARNA {
     std::ostream &
     operator<<(std::ostream &out, const std::vector<T> &vec) {
         for (typename std::vector<T>::const_iterator it = vec.begin();
-             it != vec.end(); it++) {
+             it != vec.end(); ++it) {
             out << *it << " ";
         }
         return out;

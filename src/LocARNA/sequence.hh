@@ -13,24 +13,10 @@ namespace LocARNA {
     /**
      * @brief "Sequence View" of multiple alignment as array of column
      * vectors
-     *
-     * @note use MultipleAlignment::as_sequence() to 'convert' from
-     * MultipleAlignment to Sequence.
-     *
-     * @note the conceptual relation between Sequence and
-     * MultipleAlignent is that the two classes are equivalent views
-     * of a multiple alignment. Therefore, casting between both should
-     * be free of cost, in particular for references! operator [] is
-     * supported, depending on the static type, only for
-     * Sequence. There should be a way to expresse this relation in a
-     * nicer way.
      */
     class Sequence : public MultipleAlignment {
-        // BEWARE: don't define attributes in sequence! In
-        // MultipleAlignment.as_sequence(), we rely on a simple upcast
-        // to convert MultipleAlignment objects to Sequence objects
-
     public:
+
         /**
          * @brief Construct empty
          */
@@ -45,6 +31,28 @@ namespace LocARNA {
             : MultipleAlignment(name, sequence) {}
 
         /**
+         * @brief Obtain sequence view of multiple alignment
+         * @param ma multiple alignemnt
+         * @return sequence
+         */
+        static
+        Sequence &
+        view(MultipleAlignment &ma) {
+            return static_cast<Sequence &>(ma);
+        }
+
+        /**
+         * @brief Obtain const sequence view of multiple alignment
+         * @param ma multiple alignemnt
+         * @return sequence
+         */
+        static
+        const Sequence &
+        view(const MultipleAlignment &ma) {
+            return static_cast<const Sequence &>(ma);
+        }
+
+        /**
          * @brief Access to columns
          *
          * @param col_index column index
@@ -54,7 +62,8 @@ namespace LocARNA {
          * @note allows array notation via [] operator; this is the
          * main difference to MultipleAlignment class
          */
-        AliColumn operator[](size_type col_index) const {
+        AliColumn
+	operator[](size_type col_index) const {
             return column(col_index);
         }
 
