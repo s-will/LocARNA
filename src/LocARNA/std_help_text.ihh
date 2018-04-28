@@ -69,10 +69,15 @@
     {"stockholm", "Write alignment Stockholm format to given file."},
     {"pp", "Write alignment in PP format to given file."},
     {"alifold_consensus_dp",
-     "Compute consensus dot plot by alifold (warning: this may fail for long sequences)."},
+     "Compute consensus dot plot by alifold (warning: this may fail for long "
+     "sequences)."},
     {"cons_struct_type",
      "Type of consensus structures written to screen and "
      "stockholm output [alifold|mea|none] (default: none)."},
+    {"consensus_gamma",
+     "Base pair weight for mea consensus computation. For MEA, base pairs are "
+     "scored by their pair probability times 2 gamma; unpaired bases, "
+     "by their unpaired probability."},
     {"local_output", "Output only local sub-alignment (to std out)."},
     {"local_file_output", "Write only local sub-alignment to output files."},
     {"pos_output", "Output only local sub-alignment positions."},
@@ -83,7 +88,8 @@
      "probability are taken into account."},
     {"max_bps_length_ratio",
      "Maximal ratio of #base pairs divided by sequence length. This serves "
-     "as a second filter on the \"significant\" base pairs. [default: 0.0 = "
+     "as a second filter on the \"significant\" base pairs. [default: 0.0 "
+     "= "
      "no effect]."},
     {"max_diff_am", "Maximal difference for sizes of matched arcs. [-1=off]"},
     {"max_diff",
@@ -91,7 +97,8 @@
      "bases). "
      "[-1=off]"},
     {"max_diff_at_am",
-     "Maximal difference for positions of alignment traces at arc match ends. "
+     "Maximal difference for positions of alignment traces at arc match "
+     "ends. "
      "[-1=off]"},
     {"max_diff_alignment_file",
      "Maximal difference relative to given alignment (file in clustalw "
@@ -106,14 +113,16 @@
     {"no_lonely_pairs", "Disallow lonely pairs in prediction and alignment."},
     {"max_bp_span", "Limit maximum base pair span [default=off]."},
     {"relaxed_anchors",
-     "Use relaxed semantics of anchor constraints [default=strict semantics]."},
+     "Use relaxed semantics of anchor constraints [default=strict "
+     "semantics]."},
     {"fileA", "Input file 1"}, {"fileB", "Input file 2"},
     {"files",
      "The tool is called with two input files <Input 1> and <Input 2>, "
      "which specify the two input sequences or input "
      "alignments. Different input formats (Fasta, Clustal, Stockholm, "
      "LocARNA PP, ViennaRNA postscript dotplots) are accepted and "
-     "automatically recognized (by file content); the two input files can be "
+     "automatically recognized (by file content); the two input files can "
+     "be "
      "in different formats. Extended variants of the Clustal and Stockholm "
      "formats enable specifying anchor and structure constraints."},
 
@@ -124,7 +133,8 @@
      "similarity scoring)."},
     {"match_prob_method",
      "Select method for computing sequence-based base match probablities "
-     "(to be used for mea-type alignment scores). Methods: 1=probcons-style "
+     "(to be used for mea-type alignment scores). Methods: "
+     "1=probcons-style "
      "from HMM, 2=probalign-style from PFs, 3=from PFs, local"},
     {"probcons_file",
      "Read parameters for probcons-like calculation of match probabilities "
@@ -178,11 +188,13 @@
      "increases run-time and space (less than 2x), however enables "
      "handling significantly larger instances."},
     {"extended_pf_sequence_only",
-     "Use extended precision for the computation of sequence envelopes. This "
+     "Use extended precision for the computation of sequence envelopes. "
+     "This "
      "enables "
      "handling significantly larger instances."},
     {"quad_pf",
-     "Use quad precision for partition function values. Even more precision "
+     "Use quad precision for partition function values. Even more "
+     "precision "
      "than "
      "extended pf, but usually much slower (overrides extended-pf)."},
 {

@@ -130,6 +130,8 @@ namespace LocARNA {
 
             std::string cons_struct_type; //! type of consensus structure
 
+            double consensus_gamma; //! base pair weight for consensus mea
+
             bool local_output; //!< whether to write local output
 
             bool local_file_output; //!< whether to write local output to files
@@ -477,6 +479,9 @@ namespace LocARNA {
                   const Alignment &alignment,
                   bool local
                   ) {
+
+            stopwatch.start("consensus");
+
             std::unique_ptr<RnaData> consensus;
 
             std::string consensus_structure="";
@@ -512,13 +517,16 @@ namespace LocARNA {
                                               local);
 
                 if (clp.cons_struct_type == "mea") {
-                    consensus_structure = mea_consensus->mea_structure(1);
+                    consensus_structure = mea_consensus->mea_structure(clp.consensus_gamma);
                 }
 
                 if (!clp.alifold_consensus_dp) {
                     consensus = std::move(mea_consensus);
                 }
             }
+
+            stopwatch.stop("consensus");
+
             return std::make_pair(std::move(consensus), consensus_structure);
         }
 

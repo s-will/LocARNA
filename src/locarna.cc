@@ -162,6 +162,8 @@ option_def my_options[] =
       O_NODEFAULT, "", clp.help_text["alifold_consensus_dp"]},
      {"consensus-structure", 0, 0, O_ARG_STRING, &clp.cons_struct_type,
       "none", "type", clp.help_text["cons_struct_type"]},
+     {"consensus-gamma", 0, 0, O_ARG_DOUBLE, &clp.consensus_gamma,
+      "1.0", "float", clp.help_text["consensus_gamma"]},
      {"local-output", 'L', &clp.local_output, O_NO_ARG, 0, O_NODEFAULT, "",
       clp.help_text["local_output"]},
      {"local-file-output", 0, &clp.local_file_output, O_NO_ARG, 0, O_NODEFAULT,

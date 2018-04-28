@@ -58,8 +58,8 @@ namespace LocARNA {
 
         if (seqVecA.size() != seqVecB.size()) {
             throw(
-                failure("Error during parsing of constraints. Lengths of names "
-                        "in sequences don't fit."));
+                failure("Error during parsing of constraints. All constraint names "
+                        "in sequences must have the same length."));
         }
 
         name_size_ = seqVecA.size();
