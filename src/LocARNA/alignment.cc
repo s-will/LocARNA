@@ -20,23 +20,23 @@ extern "C" {
 
 namespace LocARNA {
 
-    Alignment::Alignment(const Sequence &seqA, 
+    Alignment::Alignment(const Sequence &seqA,
 			 const Sequence &seqB)
 	: pimpl_(new AlignmentImpl(this,seqA,seqB)) {
 	clear();
     }
-    
 
-    Alignment::Alignment(const Sequence &seqA, 
-    			 const Sequence &seqB, 
+
+    Alignment::Alignment(const Sequence &seqA,
+			 const Sequence &seqB,
 			 const edges_t &edges)
 	: pimpl_(new AlignmentImpl(this,seqA,seqB)) {
-	
+
 	// append all non-locality edges
 	for (size_t k=0; k<edges.size(); k++) {
 	    const edge_end_t &x = edges.first[k];
 	    const edge_end_t &y = edges.second[k];
-	    
+
 	    if (x.is_gap() && y.is_gap()) {
 		throw failure("Invalid alignment edges");
 	    }
@@ -46,7 +46,7 @@ namespace LocARNA {
 	    if (y.is_pos() && (y<1 || y>seqB.length())) {
 		throw failure("Alignment edge out of range (second sequence).");
 	    }
-	    
+
 	    if (!((x.is_gap() && x.gap()==Gap::locality)
 		  ||
 		  (y.is_gap() && y.gap()==Gap::locality))) {
@@ -64,7 +64,7 @@ namespace LocARNA {
     Alignment::swap(Alignment &a1,Alignment &a2) {
         std::swap(a1.pimpl_,a2.pimpl_);
     }
-         
+
     Alignment::~Alignment() { delete pimpl_; }
 
     Alignment &
@@ -75,7 +75,7 @@ namespace LocARNA {
 	return *this;
     }
 
-    
+
     void
     Alignment::set_structures(const RnaStructure &structureA,const RnaStructure &structureB) {
 	pimpl_->strA_ = structureA.to_string();
@@ -94,12 +94,12 @@ namespace LocARNA {
 	pimpl_->strB_.resize(pimpl_->seqB_.length()+1);
 	fill(pimpl_->strA_.begin(),pimpl_->strA_.end(),'.');
 	fill(pimpl_->strB_.begin(),pimpl_->strB_.end(),'.');
-	
+
 	pimpl_->a_.clear();
 	pimpl_->b_.clear();
     }
 
-    void 
+    void
     Alignment::append(edge_end_t i, edge_end_t j) {
 	pimpl_->a_.push_back(i);
 	pimpl_->b_.push_back(j);
@@ -110,32 +110,32 @@ namespace LocARNA {
 	pimpl_->strA_[i]='(';
 	pimpl_->strA_[j]=')';
     }
-    
+
     void
     Alignment::add_basepairB(int i, int j) {
 	pimpl_->strB_[i]='(';
 	pimpl_->strB_[j]=')';
     }
-    
-    
-	void 
+
+
+	void
 	Alignment::add_deleted_basepairA(int i, int j) {
 	pimpl_->strA_[i]='(';
 	pimpl_->strA_[j]=')';
 	}
 
-	void 
+	void
 	Alignment::add_deleted_basepairB(int i, int j) {
 	pimpl_->strB_[i]='(';
 	pimpl_->strB_[j]=')';
 	}
 
-    const Alignment::edges_t 
+    const Alignment::edges_t
     Alignment::alignment_edges(bool only_local) const {
 
 	edge_ends_t endsA;
 	edge_ends_t endsB;
-	
+
 	const edge_ends_t &a=pimpl_->a_;
 	const edge_ends_t &b=pimpl_->b_;
 
@@ -143,7 +143,7 @@ namespace LocARNA {
 
 	int lastA=1; // bases consumed in sequence A
 	int lastB=1; // ---------- "" ------------ B
-	
+
 	for (size_type i=0; i<alisize; i++) {
 	    if (a[i].is_pos()) {
 		for (size_t j=lastA; j<a[i]; j++) {
@@ -172,8 +172,8 @@ namespace LocARNA {
 	    endsA.push_back(a[i]);
 	    endsB.push_back(b[i]);
 	}
-	
-	if (!only_local) { 
+
+	if (!only_local) {
 	    for (size_type j=lastA; j<=pimpl_->seqA_.length(); j++) {
 		endsA.push_back(j);
 		endsB.push_back(Gap::locality);
@@ -191,28 +191,48 @@ namespace LocARNA {
 
 
     size_type
-    Alignment::local_startA() const {return pimpl_->a_[0];}
-    
+    Alignment::local_startA() const {
+        for( auto x: pimpl_->a_ ) {
+            if (x.is_pos()) return x;
+        }
+        return pimpl_->seqA_.length()+1;
+    }
+
     size_type
-    Alignment::local_endA() const {return pimpl_->a_[pimpl_->a_.size()-1];}
-    
+    Alignment::local_endA() const {
+        for( auto x: std::reverse(pimpl_->a_) ) {
+            if (x.is_pos()) return x;
+        }
+        return 0;
+    }
+
     size_type
-    Alignment::local_startB()  const {return pimpl_->b_[0];}
-	
+    Alignment::local_startB() const {
+        for( auto x: pimpl_->b_ ) {
+            if (x.is_pos()) return x;
+        }
+        return pimpl_->seqB_.length()+1;
+    }
+
     size_type
-    Alignment::local_endB() const {return pimpl_->b_[pimpl_->b_.size()-1];}
+    Alignment::local_endB() const {
+        for( auto x: std::reverse(pimpl_->b_) ) {
+            if (x.is_pos()) return x;
+        }
+        return 0;
+    }
 
     const Sequence &
-    Alignment::seqA() const {return pimpl_->seqA_;} 
+    Alignment::seqA() const {return pimpl_->seqA_;}
 
     const Sequence &
-    Alignment::seqB() const {return pimpl_->seqB_;} 
+    Alignment::seqB() const {return pimpl_->seqB_;}
 
     // const std::vector<int> &
-    // Alignment::get_a() const {return pimpl_->a_;} 
+    // Alignment::get_a() const {return pimpl_->a_;}
 
     // const std::vector<int> &
-    // Alignment::get_b() const {return pimpl_->b_;} 
+    // Alignment::get_b() const {return pimpl_->b_;}
 
 
     void
@@ -226,7 +246,7 @@ namespace LocARNA {
 	}
 	out<<std::endl;
     }
-    
+
     void
     AlignmentImpl::write_debug(std::ostream &out) const {
 	write_debug(out,a_);
@@ -260,12 +280,12 @@ namespace LocARNA {
 	return s;
     }
 
-    Alignment::edge_ends_t 
+    Alignment::edge_ends_t
     Alignment::alistr_to_edge_ends(const std::string &alistr)
     {
 	edge_ends_t xs;
 	size_t i=1;
-	
+
 	for (size_t k=0; k<alistr.size(); k++) {
 	    edge_end_t x;
 	    if (is_gap_symbol(alistr[k])) {
