@@ -415,10 +415,15 @@ run_and_report() {
     // if normalized or penalized alignment shall be computed,
     // automatically turn on sequ_local unless sequ_local mode was
     // explicitly specified
+    if (clp.penalized) {
+        if (!clp.sequ_local_given) {
+            clp.sequ_local = true;
+        }
+    }
     //
     // important: in the Aligner class, we rely on sequ_local==true in
     // normalized alignment mode
-    if (clp.normalized || clp.penalized) {
+    if (clp.normalized) {
         if (!clp.sequ_local_given) {
             clp.sequ_local = true;
         } else {
