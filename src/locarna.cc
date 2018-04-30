@@ -876,9 +876,12 @@ run_and_report() {
         // write alignment to screen
 
         if (clp.pos_output) {
-            std::cout << "HIT " << score << " " << alignment->local_start().first
-                      << " " << alignment->local_start().second << " "
-                      << alignment->local_end().first << " " << alignment->local_end().second
+            const auto &start = alignment->start_positions();
+            const auto &end   = alignment->end_positions();
+
+            std::cout << "HIT " << score << " " << start.first
+                      << " " << start.second << " "
+                      << end.first << " " << end.second
                       << " " << std::endl;
             std::cout << std::endl;
         }
@@ -897,8 +900,8 @@ run_and_report() {
             }
 
             if (clp.pos_output) {
-                std::cout << "\t+" << alignment->local_start().first << std::endl
-                          << "\t+" << alignment->local_start().second << std::endl
+                std::cout << "\t+" << alignment->start_positions().first << std::endl
+                          << "\t+" << alignment->start_positions().second << std::endl
                           << std::endl;
                 std::cout << std::endl;
             }
@@ -932,8 +935,8 @@ run_and_report() {
 
             if (clp.pos_output) {
                 std::cout << std::endl
-                          << "\t+" << alignment->local_end().second << std::endl
-                          << "\t+" << alignment->local_end().second << std::endl
+                          << "\t+" << alignment->end_positions().first << std::endl
+                          << "\t+" << alignment->end_positions().second << std::endl
                           << std::endl;
             }
         }

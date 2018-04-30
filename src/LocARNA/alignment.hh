@@ -88,6 +88,7 @@ namespace LocARNA {
         using edge_ends_t = std::vector<EdgeEnd>;
 
         using edge_end_pair_t = std::pair<EdgeEnd,EdgeEnd>;
+        using pos_pair_t = std::pair<pos_type, pos_type>;
 
         //! description of alignment edges
         using edges_t = AlignmentEdges;
@@ -215,16 +216,18 @@ namespace LocARNA {
         alignment_edges(bool only_local) const;
 
         /* start/end of (locally) aligned subsequences
-           (this is used when finding k-best alignments in Aligner)
          */
 
-        //! get pair of first positions that are locally aligned
-        edge_end_pair_t
-        local_start() const;
+        //! get pair of first positions in the alignment
+        //! @note if the alignment starts with a gap, this does not return an
+        //! edge of the alignment!
+        pos_pair_t
+        start_positions() const;
 
-        //! get pair of last positions that are locally aligned
-        edge_end_pair_t
-        local_end() const;
+        //! get pair of last positions in the alignment
+        //! @see local_start()
+        pos_pair_t
+        end_positions() const;
 
         /**
          * @brief Structure A

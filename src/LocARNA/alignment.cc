@@ -166,14 +166,32 @@ namespace LocARNA {
         return res_edges;
     }
 
-    Alignment::edge_end_pair_t
-    Alignment::local_start() const {
-        return pimpl_->edges_.front();
+    Alignment::pos_pair_t
+    Alignment::start_positions() const {
+        const auto &xs = pimpl_->edges_;
+        auto x = find_if(xs.begin(), xs.end(),
+                         [](auto z) { return z.first.is_pos(); });
+        auto y = find_if(xs.begin(), xs.end(),
+                         [](auto z){return z.second.is_pos();});
+
+        return edge_end_pair_t(
+                               x!=xs.end() ? pos_type(x->first) : pimpl_->seqA_.length(),
+                               y!=xs.end() ? pos_type(y->second) : pimpl_->seqB_.length()
+                               );
     }
 
-    Alignment::edge_end_pair_t
-    Alignment::local_end() const {
-        return pimpl_->edges_.back();
+    Alignment::pos_pair_t
+    Alignment::end_positions() const {
+        const auto &xs = pimpl_->edges_;
+        auto x = find_if(xs.rbegin(), xs.rend(),
+                         [](auto z) { return z.first.is_pos(); });
+        auto y = find_if(xs.rbegin(), xs.rend(),
+                         [](auto z){return z.second.is_pos();});
+
+        return edge_end_pair_t(
+                               x!=xs.rend() ? pos_type(x->first) : 0,
+                               y!=xs.rend() ? pos_type(y->second) : 0
+                               );
     }
 
     const Sequence &
