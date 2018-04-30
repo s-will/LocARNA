@@ -204,6 +204,12 @@ namespace LocARNA {
         return pimpl_->seqB_;
     }
 
+    bool
+    Alignment::empty() const {
+        return pimpl_->empty();
+    }
+
+
     template <int i>
     std::string
     Alignment::dot_bracket_structure(const std::string &str, bool only_local) const {

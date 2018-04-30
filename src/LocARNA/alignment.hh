@@ -26,7 +26,6 @@ namespace LocARNA {
     //!
     //! asserts correct type of an edge end
     class EdgeEnd {
-        int end_; //<! position or Gap
     public:
         //!@brief construct as invalid end
         EdgeEnd() : end_(0) {}
@@ -63,10 +62,12 @@ namespace LocARNA {
 
         //! edge end as position
         //! @return position
+        //! @note allow 0 as sentinel/invalid position
         operator pos_type() const {
-            assert(end_ > 0);
             return pos_type(end_);
         }
+    private:
+        int end_; //<! position or Gap
     };
 
     class AlignmentEdges : public std::vector<std::pair<EdgeEnd,EdgeEnd>> {
@@ -262,6 +263,13 @@ namespace LocARNA {
          */
         const Sequence &
         seqB() const;
+
+        /** check for empty alignment
+         * @returns whether alignment is empty
+         */
+        bool
+        empty() const;
+
     private:
         std::unique_ptr<AlignmentImpl> pimpl_; //!< implementation pointer
 

@@ -55,6 +55,13 @@ namespace LocARNA {
               strA_(),
               strB_() {}
 
+
+        /** check for empty alignment
+         * @returns whether alignment is empty
+         */
+        bool
+        empty() const { return edges_.empty(); }
+
     };
 
 } // end namespace LocARNA

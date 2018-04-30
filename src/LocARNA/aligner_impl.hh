@@ -132,9 +132,6 @@ namespace LocARNA {
          * align_noex and trace_noex
          */
         class UnmodifiedScoringView {
-        private:
-            const AlignerImpl *
-                aligner_impl_; //!< aligner object for that the view is provided
         public:
             /**
              * Construct for Aligner object
@@ -178,6 +175,9 @@ namespace LocARNA {
             D(const ArcMatch &am) const {
                 return D(am.arcA(), am.arcB());
             }
+        private:
+            const AlignerImpl *
+                aligner_impl_; //!< aligner object for that the view is provided
         };
 
         /**
@@ -188,27 +188,6 @@ namespace LocARNA {
          * @see UnmodifiedScoringView
          */
         class ModifiedScoringView {
-        private:
-            //! aligner object for that the view is provided
-            const AlignerImpl *aligner_impl_;
-
-            //! own copy of scoring
-            const std::unique_ptr<Scoring> mod_scoring_;
-
-            score_t lambda_; //!< factor for modifying scoring
-
-            /**
-             * Computes length of an arc
-             *
-             * @param a the arc
-             *
-             * @return length of arc a
-             */
-            size_t
-            arc_length(const Arc &a) const {
-                return a.right() - a.left() + 1;
-            }
-
         public:
             /**
              * Construct for Aligner object
@@ -272,6 +251,27 @@ namespace LocARNA {
                     FiniteInt(lambda_ *
                               (arc_length(am.arcA()) + arc_length(am.arcB())));
             }
+        private:
+            //! aligner object for that the view is provided
+            const AlignerImpl *aligner_impl_;
+
+            //! own copy of scoring
+            const std::unique_ptr<Scoring> mod_scoring_;
+
+            score_t lambda_; //!< factor for modifying scoring
+
+            /**
+             * Computes length of an arc
+             *
+             * @param a the arc
+             *
+             * @return length of arc a
+             */
+            size_t
+            arc_length(const Arc &a) const {
+                return a.right() - a.left() + 1;
+            }
+
         };
 
         const UnmodifiedScoringView def_scoring_view_; //!< Default scoring view

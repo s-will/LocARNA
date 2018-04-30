@@ -1241,7 +1241,7 @@ namespace LocARNA {
         // pre: M matrices for arc computed
         M_matrix_t &M = Ms_[state];
 
-        assert(params_->trace_controller_->is_valid(i, j));
+        //assert(params_->trace_controller_->is_valid(i, j));
 
         // terminate traceback if
         // * trace on toplevel
@@ -1410,6 +1410,8 @@ namespace LocARNA {
             // get best task from tasks
             task_t task = tasks.top();
 
+            //std::cout <<"Subopt task "<<task.first<<": "<<task.second <<std::endl;
+
             // pop topmost element
             tasks.pop();
 
@@ -1430,6 +1432,10 @@ namespace LocARNA {
             }
 
             Alignment alignment = a.get_alignment();
+
+            if ( alignment.empty() ) {
+                continue;
+            }
 
             // std::cout << "SCORE: " << task_score << std::endl;
 
