@@ -874,9 +874,8 @@ if ($THREADS_ENABLED) {
 ## ------------------------------------------------------------
 ## global constants
 
-
 $MLocarna::PACKAGE_STRING=readpipe "$bindir/locarna --version";
-
+chomp $MLocarna::PACKAGE_STRING;
 
 ## vienna package programs
 my $RNAfold = "RNAfold";
