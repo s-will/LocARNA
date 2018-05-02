@@ -1445,7 +1445,7 @@ namespace LocARNA {
                 // write structure and ?. TODO: check and
                 // reimplement. SW - 2013 Jun 7
                 if (opt_pos_output) {
-                    std::cout << "HIT " << task_score
+                    std::cout << "HIT " << task_score << " "
                               << alignment.start_positions().first << " "
                               << alignment.start_positions().first << " "
                               << alignment.end_positions().second << " "
