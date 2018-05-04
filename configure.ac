@@ -297,10 +297,10 @@ AC_MSG_RESULT([$dynamic_liblocarna])
 AM_CONDITIONAL([STATIC_LIBLOCARNA],[test "$link_statically" = "no" -a "$dynamic_liblocarna" = "no"])
 
 dnl for lgomp if all-static
-dnl AS_IF([test "$link_statically" = "yes"],
-dnl [
-dnl         AX_APPEND_FLAG(["-ldl"],[LDFLAGS])
-dnl ])
+AS_IF([test "$link_statically" = "yes"],
+[
+        AX_APPEND_FLAG(["-ldl"],[LDFLAGS])
+])
 
 
 dnl Checks for typedefs, structures, and compiler characteristics.
