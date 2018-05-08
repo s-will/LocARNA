@@ -422,6 +422,7 @@ run_and_report() {
             clp.sequ_local = true;
         }
     }
+
     //
     // important: in the Aligner class, we rely on sequ_local==true in
     // normalized alignment mode

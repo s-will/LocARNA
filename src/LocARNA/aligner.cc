@@ -733,14 +733,15 @@ namespace LocARNA {
 
     // align the top level in case of free end gaps
     //
+    template <class ScoringView>
     infty_score_t
-    AlignerImpl::align_top_level_free_endgaps() {
+    AlignerImpl::align_top_level_free_endgaps(const ScoringView *sv) {
 
         M_matrix_t &M = Ms_[E_NO_NO];
 
         init_state(E_NO_NO, r_.startA() - 1, r_.endA() + 1, r_.startB() - 1,
                    r_.endB() + 1, !params_->free_endgaps_.allow_left_2(), false,
-                   !params_->free_endgaps_.allow_left_1(), false, &def_scoring_view_);
+                   !params_->free_endgaps_.allow_left_1(), false, sv);
 
         // need to handle anchor constraints:
         // search maximum to the right of (or at) rightmost anchor constraint
@@ -761,7 +762,7 @@ namespace LocARNA {
 
             for (pos_type j = min_col; j <= max_col; j++) {
                 M(i, j) = align_noex(E_NO_NO, r_.startA() - 1, r_.startB() - 1,
-                                     i, j, &def_scoring_view_);
+                                     i, j, sv);
             }
         }
 
@@ -936,7 +937,7 @@ namespace LocARNA {
 
             // align toplevel globally with potentially free endgaps (as given
             // by description params_->free_endgaps)
-            return align_top_level_free_endgaps();
+            return align_top_level_free_endgaps(&def_scoring_view_);
 
             // Without free end gaps, we could call (much simpler):
             // (we just call the more general method
@@ -1608,8 +1609,12 @@ namespace LocARNA {
 
         mod_scoring_view->set_lambda(position_penalty);
 
-        infty_score_t score =
-            align_top_level_locally(mod_scoring_view.get());
+        infty_score_t score;
+        if (params_->sequ_local_) {
+            score = align_top_level_locally(mod_scoring_view.get());
+        } else {
+            score = align_top_level_free_endgaps(mod_scoring_view.get());
+        }
 
         trace(mod_scoring_view.get());
 

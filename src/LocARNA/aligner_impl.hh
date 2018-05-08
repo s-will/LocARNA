@@ -395,8 +395,9 @@ namespace LocARNA {
          * align the top-level with potential free end gaps
          * and return the maximal score
          */
+        template <class ScoringView>
         infty_score_t
-        align_top_level_free_endgaps();
+        align_top_level_free_endgaps(const ScoringView *s);
 
         /**
          * align the top-level in a sequence local alignment
