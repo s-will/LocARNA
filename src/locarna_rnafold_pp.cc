@@ -83,7 +83,7 @@ option_def my_options[] =
       "Dangling option value"},
      {"in-loop", 0, &clp.in_loop, O_NO_ARG, 0, O_NODEFAULT, "",
       "Compute in-loop probabilities"},
-     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.0005", "prob",
+     {"min-prob", 'p', 0, O_ARG_DOUBLE, &clp.min_prob, "0.001", "prob",
       "Minimal probability"},
      {"p_unpaired_in_loop", 0, 0, O_ARG_DOUBLE,
       &clp.prob_unpaired_in_loop_threshold, "0.0005", "threshold",
@@ -95,7 +95,7 @@ option_def my_options[] =
      {"output", 'o', 0, O_ARG_STRING, &clp.output_file, "", "filename",
       "Output file"},
      {"force-alifold", 0, &clp.force_alifold, O_NO_ARG, 0, O_NODEFAULT, "",
-      "Force alifold for single seqeunces"},
+      "Force alifold for single sequences"},
      {"", 0, 0, O_ARG_STRING, &clp.input_file, "-", "filename", "Input file"},
      {"", 0, 0, 0, 0, O_NODEFAULT, "", ""}};
 
@@ -251,12 +251,22 @@ main(int argc, char **argv) {
             0, // don't filter output by max_bpil_length_ratio
             pfoldparams);
 
+        if (clp.verbose) {
+            ext_rna_data.write_size_info(std::cout);
+            std::cout << std::endl;
+        }
+
         ext_rna_data.write_pp(out_stream); // (no need to filter again => don't
                                            // specify output cutoff)
     } else {
         RnaData rna_data(rna_ensemble, clp.min_prob,
                          0, // don't filter output by max_bps_length_ratio
                          pfoldparams);
+
+        if (clp.verbose) {
+            rna_data.write_size_info(std::cout);
+            std::cout << std::endl;
+        }
 
         rna_data.write_pp(out_stream); // (no need to filter again => don't
                                        // specify output cutoff)
