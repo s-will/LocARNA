@@ -327,7 +327,7 @@ sub read_fasta {
 		$line =~ s/\s+//g;
 
 		if  ($line =~ /(.+)\s*\#(.+)/) {
-		    $seq->{"ANNO\#$2"} .= $1;
+		    $seq->{"ANNO#$2"} .= $1;
 		} else {
 		    $seq->{seq} .= $line;
 		}
@@ -1606,7 +1606,7 @@ sub constrain_sequences_from_reliable_structures: prototype($$) {
 	if (exists $constraints->{$seqs->[$i]->{name}}) {
 	    my $constraint_string = $constraints->{$seqs->[$i]->{name}};
 	    $constraint_string =~ s/[^()]/\./g;
-	    $seqs->[$i]->{"ANNO\#S"} = $constraint_string;
+	    $seqs->[$i]->{"ANNO#S"} = $constraint_string;
 	}
     }
 }

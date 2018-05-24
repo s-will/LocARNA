@@ -2921,7 +2921,7 @@ sub compute_dotplot_rnafold_pp {
     my $input = "$seqname $seq_str\n";
 
     if ( not $opts{'ignore-constraints'} ) {
-        my $structure_constraints = $seq->{"ANNO\#S"};
+        my $structure_constraints = $seq->{"ANNO#S"};
         if ( defined($structure_constraints) ) {
             $input = $input."\#S $structure_constraints\n";
             push @fold_cmd, "-C";
@@ -2985,7 +2985,7 @@ sub compute_dotplot_rnafold {
 
     my $input = ">$tmpname\n$seq_str\n";
 
-    my $structure_constraints = $seq->{"ANNO\#S"};
+    my $structure_constraints = $seq->{"ANNO#S"};
     if ( not $opts{'ignore-constraints'}
          and defined($structure_constraints) ) {
         $input = $input."$structure_constraints\n";
@@ -3163,14 +3163,14 @@ sub compute_dotplot {
     ## @note fixed structure #FS overrides structure #S
     # case: fixed structure constraints are given
     if ((!$opts{'ignore-constraints'})
-        && exists $seqs->[$i]->{"ANNO\#FS"}) {
+        && exists $seqs->[$i]->{"ANNO#FS"}) {
         if ($opts{'verbose'}) {
             print "Fixed structure given for sequence "
               .$seqs->[$i]->{'name'};
             print " (ignore local folding)" if ($opts{'plfold-span'});
             print ".\n";
         }
-        my $structure = $seqs->[$i]->{"ANNO\#FS"};
+        my $structure = $seqs->[$i]->{"ANNO#FS"};
         convert_fix_structure_to_pp($ppfile,$seqname,$seq_str,
                                     $structure,$anchor_constraints);
         return;
@@ -3195,8 +3195,8 @@ sub compute_dotplot {
       && ! $local_folding_requested ;
 
     my $structure_constraints_given =
-      exists $seqs->[$i]->{"ANNO\#FS"}
-      || exists $seqs->[$i]->{"ANNO\#S"};
+      exists $seqs->[$i]->{"ANNO#FS"}
+      || exists $seqs->[$i]->{"ANNO#S"};
 
     if (! $rnafold_pp_applicable) {
         if ($opts{'in-loop-probabilities'}) {
@@ -3204,7 +3204,7 @@ sub compute_dotplot {
 	}
 
         if ($local_folding_requested
-            and not exists $seqs->[$i]->{"ANNO\#S"}
+            and not exists $seqs->[$i]->{"ANNO#S"}
            ) {
             $folding_tool = "RNAplfold";
         } else {
@@ -3223,7 +3223,7 @@ sub compute_dotplot {
     ## override of constraints over local folding
     if ($opts{'verbose'}
         and $local_folding_requested
-        and exists $seq->{"ANNO\#S"}) {
+        and exists $seq->{"ANNO#S"}) {
         printerr "WARNING: structure constraints override local folding.\n";
     }
 
