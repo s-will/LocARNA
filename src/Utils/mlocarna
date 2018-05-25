@@ -1076,7 +1076,8 @@ my %opts;
 ## some default values
 #
 
-$opts{'noLP'}=1;
+# handle noLP / LP later
+# $opts{'noLP'}=1;
 
 $opts{'skip-pp'}=0; ## =1 skips the computation of pair probabilities
                     ## for files that exist already
@@ -1274,15 +1275,16 @@ if (defined($opts{'evaluate'})) {
     exit 0;
 }
 
+# LP and noLP should never both be given on the command line
 if (defined($opts{'LP'}) && defined($opts{'noLP'})) {
-    printerr "Only one of the options --noLP and --LP can be defined at a time.\n";
-    pod2usage(1);
+    printerr "ERROR: The flags --noLP and --LP contradict each other.\n";
+    exit(-1);
 }
 
+# this makes noLP the default, unless LP is given
 if (defined($opts{'LP'})) {
     $opts{'noLP'}=0;
-}
-if (defined($opts{'noLP'})) {
+} else {
     $opts{'noLP'}=1;
 }
 
@@ -2903,6 +2905,10 @@ sub compute_dotplot_rnafold_pp {
 
     my @fold_cmd = ( "$bindir/locarna_rnafold_pp", "-p" => $opts{'min-prob'} );
 
+    if ($opts{'noLP'}) {
+        push @fold_cmd, "--noLP";
+    }
+
     if ($opts{'in-loop-robabilities'}) {
         push @fold_cmd, "--in-loop";
     }
@@ -2981,6 +2987,10 @@ sub compute_dotplot_rnafold {
     my @fold_cmd = ("$RNAfold", "-p2");
     push  @fold_cmd, @RNAfold_args;
 
+    if ($opts{'noLP'}) {
+        push @fold_cmd, '--noLP';
+    }
+
     my $seq_str = $seq->{seq}; ## the sequence string
 
     my $input = ">$tmpname\n$seq_str\n";
@@ -3021,6 +3031,10 @@ sub compute_dotplot_rnaplfold {
       "RNAplfold",
       "-L" => $opts{'plfold-span'},
       "-W" => $opts{'plfold-winsize'}, @RNAfold_args;
+
+    if ($opts{'noLP'}) {
+        push @fold_cmd, '--noLP';
+    }
 
     my $slen=length($seq_str);
     my $win = $slen;

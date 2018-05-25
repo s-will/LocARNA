@@ -55,7 +55,7 @@ namespace LocARNA {
             // recompute all probabilities
             RnaEnsemble rna_ensemble(
                 pimpl_->sequence_, pfoldparams, false,
-                true); // use given parameters, no in loop, use alifold
+                pimpl_->sequence_.num_of_rows()>1); // use given parameters, no in loop, use alifold unless single seq
 
             // initialize from RnaEnsemble; note: method is virtual
             init_from_rna_ensemble(rna_ensemble, pfoldparams);
@@ -152,7 +152,7 @@ namespace LocARNA {
             // recompute all probabilities
             RnaEnsemble rna_ensemble(
                 sequence(), pfoldparams, true,
-                true); // use given parameters, in-loop, use alifold
+                pimpl_->sequence_.num_of_rows()>1); // use given parameters, in-loop, use alifold unless single seq
 
             // initialize
             init_from_rna_ensemble(rna_ensemble, pfoldparams);
@@ -1278,20 +1278,23 @@ namespace LocARNA {
      */
     std::string
     format_prob(double prob) {
+        size_t precision = 4;
+
         std::ostringstream outd;
-        outd.precision(3);
+        outd.precision(precision);
         outd << prob;
 
-        if (outd.str().length() <= 6) {
-            return outd.str();
+        std::string s = outd.str();
+
+        if (outd.str().length() > precision+4) {
+            std::ostringstream outs;
+            outs.setf(std::ios::scientific, std::ios::floatfield);
+            outs.precision(precision-1);
+            outs << prob;
+
+            s = outs.str();
         }
 
-        std::ostringstream outs;
-        outs.setf(std::ios::scientific, std::ios::floatfield);
-        outs.precision(2);
-        outs << prob;
-
-        std::string s = outs.str();
         size_t pos = s.find("e-0");
         if (pos != std::string::npos) {
             s.replace(pos, 3, "e-");

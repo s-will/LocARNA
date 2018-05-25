@@ -1,6 +1,12 @@
 <<<<<<< HEAD
 === 2018
 
+2.0.0RC6
+	adjust behavior of locarna and mlocarna for pairwise alignments
+	-- do not use alifold in binaries when calculating base pairs for single sequences
+	-- use noLP in mlocarna for calculating base pair probabilties /and/ the alignment
+	-- increase output precision for probabilities in pp files
+	   (reducing rounding issues for the typical cutoff)
 
 2.0.0RC5 (2018-05-08)
 	Allow penalized in global alignment

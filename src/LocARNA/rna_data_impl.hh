@@ -11,7 +11,6 @@
 
 namespace LocARNA {
 
-    class MultipleAlignment;
     class RnaEnsemble;
     class PFoldParams;
     //    template<class T> class SparseVector<T>;
