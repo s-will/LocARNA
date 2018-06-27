@@ -1,7 +1,10 @@
 ============================================================
 === 2018
 
+1.9.2.1 (2018-27-06)
+	Update test results
 	Remove perl prototype specs in to avoid perl 5.18 incompatibility
+	Include patch0 of 1.9.1
 
 ============================================================
 === 2017
