@@ -384,22 +384,4 @@ namespace LocARNA {
     sequence_identity(const string1 &seqA, const string1 &seqB);
 }
 
-// -------------------------------------------------------------------
-// --- Reversed iterable
-// from https://stackoverflow.com/questions/8542591/c11-reverse-range-based-for-loop?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
-
-namespace std {
-    template <typename T>
-    struct reversion_wrapper { T& iterable; };
-
-    template <typename T>
-    auto begin (reversion_wrapper<T> w) { return rbegin(w.iterable); }
-
-    template <typename T>
-    auto end (reversion_wrapper<T> w) { return rend(w.iterable); }
-
-    template <typename T>
-    reversion_wrapper<T> reverse (T&& iterable) { return { iterable }; }
-}
-
 #endif

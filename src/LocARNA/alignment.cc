@@ -183,32 +183,32 @@ namespace LocARNA {
 
     size_type
     Alignment::local_startA() const {
-        for( auto x: pimpl_->a_ ) {
-            if (x.is_pos()) return x;
+        for(Alignment::edge_ends_t::const_iterator it=pimpl_->a_.begin(); pimpl_->a_.end()!=it; ++it) {
+            if ( it->is_pos() ) return *it;
         }
         return pimpl_->seqA_.length()+1;
     }
 
     size_type
     Alignment::local_endA() const {
-        for( auto x: std::reverse(pimpl_->a_) ) {
-            if (x.is_pos()) return x;
+        for(Alignment::edge_ends_t::const_reverse_iterator it=pimpl_->a_.rbegin(); pimpl_->a_.rend()!=it; ++it) {
+            if ( it->is_pos() ) return *it;
         }
         return 0;
     }
 
     size_type
     Alignment::local_startB() const {
-        for( auto x: pimpl_->b_ ) {
-            if (x.is_pos()) return x;
+        for(Alignment::edge_ends_t::const_iterator it=pimpl_->b_.begin(); pimpl_->b_.end()!=it; ++it) {
+            if ( it->is_pos() ) return *it;
         }
         return pimpl_->seqB_.length()+1;
     }
 
     size_type
     Alignment::local_endB() const {
-        for( auto x: std::reverse(pimpl_->b_) ) {
-            if (x.is_pos()) return x;
+        for(Alignment::edge_ends_t::const_reverse_iterator it=pimpl_->b_.rbegin(); pimpl_->b_.rend()!=it; ++it) {
+            if ( it->is_pos() ) return *it;
         }
         return 0;
     }
