@@ -54,7 +54,7 @@ our $node_sym="\$\$nodesym";
 ## returns tree as string in NEWICK tree format
 ##
 ########################################
-sub upgma_tree : prototype($$) {
+sub upgma_tree {
     # print "Compute UPGMA-Tree ...\n";
     
     my ($names, $score_matrix) = @_;    
@@ -142,7 +142,7 @@ sub upgma_tree : prototype($$) {
 ## partition is represented as a list/subset of leaves
 ##
 ########################################
-sub tree_partitions: prototype($) {
+sub tree_partitions {
     my $tree_postorder = shift;
 
     my @result;

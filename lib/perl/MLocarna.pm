@@ -211,7 +211,7 @@ sub print_normalized_sequence_names_hash {
 ##
 ## @param $name a sequence name
 ##
-sub register_normalized_seqname :prototype($) {
+sub register_normalized_seqname {
     my ( $name ) = @_;
 
     if ( ! exists $normalized_sequence_names_hash{$name} ) {
@@ -228,7 +228,7 @@ sub register_normalized_seqname :prototype($) {
 ##
 ## @param $loh list of hashs with entry name
 ##
-sub register_normalized_seqnames: prototype($) {
+sub register_normalized_seqnames {
     my ( $loh ) = @_;
 
     foreach my $h (@$loh) {
@@ -252,7 +252,7 @@ sub forget_normalized_names {
 ## @returns normalized name for $name
 ##
 ## if normalized name was not registered: prints error message and exits with error code -1.
-sub get_normalized_seqname: prototype($) {
+sub get_normalized_seqname {
     my ( $name ) = @_;
 
     if (exists $normalized_sequence_names_hash{$name}) {
@@ -616,7 +616,7 @@ sub sequence_constraint_string {
 # a hash that maps the sequence names to their
 # corresponding sequences
 #
-sub parse_mfasta: prototype($) {
+sub parse_mfasta {
     my ($file) = @_;
     my %mfasta;
 
@@ -844,7 +844,7 @@ sub convert_dp_to_pp_with_constraints: prototype($$$$$$) {
 ## @param clustalw alignment file
 ## @param pp output file
 ##
-sub convert_alifold_dp_to_pp: prototype($$$) {
+sub convert_alifold_dp_to_pp {
     my ($dpfile,$alnfile,$ppfile) = @_;
 
     my $aln = read_clustalw_alnloh($alnfile);
@@ -1040,7 +1040,7 @@ sub read_pp_file_aln_w_anno {
 ##          positions in the hash are in [1..sequence length]
 ##
 ## auto-detect version of pp file
-sub read_pp_file_pairprobs: prototype($) {
+sub read_pp_file_pairprobs {
     my ($filename)=@_;
     my $pp_in;
 
@@ -1068,7 +1068,7 @@ sub read_pp_file_pairprobs: prototype($) {
 ##          positions in the hash are in [1..sequence length]
 ##
 ## auto-detect version of pp file
-sub read_pp_file_pairprob_info: prototype($) {
+sub read_pp_file_pairprob_info {
     my ($filename)=@_;
     my $pp_in;
 
@@ -1137,7 +1137,7 @@ sub min {
 ## @returns projected string
 ##
 ########################################
-sub project_string_to_alignment_sequence: prototype($$$) {
+sub project_string_to_alignment_sequence {
     my ($str,$seq,$gap_symbols)=@_;
 
     die "project_string_to_alignment_sequence: string and alignment sequence must have the same length:\n  $str\n  $seq\n    " if length($str) != length($seq);
@@ -1172,7 +1172,7 @@ sub project_string_to_alignment_sequence: prototype($$$) {
 ## @returns projected structure string
 ##
 ########################################
-sub project_structure_to_alignment_sequence: prototype($$$$$$) {
+sub project_structure_to_alignment_sequence {
     my ($str,
         $seq,
         $gap_symbols,
@@ -1322,7 +1322,7 @@ sub alifold_pf {
 ##        all symbols different to '(' or ')' are replaced by '.'
 ##
 ########################################
-sub constrain_sequences_from_reliable_structures: prototype($$) {
+sub constrain_sequences_from_reliable_structures {
     my ($seqs,$constraints) = @_;
 
     foreach my $i (0..@$seqs-1) {
@@ -1380,7 +1380,7 @@ sub print_k_dim_hash {
 ##
 ## @returns ref of alignment in list of hash representations
 ########################################
-sub aln_to_alnloh: prototype($$) {
+sub aln_to_alnloh {
     my ($seqs,$aln) = @_;
 
     my @resaln=();
@@ -1729,7 +1729,7 @@ sub loh_sort {
 
 
 # write aln in clustalw format to stdout
-sub write_aln: prototype($) {
+sub write_aln {
     my ($aln_ref)=@_;;
     my %aln=%{ $aln_ref };
 
@@ -1863,7 +1863,7 @@ sub project_alnloh {
 ##
 ## returns number of alignment columns with at least one match
 ##
-sub aln_length_atleastonematch: prototype($) {
+sub aln_length_atleastonematch {
     my ($aln) = @_;
 
     my $len=aln_length($aln); ## length alignment (and of each alignment string)
@@ -1997,7 +1997,7 @@ sub alipos_to_seqpos {
 
 ########################################
 ## write pp file from aln and consensus dp, write only probs >= min_prob
-sub write_pp: prototype($$$$) {
+sub write_pp {
     my ($file,$aln_ref, $cons_ref, $min_prob) = @_;
     my %aln = %{ $aln_ref };
     my @cons = @{ $cons_ref };
@@ -2045,7 +2045,7 @@ sub write_pp: prototype($$$$) {
 ## Lib format definitions can be found here:
 ## http://www.tcoffee.org/Documentation/t_coffee/t_coffee_technical.htm#_Toc256781778
 ########################################
-sub write_tcoffee_lib_file: prototype($$) {
+sub write_tcoffee_lib_file {
     my ($filename, $alignments) = @_;
 
     # open the file
@@ -2176,7 +2176,7 @@ sub get_alignment_edges($$)
 ##         indices are positions in name string
 ##
 ########################################
-sub extract_score_matrix_from_alignments: prototype($$) {
+sub extract_score_matrix_from_alignments {
     my ($names,$pairwise_alns_ref) = @_;
     my @pairwise_alns = @{ $pairwise_alns_ref };
 
@@ -2208,7 +2208,7 @@ sub extract_score_matrix_from_alignments: prototype($$) {
 
 ########################################
 ## compute reliability of an alignment as reliability for the best structure
-sub aln_reliability_beststruct_fromfile: prototype($$$) {
+sub aln_reliability_beststruct_fromfile {
     my ($file,$bmprobs,$amprobs)=@_;
     my $aln=read_aln_wo_anno($file);
 
@@ -2222,7 +2222,7 @@ sub aln_reliability_beststruct_fromfile: prototype($$$) {
 ##
 ## compute reliability of an alignment as average of the column reliability
 ##
-sub aln_reliability_fromfile: prototype($$$) {
+sub aln_reliability_fromfile {
     my ($file,$bmprobs,$amprobs)=@_;
     my $aln=read_aln_wo_anno($file);
 
@@ -2289,7 +2289,7 @@ sub parse_bracket_structure {
 ## @param $str structure string
 ## @param $constraints anchor constraint string
 ##
-sub convert_fix_structure_to_pp: prototype($$$$$) {
+sub convert_fix_structure_to_pp {
     my ($ppfilename,$name,$seq,$str,$constraints) = @_;
 
     my @str=parse_bracket_structure($str);
