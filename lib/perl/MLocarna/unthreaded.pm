@@ -15,14 +15,14 @@ sub foreach_par {
 
 
 ## generate a thread-unique filename
-sub threadsafe_name: prototype($) {
+sub threadsafe_name {
     my ($name) = @_;
     return $name;
 }
 
 
 #do nothing
-sub share: prototype(\[$@%]) {
+sub share {
     return;
 }
 

@@ -88,7 +88,7 @@ sub parse_dp_ps {
     return ($seq,\%pairprobs);
 }
 
-sub print_matrix: prototype($$$) {
+sub print_matrix {
     my ($file,$len,$matrix_ref) = @_;
     my %matrix = %{ $matrix_ref };
 

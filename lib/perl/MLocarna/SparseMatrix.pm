@@ -50,7 +50,7 @@ our @EXPORT_OK   = qw(
 
 ########################################
 ## add two 2-dimensional sparse matrices
-sub add_sparsematrix_2D: prototype($$) {
+sub add_sparsematrix_2D {
     my ($m1,$m2) = @_;
 
     my %m3 = %{ $m1 };
@@ -72,7 +72,7 @@ sub add_sparsematrix_2D: prototype($$) {
 ## @post $m1 = $m1 + $m2
 ##
 ########################################
-sub add_sparsematrix_2D_inplace: prototype($$) {
+sub add_sparsematrix_2D_inplace {
     my ($m1,$m2) = @_;
 
     foreach my $i (keys %$m2) {
@@ -86,7 +86,7 @@ sub add_sparsematrix_2D_inplace: prototype($$) {
 
 ########################################
 ## add two 4-dimensional sparse matrices
-sub add_sparsematrix_4D: prototype($$) {
+sub add_sparsematrix_4D {
     my ($m1_ref,$m2_ref) = @_;
 
     my %m1 = %{ $m1_ref };
@@ -108,7 +108,7 @@ sub add_sparsematrix_4D: prototype($$) {
     return %m3;
 }
 
-sub divide_sparsematrix_2D: prototype($$) {
+sub divide_sparsematrix_2D {
     my ($m_ref,$divisor) = @_;
 
     my %m = %{ $m_ref };
@@ -129,7 +129,7 @@ sub divide_sparsematrix_2D: prototype($$) {
 ## @post $m /= $divisor
 ##
 ########################################
-sub divide_sparsematrix_2D_inplace: prototype($$) {
+sub divide_sparsematrix_2D_inplace {
     my ($m,$divisor) = @_;
 
     foreach my $i (keys %$m) {
@@ -140,7 +140,7 @@ sub divide_sparsematrix_2D_inplace: prototype($$) {
 }
 
 
-sub divide_sparsematrix_4D: prototype($$) {
+sub divide_sparsematrix_4D {
     my ($m_ref,$divisor) = @_;
 
     my %m = %{ $m_ref };
@@ -168,7 +168,7 @@ sub divide_sparsematrix_4D: prototype($$) {
 ##
 ## return result sparsematrix
 ########################################
-sub filter_sparsematrix_2D: prototype($$) {
+sub filter_sparsematrix_2D {
     my ($m_ref,$threshold) = @_;
 
     my %m = %{ $m_ref };
@@ -192,7 +192,7 @@ sub filter_sparsematrix_2D: prototype($$) {
 ##
 ## return result sparsematrix
 ########################################
-sub filter_sparsematrix_4D: prototype($$) {
+sub filter_sparsematrix_4D {
     my ($m_ref,$threshold) = @_;
 
     my %m = %{ $m_ref };
@@ -214,7 +214,7 @@ sub filter_sparsematrix_4D: prototype($$) {
 }
 
 
-sub scale_sparsematrix_2D: prototype($$) {
+sub scale_sparsematrix_2D {
     my ($m_ref,$scale) = @_;
 
     my %m = %{ $m_ref };
@@ -229,7 +229,7 @@ sub scale_sparsematrix_2D: prototype($$) {
     return %r;
 }
 
-sub scale_sparsematrix_4D: prototype($$) {
+sub scale_sparsematrix_4D {
     my ($m_ref,$scale) = @_;
 
     my %m = %{ $m_ref };
@@ -251,7 +251,7 @@ sub scale_sparsematrix_4D: prototype($$) {
 
 
 # read from a sparse matrix file as written by locarna --write-match-probs
-sub read_sparsematrix_2D: prototype($) {
+sub read_sparsematrix_2D {
     my ($file) = @_;
 
     open(my $SM_IN, "<", $file) || die "Cannot read from $file: $!";
@@ -270,7 +270,7 @@ sub read_sparsematrix_2D: prototype($) {
 }
 
 # read from a sparse matrix file as written by locarna --write-match-probs
-sub read_sparsematrix_4D: prototype($) {
+sub read_sparsematrix_4D {
     my ($file) = @_;
 
     open(my $SM_IN, "<", $file) || die "Cannot read from $file: $!";
@@ -289,7 +289,7 @@ sub read_sparsematrix_4D: prototype($) {
 }
 
 
-sub write_sparsematrix_2D: prototype($$) {
+sub write_sparsematrix_2D {
     my ($m_ref,$file)=@_;
     my %m = %{ $m_ref };
 
@@ -306,7 +306,7 @@ sub write_sparsematrix_2D: prototype($$) {
     close $SM_OUT;
 }
 
-sub print_sparsematrix_2D: prototype($$) {
+sub print_sparsematrix_2D {
     my ($m_ref)=@_;
     my %m = %{ $m_ref };
 
@@ -318,7 +318,7 @@ sub print_sparsematrix_2D: prototype($$) {
 }
 
 
-sub write_sparsematrix_4D: prototype($$) {
+sub write_sparsematrix_4D {
     my ($m_ref,$file)=@_;
     my %m = %{ $m_ref };
 
@@ -339,7 +339,7 @@ sub write_sparsematrix_4D: prototype($$) {
 
 
 # transpose a sparse matrix implemented as hash of hashs
-sub transpose_sparsematrix_2D: prototype($) {
+sub transpose_sparsematrix_2D {
     my ($m_ref) = @_;
 
     my %m = %{ $m_ref };
@@ -356,7 +356,7 @@ sub transpose_sparsematrix_2D: prototype($) {
 }
 
 # transpose a sparse matrix implemented as hash of hashs
-sub transpose_sparsematrix_4D: prototype($) {
+sub transpose_sparsematrix_4D {
     my ($m_ref) = @_;
 
     my %m = %{ $m_ref };

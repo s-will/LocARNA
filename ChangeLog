@@ -1,6 +1,7 @@
-<<<<<<< HEAD
+============================================================
 === 2018
 
+	Remove perl prototype specs in to avoid perl 5.18 incompatibility
 2.0.0RC6
 	adjust behavior of locarna and mlocarna for pairwise alignments
 	-- do not use alifold in binaries when calculating base pairs for single sequences

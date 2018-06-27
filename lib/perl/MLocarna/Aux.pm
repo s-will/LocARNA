@@ -57,7 +57,7 @@ our $verbosemode=3;
 ## level 0  = print to screen only moreverbose
 ## level 2  = print to screen for verbose
 ## level 3  = print to screen
-sub printmsg: prototype($$) {
+sub printmsg {
     my ($verblevel, $message) = @_;
 
     ## print LOG "$message";
@@ -69,7 +69,7 @@ sub printmsg: prototype($$) {
 
 ########################################
 ## print error message
-sub printerr: prototype($) {
+sub printerr {
     my ($message) = @_;
 
     ## print LOG "$message";
@@ -78,13 +78,13 @@ sub printerr: prototype($) {
 }
 
 ## compose hash pair
-sub chp: prototype($$) {
+sub chp {
     my ($nameA,$nameB)=@_;
     return "$nameA#$nameB";
 }
 
 ## decompose hash pair
-sub dhp: prototype($) {
+sub dhp {
     my ($name_pair)=@_;
     $name_pair =~ /([^#]*)#([^#]*)/;
     return ($1,$2);
@@ -118,7 +118,7 @@ sub subtract_list {
 ## is_gap($s)
 ## returns whether $s is a gap symbol (different to A-Za-z
 ##
-sub is_gap: prototype($) {
+sub is_gap {
     my ($s)=@_;
     return ($s !~ /^[A-Za-z]$/);
 }
@@ -131,7 +131,7 @@ sub is_gap: prototype($) {
 ## sequence positions in [1..seqlen], alignment positions in [1..alilen]
 ##
 ########################################
-sub project_seq: prototype($) {
+sub project_seq {
     my ($alig_str) = @_;
 
     my @posmap;
@@ -154,7 +154,7 @@ sub project_seq: prototype($) {
 ## @param $aln ref to alignment hash
 ##
 ## ATTENTION: aln is not allowed to contain constraint extensions!
-sub aln_size: prototype($) {
+sub aln_size {
     my $aln = shift;
 
     my @ks = keys %$aln;
@@ -171,7 +171,7 @@ sub aln_size: prototype($) {
 ## @param $aln ref to alignment hash
 ##
 ## ATTENTION: aln is not allowed to contain constraint extensions!
-sub aln_names: prototype($) {
+sub aln_names {
     my $aln = shift;
 
     my @ks = keys %$aln;
@@ -190,7 +190,7 @@ sub aln_names: prototype($) {
 ## ATTENTION: sequence names in aln are not allowed to contain symbols '#',
 ## since this symbol is reserved for the constraint tags
 ##
-sub aln_size_with_constraints: prototype($) {
+sub aln_size_with_constraints {
     my $aln = shift;
 
     my @ks = keys %$aln;
@@ -203,7 +203,7 @@ sub aln_size_with_constraints: prototype($) {
 ##
 ## return length of alignment strings
 ## (assume that all strings have same length)
-sub aln_length: prototype($) {
+sub aln_length {
     my $aln = shift;
     my @ks = keys %$aln;
     return length( $aln->{$ks[0]} );

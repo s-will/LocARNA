@@ -323,7 +323,7 @@ sub parseAln{
 #
 ######################################################################
 
-sub sliceAlnByColumn: prototype($$$) {
+sub sliceAlnByColumn {
 
   my @aln=@{$_[0]};
   shift;

@@ -137,7 +137,7 @@ sub sum_paired_prob_am {
 ## returns hash of averaged base match probabilities
 ##
 ########################################
-sub average_basematch_probs: prototype($$$) {
+sub average_basematch_probs {
     my ($alnA,$alnB,$bmprobs) = @_;
 
     my @namesA = aln_names($alnA);
@@ -182,7 +182,7 @@ sub average_basematch_probs: prototype($$$) {
 ## returns hash of averaged arc match probabilities
 ##
 ########################################
-sub average_arcmatch_probs: prototype($$$) {
+sub average_arcmatch_probs {
     my ($alnA,$alnB,$amprobs) = @_;
 
     my @namesA = aln_names($alnA);
@@ -234,7 +234,7 @@ sub average_arcmatch_probs: prototype($$$) {
 ## returns ref of hash %mAB of re-estimated match probabilities between A and B
 ##
 ########################################
-sub consistency_transform_single_am: prototype($$) {
+sub consistency_transform_single_am {
     my ($mCA,$mCB) = @_;
 
     my %mAB;
@@ -276,7 +276,7 @@ sub consistency_transform_single_am: prototype($$) {
 ## returns ref of hash %mAB of re-estimated match probabilities between A and B
 ##
 ########################################
-sub consistency_transform_single_bm: prototype($$) {
+sub consistency_transform_single_bm {
     my ($mCA_ref,$mCB_ref) = @_;
 
     my %mAB;
@@ -388,7 +388,7 @@ sub consistency_transform_bm {
 ## returns ref of hash of base match probabilities
 ##
 ########################################
-sub read_bm_probs: prototype($) {
+sub read_bm_probs {
     my ($dir)=@_;
 
     my %bmprobs;
@@ -419,7 +419,7 @@ sub read_bm_probs: prototype($) {
 
 
 ## write the basematch probabilities to files for later inspection by a user
-sub write_bm_probs: prototype($$) {
+sub write_bm_probs {
     my ($dir,$bmprobs_ref)=@_;
 
     my %bmprobs = %{ $bmprobs_ref };
@@ -458,7 +458,7 @@ sub write_bm_probs: prototype($$) {
 ## returns ref of hash of arc match probabilities
 ##
 ########################################
-sub read_am_probs: prototype($) {
+sub read_am_probs {
     my ($dir)=@_;
 
     my %amprobs;
@@ -486,7 +486,7 @@ sub read_am_probs: prototype($) {
 
 
 ## write the basematch probabilities to files for later inspection by a user
-sub write_am_probs: prototype($$) {
+sub write_am_probs {
     my ($dir,$amprobs_ref)=@_;
 
     my %amprobs = %{ $amprobs_ref };
@@ -632,7 +632,7 @@ sub compute_bmreliabilities_single_seq {
 ## return ref of hash with arc match reliabilities
 ##
 ########################################
-sub compute_amreliabilities_single_seq: prototype($$$$) {
+sub compute_amreliabilities_single_seq {
 
     my ($nameA,$aln,$amprobs,$pairprobs) = @_;
 
@@ -721,7 +721,7 @@ sub compute_amreliabilities_single_seq: prototype($$$$) {
 ## alignment column indices are 1..'alignment length' for structures bmrel_seq,bmrel_str, amrel.
 ##
 ########################################
-sub compute_reliability: prototype($$$) {
+sub compute_reliability {
     my ($aln,$bmprobs,$amprobs) = @_;
 
     my @names = aln_names($aln);
@@ -1082,7 +1082,7 @@ end
 ##   ! indices in $pairprobs need to be in range 1..'sequence length'
 ##
 ########################################
-sub write_dotplot: prototype($$$) {
+sub write_dotplot {
     my ($filename,$sequence,$pairprobs) = @_;
 
     my @colors=("0 0 0");
@@ -1110,7 +1110,7 @@ sub write_dotplot: prototype($$$) {
 ## different bracket symbols to distinguish base pairs of different 'strength')
 ##
 ########################################
-sub max_weight_structure: prototype($$$$$) {
+sub max_weight_structure {
     my ($len,
         $base_weights,
         $arc_weights,
@@ -1321,7 +1321,7 @@ sub consistency_transform_am {
 ## the hash entries are only valid for non-gap positions
 ##
 ########################################
-sub alicol2seqpos: prototype($$) {
+sub alicol2seqpos {
     my ($names_ref, $aln_ref) = @_;
     my @names = @{ $names_ref };
     my $aln_length=length($aln_ref->{$names[0]});
@@ -1388,7 +1388,7 @@ sub evaluate_alignment {
 ## as averaged column reliability (unweighted structure+sequence rel.)
 ##
 ########################################
-sub aln_reliability: prototype($$$) {
+sub aln_reliability {
     my ($aln,$bmprobs,$amprobs) = @_;
 
     my ($bmrels_seq, $bmrels_str, $amrels)
