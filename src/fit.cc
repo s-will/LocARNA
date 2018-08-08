@@ -19,28 +19,6 @@
 using namespace std;
 using namespace LocARNA;
 
-// --------------------------------------------------
-// subs for reading input
-//
-
-void
-read_number_sequence(string &filename, numseq_t &numseq) {
-    ifstream in(filename.c_str());
-
-    double x;
-    while (in >> x) {
-        numseq.push_back(x);
-    }
-}
-
-void
-read_number_sequence(istream &in, numseq_t &numseq) {
-    double x;
-    while (in >> x) {
-        numseq.push_back(x);
-    }
-}
-
 // ------------------------------------------------------------
 //
 // Options
@@ -86,6 +64,18 @@ option_def my_options[] =
 
 // END Options
 // ------------------------------------------------------------
+
+
+// --------------------------------------------------
+// read input vector
+template<class T>
+void
+read_vector(istream &in, std::vector<T> &numseq) {
+    T x;
+    while (in >> x) {
+        numseq.push_back(x);
+    }
+}
 
 int
 main(int argc, char **argv) {
@@ -138,9 +128,10 @@ main(int argc, char **argv) {
     numseq_t numseq;
 
     if (clp.filename == "-") {
-        read_number_sequence(std::cin, numseq);
+        read_vector(std::cin, numseq);
     } else {
-        read_number_sequence(clp.filename, numseq);
+        ifstream in(clp.filename.c_str());
+        read_vector(in, numseq);
     }
 
     // ----------------------------------------
