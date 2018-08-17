@@ -397,8 +397,8 @@ namespace LocARNA {
 
             if (trace_probs.fail()) {
                 std::cerr << "WARNING: no valid trace probabilities could be "
-                             "computed with the requested floating point "
-                             "precision."
+                             "computed with the requested floating point precision. "
+                             "Consider flag --extended-pf (or even --quad-pf) to increase the precision."
                           << std::endl;
             }
 
