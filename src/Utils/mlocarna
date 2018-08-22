@@ -33,7 +33,7 @@ Going beyond the basic progressive alignment scheme, Mlocarna
 implements probabilistic consistency transformation and iterative
 alignment, which are available in probabilistic mode. Moreover, the
 LocARNA package provides an alternative multiple alignment tool
-"locarante", which generates alignments based on T-Coffee using
+"locarnate", which generates alignments based on T-Coffee using
 (non-probabilistic) consistency transformation.
 
 =head1 OPTIONS
