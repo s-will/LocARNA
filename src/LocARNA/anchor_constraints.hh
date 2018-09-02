@@ -108,9 +108,9 @@ namespace LocARNA {
          constraints.
          */
         AnchorConstraints(size_type lenA,
-                          const std::vector<std::string> &seqCA,
+                          std::vector<std::string> seqCA,
                           size_type lenB,
-                          const std::vector<std::string> &seqCB,
+                          std::vector<std::string> seqCB,
                           bool strict);
 
         /**

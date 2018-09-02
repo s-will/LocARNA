@@ -17,11 +17,11 @@ namespace LocARNA {
         const AlignmentEdges &edges,
         const SequenceAnnotation &annotationA,
         const SequenceAnnotation &annotationB) {
-        // assert that names are of equal size
-        assert(annotationA.name_length() == annotationB.name_length());
-
         // if one of annotation{A,B} is empty, the consensus is empty
         if (!annotationA.empty() && !annotationB.empty()) {
+            // assert that names are of equal size
+            assert(annotationA.name_length() == annotationB.name_length());
+
             annotation_.resize(annotationA.name_length());
 
             for (auto &e : edges ) {

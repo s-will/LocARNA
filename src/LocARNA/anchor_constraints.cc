@@ -11,9 +11,9 @@ namespace LocARNA {
 
     AnchorConstraints::AnchorConstraints(
         size_type lenA,
-        const std::vector<std::string> &seqVecA,
+        std::vector<std::string> seqVecA,
         size_type lenB,
-        const std::vector<std::string> &seqVecB,
+        std::vector<std::string> seqVecB,
         bool strict)
         : strict_(strict),
           lenA_(lenA),
@@ -22,10 +22,18 @@ namespace LocARNA {
           adr_(lenA + 1, range_t(1, lenB)),
           air_(lenB + 1, range_t(1, lenA)),
           name_size_(seqVecA.size()) {
+
+        auto empty = std::vector<std::string>();
+        // if one anchor spec is empty, then do not set any anchors
+        if ( seqVecA.size() == 0 || seqVecB.size() == 0 ) {
+            seqVecA = empty;
+            seqVecB = empty;
+	}
+
         if (seqVecA.size() != seqVecB.size()) {
             throw(
-                failure("Wrong input for sequence constraints. Lengths of "
-                        "constraint names in sequences don't fit."));
+                failure("Error while setting up anchor constraints. The anchor names "
+                        "in all input sequences must have the same lengths."));
         }
 
         std::map<std::string, size_type> nameTabA;
@@ -53,13 +61,16 @@ namespace LocARNA {
         std::vector<std::string> seqVecA;
         std::vector<std::string> seqVecB;
 
-        split_at_separator(seqCA, '#', seqVecA);
-        split_at_separator(seqCB, '#', seqVecB);
+        // if one anchor spec is empty, then do not set any anchors
+	if ( seqCA!="" && seqCB!="" ) {
+           split_at_separator(seqCA, '#', seqVecA);
+           split_at_separator(seqCB, '#', seqVecB);
+        }
 
         if (seqVecA.size() != seqVecB.size()) {
             throw(
-                failure("Error during parsing of constraints. All constraint names "
-                        "in sequences must have the same length."));
+                failure("Error while setting up consensus anchor constraints. The anchor names "
+                        "in all input sequences must have the same length."));
         }
 
         name_size_ = seqVecA.size();
@@ -90,8 +101,8 @@ namespace LocARNA {
         for (const auto &x : seq) {
             if (seq_len != x.length()) {
                 throw(
-                    failure("Error during parsing of constraints. Constraint "
-                            "string of wrong length."));
+                    failure("Error during parsing of anchor constraints. Anchor specification "
+                            "strings must have exactly the same length as the corresponding sequences."));
             }
 
             for (std::string::size_type i = 0; i < seq_len; i++) {
