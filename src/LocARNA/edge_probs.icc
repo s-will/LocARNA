@@ -100,9 +100,13 @@ namespace LocARNA {
         zAl.fill(0);
         zBl.fill(0);
 
+        // For the init of zM(0,0) one must distringuish global/local:
+        // In global alignment, there is an empty alignment,
+        // which does not exist as local alignment!
         if (tc.is_valid(0, 0)) {
             zMl(0, 0) = flag_local_ ? 0 : 1;
         }
+
         if (tc.is_valid(1, 0)) {
             zAl(1, 0) = g_open * g_ext;
         }
@@ -110,7 +114,6 @@ namespace LocARNA {
             zBl(0, 1) = g_open * g_ext;
         }
 
-        // init that differs for global and local
         for (size_type i = 2; i <= lenA_; i++) {
             if (tc.min_col(i) > 0)
                 break;
@@ -183,6 +186,7 @@ namespace LocARNA {
                               free_endgaps,
                               flag_local) {
         probs_.resize(this->lenA_ + 1, this->lenB_ + 1);
+        probs_.fill(0);
 
         // in local alignment, we add 1 for the empty alignment;
         // for avoiding redundancy the weight of the empty alignment is
@@ -190,7 +194,8 @@ namespace LocARNA {
         double locality_add = (this->flag_local_ ? 1 : 0);
 
         for (size_type i = 1; i <= this->lenA_; i++) {
-            for (size_type j = 1; j <= this->lenB_; j++) {
+            for (size_type j = std::max(trace_controller.min_col(i), (size_t)1);
+                 j <= std::min(trace_controller.max_col(i), this->lenB_); j++) {
                 probs_(i, j) = (this->zM_(i, j) *
                                 (this->zMr_(this->lenA_ - i, this->lenB_ - j) +
                                  this->zAr_(this->lenA_ - i, this->lenB_ - j) +
@@ -229,13 +234,15 @@ namespace LocARNA {
                               free_endgaps,
                               flag_local) {
         probs_.resize(this->lenA_ + 1, this->lenB_ + 1);
+        probs_.fill(0);
 
         double locality_add = (this->flag_local_ ? 1 : 0);
 
         double g_open = exp(gap_opening / temp);
 
         for (size_type i = 0; i <= this->lenA_; i++) {
-            for (size_type j = 0; j <= this->lenB_; j++) {
+            for (size_type j = std::max(trace_controller.min_col(i), (size_t)0);
+                 j <= std::min(trace_controller.max_col(i), this->lenB_); j++) {
                 probs_(i, j) = this->zM_(i, j) *
                         (this->zMr_(this->lenA_ - i, this->lenB_ - j) +
                          this->zAr_(this->lenA_ - i, this->lenB_ - j) +
