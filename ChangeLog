@@ -1,6 +1,9 @@
 ============================================================
 === 2018
 
+1.9.2.2 (2018-11-10)
+	Fix: remove _all_ prototype specs for perl 5.18 backward compatibility
+
 1.9.2.1 (2018-27-06)
 	Update test results
 	Remove perl prototype specs in to avoid perl 5.18 incompatibility
