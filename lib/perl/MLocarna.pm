@@ -776,7 +776,7 @@ sub parse_mfasta_constraints {
 
 ## convert a dotplot file to a pp file
 ## thereby insert the sequence constraint strings
-sub convert_dp_to_pp_with_constraints: prototype($$$$$$) {
+sub convert_dp_to_pp_with_constraints {
     my ($dpfile,$ppfile,$name,$sequence,$constraints,$read_condprobs) = @_;
 
     open(PP_OUT,">$ppfile") || die "Cannot open $ppfile for writing.";
@@ -877,7 +877,7 @@ sub convert_alifold_dp_to_pp {
 
 
 ## compute pairwise alignment for given sequences using RNAfold -p for generating dps
-sub compute_alignment: prototype($$$$$) {
+sub compute_alignment {
     my ($bindir,$seqA,$seqB,$locarna_params,$tmpprefix) =  @_;
 
     local *CA_IN;
@@ -899,7 +899,7 @@ sub compute_alignment: prototype($$$$$) {
 
 
 
-sub compute_alignment_score: prototype($$$$$) {
+sub compute_alignment_score {
     my ($bindir,$seqA,$seqB,$locarna_params,$tmpprefix) =  @_;
 
     my @content=compute_alignment($bindir,$seqA,$seqB,$locarna_params,$tmpprefix);

@@ -82,7 +82,7 @@ sub printerr {
 
 ########################################
 ## make systemcall and print call if verbose-mode
-sub systemverb: prototype($) {
+sub systemverb {
     my ($cmd)=@_;
     printmsg 1,"$cmd\n";
     printmsg 1,readpipe("$cmd");
@@ -90,7 +90,7 @@ sub systemverb: prototype($) {
 
 ########################################
 ## make systemcall with input and print call if verbose-mode
-sub systemverb_withinput: prototype($$) {
+sub systemverb_withinput {
     my ($input,$cmd)=@_;
     printmsg 1,"\"$input\" >>> $cmd\n";
 
