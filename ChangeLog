@@ -1,7 +1,7 @@
 ============================================================
 === 2018
 
-2.0.0RC7pre
+2.0.0RC7
         Accept empty sequences in input
 	Re-enable computing consensus structures in mlocarna output and stk-files
 	Remove perl prototype specs to avoid perl 5.18 incompatibility
