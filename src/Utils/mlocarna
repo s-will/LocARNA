@@ -125,6 +125,10 @@ output to stdout and results/result.aln.
 Write STOCKHOLM files of all final and intermediate alignments (in
 addition to CLUSTALW files).
 
+=item B<--consensus-structure>
+Type of consensus structures written to screen and stockholm output
+[alifold|mea|none] (default: none). Unless explicitly specified,
+the option alifold-consensus-dp implicitly sets this to alifold.
 
 =item B<-w,--width>=columns(120)
 
@@ -1001,6 +1005,7 @@ my @options = #options that are not or not automatically passed to locarna
      "keep-sequence-order",
 
      "stockholm",
+     "consensus-structure=s",
 
      "local-progressive",
      "global-progressive",
@@ -1407,8 +1412,16 @@ if ($opts{'probabilistic'}) {
     }
 }
 
-# do not compute consensus structures
-push @locarna_params, "--consensus-structure" => "none";
+# whether to compute consensus structures and which type
+if (not defined($opts{'consensus-structure'})) {
+    if ($opts{"alifold-consensus-dp"}) {
+        $opts{'consensus-structure'}="alifold";
+    } else {
+        $opts{'consensus-structure'}="none";
+    }
+}
+
+push @locarna_params, "--consensus-structure" => $opts{'consensus-structure'};
 
 ## copy to tree params
 my @locarna_params_tree = ();
@@ -1622,6 +1635,13 @@ sub main {
         $seqs = project_sequences_for_realign($refaln);
     } else {
         $seqs = read_fasta($opts{'input-file'}) ;
+    }
+
+    foreach my $seq (@{$seqs}) {
+        if (not defined($seq->{seq}) or $seq->{seq} eq "") {
+            printmsg 2,"WARNING: Sequence $seq->{name} is empty.\n";
+            $seq->{seq}="";
+        }
     }
 
     ##### ------------------------------------------------------------
