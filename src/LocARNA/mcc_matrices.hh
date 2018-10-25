@@ -298,6 +298,7 @@ namespace LocARNA {
          */
         short
         S(size_t s, size_t i) const {
+            assert(vc_);
             return vc_->S[s][i];
         }
 
@@ -311,6 +312,7 @@ namespace LocARNA {
          */
         short
         S3(size_t s, size_t i) const {
+            assert(vc_);
             return vc_->S3[s][i];
         }
 
@@ -324,6 +326,7 @@ namespace LocARNA {
          */
         short
         S5(size_t s, size_t i) const {
+            assert(vc_);
             return vc_->S5[s][i];
         }
 

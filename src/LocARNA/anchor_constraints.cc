@@ -355,7 +355,9 @@ namespace LocARNA {
                                             size_vec_t &min_anchored_right) {
         // max_anchored_left
         max_anchored_left.resize(len + 1);
-        max_anchored_left[1] = 0;
+        if (len > 0) {
+            max_anchored_left[1] = 0;
+        }
         for (size_type i = 2; i <= len; ++i) {
             max_anchored_left[i] =
                 is_anchored(len, anchors, i - 1) ? i - 1 : max_anchored_left[i - 1];
@@ -364,7 +366,8 @@ namespace LocARNA {
         // min_anchored_right
         min_anchored_right.resize(len + 1);
         min_anchored_right[len] = len + 1;
-        for (size_type i = len - 1; i > 0; --i) {
+        for (size_type i = len; i > 0;) {
+            --i;
             min_anchored_right[i] =
                 is_anchored(len, anchors, i + 1) ? i + 1 : min_anchored_right[i + 1];
         }

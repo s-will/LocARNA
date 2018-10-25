@@ -145,6 +145,15 @@ namespace LocARNA {
         assert(sequence_.num_of_rows() == 1);
         size_t length = sequence_.length();
 
+        // catch special case of length 0 sequence, since the Vienna
+        // package does not handle this for us -- sad :(
+        if (length == 0) {
+            min_free_energy_ = 0;
+            min_free_energy_structure_ = "";
+            McCmat_ = 0;
+            return;
+        }
+
         McCmat_ = std::make_unique<McC_matrices_t>(sequence_, params);
 
         const std::string &structure_anno =
@@ -173,22 +182,14 @@ namespace LocARNA {
 
         // ----------------------------------------
         // call fold for setting the pfscale
-        if (length > 0) {
-            // workaround, since fold(char*,char*) fails on empty input
-            min_free_energy_ = vrna_mfe(McCmat_->vc(), c_structure.get());
-            min_free_energy_structure_ = std::string(c_structure.get());
+        min_free_energy_ = vrna_mfe(McCmat_->vc(), c_structure.get());
+        min_free_energy_structure_ = std::string(c_structure.get());
 
-            vrna_exp_params_rescale(McCmat_->vc(), &min_free_energy_);
-        } else {
-            min_free_energy_ = 0;
-            min_free_energy_structure_ = "";
-        }
+        vrna_exp_params_rescale(McCmat_->vc(), &min_free_energy_);
 
         // ----------------------------------------
         // call pf_fold
-        if (length > 0) { // workaround for pf_fold() on empty input
-            vrna_pf(McCmat_->vc(), NULL);
-        }
+        vrna_pf(McCmat_->vc(), NULL);
 
         if (inLoopProbs) {
             // precompute qm2 for computation of in-loop probabilities
@@ -245,6 +246,8 @@ namespace LocARNA {
         }
 
         // ----------------------------------------
+        // note: we do not get here if length==0
+
         // call alifold for setting the scale
         min_free_energy_ = vrna_mfe(McCmat_->vc(), c_structure.get());
         min_free_energy_structure_ = std::string(c_structure.get());
@@ -253,12 +256,7 @@ namespace LocARNA {
 
         // ----------------------------------------
         // call alifold partition function
-        if (length > 0) { // don't call alifold for 0 length (necessary
-                          // workaround, since alifold cannot handle
-                          // empty sequences)
-
-            vrna_pf(McCmat_->vc(), NULL);
-        }
+        vrna_pf(McCmat_->vc(), NULL);
 
         if (inLoopProbs) {
             // precompute qm2 for computation of in-loop probabilities
@@ -276,12 +274,13 @@ namespace LocARNA {
         McC_matrices_t *MCm = static_cast<McC_matrices_t *>(this->McCmat_.get());
 
         size_type len = sequence_.length();
-
-        std::vector<FLT_OR_DBL> qqm(len + 2, 0);
-        std::vector<FLT_OR_DBL> qqm1(len + 2, 0);
+        assert(len>0);
 
         // qm1.resize((len+1)*(len+2)/2);
         qm2_.resize((len + 1) * (len + 2) / 2);
+
+        std::vector<FLT_OR_DBL> qqm(len + 2, 0);
+        std::vector<FLT_OR_DBL> qqm1(len + 2, 0);
 
         // initialize qqm1
         for (size_type i = 1; i <= len; i++) {
@@ -333,17 +332,19 @@ namespace LocARNA {
         assert(used_alifold_);
         assert(McCmat_);
 
+        size_type len = sequence_.length();
+        assert(len>0);
+
+        qm2_.resize((len + 1) * (len + 2) / 2);
+
         McC_ali_matrices_t *MCm =
             static_cast<McC_ali_matrices_t *>(this->McCmat_.get());
 
-        size_type len = sequence_.length();
         size_type n_seq = sequence_.num_of_rows();
 
         std::vector<FLT_OR_DBL> qqm(len + 2, 0);
         std::vector<FLT_OR_DBL> qqm1(len + 2, 0);
         std::vector<int> type(n_seq);
-
-        qm2_.resize((len + 1) * (len + 2) / 2);
 
         // initialize qqm1
         for (size_type i = 1; i <= len; i++)

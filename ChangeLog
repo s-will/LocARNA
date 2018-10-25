@@ -1,9 +1,12 @@
 ============================================================
 === 2018
 
-	Remove perl prototype specs in to avoid perl 5.18 incompatibility
+2.0.0RC7pre
+        Accept empty sequences in input
+	Re-enable computing consensus structures in mlocarna output and stk-files
+	Remove perl prototype specs to avoid perl 5.18 incompatibility
 2.0.0RC6
-	adjust behavior of locarna and mlocarna for pairwise alignments
+	Adjust behavior of locarna and mlocarna for pairwise alignments
 	-- do not use alifold in binaries when calculating base pairs for single sequences
 	-- use noLP in mlocarna for calculating base pair probabilties /and/ the alignment
 	-- increase output precision for probabilities in pp files

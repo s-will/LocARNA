@@ -107,10 +107,10 @@ namespace LocARNA {
             zMl(0, 0) = flag_local_ ? 0 : 1;
         }
 
-        if (tc.is_valid(1, 0)) {
+        if (lenA_>0 && tc.is_valid(1, 0)) {
             zAl(1, 0) = g_open * g_ext;
         }
-        if (tc.is_valid(0, 1)) {
+        if (lenB_>0 && tc.is_valid(0, 1)) {
             zBl(0, 1) = g_open * g_ext;
         }
 

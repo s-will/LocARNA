@@ -26,7 +26,7 @@ namespace LocARNA {
 
     McC_matrices_base::McC_matrices_base(vrna_fold_compound_t *vc) : vc_(vc) {}
     McC_matrices_base::~McC_matrices_base() {
-        vrna_fold_compound_free(vc_);
+        if (vc_ != nullptr) vrna_fold_compound_free(vc_);
     }
 
     // ----------------------------------------
@@ -40,9 +40,13 @@ namespace LocARNA {
         auto seqstring = sequence.seqentry(0).seq().str();
         auto md = const_cast<vrna_md_t &>(params.model_details());
 
-        vc_ = vrna_fold_compound(seqstring.c_str(),
-                                 &md,
-                                 VRNA_OPTION_PF);
+        if (sequence.length()>0) {
+            vc_ = vrna_fold_compound(seqstring.c_str(),
+                                     &md,
+                                     VRNA_OPTION_PF);
+        } else {
+            vc_ = nullptr;
+        }
     }
     McC_matrices_t::~McC_matrices_t() {}
 

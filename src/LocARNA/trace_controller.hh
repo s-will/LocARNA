@@ -110,6 +110,7 @@ namespace LocARNA {
          */
         size_t
         rows() const {
+            assert(min_col_.size()>0);
             return min_col_.size() - 1;
         }
 
@@ -120,6 +121,8 @@ namespace LocARNA {
          */
         size_t
         min_col(size_t i) const {
+            assert(i>=0);
+            assert(i<min_col_.size());
             return min_col_[i];
         }
 
@@ -130,6 +133,8 @@ namespace LocARNA {
          */
         size_t
         max_col(size_t i) const {
+            assert(i>=0);
+            assert(i<max_col_.size());
             return max_col_[i];
         }
 
@@ -315,6 +320,11 @@ namespace LocARNA {
         constrain_wo_ref(size_type lenA, size_type lenB, size_type delta);
     };
 
+    //!@brief Is (i,j) a valid cell of the DP matrices (i.e. on some possible trace)?
+    //!@param i index
+    //!@param j index
+    //!@result flag, whether (i,j) is valid
+    //!@note (i,j) must be matrix entry, i.e. in correct range
     inline bool
     TraceController::is_valid(size_type i, size_type j) const {
         return min_col(i) <= j && j <= max_col(i);
