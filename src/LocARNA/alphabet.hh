@@ -7,9 +7,7 @@
 
 #include <array>
 #include <vector>
-#include <map>
 #include <iosfwd>
-#include <assert.h>
 
 namespace LocARNA {
 
@@ -18,8 +16,6 @@ namespace LocARNA {
      *
      * maintain an alphabet and offer efficient transformation
      * between elements of alphabet and their indices
-     *
-     * @todo using map for the index to char map is overkill; rather sort and use binsearch
      */
     template <class T, std::size_t N>
     class Alphabet : public std::array<T,N> {
