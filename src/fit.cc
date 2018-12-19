@@ -13,33 +13,12 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <memory>
 
 #include "LocARNA/fitonoff.hh"
 
 using namespace std;
 using namespace LocARNA;
-
-// --------------------------------------------------
-// subs for reading input
-//
-
-void
-read_number_sequence(string &filename, numseq_t &numseq) {
-    ifstream in(filename.c_str());
-
-    double x;
-    while (in >> x) {
-        numseq.push_back(x);
-    }
-}
-
-void
-read_number_sequence(istream &in, numseq_t &numseq) {
-    double x;
-    while (in >> x) {
-        numseq.push_back(x);
-    }
-}
 
 // ------------------------------------------------------------
 //
@@ -49,43 +28,62 @@ read_number_sequence(istream &in, numseq_t &numseq) {
 
 const std::string VERSION_STRING = (std::string)PACKAGE_STRING;
 
-bool help;
-bool version;
-bool verbose;
+struct fit_clp {
+    bool help;
+    bool version;
+    bool verbose;
 
-string filename; // file that contains the sequence of numbers
+    string filename; // file that contains the sequence of numbers
+    string penalty_filename; // file that contains the sequence of numbers
 
-double delta_ab; // penalty for a change a->b
-double delta_ba; // penalty for a change b->a
+    double delta_val; // penalty for a change a->b
 
-double beta = 12; // inverse temperature
+    double beta = 12; // inverse temperature
 
-bool opt_once_on;
+    bool opt_once_on;
 
-bool opt_all_values;
+    bool opt_all_values;
+
+	bool opt_penalties;
+};
+
+fit_clp clp;
 
 option_def my_options[] =
-    {{"help", 'h', &help, O_NO_ARG, 0, O_NODEFAULT, "", "This help"},
-     {"version", 'V', &version, O_NO_ARG, 0, O_NODEFAULT, "", "Version info"},
-     {"verbose", 'v', &verbose, O_NO_ARG, 0, O_NODEFAULT, "", "Verbose"},
+    {{"help", 'h', &clp.help, O_NO_ARG, 0, O_NODEFAULT, "", "This help"},
+     {"version", 'V', &clp.version, O_NO_ARG, 0, O_NODEFAULT, "", "Version info"},
+     {"verbose", 'v', &clp.verbose, O_NO_ARG, 0, O_NODEFAULT, "", "Verbose"},
 
-     {"delta", 'd', 0, O_ARG_DOUBLE, &delta_ab, "0.5", "float",
+     {"delta", 'd', 0, O_ARG_DOUBLE, &clp.delta_val, "0.5", "float",
       "Penalty for state change"},
-     {"beta", 'b', 0, O_ARG_DOUBLE, &beta, "6", "float", "Inverse temperature"},
-     {"once-on", 0, &opt_once_on, O_NO_ARG, 0, O_NODEFAULT, "",
+     {"beta", 'b', 0, O_ARG_DOUBLE, &clp.beta, "6", "float", "Inverse temperature"},
+     {"once-on", 0, &clp.opt_once_on, O_NO_ARG, 0, O_NODEFAULT, "",
       "Fit a signal that is on only once"},
-     {"all-values", 0, &opt_all_values, O_NO_ARG, 0, O_NODEFAULT, "",
+     {"all-values", 0, &clp.opt_all_values, O_NO_ARG, 0, O_NODEFAULT, "",
       "Show all function values of signal (instead of only ranges)"},
-     {"", 0, 0, O_ARG_STRING, &filename, "profile.dat", "file",
+     {"penalties", 'p', &clp.opt_penalties, O_ARG_STRING, &clp.penalty_filename, O_NODEFAULT, "file",
+      "Input penalty file with sequence of numbers"},
+     {"", 0, 0, O_ARG_STRING, &clp.filename, "profile.dat", "file",
       "Input file with sequence of numbers"},
      {"", 0, 0, 0, 0, O_NODEFAULT, "", ""}};
 
 // END Options
 // ------------------------------------------------------------
 
+
+// --------------------------------------------------
+// read input vector
+template<class T>
+void
+read_vector(istream &in, std::vector<T> &numseq) {
+    T x;
+    while (in >> x) {
+        numseq.push_back(x);
+    }
+}
+
 int
 main(int argc, char **argv) {
-    delta_ba = delta_ab; // always use same penalties for a->b and b->a
 
     double c0 = 0.2;
     double c1 = 0.6; // initial on off values
@@ -95,7 +93,7 @@ main(int argc, char **argv) {
     //
     bool process_success = process_options(argc, argv, my_options);
 
-    if (help) {
+    if (clp.help) {
         cout << "locarnap_fit - Fit a two step function to a data series."
              << endl
              << endl;
@@ -107,9 +105,9 @@ main(int argc, char **argv) {
         return 0;
     }
 
-    if (version || verbose) {
+    if (clp.version || clp.verbose) {
         cout << "locarnap_fit (" << VERSION_STRING << ")" << endl;
-        if (version)
+        if (clp.version)
             return 0;
         else
             cout << endl;
@@ -121,7 +119,7 @@ main(int argc, char **argv) {
         return -1;
     }
 
-    if (verbose) {
+    if (clp.verbose) {
         print_options(my_options);
     }
     //
@@ -132,51 +130,69 @@ main(int argc, char **argv) {
     // read number sequence from file or stdin
     //
     numseq_t numseq;
+	numseq_t penalties;
 
-    if (filename == "-") {
-        read_number_sequence(std::cin, numseq);
+    if (clp.filename == "-") {
+        read_vector(std::cin, numseq);
     } else {
-        read_number_sequence(filename, numseq);
+        ifstream in(clp.filename.c_str());
+        read_vector(in, numseq);
     }
+
+	// read in the position-dependent penalty 
+	if (not clp.opt_penalties) { // --position-penalty is not set
+		read_vector(std::cin, penalties);
+	} else {
+		ifstream in(clp.penalty_filename.c_str());
+		read_vector(in, penalties);
+	}
 
     // ----------------------------------------
     // optimize on/off-values and compute fit
     //
-    FitOnOff fns(numseq, delta_ab, delta_ba, beta);
+
+    // polymorphism used to generate different objects, depending on the use of
+    // position dependent penalties or not
+	std::unique_ptr<FitOnOff> fns;
+
+	if (not clp.opt_penalties) // position dependent penalties off
+    	fns = std::make_unique<FitOnOff>(numseq, clp.delta_val, clp.beta);
+	else
+		fns = std::make_unique<FitOnOffVarPenalty>(numseq, penalties ,clp.beta);
 
     // double viterbi_score;
 
     // optimize
-    pair<double, double> opt = fns.optimize(c0, c1);
+    pair<double, double> opt = fns->optimize(c0, c1);
     c0 = opt.first;
     c1 = opt.second;
 
-    if (opt_once_on) {
+    if (clp.opt_once_on) {
         // run once on optimization
         double on = std::max(c0, c1);
         double off = std::min(c0, c1);
 
         // viterbi_score =
-        fns.best_once_on(off, on);
+        fns->best_once_on(off, on);
         c0 = off;
         c1 = on;
     } else {
         // run viterbi algo with optimal c0,c1
         // viterbi_score =
-        fns.viterbi(c0, c1, true);
+        fns->viterbi(c0, c1, true);
     }
     // ----------------------------------------
     // write best fit
     //
 
-    if (!opt_all_values) {
-        if (opt_once_on)
+    if (!clp.opt_all_values) {
+        if (clp.opt_once_on)
             cout << "ONOFF " << min(c0, c1) << " " << max(c0, c1) << endl;
         else
             cout << "ONOFF " << c0 << " " << c1 << endl;
         cout << "FIT ";
-        fns.write_viterbi_path_compact(cout, c0, c1);
+        fns->write_viterbi_path_compact(cout, c0, c1);
     } else {
-        fns.write_viterbi_path(cout, c0, c1);
+        fns->write_viterbi_path(cout, c0, c1);
     }
 }

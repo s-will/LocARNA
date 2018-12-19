@@ -18,14 +18,14 @@ namespace LocARNA {
 
         for (size_type i = 1; i <= x.size(); ++i) {
             v[0][i] = sqdiff(x[i - 1], c0) +
-                std::min(v[0][i - 1], v[1][i - 1] + delta_10);
+                std::min(v[0][i - 1], v[1][i - 1] + delta(i));
             v[1][i] = sqdiff(x[i - 1], c1) +
-                std::min(v[1][i - 1], v[0][i - 1] + delta_01);
+                std::min(v[1][i - 1], v[0][i - 1] + delta(i));
 
             if (traceback) {
                 t[0][i] = (v[0][i - 1] > v[1][i - 1] +
-                               delta_10); // 0 for going to 0, 1 for going to 1
-                t[1][i] = !(v[1][i - 1] > v[0][i - 1] + delta_01);
+                               delta(i)); // 0 for going to 0, 1 for going to 1
+                t[1][i] = !(v[1][i - 1] > v[0][i - 1] + delta(i));
             }
         }
 
@@ -106,9 +106,9 @@ namespace LocARNA {
 
         for (size_type i = 1; i <= x.size(); ++i) {
             v[0][i] = exp(-beta * sqdiff(x[i - 1], c0)) *
-                (v[0][i - 1] + v[1][i - 1] * exp_delta_10);
+                (v[0][i - 1] + v[1][i - 1] * exp_delta(i));
             v[1][i] = exp(-beta * sqdiff(x[i - 1], c1)) *
-                (v[1][i - 1] + v[0][i - 1] * exp_delta_01);
+                (v[1][i - 1] + v[0][i - 1] * exp_delta(i));
         }
 
         return v[0][x.size()] + v[1][x.size()];
@@ -185,24 +185,24 @@ namespace LocARNA {
                                                        // to c1
 
                 v[0][i] = theta[i] * exp_dev0 *
-                    (v[0][i - 1] + v[1][i - 1] * exp_delta_10);
+                    (v[0][i - 1] + v[1][i - 1] * exp_delta(i));
                 v[1][i] = theta[i] * exp_dev1 *
-                    (v[1][i - 1] + v[0][i - 1] * exp_delta_01);
+                    (v[1][i - 1] + v[0][i - 1] * exp_delta(i));
 
                 dv[0][0][i] = theta[i] * exp_dev0 *
-                    (dv[0][0][i - 1] + dv[1][0][i - 1] * exp_delta_10 +
-                     (v[0][i - 1] + v[1][i - 1] * exp_delta_10) * 2 * beta *
+                    (dv[0][0][i - 1] + dv[1][0][i - 1] * exp_delta(i) +
+                     (v[0][i - 1] + v[1][i - 1] * exp_delta(i)) * 2 * beta *
                          (x[i - 1] - c0));
 
                 dv[0][1][i] = theta[i] * exp_dev0 *
-                    (dv[0][1][i - 1] + dv[1][1][i - 1] * exp_delta_10);
+                    (dv[0][1][i - 1] + dv[1][1][i - 1] * exp_delta(i));
 
                 dv[1][0][i] = theta[i] * exp_dev1 *
-                    (dv[1][0][i - 1] + dv[0][0][i - 1] * exp_delta_01);
+                    (dv[1][0][i - 1] + dv[0][0][i - 1] * exp_delta(i));
 
                 dv[1][1][i] = theta[i] * exp_dev1 *
-                    (dv[1][1][i - 1] + dv[0][1][i - 1] * exp_delta_01 +
-                     (v[1][i - 1] + v[0][i - 1] * exp_delta_01) * 2 * beta *
+                    (dv[1][1][i - 1] + dv[0][1][i - 1] * exp_delta(i) +
+                     (v[1][i - 1] + v[0][i - 1] * exp_delta(i)) * 2 * beta *
                          (x[i - 1] - c1));
             }
 
