@@ -22,20 +22,29 @@ namespace LocARNA {
      *
      */
     class FitOnOff {
-        double delta_01;
-        double delta_10;
+        double delta_val;
         numseq_t x;
 
         double beta;
 
-        pf_t exp_delta_01; //!< exp(-beta*delta_01)
-        pf_t exp_delta_10; //!< exp(-beta*delta_10)
+        pf_t exp_delta_val; //!< exp(-beta*delta_val)
 
         std::vector<std::vector<pf_t> > v; //!< score/pf vectors 0 and 1
 
         std::vector<std::vector<bool> > t; //!< trace vectors 0 and 1
 
         std::vector<bool> trace;
+
+        /*
+        * helper-functions for switching between position
+        * and non-position dependent penalties
+        */
+
+	protected:
+		virtual
+		double delta(int i) const {return delta_val;}
+		virtual
+		double exp_delta(int i) const {return exp_delta_val;}
 
     public:
         /**
@@ -45,8 +54,8 @@ namespace LocARNA {
          * @param delta_10_ penalty for change from b to a
          * @param beta_ is the inverse temperature
          */
-        FitOnOff(numseq_t &x_, double delta_01_, double delta_10_, double beta_)
-            : delta_01(delta_01_), delta_10(delta_10_), x(x_), beta(beta_) {
+        FitOnOff(numseq_t &x_, double delta_, double beta_)
+            : x(x_), delta_val(delta_), beta(beta_) {
             v.resize(2);
             v[0].resize(x.size() + 1);
             v[1].resize(x.size() + 1);
@@ -56,9 +65,9 @@ namespace LocARNA {
             t[1].resize(x.size() + 1);
             trace.resize(x.size() + 1);
 
-            exp_delta_01 = exp(-beta * delta_01);
-            exp_delta_10 = exp(-beta * delta_10);
+            exp_delta_val = exp(-beta * delta_val);
         }
+
 
         /**
          * compute the viterbi score (and optionally path)
@@ -129,6 +138,41 @@ namespace LocARNA {
         void
         print_tables() const;
     };
+
+    class FitOnOffVarPenalty : public FitOnOff {
+	public:
+    	/**
+         * construct with parameters
+         * @param x_ number sequence that we want to fit
+         * @param penalties_ position dependent penalty for change from a to b
+         * @param beta_ is the inverse temperature
+         */
+        FitOnOffVarPenalty(numseq_t &x_, numseq_t &penalties_, double beta_)
+        : FitOnOff(x_, 0, beta_), penalties(penalties_) {
+
+            // pre-calculation of exp_penalties parameter
+			int length_penalties = penalties.size();
+			for (int i = 0; i < length_penalties; i++) {
+				exp_penalties.push_back(exp(-beta_ * penalties.at(i)));
+			}
+		}
+		
+        /*
+        * helper-functions for switching between position
+        * and non-position dependent penalties
+        */
+
+	protected:
+		virtual
+		double delta(int i) const {return penalties.at(i-1);}
+		virtual
+		double exp_delta(int i) const {return exp_penalties.at(i-1);}
+
+	private:
+		numseq_t penalties;
+		numseq_t exp_penalties;
+
+	};
 
 } // END namespace LocARNA
 
