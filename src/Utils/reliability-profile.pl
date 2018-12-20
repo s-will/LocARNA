@@ -42,6 +42,10 @@ Turn off predicting. (def=on)
 
 Penalty for on/off switching in fit
 
+=item B<--position-penalty>
+
+Position dependent penalty for calculating fit.
+
 =item B<--fit-once-on>
 
 Restrict fitting to being exactly once on
@@ -68,6 +72,10 @@ Specify multi-range signals by from0a to0a from0b to0b ...
 =item B<--structure-weight>=w
 
 Weight of structure against sequence (1.0)
+
+=item B<--position-penalty-weight>=pos_w
+
+Weight of the position penalty
 
 =item B<--show-sw>
 
@@ -137,6 +145,8 @@ my $dont_predict=0;
 
 my $fitpenalty=0.3;
 
+my $position_penalty;
+
 my $outfile="rel";
 
 my $title="";
@@ -146,6 +156,8 @@ my $offset=1; ## (genomic) position of the first base in sequence seqname
 my $signals=""; ## string giving location of signals, relative to offset
 
 my $structure_weight=1.5; ## structure weight for fitting
+
+my $position_penalty_weight=1;
 
 my $fit_once_on;
 
@@ -182,6 +194,7 @@ GetOptions(
     "seqname=s" => \$seqname,
     "dont-predict" => \$dont_predict,
     "fit-penalty=f" => \$fitpenalty,
+    "position-penalty" => \$position_penalty,
     "fit-once-on" => \$fit_once_on,
     "beta=f" => \$beta,
     "out=s" => \$outfile,
@@ -190,6 +203,7 @@ GetOptions(
     "signals=s" => \$signals,
     "signal-names=s" => \$signal_names,
     "structure-weight=f" => \$structure_weight,
+    "position-penalty-weight=f" => \$position_penalty_weight,
     "show-sw" => \$show_sw,
     "revcompl" => \$revcompl,
     "dont-plot" => \$dont_plot,
@@ -209,15 +223,18 @@ if ($#ARGV!=0 && $#ARGV!=1) {print STDERR "Need locarna output directory or file
 
 my $alnfile;
 my $bmrelfile;
+my $amrelfile;
 
 if (@ARGV==1) {
     my $dir=$ARGV[0];
     # print STDERR "Use files from LocARNA output directory $dir\n";
     $alnfile = "$dir/results/result.aln";
     $bmrelfile = "$dir/results/result.bmreliability";
+    $amrelfile = "$dir/results/result.amreliability";
 } else {
     $alnfile = $ARGV[0];
     $bmrelfile = $ARGV[1];
+    $amrelfile = $ARGV[2];
 }
 
 
@@ -348,30 +365,80 @@ my @relprof=(); ## reliability profile for the reference sequence.
 
 open(my $IN, "<", $bmrelfile) || die "Cannot read from $bmrelfile: $!";
 
+my $seq_len=0; ## determine length of sequence
 my $len=0; ## determine length of the profile
+my @pos=(); ## position in alignment, used as array to calculate profile at amreliability 
 while(<$IN>) {
     my @line=split /\s+/,$_;
 
-    my $pos=$line[0];
+    push @pos, $line[0];
     my $seqrel=$line[1];
     my $strrel=$line[2];
     my $rel = ($seqrel + $structure_weight * $strrel)/($structure_weight);
 
-    if ($seqname eq "" || substr($sequence_alistr,$pos-1,1) ne "-") {
+    if ($seqname eq "" || substr($sequence_alistr,$line[0]-1,1) ne "-") {
 	print $TMP "$rel\n";
 	push @relprof,$rel;
 	$len++;
     }
+
+	$seq_len++;
 }
 
 close $TMP;
 
+# compute position dependent delta values
+my $tmpfile_2="penalties.$$";
+open(my $TMP_2, ">", "$tmpfile_2") || die "Cannot write to $tmpfile_2: $!";
+open(my $IN_2, "<", $amrelfile) || die "Cannot read from $amrelfile: $!";
+
+my %left;		 # hashmap of arc-opening probabilities
+my %right;		 # hashmap of arc-closing probabilities
+
+# read each line in results.amreliabilities
+while (<$IN_2>) {
+	
+    # split each line delimited by tab
+    my @line = split /\s+/,$_;
+    
+    # create hashmap with left and right position of arc as keys
+    # and the arcprobability as hashvalue
+    $left{$line[0]} += $line[2];
+    $right{$line[1]} -= $line[2];
+    
+}
+
+# for every position until the largest arc-closing position, calculate delta
+for (my $i = 1; $i <= $seq_len; $i++) {
+
+    # penalty for each position in the sequence
+    my $delta = 0;
+    my $r = defined $right{$i} ? $right{$i} : 0; # condition ? true : false
+    my $l = defined $left{$i} ? $left{$i} : 0;
+
+    # calculate delta values
+    $delta = $position_penalty_weight * ($l - $r);
+
+    # write profile-delta in tmp-file
+    if ($seqname eq "" || substr($sequence_alistr,$pos[$i-1]-1,1) ne "-") {
+        print $TMP_2 "$delta\n";
+    } else { # write delta in tmp-file
+        print $TMP_2 "$delta\n";
+    }
+	
+}
+
+close $TMP_2;
+
+
 ### do fit
-my $fit_cmd="cat $tmpfile | $LOCARNAP_FIT - --delta $fitpenalty".($fit_once_on?" --once-on":"").(defined($beta)?" --beta $beta":"");
+my $fit_cmd="cat $tmpfile | $LOCARNAP_FIT - --delta $fitpenalty".($fit_once_on?" --once-on":"").(defined($beta)?" --beta $beta":"").(defined($position_penalty)?" --penalties $tmpfile_2":"");
+
 my @fit_answer = readpipe($fit_cmd);
 
 #print STDOUT "fit call: $fit_cmd\n";
 unlink $tmpfile;
+
 
 
 foreach my $line (@fit_answer) {
