@@ -234,7 +234,7 @@ if (@ARGV==1) {
 } else {
     $alnfile = $ARGV[0];
     $bmrelfile = $ARGV[1];
-	$amrelfile = $ARGV[2];
+    $amrelfile = $ARGV[2];
 }
 
 
@@ -433,8 +433,6 @@ close $TMP_2;
 
 ### do fit
 my $fit_cmd="cat $tmpfile | $LOCARNAP_FIT - --delta $fitpenalty".($fit_once_on?" --once-on":"").(defined($beta)?" --beta $beta":"").(defined($position_penalty)?" --penalties $tmpfile_2":"");
-
-print "$fit_cmd";
 
 my @fit_answer = readpipe($fit_cmd);
 
