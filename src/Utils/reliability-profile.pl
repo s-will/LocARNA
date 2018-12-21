@@ -367,7 +367,7 @@ open(my $IN, "<", $bmrelfile) || die "Cannot read from $bmrelfile: $!";
 
 my $seq_len=0; ## determine length of sequence
 my $len=0; ## determine length of the profile
-my @pos=(); ## position in alignment, used as array to calculate profile at amreliability 
+my @pos=(); ## position in alignment, used as array to calculate profile at amreliability
 while(<$IN>) {
     my @line=split /\s+/,$_;
 
@@ -382,7 +382,7 @@ while(<$IN>) {
 	$len++;
     }
 
-	$seq_len++;
+    $seq_len++;
 }
 
 close $TMP;
@@ -397,15 +397,14 @@ my %right;		 # hashmap of arc-closing probabilities
 
 # read each line in results.amreliabilities
 while (<$IN_2>) {
-	
+
     # split each line delimited by tab
     my @line = split /\s+/,$_;
-    
+
     # create hashmap with left and right position of arc as keys
     # and the arcprobability as hashvalue
     $left{$line[0]} += $line[2];
     $right{$line[1]} -= $line[2];
-    
 }
 
 # for every position until the largest arc-closing position, calculate delta
@@ -425,7 +424,6 @@ for (my $i = 1; $i <= $seq_len; $i++) {
     } else { # write delta in tmp-file
         print $TMP_2 "$delta\n";
     }
-	
 }
 
 close $TMP_2;
@@ -438,7 +436,6 @@ my @fit_answer = readpipe($fit_cmd);
 
 #print STDOUT "fit call: $fit_cmd\n";
 unlink $tmpfile;
-
 
 
 foreach my $line (@fit_answer) {

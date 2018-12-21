@@ -50,8 +50,7 @@ namespace LocARNA {
         /**
          * construct with parameters
          * @param x_ number sequence that we want to fit
-         * @param delta_01_ penalty for change from a to b
-         * @param delta_10_ penalty for change from b to a
+         * @param delta_ penalty for change between a and b
          * @param beta_ is the inverse temperature
          */
         FitOnOff(numseq_t &x_, double delta_, double beta_)
@@ -67,7 +66,6 @@ namespace LocARNA {
 
             exp_delta_val = exp(-beta * delta_val);
         }
-
 
         /**
          * compute the viterbi score (and optionally path)
@@ -139,41 +137,37 @@ namespace LocARNA {
         print_tables() const;
     };
 
+    /**
+     * \brief Fitting of a two-step function with position-specific step penalities
+     */
     class FitOnOffVarPenalty : public FitOnOff {
-	public:
+    public:
     	/**
          * construct with parameters
          * @param x_ number sequence that we want to fit
-         * @param penalties_ position dependent penalty for change from a to b
-         * @param beta_ is the inverse temperature
+         * @param penalties_ position dependent penalty for change between a and b
+         * @param beta_ inverse temperature
          */
         FitOnOffVarPenalty(numseq_t &x_, numseq_t &penalties_, double beta_)
-        : FitOnOff(x_, 0, beta_), penalties(penalties_) {
+            : FitOnOff(x_, 0, beta_), penalties(penalties_) {
 
             // pre-calculation of exp_penalties parameter
-			int length_penalties = penalties.size();
-			for (int i = 0; i < length_penalties; i++) {
-				exp_penalties.push_back(exp(-beta_ * penalties.at(i)));
-			}
-		}
-		
-        /*
-        * helper-functions for switching between position
-        * and non-position dependent penalties
-        */
+            int length_penalties = penalties.size();
+            for (int i = 0; i < length_penalties; i++) {
+                exp_penalties.push_back(exp(-beta_ * penalties.at(i)));
+            }
+        }
 
-	protected:
-		virtual
-		double delta(int i) const {return penalties.at(i-1);}
-		virtual
-		double exp_delta(int i) const {return exp_penalties.at(i-1);}
+    protected:
+        virtual
+        double delta(int i) const {return penalties.at(i-1);}
+        virtual
+        double exp_delta(int i) const {return exp_penalties.at(i-1);}
 
-	private:
-		numseq_t penalties;
-		numseq_t exp_penalties;
-
-	};
-
+    private:
+        numseq_t penalties;
+        numseq_t exp_penalties;
+    };
 } // END namespace LocARNA
 
 #endif // LOCARNA_FIT_ON_OFF_HH

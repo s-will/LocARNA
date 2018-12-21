@@ -128,7 +128,7 @@ main(int argc, char **argv) {
     // read number sequence from file or stdin
     //
     numseq_t numseq;
-	numseq_t penalties;
+    numseq_t penalties;
 
     if (clp.filename == "-") {
         read_vector(std::cin, numseq);
@@ -137,13 +137,13 @@ main(int argc, char **argv) {
         read_vector(in, numseq);
     }
 
-	// read in the position-dependent penalty 
-	if (not clp.opt_penalties) { // --position-penalty is not set
-		read_vector(std::cin, penalties);
-	} else {
-		ifstream in(clp.penalty_filename.c_str());
-		read_vector(in, penalties);
-	}
+    // read in the position-dependent penalty
+    if (not clp.opt_penalties) { // --position-penalty is not set
+	read_vector(std::cin, penalties);
+    } else {
+	ifstream in(clp.penalty_filename.c_str());
+	read_vector(in, penalties);
+    }
 
     // ----------------------------------------
     // optimize on/off-values and compute fit
@@ -151,13 +151,13 @@ main(int argc, char **argv) {
 
     // polymorphism used to generate different objects, depending on the use of
     // position dependent penalties or not
-	std::unique_ptr<FitOnOff> fns;
+    std::unique_ptr<FitOnOff> fns;
 
-	if (not clp.opt_penalties) { // position dependent penalties off
-    	    fns = std::make_unique<FitOnOff>(numseq, clp.delta_val, clp.beta);
-	} else {
-            fns = std::make_unique<FitOnOffVarPenalty>(numseq, penalties ,clp.beta);
-        }
+    if (not clp.opt_penalties) { // position dependent penalties off
+        fns = std::make_unique<FitOnOff>(numseq, clp.delta_val, clp.beta);
+    } else {
+        fns = std::make_unique<FitOnOffVarPenalty>(numseq, penalties ,clp.beta);
+    }
 
     // double viterbi_score;
 
