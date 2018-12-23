@@ -2230,6 +2230,8 @@ sub perform_multiple_alignment {
     my $namewidth=write_clustalw_alnloh($ALNOUT,$aln,$opts{'width'});
     close $ALNOUT;
 
+    ## ----------
+    ## write the result alignment to standard output
     open(my $alnfh, "<", "$results_dir/result.aln");
     while (<$alnfh>) { if (!/^CLUSTAL/) { printmsg 3, $_; } }
     close $alnfh;
@@ -2241,7 +2243,7 @@ sub perform_multiple_alignment {
     chomp $alistr;
 
     if ($alistr eq "") {
-        printmsg 3, "\nWARNING: cannot report consensus strucutre (RNAalifold call failed).\n";
+        printmsg 3, "\nWARNING: cannot report consensus structure (RNAalifold call failed).\n";
     }
 
     if ($alistr=~/([^\s]*)\s(.*)/) {
@@ -2462,8 +2464,7 @@ sub call_locarna {
 
     push @cmd, "-q" unless $opts{'moreverbose'};
 
-    printmsg 1, "@cmd\n";
-    printmsg 1, "\n";
+    printmsg 1, "@cmd\n\n";
     system(@cmd)==0 || die "Command @cmd failed: $!";
 
     if ((! -e "$tgt.aln") || (! -e "$tgt.pp")) {
@@ -2519,20 +2520,20 @@ sub call_locarna_prob {
 
     push @cmd, reference_alignment_option($refaln_filename);
 
-    # if (! $opts{'moreverbose'}) { @cmd.=" >/dev/null"; }
+    push @cmd, "-q" unless $opts{'moreverbose'};
 
     printmsg 1, "@cmd\n\n";
-
     system(@cmd)==0 || die "Command @cmd failed: $!";
 
     if ((! -e "$tgt.aln") || (! -e "$tgt.pp")) {
 	die "Pairwise aligner ($opts{'pw-aligner'}) failed to write alignment to file";
     }
 
-    if ($opts{'verbose'}) {
+    if ($opts{'verbose'} and not $opts{'moreverbose'}) {
         open(my $alnfh, "<", "$tgt.aln");
-        while(<$alnfh>) {print;}
-        close($alnfh);
+        while(<$alnfh>) { if (!/^CLUSTAL/) { print $_; } }
+        close $alnfh;
+        print "\n";
     }
 
     if (!$opts{'fast-mea'} && !$opts{'only-basematch-probs'}) {
