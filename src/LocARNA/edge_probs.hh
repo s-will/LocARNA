@@ -120,23 +120,23 @@ namespace LocARNA {
         using size_type=size_t; //!< size
 
         /**
-          * Construct to provide partial partition functions from Gotoh-like matrices
-          *
-          * Runs the Gotoh partition function variant
-          *
-          * @param rnaA RnaData of RNA A
-          * @param rnaB RnaData of RNA B
-          * @param trace_controller controller limiting possible traces
-          * @param sim_mat similarity matrix for scoring base matches;
-          *        e.g. @see Ribosum::get_basematch_scores()
-          * @param alphabet the alphabet of the similiarity matrix
-          * @param gap_opening score for opening a gap
-          * @param gap_extension score for extending a gap
-          * @param pf_struct_weight weight of structure (vs. sequence)
-          * @param temp temperature for computing the Boltzmann weights
-          * @param free_endgaps which end gaps should be cost free
-          * @param flag_local whether to run local alignment
-          */
+         * @brief Construct to provide partial partition functions from Gotoh-like matrices
+         *
+         * Runs the Gotoh partition function variant
+         *
+         * @param rnaA RnaData of RNA A
+         * @param rnaB RnaData of RNA B
+         * @param trace_controller controller limiting possible traces
+         * @param sim_mat similarity matrix for scoring base matches;
+         *        e.g. @see Ribosum::get_basematch_scores()
+         * @param alphabet the alphabet of the similiarity matrix
+         * @param gap_opening score for opening a gap
+         * @param gap_extension score for extending a gap
+         * @param pf_struct_weight weight of structure (vs. sequence)
+         * @param temp temperature for computing the Boltzmann weights
+         * @param free_endgaps which end gaps should be cost free
+         * @param flag_local whether to run local alignment
+         */
         PFGotoh(const RnaData &rnaA,
 		const RnaData &rnaB,
 		const TraceController &trace_controller,
@@ -148,6 +148,12 @@ namespace LocARNA {
 		double temp,
                 const FreeEndgaps &free_endgaps,
                 bool flag_local);
+	/**
+	 * @brief Get the partition function
+	 * @returns partition function
+	 */
+	const pf_score_t&
+	z() const {return z_;}
 
     protected:
 
@@ -193,7 +199,7 @@ namespace LocARNA {
                  const StralScore &score,
                  const FreeEndgaps &free_endgaps);
 
-        bool fail() {return z_==0 || std::isnan(z_) || std::isinf(z_);}
+        bool fail() const {return z_==(pf_score_t)0 || std::isnan(z_) || std::isinf(z_);}
 
     };
 
@@ -258,7 +264,10 @@ namespace LocARNA {
                      const FreeEndgaps &free_endgaps,
 		     bool flag_local);
 
-        bool fail() {return PFGotoh<pf_score_t>::fail();}
+        bool fail() const {return PFGotoh<pf_score_t>::fail();}
+
+	const pf_score_t &
+	z() const {return PFGotoh<pf_score_t>::z();}
     };
 
 
@@ -300,7 +309,10 @@ namespace LocARNA {
                      const FreeEndgaps &free_endgaps,
 		     bool flag_local);
 
-        bool fail() {return PFGotoh<pf_score_t>::fail();}
+        bool fail() const {return PFGotoh<pf_score_t>::fail();}
+
+	const pf_score_t &
+	z() const {return PFGotoh<pf_score_t>::z();}
     };
 
     /*

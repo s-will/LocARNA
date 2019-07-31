@@ -243,7 +243,9 @@ namespace LocARNA {
         for (size_type i = 0; i <= this->lenA_; i++) {
             for (size_type j = std::max(trace_controller.min_col(i), (size_t)0);
                  j <= std::min(trace_controller.max_col(i), this->lenB_); j++) {
-                probs_(i, j) = this->zM_(i, j) *
+
+		pf_score_t z_ij =
+		    this->zM_(i, j) *
                         (this->zMr_(this->lenA_ - i, this->lenB_ - j) +
                          this->zAr_(this->lenA_ - i, this->lenB_ - j) +
                          this->zBr_(this->lenA_ - i, this->lenB_ - j) +
@@ -257,7 +259,7 @@ namespace LocARNA {
                          this->zAr_(this->lenA_ - i, this->lenB_ - j) +
                          this->zBr_(this->lenA_ - i, this->lenB_ - j) / g_open);
 
-                this->probs_(i, j) /= this->z_;
+                this->probs_(i, j) = z_ij / this->z_;
                 // std::cout <<i<<" "<<j<<": "<<probs_(i,j)<<std::endl;
             }
         }
