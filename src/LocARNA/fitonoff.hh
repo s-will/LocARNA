@@ -22,9 +22,8 @@ namespace LocARNA {
      *
      */
     class FitOnOff {
-        double delta_val;
         numseq_t x;
-
+        double delta_val;
         double beta;
 
         pf_t exp_delta_val; //!< exp(-beta*delta_val)
