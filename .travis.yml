@@ -13,7 +13,6 @@ addons:
     packages:
     - gcc-7
     - g++-7
-    - binutils
     - clang-4.0
     - help2man
     - libgsl0-dev
@@ -23,9 +22,6 @@ addons:
 install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
 
-  - $CXX --version
-  - ld --version
-
   # install conda to install build requirements
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
@@ -33,7 +29,7 @@ install:
   - export CONDA_PATH=$HOME/miniconda3
   - export PATH=$CONDA_PATH/bin:$PATH
   - conda update --yes conda
-  - conda install --yes -c bioconda viennarna t_coffee
+  - conda install --yes -c bioconda -c conda-forge viennarna t_coffee binutils
   # don't use libc++ with clang---for now
   # - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
   - if [ "$CXX" == "clang++" ]; then export CC="clang-4.0" CXX="clang++-4.0" LDFLAGS="-fopenmp=libgomp"; fi
@@ -42,6 +38,8 @@ before_script:
 - autoreconf -i
 
 script:
+- $CXX --version
+- ld --version
 - ./configure --with-vrna=${CONDA_PATH}
 - make -j${CPU_COUNT}
 - make -j${CPU_COUNT} check
