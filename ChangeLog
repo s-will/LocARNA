@@ -1,4 +1,27 @@
 ============================================================
+=== 2019
+
+2.0.0RC8
+	Bugfixes:
+	---------
+	Fix bug in sequence trace probability computationi, which was
+	potentially critical for large instances (e.g. aligning sequences with ~1000
+	length difference)
+
+	Remove superfluous output of alignments in probabilistic mode
+
+	Code improvements/Maintenance:
+	------------------------------
+	Update travis CI script
+	Fix initialization order [FitOnOff]
+	Fix missing and superfluous headers [alphabet.hh/icc]
+
+	Experimental Feature:
+	---------------------
+	experimental extension of boundary prediction by position wise
+	penalties, can use consistency file information [reliability-profile.pl, locarnap_fit]
+
+============================================================
 === 2018
 
 2.0.0RC7
