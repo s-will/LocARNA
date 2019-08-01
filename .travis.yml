@@ -29,7 +29,7 @@ install:
   - export CONDA_PATH=$HOME/miniconda3
   - export PATH=$CONDA_PATH/bin:$PATH
   - conda update --yes conda
-  - conda install --yes -c bioconda 'python<=3.5' viennarna t_coffee
+  - conda install --yes -c bioconda -c conda-forge viennarna t_coffee binutils
   # don't use libc++ with clang---for now
   # - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
   - if [ "$CXX" == "clang++" ]; then export CC="clang-4.0" CXX="clang++-4.0" LDFLAGS="-fopenmp=libgomp"; fi
