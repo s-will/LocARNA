@@ -13,6 +13,7 @@ addons:
     packages:
     - gcc-7
     - g++-7
+    - binutils
     - clang-4.0
     - help2man
     - libgsl0-dev
@@ -21,6 +22,9 @@ addons:
 
 install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
+
+  - $CXX --version
+  - ld --version
 
   # install conda to install build requirements
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
