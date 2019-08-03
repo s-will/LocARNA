@@ -31,7 +31,7 @@ install:
   - conda install --yes -c bioconda -c conda-forge viennarna t_coffee binutils clang
   # don't use libc++ with clang---for now
   # - if [ "$CXX" == "clang++" ]; then export CXXFLAGS="--stdlib=libc++" ; fi
-  # - if [ "$CXX" == "clang++" ]; then export CC="clang-4.0" CXX="clang++-4.0" LDFLAGS="-fopenmp=libgomp"; fi
+  - if [ "$CXX" == "clang++" ]; then export LDFLAGS="-fopenmp=libgomp"; fi
 
 before_script:
 - autoreconf -i
