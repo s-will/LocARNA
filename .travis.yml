@@ -13,7 +13,7 @@ addons:
     packages:
     - gcc-7
     - g++-7
-    - clang-4.0
+    - clang-5.0
     - help2man
     - libgsl0-dev
     - doxygen
