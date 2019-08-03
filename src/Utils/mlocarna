@@ -511,13 +511,19 @@ Reserved parameter for fast-mea mode.
 
 Turn on gap penalties in probabilistic/mea mode (default: off).
 
-=item  B<--no-write-bm-probs> / B<--write-bm-probs>
+=item B<--write-probs> / B<--no-write-probs>
 
-Don't write / Write base match probabilities to files in target dir (default: write).
+Write / don't write probabilities (of base matches and arc matches) to the target directory.
+Override by single options --(no-)write-bm-probs and --(no-)write-am-probs is possible. Use this to
+make the probability files available for post-processing. (default: don't write).
 
-=item  B<--no-write-am-probs> / B<--write-am-probs>
+=item  B<--write-bm-probs> / B<--no-write-bm-probs>
 
-Don't write / Write arc match probabilities to files in target dir (default: write).
+Don't write / Write base match probabilities to files in target dir (default: don't write).
+
+=item  B<--write-am-probs> / B<--no-write-am-probs>
+
+Don't write / Write arc match probabilities to files in target dir (default: don't write).
 
 =back
 
@@ -971,6 +977,8 @@ my @options = #options that are not or not automatically passed to locarna
      "min-bm-prob=f",
      "min-am-prob=f",
 
+     "no-write-probs",
+     "write-probs",
      "no-write-bm-probs",
      "no-write-am-probs",
      "write-bm-probs",
@@ -1505,14 +1513,12 @@ if ($opts->{'consistency-transformation'} && !$opts->{'probabilistic'}) {
     exit -1;
 }
 
-if (!$opts->{'probabilistic'} && ($opts->{'write-bm-probs'} || $opts->{'write-am-probs'})) {
-    printerr "Writing of probabilities only possible in probabilistic mode. Exit.\n";
-    exit -1;
+if (!$opts->{'probabilistic'} && ($opts->{'write-probs'} || $opts->{'write-bm-probs'} || $opts->{'write-am-probs'})) {
+    printerr "WARNING: Writing of probabilities only possible in probabilistic mode.\n";
 }
 
 if (($opts->{'fast-mea'} || $opts->{'only-basematch-probs'}) && $opts->{'write-am-probs'}) {
-    printerr "Writing of arc match probabilities requested, but their computation is disabled. Exit.\n";
-    exit -1;
+    printerr "WARNING: Writing of arc match probabilities requested, but their computation is disabled.\n";
 }
 
 if (defined($opts->{'rnafold-temperature'}) && $opts->{'rnafold-temperature'}!=37 && defined($opts->{'alifold-consensus-dp'})) {
@@ -1531,16 +1537,17 @@ my $refaln_filename; # filename of reference alignment
 ##### ----------------------------------------
 #### Writing of probabilities
 
-## write probabilities to disk by default
-if ($opts->{'probabilistic'}) {
-    $opts->{'write-bm-probs'} = 1;
-    $opts->{'write-am-probs'} = 1;
+## don't write probabilities to disk by default; turn off unless explicitly wanted
+if (1 || defined($opts->{'no-write-probs'})) {
+    $opts->{'write-bm-probs'} = 0 unless defined($opts->{'write-bm-probs'});
+    $opts->{'write-am-probs'} = 0 unless defined($opts->{'write-am-probs'});;
 }
 
-## turn off writing of probabilities to disk if wanted
-if (defined($opts->{'no-write-bm-probs'})) { $opts->{'write-bm-probs'} = !$opts->{'no-write-bm-probs'}; }
-if (defined($opts->{'no-write-am-probs'})) { $opts->{'write-am-probs'} = !$opts->{'no-write-am-probs'}; }
-
+# collectively turn on write-probs unless am or bm are turned off
+if (defined($opts->{'write-probs'})) {
+    $opts->{'write-bm-probs'} = 1 unless defined($opts->{'no-write-bm-probs'});
+    $opts->{'write-am-probs'} = 1 unless defined($opts->{'no-write-am-probs'});
+}
 
 ####
 ## get full, absolute path for parameter file
@@ -1725,8 +1732,13 @@ sub main {
     if (defined($opts->{'dp-cache'}))  { $opts->{'dp-cache'}  = abs_path($opts->{'dp-cache'});  }
 
     mkdir $opts->{'tgtdir'}."/$input_dir";
-    if ($opts->{'probabilistic'}) {mkdir $opts->{'tgtdir'}."/$probs_dir";}
+
+    if ($opts->{'probabilistic'} && ($opts->{'write-am-probs'} || $opts->{'write-bm-probs'}) ) {
+        mkdir $opts->{'tgtdir'}."/$probs_dir";
+    }
+
     mkdir $opts->{'tgtdir'}."/$intermediate_dir";
+
     mkdir $opts->{'tgtdir'}."/$results_dir";
 
     copy($opts->{'input-file'}, $opts->{'tgtdir'}."/$input_dir/input.fa");
