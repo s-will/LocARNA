@@ -5,7 +5,7 @@ AC_PREREQ(2.59)
 AC_INIT([LocARNA], [1.9.2.2], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
-dnl special dir for aux config files 
+dnl special dir for aux config files
 AC_CONFIG_AUX_DIR(config)
 
 dnl Define here to keep all version information in one place.
@@ -38,7 +38,7 @@ AC_SUBST([PACKAGE_SOURCES_URL], ["http://www.bioinf.uni-freiburg.de/Software/Loc
 
 
 dnl minimally required ViennaRNA version
-VRNA_VERSION=2.3.1
+VRNA_VERSION=2.4.0
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -65,9 +65,12 @@ dnl AX_CXX_COMPILE_STDCXX_11
 
 AC_CHECK_PROGS([PERL],[perl])
 
+dnl defines that have to be set when using the LocARNA library
+AC_SUBST(LIBDEFS)
+
 dnl Variable settings for generation of man pages via help2man --
 dnl adapted from gnu hello example
-dnl 
+dnl
 dnl Are we building from vc checked-out sources, or a tarball ?
 dnl This is used in "Makefile.am" to avoid re-generating the manpage
 dnl when building from tarballs.
@@ -80,7 +83,7 @@ dnl is sufficient, and obviates the need to maintain man pages separately.
 dnl However, this means invoking executables, which we generally cannot do
 dnl when cross-compiling, so we test to avoid that (the variable
 dnl "cross_compiling" is set by AC_PROG_CC).
-AS_IF([test $cross_compiling = no], [
+AS_IF([test "$cross_compiling" = "no"], [
   AM_MISSING_PROG([HELP2MAN], [help2man])
 ], [
   HELP2MAN=:
@@ -109,7 +112,7 @@ dnl ----------------------------------------
 dnl ----------------------------------------
 dnl for Vienna RNA
 dnl     defines HAVE_STRDUP if strdup is available
-AC_CHECK_FUNCS([strdup]) 
+AC_CHECK_FUNCS([strdup])
 
 dnl Vienna RNA package library path support, if not installed in standard directory/path
 VRNA_OK=true
@@ -124,17 +127,11 @@ AC_ARG_WITH([vrna],
 dnl require rna lib linking
 ENABLE_LIBRNA=yes
 
-AC_SUBST(LDFLAGS,[""])
-AC_SUBST(CPPFLAGS,[""])
-AC_SUBST(LIBS,[""])
-dnl defines that have to be set when using the LocARNA library
-AC_SUBST(LIBDEFS,[""]) 
-
 
 dnl ------------------------------
 dnl Vienna RNA lib configuration
 dnl
-dnl check whether pkg-config is available 
+dnl check whether pkg-config is available
 AC_CHECK_PROG([PKG_CONFIG_AVAILABLE],pkg-config,[true],[false])
 
 VRNALIB_OK=false
@@ -151,8 +148,8 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
 ])
 dnl if pkg-config is not available or something else went wrong with pkg-config,
 dnl then guess the configuration
-dnl 
-AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true" ], 
+dnl
+AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true" ],
 [
   AC_MSG_NOTICE([Guess the Vienna RNA library configuration:])
   if test "$with_vrna" = "" ; then
@@ -167,20 +164,20 @@ AS_IF([test "$VRNALIB_OK" != "true" -a "$PKG_CONFIG_AVAILABLE" != "true" ],
   VRNA_LIBS="-L$vrna_prefix/lib -lRNA"
 
   dnl if libgomp is available, then add it to VRNA_LIBS; otherwise,
-  dnl assume (optimistically) that libRNA works without libgomp 
-  AC_CHECK_LIB([gomp],[main],[VRNA_LIBS="$VRNA_LIBS -lgomp"])
-  
+  dnl assume (optimistically) that libRNA works without libgomp
+  dnl AC_CHECK_LIB([gomp],[main],[VRNA_LIBS="$VRNA_LIBS -lgomp"])
+
   VRNA_CFLAGS="-I$vrna_prefix/include"
   AC_MSG_NOTICE([Guessing of ViennaRNA flags may be avoided by installing pkg-config.])
-  
+
   AC_CHECK_LIB([RNA],[vrna_fold],[VRNALIB_OK=true],[VRNALIB_OK=false])
 ])
 
 # add vrna to libs
 LIBS="$VRNA_LIBS $LIBS"
 
-dnl ============================================================ 
-dnl check for RNAlib/c++-compiler incompatibility 
+dnl ============================================================
+dnl check for RNAlib/c++-compiler incompatibility
 dnl If the ViennaRNA lib is compiled w/ C11 support, then the c++
 dnl compiler has to support anonymous unions and structs.
 
@@ -191,7 +188,7 @@ dnl can the C++ compiler compile anonymous unions
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([struct s{union{struct {float x;};struct {int i;};};};])],
                   [HAS_ANONYMOUS_STRUCT="yes"],[HAS_ANONYMOUS_STRUCT="no"])
 dnl
-AS_IF([test "$VRNA_USES_C11_FEATURES" = "true" && test "$HAS_ANONYMOUS_STRUCT" = "no"], 
+AS_IF([test "$VRNA_USES_C11_FEATURES" = "true" && test "$HAS_ANONYMOUS_STRUCT" = "no"],
       [AC_MSG_ERROR([
       ============================================================
       Your C++ compiler does not support C11 features
@@ -322,7 +319,7 @@ Packaging/debian/control Packaging/rpm/locarna.spec])
 
 dnl ----------------------------------------
 dnl Test if Vienna lib available and ok
-dnl don't allow compiling otherwise 
+dnl don't allow compiling otherwise
 
 MESSAGE=""
 if test "$VRNALIB_OK" = "false" ; then
