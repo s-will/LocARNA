@@ -1,0 +1,6 @@
+[>DESCRIPTION]
+
+This small program is used by locarna internally, when building locarna to
+generate C++-code from ribosum matrix data in user-readable text format. It can
+be called independently to produce C++-classes that specify particular
+RIBOSUM matrix data.

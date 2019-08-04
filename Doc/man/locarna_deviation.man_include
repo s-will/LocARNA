@@ -1,0 +1,5 @@
+[>DESCRIPTION]
+
+By calculating similarity measures of an alignment to a reference
+alignment, this small program based on the locarna library is
+useful for benchmarking alignment tools.

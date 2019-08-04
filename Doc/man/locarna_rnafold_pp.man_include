@@ -1,0 +1,8 @@
+[>DESCRIPTION]
+
+Folds RNA sequences by calling the Vienna RNA library and directly writes
+LocARNA's pp 2.0 format.
+In many cases this program can replace a call to RNAfold or RNAalifold followed by
+a conversion of its output to pp format. mlocarna uses this script wherever
+possible. This tool allows moreover precomputing "in-loop" probabilities as
+used by SPARSE and ExpaRNA-p.

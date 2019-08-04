@@ -1,0 +1,11 @@
+[>DESCRIPTION]
+
+This tool predicts signals-regions in a profile. It is used by the script
+reliability-profile.pl for predicting the boundaries of ncRNAs.
+
+[REFERENCES]
+
+Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler, and Rolf
+Backofen. LocARNA-P: Accurate boundary prediction and improved detection
+of structural RNAs. RNA, 18 no. 5 pp. 900-914, 2012. doi:
+10.1261/rna.029041.111
