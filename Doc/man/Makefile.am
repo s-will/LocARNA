@@ -32,11 +32,12 @@ help2man_prgs=$(help2man_prgs1) locarna
 ## in (locarna only) installation bin directory
 ##
 pod2man_prgs=aln2fa.pl alnsel.pl aln-seqs.pl average-dot.pl dot2pp	\
-exploc_p gen-reliab-dot.pl locarna-mea.pl locarna-motif-scan		\
+exploc_p gen-reliab-dot.pl locarna_mcc locarna-mea.pl locarna-motif-scan\
 locarnap-predict-and-plot.pl locarnap-realign-all.pl			\
 locarnap-revcomp.pl locarnap-revisit-RNAz-hits.pl locarnate mlocarna	\
 mlocarna_nnames plot-bmprobs pp2dot reliability-profile.pl
 
+# register man pages only if we do not cross-compile from VC
 if !VC_CROSS_COMPILING
 
 man_MANS=$(help2man_prgs:=.1) $(pod2man_prgs:=.1)
@@ -44,6 +45,7 @@ man_MANS=$(help2man_prgs:=.1) $(pod2man_prgs:=.1)
 EXTRA_DIST += $(man_MANS)
 endif
 
+# generate rules for making man pages only if building from VC
 if BUILD_FROM_VC
 
 ## For portability, we generate single rules for each man page.  Using
