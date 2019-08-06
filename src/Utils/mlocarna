@@ -2020,10 +2020,6 @@ sub perform_multiple_alignment {
 	$tree=<$TREE>;
 	chomp($tree);
 
-	## don't allow names that end in :<float>, but accept input tree with distances (and ignore them)
-	$tree =~ s/:[\d.e-]+\s*([,)])/$1/g;
-	$tree =~ s/:[\d.e-]+\s*$//g;
-
 	close $TREE;
 
     } elsif (defined($opts{'similarity-matrix'})) {
