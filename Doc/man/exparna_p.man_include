@@ -31,10 +31,8 @@ sequences rather than alignments.
 [AVAILABILITY]
 
 The latest LocARNA package release is available online at
-  
-    http://www.bioinf.uni-freiburg.de/Software/LocARNA/
-
-and at Github https://github.com/s-will/LocARNA
+at Github https://github.com/s-will/LocARNA and
+http://www.bioinf.uni-freiburg.de/Software/LocARNA/
 
 [AUTHOR]
 
@@ -44,10 +42,9 @@ of the LocARNA package.
 The exparna_p tool and the library classes for strong ensemble-based
 sparsification were written by Christina Otto.
 
-[COPYING (LICENSE)]
+[COPYRIGHT]
 
-Copyright 2005- Christina Otto, Sebastian Will
-
+Copyright 2005- Christina Otto, Sebastian Will.
 The LocARNA package is released under GNU Public License v3.0
 
 [REFERENCES]
@@ -55,10 +52,9 @@ The LocARNA package is released under GNU Public License v3.0
 Christina Otto, Mathias Mohl, Steffen Heyne, Mika Amit, Gad M. Landau,
 Rolf Backofen, and Sebastian Will.  ExpaRNA-P: simultaneous exact
 pattern matching and folding of RNAs. BMC Bioinformatics, 15:404,
-2014. DOI: 10.1186/s12859-014-0404-0
+2014. doi:10.1186/s12859-014-0404-0
 
 [SEE ALSO]
 
 The LocARNA PP 2.0 format is described online at
-  
-  http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/
+http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/

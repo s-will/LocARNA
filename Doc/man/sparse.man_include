@@ -17,10 +17,8 @@ explanations and examples.
 [AVAILABILITY]
 
 The latest LocARNA package release is available online at
-  
-    http://www.bioinf.uni-freiburg.de/Software/LocARNA/
-
-and at Github https://github.com/s-will/LocARNA
+at Github https://github.com/s-will/LocARNA and
+http://www.bioinf.uni-freiburg.de/Software/LocARNA/
 
 [AUTHOR]
 
@@ -33,8 +31,7 @@ written by Christina Otto.
 
 [COPYING (LICENSE)]
 
-Copyright 2005- Milad Miladi, Sebastian Will, Christina Otto
-
+Copyright 2005- Milad Miladi, Sebastian Will, Christina Otto.
 The LocARNA package is released under GNU Public License v3.0
 
 [REFERENCES]
@@ -47,5 +44,4 @@ of RNAs without sequence-based heuristics. Bioinformatics 31 (15):
 [SEE ALSO]
 
 The LocARNA PP 2.0 format is described online at
-  
-  http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/
+http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/

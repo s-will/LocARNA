@@ -18,7 +18,7 @@ constraints specifications.
 Probabilities of base and base pair matches can be written to
 files. (The total partition function is reported to standard out.)
 
-[DISCLAIMERS]
+[DISCLAIMER]
 
 locarna_p is a low level tool; most often this tool is used
 indirectly, by calling mlocarna with --probabilistic.  Note that the
@@ -35,10 +35,8 @@ examples.
 [AVAILABILITY]
 
 The latest LocARNA package release is available online at
-  
-    http://www.bioinf.uni-freiburg.de/Software/LocARNA/
-
-and at Github https://github.com/s-will/LocARNA
+at Github https://github.com/s-will/LocARNA and
+http://www.bioinf.uni-freiburg.de/Software/LocARNA/
 
 [AUTHOR]
 
@@ -50,8 +48,7 @@ Tejal Joshi.
 
 [COPYING (LICENSE)]
 
-Copyright 2005- Sebastian Will
-
+Copyright 2005- Sebastian Will.
 The LocARNA package is released under GNU Public License v3.0
 
 [REFERENCES]

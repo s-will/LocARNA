@@ -2,7 +2,7 @@
 
 locarna is the pairwise alignment tool of the LocARNA package, which
 performs fast simultaneous folding and alignment based on two RNA
-sequences (or alignments). 
+sequences (or alignments).
 
 .SS Input
 
@@ -40,7 +40,7 @@ below).
 The final pairwise alignment is reported in standard and/or variants of the
 clustal and stockholm format, as well as LocARNA's own pp format.
 
-[DISCLAIMERS]
+[DISCLAIMER]
 
 For many purposes, it is more convenient to use the multiple alignment
 tool mlocarna (even for pairwise alignment). However, certain tasks
@@ -49,18 +49,27 @@ pairwise tool or can be better controlled. Note that the performance
 of locarna (as well as basically all tools in the LocARNA package) is
 often significantly improved by the use of suitable
 application-specific options, deviating from the default
-settings. 
+settings.
 
-.PP
-Locarna's alignments are optimal -- it's the parameters,
-stupid ;).
+[REFERENCES]
+
+If you use locarna please cite us:
+
+Sebastian Will, Kristin Reiche, Ivo L. Hofacker, Peter F. Stadler, and
+Rolf Backofen.  Inferring non-coding RNA families and classes by means
+of genome-scale structure-based clustering. PLOS Computational
+Biology, 3 no. 4 pp. e65, 2007. doi:10.1371/journal.pcbi.0030065
+
+Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler, and Rolf Backofen.
+LocARNA-P: Accurate boundary prediction and improved detection of structural RNAs.
+RNA, 18(5):900–14, 2012. doi:10.1261/rna.029041.111
 
 [EXAMPLES]
 
 In the simplest case, the tool is called with two sequences in fasta
 format or two alignments in multiple fasta, clustal or stockholm format like
 
-  locarna file1.fa file2.fa 
+  locarna file1.fa file2.fa
 
 or
 
@@ -122,31 +131,20 @@ The prefix for fixed structures is '#=GC cFS'.
 [AVAILABILITY]
 
 The latest LocARNA package release is available online at
-  
-    http://www.bioinf.uni-freiburg.de/Software/LocARNA/
-
-and at Github https://github.com/s-will/LocARNA
+at Github https://github.com/s-will/LocARNA and
+http://www.bioinf.uni-freiburg.de/Software/LocARNA/
 
 [AUTHOR]
 
-This man page is written and maintained by Sebastian Will it is part
+This man page is written and maintained by Sebastian Will. It is part
 of the LocARNA package.
 
-[COPYING (LICENSE)]
+[COPYRIGHT]
 
-Copyright 2005- Sebastian Will
-
+Copyright 2005- Sebastian Will.
 The LocARNA package is released under GNU Public License v3.0
-
-[REFERENCES]
-
-Sebastian Will, Kristin Reiche, Ivo L. Hofacker, Peter F. Stadler, and
-Rolf Backofen.  Inferring non-coding RNA families and classes by means
-of genome-scale structure-based clustering. PLOS Computational
-Biology, 3 no. 4 pp. e65, 2007.
 
 [SEE ALSO]
 
 The LocARNA PP 2.0 format is described online at
-  
-  http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/
+http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/

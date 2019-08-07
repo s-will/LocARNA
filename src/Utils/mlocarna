@@ -818,7 +818,12 @@ Milad Miladi (SPARSE)
 =head1 ONLINE INFORMATION
 
 For download and online information, see
-L<http://www.bioinf.uni-freiburg.de/Software/LocARNA>
+L<https://github.com/s-will/LocARNA>
+and L<http://www.bioinf.uni-freiburg.de/Software/LocARNA>.
+
+Latest releases are available as source code on Github at
+L<https://github.com/s-will/LocARNA/releases>.
+
 
 =head1 REFERENCES
 
@@ -826,16 +831,16 @@ Sebastian Will, Kristin Reiche, Ivo L. Hofacker, Peter F. Stadler, and
 Rolf Backofen.  Inferring non-coding RNA families and classes by means
 of genome-scale structure-based clustering.  PLOS Computational
 Biology, 3 no. 4 pp. e65, 2007.
-doi: 10.1371/journal.pcbi.0030065
+doi:10.1371/journal.pcbi.0030065
 
 Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler,
 and Rolf Backofen. LocARNA-P: Accurate boundary prediction and
 improved detection of structural RNAs. RNA, 18 no. 5 pp. 900-914, 2012.
-doi: 10.1261/rna.029041.111
+doi:10.1261/rna.029041.111
 
 Sebastian Will, Michael Yu, and Bonnie Berger. Structure-based Whole
 Genome Realignment Reveals Many Novel Non-coding RNAs. Genome Research,
-no. 23 pp. 1018-1027, 2013. doi: 10.1101/gr.137091.111
+no. 23 pp. 1018-1027, 2013. doi:10.1101/gr.137091.111
 
 =cut
 
