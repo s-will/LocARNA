@@ -40,12 +40,40 @@ $node_sym
 our $node_sym="\$\$nodesym";
 
 ########################################
+## quote_newick_label
+##
+## @param label unquoted label
+## @returns quoted label
+##
+## quotes special characters, such that the text
+## is valid as label in newwick format
+########################################
+sub quote_newick_label {
+    my $label = shift;
+
+    my $add_ticks=0;
+    if ( $label =~ /[\':]/ ) {
+	$add_ticks = 1;
+    }
+
+    $label =~ s/\'/\'\'/g;
+
+    if ($add_ticks) {
+	$label = "\'$label\'"
+    }
+
+    return $label;
+}
+
+########################################
 ## upgma_tree_dist( $names ref to list, $dist_matrix ref to matrix of distances)
 ##
 ## Compute an upgma-tree from distances
 ##
 ## @param $names ref to a list of names
 ## @param $dist_matrix ref to a matrix (array of arrays) of similarity dists
+## @param $add_branch_lengths boolean 0/1-flag, control whether to add
+##        branch lengths in the tree string [default on]
 ##
 ## The output uses the names in list @$names. Consequently, names
 ## should be unique and indices in $@names and matrix @$dist_matrix
@@ -54,7 +82,10 @@ our $node_sym="\$\$nodesym";
 ## @return tree as string in NEWICK tree format
 ########################################
 sub upgma_tree_dist {
-    my ($names, $dist_matrix) = @_;
+    my ($names, $dist_matrix, $add_branch_lengths) = @_;
+    if (!defined($add_branch_lengths)) {
+	$add_branch_lengths = 1;
+    }
 
     ## compute tree by upgma applied to dist matrix
 
@@ -65,7 +96,7 @@ sub upgma_tree_dist {
 
     for (my $i=0; $i<@$names; $i++) {
 	$clusters[$i] = $i;
-	$trees[$i]    = quotemeta($names->[$i]);
+	$trees[$i]    = quote_newick_label($names->[$i]);
 	$cluster_sizes[$i] = 1;
 	$heights[$i]  = 0;
     }
@@ -108,10 +139,15 @@ sub upgma_tree_dist {
 
 	## height of the new node and branch lengths
 	my $height = $min_dist / 2.0;
-	my $ilen = $height - $heights[$cluster_i];
-	my $jlen = $height - $heights[$cluster_j];
 
-	my $new_tree = "(".$trees[$cluster_i].":".$ilen.",".$trees[$cluster_j].":".$jlen.")";
+	my $new_tree;
+	if ($add_branch_lengths) {
+	    my $ilen = $height - $heights[$cluster_i];
+	    my $jlen = $height - $heights[$cluster_j];
+	    $new_tree = "(".$trees[$cluster_i].":".$ilen.",".$trees[$cluster_j].":".$jlen.")";
+	} else {
+	    $new_tree = "(".$trees[$cluster_i].",".$trees[$cluster_j].")";
+	}
 
 	$trees[$clusters[0]] = $new_tree;
 
@@ -183,91 +219,6 @@ sub upgma_tree {
     return upgma_tree_dist($names, $dist_matrix);
 }
 
-########################################
-## upgma_tree_sim( $names ref to list, $score_matrix ref to matrix of scores)
-##
-## Compute an upgma-tree from similarities (like locarna scores)
-## This strategy was used since the very beginnings of mlocarna for
-## constructing guide trees
-##
-## This implements an ad-hoc similarity-variant of the typically distance-based
-## upgma algorithm
-##
-## @param $names ref to a list of names
-## @param $score_matrix ref to a matrix (array of arrays) of similarity scores
-##
-## The output uses the names in list @$names. Consequently, names
-## should be unique and indices in $@names and matrix @$score_matrix
-## should correspond
-##
-## @return tree as string in NEWICK tree format
-##
-########################################
-sub upgma_tree_sim {
-    # print "Compute UPGMA-Tree ...\n";
-
-    my ($names, $score_matrix) = @_;
-
-    ## compute tree by upgma applied to score matrix
-
-    my @clusters; # a list of the clusters
-    my @trees; # a list of sub-trees
-    my @cluster_sizes;
-
-    for (my $i=0; $i<@$names; $i++) {
-	$clusters[$i]=$i;
-	$trees[$i]=quotemeta($names->[$i]);
-	$cluster_sizes[$i]=1;
-    }
-
-    my $NEG_INFINITY=-1e10;
-
-    while ($#clusters>0) {
-        ## find the nearest two clusters (with maximal similarity)
-	my $max_i;
-	my $max_j;
-	my $max_score=$NEG_INFINITY;
-	for (my $i=0; $i<=$#clusters; $i++) {
-	    for (my $j=$i+1; $j<=$#clusters; $j++) {
-		my $score=$score_matrix->[$clusters[$i]][$clusters[$j]];
-		if ($score > $max_score) {
-		    $max_i=$i;
-		    $max_j=$j;
-		    $max_score=$score;
-		}
-	    }
-	}
-
-	## recompute similarities
-	my $cluster_i = $clusters[$max_i];
-	my $cluster_j = $clusters[$max_j];
-
-	$clusters[$max_j] = $clusters[$#clusters];
-	$clusters[$max_i] = $clusters[0];
-	$clusters[0] = $cluster_i;
-
-	for (my $i=1; $i<$#clusters; $i++) {
-	    $score_matrix->[$clusters[0]][$clusters[$i]]
-		=
-		($cluster_sizes[$cluster_i] * $score_matrix->[$cluster_i][$clusters[$i]]
-		 + $cluster_sizes[$cluster_j] * $score_matrix->[$cluster_j][$clusters[$i]])
-		/ ($cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j]);
-	    $score_matrix->[$clusters[$i]][$clusters[0]] =
-		$score_matrix->[$clusters[0]][$clusters[$i]];
-	}
-
-	my $new_tree="($trees[$cluster_i],$trees[$cluster_j])";
-
-	$trees[$clusters[0]]=$new_tree;
-
-	$cluster_sizes[$clusters[0]]=$cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j];
-
-	$#clusters--;
-    }
-
-    return $trees[$clusters[0]].";";
-}
-
 ########################################ä
 ## tree_partitions($tree_postorder ref of list)
 ##
@@ -308,15 +259,18 @@ sub tree_partitions {
 
 ########################################
 ##
-## unquote a string using Text::ParseWords
+## unquote a newick label
 ##
-## param string
-## return unquoted string
+## @params string
+## @return unquoted string
 ##
-sub unquote {
+sub unquote_newick_label {
     my ($s)=@_;
-    my @strings=parse_line(" ", 0, $s);
-    return join " ",@strings;
+    if ($s =~ /^\'(.*)\'$/) {
+	$s = "$1";
+	$s =~ s/\'\'/\'/g;
+    }
+    return $s;
 }
 
 ########################################ä
@@ -374,7 +328,7 @@ sub newick_tree_to_postorder {
 		die "Distance expected in tree.";
 	    }
 	} else {
-	    push @list, unquote($tok);
+	    push @list, unquote_newick_label($tok);
 	}
     }
 
