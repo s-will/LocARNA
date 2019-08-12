@@ -142,8 +142,8 @@ sub upgma_tree_dist {
 
 	my $new_tree;
 	if ($add_branch_lengths) {
-	    my $ilen = $height - $heights[$cluster_i];
-	    my $jlen = $height - $heights[$cluster_j];
+	    my $ilen = sprintf("%.3f",$height - $heights[$cluster_i]);
+	    my $jlen = sprintf("%.3f",$height - $heights[$cluster_j]);
 	    $new_tree = "(".$trees[$cluster_i].":".$ilen.",".$trees[$cluster_j].":".$jlen.")";
 	} else {
 	    $new_tree = "(".$trees[$cluster_i].",".$trees[$cluster_j].")";
