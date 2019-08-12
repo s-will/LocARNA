@@ -1917,11 +1917,7 @@ sub perform_multiple_alignment {
 	generate_input_files_without_bpps($seqs);
     } else {
 	printmsg 3,"Compute pair probs ...\n";
-	if ($opts{'threads'}==1) {
-	    compute_all_dotplots($seqs);
-	} else  {
-	    compute_all_dotplots_par($opts{'threads'},$seqs);
-	}
+        compute_all_dotplots($seqs,$opts{'threads'});
     }
 
     ## exit here if only dps shall be computed
@@ -1957,12 +1953,7 @@ sub perform_multiple_alignment {
 	# compute arc match probs only if required
 	#
 	#
-	if ($opts{'threads'}==1) {
-	    compute_all_match_probs(\@names, \%bmprobs_shared, \%amprobs_shared);
-	} else  {
-	    compute_all_match_probs_par($opts{'threads'},\@names, \%bmprobs_shared, \%amprobs_shared);
-	}
-
+        compute_all_match_probs(\@names, \%bmprobs_shared, \%amprobs_shared, $opts{'threads'});
 
 	# make unshared clone-copys of shared bmprobs/amprobs
 	#
@@ -2098,19 +2089,14 @@ sub perform_multiple_alignment {
 	printmsg 3,"Compute pairwise alignments ... \n";
 
 	# store all pairwise alignments in @pairwise_alignments
-	my @pairwise_alns;
-	if ($opts{'threads'}==1) {
-	    @pairwise_alns = compute_all_pairwise_alignments(\@names,\%bmprobs,\%amprobs);
-	} else  {
-	    @pairwise_alns = compute_all_pairwise_alignments_par($opts{'threads'},\@names,\%bmprobs,\%amprobs);
-	}
+	my $pairwise_alns = compute_all_pairwise_alignments(\@names, \%bmprobs, \%amprobs, $opts{'threads'});
 	## fill score matrix
-	my $score_matrix = extract_score_matrix_from_alignments(\@names,\@pairwise_alns);
+	my $score_matrix = extract_score_matrix_from_alignments(\@names, $pairwise_alns);
 
 	write_2D_matrix("$results_dir/result.matrix",$score_matrix);
 
 	if ($opts{'extlib'}) {
-	    extend_library(\@pairwise_alns);
+	    extend_library($pairwise_alns);
 	}
 
 	$tree = upgma_tree(\@names,$score_matrix);
@@ -2282,26 +2268,9 @@ sub perform_multiple_alignment {
 ##
 ## returns a hash of "sparse matrices"
 sub compute_all_match_probs {
-    my ($names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+    my ($names_ref, $bmprobs_ref, $amprobs_ref, $thread_num) = @_;
 
-    my @names = @{ $names_ref };
-
-    my $a=0;
-
-    for my $nameA (@names) {
-	$a++;
-	my $b=0;
-	for my $nameB (@names) {
-	    $b++;
-	    if ($b!=$a) {
-		compute_match_probs($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$#names+1);
-	    }
-	}
-    }
-}
-
-sub compute_all_match_probs_par {
-    my ($cpu_num,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+    if (!defined($thread_num)) { $thread_num = 1; }
 
     my @names = @{ $names_ref };
 
@@ -2336,7 +2305,7 @@ sub compute_all_match_probs_par {
 	    compute_match_probs($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$#names+1);
 	},
 	\@arg_lists_par,
-	$cpu_num);
+	$thread_num);
 
 
     ## symmetrical entries in sequence
@@ -2361,8 +2330,7 @@ sub compute_match_probs {
 
     } else {
 	# compute the match probabilities for the pair
-
-	printmsg 2, sprintf(
+	printmsg 1, sprintf(
 	    "PFAlign %d/%d : $nameA and %d/%d: $nameB\n",
 	    $a,$num_seqs-1,$b,$num_seqs);
 
@@ -2863,15 +2831,9 @@ sub compute_alignment_from_dps_probs {
 ## $opts{'plfold-winsize'}
 ##
 sub compute_all_dotplots {
-    my ($seqs) = @_;
+    my ($seqs,$thread_num) = @_;
 
-    for my $i (0..@$seqs-1) {
-	compute_dotplot($i,$seqs);
-    }
-}
-
-sub compute_all_dotplots_par {
-    my ($cpu_num,$seqs) = @_;
+    if (!defined($thread_num)) { $thread_num = 1; }
 
     my @arg_list;
     foreach my $i (0..@$seqs-1) {
@@ -2880,7 +2842,7 @@ sub compute_all_dotplots_par {
 
     foreach_par(sub { my ($i)=@_; compute_dotplot($i,$seqs) },
 	    \@arg_list,
-	    $cpu_num);
+	    $thread_num);
 }
 
 ## ----------------------------------------
@@ -3278,66 +3240,23 @@ sub compute_dotplot {
 ## compute all pairwise alignments for pairs
 ## of sequences (given by @names)
 ##
-## @returns 2D-array of alignments (indices are
+## @returns ref to 2D-array of alignments (indices are
 ##          positions in list @names)
 ##
-## Dependencies on GLOBAL VARIABLES
+## @depends $opts{'probabilistic'}   flag for probabilistic alignment
 ##
-## $opts{'probabilistic'}   flag for probabilistic alignment
-## %bmprobs         base match probs in case of probabilistic alignment
-## %amprobs         arc  match probs in case of probabilistic alignment
+## @param $names_ref       names of sequences
+## @param $bmprobs_ref     base match probs in case of probabilistic alignment
+## @param $amprobs_ref     arc  match probs in case of probabilistic alignment
+## @param $thread_num         number of threads (default 1)
 ##
 sub compute_all_pairwise_alignments {
-    my ($names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+    my ($names_ref,$bmprobs_ref,$amprobs_ref,$thread_num) = @_;
 
     my %bmprobs = %{ $bmprobs_ref };
     my %amprobs = %{ $amprobs_ref };
 
-
-    my @names = @{ $names_ref };
-
-    my @pairwise_alns;
-
-    my $num=0;
-    for (my $a=0; $a<=$#names; $a++) {
-	for (my $b=0; $b<$a; $b++) {
-	    $num++;
-
-	    printmsg 2, sprintf(
-		"Align %d/%d : $names[$a] and %d/%d: $names[$b] (%d/%d)\n",
-		$a+1,$#names+1,$b+1,$a,$num,($#names*($#names+1))/2);
-
-	    my @aln;
-	    if ( $opts{'probabilistic'} ) {
-		@aln =
-		    compute_alignment_from_dps_probs($input_dir,
-						     $names[$a],
-						     $names[$b],
-						     \@locarna_params_tree,
-						     $bmprobs{nnamepair($names[$a],$names[$b])},
-						     $amprobs{nnamepair($names[$a],$names[$b])}
-		    );
-	    } else {
-		@aln = compute_alignment_from_dps($input_dir,
-						  $names[$a],
-						  $names[$b],
-						  \@locarna_params_tree
-		    );
-	    }
-
-	    $pairwise_alns[$a][$b] = [ @aln ];
-	}
-    }
-    return @pairwise_alns;
-}
-
-
-sub compute_all_pairwise_alignments_par {
-    my ($cpu_num,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
-
-    my %bmprobs = %{ $bmprobs_ref };
-    my %amprobs = %{ $amprobs_ref };
-
+    if (!defined($thread_num)) { $thread_num=1; }
 
     my @names = @{ $names_ref };
 
@@ -3400,7 +3319,7 @@ sub compute_all_pairwise_alignments_par {
 
 	},
 	\@argument_lists,
-	$cpu_num
+	$thread_num
 	);
 
 
@@ -3414,7 +3333,7 @@ sub compute_all_pairwise_alignments_par {
 	}
     }
 
-    return @res;
+    return \@res;
 }
 
 
