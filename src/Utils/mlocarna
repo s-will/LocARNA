@@ -2280,16 +2280,16 @@ sub compute_all_match_probs {
     my $a=0;
 
     ## collect argument lists
+    my $num=0;
     for my $nameA (@names) {
 	$a++;
 	my $b=0;
 	for my $nameB (@names) {
 	    $b++;
 	    if ($b!=$a) {
-		if ($a<$b) {
-		    push @arg_lists_par, [ ($a,$b,$nameA,$nameB) ];
-		} else {
-		    push @arg_lists_seq, [ ($a,$b,$nameA,$nameB) ];
+		if ($a>$b) {
+		    $num++;
+		    push @arg_lists_par, [ ($num,$a,$b,$nameA,$nameB) ];
 		}
 	    }
 	}
@@ -2298,89 +2298,86 @@ sub compute_all_match_probs {
     share($bmprobs_ref);
     share($amprobs_ref);
 
-    ## perfom in parallel
+    ## perform in parallel
     foreach_par(
 	sub {
-	    my ($a,$b,$nameA,$nameB)=@_;
-	    compute_match_probs($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$#names+1);
+	    my ($num,$a,$b,$nameA,$nameB)=@_;
+	    printmsg 2, sprintf(
+		"PFAlign %d/%d : $nameA and %d/%d: $nameB (%d/%d)\n",
+		$a,$#names+1,$b,$a-1,
+		$num,($#names*($#names+1))/2);
+
+	    compute_match_probs($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref);
+	    get_symmetric_match_probs($b,$a,$nameB,$nameA,$bmprobs_ref,$amprobs_ref);
 	},
 	\@arg_lists_par,
 	$thread_num);
+}
 
+sub get_symmetric_match_probs {
+    # get match probs entries from the symmetric case
+    my ($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref) = @_;
 
-    ## symmetrical entries in sequence
-    foreach my $list (@arg_lists_seq) {
-	my ($a,$b,$nameA,$nameB)=@{ $list };
-	compute_match_probs($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$#names+1);
+    if (! exists $bmprobs_ref->{nnamepair($nameB,$nameA)}) {
+	printerr "Internal ERROR: symmetric match probabilities don't exist yet.\n";
+	exit -1;
     }
 
+    my %subhash_bm = transpose_sparsematrix_2D( $bmprobs_ref->{nnamepair($nameB,$nameA)} );
+    $bmprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(2, \%subhash_bm);
+
+    my %subhash_am = transpose_sparsematrix_4D( $amprobs_ref->{nnamepair($nameB,$nameA)} );
+    $amprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(4, \%subhash_am);
 }
 
 sub compute_match_probs {
-    my ($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref,$num_seqs) = @_;
+    # compute the match probabilities for the pair
+    my ($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref) = @_;
 
-    if (exists $bmprobs_ref->{nnamepair($nameB,$nameA)}) {
-	# match probs are symmetric. So if we already have it then use it.
+    my $tmpprefix = threadsafe_name("$global_tmpprefix");
 
-	my %subhash_bm = transpose_sparsematrix_2D( $bmprobs_ref->{nnamepair($nameB,$nameA)} );
-	$bmprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(2, \%subhash_bm);
+    my $tmpfile_bm="$tmpprefix.bmps";
+    my $tmpfile_am="$tmpprefix.amps";
 
-	my %subhash_am = transpose_sparsematrix_4D( $amprobs_ref->{nnamepair($nameB,$nameA)} );
-	$amprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(4, \%subhash_am);
+    my @ref_aln_option = pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
 
+    my $nnameA=get_normalized_seqname($nameA);
+    my $nnameB=get_normalized_seqname($nameB);
+
+    my @cmd = ();
+    if ($opts{'fast-mea'}) {
+        push @cmd, $opts{'pw-aligner'}, "$input_dir/$nnameA", "$input_dir/$nnameB",
+          @locarna_params, "--write-match-probs" => "$tmpfile_bm";
     } else {
-	# compute the match probabilities for the pair
-	printmsg 1, sprintf(
-	    "PFAlign %d/%d : $nameA and %d/%d: $nameB\n",
-	    $a,$num_seqs-1,$b,$num_seqs);
+        push @cmd, $opts{'pw-aligner-p'}, "$input_dir/$nnameA", "$input_dir/$nnameB",
+          @locarna_p_params, "--write-basematch-probs" => "$tmpfile_bm";
 
-	my $tmpprefix = threadsafe_name("$global_tmpprefix");
-
-	my $tmpfile_bm="$tmpprefix.bmps";
-	my $tmpfile_am="$tmpprefix.amps";
-
-	my @ref_aln_option = pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
-
-	my $nnameA=get_normalized_seqname($nameA);
-	my $nnameB=get_normalized_seqname($nameB);
-
-	my @cmd = ();
-	if ($opts{'fast-mea'}) {
-	    push @cmd, $opts{'pw-aligner'}, "$input_dir/$nnameA", "$input_dir/$nnameB",
-              @locarna_params, "--write-match-probs" => "$tmpfile_bm";
-	} else {
-	    push @cmd, $opts{'pw-aligner-p'}, "$input_dir/$nnameA", "$input_dir/$nnameB",
-              @locarna_p_params, "--write-basematch-probs" => "$tmpfile_bm";
-
-	    if ( ! $opts{'only-basematch-probs'} ) {
-		push @cmd, "--write-arcmatch-probs" => "$tmpfile_am";
-	    }
-	}
-
-	push @cmd, @ref_aln_option; ## add option for reference alignment (potentially empty)
-
-	push @cmd, "-q" unless $opts{'moreverbose'};
-
-        printmsg 1, "@cmd\n";
-	system(@cmd)==0 || die_hard( "Cannot compute match probabilities by @cmd: $!" );
-
-	if ((! -e $tmpfile_bm) || (! -e $tmpfile_am)) {
-	    die_hard "Pairwise aligner failed to write match probabilities to file; called by @cmd.";
-	}
-
-	my %mat_bm = read_sparsematrix_2D($tmpfile_bm);
-	my %mat_am = read_sparsematrix_4D($tmpfile_am);
-
-
-	$bmprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(2,\%mat_bm);
-	$amprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(4,\%mat_am);
-
-	unlink "$tmpfile_am";
-	unlink "$tmpfile_bm";
+        if ( ! $opts{'only-basematch-probs'} ) {
+	push @cmd, "--write-arcmatch-probs" => "$tmpfile_am";
+        }
     }
+
+    push @cmd, @ref_aln_option; ## add option for reference alignment (potentially empty)
+
+    push @cmd, "-q" unless $opts{'moreverbose'};
+
+    printmsg 1, "@cmd\n";
+    system(@cmd)==0 || die_hard( "Cannot compute match probabilities by @cmd: $!" );
+
+    if ((! -e $tmpfile_bm) || (! -e $tmpfile_am)) {
+        die_hard "Pairwise aligner failed to write match probabilities to file; called by @cmd.";
+    }
+
+    my %mat_bm = read_sparsematrix_2D($tmpfile_bm);
+    my %mat_am = read_sparsematrix_4D($tmpfile_am);
+
+
+    $bmprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(2,\%mat_bm);
+    $amprobs_ref->{nnamepair($nameA,$nameB)} = clone_share_hash(4,\%mat_am);
+
+    unlink "$tmpfile_am";
+    unlink "$tmpfile_bm";
 }
-
-
 
 ########################################
 ## clone_share_hash($levels,$x)
@@ -3222,7 +3219,7 @@ sub compute_dotplot {
 
     # delegate to folding tool specific method
     if (not exists $delegate_compute_dotplot{$folding_tool}) {
-        print STDERR "Internal ERROR: unknown folding tool $folding_tool.\n";
+        printerr "Internal ERROR: unknown folding tool $folding_tool.\n";
         exit -1;
     }
     $delegate_compute_dotplot{$folding_tool}($ppfile, $seq);
