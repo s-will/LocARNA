@@ -1,4 +1,16 @@
+package MLocarna::unthreaded;
+
 use strict;
+use warnings;
+
+require Exporter;
+our $VERISON = 1.00;
+our @ISA = qw(Exporter);
+our @EXPORT = qw(
+    foreach_par
+    threadsafe_name
+    share);
+
 
 ## just do the same as foreach_par but sequentially
 ##

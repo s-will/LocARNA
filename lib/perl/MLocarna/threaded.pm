@@ -1,7 +1,19 @@
+package MLocarna::threaded;
+
 use strict;
+use warnings;
 
 use threads;
-use threads::shared;
+use threads::shared qw(share);
+use Thread::Semaphore;
+
+require Exporter;
+our $VERISON = 1.00;
+our @ISA = qw(Exporter);
+our @EXPORT = qw(
+    foreach_par
+    threadsafe_name
+    share);
 
 ## execute sub for all given argument lists in in parallel
 ##
@@ -13,7 +25,6 @@ use threads::shared;
 # long as there is one and processes the job. job reservation needs to
 # be synchronized (by lock on shared var $job_count)
 #
-
 sub foreach_par {
     my ($sub_ref,$argument_lists_ref,$thread_num) = @_;
 
