@@ -22,11 +22,6 @@ our $VERSION     = 1.00;
 
 our @ISA         = qw(Exporter);
 our @EXPORT      = qw(
-upgma_tree
-newick_tree_to_postorder
-tree_partitions
-check_tree_labels
-project_tree
 );
 
 our %EXPORT_TAGS = ();
@@ -34,7 +29,14 @@ our %EXPORT_TAGS = ();
 # your exported package globals go here,
 # as well as any optionally exported functions
 our @EXPORT_OK   = qw(
+check_tree_labels
 $node_sym
+newick_tree_to_postorder
+project_tree
+quote_newick_label
+tree_partitions
+unquote_newick_label
+upgma_tree
 );
 
 our $node_sym="\$\$nodesym";

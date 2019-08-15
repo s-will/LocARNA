@@ -2019,10 +2019,13 @@ sub perform_multiple_alignment {
 
 	write_2D_matrix("$results_dir/result.matrix",$score_matrix);
 
-	$tree = upgma_tree(\@names,$score_matrix);
+	$tree = MLocarna::Trees::upgma_tree(\@names,$score_matrix);
 
-    } elsif ($#names == 1) { # for only two sequences, tree is unique
-	$tree="(".quotemeta($names[0]).",".quotemeta($names[1]).");";
+    } elsif (@names == 2) { # for only two sequences, tree is unique
+
+	$tree = "(".MLocarna::Trees::quote_newick_label($names[0]).
+		",".MLocarna::Trees::quote_newick_label($names[1]).");";
+
     } elsif ($opts{'graphkernel'}) {
 
 	## RECALL: here the current directory is the target directory
@@ -2078,7 +2081,7 @@ sub perform_multiple_alignment {
 	## write it to results directory
 	write_2D_matrix("$results_dir/result.matrix",$score_matrix);
 
-	$tree = upgma_tree(\@names,$score_matrix);
+	$tree = MLocarna::Trees::upgma_tree(\@names,$score_matrix);
 
     } else {
 	# --------------------------------------------------
@@ -2099,7 +2102,7 @@ sub perform_multiple_alignment {
 	    extend_library($pairwise_alns);
 	}
 
-	$tree = upgma_tree(\@names,$score_matrix);
+	$tree = MLocarna::Trees::upgma_tree(\@names,$score_matrix);
 
     } # end generation of tree
 
@@ -2109,18 +2112,18 @@ sub perform_multiple_alignment {
     print $TREE "$tree\n";
     close $TREE;
 
-    my $tree_postorder = newick_tree_to_postorder($tree);
+    my $tree_postorder = MLocarna::Trees::newick_tree_to_postorder($tree);
 
     if (defined($opts{'treefile'})) {
 	## check whether tree contains all names in the input file and project tree to these names
 
-	if (! check_tree_labels($tree_postorder,\@names) ) {
+	if (! MLocarna::Trees::check_tree_labels($tree_postorder,\@names) ) {
 	    print STDERR "ERROR: given guide tree (--treefile) does not contain all names in the input.\n";
 	    exit(-1);
 	}
 	#print "Tree: @$tree_postorder\n";
 
-	$tree_postorder = project_tree($tree_postorder,\@names);
+	$tree_postorder = MLocarna::Trees::project_tree($tree_postorder,\@names);
 
 	#print "Projected tree: @$tree_postorder\n";
     }
@@ -3433,7 +3436,7 @@ sub perform_iterative_refinement_one_round {
     my @names = @{ $names_ref };
 
 
-    my $partitions = tree_partitions($tree_postorder);
+    my $partitions = MLocarna::Trees::tree_partitions($tree_postorder);
 
     foreach my $namesA_ref (@$partitions) {
 	my @namesA = @{ $namesA_ref };
