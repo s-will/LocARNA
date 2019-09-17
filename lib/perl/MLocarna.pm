@@ -29,8 +29,6 @@ our @EXPORT      =
         alifold_structure
         aln_h2loh
         aln_length_atleastonematch
-        aln_reliability_beststruct_fromfile
-        aln_reliability_fromfile
         aln_to_alnloh
         anchor_constraint_string
         clone_hash
@@ -45,15 +43,11 @@ our @EXPORT      =
         extract_score_matrix_from_alignments
         find_in_exec_path
         find_in_exec_path_or_error
-        forget_normalized_seqnames
-        get_normalized_seqname
         loh_names
         loh_sort
         new_intermediate_name
-        nnamepair
         parse_bracket_structure
         parse_bracket_structure_single
-        print_normalized_sequence_names_hash
         project_aln
         project_alnloh
         project_string_to_alignment_sequence
@@ -71,8 +65,6 @@ our @EXPORT      =
         read_pp_file_aln_wo_anno
         read_pp_file_pairprob_info
         read_pp_file_pairprobs
-        register_normalized_seqname
-        register_normalized_seqnames
         sprint_fasta_alnloh
         system_pipein_list
         write_2D_matrix
@@ -103,8 +95,6 @@ our $PACKAGE_STRING = "MLocarna";
 
 
 
-
-
 ########################################
 ## new_intermediate_name
 ##
@@ -122,144 +112,6 @@ my $intermediate_name_base="intermediate";
 sub new_intermediate_name {
     $intermediate_name_counter++;
     return "$intermediate_name_base$intermediate_name_counter";
-}
-
-
-########################################
-## Sequence names in fasta and clustalw files can contain characters
-## that cannot be written to disk.  Therefore, we introduce name
-## normalization that removes special characters and restrict name
-## length in order to generate a nice filename.
-##
-
-########################################
-## normalize_seqname($name, @names list of existing names)
-##
-## generate a sequence name from $name that
-## has at most a length of 16
-## and
-## does not already exist in @names
-##
-########################################
-sub normalize_seqname {
-    my ($name, @names) = @_;
-
-    my $maxlen=16;
-
-    chomp $name;
-
-    # replace all non-alpha-numeric symbols by '_'
-    $name =~ s/[^a-zA-Z\d]/_/g;
-    # take first 16 characters
-    $name = substr $name,0,$maxlen;
-
-    # make $name unique if it already occurs in @names
-    # by appending '_' and a number $i to the truncated name
-    # ($name is truncated such that maxlen is not exceeded)
-    #
-    # iterate over numbers $i from 1 until a unique name is generated
-    my $i=1;
-    while (grep /^$name$/, @names) {
-	my $arity = int(log($i)/log(10))+1;
-	if ($arity > 10) { # this will never happen ;)
-	    die "Could not generate unique name";
-	}
-
-	$name = substr $name,0,$maxlen-$arity-1;
-	$name = sprintf("%s_%0$arity"."d",$name,$i);
-	$i++;
-    }
-    return $name;
-}
-
-
-## global hash for storing the association of names to normalized names
-my %normalized_sequence_names_hash;
-
-########################################
-## print normalized sequence names hash to stdout for debugging
-##
-sub print_normalized_sequence_names_hash {
-    #print "Normalized sequence names hash:\n";
-    foreach my $k (sort keys %normalized_sequence_names_hash) {
-	print "$k => $normalized_sequence_names_hash{$k}\n";
-    }
-}
-
-########################################
-## register_normalized_seqname( $name )
-##
-## registers a normalized name for $name
-## if the name exists already, do nothing
-##
-## @param $name a sequence name
-##
-sub register_normalized_seqname {
-    my ( $name ) = @_;
-
-    if ( ! exists $normalized_sequence_names_hash{$name} ) {
-	$normalized_sequence_names_hash{$name} =
-          normalize_seqname($name,values %normalized_sequence_names_hash);
-    }
-}
-
-########################################
-## register_normalized_seqnames( $loh )
-##
-## registers all normalized name for names in a loh with name entries
-## by calling register_normalized_seqname( $name )
-##
-## @param $loh list of hashs with entry name
-##
-sub register_normalized_seqnames {
-    my ( $loh ) = @_;
-
-    foreach my $h (@$loh) {
-	register_normalized_seqname($h->{name});
-    }
-}
-
-########################################
-## forget_normalized_seqnames()
-##
-## forget all normalized names
-##
-sub forget_normalized_names {
-    %normalized_sequence_names_hash=();
-}
-
-########################################
-## get_normalized_seqname( $name )
-## returns normalized name for the given name
-##
-## @returns normalized name for $name
-##
-## if normalized name was not registered: prints error message and exits with error code -1.
-sub get_normalized_seqname {
-    my ( $name ) = @_;
-
-    if (exists $normalized_sequence_names_hash{$name}) {
-	return $normalized_sequence_names_hash{$name};
-    } else {
-	printerr "ERROR: No normalized name was registered for the requested name $name.\n";
-	exit(-1);
-    }
-}
-
-##
-## generate a unique string from two sequence names
-## that can be used as a filename
-##
-## normalized names have to be registered
-##
-## normalized names do not containt '-' (see MLocarna::chp !)
-sub nnamepair {
-    my ($nameA,$nameB) = @_;
-
-    my $nnameA=get_normalized_seqname($nameA);
-    my $nnameB=get_normalized_seqname($nameB);
-
-    return MLocarna::chp($nnameA,$nnameB);
 }
 
 
@@ -1373,7 +1225,7 @@ sub project_structure_to_alignment_sequence {
 ########################################
 ## clone_hash($levels,$x)
 ##
-## make a non-shared copy of a hash
+## make a (non-shared) copy of a hash
 ##
 ## (one could use ref as "typeof" to make this more generic,
 ## however its not needed for the moment)
@@ -1904,65 +1756,6 @@ sub sprint_fasta_alnloh {
     return $res;
 }
 
-
-
-############################################################
-## Translation obsolete due to simpler handling of normalized names
-##
-##
-#
-# ########################################
-# ## loh_translate_names($alnloh,$names)
-# ##
-# ## Translate names in $alnloh according to hash $names
-# ##
-# ## $alnloh alignment as list of hashs
-# ## $names  hash of names
-# ##
-# ## Example:
-# ##    use
-# ##       alnloh_translate_names($alnloh,loh_associate_nnames_to_names($seqs))
-# ##    to 'unnormalize' names in $alnloh
-# ##
-# ## returns ref to a copy of $alnloh where names are replaced by their
-# ## associated values in hash $names.
-# ##
-# ########################################
-# sub loh_translate_names {
-#     my ($alnloh,$names) = @_;
-
-#     my @res=();
-
-#     for my $seq (@$alnloh) {
-# 	my %entry = %$seq;
-# 	$entry{name}=$names->{$seq->{name}};
-# 	push @res,\%entry;
-#     }
-
-#     return \@res;
-# }
-
-# ########################################
-# ## loh_associate_nnames_to_names($loh)
-# ##
-# ## Associate normalized names to their long names as in $loh.
-# ##
-# ## $loh sequences or alignment as list of hashs
-# ##
-# ## returns ref to a hash that associates the names.
-# ##
-# ########################################
-# sub loh_associate_nnames_to_names {
-#     my $loh = shift;
-
-#     my %names=();
-#     for my $seq (@$loh) {
-# 	$names{$seq->{nname}}=$seq->{name};
-#     }
-
-#     return \%names;
-# }
-
 ########################################ä
 ## loh_names($loh)
 ##
@@ -2479,30 +2272,6 @@ sub extract_score_matrix_from_alignments {
     }
 
     return \@score_matrix;
-}
-
-
-########################################
-## compute reliability of an alignment as reliability for the best structure
-sub aln_reliability_beststruct_fromfile {
-    my ($file,$bmprobs,$amprobs)=@_;
-    my $aln=read_aln_wo_anno($file);
-
-    my ($score,$rel_str) = evaluate_alignment($aln,$bmprobs,$amprobs,0);
-
-    return $score;
-}
-
-########################################
-## aln_reliability_fromfile($file,$bmprobs,$amprobs)
-##
-## compute reliability of an alignment as average of the column reliability
-##
-sub aln_reliability_fromfile {
-    my ($file,$bmprobs,$amprobs)=@_;
-    my $aln=read_aln_wo_anno($file);
-
-    return aln_reliability($aln,$bmprobs,$amprobs);
 }
 
 

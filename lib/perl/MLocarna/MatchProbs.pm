@@ -26,31 +26,6 @@ our $VERSION     = 1.00;
 
 our @ISA         = qw(Exporter);
 our @EXPORT      = qw(
-read_bm_probs
-write_bm_probs
-read_am_probs
-write_am_probs
-write_bm_reliabilities
-write_am_reliabilities
-write_reliability_bars
-
-average_basematch_probs
-average_arcmatch_probs
-
-consistency_transform_bm
-consistency_transform_am
-
-compute_amreliabilities_single_seq
-compute_bmreliabilities_single_seq
-compute_reliability
-
-max_weight_structure
-write_dotplot
-write_dotplot_extended
-
-evaluate_alignment
-aln_reliability
-
 );
 
 our %EXPORT_TAGS = ();
@@ -61,6 +36,33 @@ our @EXPORT_OK   = qw(
 $min_bm_prob
 $min_am_prob
 $scale_after_ct
+aln_reliability_beststruct_fromfile
+aln_reliability_fromfile
+average_arcmatch_probs
+average_basematch_probs
+compute_amreliabilities_single_seq
+compute_bmreliabilities_single_seq
+
+consistency_transform_bm
+consistency_transform_am
+
+compute_reliability
+
+read_bm_probs
+write_bm_probs
+read_am_probs
+write_am_probs
+write_bm_reliabilities
+write_am_reliabilities
+write_reliability_bars
+
+
+max_weight_structure
+write_dotplot
+write_dotplot_extended
+
+evaluate_alignment
+aln_reliability
 );
 
 our $min_bm_prob = 0.0005; # minimal prob of base match (used for pf alignment output)
@@ -138,7 +140,7 @@ sub sum_paired_prob_am {
 ##
 ########################################
 sub average_basematch_probs {
-    my ($alnA,$alnB,$bmprobs) = @_;
+    my ($alnA,$alnB,$bmprobs,$nnorm) = @_;
 
     my @namesA = aln_names($alnA);
     my @namesB = aln_names($alnB);
@@ -154,7 +156,7 @@ sub average_basematch_probs {
 
             my  @bmprobkeys=keys %$bmprobs;
 
-            my %m = %{ $bmprobs->{MLocarna::nnamepair($nameA,$nameB)} };
+            my %m = %{ $bmprobs->{$nnorm->nnamepair($nameA,$nameB)} };
 
             # compute sum over all sequence pairs
 
@@ -183,7 +185,7 @@ sub average_basematch_probs {
 ##
 ########################################
 sub average_arcmatch_probs {
-    my ($alnA,$alnB,$amprobs) = @_;
+    my ($alnA,$alnB,$amprobs,$nnorm) = @_;
 
     my @namesA = aln_names($alnA);
     my @namesB = aln_names($alnB);
@@ -197,7 +199,7 @@ sub average_arcmatch_probs {
             my @posmapA = project_seq($alnA->{$nameA});
             my @posmapB = project_seq($alnB->{$nameB});
 
-            my %m = %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)} };
+            my %m = %{ $amprobs->{$nnorm->nnamepair($nameA,$nameB)} };
 
             # averagerei
 
@@ -312,7 +314,7 @@ sub consistency_transform_single_bm {
 ##
 ########################################
 sub consistency_transform_bm {
-    my ( $h, $names ) = @_;
+    my ( $h, $names, $nnorm ) = @_;
 
     my $num_seqs=@$names;
 
@@ -339,7 +341,7 @@ sub consistency_transform_bm {
             foreach my $nameC (@$names) {
 
                 # careful, names in the hash are normalized!
-                my $nnameC=MLocarna::get_normalized_seqname($nameC);
+                my $nnameC=$nnorm->nname($nameC);
 
                 # transform via $nameC and add to matrix AB
 
@@ -525,7 +527,7 @@ sub write_am_probs {
 ##
 ########################################
 sub compute_bmreliabilities_single_seq {
-    my ($nameA,$aln,$bmprobs,$amprobs) = @_;
+    my ( $nameA, $aln, $bmprobs, $amprobs, $nnorm ) = @_;
 
     my @names = aln_names($aln);
 
@@ -573,15 +575,15 @@ sub compute_bmreliabilities_single_seq {
             my $pB=$col2pos{$nameB}[$i];
 
             ## 1.) contribution from base match
-            if (exists $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB}) {
-                $res_bmrel_seq[$i] += $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB};
+            if (exists $bmprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pB}) {
+                $res_bmrel_seq[$i] += $bmprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pB};
             }
 
             ## 2.) contribution from arc matchs
 
             my @posmapB = @{ $posmaps{$nameB} };
 
-            for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
+            for my $pA2 ( keys %{ $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA} } ) {
 
                 my $i2 = $posmapA[$pA2];
 
@@ -593,9 +595,9 @@ sub compute_bmreliabilities_single_seq {
 
                 my $pB2 =  $col2pos{$nameB}[$i2];
 
-                if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+                if ( ! exists( $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 
-                my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+                my $add_prob=$amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
 
                 $res_bmrel_str[$i]  += $add_prob;
                 $res_bmrel_str[$i2] += $add_prob;
@@ -634,7 +636,7 @@ sub compute_bmreliabilities_single_seq {
 ########################################
 sub compute_amreliabilities_single_seq {
 
-    my ($nameA,$aln,$amprobs,$pairprobs) = @_;
+    my ($nameA,$aln,$amprobs,$pairprobs,$nnorm) = @_;
 
     my @names = aln_names($aln);
 
@@ -660,7 +662,7 @@ sub compute_amreliabilities_single_seq {
 
             my @posmapB = project_seq($aln->{$nameB});
 
-            for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
+            for my $pA2 ( keys %{ $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA} } ) {
 
                 my $i2 = $posmapA[$pA2];
 
@@ -672,9 +674,9 @@ sub compute_amreliabilities_single_seq {
 
                 my $pB2 =  $col2pos{$nameB}[$i2];
 
-                if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+                if ( ! exists( $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 
-                my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+                my $add_prob=$amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
 
                 $res_amrel{"$i $i2"} += $add_prob;
             }
@@ -722,7 +724,7 @@ sub compute_amreliabilities_single_seq {
 ##
 ########################################
 sub compute_reliability {
-    my ($aln,$bmprobs,$amprobs) = @_;
+    my ($aln,$bmprobs,$amprobs,$nnorm) = @_;
 
     my @names = aln_names($aln);
 
@@ -768,15 +770,15 @@ sub compute_reliability {
                 my $pB=$col2pos{$nameB}[$i];
 
                 ## 1.) contribution from base match
-                if (exists $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB}) {
-                    $res_bmrel_seq[$i] += $bmprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pB};
+                if (exists $bmprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pB}) {
+                    $res_bmrel_seq[$i] += $bmprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pB};
                 }
 
                 ## 2.) contribution from arc matchs
 
                 my @posmapB = @{ $posmaps{$nameB} };
 
-                for my $pA2 ( keys %{ $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA} } ) {
+                for my $pA2 ( keys %{ $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA} } ) {
 
                     my $i2 = $posmapA[$pA2];
 
@@ -788,10 +790,10 @@ sub compute_reliability {
 
                     my $pB2 =  $col2pos{$nameB}[$i2];
 
-                    #printerr "MLocarna::nnamepair($nameA,$nameB) $pA $pA2 $pB $pB2\n";
-                    if ( ! exists( $amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+                    #printerr "nnamepair($nameA,$nameB) $pA $pA2 $pB $pB2\n";
+                    if ( ! exists( $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
 
-                    my $add_prob=$amprobs->{MLocarna::nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+                    my $add_prob=$amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
 
                     $res_amrel{"$i $i2"} += $add_prob;
 
@@ -1231,7 +1233,7 @@ sub max_weight_structure {
 ## returns the transformed hash
 ########################################
 sub consistency_transform_am {
-    my ( $h, $names ) = @_;
+    my ( $h, $names, $nnorm ) = @_;
 
     my $num_seqs=@$names;
 
@@ -1260,7 +1262,7 @@ sub consistency_transform_am {
                 foreach my $nameC (@$names) {
 
                     # careful, names in the hash are normalized!
-                    my $nnameC=MLocarna::get_normalized_seqname($nameC);
+                    my $nnameC=$nnorm->nname($nameC);
 
                     # transform via $nameC and add to matrix AB
 
@@ -1358,12 +1360,12 @@ sub alicol2seqpos {
 ##
 ########################################
 sub evaluate_alignment {
-    my ($aln,$bmprobs,$amprobs,$output) = @_;
+    my ($aln, $bmprobs, $amprobs, $output, $nnorm) = @_;
 
     my $len=aln_length($aln);
 
     my ($bmrels_seq, $bmrels_str, $amrels)
-        = compute_reliability($aln,$bmprobs,$amprobs);
+        = compute_reliability($aln,$bmprobs,$amprobs, $nnorm);
 
     if ($output) {
         if (3 >= $MLocarna::Aux::verbosemode) {
@@ -1389,10 +1391,10 @@ sub evaluate_alignment {
 ##
 ########################################
 sub aln_reliability {
-    my ($aln,$bmprobs,$amprobs) = @_;
+    my ($aln, $bmprobs, $amprobs, $nnorm) = @_;
 
     my ($bmrels_seq, $bmrels_str, $amrels)
-        = compute_reliability($aln,$bmprobs,$amprobs);
+        = compute_reliability($aln, $bmprobs, $amprobs, $nnorm);
 
 
     my $score=0;
@@ -1411,6 +1413,30 @@ sub aln_reliability {
 
     return $score;
 }
+
+########################################
+## compute reliability of an alignment as reliability for the best structure
+sub aln_reliability_beststruct_fromfile {
+    my ($file,$bmprobs,$amprobs, $nnorm)=@_;
+    my $aln=MLocarna::read_aln_wo_anno($file);
+
+    my ($score,$rel_str) = evaluate_alignment($aln,$bmprobs,$amprobs,0, $nnorm);
+
+    return $score;
+}
+
+########################################
+## aln_reliability_fromfile($file,$bmprobs,$amprobs)
+##
+## compute reliability of an alignment as average of the column reliability
+##
+sub aln_reliability_fromfile {
+    my ($file,$bmprobs,$amprobs, $nnorm)=@_;
+    my $aln=MLocarna::read_aln_wo_anno($file);
+
+    return aln_reliability($aln,$bmprobs,$amprobs, $nnorm);
+}
+
 
 
 ## ------------------------------------------------------------
