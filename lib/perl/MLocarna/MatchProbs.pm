@@ -10,8 +10,6 @@ package MLocarna::MatchProbs;
 ##
 ############################################################
 
-
-use 5.008003;
 use strict;
 use warnings;
 
@@ -130,13 +128,17 @@ sub sum_paired_prob_am {
 }
 
 ########################################
-## average_basematch_probs($alnA ref of alignment hash,$alnB ref of alignment hash,
-##                         $bmprobs ref of base match probabilities hash)
+## average_basematch_probs
 ##
 ## calculate the average base match probabilities for
 ## the alignment of the alignments alnA and alnB
 ##
-## returns hash of averaged base match probabilities
+## @param $alnA alignment A
+## @param $alnB alignment B
+## @param $bmprobs base match probabilities
+## @param $nnorm name normalizer object
+##
+## @returns hash of averaged base match probabilities
 ##
 ########################################
 sub average_basematch_probs {
@@ -154,21 +156,19 @@ sub average_basematch_probs {
             my @posmapA = project_seq($alnA->{$nameA});
             my @posmapB = project_seq($alnB->{$nameB});
 
-            my  @bmprobkeys=keys %$bmprobs;
-
-            my %m = %{ $bmprobs->{$nnorm->nnamepair($nameA,$nameB)} };
+            my $m = $bmprobs->{$nnorm->nnamepair($nameA,$nameB)};
 
             # compute sum over all sequence pairs
 
-            foreach my $i (keys %m) {
-                foreach my $j (keys %{ $m{$i} }) {
-                    $r{$posmapA[$i]}{$posmapB[$j]} += $m{$i}{$j};
+            foreach my $i (keys %$m) {
+                foreach my $j (keys %{ $m->{$i} }) {
+                    $r{$posmapA[$i]}{$posmapB[$j]} += $m->{$i}{$j};
                 }
             }
         }
     }
 
-    my $nm = ($#namesA+1)*($#namesB+1);
+    my $nm = scalar(@namesA)*scalar(@namesB);
 
     return divide_sparsematrix_2D(\%r,$nm);
 }
@@ -199,15 +199,15 @@ sub average_arcmatch_probs {
             my @posmapA = project_seq($alnA->{$nameA});
             my @posmapB = project_seq($alnB->{$nameB});
 
-            my %m = %{ $amprobs->{$nnorm->nnamepair($nameA,$nameB)} };
+            my $m = $amprobs->{$nnorm->nnamepair($nameA,$nameB)};
 
             # averagerei
 
-            foreach my $i (keys %m) {
-                foreach my $j (keys %{ $m{$i} }) {
-                    foreach my $k (keys %{ $m{$i}{$j} }) {
-                        foreach my $l (keys %{ $m{$i}{$j}{$k} }) {
-                            $r{$posmapA[$i]}{$posmapA[$j]}{$posmapB[$k]}{$posmapB[$l]} += $m{$i}{$j}{$k}{$l};
+            foreach my $i (keys %$m) {
+                foreach my $j (keys %{ $m->{$i} }) {
+                    foreach my $k (keys %{ $m->{$i}{$j} }) {
+                        foreach my $l (keys %{ $m->{$i}{$j}{$k} }) {
+                            $r{$posmapA[$i]}{$posmapA[$j]}{$posmapB[$k]}{$posmapB[$l]} += $m->{$i}{$j}{$k}{$l};
                         }
                     }
                 }
@@ -215,7 +215,7 @@ sub average_arcmatch_probs {
         }
     }
 
-    my $nm = ($#namesA+1)*($#namesB+1);
+    my $nm = (@namesA)*(@namesB);
 
     return divide_sparsematrix_4D(\%r,$nm);
 }
@@ -422,13 +422,11 @@ sub read_bm_probs {
 
 ## write the basematch probabilities to files for later inspection by a user
 sub write_bm_probs {
-    my ($dir,$bmprobs_ref)=@_;
-
-    my %bmprobs = %{ $bmprobs_ref };
+    my ($dir,$bmprobs)=@_;
 
     mkdir "$dir" || die "Cannot make dir $dir";
 
-    my @name_pairs = keys %bmprobs;
+    my @name_pairs = keys %$bmprobs;
 
     for my $name_pair (@name_pairs) {
         my ($nameA,$nameB) = MLocarna::dhp($name_pair);
@@ -436,7 +434,7 @@ sub write_bm_probs {
         my $outfile="$dir/$nameA-$nameB";
         open(my $MYOUT,">", "$outfile") || die "Cannot write to $outfile: $!";
 
-        my %h = %{ $bmprobs{$name_pair} };
+        my %h = %{ $bmprobs->{$name_pair} };
 
         for my $i (keys %h) {
             my %h2 = %{ $h{$i} };
@@ -568,22 +566,25 @@ sub compute_bmreliabilities_single_seq {
 
         for my $nameB (@names) {
             if ($nameA eq $nameB) { next; }
-
             if (substr($aln->{$nameB},$i-1,1) !~ /[A-Za-z]/ ) { next; }
+
+            my $basepair = $nnorm->nnamepair($nameA,$nameB);
 
             my $pA=$col2pos{$nameA}[$i];
             my $pB=$col2pos{$nameB}[$i];
 
             ## 1.) contribution from base match
-            if (exists $bmprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pB}) {
-                $res_bmrel_seq[$i] += $bmprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pB};
+            if (multi_exists ($bmprobs, [$basepair, $pA, $pB]) ) {
+                $res_bmrel_seq[$i] += $bmprobs->{$basepair}{$pA}{$pB};
             }
 
             ## 2.) contribution from arc matchs
 
             my @posmapB = @{ $posmaps{$nameB} };
 
-            for my $pA2 ( keys %{ $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA} } ) {
+            if ( ! exists $amprobs->{$basepair}{$pA} ) { next; }
+
+            for my $pA2 ( keys %{ $amprobs->{$basepair}{$pA} } ) {
 
                 my $i2 = $posmapA[$pA2];
 
@@ -595,9 +596,9 @@ sub compute_bmreliabilities_single_seq {
 
                 my $pB2 =  $col2pos{$nameB}[$i2];
 
-                if ( ! exists( $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+                if ( ! multi_exists( $amprobs, [ $basepair, $pA, $pA2, $pB, $pB2 ] ) ) { next; }
 
-                my $add_prob=$amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+                my $add_prob=$amprobs->{$basepair}{$pA}{$pA2}{$pB}{$pB2};
 
                 $res_bmrel_str[$i]  += $add_prob;
                 $res_bmrel_str[$i2] += $add_prob;
@@ -616,8 +617,7 @@ sub compute_bmreliabilities_single_seq {
 }
 
 ########################################
-## compute_amreliabilities_single_seq($name sequence name, $aln ref of alingnment hash,
-##                                $pairbrobs ref to pairprobs hash)
+## compute_amreliabilities_single_seq
 ##
 ## compute arc match reliabilities for the given sequence
 ## in the given multiple alignment
@@ -626,6 +626,7 @@ sub compute_bmreliabilities_single_seq {
 ## @param $aln ref of the mulitple alignment
 ## @param $amprobs ref of the hash of arc match probabilities of seqs in the alignment
 ## @param $pairprobs ref to hash of pair probabilities of the sequence
+## @param nnorm name normalizer
 ##
 ## NOTE: positions in the returned profile are alignment columns (not
 ## positions of the unaligned sequence)
@@ -655,6 +656,8 @@ sub compute_amreliabilities_single_seq {
         for my $nameB (@names) {
             if ($nameA eq $nameB) { next; }
 
+            my $basepair = $nnorm->nnamepair($nameA,$nameB);
+
             if (substr($aln->{$nameB},$i-1,1) !~ /[A-Za-z]/ ) { next; }
 
             my $pA=$col2pos{$nameA}[$i];
@@ -662,7 +665,9 @@ sub compute_amreliabilities_single_seq {
 
             my @posmapB = project_seq($aln->{$nameB});
 
-            for my $pA2 ( keys %{ $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA} } ) {
+            if ( ! exists $amprobs->{$basepair}{$pA} ) { next; }
+
+            for my $pA2 ( keys %{ $amprobs->{$basepair}{$pA} } ) {
 
                 my $i2 = $posmapA[$pA2];
 
@@ -674,9 +679,9 @@ sub compute_amreliabilities_single_seq {
 
                 my $pB2 =  $col2pos{$nameB}[$i2];
 
-                if ( ! exists( $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+                if ( ! multi_exists( $amprobs, [$basepair, $pA, $pA2, $pB, $pB2] ) ) { next; }
 
-                my $add_prob=$amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+                my $add_prob=$amprobs->{$basepair}{$pA}{$pA2}{$pB}{$pB2};
 
                 $res_amrel{"$i $i2"} += $add_prob;
             }
@@ -707,11 +712,27 @@ sub compute_amreliabilities_single_seq {
     return \%res_amrel;
 }
 
+# test for key existence in hoh data structures
+# avoids to force entries into existence
+sub multi_exists{
+    my ($h, $keys) = @_;
+    foreach my $k (@$keys) {
+        if (! exists $h->{$k}) {
+            return 0;
+        }
+        $h = $h->{$k};
+    }
+    return 1;
+}
+
 
 ########################################
-## compute_reliability($aln ref to alignment hash,
-##                     $bmprobs ref to base match probs hash,
-##                     $amprobs ref to arc match probs hash)
+## compute_reliability
+##
+## @param $aln ref to alignment hash
+## @param $bmprobs ref to base match probs hash
+## @param $amprobs ref to arc match probs hash
+## @param nnorm name normalizer
 ##
 ## Compute reliabilities for the basematches in each column of a
 ## multiple alignment, as well as reliabilities for structural match
@@ -728,7 +749,7 @@ sub compute_reliability {
 
     my @names = aln_names($aln);
 
-    if ($#names < 0) { die "basematch_reliability: empty alignment."; }
+    if (@names == 0) { die "compute_reliability: empty alignment."; }
 
     my $aln_length=length($aln->{$names[0]});
 
@@ -764,21 +785,23 @@ sub compute_reliability {
             for my $nameB (@names) {
                 if ($nameA le $nameB) { next; }
 
+                my $namepair = $nnorm->nnamepair($nameA,$nameB);
+
                 if (substr($aln->{$nameB},$i-1,1) !~ /[A-Za-z]/ ) { next; }
 
                 my $pA=$col2pos{$nameA}[$i];
                 my $pB=$col2pos{$nameB}[$i];
 
                 ## 1.) contribution from base match
-                if (exists $bmprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pB}) {
-                    $res_bmrel_seq[$i] += $bmprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pB};
+                if (exists $bmprobs->{$namepair}{$pA}{$pB}) {
+                    $res_bmrel_seq[$i] += $bmprobs->{$namepair}{$pA}{$pB};
                 }
 
                 ## 2.) contribution from arc matchs
 
                 my @posmapB = @{ $posmaps{$nameB} };
 
-                for my $pA2 ( keys %{ $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA} } ) {
+                for my $pA2 ( keys %{ $amprobs->{$namepair}{$pA} } ) {
 
                     my $i2 = $posmapA[$pA2];
 
@@ -790,10 +813,9 @@ sub compute_reliability {
 
                     my $pB2 =  $col2pos{$nameB}[$i2];
 
-                    #printerr "nnamepair($nameA,$nameB) $pA $pA2 $pB $pB2\n";
-                    if ( ! exists( $amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2} ) ) { next; }
+                    if ( ! multi_exists( $amprobs, [$namepair,$pA,$pA2,$pB,$pB2] ) ) { next; }
 
-                    my $add_prob=$amprobs->{$nnorm->nnamepair($nameA,$nameB)}{$pA}{$pA2}{$pB}{$pB2};
+                    my $add_prob=$amprobs->{$namepair}{$pA}{$pA2}{$pB}{$pB2};
 
                     $res_amrel{"$i $i2"} += $add_prob;
 
@@ -804,7 +826,6 @@ sub compute_reliability {
             }
         }
     }
-
 
     my $numpairs = ($#names+1)*$#names/2;
 
