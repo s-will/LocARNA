@@ -1075,39 +1075,38 @@ my @autopass_noarg_options = ( "max-diff-relax", "relaxed-anchors" );
 ## ----------------------------------------
 ## the hash of options
 #
-my %opts;
-
+my $opts;
 
 ## ----------------------------------------
 ## some default values
 #
 
 # handle noLP / LP later
-# $opts{'noLP'}=1;
+# $opts->{'noLP'}=1;
 
-$opts{'skip-pp'}=0; ## =1 skips the computation of pair probabilities
+$opts->{'skip-pp'}=0; ## =1 skips the computation of pair probabilities
                     ## for files that exist already
-$opts{'it-reliable-structure'}=0;
+$opts->{'it-reliable-structure'}=0;
 
-$opts{'min-prob'}=0.001;
+$opts->{'min-prob'}=0.001;
 
-$opts{'struct-weight'}=200;
-$opts{'max-diff-am'}=30;
+$opts->{'struct-weight'}=200;
+$opts->{'max-diff-am'}=30;
 
-$opts{'threads'}=1;
+$opts->{'threads'}=1;
 
-$opts{'pw-aligner'}="$bindir/locarna";
-$opts{'pw-aligner-p'}="$bindir/locarna_p";
+$opts->{'pw-aligner'}="$bindir/locarna";
+$opts->{'pw-aligner-p'}="$bindir/locarna_p";
 
-$opts{'pw-aligner-options'}="";
-$opts{'pw-aligner-p-options'}="";
+$opts->{'pw-aligner-options'}="";
+$opts->{'pw-aligner-p-options'}="";
 
 # defaults for experimental graph kernel interface
-$opts{'svmsgdnspdk'}="svmsgdnspdk";
-$opts{'svmsgdnspdk-radius'}=2;
-$opts{'svmsgdnspdk-distance'}=4;
+$opts->{'svmsgdnspdk'}="svmsgdnspdk";
+$opts->{'svmsgdnspdk-radius'}=2;
+$opts->{'svmsgdnspdk-distance'}=4;
 
-$opts{'fasta2shrep'}="fasta2shrep_gspan.pl";
+$opts->{'fasta2shrep'}="fasta2shrep_gspan.pl";
 
 # default options of fasta2shrep. In particular, specify
 # -wins window size
@@ -1116,7 +1115,7 @@ $opts{'fasta2shrep'}="fasta2shrep_gspan.pl";
 # -t grammar abstraction level (of RNAshape)
 # -M number of shapes
 #
-$opts{'fasta2shrep-options'}="-wins 200 -shift 50 -stack -t 3 -M 3";
+$opts->{'fasta2shrep-options'}="-wins 200 -shift 50 -stack -t 3 -M 3";
 
 
 ## ----------------------------------------
@@ -1133,13 +1132,13 @@ my $config_file;
 Getopt::Long::Configure("pass_through");
 #
 if (GetOptions( 'configure=s' => \$config_file,
-                'verbose' => \$opts{'verbose'},
-                'quiet' => \$opts{'quiet'}
+                'verbose' => \$opts->{'verbose'},
+                'quiet' => \$opts->{'quiet'}
               ) && defined($config_file)) {
-    print "Load configuration from $config_file.\n" unless $opts{'quiet'};
+    print "Load configuration from $config_file.\n" unless $opts->{'quiet'};
     {
         open(my $in, "<","$config_file");
-        load_keyvalue_pairs( $in, \%opts );
+        load_keyvalue_pairs( $in, $opts );
         close $in;
     }
 }
@@ -1148,32 +1147,32 @@ if (GetOptions( 'configure=s' => \$config_file,
 #
 Getopt::Long::Configure("no_ignore_case");
 #
-GetOptions( \%opts, @options, @autopass_arg_options, @autopass_noarg_options )
+GetOptions( $opts, @options, @autopass_arg_options, @autopass_noarg_options )
     || pod2usage(2);
 
 
 
 # ----------------------------------------
 # synonymous options
-$opts{'threads'} = $opts{'cpus'} if defined $opts{'cpus'};
-$opts{'cpus'} = $opts{'threads'} if defined $opts{'threads'};
+$opts->{'threads'} = $opts->{'cpus'} if defined $opts->{'cpus'};
+$opts->{'cpus'} = $opts->{'threads'} if defined $opts->{'threads'};
 
 ## print out options hash -- for debugging
-# for my $key (keys %opts) {
-#     my $value=$opts{$key};
+# for my $key (keys %$opts) {
+#     my $value=$opts->{$key};
 #     if (defined $value) {
 #         print "$key\t=\t$value\n";
 #     }
 # }
 #
 
-help_msg() if $opts{'help'};
-pod2usage(-exitstatus => 0, -verbose => 2) if $opts{'man'};
+help_msg() if $opts->{'help'};
+pod2usage(-exitstatus => 0, -verbose => 2) if $opts->{'man'};
 
 
 ## option --version
 
-if ($opts{'version'}) {
+if ($opts->{'version'}) {
    system("$bindir/locarna", "--version");
    exit(0);
 }
@@ -1182,7 +1181,7 @@ if ($opts{'version'}) {
 # parameter mfasta file
 ## input-file = filename of fasta file with input sequences
 if ($#ARGV == 0) {
-    $opts{'input-file'} = $ARGV[0];
+    $opts->{'input-file'} = $ARGV[0];
 }else {
     help_msg();
 }
@@ -1240,18 +1239,18 @@ sub load_keyvalue_pairs {
 
 ## ----------------------------------------
 ## verbosity level
-if ($opts{'quiet'}) {
+if ($opts->{'quiet'}) {
     $MLocarna::Aux::verbosemode=4;
 }
 
 # mode 3 is 'normal' verbosity
 
-if ($opts{'verbose'}) {
+if ($opts->{'verbose'}) {
     $MLocarna::Aux::verbosemode=2;
 }
 
-if ($opts{'moreverbose'}) {
-    $opts{'verbose'}=1;
+if ($opts->{'moreverbose'}) {
+    $opts->{'verbose'}=1;
     $MLocarna::Aux::verbosemode=1;
 }
 
@@ -1267,58 +1266,58 @@ printmsg 3,"Copyright Sebastian Will\n\n";
 
 
 ## target/output directory
-if (!defined($opts{'tgtdir'})) {
-    $opts{'tgtdir'} = $opts{'input-file'};
-    $opts{'tgtdir'} =~ s/\.mfasta$|\.fasta$|\.fa$|\.aln$//;
-    $opts{'tgtdir'} .= ".out";
+if (!defined($opts->{'tgtdir'})) {
+    $opts->{'tgtdir'} = $opts->{'input-file'};
+    $opts->{'tgtdir'} =~ s/\.mfasta$|\.fasta$|\.fa$|\.aln$//;
+    $opts->{'tgtdir'} .= ".out";
 }
 
-if (defined($opts{'evaluate'})) {
+if (defined($opts->{'evaluate'})) {
     printmsg 3, "EVALUATION MODE\n\n";
 
-    run_evaluation_mode($opts{'evaluate'},$opts{'tgtdir'}."/probs");
+    run_evaluation_mode($opts->{'evaluate'},$opts->{'tgtdir'}."/probs");
 
     exit 0;
 }
 
 # LP and noLP should never both be given on the command line
-if (defined($opts{'LP'}) && defined($opts{'noLP'})) {
+if (defined($opts->{'LP'}) && defined($opts->{'noLP'})) {
     printerr "ERROR: The flags --noLP and --LP contradict each other.\n";
     exit(-1);
 }
 
 # this makes noLP the default, unless LP is given
-if (defined($opts{'LP'})) {
-    $opts{'noLP'}=0;
+if (defined($opts->{'LP'})) {
+    $opts->{'noLP'}=0;
 } else {
-    $opts{'noLP'}=1;
+    $opts->{'noLP'}=1;
 }
 
 
 ## if option sparse is given, then use sparse as pairwise aligner
-if ($opts{'sparse'}) {
-    $opts{'pw-aligner'} = "$bindir/sparse";
-    $opts{'in-loop-robabilities'}=1;
+if ($opts->{'sparse'}) {
+    $opts->{'pw-aligner'} = "$bindir/sparse";
+    $opts->{'in-loop-robabilities'}=1;
 }
 
 ## construct parameter string for locarna
 
-my @locarna_params = split(/\s+/, $opts{'pw-aligner-options'});
-my @locarna_p_params = split(/\s+/, $opts{'pw-aligner-p-options'});
+my @locarna_params = split(/\s+/, $opts->{'pw-aligner-options'});
+my @locarna_p_params = split(/\s+/, $opts->{'pw-aligner-p-options'});
 
 ## first set parameters that are equal for tree construction and other locarna runs
 ## (we copy locarna_params to locarna_params_tree later)
 
 my $endgaps_string="++++";
-if (defined($opts{'free-endgaps-3'})) {
-    $opts{'free-endgaps'}=1;
-    $endgaps_string="-+-+" unless defined($opts{'free-endgaps-5'});
-} elsif (defined($opts{'free-endgaps-5'})) {
-    $opts{'free-endgaps'}=1;
+if (defined($opts->{'free-endgaps-3'})) {
+    $opts->{'free-endgaps'}=1;
+    $endgaps_string="-+-+" unless defined($opts->{'free-endgaps-5'});
+} elsif (defined($opts->{'free-endgaps-5'})) {
+    $opts->{'free-endgaps'}=1;
     $endgaps_string="+-+-";
 }
-if (defined($opts{'free-endgaps'})) {
-    if($opts{'probabilistic'}) {
+if (defined($opts->{'free-endgaps'})) {
+    if($opts->{'probabilistic'}) {
         printerr "ERROR: no free-end gaps in probabilistic mode.\n";
         exit(-1);
     } else {
@@ -1326,7 +1325,7 @@ if (defined($opts{'free-endgaps'})) {
     }
 }
 
-if (defined($opts{'only-basematch-probs'})) {
+if (defined($opts->{'only-basematch-probs'})) {
     push @locarna_p_params, "--include-am-in-bm";
 }
 
@@ -1339,33 +1338,33 @@ if (defined($MLocarna::MatchProbs::min_am_prob)) {
     push @locarna_p_params, "--min-am-prob" => $MLocarna::MatchProbs::min_am_prob;
 }
 
-if (defined($opts{'extended-pf'})) {
+if (defined($opts->{'extended-pf'})) {
     push @locarna_p_params, "--extended-pf";
 }
 
-if (defined($opts{'quad-pf'})) {
+if (defined($opts->{'quad-pf'})) {
     push @locarna_p_params, "--quad-pf";
 }
 
-if (defined($opts{'pf-scale'})) {
-    push @locarna_p_params, "--pf-scale" => $opts{'pf-scale'};
+if (defined($opts->{'pf-scale'})) {
+    push @locarna_p_params, "--pf-scale" => $opts->{'pf-scale'};
 }
 
 ## handle plfold
-if (defined($opts{'plfold-span'})) {
+if (defined($opts->{'plfold-span'})) {
     printmsg 1,"Use plfold for local folding.\n";
-    if (!defined($opts{'plfold-winsize'})) {
-        $opts{'plfold-winsize'} = 2*$opts{'plfold-span'};
+    if (!defined($opts->{'plfold-winsize'})) {
+        $opts->{'plfold-winsize'} = 2*$opts->{'plfold-span'};
     }
-    if (defined($opts{'stacking'}) || defined($opts{'new-stacking'})) {
+    if (defined($opts->{'stacking'}) || defined($opts->{'new-stacking'})) {
         printerr "Can't use stacking with plfold.\n";
         exit -1;
     }
-} elsif (defined($opts{'plfold-winsize'})) {
+} elsif (defined($opts->{'plfold-winsize'})) {
     printerr "Warning: winsize for plfold given, but no span. Winsize ignored.\n";
 }
 
-push @locarna_params, "-v" if ($opts{'verbose'});
+push @locarna_params, "-v" if ($opts->{'verbose'});
 
 # ----------------------------------------
 # handle autopass options
@@ -1373,15 +1372,15 @@ push @locarna_params, "-v" if ($opts{'verbose'});
 foreach my $opt (@autopass_arg_options) {
     $opt =~ s/[|=].*//;
 
-    if (exists $opts{$opt}) {
-        push @locarna_params, "--$opt" => $opts{$opt};
+    if (exists $opts->{$opt}) {
+        push @locarna_params, "--$opt" => $opts->{$opt};
     }
 }
 
 foreach my $opt (@autopass_noarg_options) {
     $opt =~ s/[|].*//;
 
-    if (exists $opts{$opt}) {
+    if (exists $opts->{$opt}) {
         push @locarna_params, "--$opt";
     }
 }
@@ -1389,40 +1388,40 @@ foreach my $opt (@autopass_noarg_options) {
 # ----------------------------------------
 
 
-if (defined($opts{'width'})) {
-    push @locarna_params, "--width" => $opts{'width'};
+if (defined($opts->{'width'})) {
+    push @locarna_params, "--width" => $opts->{'width'};
 } else {
-    $opts{'width'}=120;
+    $opts->{'width'}=120;
 }
 
 push @locarna_p_params, @locarna_params;
 
 ## options only passed to locarna (not to locarna_p)
-push @locarna_params, "--noLP" if ($opts{'noLP'});
+push @locarna_params, "--noLP" if ($opts->{'noLP'});
 
-if ($opts{'probabilistic'}) {
+if ($opts->{'probabilistic'}) {
     push @locarna_params, "--mea-alignment";
 
-    push @locarna_params, "--mea-gapcost" if $opts{'mea-gapcost'};
+    push @locarna_params, "--mea-gapcost" if $opts->{'mea-gapcost'};
 
-    push @locarna_params, "--mea-beta" => $opts{'mea-beta'} if defined($opts{'mea-beta'});
+    push @locarna_params, "--mea-beta" => $opts->{'mea-beta'} if defined($opts->{'mea-beta'});
 
-    if ( defined($opts{'fast-mea'}) ) {
-        push @locarna_params, "--mea-alpha" => $opts{'mea-alpha'} if defined($opts{'mea-alpha'});
-        push @locarna_params, "--mea-gamma" => $opts{'mea-gamma'} if defined($opts{'mea-gamma'});
+    if ( defined($opts->{'fast-mea'}) ) {
+        push @locarna_params, "--mea-alpha" => $opts->{'mea-alpha'} if defined($opts->{'mea-alpha'});
+        push @locarna_params, "--mea-gamma" => $opts->{'mea-gamma'} if defined($opts->{'mea-gamma'});
     }
 }
 
 # whether to compute consensus structures and which type
-if (not defined($opts{'consensus-structure'})) {
-    if ($opts{"alifold-consensus-dp"}) {
-        $opts{'consensus-structure'}="alifold";
+if (not defined($opts->{'consensus-structure'})) {
+    if ($opts->{"alifold-consensus-dp"}) {
+        $opts->{'consensus-structure'}="alifold";
     } else {
-        $opts{'consensus-structure'}="none";
+        $opts->{'consensus-structure'}="none";
     }
 }
 
-push @locarna_params, "--consensus-structure" => $opts{'consensus-structure'};
+push @locarna_params, "--consensus-structure" => $opts->{'consensus-structure'};
 
 ## copy to tree params
 my @locarna_params_tree = ();
@@ -1430,9 +1429,9 @@ push @locarna_params_tree, @locarna_params;
 
 ## special treatment of min-prob and tree-min-prob
 
-push @locarna_p_params, "--min-prob" => $opts{'min-prob'} if (defined($opts{'min-prob'}));
+push @locarna_p_params, "--min-prob" => $opts->{'min-prob'} if (defined($opts->{'min-prob'}));
 
-if ($opts{'probabilistic'} && $opts{'only-basematch-probs'}) {
+if ($opts->{'probabilistic'} && $opts->{'only-basematch-probs'}) {
     # when using only basematch probabilities,
     # turn off structural scoring for locarna
 
@@ -1440,16 +1439,16 @@ if ($opts{'probabilistic'} && $opts{'only-basematch-probs'}) {
     push @locarna_params_tree, "--min-prob" => "1";
 } else {
 
-    push @locarna_params, "--min-prob" => $opts{'min-prob'} if (defined($opts{'min-prob'}));
+    push @locarna_params, "--min-prob" => $opts->{'min-prob'} if (defined($opts->{'min-prob'}));
 
-    if (defined($opts{'tree-min-prob'})) {
-        push @locarna_params_tree, "--min-prob" => $opts{'tree-min-prob'};
+    if (defined($opts->{'tree-min-prob'})) {
+        push @locarna_params_tree, "--min-prob" => $opts->{'tree-min-prob'};
     } else {
-        push @locarna_params_tree, "--min-prob" => $opts{'min-prob'} if (defined($opts{'min-prob'}));
+        push @locarna_params_tree, "--min-prob" => $opts->{'min-prob'} if (defined($opts->{'min-prob'}));
     }
 }
 
-if ($opts{'write-structure'}) {
+if ($opts->{'write-structure'}) {
     push @locarna_params, "--write-structure";
 }
 
@@ -1457,13 +1456,13 @@ if ($opts{'write-structure'}) {
 ## use global or local alignments in subsequent progressive steps
 ##
 ## make local progressive default, if sequence local alignment is turned on
-if ((grep $opts{'sequ-local'}, ("on","true","t","1"))
-    && !$opts{'global-progressive'}) {
-    $opts{'local-progressive'}=1;
+if ((grep $opts->{'sequ-local'}, ("on","true","t","1"))
+    && !$opts->{'global-progressive'}) {
+    $opts->{'local-progressive'}=1;
 }
 
-if ($opts{'local-progressive'}) {
-    if ($opts{'global-progressive'}) {
+if ($opts->{'local-progressive'}) {
+    if ($opts->{'global-progressive'}) {
         printerr "Warning: local overrides global progressive alignment!\n"
     }
     push @locarna_params, "--local-file-output", "--local-output";
@@ -1471,15 +1470,15 @@ if ($opts{'local-progressive'}) {
 
 
 ## no stacking for locarna_p
-push @locarna_params, "--stacking" if ($opts{'stacking'});
-push @locarna_params_tree, "--stacking" if ($opts{'stacking'});
+push @locarna_params, "--stacking" if ($opts->{'stacking'});
+push @locarna_params_tree, "--stacking" if ($opts->{'stacking'});
 
-push @locarna_params, "--new-stacking" if ($opts{'new-stacking'});
-push @locarna_params_tree, "--new-stacking" if ($opts{'new-stacking'});
+push @locarna_params, "--new-stacking" if ($opts->{'new-stacking'});
+push @locarna_params_tree, "--new-stacking" if ($opts->{'new-stacking'});
 
 ## pass alifold-consensus-dp
-push @locarna_params, "--alifold-consensus-dp" if ($opts{'alifold-consensus-dp'});
-# push @locarna_params_tree, "--alifold-consensus-dp" if ($opts{'alifold-consensus-dp'});
+push @locarna_params, "--alifold-consensus-dp" if ($opts->{'alifold-consensus-dp'});
+# push @locarna_params_tree, "--alifold-consensus-dp" if ($opts->{'alifold-consensus-dp'});
 
 
 ######## ------------------------------------------------------------
@@ -1488,27 +1487,27 @@ push @locarna_params, "--alifold-consensus-dp" if ($opts{'alifold-consensus-dp'}
 #
 #
 
-if ($opts{'consistency-transformation'} && !$opts{'probabilistic'}) {
+if ($opts->{'consistency-transformation'} && !$opts->{'probabilistic'}) {
     printerr "Consistency transformation is supported only in probabilistic mode. Exit.\n";
     exit -1;
 }
 
-if (!$opts{'probabilistic'} && ($opts{'write-bm-probs'} || $opts{'write-am-probs'})) {
+if (!$opts->{'probabilistic'} && ($opts->{'write-bm-probs'} || $opts->{'write-am-probs'})) {
     printerr "Writing of probabilities only possible in probabilistic mode. Exit.\n";
     exit -1;
 }
 
-if (($opts{'fast-mea'} || $opts{'only-basematch-probs'}) && $opts{'write-am-probs'}) {
+if (($opts->{'fast-mea'} || $opts->{'only-basematch-probs'}) && $opts->{'write-am-probs'}) {
     printerr "Writing of arc match probabilities requested, but their computation is disabled. Exit.\n";
     exit -1;
 }
 
-if (defined($opts{'rnafold-temperature'}) && $opts{'rnafold-temperature'}!=37 && defined($opts{'alifold-consensus-dp'})) {
+if (defined($opts->{'rnafold-temperature'}) && $opts->{'rnafold-temperature'}!=37 && defined($opts->{'alifold-consensus-dp'})) {
     printerr "WARNING: alifold consensus dotplots are computed at 37°C\n";
-    printerr "         (different to initial folding temperature T=$opts{'rnafold-temperature'})\n\n";
+    printerr "         (different to initial folding temperature T=$opts->{'rnafold-temperature'})\n\n";
 }
 
-if (defined($opts{'rnafold-parameter'}) && defined($opts{'alifold-consensus-dp'})) {
+if (defined($opts->{'rnafold-parameter'}) && defined($opts->{'alifold-consensus-dp'})) {
     printerr "WARNING: alifold consensus dotplots are computed with standard parameters\n\n";
 }
 
@@ -1520,24 +1519,24 @@ my $refaln_filename; # filename of reference alignment
 #### Writing of probabilities
 
 ## write probabilities to disk by default
-if ($opts{'probabilistic'}) {
-    $opts{'write-bm-probs'} = 1;
-    $opts{'write-am-probs'} = 1;
+if ($opts->{'probabilistic'}) {
+    $opts->{'write-bm-probs'} = 1;
+    $opts->{'write-am-probs'} = 1;
 }
 
 ## turn off writing of probabilities to disk if wanted
-if (defined($opts{'no-write-bm-probs'})) { $opts{'write-bm-probs'} = !$opts{'no-write-bm-probs'}; }
-if (defined($opts{'no-write-am-probs'})) { $opts{'write-am-probs'} = !$opts{'no-write-am-probs'}; }
+if (defined($opts->{'no-write-bm-probs'})) { $opts->{'write-bm-probs'} = !$opts->{'no-write-bm-probs'}; }
+if (defined($opts->{'no-write-am-probs'})) { $opts->{'write-am-probs'} = !$opts->{'no-write-am-probs'}; }
 
 
 ####
 ## get full, absolute path for parameter file
-if (defined($opts{'rnafold-parameter'})) {
-    if ((!defined(abs_path($opts{'rnafold-parameter'})) || (! -e $opts{'rnafold-parameter'}))) {
-        printerr "WARNING: RNAfold parameters $opts{'rnafold-parameter'} not found (use default)!\n";
-        $opts{'rnafold-parameter'} = undef;
+if (defined($opts->{'rnafold-parameter'})) {
+    if ((!defined(abs_path($opts->{'rnafold-parameter'})) || (! -e $opts->{'rnafold-parameter'}))) {
+        printerr "WARNING: RNAfold parameters $opts->{'rnafold-parameter'} not found (use default)!\n";
+        $opts->{'rnafold-parameter'} = undef;
     } else {
-        $opts{'rnafold-parameter'} = abs_path($opts{'rnafold-parameter'});
+        $opts->{'rnafold-parameter'} = abs_path($opts->{'rnafold-parameter'});
     }
 }
 
@@ -1545,16 +1544,16 @@ if (defined($opts{'rnafold-parameter'})) {
 ## parameters for RNAfold and RNAalifold (parameter file,
 ## temperature, and maxBPspan)
 my @RNAfold_args = ();
-if (defined($opts{'rnafold-parameter'})) {
-    push @RNAfold_args, "-P" => $opts{'rnafold-parameter'};
+if (defined($opts->{'rnafold-parameter'})) {
+    push @RNAfold_args, "-P" => $opts->{'rnafold-parameter'};
 }
 
-if (defined($opts{'rnafold-temperature'})) {
-    push @RNAfold_args, "-T" => $opts{'rnafold-temperature'};
+if (defined($opts->{'rnafold-temperature'})) {
+    push @RNAfold_args, "-T" => $opts->{'rnafold-temperature'};
 }
 
-if (defined($opts{'maxBPspan'}) && $opts{'maxBPspan'} ne "-1") {
-    push @RNAfold_args, "--maxBPspan" => $opts{'maxBPspan'};
+if (defined($opts->{'maxBPspan'}) && $opts->{'maxBPspan'} ne "-1") {
+    push @RNAfold_args, "--maxBPspan" => $opts->{'maxBPspan'};
 }
 
 ####
@@ -1562,20 +1561,20 @@ if (defined($opts{'maxBPspan'}) && $opts{'maxBPspan'} ne "-1") {
 ## search in PATH, unless absolute or relative path is given
 ## get full, absolute path
 
-if (defined($opts{'pw-aligner'})) {
-    $opts{'pw-aligner'} = find_in_exec_path_or_error($opts{'pw-aligner'});
+if (defined($opts->{'pw-aligner'})) {
+    $opts->{'pw-aligner'} = find_in_exec_path_or_error($opts->{'pw-aligner'});
 }
 
 ####
 ## get full, absolute path for pairwise aligner p
-if (defined($opts{'pw-aligner-p'})) {
-    $opts{'pw-aligner-p'} = find_in_exec_path_or_error($opts{'pw-aligner-p'});
+if (defined($opts->{'pw-aligner-p'})) {
+    $opts->{'pw-aligner-p'} = find_in_exec_path_or_error($opts->{'pw-aligner-p'});
 }
 
 
 #### ------------------------------------------------------------
 
-if ($opts{'probabilistic'} && ! $opts{'fast-mea'}) {
+if ($opts->{'probabilistic'} && ! $opts->{'fast-mea'}) {
     printmsg 2,"Locarna-P parameters (for computing probabilities): @locarna_p_params\n";
 }
 printmsg 2,"Locarna parameter for progressive alignment: @locarna_params\n";
@@ -1612,17 +1611,17 @@ exit(0);
 
 sub main {
 
-    if (! -e $opts{'tgtdir'}) {
-        mkdir $opts{'tgtdir'};
-        if (! -e $opts{'tgtdir'} ) {
-            printerr "Cannot create target directory $opts{'tgtdir'}. Exit.";
+    if (! -e $opts->{'tgtdir'}) {
+        mkdir $opts->{'tgtdir'};
+        if (! -e $opts->{'tgtdir'} ) {
+            printerr "Cannot create target directory $opts->{'tgtdir'}. Exit.";
             exit -1;
         }
     } else {
-        if ( -d $opts{'tgtdir'} ) {
-            printerr "Warning: $opts{'tgtdir'} exists already.\n" if ($opts{'verbose'});
+        if ( -d $opts->{'tgtdir'} ) {
+            printerr "Warning: $opts->{'tgtdir'} exists already.\n" if ($opts->{'verbose'});
         } else {
-            printerr $opts{'tgtdir'}." is not a directory. Exit.\n";
+            printerr $opts->{'tgtdir'}." is not a directory. Exit.\n";
             exit -1;
         }
     }
@@ -1632,12 +1631,12 @@ sub main {
     ## ----------------------------------------
     # read input sequences from file
     #
-    if ($opts{'realign'}) {
-        $refaln = read_clustalw_alnloh($opts{'input-file'});
-        $refaln_filename = abs_path($opts{'input-file'});
+    if ($opts->{'realign'}) {
+        $refaln = read_clustalw_alnloh($opts->{'input-file'});
+        $refaln_filename = abs_path($opts->{'input-file'});
         $seqs = project_sequences_for_realign($refaln);
     } else {
-        $seqs = read_fasta($opts{'input-file'}) ;
+        $seqs = read_fasta($opts->{'input-file'}) ;
     }
 
     foreach my $seq (@{$seqs}) {
@@ -1650,15 +1649,15 @@ sub main {
     ##### ------------------------------------------------------------
     ## limited realignment: max_diff_aln
 
-    if (defined($opts{'max-diff-aln'})) {
-        if ($opts{'realign'}) {
+    if (defined($opts->{'max-diff-aln'})) {
+        if ($opts->{'realign'}) {
             ## require '.' argument to max-diff-aln
-            if (!($opts{'max-diff-aln'} eq "." or $opts{'max-diff-aln'} eq $opts{'input-file'})) {
+            if (!($opts->{'max-diff-aln'} eq "." or $opts->{'max-diff-aln'} eq $opts->{'input-file'})) {
                 printerr "WARNING: due to '--realign', the argument of max-diff-aln is ignored;\n";
                 printerr "         to avoid this warning, set it to '.' (or identical to the input file).\n";
             }
         } else {
-            $refaln_filename=abs_path($opts{'max-diff-aln'});
+            $refaln_filename=abs_path($opts->{'max-diff-aln'});
             ## read alignment from file
             $refaln = read_clustalw_alnloh("$refaln_filename");
         }
@@ -1674,19 +1673,19 @@ sub main {
 
     ## check input: we need at least two input sequences
     if (@$seqs == 0) {
-        printerr("No input sequences found in $opts{'input-file'}.\n");
+        printerr("No input sequences found in $opts->{'input-file'}.\n");
         exit(-1);
     }
     if (@$seqs == 1) {
-        printerr("Only one input sequence found in $opts{'input-file'}.\n");
+        printerr("Only one input sequence found in $opts->{'input-file'}.\n");
         exit(-1);
     }
 
-    if ( defined $opts{'anchor-constraints'} ) {
-        print "Read anchor constraints from file $opts{'anchor-constraints'}...\n" if $opts{'verbose'};
+    if ( defined $opts->{'anchor-constraints'} ) {
+        print "Read anchor constraints from file $opts->{'anchor-constraints'}...\n" if $opts->{'verbose'};
         my $regions = read_anchor_constraints($seqs,
-                                              $opts{'anchor-constraints'});
-        if ($opts{'verbose'}) {
+                                              $opts->{'anchor-constraints'});
+        if ($opts->{'verbose'}) {
             print "ANCHOR REGIONS: @{$regions}\n";
         }
     }
@@ -1696,10 +1695,10 @@ sub main {
     constraint_annotation_is_valid_or_die($seqs);
 
     ## check whether sequences and reference alignment are compatible
-    if ($opts{'max-diff-aln'} && (! is_aln_of_seqs($seqs,$refaln)) ) {
+    if ($opts->{'max-diff-aln'} && (! is_aln_of_seqs($seqs,$refaln)) ) {
         print STDERR "Inconsistent input: Given reference alignment "
-          ."( --max-diff-aln \"$opts{'max-diff-aln'}\" ) "
-          ."does not match input sequences ( \"$opts{'input-file'}\" ).\n";
+          ."( --max-diff-aln \"$opts->{'max-diff-aln'}\" ) "
+          ."does not match input sequences ( \"$opts->{'input-file'}\" ).\n";
         exit(-1);
     }
 
@@ -1707,17 +1706,17 @@ sub main {
     ## make target directory the current directory
     ## and make paths to later used files absolute
     ##
-    if (defined($opts{'treefile'})) { $opts{'treefile'} = abs_path($opts{'treefile'}); }
-    if (defined($opts{'similarity-matrix'})) {
-        $opts{'similarity-matrix'} = abs_path($opts{'similarity-matrix'}); }
-    if (defined($opts{'dp-cache'}))  { $opts{'dp-cache'}  = abs_path($opts{'dp-cache'});  }
+    if (defined($opts->{'treefile'})) { $opts->{'treefile'} = abs_path($opts->{'treefile'}); }
+    if (defined($opts->{'similarity-matrix'})) {
+        $opts->{'similarity-matrix'} = abs_path($opts->{'similarity-matrix'}); }
+    if (defined($opts->{'dp-cache'}))  { $opts->{'dp-cache'}  = abs_path($opts->{'dp-cache'});  }
 
-    mkdir $opts{'tgtdir'}."/$input_dir";
-    if ($opts{'probabilistic'}) {mkdir $opts{'tgtdir'}."/$probs_dir";}
-    mkdir $opts{'tgtdir'}."/$intermediate_dir";
-    mkdir $opts{'tgtdir'}."/$results_dir";
+    mkdir $opts->{'tgtdir'}."/$input_dir";
+    if ($opts->{'probabilistic'}) {mkdir $opts->{'tgtdir'}."/$probs_dir";}
+    mkdir $opts->{'tgtdir'}."/$intermediate_dir";
+    mkdir $opts->{'tgtdir'}."/$results_dir";
 
-    copy($opts{'input-file'}, $opts{'tgtdir'}."/$input_dir/input.fa");
+    copy($opts->{'input-file'}, $opts->{'tgtdir'}."/$input_dir/input.fa");
 
     ## ----------------------------------------
     # perform multiple alignment
@@ -1727,11 +1726,11 @@ sub main {
     ## ----------------------------------------
     # compute reliabilities and print reliability plots
     #
-    if ($opts{'probabilistic'}) {
+    if ($opts->{'probabilistic'}) {
 
-        ## iterate $opts{'it-reliable-structure'} times using reliable structures as structure constraints
-        for (my $it=0; $it<$opts{'it-reliable-structure'}; $it++) {
-            my $aln = read_aln_wo_anno($opts{'tgtdir'}."/$results_dir/result.aln");
+        ## iterate $opts->{'it-reliable-structure'} times using reliable structures as structure constraints
+        for (my $it=0; $it<$opts->{'it-reliable-structure'}; $it++) {
+            my $aln = read_aln_wo_anno($opts->{'tgtdir'}."/$results_dir/result.aln");
 
             my $reliable_structures = compute_and_write_reliabilities($aln);
 
@@ -1743,7 +1742,7 @@ sub main {
             perform_multiple_alignment($seqs);
         }
 
-        my $aln = read_aln_wo_anno($opts{'tgtdir'}."/$results_dir/result.aln");
+        my $aln = read_aln_wo_anno($opts->{'tgtdir'}."/$results_dir/result.aln");
         compute_and_write_reliabilities($aln);
 
     } ## end if probabilistic
@@ -1767,7 +1766,7 @@ sub compute_and_write_reliabilities {
 
     my ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref);
 
-    if ($opts{'consistency-transformation'}) {
+    if ($opts->{'consistency-transformation'}) {
         ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
             = MLocarna::MatchProbs::compute_reliability(\%aln,\%bmprobs_nocbt,\%amprobs_nocbt,$nnorm);
     } else {
@@ -1786,36 +1785,36 @@ sub compute_and_write_reliabilities {
         MLocarna::MatchProbs::write_reliability_bars($bmrels_seq_ref, $bmrels_str_ref);
     }
 
-    MLocarna::MatchProbs::write_bm_reliabilities($opts{'tgtdir'}."/$results_dir/result.bmreliability",
+    MLocarna::MatchProbs::write_bm_reliabilities($opts->{'tgtdir'}."/$results_dir/result.bmreliability",
                                                  $bmrels_seq_ref,$bmrels_str_ref);
-    MLocarna::MatchProbs::write_am_reliabilities($opts{'tgtdir'}."/$results_dir/result.amreliability",$amrels_ref);
+    MLocarna::MatchProbs::write_am_reliabilities($opts->{'tgtdir'}."/$results_dir/result.amreliability",$amrels_ref);
 
-    MLocarna::MatchProbs::write_dotplot($opts{'tgtdir'}."/$results_dir/reldot.ps",consensus_sequence(\%aln),$amrels_ref);
+    MLocarna::MatchProbs::write_dotplot($opts->{'tgtdir'}."/$results_dir/reldot.ps",consensus_sequence(\%aln),$amrels_ref);
 
-    if ($opts{'consistency-transformation'}) {
+    if ($opts->{'consistency-transformation'}) {
 
         my ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
             = MLocarna::MatchProbs::compute_reliability(\%aln,\%bmprobs,\%amprobs, $nnorm);
 
-        if ($opts{'verbose'}) {
+        if ($opts->{'verbose'}) {
             printmsg 3, "reliability (cbt)\n";
             if (3 >= $MLocarna::Aux::verbosemode) {
 	        write_reliability_bars($bmrels_seq_ref, $bmrels_str_ref);
             }
         }
 
-        MLocarna::MatchProbs::write_bm_reliabilities($opts{'tgtdir'}."/$results_dir/result.bmreliability-cbt",
+        MLocarna::MatchProbs::write_bm_reliabilities($opts->{'tgtdir'}."/$results_dir/result.bmreliability-cbt",
                                                      $bmrels_seq_ref,$bmrels_str_ref);
-        MLocarna::MatchProbs::write_am_reliabilities($opts{'tgtdir'}."/$results_dir/result.amreliability-cbt",$amrels_ref);
+        MLocarna::MatchProbs::write_am_reliabilities($opts->{'tgtdir'}."/$results_dir/result.amreliability-cbt",$amrels_ref);
 
-        MLocarna::MatchProbs::write_dotplot($opts{'tgtdir'}."/$results_dir/reldot-cbt.ps",consensus_sequence(\%aln),$amrels_ref);
+        MLocarna::MatchProbs::write_dotplot($opts->{'tgtdir'}."/$results_dir/reldot-cbt.ps",consensus_sequence(\%aln),$amrels_ref);
     }
 
     ## hash for storing highly reliable structures (that will be used as constraints)
     my %reliable_structures;
 
     if ($reliabilities_single_sequences) {
-        mkdir $opts{'tgtdir'}."/$results_dir/$single_reliabilities_dir";
+        mkdir $opts->{'tgtdir'}."/$results_dir/$single_reliabilities_dir";
         ## compute reliability profiles for single sequences
         for my $name (sort {$a cmp $b} @names) {
             # printmsg 1,"Compute structure reliability profile for $name\n";
@@ -1826,19 +1825,19 @@ sub compute_and_write_reliabilities {
 
             my $nname = $nnorm->nname($name);
             MLocarna::MatchProbs::write_bm_reliabilities(
-                $opts{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname.bmreliability",
+                $opts->{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname.bmreliability",
 	        $bmrels_seq, $bmrels_str);
 
 
             ## compute and write arc match reliabilities for the single sequences
-            my %name_pairprobs = read_pp_file_pairprobs($opts{'tgtdir'}."/$input_dir/$nname");
+            my %name_pairprobs = read_pp_file_pairprobs($opts->{'tgtdir'}."/$input_dir/$nname");
 
             my $amrels_ref = MLocarna::MatchProbs::compute_amreliabilities_single_seq(
                 $name,\%aln,\%amprobs_nocbt,\%name_pairprobs,$nnorm);
             MLocarna::MatchProbs::write_am_reliabilities(
-                $opts{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname.amreliability", $amrels_ref);
+                $opts->{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname.amreliability", $amrels_ref);
             MLocarna::MatchProbs::write_dotplot(
-                $opts{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname"."_reldot.ps", $aln{$name},$amrels_ref);
+                $opts->{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname"."_reldot.ps", $aln{$name},$amrels_ref);
 
             my @empty=();
             my ($score,$rel_str)=MLocarna::MatchProbs::max_weight_structure(length($aln{$name}),\@empty,$amrels_ref,1,0.125);
@@ -1911,26 +1910,26 @@ sub perform_multiple_alignment {
 
     my $current_dir = abs_path(".");
 
-    chdir $opts{'tgtdir'};
+    chdir $opts->{'tgtdir'};
 
-    if ($opts{'threads'}>1) {
-       printmsg 2,"Compute using $opts{'threads'} threads.\n";
+    if ($opts->{'threads'}>1) {
+       printmsg 2,"Compute using $opts->{'threads'} threads.\n";
     }
 
     ## ----------------------------------------
     # compute probability dot-plots
     # (if wanted or if necessary)
     #
-    if ($opts{'opt_no_bpp_precomputation'}) {
+    if ($opts->{'opt_no_bpp_precomputation'}) {
         printmsg 3,"Skip precomputation of dot plots.\n";
         generate_input_files_without_bpps($seqs);
     } else {
         printmsg 3,"Compute pair probs ...\n";
-        compute_all_dotplots($seqs,$opts{'threads'});
+        compute_all_dotplots($seqs,$opts->{'threads'});
     }
 
     ## exit here if only dps shall be computed
-    if ($opts{'only-dps'}) {
+    if ($opts->{'only-dps'}) {
         printmsg 1,"Computed only the missing dotplots.\n";
         exit 0;
     }
@@ -1940,7 +1939,7 @@ sub perform_multiple_alignment {
     ## generate base match probabilities for all sequence pairs
     #  (if required)
 
-    if ($opts{'probabilistic'}) {
+    if ($opts->{'probabilistic'}) {
         #
         # for some strange reasons, later we get problems when using
         # shared variables, where we actually don't need it.
@@ -1962,7 +1961,7 @@ sub perform_multiple_alignment {
         # compute arc match probs only if required
         #
         #
-        compute_all_match_probs(\@names, \%bmprobs_shared, \%amprobs_shared, $opts{'threads'});
+        compute_all_match_probs(\@names, \%bmprobs_shared, \%amprobs_shared, $opts->{'threads'});
 
         # make unshared clone-copys of shared bmprobs/amprobs
         #
@@ -1973,16 +1972,16 @@ sub perform_multiple_alignment {
         undef %amprobs_shared; #not needed anymore
 
 
-        if ($opts{'write-bm-probs'}) {
+        if ($opts->{'write-bm-probs'}) {
             MLocarna::MatchProbs::write_bm_probs("$probs_dir/bmprobs",\%bmprobs_nocbt);
         }
-        if ($opts{'write-am-probs'}) {
+        if ($opts->{'write-am-probs'}) {
             MLocarna::MatchProbs::write_am_probs("$probs_dir/amprobs",\%amprobs_nocbt);
         }
 
         # print_k_dim_hash(\%bmprobs,4,"");
 
-        if ($opts{'consistency-transformation'}) {
+        if ($opts->{'consistency-transformation'}) {
             ## store untransformed probabilities
 
             printmsg 3, "Consistency transform match probabilities ...\n";
@@ -1990,10 +1989,10 @@ sub perform_multiple_alignment {
             %bmprobs = MLocarna::MatchProbs::consistency_transform_bm(\%bmprobs_nocbt,\@names, $nnorm);
             %amprobs = MLocarna::MatchProbs::consistency_transform_am(\%amprobs_nocbt,\@names, $nnorm);
 
-            if ($opts{'write-bm-probs'}) {
+            if ($opts->{'write-bm-probs'}) {
 	        MLocarna::MatchProbs::write_bm_probs("$probs_dir/bmprobs-cbt",\%bmprobs);
             }
-            if ($opts{'write-am-probs'}) {
+            if ($opts->{'write-am-probs'}) {
 	        MLocarna::MatchProbs::write_am_probs("$probs_dir/amprobs-cbt",\%amprobs);
             }
         } else {
@@ -2012,19 +2011,19 @@ sub perform_multiple_alignment {
 
     my $tree;
 
-    if (defined($opts{'treefile'})) {
+    if (defined($opts->{'treefile'})) {
 
         printmsg 3,"Read guide tree from file. \n";
 
-        open(my $TREE,"<","$opts{'treefile'}");
+        open(my $TREE,"<","$opts->{'treefile'}");
         $tree=<$TREE>;
         chomp($tree);
 
         close $TREE;
 
-    } elsif (defined($opts{'similarity-matrix'})) {
+    } elsif (defined($opts->{'similarity-matrix'})) {
 
-        my $score_matrix = read_2D_matrix($opts{'similarity-matrix'},int(@names),int(@names));
+        my $score_matrix = read_2D_matrix($opts->{'similarity-matrix'},int(@names),int(@names));
 
         write_2D_matrix("$results_dir/result.matrix",$score_matrix);
 
@@ -2035,11 +2034,11 @@ sub perform_multiple_alignment {
         $tree = "(".MLocarna::Trees::quote_newick_label($names[0]).
 	        ",".MLocarna::Trees::quote_newick_label($names[1]).");";
 
-    } elsif ($opts{'graphkernel'}) {
+    } elsif ($opts->{'graphkernel'}) {
 
         ## RECALL: here the current directory is the target directory
 
-        my @cmd=($opts{'fasta2shrep'}, $opts{'fasta2shrep-options'},
+        my @cmd=($opts->{'fasta2shrep'}, $opts->{'fasta2shrep-options'},
                  "-fasta" => "input/input.fa", "-tmp" => "graphkernel/tmp", "-o" => "graphkernel");
         print "Run @cmd\n";
 
@@ -2062,8 +2061,8 @@ sub perform_multiple_alignment {
 
 # note: the gspan format defines graphs
 
-        @cmd = ("$opts{'svmsgdnspdk'}", "-i" => "graphkernel/gspan",
-                "-r" => "$opts{'svmsgdnspdk-radius'}", "-d" => "$opts{'svmsgdnspdk-distance'}",
+        @cmd = ("$opts->{'svmsgdnspdk'}", "-i" => "graphkernel/gspan",
+                "-r" => "$opts->{'svmsgdnspdk-radius'}", "-d" => "$opts->{'svmsgdnspdk-distance'}",
                 "-gt" => "DIRECTED", "-a" => "MATRIX");
         print "Run @cmd\n";
 
@@ -2101,13 +2100,13 @@ sub perform_multiple_alignment {
         printmsg 3,"Compute pairwise alignments ... \n";
 
         # store all pairwise alignments in @pairwise_alignments
-        my $pairwise_alns = compute_all_pairwise_alignments(\@names, \%bmprobs, \%amprobs, $opts{'threads'});
+        my $pairwise_alns = compute_all_pairwise_alignments(\@names, \%bmprobs, \%amprobs, $opts->{'threads'});
         ## fill score matrix
         my $score_matrix = extract_score_matrix_from_alignments(\@names, $pairwise_alns);
 
         write_2D_matrix("$results_dir/result.matrix",$score_matrix);
 
-        if ($opts{'extlib'}) {
+        if ($opts->{'extlib'}) {
             extend_library($pairwise_alns);
         }
 
@@ -2123,7 +2122,7 @@ sub perform_multiple_alignment {
 
     my $tree_postorder = MLocarna::Trees::newick_tree_to_postorder($tree);
 
-    if (defined($opts{'treefile'})) {
+    if (defined($opts->{'treefile'})) {
         ## check whether tree contains all names in the input file and project tree to these names
 
         if (! MLocarna::Trees::check_tree_labels($tree_postorder,\@names) ) {
@@ -2150,7 +2149,7 @@ sub perform_multiple_alignment {
     ##
     copy( "$current_alignment_name.aln", "$results_dir/result_prog.aln" );
     copy( "$current_alignment_name.pp", "$results_dir/result_prog.pp" );
-    if ($opts{'stockholm'}) {
+    if ($opts->{'stockholm'}) {
         copy( "$current_alignment_name.stk", "$results_dir/result_prog.stk" );
     }
 
@@ -2182,15 +2181,15 @@ sub perform_multiple_alignment {
     ##
 
 
-    if (defined($opts{'iterate'}) && ! defined($opts{'iterations'})) {
-        $opts{'iterations'}=1;
+    if (defined($opts->{'iterate'}) && ! defined($opts->{'iterations'})) {
+        $opts->{'iterations'}=1;
     }
 
-    if (defined($opts{'iterations'}) && ($#names==1)) {
-        $opts{'iterations'} = 0;
+    if (defined($opts->{'iterations'}) && ($#names==1)) {
+        $opts->{'iterations'} = 0;
     }
 
-    if (defined($opts{'iterations'}) && ($opts{'iterations'}>0)) {
+    if (defined($opts->{'iterations'}) && ($opts->{'iterations'}>0)) {
          printmsg 3, "Perform iterative refinement ...\n";
 
         $current_alignment_name = perform_iterative_refinement($current_alignment_name,$tree_postorder,\@names,\%bmprobs,\%amprobs);
@@ -2206,7 +2205,7 @@ sub perform_multiple_alignment {
     #
     copy( "$current_alignment_name.aln", "$results_dir/result.aln" );
     copy( "$current_alignment_name.pp", "$results_dir/result.pp" );
-    if ($opts{'stockholm'}) {
+    if ($opts->{'stockholm'}) {
         copy( "$current_alignment_name.stk", "$results_dir/result.stk" );
     }
 
@@ -2215,13 +2214,13 @@ sub perform_multiple_alignment {
     ##
     my $aln = read_clustalw_alnloh("$results_dir/result.aln");
 
-    if ($opts{'keep-sequence-order'}) {
+    if ($opts->{'keep-sequence-order'}) {
         $aln = loh_sort($aln,loh_names $seqs);
     }
 
     open(my $ALNOUT, ">", "$results_dir/result.aln");
 
-    my $namewidth=write_clustalw_alnloh($ALNOUT,$aln,$opts{'width'});
+    my $namewidth=write_clustalw_alnloh($ALNOUT,$aln,$opts->{'width'});
     close $ALNOUT;
 
     ## ----------
@@ -2242,7 +2241,7 @@ sub perform_multiple_alignment {
 
     if ($alistr=~/([^\s]*)\s(.*)/) {
         my $name="alifold";
-        for my $s (chop_string($1,$opts{'width'})) {
+        for my $s (chop_string($1,$opts->{'width'})) {
             printmsg 3, sprintf("\n%-".$namewidth."s %s",$name,$s);
             $name="";
         }
@@ -2250,7 +2249,7 @@ sub perform_multiple_alignment {
     }
 
     # in probabilistic mode compute and store alifold dotplot
-    if ($opts{'probabilistic'}) {
+    if ($opts->{'probabilistic'}) {
         alifold_pf("$results_dir/result.aln", @RNAfold_args);
         rename "alidot.ps", "$results_dir/alidot.ps";
     }
@@ -2357,21 +2356,21 @@ sub compute_match_probs {
     my $nnameB=$nnorm->nname($nameB);
 
     my @cmd = ();
-    if ($opts{'fast-mea'}) {
-        push @cmd, $opts{'pw-aligner'}, "$input_dir/$nnameA", "$input_dir/$nnameB",
+    if ($opts->{'fast-mea'}) {
+        push @cmd, $opts->{'pw-aligner'}, "$input_dir/$nnameA", "$input_dir/$nnameB",
           @locarna_params, "--write-match-probs" => "$tmpfile_bm";
     } else {
-        push @cmd, $opts{'pw-aligner-p'}, "$input_dir/$nnameA", "$input_dir/$nnameB",
+        push @cmd, $opts->{'pw-aligner-p'}, "$input_dir/$nnameA", "$input_dir/$nnameB",
           @locarna_p_params, "--write-basematch-probs" => "$tmpfile_bm";
 
-        if ( ! $opts{'only-basematch-probs'} ) {
+        if ( ! $opts->{'only-basematch-probs'} ) {
         push @cmd, "--write-arcmatch-probs" => "$tmpfile_am";
         }
     }
 
     push @cmd, @ref_aln_option; ## add option for reference alignment (potentially empty)
 
-    push @cmd, "-q" unless $opts{'moreverbose'};
+    push @cmd, "-q" unless $opts->{'moreverbose'};
 
     printmsg 1, "@cmd\n";
     system(@cmd)==0 || die_hard( "Cannot compute match probabilities by @cmd: $!" );
@@ -2416,7 +2415,7 @@ sub clone_share_hash {
 
 
 
-## calls pairwise aligner ($opts{'pw-aligner'}) on nameA and nameB in
+## calls pairwise aligner ($opts->{'pw-aligner'}) on nameA and nameB in
 ## input_dir and writes to $tgt.pp and $tgt.aln
 sub call_locarna {
     my ($inA,$inB,$tgt) = @_;
@@ -2424,9 +2423,9 @@ sub call_locarna {
     printmsg 2, "Align $inA + $inB --> $tgt\n";
 
     my @cmd = ();
-    push @cmd, $opts{'pw-aligner'}, $inA, $inB, @locarna_params, "--clustal=$tgt.aln";
+    push @cmd, $opts->{'pw-aligner'}, $inA, $inB, @locarna_params, "--clustal=$tgt.aln";
 
-    if ($opts{'stockholm'}) {
+    if ($opts->{'stockholm'}) {
         push @cmd, "--stockholm=$tgt.stk";
     }
 
@@ -2434,16 +2433,16 @@ sub call_locarna {
 
     push @cmd, reference_alignment_option($refaln_filename);
 
-    push @cmd, "-q" unless $opts{'moreverbose'};
+    push @cmd, "-q" unless $opts->{'moreverbose'};
 
     printmsg 1, "@cmd\n\n";
     system(@cmd)==0 || die "Command @cmd failed: $!";
 
     if ((! -e "$tgt.aln") || (! -e "$tgt.pp")) {
-        die "Pairwise aligner ($opts{'pw-aligner'}) failed to write alignment to file";
+        die "Pairwise aligner ($opts->{'pw-aligner'}) failed to write alignment to file";
     }
 
-    if ($opts{'verbose'} and not $opts{'moreverbose'}) {
+    if ($opts->{'verbose'} and not $opts->{'moreverbose'}) {
         open(my $alnfh, "<", "$tgt.aln");
         while(<$alnfh>) { if (!/^CLUSTAL/) { print $_; } }
         close $alnfh;
@@ -2474,7 +2473,7 @@ sub call_locarna_prob {
 
     my $tmpfile_am="$tmpprefix.amps";
     # if required, average the arc match probabilities and write to tmpfile
-    if (!$opts{'fast-mea'} && !$opts{'only-basematch-probs'}) {
+    if (!$opts->{'fast-mea'} && !$opts->{'only-basematch-probs'}) {
         my $m = MLocarna::MatchProbs::average_arcmatch_probs( \%alnA, \%alnB, $amprobs_ref, $nnorm );
         MLocarna::SparseMatrix::write_4D($m,$tmpfile_am);
 
@@ -2483,32 +2482,32 @@ sub call_locarna_prob {
 
     printmsg 2, "Align $inA + $inB --> $tgt\n";
     my @cmd = ();
-    push @cmd, $opts{'pw-aligner'}, $inA, $inB, @locarna_params,
+    push @cmd, $opts->{'pw-aligner'}, $inA, $inB, @locarna_params,
       "--pp=$tgt.pp", "--clustal=$tgt.aln", @readprob_args;
 
-    if ($opts{'stockholm'}) {
+    if ($opts->{'stockholm'}) {
         push @cmd, "--stockholm=$tgt.stk";
     }
 
     push @cmd, reference_alignment_option($refaln_filename);
 
-    push @cmd, "-q" unless $opts{'moreverbose'};
+    push @cmd, "-q" unless $opts->{'moreverbose'};
 
     printmsg 1, "@cmd\n\n";
     system(@cmd)==0 || die "Command @cmd failed: $!";
 
     if ((! -e "$tgt.aln") || (! -e "$tgt.pp")) {
-        die "Pairwise aligner ($opts{'pw-aligner'}) failed to write alignment to file";
+        die "Pairwise aligner ($opts->{'pw-aligner'}) failed to write alignment to file";
     }
 
-    if ($opts{'verbose'} and not $opts{'moreverbose'}) {
+    if ($opts->{'verbose'} and not $opts->{'moreverbose'}) {
         open(my $alnfh, "<", "$tgt.aln");
         while(<$alnfh>) { if (!/^CLUSTAL/) { print $_; } }
         close $alnfh;
         print "\n";
     }
 
-    if (!$opts{'fast-mea'} && !$opts{'only-basematch-probs'}) {
+    if (!$opts->{'fast-mea'} && !$opts->{'only-basematch-probs'}) {
         unlink $tmpfile_am;
     }
     unlink $tmpfile_bm;
@@ -2537,7 +2536,7 @@ sub write_pp_projected {
         my %name_pairprobs =
             read_pp_file_pairprobs("$input_dir/".$nnorm->nname($name));
 
-        if ( exists $name_aln{"#C"} && (!$opts{'ignore-constraints'})) {
+        if ( exists $name_aln{"#C"} && (!$opts->{'ignore-constraints'})) {
             # my $constraints = $name_aln{"#C"};
             printerr "WARNING: constraints ignored in iterative alignment.\n";
         }
@@ -2549,9 +2548,9 @@ sub write_pp_projected {
         #
         # In principle, copy the magic spell from alignment.cc
         #
-        my $minimal_p = $opts{'min-prob'}*0.1;
-        if (defined($opts{'exp-prob'}) && $opts{'exp-prob'}<$minimal_p ) {
-            $minimal_p = $opts{'exp-prob'};
+        my $minimal_p = $opts->{'min-prob'}*0.1;
+        if (defined($opts->{'exp-prob'}) && $opts->{'exp-prob'}<$minimal_p ) {
+            $minimal_p = $opts->{'exp-prob'};
         }
 
         for my $pair (keys %name_pairprobs) {
@@ -2579,7 +2578,7 @@ sub write_pp_projected {
         }
     }
 
-    write_pp($tgt_name,\%alnP,\@consensus_dp,$opts{'min-prob'});
+    write_pp($tgt_name,\%alnP,\@consensus_dp,$opts->{'min-prob'});
 
     return;
 }
@@ -2663,15 +2662,15 @@ sub extend_library {
 
 	        for (my $iA=0; $iA<$lengthA; $iA++) {
 	            for (my $jA=$iA+1; $jA<$lengthA; $jA++) {
-		        my $pA = (defined $ext_pairprobsA[$iA][$jA])?$ext_pairprobsA[$iA][$jA]:$opts{'min-prob'};
-		        if ($pA > $opts{'min-prob'}) {
+		        my $pA = (defined $ext_pairprobsA[$iA][$jA])?$ext_pairprobsA[$iA][$jA]:$opts->{'min-prob'};
+		        if ($pA > $opts->{'min-prob'}) {
 		            my $iB = $ap2spB[$sp2apA[$iA]];
 		            my $jB = $ap2spB[$sp2apA[$jA]];
 
 		            if ($iB != -1 && $jB != -1) {
 			        # print "$iA,$jA <--> $sp2apA[$iA],$sp2apA[$jA] <--> $iB,$jB\n";
-			        my $pB = (defined $pairprobsB[$iB][$jB])?$pairprobsB[$iB][$jB]:$opts{'min-prob'};
-			        if ($pB>$opts{'min-prob'}) {
+			        my $pB = (defined $pairprobsB[$iB][$jB])?$pairprobsB[$iB][$jB]:$opts->{'min-prob'};
+			        if ($pB>$opts->{'min-prob'}) {
 			            my $new_pA = exp( log($pA) * (1/(1+$pB)));
 			            $ext_pairprobsA[$iA][$jA] = $new_pA;
 			            my @orig_pairprobsA=@{ $pairprobs[$a] };
@@ -2706,7 +2705,7 @@ sub extend_library {
             for (my $j=$i+1; $j<$len; $j++) {
 	        if (defined $ext_pairprobs[$i][$j]) {
 	            my $p = $ext_pairprobs[$i][$j];
-	            if ($p > $opts{'min-prob'}) {
+	            if ($p > $opts->{'min-prob'}) {
 		        print $PP_OUT "$i $j $p\n";
 	            }
 	        }
@@ -2741,12 +2740,12 @@ sub compute_alignment_from_dps {
     my $seqB_dp="$input_dir/".$nnorm->nname($nameB);
 
     my @cmd = ();
-    push @cmd, $opts{'pw-aligner'}, $seqA_dp, $seqB_dp,
+    push @cmd, $opts->{'pw-aligner'}, $seqA_dp, $seqB_dp,
       @$locarna_params_ref,
       "--clustal" => $tmpfile,
       pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
 
-    push @cmd, "-q" unless $opts{'moreverbose'};
+    push @cmd, "-q" unless $opts->{'moreverbose'};
 
     system(@cmd)==0 || die_hard "Command @cmd failed: $!";
 
@@ -2785,16 +2784,16 @@ sub compute_alignment_from_dps_probs {
 
     push @locarna_params, "--clustal=$tmpfile", "--read-match-probs=$tmpfile2";
 
-    if (!$opts{'fast-mea'} && !$opts{'only-basematch-probs'}) {
+    if (!$opts->{'fast-mea'} && !$opts->{'only-basematch-probs'}) {
         MLocarna::SparseMatrix::write_4D($amprobs_ref,$tmpfile3);
 
         push @locarna_params, "--read-arcmatch-probs" => $tmpfile3;
     }
 
     my @cmd = ();
-    push @cmd, $opts{'pw-aligner'}, $seqA_dp, $seqB_dp, @locarna_params;
+    push @cmd, $opts->{'pw-aligner'}, $seqA_dp, $seqB_dp, @locarna_params;
 
-    push @cmd, "-q" unless $opts{'moreverbose'};
+    push @cmd, "-q" unless $opts->{'moreverbose'};
 
     push @cmd, pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
 
@@ -2802,7 +2801,7 @@ sub compute_alignment_from_dps_probs {
 
     open(my $CA_IN, "<", "$tmpfile") || die_hard "compute_alignment_from_dps_probs: Cannot read temporary file $tmpfile: $!";
 
-    if (!$opts{'fast-mea'} && !$opts{'only-basematch-probs'}) {
+    if (!$opts->{'fast-mea'} && !$opts->{'only-basematch-probs'}) {
         unlink $tmpfile3;
     }
     unlink $tmpfile2;
@@ -2826,17 +2825,17 @@ sub compute_alignment_from_dps_probs {
 ## ------------------------------
 ## Dependency on GLOBAL VARIABLES
 ##
-## $opts{'dp-cache'}   if defined, use as cache directory
+## $opts->{'dp-cache'}   if defined, use as cache directory
 ##             in order to avoid multiple computation of bp probs
-## $opts{'skip-pp'}    if true, skip computation of bp-probs for RNAs
+## $opts->{'skip-pp'}    if true, skip computation of bp-probs for RNAs
 ##             where the corresponding file already exists in
 ##             the current directory
-## $opts{'rnafold-parameter'}
-## $opts{'rnafold-temperature'}
+## $opts->{'rnafold-parameter'}
+## $opts->{'rnafold-temperature'}
 ##
-## $opts{'verbose'}
-## $opts{'plfold-span'}
-## $opts{'plfold-winsize'}
+## $opts->{'verbose'}
+## $opts->{'plfold-span'}
+## $opts->{'plfold-winsize'}
 ##
 sub compute_all_dotplots {
     my ($seqs,$thread_num) = @_;
@@ -2862,7 +2861,7 @@ sub generate_input_files_without_bpps {
         my $ppname="$input_dir/".$nnorm->nname($name);
         my $seq_str = $seqs->[$i]->{seq}; ## the sequence string
 
-        if (! $opts{'ignore-constraints'}) {
+        if (! $opts->{'ignore-constraints'}) {
             my $constraints = anchor_constraint_string($seqs->[$i]);
             if (defined($constraints) && ($constraints ne "")) {
 	        printerr( "WARNING: Constraints found for sequence $i, "
@@ -2890,20 +2889,20 @@ sub generate_input_files_without_bpps {
 sub compute_dotplot_rnafold_pp {
     my ($ppfile, $seq) = @_;
 
-    my @fold_cmd = ( "$bindir/locarna_rnafold_pp", "-p" => $opts{'min-prob'} );
+    my @fold_cmd = ( "$bindir/locarna_rnafold_pp", "-p" => $opts->{'min-prob'} );
 
-    if ($opts{'noLP'}) {
+    if ($opts->{'noLP'}) {
         push @fold_cmd, "--noLP";
     }
 
-    if ($opts{'in-loop-robabilities'}) {
+    if ($opts->{'in-loop-robabilities'}) {
         push @fold_cmd, "--in-loop";
     }
-    if ( $opts{'stacking'} || $opts{'new-stacking'} ) {
+    if ( $opts->{'stacking'} || $opts->{'new-stacking'} ) {
         push @fold_cmd, "--stacking";
     }
-    if (defined($opts{'maxBPspan'}) && $opts{'maxBPspan'} ne "-1") {
-        push @fold_cmd, "--maxBPspan" => $opts{'maxBPspan'};
+    if (defined($opts->{'maxBPspan'}) && $opts->{'maxBPspan'} ne "-1") {
+        push @fold_cmd, "--maxBPspan" => $opts->{'maxBPspan'};
     }
 
     push @fold_cmd, "-o" => "$ppfile";
@@ -2913,7 +2912,7 @@ sub compute_dotplot_rnafold_pp {
 
     my $input = "$seqname $seq_str\n";
 
-    if ( not $opts{'ignore-constraints'} ) {
+    if ( not $opts->{'ignore-constraints'} ) {
         my $structure_constraints = $seq->{"ANNO#S"};
         if ( defined($structure_constraints) ) {
             $input = $input."\#S $structure_constraints\n";
@@ -2974,7 +2973,7 @@ sub compute_dotplot_rnafold {
     my @fold_cmd = ("$RNAfold", "-p2");
     push  @fold_cmd, @RNAfold_args;
 
-    if ($opts{'noLP'}) {
+    if ($opts->{'noLP'}) {
         push @fold_cmd, '--noLP';
     }
 
@@ -2983,7 +2982,7 @@ sub compute_dotplot_rnafold {
     my $input = ">$tmpname\n$seq_str\n";
 
     my $structure_constraints = $seq->{"ANNO#S"};
-    if ( not $opts{'ignore-constraints'}
+    if ( not $opts->{'ignore-constraints'}
          and defined($structure_constraints) ) {
         $input = $input."$structure_constraints\n";
         push @fold_cmd, "-C";
@@ -3016,10 +3015,10 @@ sub compute_dotplot_rnaplfold {
 
     push @fold_cmd,
       "RNAplfold",
-      "-L" => $opts{'plfold-span'},
-      "-W" => $opts{'plfold-winsize'}, @RNAfold_args;
+      "-L" => $opts->{'plfold-span'},
+      "-W" => $opts->{'plfold-winsize'}, @RNAfold_args;
 
-    if ($opts{'noLP'}) {
+    if ($opts->{'noLP'}) {
         push @fold_cmd, '--noLP';
     }
 
@@ -3086,7 +3085,7 @@ sub compute_dotplot {
     my $ppfile="$input_dir/".$seqnormname;
 
     my $anchor_constraints;
-    if (! $opts{'ignore-constraints'}) {
+    if (! $opts->{'ignore-constraints'}) {
         $anchor_constraints = anchor_constraint_string($seqs->[$i]);
     }
 
@@ -3101,20 +3100,20 @@ sub compute_dotplot {
     ##
     ## The latter two cases allow using anchor constraints given in the input mfasta file
     ##
-    if ( $opts{'skip-pp'} ) {
+    if ( $opts->{'skip-pp'} ) {
         if ( -e "$ppfile" )  {
             # assume that the pp file is in pp format
-            print "Skip $seqname\n" if $opts{'moreverbose'};
+            print "Skip $seqname\n" if $opts->{'moreverbose'};
             # skip
         } elsif ( -e "$ppfile\_dp2.ps" ) {
             # assume that the file is in dp2 format. Therefore, convert to pp.
-            print "Skip $seqname, convert from $ppfile\_dp2.ps\n"  if $opts{'moreverbose'};
+            print "Skip $seqname, convert from $ppfile\_dp2.ps\n"  if $opts->{'moreverbose'};
             convert_dp_to_pp_with_constraints("$ppfile\_dp2.ps", $ppfile,
                                               $seqname, $seq_str,
                                               $anchor_constraints, 1);
         } elsif ( -e "$ppfile\_dp.ps" ) {
             # assume that the file is in dp format. Therefore, convert to pp.
-            print "Skip $seqname, convert from $ppfile\_dp.ps\n"  if $opts{'moreverbose'};
+            print "Skip $seqname, convert from $ppfile\_dp.ps\n"  if $opts->{'moreverbose'};
             convert_dp_to_pp_with_constraints("$ppfile\_dp.ps", $ppfile,
                                               $seqname, $seq_str,
                                               $anchor_constraints, 0);
@@ -3125,10 +3124,10 @@ sub compute_dotplot {
     ## ------------------------------
     ## CACHING
     ## if caching is enabled, use cached dot plots
-    if ( defined( $opts{'dp-cache'} ) ) {
+    if ( defined( $opts->{'dp-cache'} ) ) {
         my $cached=0; ## whether dot plot could be retrieved from cache
 
-        my $dpname="$opts{'dp-cache'}/$seqfilename";
+        my $dpname="$opts->{'dp-cache'}/$seqfilename";
 
         if ( -e "$dpname" ) {
             copy($dpname, $ppfile);
@@ -3163,12 +3162,12 @@ sub compute_dotplot {
     ## FIXED STRUCTURE
     ## @note fixed structure #FS overrides structure #S
     # case: fixed structure constraints are given
-    if ((!$opts{'ignore-constraints'})
+    if ((!$opts->{'ignore-constraints'})
         && exists $seqs->[$i]->{"ANNO#FS"}) {
-        if ($opts{'verbose'}) {
+        if ($opts->{'verbose'}) {
             print "Fixed structure given for sequence "
               .$seqs->[$i]->{'name'};
-            print " (ignore local folding)" if ($opts{'plfold-span'});
+            print " (ignore local folding)" if ($opts->{'plfold-span'});
             print ".\n";
         }
         my $structure = $seqs->[$i]->{"ANNO#FS"};
@@ -3188,7 +3187,7 @@ sub compute_dotplot {
     ##
     my $folding_tool = "locarna_rnafold_pp";
 
-    my $local_folding_requested = defined($opts{'plfold-span'});
+    my $local_folding_requested = defined($opts->{'plfold-span'});
 
     ## check whether rnafold_pp cannot be used for any reason
     my $rnafold_pp_applicable =
@@ -3200,7 +3199,7 @@ sub compute_dotplot {
       || exists $seqs->[$i]->{"ANNO#S"};
 
     if (! $rnafold_pp_applicable) {
-        if ($opts{'in-loop-probabilities'}) {
+        if ($opts->{'in-loop-probabilities'}) {
             print STDERR "Warning: cannot precompute in-loop probabilities.\n";
         }
 
@@ -3216,13 +3215,13 @@ sub compute_dotplot {
 
     ## warn about if in loop probabilities are requested but cannot be
     ## computed
-    if (! $rnafold_pp_applicable && $opts{'in-loop-probabilities'}) {
+    if (! $rnafold_pp_applicable && $opts->{'in-loop-probabilities'}) {
         print STDERR "Warning: cannot precompute in-loop probabilities.\n";
     }
 
     ## if verbose, check whether local folding is active; warn about
     ## override of constraints over local folding
-    if ($opts{'verbose'}
+    if ($opts->{'verbose'}
         and $local_folding_requested
         and exists $seq->{"ANNO#S"}) {
         printerr "WARNING: structure constraints override local folding.\n";
@@ -3236,9 +3235,9 @@ sub compute_dotplot {
     $delegate_compute_dotplot{$folding_tool}($ppfile, $seq);
 
     ## CACHING: cache the result, if requested
-    if (defined($opts{'dp-cache'})) {
+    if (defined($opts->{'dp-cache'})) {
         if ( -e "$ppfile" ) {
-            copy("$ppfile", "$opts{'dp-cache'}/$seqfilename");
+            copy("$ppfile", "$opts->{'dp-cache'}/$seqfilename");
         }
     }
 }
@@ -3251,7 +3250,7 @@ sub compute_dotplot {
 ## @returns ref to 2D-array of alignments (indices are
 ##          positions in list @names)
 ##
-## @depends $opts{'probabilistic'}   flag for probabilistic alignment
+## @depends $opts->{'probabilistic'}   flag for probabilistic alignment
 ##
 ## @param $names_ref       names of sequences
 ## @param $bmprobs_ref     base match probs in case of probabilistic alignment
@@ -3278,7 +3277,7 @@ sub compute_all_pairwise_alignments {
         for (my $b=0; $b<$a; $b++) {
             $num++;
 
-            if ( $opts{'probabilistic'} ) {
+            if ( $opts->{'probabilistic'} ) {
 	        my @arg_list = ($num,$a,$b,
 			        $names[$a],
 			        $names[$b],
@@ -3306,7 +3305,7 @@ sub compute_all_pairwise_alignments {
 
             my @aln;
 
-            if ( $opts{'probabilistic'} ) {
+            if ( $opts->{'probabilistic'} ) {
 	        my ($nameA,$nameB,$bmprobs,$amprobs) = @arg_list;
 	        @aln = compute_alignment_from_dps_probs($input_dir,
 						        $nameA,
@@ -3371,7 +3370,7 @@ sub perform_progressive_steps {
 
             my $intermediate_name = new_intermediate_name();
 
-            if ( $opts{'probabilistic'} ) {
+            if ( $opts->{'probabilistic'} ) {
 	        call_locarna_prob($op1,$op2,"$intermediate_dir/".$intermediate_name,$bmprobs_ref,$amprobs_ref);
             } else {
 	        call_locarna($op1,$op2,"$intermediate_dir/".$intermediate_name);
@@ -3407,14 +3406,14 @@ sub perform_iterative_refinement {
     ## my $current_aliquality = alifold_mfe("$current_alignment_name.aln", @RNAfold_args); ## optimize SCI
 
     my $current_aliquality;
-    if ($opts{'probabilistic'}) {
+    if ($opts->{'probabilistic'}) {
         $current_aliquality = MLocarna::MatchProbs::aln_reliability_fromfile(
             "$current_alignment_name.aln",\%bmprobs,\%amprobs, $nnorm); ## optimize RELIABILITY
     } else {
         $current_aliquality = - alifold_mfe("$current_alignment_name.aln", @RNAfold_args); ## optimize SCI
     }
 
-    for (my $i=1; $i<=$opts{'iterations'}; $i++) {
+    for (my $i=1; $i<=$opts->{'iterations'}; $i++) {
         printmsg 1, "--- Iterative Refinement ---\n";
         printmsg 1, "--- Round $i\n";
 
@@ -3463,7 +3462,7 @@ sub perform_iterative_refinement_one_round {
         write_pp_projected($aln,\@namesB,$intermediate_nameB);
 
 
-        if ( $opts{'probabilistic'} ) {
+        if ( $opts->{'probabilistic'} ) {
             call_locarna_prob($intermediate_nameA,$intermediate_nameB,$intermediate_name,$bmprobs_ref,$amprobs_ref);
         } else {
             call_locarna($intermediate_nameA,$intermediate_nameB,$intermediate_name);
@@ -3473,7 +3472,7 @@ sub perform_iterative_refinement_one_round {
         # test, whether new alignment is better than former
         #
         my $new_aliquality;# = alifold_mfe("$intermediate_name.aln", @RNAfold_args);
-        if ($opts{'probabilistic'}) {
+        if ($opts->{'probabilistic'}) {
             $new_aliquality = MLocarna::MatchProbs::aln_reliability_fromfile(
                 "$intermediate_name.aln",\%bmprobs,\%amprobs, $nnorm); ## optimize RELIABILITY
         } else {
@@ -3507,7 +3506,7 @@ sub run_evaluation_mode {
     ## such that sequence name order is preserved
     my $aln;
 
-    if ( $opts{'eval-fasta'} ) {
+    if ( $opts->{'eval-fasta'} ) {
          my $alnlist = read_fasta($alnfile);
         my %alnhash=();
         foreach my $seq (@$alnlist) {
@@ -3584,7 +3583,7 @@ sub pairwise_reference_alignment_option {
 ## @returns option list or () if $refaln_filename undefined
 sub reference_alignment_option {
     my ($refaln_filename) =@_;
-    if ( $opts{'max-diff-aln'} ) {
+    if ( $opts->{'max-diff-aln'} ) {
         return ("--max-diff-aln" => "$refaln_filename");
     } else {
         return ();
@@ -3620,7 +3619,7 @@ sub is_aln_of_seqs {
 
 	        $found = ( $alnseqstr eq $seqstr );
 
-	        if ($opts{'verbose'} && !$found) {
+	        if ($opts->{'verbose'} && !$found) {
 	            print STDERR "Warning: name match ($seq->{name}) but sequence mismatch.\n";
 	            print STDERR "  Sequences: $seqstr\n";
                     print STDERR "  Alignment: $alnseqstr\n";
