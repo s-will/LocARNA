@@ -16,8 +16,8 @@ sub new {
     my ($class, $seqs) = @_;
 
     my $self = {
-	## global hash for storing the association of names to normalized names
-	_norm_names => { }
+        ## global hash for storing the association of names to normalized names
+        _norm_names => { }
     };
 
     bless $self, $class;
@@ -59,14 +59,14 @@ sub _normalize {
     # iterate over numbers $i from 1 until a unique name is generated
     my $i=1;
     while (grep /^$name$/, @names) {
-	my $arity = int(log($i)/log(10))+1;
-	if ($arity > 10) { # this will never happen ;)
-	    die "Could not generate unique name";
-	}
+        my $arity = int(log($i)/log(10))+1;
+        if ($arity > 10) { # this will never happen ;)
+            die "Could not generate unique name";
+        }
 
-	$name = substr $name,0,$maxlen-$arity-1;
-	$name = sprintf("%s_%0$arity"."d",$name,$i);
-	$i++;
+        $name = substr $name,0,$maxlen-$arity-1;
+        $name = sprintf("%s_%0$arity"."d",$name,$i);
+        $i++;
     }
     return $name;
 }
@@ -78,7 +78,7 @@ sub _normalize {
 sub print {
     my $self = shift;
     foreach my $k (sort keys %{ $self->{_norm_names} }) {
-	print "$k => $self->{_norm_names}->{$k}\n";
+        print "$k => $self->{_norm_names}->{$k}\n";
     }
 }
 
@@ -94,7 +94,7 @@ sub register_name {
     my ( $self, $name ) = @_;
 
     if ( ! exists $self->{_norm_names}->{$name} ) {
-	$self->{_norm_names}->{$name} =
+        $self->{_norm_names}->{$name} =
           $self->_normalize( $name, values %{ $self->{_norm_names} } );
     }
 }
@@ -111,7 +111,7 @@ sub register_names {
     my ( $self, $loh ) = @_;
 
     foreach my $h (@$loh) {
-	$self->register_name( $h->{name} );
+        $self->register_name( $h->{name} );
     }
 }
 
@@ -136,11 +136,11 @@ sub nname {
     my ( $self, $name ) = @_;
 
     if (exists $self->{_norm_names}->{$name}) {
-	return $self->{_norm_names}->{$name};
+        return $self->{_norm_names}->{$name};
     } else {
-	MLocarna::Aux::printerr "ERROR: No normalized name was registered for the requested name $name.\n";
-	$self->print();
-	exit(-1);
+        MLocarna::Aux::printerr "ERROR: No normalized name was registered for the requested name $name.\n";
+        $self->print();
+        exit(-1);
     }
 }
 

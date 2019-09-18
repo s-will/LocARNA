@@ -55,13 +55,13 @@ sub quote_newick_label {
 
     my $add_ticks=0;
     if ( $label =~ /[\':]/ ) {
-	$add_ticks = 1;
+        $add_ticks = 1;
     }
 
     $label =~ s/\'/\'\'/g;
 
     if ($add_ticks) {
-	$label = "\'$label\'"
+        $label = "\'$label\'"
     }
 
     return $label;
@@ -86,7 +86,7 @@ sub quote_newick_label {
 sub upgma_tree_dist {
     my ($names, $dist_matrix, $add_branch_lengths) = @_;
     if (!defined($add_branch_lengths)) {
-	$add_branch_lengths = 1;
+        $add_branch_lengths = 1;
     }
 
     ## compute tree by upgma applied to dist matrix
@@ -97,66 +97,66 @@ sub upgma_tree_dist {
     my @heights;
 
     for (my $i=0; $i<@$names; $i++) {
-	$clusters[$i] = $i;
-	$trees[$i]    = quote_newick_label($names->[$i]);
-	$cluster_sizes[$i] = 1;
-	$heights[$i]  = 0;
+        $clusters[$i] = $i;
+        $trees[$i]    = quote_newick_label($names->[$i]);
+        $cluster_sizes[$i] = 1;
+        $heights[$i]  = 0;
     }
 
     my $INFINITY = 1e10;
 
     while ($#clusters>0) {
         ## find the nearest two clusters (with minimal similarity)
-	my $min_i;
-	my $min_j;
-	my $min_dist=$INFINITY;
-	for (my $i=0; $i<=$#clusters; $i++) {
-	    for (my $j=$i+1; $j<=$#clusters; $j++) {
-		my $dist=$dist_matrix->[$clusters[$i]][$clusters[$j]];
-		if ($dist < $min_dist) {
-		    $min_i=$i;
-		    $min_j=$j;
-		    $min_dist=$dist;
-		}
-	    }
-	}
+        my $min_i;
+        my $min_j;
+        my $min_dist=$INFINITY;
+        for (my $i=0; $i<=$#clusters; $i++) {
+            for (my $j=$i+1; $j<=$#clusters; $j++) {
+                my $dist=$dist_matrix->[$clusters[$i]][$clusters[$j]];
+                if ($dist < $min_dist) {
+                    $min_i=$i;
+                    $min_j=$j;
+                    $min_dist=$dist;
+                }
+            }
+        }
 
-	## recompute similarities
-	my $cluster_i = $clusters[$min_i];
-	my $cluster_j = $clusters[$min_j];
+        ## recompute similarities
+        my $cluster_i = $clusters[$min_i];
+        my $cluster_j = $clusters[$min_j];
 
-	## update the list clusters
-	$clusters[$min_j] = $clusters[$#clusters];
-	$clusters[$min_i] = $clusters[0];
-	$clusters[0] = $cluster_i;
+        ## update the list clusters
+        $clusters[$min_j] = $clusters[$#clusters];
+        $clusters[$min_i] = $clusters[0];
+        $clusters[0] = $cluster_i;
 
-	for (my $i=1; $i<$#clusters; $i++) {
-	    $dist_matrix->[$clusters[0]][$clusters[$i]] =
-		($cluster_sizes[$cluster_i] * $dist_matrix->[$cluster_i][$clusters[$i]]
-		 + $cluster_sizes[$cluster_j] * $dist_matrix->[$cluster_j][$clusters[$i]])
-		/ ($cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j]);
-	    $dist_matrix->[$clusters[$i]][$clusters[0]] =
-		$dist_matrix->[$clusters[0]][$clusters[$i]];
-	}
+        for (my $i=1; $i<$#clusters; $i++) {
+            $dist_matrix->[$clusters[0]][$clusters[$i]] =
+                ($cluster_sizes[$cluster_i] * $dist_matrix->[$cluster_i][$clusters[$i]]
+                 + $cluster_sizes[$cluster_j] * $dist_matrix->[$cluster_j][$clusters[$i]])
+                / ($cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j]);
+            $dist_matrix->[$clusters[$i]][$clusters[0]] =
+                $dist_matrix->[$clusters[0]][$clusters[$i]];
+        }
 
-	## height of the new node and branch lengths
-	my $height = $min_dist / 2.0;
+        ## height of the new node and branch lengths
+        my $height = $min_dist / 2.0;
 
-	my $new_tree;
-	if ($add_branch_lengths) {
-	    my $ilen = sprintf("%.3f",$height - $heights[$cluster_i]);
-	    my $jlen = sprintf("%.3f",$height - $heights[$cluster_j]);
-	    $new_tree = "(".$trees[$cluster_i].":".$ilen.",".$trees[$cluster_j].":".$jlen.")";
-	} else {
-	    $new_tree = "(".$trees[$cluster_i].",".$trees[$cluster_j].")";
-	}
+        my $new_tree;
+        if ($add_branch_lengths) {
+            my $ilen = sprintf("%.3f",$height - $heights[$cluster_i]);
+            my $jlen = sprintf("%.3f",$height - $heights[$cluster_j]);
+            $new_tree = "(".$trees[$cluster_i].":".$ilen.",".$trees[$cluster_j].":".$jlen.")";
+        } else {
+            $new_tree = "(".$trees[$cluster_i].",".$trees[$cluster_j].")";
+        }
 
-	$trees[$clusters[0]] = $new_tree;
+        $trees[$clusters[0]] = $new_tree;
 
-	$cluster_sizes[$clusters[0]] = $cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j];
-	$heights[$clusters[0]] = $height;
+        $cluster_sizes[$clusters[0]] = $cluster_sizes[$cluster_i]+$cluster_sizes[$cluster_j];
+        $heights[$clusters[0]] = $height;
 
-	$#clusters--;
+        $#clusters--;
     }
 
     return $trees[$clusters[0]].";";
@@ -180,16 +180,16 @@ sub scores_to_dists {
     my $n = scalar( @$score_matrix );
     my $max = $score_matrix->[0][0];
     for(my $i=0;$i<$n;$i++) {
-	for (my $j=$i+1; $j<$n; $j++) {
-	    $max = max( $score_matrix->[$i][$j], $max );
-	}
+        for (my $j=$i+1; $j<$n; $j++) {
+            $max = max( $score_matrix->[$i][$j], $max );
+        }
     }
 
     my @dist_matrix;
     for(my $i=0;$i<$n;$i++) {
-	for (my $j=0; $j<$n; $j++) {
-	    $dist_matrix[$i][$j] = $max - $score_matrix->[$i][$j];
-	}
+        for (my $j=0; $j<$n; $j++) {
+            $dist_matrix[$i][$j] = $max - $score_matrix->[$i][$j];
+        }
     }
 
     return \@dist_matrix;
@@ -241,19 +241,19 @@ sub tree_partitions {
     my @stack;
 
     for my $item (@$tree_postorder) {
-	if ($item eq $node_sym) {
-	    my @op1 = @{ $stack[-2] };
-	    my @op2 = @{ $stack[-1] };
+        if ($item eq $node_sym) {
+            my @op1 = @{ $stack[-2] };
+            my @op2 = @{ $stack[-1] };
 
-	    $#stack-=2;
+            $#stack-=2;
 
-	    my @op12 = (@op1, @op2);
+            my @op12 = (@op1, @op2);
 
-	    push @stack, \@op12;
-	} else {
-	    push @stack, [ $item ];
-	}
-	push @result, $stack[-1];
+            push @stack, \@op12;
+        } else {
+            push @stack, [ $item ];
+        }
+        push @result, $stack[-1];
     }
     $#result-=2; # the last is empty, the one before symmetric
     return \@result;
@@ -269,8 +269,8 @@ sub tree_partitions {
 sub unquote_newick_label {
     my ($s)=@_;
     if ($s =~ /^\'(.*)\'$/) {
-	$s = "$1";
-	$s =~ s/\'\'/\'/g;
+        $s = "$1";
+        $s =~ s/\'\'/\'/g;
     }
     return $s;
 }
@@ -304,34 +304,34 @@ sub newick_tree_to_postorder {
 
     my $brcount=0;
     for (my $i=0; defined($tokens[$i]); $i++) {
-	my $tok=$tokens[$i];
+        my $tok=$tokens[$i];
 
-	if ($tok eq "(") {
-	    $brcount++;
-	} elsif ($tok eq ")") {
-	    $brcount--;
-	    if ($brcount<0) {
-		die "Parse error in tree.";
-	    }
+        if ($tok eq "(") {
+            $brcount++;
+        } elsif ($tok eq ")") {
+            $brcount--;
+            if ($brcount<0) {
+                die "Parse error in tree.";
+            }
 
-	    $tok = $tokens[$i+1];
-	    if ( defined($tok) && $tok =~ /^[a-zA-Z0-9]/ ) {
-		$i++;
-		#ignore names of inner nodes
-	    }
-	    push @list, $node_sym;
-	} elsif ($tok eq ",") {
-	    ## ignore, although we could do syntax checking
-	} elsif ($tok =~ /^\s*$/)  {
-	    ## ignore whitespace
-	} elsif ($tok eq ":") {
-	    $i++;
-	    if ( ! looks_like_number($tokens[$i]) ) {
-		die "Distance expected in tree.";
-	    }
-	} else {
-	    push @list, unquote_newick_label($tok);
-	}
+            $tok = $tokens[$i+1];
+            if ( defined($tok) && $tok =~ /^[a-zA-Z0-9]/ ) {
+                $i++;
+                #ignore names of inner nodes
+            }
+            push @list, $node_sym;
+        } elsif ($tok eq ",") {
+            ## ignore, although we could do syntax checking
+        } elsif ($tok =~ /^\s*$/)  {
+            ## ignore whitespace
+        } elsif ($tok eq ":") {
+            $i++;
+            if ( ! looks_like_number($tokens[$i]) ) {
+                die "Distance expected in tree.";
+            }
+        } else {
+            push @list, unquote_newick_label($tok);
+        }
     }
 
     return \@list;
@@ -350,26 +350,26 @@ sub newick_tree_to_postorder_old {
 
     my $brcount=0;
     for (my $i=0; $i< length $tree; $i++) {
-	my $c=substr $tree,$i,1;
+        my $c=substr $tree,$i,1;
 
-	if ($c eq "(") {
-	    $brcount++;
-	} elsif ($c eq ")") {
-	    $brcount--;
-	    if ($brcount<0) {
-		die "Parse error in tree.";
-	    }
+        if ($c eq "(") {
+            $brcount++;
+        } elsif ($c eq ")") {
+            $brcount--;
+            if ($brcount<0) {
+                die "Parse error in tree.";
+            }
 
-	    push @list, $node_sym;
-	} elsif ($c eq ",") {
-	    ## ignore, although we could do syntax checking
-	} else {
-	    my $rest=substr $tree,$i;
-	    $rest =~ /^([^(),]+)/;
-	    my $token = $1;
-	    $i+=(length $token)-1;
-	    push @list, $token;
-	}
+            push @list, $node_sym;
+        } elsif ($c eq ",") {
+            ## ignore, although we could do syntax checking
+        } else {
+            my $rest=substr $tree,$i;
+            $rest =~ /^([^(),]+)/;
+            my $token = $1;
+            $i+=(length $token)-1;
+            push @list, $token;
+        }
     }
 
     return \@list;
@@ -387,13 +387,13 @@ sub check_tree_labels {
     my %existing_labels;
 
     foreach my $i (@$tree) {
-	$existing_labels{$i}=1;
+        $existing_labels{$i}=1;
     }
 
     foreach my $i (@$labels) {
-	if (!exists $existing_labels{$i}) {
-	    return 0;
-	}
+        if (!exists $existing_labels{$i}) {
+            return 0;
+        }
     }
 
     return 1;
@@ -414,29 +414,29 @@ sub project_tree {
     my @stack;
 
     foreach my $item (@$tree) {
-	my @list=();
+        my @list=();
 
-	if ($item eq $node_sym) {
-	    my @x = @{ $stack[-2] };
-	    my @y = @{ $stack[-1] };
-	    $#stack-=2;
+        if ($item eq $node_sym) {
+            my @x = @{ $stack[-2] };
+            my @y = @{ $stack[-1] };
+            $#stack-=2;
 
-	    if (@x==0 && @y==0) {
-		@list = ();
-	    } elsif (@x==0) {
-		@list = @y;
-	    } elsif (@y==0) {
-		@list = @x;
-	    } else {
-		@list=(@x,@y,$node_sym);
-	    }
-	} else {
-	    @list=();
-	    if (grep (/^$item$/, @$labels)!=0) {
-		@list=($item);
-	    }
-	}
-	push @stack, [ @list ];
+            if (@x==0 && @y==0) {
+                @list = ();
+            } elsif (@x==0) {
+                @list = @y;
+            } elsif (@y==0) {
+                @list = @x;
+            } else {
+                @list=(@x,@y,$node_sym);
+            }
+        } else {
+            @list=();
+            if (grep (/^$item$/, @$labels)!=0) {
+                @list=($item);
+            }
+        }
+        push @stack, [ @list ];
     }
 
     return $stack[0];
