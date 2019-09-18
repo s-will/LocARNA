@@ -374,7 +374,7 @@ sub consistency_transform_bm {
         }
     }
 
-    return %th;
+    return \%th;
 }
 
 ########################################
@@ -1315,7 +1315,7 @@ sub consistency_transform_am {
         }
     }
 
-    return %th;
+    return \%th;
 }
 
 

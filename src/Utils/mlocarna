@@ -1593,13 +1593,13 @@ my $global_tmpprefix="$global_tmpname"; # could be a absolute path, but there's 
 #
 
 ## GLOBAL VARS (since passing this arround is ugly:))
-my %bmprobs; # base match probabilities
-my %amprobs; # arc match probabilities
+my $bmprobs; # base match probabilities
+my $amprobs; # arc match probabilities
 
 ## use for storing untransformed probs
 ## in case of consistency-transformation
-my %bmprobs_nocbt; # untransformed base match probabilities
-my %amprobs_nocbt; # untransformed arc match probabilities
+my $bmprobs_nocbt; # untransformed base match probabilities
+my $amprobs_nocbt; # untransformed arc match probabilities
 
 # name normalizer
 my $nnorm;
@@ -1768,10 +1768,10 @@ sub compute_and_write_reliabilities {
 
     if ($opts->{'consistency-transformation'}) {
         ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
-            = MLocarna::MatchProbs::compute_reliability(\%aln,\%bmprobs_nocbt,\%amprobs_nocbt,$nnorm);
+            = MLocarna::MatchProbs::compute_reliability(\%aln,$bmprobs_nocbt,$amprobs_nocbt,$nnorm);
     } else {
         ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
-            = MLocarna::MatchProbs::compute_reliability(\%aln,\%bmprobs,\%amprobs,$nnorm);
+            = MLocarna::MatchProbs::compute_reliability(\%aln,$bmprobs,$amprobs,$nnorm);
     }
 
     printmsg 3, "reliability\n";
@@ -1794,7 +1794,7 @@ sub compute_and_write_reliabilities {
     if ($opts->{'consistency-transformation'}) {
 
         my ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
-            = MLocarna::MatchProbs::compute_reliability(\%aln,\%bmprobs,\%amprobs, $nnorm);
+            = MLocarna::MatchProbs::compute_reliability(\%aln,$bmprobs,$amprobs, $nnorm);
 
         if ($opts->{'verbose'}) {
             printmsg 3, "reliability (cbt)\n";
@@ -1821,7 +1821,7 @@ sub compute_and_write_reliabilities {
 
             ## compute and write reliability profiles for the single sequences
             my ($bmrels_seq,$bmrels_str) =
-	        MLocarna::MatchProbs::compute_bmreliabilities_single_seq($name,\%aln,\%bmprobs_nocbt,\%amprobs_nocbt,$nnorm);
+	        MLocarna::MatchProbs::compute_bmreliabilities_single_seq($name,\%aln,$bmprobs_nocbt,$amprobs_nocbt,$nnorm);
 
             my $nname = $nnorm->nname($name);
             MLocarna::MatchProbs::write_bm_reliabilities(
@@ -1833,7 +1833,7 @@ sub compute_and_write_reliabilities {
             my %name_pairprobs = read_pp_file_pairprobs($opts->{'tgtdir'}."/$input_dir/$nname");
 
             my $amrels_ref = MLocarna::MatchProbs::compute_amreliabilities_single_seq(
-                $name,\%aln,\%amprobs_nocbt,\%name_pairprobs,$nnorm);
+                $name,\%aln,$amprobs_nocbt,\%name_pairprobs,$nnorm);
             MLocarna::MatchProbs::write_am_reliabilities(
                 $opts->{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname.amreliability", $amrels_ref);
             MLocarna::MatchProbs::write_dotplot(
@@ -1946,11 +1946,11 @@ sub perform_multiple_alignment {
         # Therefore, use extra vars and copy back immediately after
         # use.
         #
-        my %bmprobs_shared; # shared for parallel computation
-        my %amprobs_shared; # shared for parallel computation
+        my $bmprobs_shared = {}; # shared for parallel computation
+        my $amprobs_shared = {}; # shared for parallel computation
 
-        share(\%bmprobs_shared);
-        share(\%amprobs_shared);
+        share($bmprobs_shared);
+        share($amprobs_shared);
 
 
         printmsg 3,"Compute match probabilities ...\n";
@@ -1961,46 +1961,46 @@ sub perform_multiple_alignment {
         # compute arc match probs only if required
         #
         #
-        compute_all_match_probs(\@names, \%bmprobs_shared, \%amprobs_shared, $opts->{'threads'});
+        compute_all_match_probs(\@names, $bmprobs_shared, $amprobs_shared, $opts->{'threads'});
 
         # make unshared clone-copys of shared bmprobs/amprobs
         #
-        %bmprobs_nocbt = %{ clone_hash(3, \%bmprobs_shared) };
-        %amprobs_nocbt = %{ clone_hash(5, \%amprobs_shared) };
+        $bmprobs_nocbt = clone_hash(3, $bmprobs_shared);
+        $amprobs_nocbt = clone_hash(5, $amprobs_shared);
 
-        undef %bmprobs_shared; #not needed anymore
-        undef %amprobs_shared; #not needed anymore
+        undef $bmprobs_shared; #not needed anymore
+        undef $amprobs_shared; #not needed anymore
 
 
         if ($opts->{'write-bm-probs'}) {
-            MLocarna::MatchProbs::write_bm_probs("$probs_dir/bmprobs",\%bmprobs_nocbt);
+            MLocarna::MatchProbs::write_bm_probs("$probs_dir/bmprobs",$bmprobs_nocbt);
         }
         if ($opts->{'write-am-probs'}) {
-            MLocarna::MatchProbs::write_am_probs("$probs_dir/amprobs",\%amprobs_nocbt);
+            MLocarna::MatchProbs::write_am_probs("$probs_dir/amprobs",$amprobs_nocbt);
         }
 
-        # print_k_dim_hash(\%bmprobs,4,"");
+        # print_k_dim_hash($bmprobs,4,"");
 
         if ($opts->{'consistency-transformation'}) {
             ## store untransformed probabilities
 
             printmsg 3, "Consistency transform match probabilities ...\n";
 
-            %bmprobs = MLocarna::MatchProbs::consistency_transform_bm(\%bmprobs_nocbt,\@names, $nnorm);
-            %amprobs = MLocarna::MatchProbs::consistency_transform_am(\%amprobs_nocbt,\@names, $nnorm);
+            $bmprobs = MLocarna::MatchProbs::consistency_transform_bm($bmprobs_nocbt,\@names, $nnorm);
+            $amprobs = MLocarna::MatchProbs::consistency_transform_am($amprobs_nocbt,\@names, $nnorm);
 
             if ($opts->{'write-bm-probs'}) {
-	        MLocarna::MatchProbs::write_bm_probs("$probs_dir/bmprobs-cbt",\%bmprobs);
+	        MLocarna::MatchProbs::write_bm_probs("$probs_dir/bmprobs-cbt",$bmprobs);
             }
             if ($opts->{'write-am-probs'}) {
-	        MLocarna::MatchProbs::write_am_probs("$probs_dir/amprobs-cbt",\%amprobs);
+	        MLocarna::MatchProbs::write_am_probs("$probs_dir/amprobs-cbt",$amprobs);
             }
         } else {
-            %bmprobs=%bmprobs_nocbt;
-            %amprobs=%amprobs_nocbt;
+            $bmprobs=$bmprobs_nocbt;
+            $amprobs=$amprobs_nocbt;
         }
 
-        #print_k_dim_hash(\%bmprobs,4,"");
+        #print_k_dim_hash($bmprobs,4,"");
     }
 
 
@@ -2100,7 +2100,7 @@ sub perform_multiple_alignment {
         printmsg 3,"Compute pairwise alignments ... \n";
 
         # store all pairwise alignments in @pairwise_alignments
-        my $pairwise_alns = compute_all_pairwise_alignments(\@names, \%bmprobs, \%amprobs, $opts->{'threads'});
+        my $pairwise_alns = compute_all_pairwise_alignments(\@names, $bmprobs, $amprobs, $opts->{'threads'});
         ## fill score matrix
         my $score_matrix = extract_score_matrix_from_alignments(\@names, $pairwise_alns);
 
@@ -2142,7 +2142,7 @@ sub perform_multiple_alignment {
     printmsg 3, "Perform progressive alignment ...\n";
 
     my $current_alignment_name =
-      perform_progressive_steps($tree_postorder,\%bmprobs,\%amprobs);
+      perform_progressive_steps($tree_postorder,$bmprobs,$amprobs);
 
     ## ----------------------------------------
     ## copy results to files result_prog.aln and result_prog.pp
@@ -2192,7 +2192,7 @@ sub perform_multiple_alignment {
     if (defined($opts->{'iterations'}) && ($opts->{'iterations'}>0)) {
          printmsg 3, "Perform iterative refinement ...\n";
 
-        $current_alignment_name = perform_iterative_refinement($current_alignment_name,$tree_postorder,\@names,\%bmprobs,\%amprobs);
+        $current_alignment_name = perform_iterative_refinement($current_alignment_name,$tree_postorder,\@names,$bmprobs,$amprobs);
     }
 
     ### DONE iterative refinement
@@ -2279,11 +2279,9 @@ sub perform_multiple_alignment {
 ##
 ## returns a hash of "sparse matrices"
 sub compute_all_match_probs {
-    my ($names_ref, $bmprobs_ref, $amprobs_ref, $thread_num) = @_;
+    my ($names, $bmprobs, $amprobs, $thread_num) = @_;
 
     if (!defined($thread_num)) { $thread_num = 1; }
-
-    my @names = @{ $names_ref };
 
     my @arg_lists_par;
     my @arg_lists_seq;
@@ -2292,10 +2290,10 @@ sub compute_all_match_probs {
 
     ## collect argument lists
     my $num=0;
-    for my $nameA (@names) {
+    for my $nameA (@$names) {
         $a++;
         my $b=0;
-        for my $nameB (@names) {
+        for my $nameB (@$names) {
             $b++;
             if ($b!=$a) {
 	        if ($a>$b) {
@@ -2306,8 +2304,10 @@ sub compute_all_match_probs {
         }
     }
 
-    share($bmprobs_ref);
-    share($amprobs_ref);
+    share($bmprobs);
+    share($amprobs);
+
+    my $num_names = scalar(@$names);
 
     ## perform in parallel
     foreach_par(
@@ -2315,11 +2315,11 @@ sub compute_all_match_probs {
             my ($num,$a,$b,$nameA,$nameB)=@_;
             printmsg 2, sprintf(
 	        "PFAlign %d/%d : $nameA and %d/%d: $nameB (%d/%d)\n",
-	        $a,$#names+1,$b,$a-1,
-	        $num,($#names*($#names+1))/2);
+	        $a,$num_names,$b,$a-1,
+	        $num,($num_names*($num_names-1))/2);
 
-            compute_match_probs($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref);
-            get_symmetric_match_probs($b,$a,$nameB,$nameA,$bmprobs_ref,$amprobs_ref);
+            compute_match_probs($a,$b,$nameA,$nameB,$bmprobs,$amprobs);
+            get_symmetric_match_probs($b,$a,$nameB,$nameA,$bmprobs,$amprobs);
         },
         \@arg_lists_par,
         $thread_num);
@@ -2327,23 +2327,23 @@ sub compute_all_match_probs {
 
 sub get_symmetric_match_probs {
     # get match probs entries from the symmetric case
-    my ($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref) = @_;
+    my ($a,$b,$nameA,$nameB,$bmprobs,$amprobs) = @_;
 
-    if (! exists $bmprobs_ref->{$nnorm->nnamepair($nameB,$nameA)}) {
+    if (! exists $bmprobs->{$nnorm->nnamepair($nameB,$nameA)}) {
         printerr "Internal ERROR: symmetric match probabilities don't exist yet.\n";
         exit -1;
     }
 
-    my $subhash_bm = MLocarna::SparseMatrix::transpose_2D( $bmprobs_ref->{$nnorm->nnamepair($nameB,$nameA)} );
-    $bmprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2, $subhash_bm);
+    my $subhash_bm = MLocarna::SparseMatrix::transpose_2D( $bmprobs->{$nnorm->nnamepair($nameB,$nameA)} );
+    $bmprobs->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2, $subhash_bm);
 
-    my $subhash_am = MLocarna::SparseMatrix::transpose_4D( $amprobs_ref->{$nnorm->nnamepair($nameB,$nameA)} );
-    $amprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4, $subhash_am);
+    my $subhash_am = MLocarna::SparseMatrix::transpose_4D( $amprobs->{$nnorm->nnamepair($nameB,$nameA)} );
+    $amprobs->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4, $subhash_am);
 }
 
 sub compute_match_probs {
     # compute the match probabilities for the pair
-    my ($a,$b,$nameA,$nameB,$bmprobs_ref,$amprobs_ref) = @_;
+    my ($a,$b,$nameA,$nameB,$bmprobs,$amprobs) = @_;
 
     my $tmpprefix = threadsafe_name("$global_tmpprefix");
 
@@ -2382,8 +2382,8 @@ sub compute_match_probs {
     my $mat_bm = MLocarna::SparseMatrix::read_2D($tmpfile_bm);
     my $mat_am = MLocarna::SparseMatrix::read_4D($tmpfile_am);
 
-    $bmprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2,$mat_bm);
-    $amprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4,$mat_am);
+    $bmprobs->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2,$mat_bm);
+    $amprobs->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4,$mat_am);
 
     unlink "$tmpfile_am";
     unlink "$tmpfile_bm";
@@ -2456,7 +2456,7 @@ sub call_locarna {
 ## (unless in fast-mea mode, the pair probabilities in the pp files are ignored)
 ##
 sub call_locarna_prob {
-    my ($inA,$inB,$tgt,$bmprobs_ref,$amprobs_ref) = @_;
+    my ($inA,$inB,$tgt,$bmprobs,$amprobs) = @_;
 
     ## extract the alignments from the pp files
     #
@@ -2466,7 +2466,7 @@ sub call_locarna_prob {
     my $tmpprefix = threadsafe_name("$global_tmpprefix");
 
     # average the base match probabilities and write to tmpfile
-    my $m = MLocarna::MatchProbs::average_basematch_probs( \%alnA, \%alnB, $bmprobs_ref, $nnorm );
+    my $m = MLocarna::MatchProbs::average_basematch_probs( \%alnA, \%alnB, $bmprobs, $nnorm );
     my $tmpfile_bm="$tmpprefix.bmps";
     MLocarna::SparseMatrix::write_2D($m,$tmpfile_bm);
     my @readprob_args = ("--read-match-probs" => $tmpfile_bm);
@@ -2474,7 +2474,7 @@ sub call_locarna_prob {
     my $tmpfile_am="$tmpprefix.amps";
     # if required, average the arc match probabilities and write to tmpfile
     if (!$opts->{'fast-mea'} && !$opts->{'only-basematch-probs'}) {
-        my $m = MLocarna::MatchProbs::average_arcmatch_probs( \%alnA, \%alnB, $amprobs_ref, $nnorm );
+        my $m = MLocarna::MatchProbs::average_arcmatch_probs( \%alnA, \%alnB, $amprobs, $nnorm );
         MLocarna::SparseMatrix::write_4D($m,$tmpfile_am);
 
         push @readprob_args, "--read-arcmatch-probs" => $tmpfile_am;
@@ -2764,7 +2764,7 @@ sub compute_alignment_from_dps {
 
 ## compute alignment with given probabilities
 sub compute_alignment_from_dps_probs {
-    my ($input_dir,$nameA,$nameB,$locarna_params_ref,$bmprobs_ref,$amprobs_ref) =  @_;
+    my ($input_dir,$nameA,$nameB,$locarna_params_ref,$bmprobs,$amprobs) =  @_;
 
     # printerr "compute_alignment_from_dps_probs $seqA_dp $seqB_dp";
 
@@ -2777,7 +2777,7 @@ sub compute_alignment_from_dps_probs {
     my $seqA_dp="$input_dir/".$nnorm->nname($nameA);
     my $seqB_dp="$input_dir/".$nnorm->nname($nameB);
 
-    MLocarna::SparseMatrix::write_2D($bmprobs_ref,$tmpfile2);
+    MLocarna::SparseMatrix::write_2D($bmprobs,$tmpfile2);
 
     my @locarna_params = ();
     push @locarna_params, @$locarna_params_ref;
@@ -2785,7 +2785,7 @@ sub compute_alignment_from_dps_probs {
     push @locarna_params, "--clustal=$tmpfile", "--read-match-probs=$tmpfile2";
 
     if (!$opts->{'fast-mea'} && !$opts->{'only-basematch-probs'}) {
-        MLocarna::SparseMatrix::write_4D($amprobs_ref,$tmpfile3);
+        MLocarna::SparseMatrix::write_4D($amprobs,$tmpfile3);
 
         push @locarna_params, "--read-arcmatch-probs" => $tmpfile3;
     }
@@ -3253,15 +3253,12 @@ sub compute_dotplot {
 ## @depends $opts->{'probabilistic'}   flag for probabilistic alignment
 ##
 ## @param $names_ref       names of sequences
-## @param $bmprobs_ref     base match probs in case of probabilistic alignment
-## @param $amprobs_ref     arc  match probs in case of probabilistic alignment
+## @param $bmprobs     base match probs in case of probabilistic alignment
+## @param $amprobs     arc  match probs in case of probabilistic alignment
 ## @param $thread_num         number of threads (default 1)
 ##
 sub compute_all_pairwise_alignments {
-    my ($names_ref,$bmprobs_ref,$amprobs_ref,$thread_num) = @_;
-
-    my %bmprobs = %{ $bmprobs_ref };
-    my %amprobs = %{ $amprobs_ref };
+    my ($names_ref,$bmprobs,$amprobs,$thread_num) = @_;
 
     if (!defined($thread_num)) { $thread_num=1; }
 
@@ -3281,8 +3278,8 @@ sub compute_all_pairwise_alignments {
 	        my @arg_list = ($num,$a,$b,
 			        $names[$a],
 			        $names[$b],
-			        $bmprobs{$nnorm->nnamepair($names[$a],$names[$b])},
-			        $amprobs{$nnorm->nnamepair($names[$a],$names[$b])});
+			        $bmprobs->{$nnorm->nnamepair($names[$a],$names[$b])},
+			        $amprobs->{$nnorm->nnamepair($names[$a],$names[$b])});
 	        push @argument_lists, [ @arg_list ];
             } else {
 	        my @arg_list=($num,$a,$b,
@@ -3356,7 +3353,7 @@ sub compute_all_pairwise_alignments {
 ## needs bmprobs, amprobs in probabilistic mode
 ##
 sub perform_progressive_steps {
-    my ($tree_postorder,$bmprobs_ref,$amprobs_ref)=@_;
+    my ($tree_postorder,$bmprobs,$amprobs)=@_;
 
     my @stack=();
 
@@ -3371,7 +3368,7 @@ sub perform_progressive_steps {
             my $intermediate_name = new_intermediate_name();
 
             if ( $opts->{'probabilistic'} ) {
-	        call_locarna_prob($op1,$op2,"$intermediate_dir/".$intermediate_name,$bmprobs_ref,$amprobs_ref);
+	        call_locarna_prob($op1,$op2,"$intermediate_dir/".$intermediate_name,$bmprobs,$amprobs);
             } else {
 	        call_locarna($op1,$op2,"$intermediate_dir/".$intermediate_name);
             }
@@ -3401,14 +3398,14 @@ sub perform_progressive_steps {
 ## @returns file name of result
 ##
 sub perform_iterative_refinement {
-    my ($current_alignment_name,$tree_postorder_ref,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+    my ($current_alignment_name,$tree_postorder_ref,$names_ref,$bmprobs,$amprobs) = @_;
 
     ## my $current_aliquality = alifold_mfe("$current_alignment_name.aln", @RNAfold_args); ## optimize SCI
 
     my $current_aliquality;
     if ($opts->{'probabilistic'}) {
         $current_aliquality = MLocarna::MatchProbs::aln_reliability_fromfile(
-            "$current_alignment_name.aln",\%bmprobs,\%amprobs, $nnorm); ## optimize RELIABILITY
+            "$current_alignment_name.aln",$bmprobs,$amprobs, $nnorm); ## optimize RELIABILITY
     } else {
         $current_aliquality = - alifold_mfe("$current_alignment_name.aln", @RNAfold_args); ## optimize SCI
     }
@@ -3419,7 +3416,7 @@ sub perform_iterative_refinement {
 
         my $round_aliquality;
         ($current_alignment_name,$round_aliquality) =
-            perform_iterative_refinement_one_round($current_alignment_name,$current_aliquality,$tree_postorder_ref,$names_ref,$bmprobs_ref,$amprobs_ref);
+            perform_iterative_refinement_one_round($current_alignment_name,$current_aliquality,$tree_postorder_ref,$names_ref,$bmprobs,$amprobs);
 
         if ($current_aliquality == $round_aliquality) {
             printmsg 2, "Converge after round $i\n\n";
@@ -3437,7 +3434,7 @@ sub perform_iterative_refinement {
 ##
 sub perform_iterative_refinement_one_round {
     my ($current_alignment_name,$current_aliquality,
-        $tree_postorder,$names_ref,$bmprobs_ref,$amprobs_ref) = @_;
+        $tree_postorder,$names_ref,$bmprobs,$amprobs) = @_;
 
     my $round_aliquality = $current_aliquality;
 
@@ -3463,7 +3460,7 @@ sub perform_iterative_refinement_one_round {
 
 
         if ( $opts->{'probabilistic'} ) {
-            call_locarna_prob($intermediate_nameA,$intermediate_nameB,$intermediate_name,$bmprobs_ref,$amprobs_ref);
+            call_locarna_prob($intermediate_nameA,$intermediate_nameB,$intermediate_name,$bmprobs,$amprobs);
         } else {
             call_locarna($intermediate_nameA,$intermediate_nameB,$intermediate_name);
         }
@@ -3474,7 +3471,7 @@ sub perform_iterative_refinement_one_round {
         my $new_aliquality;# = alifold_mfe("$intermediate_name.aln", @RNAfold_args);
         if ($opts->{'probabilistic'}) {
             $new_aliquality = MLocarna::MatchProbs::aln_reliability_fromfile(
-                "$intermediate_name.aln",\%bmprobs,\%amprobs, $nnorm); ## optimize RELIABILITY
+                "$intermediate_name.aln",$bmprobs,$amprobs, $nnorm); ## optimize RELIABILITY
         } else {
             $new_aliquality = - alifold_mfe("$intermediate_name.aln", @RNAfold_args); ## optimize SCI
         }
