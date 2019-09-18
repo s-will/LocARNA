@@ -31,7 +31,6 @@ our @EXPORT      =
         aln_length_atleastonematch
         aln_to_alnloh
         anchor_constraint_string
-        clone_hash
         compute_alignment_from_seqs
         compute_alignment_score
         constraint_annotation_is_valid_or_die
@@ -1220,30 +1219,6 @@ sub project_structure_to_alignment_sequence {
     return
       project_string_to_alignment_sequence($str, $seq, $gap_symbols);
 }
-
-
-########################################
-## clone_hash($levels,$x)
-##
-## make a (non-shared) copy of a hash
-##
-## (one could use ref as "typeof" to make this more generic,
-## however its not needed for the moment)
-########################################
-sub clone_hash {
-    my ($levels,$x) = @_;
-    my %y;
-
-    if ($levels>1) {
-	foreach my $k (keys %{ $x }) {
-	    $y{$k} = clone_hash( $levels-1, $x->{$k} );
-	}
-    } else {
-	%y = %{ $x };
-    }
-    return \%y;
-}
-
 
 
 ########################################

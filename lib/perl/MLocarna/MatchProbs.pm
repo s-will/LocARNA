@@ -799,6 +799,7 @@ sub compute_reliability {
 
                 my @posmapB = @{ $posmaps{$nameB} };
 
+                if ( ! multi_exists($amprobs, [$namepair, $pA]) ) { next; }
                 for my $pA2 ( keys %{ $amprobs->{$namepair}{$pA} } ) {
 
                     my $i2 = $posmapA[$pA2];

@@ -1593,13 +1593,13 @@ my $global_tmpprefix="$global_tmpname"; # could be a absolute path, but there's 
 #
 
 ## GLOBAL VARS (since passing this arround is ugly:))
-my $bmprobs; # base match probabilities
-my $amprobs; # arc match probabilities
+my $bmprobs = {}; # base match probabilities
+my $amprobs = {}; # arc match probabilities
 
 ## use for storing untransformed probs
 ## in case of consistency-transformation
-my $bmprobs_nocbt; # untransformed base match probabilities
-my $amprobs_nocbt; # untransformed arc match probabilities
+my $bmprobs_nocbt = {}; # untransformed base match probabilities
+my $amprobs_nocbt = {}; # untransformed arc match probabilities
 
 # name normalizer
 my $nnorm;
@@ -1940,18 +1940,6 @@ sub perform_multiple_alignment {
     #  (if required)
 
     if ($opts->{'probabilistic'}) {
-        #
-        # for some strange reasons, later we get problems when using
-        # shared variables, where we actually don't need it.
-        # Therefore, use extra vars and copy back immediately after
-        # use.
-        #
-        my $bmprobs_shared = {}; # shared for parallel computation
-        my $amprobs_shared = {}; # shared for parallel computation
-
-        share($bmprobs_shared);
-        share($amprobs_shared);
-
 
         printmsg 3,"Compute match probabilities ...\n";
 
@@ -1961,15 +1949,7 @@ sub perform_multiple_alignment {
         # compute arc match probs only if required
         #
         #
-        compute_all_match_probs(\@names, $bmprobs_shared, $amprobs_shared, $opts->{'threads'});
-
-        # make unshared clone-copys of shared bmprobs/amprobs
-        #
-        $bmprobs_nocbt = clone_hash(3, $bmprobs_shared);
-        $amprobs_nocbt = clone_hash(5, $amprobs_shared);
-
-        undef $bmprobs_shared; #not needed anymore
-        undef $amprobs_shared; #not needed anymore
+        compute_all_match_probs(\@names, $bmprobs_nocbt, $amprobs_nocbt, $opts->{'threads'});
 
 
         if ($opts->{'write-bm-probs'}) {
@@ -2334,11 +2314,11 @@ sub get_symmetric_match_probs {
         exit -1;
     }
 
-    my $subhash_bm = MLocarna::SparseMatrix::transpose_2D( $bmprobs->{$nnorm->nnamepair($nameB,$nameA)} );
-    $bmprobs->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2, $subhash_bm);
+    $bmprobs->{$nnorm->nnamepair($nameA,$nameB)} = threads::shared::shared_clone(
+        MLocarna::SparseMatrix::transpose_2D( $bmprobs->{$nnorm->nnamepair($nameB,$nameA)} ) );
 
-    my $subhash_am = MLocarna::SparseMatrix::transpose_4D( $amprobs->{$nnorm->nnamepair($nameB,$nameA)} );
-    $amprobs->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4, $subhash_am);
+    $amprobs->{$nnorm->nnamepair($nameA,$nameB)} = threads::shared::shared_clone(
+        MLocarna::SparseMatrix::transpose_4D( $amprobs->{$nnorm->nnamepair($nameB,$nameA)} ) );
 }
 
 sub compute_match_probs {
@@ -2379,41 +2359,13 @@ sub compute_match_probs {
         die_hard "Pairwise aligner failed to write match probabilities to file; called by @cmd.";
     }
 
-    my $mat_bm = MLocarna::SparseMatrix::read_2D($tmpfile_bm);
-    my $mat_am = MLocarna::SparseMatrix::read_4D($tmpfile_am);
-
-    $bmprobs->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2,$mat_bm);
-    $amprobs->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4,$mat_am);
-
+    $bmprobs->{$nnorm->nnamepair($nameA,$nameB)} = threads::shared::shared_clone(
+        MLocarna::SparseMatrix::read_2D($tmpfile_bm));
+    $amprobs->{$nnorm->nnamepair($nameA,$nameB)} = threads::shared::shared_clone(
+        MLocarna::SparseMatrix::read_4D($tmpfile_am));
     unlink "$tmpfile_am";
     unlink "$tmpfile_bm";
 }
-
-########################################
-## clone_share_hash($levels,$x)
-##
-## make a shared copy of a hash
-##
-## (one could use ref as "typeof" to make this more generic,
-## however its not needed for the moment)
-sub clone_share_hash {
-    my ($levels,$x) = @_;
-    my %y;
-
-    share(\%y);
-
-
-    if ($levels>1) {
-        foreach my $k (keys %{ $x }) {
-            $y{$k} = clone_share_hash( $levels-1, $x->{$k} );
-        }
-    } else {
-        %y = %{ $x };
-    }
-    return \%y;
-}
-
-
 
 ## calls pairwise aligner ($opts->{'pw-aligner'}) on nameA and nameB in
 ## input_dir and writes to $tgt.pp and $tgt.aln
