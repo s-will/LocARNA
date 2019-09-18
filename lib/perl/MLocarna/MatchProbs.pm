@@ -138,7 +138,7 @@ sub sum_paired_prob_am {
 ## @param $bmprobs base match probabilities
 ## @param $nnorm name normalizer object
 ##
-## @returns hash of averaged base match probabilities
+## @returns ref to hash of averaged base match probabilities
 ##
 ########################################
 sub average_basematch_probs {
@@ -151,7 +151,7 @@ sub average_basematch_probs {
 
     for my $nameA (@namesA) {
         for my $nameB (@namesB) {
-            # projecterei
+            # projecting
 
             my @posmapA = project_seq($alnA->{$nameA});
             my @posmapB = project_seq($alnB->{$nameB});
@@ -170,7 +170,7 @@ sub average_basematch_probs {
 
     my $nm = scalar(@namesA)*scalar(@namesB);
 
-    return divide_sparsematrix_2D(\%r,$nm);
+    return MLocarna::SparseMatrix::divide_2D(\%r,$nm);
 }
 
 
@@ -181,7 +181,7 @@ sub average_basematch_probs {
 ## calculate the average arc match probabilities for
 ## the alignment of the alignments alnA and alnB
 ##
-## returns hash of averaged arc match probabilities
+## returns ref to hash of averaged arc match probabilities
 ##
 ########################################
 sub average_arcmatch_probs {
@@ -194,14 +194,14 @@ sub average_arcmatch_probs {
 
     for my $nameA (@namesA) {
         for my $nameB (@namesB) {
-            # projecterei
+            # projecting
 
             my @posmapA = project_seq($alnA->{$nameA});
             my @posmapB = project_seq($alnB->{$nameB});
 
             my $m = $amprobs->{$nnorm->nnamepair($nameA,$nameB)};
 
-            # averagerei
+            # averaging
 
             foreach my $i (keys %$m) {
                 foreach my $j (keys %{ $m->{$i} }) {
@@ -217,7 +217,7 @@ sub average_arcmatch_probs {
 
     my $nm = (@namesA)*(@namesB);
 
-    return divide_sparsematrix_4D(\%r,$nm);
+    return MLocarna::SparseMatrix::divide_4D(\%r,$nm);
 }
 
 
@@ -333,10 +333,9 @@ sub consistency_transform_bm {
     foreach my $name_pair (@name_pairs) {
         my ($nameA,$nameB) = dhp($name_pair);
         if (exists $th{chp($nameB,$nameA)}) {
-            my %subhash = transpose_sparsematrix_2D( $th{chp($nameB,$nameA)} );
-            $th{$name_pair} = \%subhash;
+            $th{$name_pair} = MLocarna::SparseMatrix::transpose_2D( $th{chp($nameB,$nameA)} );
         } else {
-            my %matrixAB;
+            my $matrixAB = {};
 
             foreach my $nameC (@$names) {
 
@@ -355,14 +354,14 @@ sub consistency_transform_bm {
                                                          $h->{chp($nnameC,$nameB)} );
                 }
 
-                add_sparsematrix_2D_inplace ( \%matrixAB, $matrixAB_add );
+                MLocarna::SparseMatrix::add_2D_inplace ( $matrixAB, $matrixAB_add );
             }
 
-            %matrixAB = filter_sparsematrix_2D( \%matrixAB, $num_seqs * $min_bm_prob);
+            $matrixAB = MLocarna::SparseMatrix::filter_2D( $matrixAB, $num_seqs * $min_bm_prob);
 
-            divide_sparsematrix_2D_inplace( \%matrixAB, $num_seqs );
+            MLocarna::SparseMatrix::divide_2D_inplace( $matrixAB, $num_seqs );
 
-            $th{$name_pair} = \%matrixAB;
+            $th{$name_pair} = $matrixAB;
         }
     }
 
@@ -371,8 +370,7 @@ sub consistency_transform_bm {
         # printmsg 1, "Sum paired prob bm ratio: $paired_prob_ratio\n";
 
         foreach my $name_pair (@name_pairs) {
-            my %subhash = scale_sparsematrix_2D($th{$name_pair},$paired_prob_ratio);
-            $th{$name_pair} = \%subhash;
+            $th{$name_pair} = MLocarna::SparseMatrix::scale_2D($th{$name_pair},$paired_prob_ratio);
         }
     }
 
@@ -1274,11 +1272,10 @@ sub consistency_transform_am {
             $th{$name_pair} = $h->{$name_pair};
         } else {
             if (exists $th{chp($nameB,$nameA)}) {
-                my %subhash = transpose_sparsematrix_4D( $th{chp($nameB,$nameA)} );
-                $th{$name_pair} = \%subhash;
+                $th{$name_pair} = MLocarna::SparseMatrix::transpose_4D( $th{chp($nameB,$nameA)} );
             } else {
 
-                my %matrixAB;
+                my $matrixAB = {};
 
                 foreach my $nameC (@$names) {
 
@@ -1295,14 +1292,14 @@ sub consistency_transform_am {
                         $matrixAB_add = consistency_transform_single_am( $h->{chp($nnameC,$nameA)} , $h->{chp($nnameC,$nameB)} );
                     }
 
-                    %matrixAB = add_sparsematrix_4D ( \%matrixAB, $matrixAB_add );
+                    MLocarna::SparseMatrix::add_4D_inplace( $matrixAB, $matrixAB_add );
                 }
 
-                %matrixAB = filter_sparsematrix_4D( \%matrixAB, $num_seqs * $min_am_prob);
+                $matrixAB = MLocarna::SparseMatrix::filter_4D( $matrixAB, $num_seqs * $min_am_prob);
 
-                %matrixAB = divide_sparsematrix_4D( \%matrixAB, $num_seqs );
+                $matrixAB = MLocarna::SparseMatrix::divide_4D( $matrixAB, $num_seqs );
 
-                $th{$name_pair} = \%matrixAB;
+                $th{$name_pair} = $matrixAB;
             }
         }
     }
@@ -1314,8 +1311,7 @@ sub consistency_transform_am {
         #printmsg 1, "Sum paired prob am ratio: $paired_prob_ratio\n";
 
         foreach my $name_pair (@name_pairs) {
-            my %subhash = scale_sparsematrix_4D($th{$name_pair},$paired_prob_ratio);
-            $th{$name_pair} = \%subhash;
+            $th{$name_pair} = MLocarna::SparseMatrix::scale_4D($th{$name_pair},$paired_prob_ratio);
         }
     }
 

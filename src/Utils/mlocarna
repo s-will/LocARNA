@@ -2335,11 +2335,11 @@ sub get_symmetric_match_probs {
         exit -1;
     }
 
-    my %subhash_bm = transpose_sparsematrix_2D( $bmprobs_ref->{$nnorm->nnamepair($nameB,$nameA)} );
-    $bmprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2, \%subhash_bm);
+    my $subhash_bm = MLocarna::SparseMatrix::transpose_2D( $bmprobs_ref->{$nnorm->nnamepair($nameB,$nameA)} );
+    $bmprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2, $subhash_bm);
 
-    my %subhash_am = transpose_sparsematrix_4D( $amprobs_ref->{$nnorm->nnamepair($nameB,$nameA)} );
-    $amprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4, \%subhash_am);
+    my $subhash_am = MLocarna::SparseMatrix::transpose_4D( $amprobs_ref->{$nnorm->nnamepair($nameB,$nameA)} );
+    $amprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4, $subhash_am);
 }
 
 sub compute_match_probs {
@@ -2380,12 +2380,11 @@ sub compute_match_probs {
         die_hard "Pairwise aligner failed to write match probabilities to file; called by @cmd.";
     }
 
-    my %mat_bm = read_sparsematrix_2D($tmpfile_bm);
-    my %mat_am = read_sparsematrix_4D($tmpfile_am);
+    my $mat_bm = MLocarna::SparseMatrix::read_2D($tmpfile_bm);
+    my $mat_am = MLocarna::SparseMatrix::read_4D($tmpfile_am);
 
-
-    $bmprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2,\%mat_bm);
-    $amprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4,\%mat_am);
+    $bmprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(2,$mat_bm);
+    $amprobs_ref->{$nnorm->nnamepair($nameA,$nameB)} = clone_share_hash(4,$mat_am);
 
     unlink "$tmpfile_am";
     unlink "$tmpfile_bm";
@@ -2468,16 +2467,16 @@ sub call_locarna_prob {
     my $tmpprefix = threadsafe_name("$global_tmpprefix");
 
     # average the base match probabilities and write to tmpfile
-    my %m = MLocarna::MatchProbs::average_basematch_probs( \%alnA, \%alnB, $bmprobs_ref, $nnorm );
+    my $m = MLocarna::MatchProbs::average_basematch_probs( \%alnA, \%alnB, $bmprobs_ref, $nnorm );
     my $tmpfile_bm="$tmpprefix.bmps";
-    write_sparsematrix_2D(\%m,$tmpfile_bm);
+    MLocarna::SparseMatrix::write_2D($m,$tmpfile_bm);
     my @readprob_args = ("--read-match-probs" => $tmpfile_bm);
 
     my $tmpfile_am="$tmpprefix.amps";
     # if required, average the arc match probabilities and write to tmpfile
     if (!$opts{'fast-mea'} && !$opts{'only-basematch-probs'}) {
-        my %m = MLocarna::MatchProbs::average_arcmatch_probs( \%alnA, \%alnB, $amprobs_ref, $nnorm );
-        write_sparsematrix_4D(\%m,$tmpfile_am);
+        my $m = MLocarna::MatchProbs::average_arcmatch_probs( \%alnA, \%alnB, $amprobs_ref, $nnorm );
+        MLocarna::SparseMatrix::write_4D($m,$tmpfile_am);
 
         push @readprob_args, "--read-arcmatch-probs" => $tmpfile_am;
     }
@@ -2779,7 +2778,7 @@ sub compute_alignment_from_dps_probs {
     my $seqA_dp="$input_dir/".$nnorm->nname($nameA);
     my $seqB_dp="$input_dir/".$nnorm->nname($nameB);
 
-    write_sparsematrix_2D($bmprobs_ref,$tmpfile2);
+    MLocarna::SparseMatrix::write_2D($bmprobs_ref,$tmpfile2);
 
     my @locarna_params = ();
     push @locarna_params, @$locarna_params_ref;
@@ -2787,7 +2786,7 @@ sub compute_alignment_from_dps_probs {
     push @locarna_params, "--clustal=$tmpfile", "--read-match-probs=$tmpfile2";
 
     if (!$opts{'fast-mea'} && !$opts{'only-basematch-probs'}) {
-        write_sparsematrix_4D($amprobs_ref,$tmpfile3);
+        MLocarna::SparseMatrix::write_4D($amprobs_ref,$tmpfile3);
 
         push @locarna_params, "--read-arcmatch-probs" => $tmpfile3;
     }
