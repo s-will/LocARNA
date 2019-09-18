@@ -73,7 +73,7 @@ sub _normalize {
 
 
 ########################################
-## print normalized sequence names hash to stdout for debugging
+## print normalized sequence names hash to stdout
 ##
 sub print {
     my $self = shift;

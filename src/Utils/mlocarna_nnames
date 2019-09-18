@@ -34,12 +34,8 @@ use strict;
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
 
-use MLocarna;
-use MLocarna::SparseMatrix;
-use MLocarna::Trees;
-use MLocarna::MatchProbs;
-use MLocarna::Aux;
-
+use MLocarna qw();
+use MLocarna::NameNormalizer;
 
 ##------------------------------------------------------------
 ## options
@@ -73,10 +69,14 @@ if (!defined($seqs_file)) {
 ## ------------------------------------------------------------
 ## main part
 
-my $seqs = read_fasta($seqs_file); ## input sequences
-register_normalized_seqnames($seqs); ## register normalized names for them that can be used as filenames
-print_normalized_sequence_names_hash();
+## read input sequences
+my $seqs = MLocarna::read_fasta($seqs_file);
+
+## register normalized names for them that can be used as filenames
+my $nnorm = new MLocarna::NameNormalizer($seqs);
+
+## print normalized names
+$nnorm->print();
 
 ## ------------------------------------------------------------
-
 
