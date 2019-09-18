@@ -1758,56 +1758,55 @@ sub main {
 ## @param %aln the multiple alignment
 ##
 sub compute_and_write_reliabilities {
-    my ($aln_ref) = @_;
-    my %aln = %{$aln_ref};
+    my ($aln) = @_;
 
-    my @names = keys %aln;
+    my @names = keys %$aln;
     @names = grep {!/\#/} @names;
 
-    my ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref);
+    my ($bmrels_seq, $bmrels_str, $amrels);
 
     if ($opts->{'consistency-transformation'}) {
-        ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
-            = MLocarna::MatchProbs::compute_reliability(\%aln,$bmprobs_nocbt,$amprobs_nocbt,$nnorm);
+        ($bmrels_seq, $bmrels_str, $amrels)
+            = MLocarna::MatchProbs::compute_reliability($aln,$bmprobs_nocbt,$amprobs_nocbt,$nnorm);
     } else {
-        ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
-            = MLocarna::MatchProbs::compute_reliability(\%aln,$bmprobs,$amprobs,$nnorm);
+        ($bmrels_seq, $bmrels_str, $amrels)
+            = MLocarna::MatchProbs::compute_reliability($aln,$bmprobs,$amprobs,$nnorm);
     }
 
     printmsg 3, "reliability\n";
 
     # compute and print a maximum reliability structure for the consensus reliabilities
     my @empty=();
-    my ($score,$rel_str)=MLocarna::MatchProbs::max_weight_structure(aln_length(\%aln),\@empty,$amrels_ref,1,0.125);
+    my ($score,$rel_str)=MLocarna::MatchProbs::max_weight_structure(aln_length($aln),\@empty,$amrels,1,0.125);
     printmsg 3, "max. reliability   $rel_str\n";
 
     if (3 >= $MLocarna::Aux::verbosemode) {
-        MLocarna::MatchProbs::write_reliability_bars($bmrels_seq_ref, $bmrels_str_ref);
+        MLocarna::MatchProbs::write_reliability_bars($bmrels_seq, $bmrels_str);
     }
 
     MLocarna::MatchProbs::write_bm_reliabilities($opts->{'tgtdir'}."/$results_dir/result.bmreliability",
-                                                 $bmrels_seq_ref,$bmrels_str_ref);
-    MLocarna::MatchProbs::write_am_reliabilities($opts->{'tgtdir'}."/$results_dir/result.amreliability",$amrels_ref);
+                                                 $bmrels_seq,$bmrels_str);
+    MLocarna::MatchProbs::write_am_reliabilities($opts->{'tgtdir'}."/$results_dir/result.amreliability",$amrels);
 
-    MLocarna::MatchProbs::write_dotplot($opts->{'tgtdir'}."/$results_dir/reldot.ps",consensus_sequence(\%aln),$amrels_ref);
+    MLocarna::MatchProbs::write_dotplot($opts->{'tgtdir'}."/$results_dir/reldot.ps",consensus_sequence($aln),$amrels);
 
     if ($opts->{'consistency-transformation'}) {
 
-        my ($bmrels_seq_ref, $bmrels_str_ref, $amrels_ref)
-            = MLocarna::MatchProbs::compute_reliability(\%aln,$bmprobs,$amprobs, $nnorm);
+        my ($bmrels_seq, $bmrels_str, $amrels)
+            = MLocarna::MatchProbs::compute_reliability($aln,$bmprobs,$amprobs, $nnorm);
 
         if ($opts->{'verbose'}) {
             printmsg 3, "reliability (cbt)\n";
             if (3 >= $MLocarna::Aux::verbosemode) {
-	        write_reliability_bars($bmrels_seq_ref, $bmrels_str_ref);
+	        write_reliability_bars($bmrels_seq, $bmrels_str);
             }
         }
 
         MLocarna::MatchProbs::write_bm_reliabilities($opts->{'tgtdir'}."/$results_dir/result.bmreliability-cbt",
-                                                     $bmrels_seq_ref,$bmrels_str_ref);
-        MLocarna::MatchProbs::write_am_reliabilities($opts->{'tgtdir'}."/$results_dir/result.amreliability-cbt",$amrels_ref);
+                                                     $bmrels_seq,$bmrels_str);
+        MLocarna::MatchProbs::write_am_reliabilities($opts->{'tgtdir'}."/$results_dir/result.amreliability-cbt",$amrels);
 
-        MLocarna::MatchProbs::write_dotplot($opts->{'tgtdir'}."/$results_dir/reldot-cbt.ps",consensus_sequence(\%aln),$amrels_ref);
+        MLocarna::MatchProbs::write_dotplot($opts->{'tgtdir'}."/$results_dir/reldot-cbt.ps",consensus_sequence($aln),$amrels);
     }
 
     ## hash for storing highly reliable structures (that will be used as constraints)
@@ -1821,7 +1820,7 @@ sub compute_and_write_reliabilities {
 
             ## compute and write reliability profiles for the single sequences
             my ($bmrels_seq,$bmrels_str) =
-	        MLocarna::MatchProbs::compute_bmreliabilities_single_seq($name,\%aln,$bmprobs_nocbt,$amprobs_nocbt,$nnorm);
+	        MLocarna::MatchProbs::compute_bmreliabilities_single_seq($name,$aln,$bmprobs_nocbt,$amprobs_nocbt,$nnorm);
 
             my $nname = $nnorm->nname($name);
             MLocarna::MatchProbs::write_bm_reliabilities(
@@ -1832,20 +1831,20 @@ sub compute_and_write_reliabilities {
             ## compute and write arc match reliabilities for the single sequences
             my %name_pairprobs = read_pp_file_pairprobs($opts->{'tgtdir'}."/$input_dir/$nname");
 
-            my $amrels_ref = MLocarna::MatchProbs::compute_amreliabilities_single_seq(
-                $name,\%aln,$amprobs_nocbt,\%name_pairprobs,$nnorm);
+            my $amrels = MLocarna::MatchProbs::compute_amreliabilities_single_seq(
+                $name,$aln,$amprobs_nocbt,\%name_pairprobs,$nnorm);
             MLocarna::MatchProbs::write_am_reliabilities(
-                $opts->{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname.amreliability", $amrels_ref);
+                $opts->{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname.amreliability", $amrels);
             MLocarna::MatchProbs::write_dotplot(
-                $opts->{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname"."_reldot.ps", $aln{$name},$amrels_ref);
+                $opts->{'tgtdir'}."/$results_dir/$single_reliabilities_dir/$nname"."_reldot.ps", $aln->{$name},$amrels);
 
             my @empty=();
-            my ($score,$rel_str)=MLocarna::MatchProbs::max_weight_structure(length($aln{$name}),\@empty,$amrels_ref,1,0.125);
+            my ($score,$rel_str)=MLocarna::MatchProbs::max_weight_structure(length($aln->{$name}),\@empty,$amrels,1,0.125);
 
             printmsg 3,sprintf("%-18s ",$name).$rel_str."\n";
 
             $rel_str = project_structure_to_alignment_sequence($rel_str,
-                                                               $aln{$name},
+                                                               $aln->{$name},
                                                                "-~.",
                                                                "({`",
                                                                ")}'",
@@ -2471,18 +2470,16 @@ sub call_locarna_prob {
 # generates consensus dotplot and constraints
 # out of single pp files
 sub write_pp_projected {
-    my ($aln_ref, $names_ref, $tgt_name) = @_;
-    my %aln = %{ $aln_ref };
-    my @names = @{ $names_ref };
+    my ($aln, $names, $tgt_name) = @_;
 
-    my %alnP = project_aln(\%aln,\@names);
+    my $alnP = project_aln($aln,$names);
 
     ## compute the consensus dot plot
     my @consensus_dp; # 2D array
     my @size; # number of added values for pos $i,$j
 
-    foreach my $name (@names) {
-        my @posmap = project_seq($alnP{$name});
+    foreach my $name (@$names) {
+        my @posmap = project_seq($alnP->{$name});
         my %name_aln =
             read_pp_file_aln_w_anno("$input_dir/".$nnorm->nname($name));
         my %name_pairprobs =
@@ -2520,7 +2517,7 @@ sub write_pp_projected {
 
 
     # normalize consensus_dp
-    my $len  = aln_length(\%alnP);
+    my $len  = aln_length( $alnP );
 
     for (my $i=1; $i<=$len; $i++) {
         for (my $j=$i+1; $j<=$len; $j++) {
@@ -2530,7 +2527,7 @@ sub write_pp_projected {
         }
     }
 
-    write_pp($tgt_name,\%alnP,\@consensus_dp,$opts->{'min-prob'});
+    write_pp($tgt_name,$alnP,\@consensus_dp,$opts->{'min-prob'});
 
     return;
 }
@@ -2538,10 +2535,7 @@ sub write_pp_projected {
 
 
 sub extend_library {
-    my ($pairwise_alns_ref,$names_ref) = @_;
-    my @pairwise_alns = @{ $pairwise_alns_ref };
-
-    my @names=@{ $names_ref };
+    my ($pairwise_alns,$names) = @_;
 
     ### ------------------------------------------------------------
     ## compute "extended pairprobability library"
@@ -2550,10 +2544,10 @@ sub extend_library {
     my @pairprobs;
     my @sequences;
 
-    for (my $a=0; $a<=$#names; $a++) {
+    for (my $a=0; $a<@$names; $a++) {
         my $seqA;
         my $pairprobsA_ref;
-        ($seqA,$pairprobsA_ref) = read_dp_ps("$names[$a]");
+        ($seqA,$pairprobsA_ref) = read_dp_ps("$names->[$a]");
 
         $sequences[$a] = $seqA;
         $pairprobs[$a] = [ @{ $pairprobsA_ref } ];
@@ -2564,7 +2558,7 @@ sub extend_library {
     ## make a deep copy of pair probabilities
     #
     my @ext_pairprobs;
-    for (my $a=0; $a<=$#names; $a++) {
+    for (my $a=0; $a<@$names; $a++) {
         my @eppA;
         my @ppA = @{ $pairprobs[$a] };
         for my $i ( 0..$#ppA ) {
@@ -2580,23 +2574,23 @@ sub extend_library {
         $ext_pairprobs[$a] = [ @eppA ];
     }
 
-    for (my $a=0; $a<=$#names; $a++) {
-        printmsg 1, "Compute ext lib for $names[$a]\n";
+    for (my $a=0; $a<@$names; $a++) {
+        printmsg 1, "Compute ext lib for $names->[$a]\n";
 
         my @ext_pairprobsA = @{ $ext_pairprobs[$a] }; # we accummulate the extension!
 
-        for (my $b=0; $b<=$#names; $b++) {
+        for (my $b=0; $b<@$names; $b++) {
             if ($a != $b) {
 
 	        my $aliA; # alignment-string for sequence a
 	        my $aliB; # alignment-string for sequence b
 
 	        if ($a>$b) {
-	            my @alnAB = @{ $pairwise_alns[$a][$b] };
-	            ($aliA,$aliB) = extract_from_clustal_alignment($names[$a],$names[$b],\@alnAB);
+	            my $alnAB = $pairwise_alns->[$a][$b];
+	            ($aliA,$aliB) = extract_from_clustal_alignment($names->[$a],$names->[$b],$alnAB);
 	        } else {
-	            my @alnBA = @{ $pairwise_alns[$b][$a] };
-	            ($aliB,$aliA) = extract_from_clustal_alignment($names[$b],$names[$a],\@alnBA);
+	            my $alnBA = $pairwise_alns->[$b][$a];
+	            ($aliB,$aliA) = extract_from_clustal_alignment($names->[$b],$names->[$a],$alnBA);
 	        }
 
 	        my @sp2apA = seqpos_to_alipos($aliA);
@@ -2608,7 +2602,7 @@ sub extend_library {
 	        my $lengthA=$#sp2apA+1;
 	        my $lengthB=$#sp2apB+1;
 
-	        printmsg 1, "  $a:$names[$a] ($lengthA) --- $b:$names[$b]\n";
+	        printmsg 1, "  $a:$names->[$a] ($lengthA) --- $b:$names->[$b]\n";
 
 	        my @pairprobsB = @{ $pairprobs[$b] };
 
@@ -2641,17 +2635,17 @@ sub extend_library {
     ## write pp files with extended probabilities
     #
 
-    for (my $a=0; $a<=$#names; $a++) {
-        # print "write extended probs for $names[$a]\n";
+    for (my $a=0; $a<@$names; $a++) {
+        # print "write extended probs for $names->[$a]\n";
 
         my $seq=$sequences[$a];
         my $len=length($seq);
         my @ext_pairprobs = @{ $ext_pairprobs[$a] }; # the extended probs
 
 
-        open(my $PP_OUT, ">", "$names[$a].pp");
+        open(my $PP_OUT, ">", "$names->[$a].pp");
 
-        print $PP_OUT "$names[$a] $seq\n\n#\n";
+        print $PP_OUT "$names->[$a] $seq\n\n#\n";
 
         for (my $i=0; $i<$len; $i++) {
             for (my $j=$i+1; $j<$len; $j++) {
@@ -2670,8 +2664,8 @@ sub extend_library {
     # print "\n\n";
     #
 
-    for (my $a=0; $a<=$#names; $a++) {
-        rename "$names[$a].pp", "$names[$a]";
+    for (my $a=0; $a<@$names; $a++) {
+        rename "$names->[$a].pp", "$names->[$a]";
     }
 
     #
@@ -2682,7 +2676,7 @@ sub extend_library {
 
 ## compute the alignment from dp-files or pp-files
 sub compute_alignment_from_dps {
-    my ($input_dir,$nameA,$nameB,$locarna_params_ref) =  @_;
+    my ($input_dir,$nameA,$nameB,$locarna_params) =  @_;
 
     my $tmpprefix = threadsafe_name("$global_tmpprefix");
 
@@ -2693,7 +2687,7 @@ sub compute_alignment_from_dps {
 
     my @cmd = ();
     push @cmd, $opts->{'pw-aligner'}, $seqA_dp, $seqB_dp,
-      @$locarna_params_ref,
+      @$locarna_params,
       "--clustal" => $tmpfile,
       pairwise_reference_alignment_option($nameA,$nameB,$refaln,$refaln_filename);
 
@@ -2716,7 +2710,7 @@ sub compute_alignment_from_dps {
 
 ## compute alignment with given probabilities
 sub compute_alignment_from_dps_probs {
-    my ($input_dir,$nameA,$nameB,$locarna_params_ref,$bmprobs,$amprobs) =  @_;
+    my ($input_dir,$nameA,$nameB,$locarna_params,$bmprobs,$amprobs) =  @_;
 
     # printerr "compute_alignment_from_dps_probs $seqA_dp $seqB_dp";
 
@@ -2732,7 +2726,7 @@ sub compute_alignment_from_dps_probs {
     MLocarna::SparseMatrix::write_2D($bmprobs,$tmpfile2);
 
     my @locarna_params = ();
-    push @locarna_params, @$locarna_params_ref;
+    push @locarna_params, @$locarna_params;
 
     push @locarna_params, "--clustal=$tmpfile", "--read-match-probs=$tmpfile2";
 
@@ -3204,39 +3198,39 @@ sub compute_dotplot {
 ##
 ## @depends $opts->{'probabilistic'}   flag for probabilistic alignment
 ##
-## @param $names_ref       names of sequences
+## @param $names       names of sequences
 ## @param $bmprobs     base match probs in case of probabilistic alignment
 ## @param $amprobs     arc  match probs in case of probabilistic alignment
 ## @param $thread_num         number of threads (default 1)
 ##
 sub compute_all_pairwise_alignments {
-    my ($names_ref,$bmprobs,$amprobs,$thread_num) = @_;
+    my ($names,$bmprobs,$amprobs,$thread_num) = @_;
 
     if (!defined($thread_num)) { $thread_num=1; }
-
-    my @names = @{ $names_ref };
 
     my @argument_lists;
 
     my @pairwise_alns : shared;
 
+    my $num_names = scalar(@$names);
+
     ## collect arguments for function calls (=jobs)
     my $num=0;
-    for (my $a=0; $a<=$#names; $a++) {
+    for (my $a=0; $a<$num_names; $a++) {
         for (my $b=0; $b<$a; $b++) {
             $num++;
 
             if ( $opts->{'probabilistic'} ) {
 	        my @arg_list = ($num,$a,$b,
-			        $names[$a],
-			        $names[$b],
-			        $bmprobs->{$nnorm->nnamepair($names[$a],$names[$b])},
-			        $amprobs->{$nnorm->nnamepair($names[$a],$names[$b])});
+			        $names->[$a],
+			        $names->[$b],
+			        $bmprobs->{$nnorm->nnamepair($names->[$a],$names->[$b])},
+			        $amprobs->{$nnorm->nnamepair($names->[$a],$names->[$b])});
 	        push @argument_lists, [ @arg_list ];
             } else {
 	        my @arg_list=($num,$a,$b,
-		              $names[$a],
-		              $names[$b]
+		              $names->[$a],
+		              $names->[$b]
 	            );
 	        push @argument_lists, [ @arg_list ];
             }
@@ -3248,9 +3242,10 @@ sub compute_all_pairwise_alignments {
         sub {
             my ($num,$a,$b,@arg_list)=@_;
 
+
             printmsg 2, sprintf(
-	        "Align %d/%d : $names[$a] and %d/%d: $names[$b] (%d/%d)\n",
-	        $a+1,$#names+1,$b+1,$a,$num,($#names*($#names+1))/2);
+	        "Align %d/%d : $names->[$a] and %d/%d: $names->[$b] (%d/%d)\n",
+	        $a+1,$num_names,$b+1,$a,$num,($num_names*($num_names-1))/2);
 
             my @aln;
 
@@ -3271,20 +3266,19 @@ sub compute_all_pairwise_alignments {
 					          );
             }
 
-            $pairwise_alns[$a*($#names+1)+$b] = "@aln";
+            $pairwise_alns[$a*$num_names + $b] = "@aln";
 
         },
         \@argument_lists,
         $thread_num
         );
 
-
     ## convert result for returning
     my @res;
 
-    for (my $a=0; $a<=$#names; $a++) {
+    for (my $a=0; $a<$num_names; $a++) {
         for (my $b=0; $b<$a; $b++) {
-            my @aln =  split(/\n/, $pairwise_alns[$a*($#names+1)+$b]);
+            my @aln =  split(/\n/, $pairwise_alns[$a*$num_names + $b]);
             $res[$a][$b] = [ @aln ];
         }
     }
@@ -3350,7 +3344,7 @@ sub perform_progressive_steps {
 ## @returns file name of result
 ##
 sub perform_iterative_refinement {
-    my ($current_alignment_name,$tree_postorder_ref,$names_ref,$bmprobs,$amprobs) = @_;
+    my ($current_alignment_name,$tree_postorder,$names,$bmprobs,$amprobs) = @_;
 
     ## my $current_aliquality = alifold_mfe("$current_alignment_name.aln", @RNAfold_args); ## optimize SCI
 
@@ -3368,7 +3362,7 @@ sub perform_iterative_refinement {
 
         my $round_aliquality;
         ($current_alignment_name,$round_aliquality) =
-            perform_iterative_refinement_one_round($current_alignment_name,$current_aliquality,$tree_postorder_ref,$names_ref,$bmprobs,$amprobs);
+            perform_iterative_refinement_one_round($current_alignment_name,$current_aliquality,$tree_postorder,$names,$bmprobs,$amprobs);
 
         if ($current_aliquality == $round_aliquality) {
             printmsg 2, "Converge after round $i\n\n";
@@ -3386,20 +3380,16 @@ sub perform_iterative_refinement {
 ##
 sub perform_iterative_refinement_one_round {
     my ($current_alignment_name,$current_aliquality,
-        $tree_postorder,$names_ref,$bmprobs,$amprobs) = @_;
+        $tree_postorder,$names,$bmprobs,$amprobs) = @_;
 
     my $round_aliquality = $current_aliquality;
 
-    my @names = @{ $names_ref };
-
-
     my $partitions = MLocarna::Trees::tree_partitions($tree_postorder);
 
-    foreach my $namesA_ref (@$partitions) {
-        my @namesA = @{ $namesA_ref };
-        my @namesB = subtract_list( \@names, \@namesA );
+    foreach my $namesA (@$partitions) {
+        my $namesB = subtract_list( $names, $namesA );
 
-        printmsg 2, "Realign split @namesA --- @namesB\n";
+        printmsg 2, "Realign split @$namesA --- @$namesB\n";
 
         my $aln = read_aln_wo_anno("$current_alignment_name.aln");
 
@@ -3407,8 +3397,8 @@ sub perform_iterative_refinement_one_round {
 
         my $intermediate_nameA = "$intermediate_name.A.pp";
         my $intermediate_nameB = "$intermediate_name.B.pp";
-        write_pp_projected($aln,\@namesA,$intermediate_nameA);
-        write_pp_projected($aln,\@namesB,$intermediate_nameB);
+        write_pp_projected($aln,$namesA,$intermediate_nameA);
+        write_pp_projected($aln,$namesB,$intermediate_nameB);
 
 
         if ( $opts->{'probabilistic'} ) {

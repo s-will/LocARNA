@@ -111,7 +111,7 @@ sub subtract_list {
         }
         if ($found==0) { push @res, $x; }
     }
-    return @res;
+    return \@res;
 }
 
 ########################################

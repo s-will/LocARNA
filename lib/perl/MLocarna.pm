@@ -1864,7 +1864,7 @@ sub project_aln {
 	}
     }
 
-    return %alnP;
+    return \%alnP;
 }
 
 ########################################
