@@ -8,7 +8,6 @@ use warnings;
 #use FindBin;
 #use lib $FindBin::RealBin;
 use MLocarna::SparseMatrix;
-use MLocarna::Trees;
 use MLocarna::MatchProbs;
 use MLocarna::Aux;
 
@@ -98,10 +97,6 @@ our $PACKAGE_STRING = "MLocarna";
 ## new_intermediate_name
 ##
 ## returns a new name for intermediate files
-## uses counter
-my $intermediate_name_counter=0;
-## and basename
-my $intermediate_name_base="intermediate";
 ##
 ## These names are used by mlocarna as filenames/identifiers of
 ## intermediary alignments during the computation of progressive and
@@ -109,8 +104,33 @@ my $intermediate_name_base="intermediate";
 ##
 ########################################
 sub new_intermediate_name {
-    $intermediate_name_counter++;
-    return "$intermediate_name_base$intermediate_name_counter";
+    my $data = shift;
+    my $label = shift;
+    my $baseone = shift;
+
+    my $intermediate_name_base="intermediate";
+
+    my $name = "$intermediate_name_base";
+    if (defined($label)) {
+        $label =~ s/[^A-Za-z0-9]/_/g;
+        $name="$name$label";
+    }
+
+    my $suf="";
+    my $i=0;
+    if (defined($baseone)) {
+        $i=1;
+        $suf="-1";
+    }
+
+    while( exists $data->{"$name$suf"} ) {
+        $i++;
+        $suf="-$i";
+    }
+    $name="$name$suf";
+    $data->{$name}=undef;
+
+    return $name;
 }
 
 
@@ -1223,8 +1243,6 @@ sub project_structure_to_alignment_sequence {
 
 ########################################
 ## shell_quote(@args)
-##
-## safer replacement for readpipe that avoids the shell
 ##
 ## @param  @args command and argument list
 ## @return shell-quoted command string

@@ -856,7 +856,7 @@ my $bindir = "$FindBin::Bin";
 
 use MLocarna;
 use MLocarna::SparseMatrix;
-use MLocarna::Trees;
+use MLocarna::Tree;
 use MLocarna::MatchProbs;
 use MLocarna::Aux;
 use MLocarna::NameNormalizer;
@@ -2000,23 +2000,26 @@ sub perform_multiple_alignment {
         printmsg 3,"Read guide tree from file. \n";
 
         open(my $TREE,"<","$opts->{'treefile'}");
-        $tree=<$TREE>;
-        chomp($tree);
-
+        my $newick_string;
+        while(<$TREE>) {$newick_string.=$_;}
         close $TREE;
-
+        $tree = new MLocarna::Tree( $newick_string );
+        $tree = $tree->binarize();
     } elsif (defined($opts->{'similarity-matrix'})) {
 
         my $score_matrix = read_2D_matrix($opts->{'similarity-matrix'},int(@names),int(@names));
 
         write_2D_matrix("$results_dir/result.matrix",$score_matrix);
 
-        $tree = MLocarna::Trees::upgma_tree(\@names,$score_matrix);
+        $tree = new MLocarna::Tree("UPGMA", \@names, $score_matrix);
 
     } elsif (@names == 2) { # for only two sequences, tree is unique
 
-        $tree = "(".MLocarna::Trees::quote_newick_label($names[0]).
-	        ",".MLocarna::Trees::quote_newick_label($names[1]).");";
+        $tree = new MLocarna::Tree(
+            [ new MLocarna::Tree( "LEAVE", $names[0] ),
+              new MLocarna::Tree( "LEAVE", $names[1] )
+            ]
+        );
 
     } elsif ($opts->{'graphkernel'}) {
 
@@ -2073,7 +2076,7 @@ sub perform_multiple_alignment {
         ## write it to results directory
         write_2D_matrix("$results_dir/result.matrix",$score_matrix);
 
-        $tree = MLocarna::Trees::upgma_tree(\@names,$score_matrix);
+        $tree = new MLocarna::Tree("UPGMA",\@names,$score_matrix);
 
     } else {
         # --------------------------------------------------
@@ -2094,30 +2097,27 @@ sub perform_multiple_alignment {
             extend_library($pairwise_alns);
         }
 
-        $tree = MLocarna::Trees::upgma_tree(\@names,$score_matrix);
+        $tree = new MLocarna::Tree("UPGMA",\@names,$score_matrix);
 
     } # end generation of tree
 
 
     open(my $TREE,">","$results_dir/result.tree");
-
-    print $TREE "$tree\n";
+    print $TREE $tree->to_newick().";\n";
     close $TREE;
-
-    my $tree_postorder = MLocarna::Trees::newick_tree_to_postorder($tree);
 
     if (defined($opts->{'treefile'})) {
         ## check whether tree contains all names in the input file and project tree to these names
 
-        if (! MLocarna::Trees::check_tree_labels($tree_postorder,\@names) ) {
+        if (! $tree->contains_leaves(\@names) ) {
             print STDERR "ERROR: given guide tree (--treefile) does not contain all names in the input.\n";
             exit(-1);
         }
-        #print "Tree: @$tree_postorder\n";
+        #print "Tree: ".$tree->to_newick().";\n";
 
-        $tree_postorder = MLocarna::Trees::project_tree($tree_postorder,\@names);
+        $tree = $tree->project(\@names);
 
-        #print "Projected tree: @$tree_postorder\n";
+        #print "Projected tree: ".$tree->to_newick().";\n";
     }
 
     ## ----------------------------------------
@@ -2125,8 +2125,9 @@ sub perform_multiple_alignment {
     #
     printmsg 3, "Perform progressive alignment ...\n";
 
+    my $intermediate_name_data = {}; # a hash of already assigned intermediary names
     my $current_alignment_name =
-      perform_progressive_steps($tree_postorder,$bmprobs,$amprobs);
+      perform_progressive_steps($tree,$bmprobs,$amprobs,$intermediate_name_data);
 
     ## ----------------------------------------
     ## copy results to files result_prog.aln and result_prog.pp
@@ -2176,7 +2177,8 @@ sub perform_multiple_alignment {
     if (defined($opts->{'iterations'}) && ($opts->{'iterations'}>0)) {
          printmsg 3, "Perform iterative refinement ...\n";
 
-        $current_alignment_name = perform_iterative_refinement($current_alignment_name,$tree_postorder,\@names,$bmprobs,$amprobs);
+        $current_alignment_name =
+            perform_iterative_refinement($current_alignment_name,$tree,\@names,$bmprobs,$amprobs,$intermediate_name_data);
     }
 
     ### DONE iterative refinement
@@ -3294,29 +3296,35 @@ sub compute_all_pairwise_alignments {
 
 ## ----------------------------------------
 ## perform the progressive steps
-## for getting the multiple alignment
+## to compute the multiple alignment
 ##
-## args @tree_postorder defines the order of alignments (=guide tree)
+## @param $tree the guide tree
+## @param $bmprobs base match probabilities
+## @param $amprobs arc match probabilities
 ##
 ## Dependencies
 ##
 ## needs pp files
-## needs bmprobs, amprobs in probabilistic mode
 ##
 sub perform_progressive_steps {
-    my ($tree_postorder,$bmprobs,$amprobs)=@_;
+    my ($tree,$bmprobs,$amprobs,$intermediate_name_data)=@_;
 
-    my @stack=();
+    my $result =
+    $tree->traverse(sub {
+        my $tree = shift;
+        my $children_names = shift;
+        my $children = $tree->children();
 
-    for my $item (@$tree_postorder) {
-        if ($item eq $MLocarna::Trees::node_sym) {
-            # align two topmost stack entrys and push result
-            my $op1 = $stack[$#stack-1];
-            my $op2 = $stack[$#stack];
+        if (@$children>=2) {
+            if (@$children>2) {
+                print "ERROR: the guide tree must be binary\n.";
+                exit(-1);
+            }
 
-            $#stack -= 2;
+            my $intermediate_name = new_intermediate_name($intermediate_name_data,$tree->label());
 
-            my $intermediate_name = new_intermediate_name();
+            my $op1 = $children_names->[0];
+            my $op2 = $children_names->[1];
 
             if ( $opts->{'probabilistic'} ) {
 	        call_locarna_prob($op1,$op2,"$intermediate_dir/".$intermediate_name,$bmprobs,$amprobs);
@@ -3324,22 +3332,15 @@ sub perform_progressive_steps {
 	        call_locarna($op1,$op2,"$intermediate_dir/".$intermediate_name);
             }
 
-            push @stack, "$intermediate_dir/$intermediate_name.pp";
-
-        } else {
-            push @stack, "$input_dir/".$nnorm->nname($item);
+            return "$intermediate_dir/$intermediate_name.pp";
+        } elsif (@$children==0) {
+            return "$input_dir/".$nnorm->nname($tree->label());
         }
-    }
+    });
 
-    if ($#stack!=0) {
-        printerr "Tree parsing failed. Exit.\n";
-        printerr "STACK: @stack\n";
-        exit -1;
-    }
+    $result =~ s/.pp$//;
 
-    (my $current_alignment_name = $stack[-1] ) =~ s/.pp$//;
-
-    return $current_alignment_name;
+    return $result;
 }
 
 
@@ -3349,7 +3350,7 @@ sub perform_progressive_steps {
 ## @returns file name of result
 ##
 sub perform_iterative_refinement {
-    my ($current_alignment_name,$tree_postorder,$names,$bmprobs,$amprobs) = @_;
+    my ($current_alignment_name,$tree,$names,$bmprobs,$amprobs,$intermediate_name_data) = @_;
 
     ## my $current_aliquality = alifold_mfe("$current_alignment_name.aln", @RNAfold_args); ## optimize SCI
 
@@ -3367,7 +3368,11 @@ sub perform_iterative_refinement {
 
         my $round_aliquality;
         ($current_alignment_name,$round_aliquality) =
-            perform_iterative_refinement_one_round($current_alignment_name,$current_aliquality,$tree_postorder,$names,$bmprobs,$amprobs);
+            perform_iterative_refinement_one_round($i,
+                $current_alignment_name,$current_aliquality,
+                $tree,$names,$bmprobs,$amprobs,
+                $intermediate_name_data
+            );
 
         if ($current_aliquality == $round_aliquality) {
             printmsg 2, "Converge after round $i\n\n";
@@ -3384,21 +3389,21 @@ sub perform_iterative_refinement {
 ## @returns file name of result and alignment quality
 ##
 sub perform_iterative_refinement_one_round {
-    my ($current_alignment_name,$current_aliquality,
-        $tree_postorder,$names,$bmprobs,$amprobs) = @_;
+    my ($round,
+        $current_alignment_name,$current_aliquality,
+        $tree,$names,$bmprobs,$amprobs,$intermediate_name_data) = @_;
 
     my $round_aliquality = $current_aliquality;
 
-    my $partitions = MLocarna::Trees::tree_partitions($tree_postorder);
-
-    foreach my $namesA (@$partitions) {
+    $tree->traverse_partitions(sub {
+        my $namesA = shift;
         my $namesB = subtract_list( $names, $namesA );
 
         printmsg 2, "Realign split @$namesA --- @$namesB\n";
 
         my $aln = read_aln_wo_anno("$current_alignment_name.aln");
 
-        my $intermediate_name = "$intermediate_dir/".new_intermediate_name();
+        my $intermediate_name = "$intermediate_dir/".new_intermediate_name($intermediate_name_data,"-round$round",1);
 
         my $intermediate_nameA = "$intermediate_name.A.pp";
         my $intermediate_nameB = "$intermediate_name.B.pp";
@@ -3432,13 +3437,10 @@ sub perform_iterative_refinement_one_round {
             printmsg 0, "Reject new alignment (worse or equal alifold-mfe: $current_aliquality <= $new_aliquality)\n";
         }
         printmsg 0, "\n";
-    }
+    });
 
     return ($current_alignment_name,$current_aliquality);
 }
-
-
-
 
 ## EVALUATION MODE
 ## to keep this simple, assume that probabilities
