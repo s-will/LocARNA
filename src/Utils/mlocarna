@@ -418,6 +418,12 @@ constraints, since it ignores them for all but the pairwise alignments
 of single sequences. Furthermore, note that it does not support
 B<--stacking> or B<--new-stacking>.
 
+=item B<--max-alignment-size>=size
+
+Limit the maximum number of sequences that are aligned together by progressive alignment. This can be used to save
+unnecessary computations, when producing a clustering of the input RNAs rather than constructing a single multiple alignment.
+[default: no limit].
+
 =item B<--local-progressive>
 
 Align only the subalignment of locally aligned subsequences in
@@ -1007,6 +1013,8 @@ my @options = #options that are not or not automatically passed to locarna
      "write-structure",
 
      "width=i",
+
+     "max-alignment-size=i",
 
      "keep-sequence-order",
 
@@ -2127,7 +2135,17 @@ sub perform_multiple_alignment {
 
     my $intermediate_name_data = {}; # a hash of already assigned intermediary names
     my $current_alignment_name =
-      perform_progressive_steps($tree,$bmprobs,$amprobs,$intermediate_name_data);
+      perform_progressive_steps($tree,$bmprobs,$amprobs,$opts->{'max-alignment-size'},$intermediate_name_data);
+
+    if (! defined $current_alignment_name) {
+        if (defined $opts->{'max-alignment-size'}) {
+            printmsg 3, "Only 'intermediary' alignments up to size $opts->{'max-alignment-size'} were computed.\n";
+        } else {
+            printmsg 3, "No alignment of all input sequences was computed.\n";
+        }
+        chdir "$current_dir";
+        return;
+    }
 
     ## ----------------------------------------
     ## copy results to files result_prog.aln and result_prog.pp
@@ -3302,18 +3320,25 @@ sub compute_all_pairwise_alignments {
 ## @param $bmprobs base match probabilities
 ## @param $amprobs arc match probabilities
 ##
-## Dependencies
-##
-## needs pp files
+## @pre the guide tree must be binary
+## @pre needs input files
 ##
 sub perform_progressive_steps {
-    my ($tree,$bmprobs,$amprobs,$intermediate_name_data)=@_;
+    my $tree = shift;
+    my $bmprobs = shift;
+    my $amprobs = shift;
+    my $max_alignment_size = shift;
+    my $intermediate_name_data = shift;
 
     my $result =
     $tree->traverse(sub {
         my $tree = shift;
-        my $children_names = shift;
+        my $children_data = shift;
         my $children = $tree->children();
+
+        for my $child (@$children_data) {
+            return undef unless defined $child;
+        }
 
         if (@$children>=2) {
             if (@$children>2) {
@@ -3321,10 +3346,14 @@ sub perform_progressive_steps {
                 exit(-1);
             }
 
+            my $size = $children_data->[0]->{size} + $children_data->[1]->{size};
+
+            if (defined $max_alignment_size and $size>$max_alignment_size) {return undef;}
+
             my $intermediate_name = new_intermediate_name($intermediate_name_data,$tree->label());
 
-            my $op1 = $children_names->[0];
-            my $op2 = $children_names->[1];
+            my $op1 = $children_data->[0]->{name};
+            my $op2 = $children_data->[1]->{name};
 
             if ( $opts->{'probabilistic'} ) {
 	        call_locarna_prob($op1,$op2,"$intermediate_dir/".$intermediate_name,$bmprobs,$amprobs);
@@ -3332,14 +3361,19 @@ sub perform_progressive_steps {
 	        call_locarna($op1,$op2,"$intermediate_dir/".$intermediate_name);
             }
 
-            return "$intermediate_dir/$intermediate_name.pp";
+            return {
+                name => "$intermediate_dir/$intermediate_name.pp",
+                size => $size
+            };
         } elsif (@$children==0) {
-            return "$input_dir/".$nnorm->nname($tree->label());
+            return { name => "$input_dir/".$nnorm->nname($tree->label()), size => 1 };
         }
     });
 
-    $result =~ s/.pp$//;
-
+    if (defined $result) {
+        $result = $result->{name};
+        $result =~ s/.pp$//;
+    }
     return $result;
 }
 
