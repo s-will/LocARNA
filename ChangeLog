@@ -1,10 +1,83 @@
 ============================================================
 === 2019
 
+2.0.0RC9
+	MLocarna functionality:
+	-----------------------
+	The calculation of the guide tree is rewritten; in consequence mlocarna is now more useful
+	for clustering RNAs, since score distances are reported in the tree
+	output (as well as names that correspond to intermediate alignments of
+	subsets of the input sequences in subtrees)
+
+	Generally, improved functionality for multiple alignment
+	    - better support for 'clustering' use case
+	        - distances and inner node labels in newick output
+	        - inner node labels correspond to names of intermediary alignments
+	    - introduces new perl Tree class with internal full tree representation
+	    - supports flexible traversals, filtering, etc
+	    - parsing and writing newick format fully supported
+	    - handles multi-ary trees
+	    - assign meaningful indices to intermediary alignments from most closely related to further apart
+	    - changes naming scheme of intermediary alignments in iterative
+	      alignment (include round in name)
+
+	Perform distance-based upgma for guide tree computation:
+	    Calculate distances from locarna scores as
+	      distance  = max_score - score
+
+	Add option (max-alignment-size) to limit the size of computed multiple alignments
+
+	Don't write am and bm probabilities by default; introduce
+	options to control writing.
+	  Motivation: probabilities require lots of disk space, which is rarely
+	  used for inspection or further processing
+
+	  Introduces new options
+	    --write-probs / --no-write-probs
+	    --write-am-probs / --no-write-am-probs
+	    --write-bm-probs / --no-write-bm-probs
+	  All of them default to 'no-write'
+
+	Documentation improvements:
+	---------------------------
+	Improve man pages (add dois, slightly edit)
+	Include disclaimer about the use of many threads in mlocarna man page
+	Improve documentation of small tools (add missing man page includes)
+	Add locarna_mcc man page
+
+	Fixes:
+	------
+	Fix quoting in newick trees
+	Update script mlocarna_nnames
+
+	MLocarna minor or internal changes:
+	-----------------------------------
+	Refactorize guide tree computation.
+	Inform user that results were written to target directory
+	Code cleanup:
+	  Cleanup reference variables
+	  Cleanup amprobs/bmprobs hash references
+	  Cleanup sparse matrix module, return hash refs
+	  Change global var %opts to hash reference
+	  Expand leading tabs
+	  Cleanup in MatchProbs module
+	  Cleanup threaded/unthreaded modules
+	  Cleanup match probability computation.
+	  Remove redundant code for sequential computations of already parallelized steps
+
+	Avoid unnecessary cloning of hashs; cleanup shared cloning
+	factorize: introduce name normalizer class
+
+	Other internal changes:
+	-----------------------
+	Remove obsolete script to label trees
+	Update CARNA server related scripts
+	Slightly simplify make of man pages (require man_include files)
+
 2.0.0RC8
 	Bugfixes:
 	---------
-	Fix bug in sequence trace probability computationi, which was
+	Fix bug in sequence trace probability computation, which was
 	potentially critical for large instances (e.g. aligning sequences with ~1000
 	length difference)
 
@@ -25,7 +98,7 @@
 === 2018
 
 2.0.0RC7
-        Accept empty sequences in input
+	Accept empty sequences in input
 	Re-enable computing consensus structures in mlocarna output and stk-files
 	Remove perl prototype specs to avoid perl 5.18 incompatibility
 2.0.0RC6
@@ -42,8 +115,8 @@
 	Bugfixes:
 	---------
 	Fix kbest HIT line
-        Fix static linking (with gomp)
-        Remove one extra line after CLUSTAL header (which used to be written by mlocarna)
+	Fix static linking (with gomp)
+	Remove one extra line after CLUSTAL header (which used to be written by mlocarna)
 
 2.0.0RC3 (2018-04-30)
 	Bugfixes:
@@ -53,7 +126,7 @@
 
 	Features / Improvements:
 	------------------------
-        Add stopwatch (for consensus computation)
+	Add stopwatch (for consensus computation)
 	Introduce parameter --consensus-gamma for mea consensus 'gamma'
 
 	API:
@@ -72,7 +145,7 @@
 
 	Features / Improvements:
 	------------------------
-          [Both improvements were introduced to handle large instances]
+	  [Both improvements were introduced to handle large instances]
 	  Improve alifold consensus computation
 	    - turn off by default (also speeds up mlocarna)
 	    - handle cases where consensus is not/cannot be computed
@@ -161,13 +234,13 @@
 	  dot plot).]
 
 	fix strict semantics for anchor constraints
-        fix compatibility '--keep-sequence-order' with anchor constraints
+	fix compatibility '--keep-sequence-order' with anchor constraints
 
 	1.9.2pre2
 	mlocarna: write ps files (aln.ps, alirna.ps and if probabilistic,
-          alidot.ps) from alifold call on result alignment to the
-          results output directory;
-          use alifold options --aln --color --mis
+	  alidot.ps) from alifold call on result alignment to the
+	  results output directory;
+	  use alifold options --aln --color --mis
 	fix mlocarna: find pw-aligner and pw-aligner-p executables in PATH
 
 1.9.1 (2017-01-22)
@@ -193,7 +266,7 @@
 	  bed-format specification
 	add option --maxBPspan (analogous to ViennaRNA's maxBPspan)
 	activate penalized option for mlocarna
-        update documentation of mlocarna
+	update documentation of mlocarna
 	update reliability-profile.pl: suppress too verbose output;
 	  improve behavior of subseq option
 	Tests:
@@ -230,7 +303,7 @@
 	Read stockholm format
 	Factorize common code in locarna, locarna_p and sparse (MainHelper)
 	Add stockholm support input and output to locarna
-        Fix bug occuring with empty input sequences
+	Fix bug occuring with empty input sequences
 	Call alifold with /best/ parameters (from perl /and/ c++)
 	Fix locarnate (compatibility to current locarna); add unit test
 
@@ -287,13 +360,13 @@
 	fix incompatibility with clang (now used by MacOS X); fix warnings of clang
 	remove g++ warnings
 1.8.2
-        change semantics w.r.t. constraints + local folding:
+	change semantics w.r.t. constraints + local folding:
 	    constraints turn off local folding
-        reformat change log
+	reformat change log
 	support generating doxygen documentation from
 	    distribution by make doxygen-doc
-        penalized alignment
-        experimental galaxy wrapper generation
+	penalized alignment
+	experimental galaxy wrapper generation
 1.8.1
 	implement ribofit
 	Bugfix in OMatrix: incorrect address calculation
@@ -328,14 +401,14 @@
 
 1.7.17
 	max-bps/uil/bpil-length-ratio for SPARSE/ExparnaP
-        Second type of stacking terms: new-stacking
+	Second type of stacking terms: new-stacking
 	Add heuristic to restrict maximum number of "significant" base
 	pairs: max-bps-length-ratio
 	Add max-diff restriction at arc match ends: --max-diff-at-am
 	Restructure parameter passing to Aligner* classes: use "named
 	argument" idiom
 1.7.16
-        ExpaRNA-P rename of tools
+	ExpaRNA-P rename of tools
 1.7.15
 	Fix bug concerning iterative alignment and alignment evaluation
 	Rename locarna_X to exparna_p
@@ -356,7 +429,7 @@ Jan 2013
 	generating pps via locarna_rnafold_pp in mlocarna.
 	(1.7.3.1)
 
-        Resolve rnalib dependency. New configure option with-sparse
+	Resolve rnalib dependency. New configure option with-sparse
 	is now required to compile with ExpARNA-P and SPARSE functionality.
 	(1.7.5)
 
@@ -443,7 +516,7 @@ Mar 2012
 	a bug in normalized alignment and helps to clean up the Exparna-P code.
 	(1.7.1)
 Apr/May 2012
-        Add reading of score matrix in mlocarna
+	Add reading of score matrix in mlocarna
 	Fix bug in probabilistic mode, which did not allow '#' in sequence names
 	Fix bugs in output of score matrix
 	Fix drawdplin
@@ -625,7 +698,7 @@ Feb 2009 (v1.4.4alpha)
 	precompute exp base match similarity and gap cost for partition
 	function => significant speed up of locarna_p
 	change handling of max_diff: guarantee at least |lenA-lenB|
-        improve outside algorithm in locarna_p (reduce sizes of Mrev-matrices)
+	improve outside algorithm in locarna_p (reduce sizes of Mrev-matrices)
 	=> with prior optimization massive speedup of locarna_p
 
 	add probability filtering after cbt
@@ -696,7 +769,7 @@ Aug 2008
 	experimental support for multiple alignment using
 	  basematch probabilities and probabilistic
 	  consistency transformation
-        (Version 1.3.2)
+	(Version 1.3.2)
 
 	mlocarna can write basematch probabilities for plotting
 	plotting of basematch probs (Utils/plot-bmprobs)
@@ -741,7 +814,7 @@ Nov 2007
 	for locarna: integrate anchor constraints
 	for mlocarna: read and pass structure constraints to RNAfold -p,
 	              read and pass sequence constraints to locarna
-        The pp-format is redefined in order to pass constraint information from
+	The pp-format is redefined in order to pass constraint information from
 	mlocarna to locarna.
 	New class for representing and calculating with infinite scores
 	changed default sequ-local=on to off
