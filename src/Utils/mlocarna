@@ -1777,6 +1777,8 @@ sub main {
 
     } ## end if probabilistic
 
+    printmsg 3, "Results written to target directory $opts->{'tgtdir'}.\n"
+
 } ## end main
 
 
@@ -1959,7 +1961,7 @@ sub perform_multiple_alignment {
 
     ## exit here if only dps shall be computed
     if ($opts->{'only-dps'}) {
-        printmsg 1,"Computed only the missing dotplots.\n";
+        printmsg 3,"Computed only the missing dotplots (results written to $opts->{'tgtdir'}).\n";
         exit 0;
     }
 
