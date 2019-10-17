@@ -662,6 +662,11 @@ pairwise aligners (e.g. locarna_n) that use such probabilities.
 Use the given number of threads for computing pair probabilities and
 all-2-all alignments in parallel (multicore/processor support).
 
+Be aware: mlocarna seems not to scale well for more than a few threads (often only 2 or 3).
+Using more threads is often detrimental, since it strongly increases memory consumption
+due to the current perl threading implementation. This unfortunate behavior seems hard
+to improve without major rewrite of the software.
+
 =back
 
 =head2 Getting Help
