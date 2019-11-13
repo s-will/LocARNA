@@ -126,6 +126,7 @@ Write STOCKHOLM files of all final and intermediate alignments (in
 addition to CLUSTALW files).
 
 =item B<--consensus-structure>
+
 Type of consensus structures written to screen and stockholm output
 [alifold|mea|none] (default: none). Unless explicitly specified,
 the option alifold-consensus-dp implicitly sets this to alifold.
