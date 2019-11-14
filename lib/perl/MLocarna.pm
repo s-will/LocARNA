@@ -38,7 +38,6 @@ our @EXPORT      =
         convert_dp_to_pp_with_constraints
         convert_fix_structure_to_pp
         extract_from_clustal_alignment
-        extract_score_matrix_from_alignments
         find_in_exec_path
         find_in_exec_path_or_error
         loh_names
@@ -2223,48 +2222,6 @@ sub get_alignment_edges($$)
   }
 
   return \@seq;
-}
-
-########################################
-## extract_score_matrix_from_alignments($names,$pairwise_aln)
-##
-## compute the score matrix from all pairwise alinments
-##
-## arg \@names         ref to list of sequence names
-## arg \@pairwise_aln  ref to 2D-array of all pairwise alignments
-##                     of sequences given by names
-##
-## returns ref to 2D-array of scores (symmetric),
-##         indices are positions in name string
-##
-########################################
-sub extract_score_matrix_from_alignments {
-    my ($names,$pairwise_alns_ref) = @_;
-    my @pairwise_alns = @{ $pairwise_alns_ref };
-
-    my @score_matrix; ## result
-
-
-    for (my $a=0; $a<@$names; $a++) {
-	$score_matrix[$a][$a] = 0; ## set diagonal to 0
-	for (my $b=0; $b<$a; $b++) {
-
-	    my @aln = @{ $pairwise_alns[$a][$b] };
-
-	    $aln[0] =~ /Score: (\S+)/ || die "Cannot extract score for sequence $a vs. $b.\n";
-	    my $score=$1;
-
-	    ## replace -inf scores by something strongly negative (that
-	    ## does not immediately overflow); apparently, too negative values confuse tree construction
-	    if ($score eq "-inf") {$score=-1e8;}
-	    #{$score = sprintf "%d",$score; $score=-sqrt(-$score);}
-
-	    $score_matrix[$a][$b] = $score;
-	    $score_matrix[$b][$a] = $score;
-	}
-    }
-
-    return \@score_matrix;
 }
 
 

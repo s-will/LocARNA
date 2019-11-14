@@ -454,10 +454,6 @@ refinement realigns all binary splits along the guide tree.
 Refine iteratively for given number of iterations (or stop at
 convergence).
 
-=item  B<--extlib>
-
-Use library extension for base pair probabilities (experimental/not functional).
-
 =item  B<--it-reliable-structure>=number
 
 Iterate alignment <num> times with reliable structure. This works only
@@ -952,7 +948,7 @@ my @options = #options that are not or not automatically passed to locarna
 
      "new-stacking",
 
-     "extlib",
+     # "extlib",
 
      "skip-pp",
 
@@ -2113,20 +2109,22 @@ sub perform_multiple_alignment {
         #
 
         printmsg 3,"Compute pairwise alignments ... \n";
-
-        # store all pairwise alignments in @pairwise_alignments
-        my $pairwise_alns = compute_all_pairwise_alignments(\@names, $bmprobs, $amprobs, $opts->{'threads'});
-        ## fill score matrix
-        my $score_matrix = extract_score_matrix_from_alignments(\@names, $pairwise_alns);
+ 
+        my $score_matrix = compute_all_pairwise_alignments(\@names, $bmprobs, $amprobs, $opts->{'threads'});
 
         write_2D_matrix("$results_dir/result.matrix",$score_matrix);
 
-        if ($opts->{'extlib'}) {
-            extend_library($pairwise_alns);
-        }
+	# this did never really work. Here is the removed man page text:
+	# =item  B<--extlib>
+        # Use library extension for base pair probabilities (experimental/not functional).
+	#
+	# To reactivate it, we need a matrix of the pairwise aligner output
+	#
+	# if ($opts->{'extlib'}) {
+        #     extend_library($pairwise_alns);
+        # }
 
         $tree = new MLocarna::Tree("UPGMA",\@names,$score_matrix);
-
     } # end generation of tree
 
 
@@ -2293,6 +2291,11 @@ sub perform_multiple_alignment {
 ## compute base and arc match probs for all pairs of names
 ## we assume that for each name there is a pp file
 ##
+## @param $names list of all sequence names
+## @param $bmprobs hash of base match probabilities for all sequence pairs
+## @param $amprobs hash of arc match probabilties for all sequence pairs
+## @thread_num number of parallel threads
+##
 ## in fast-mea mode:
 ## for computing the probabilities, locarna is called with
 ## option --write-match-probs
@@ -2301,7 +2304,7 @@ sub perform_multiple_alignment {
 ## for computing the probabilities, locarna is called with
 ## option --write-basematch-probs and --write-arcmatch-probs
 ##
-## returns a hash of "sparse matrices"
+## writes results to the hashs bmprobs and amprobs
 sub compute_all_match_probs {
     my ($names, $bmprobs, $amprobs, $thread_num) = @_;
 
@@ -2365,6 +2368,15 @@ sub get_symmetric_match_probs {
         MLocarna::SparseMatrix::transpose_4D( $amprobs->{$nnorm->nnamepair($nameB,$nameA)} ) );
 }
 
+## compute the match probabilities from a single pairwise alignment
+## @param $nameA name of the first sequence
+## @param $nameB name of the second sequence
+## @param[out] $bmprobs hash of all base match probs (for all pairwise alignments)
+## @param[out] $amprobs hash of all arc match probs (for all pairwise alignments)
+##
+## calls binary (locarna_p, or locarna if fastmea) to compute and write probabilities to files. The files are read again and 
+## probabilities are written into the hashs $bmprobs, $amprobs
+##
 sub compute_match_probs {
     # compute the match probabilities for the pair
     my ($a,$b,$nameA,$nameB,$bmprobs,$amprobs) = @_;
@@ -3233,6 +3245,30 @@ sub compute_dotplot {
     }
 }
 
+########################################
+## extract_score_from_alignment
+##
+## get the alignment score from the output of locarna (or a similar pairwise aligner) 
+##
+## @param $alntext text output of locarna
+##
+## @returns $score
+##
+## replaces -inf scores by large negative values
+##
+########################################
+sub extract_score_from_alignment {
+    my $aln = shift;
+    $aln =~ /Score: (\S+)/ || die "Cannot extract score from pairwise alignment output:\n$aln\n";
+    my $score=$1;
+
+    ## replace -inf scores by something strongly negative (that
+    ## does not immediately overflow); apparently, too negative values confuse tree construction
+    if ($score eq "-inf") {$score=-1e8;}
+
+    return $score;
+}
+
 
 ## ----------------------------------------
 ## compute all pairwise alignments for pairs
@@ -3248,6 +3284,7 @@ sub compute_dotplot {
 ## @param $amprobs     arc  match probs in case of probabilistic alignment
 ## @param $thread_num         number of threads (default 1)
 ##
+## @return 2D-array of locarna scores
 sub compute_all_pairwise_alignments {
     my ($names,$bmprobs,$amprobs,$thread_num) = @_;
 
@@ -3319,16 +3356,17 @@ sub compute_all_pairwise_alignments {
         );
 
     ## convert result for returning
-    my @res;
+    my $score_matrix;
 
     for (my $a=0; $a<$num_names; $a++) {
+        $score_matrix->[$a][$a] = 0; 
         for (my $b=0; $b<$a; $b++) {
-            my @aln =  split(/\n/, $pairwise_alns[$a*$num_names + $b]);
-            $res[$a][$b] = [ @aln ];
-        }
+            $score_matrix->[$a][$b] = extract_score_from_alignment( $pairwise_alns[$a*$num_names + $b] );
+            $score_matrix->[$b][$a] = $score_matrix->[$a][$b];
+	}
     }
 
-    return \@res;
+    return $score_matrix;
 }
 
 
