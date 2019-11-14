@@ -40,6 +40,9 @@ our @EXPORT_OK   = qw(
     scale_4D
     transpose_2D
     transpose_4D
+    to_array_2D
+    to_sym_array_2D
+    to_sym_array_check_2D
     write_2D
     write_4D
 );
@@ -258,14 +261,13 @@ sub read_4D {
     return \%h;
 }
 
-
 sub write_2D {
     my ($m,$file)=@_;
 
     open(my $SM_OUT,">", "$file") || die "Cannot write to $file: $!";
 
-    foreach my $i (keys %$m) {
-        foreach my $j (keys %{ $m->{$i} }) {
+    foreach my $i ((keys %$m)) {
+        foreach my $j ((keys %{ $m->{$i} })) {
             print $SM_OUT "$i $j $m->{$i}{$j}\n";
         }
     }
@@ -276,8 +278,8 @@ sub write_2D {
 sub print_2D {
     my ($m)=@_;
 
-    foreach my $i (keys %$m) {
-        foreach my $j (keys %{ $m->{$i} }) {
+    foreach my $i ((keys %$m)) {
+        foreach my $j ((keys %{ $m->{$i} })) {
             print "$i $j $m->{$i}{$j}\n";
         }
     }
@@ -288,10 +290,10 @@ sub write_4D {
 
     open(my $SM_OUT,">", "$file") || die "Cannot write to $file: $!";
 
-    foreach my $i (keys %$m) {
-        foreach my $j (keys %{ $m->{$i} }) {
-            foreach my $k (keys %{ $m->{$i}{$j} }) {
-                foreach my $l (keys %{ $m->{$i}{$j}{$k} }) {
+    foreach my $i ((keys %$m)) {
+        foreach my $j ((keys %{ $m->{$i} })) {
+            foreach my $k ((keys %{ $m->{$i}{$j} })) {
+                foreach my $l ((keys %{ $m->{$i}{$j}{$k} })) {
                     print $SM_OUT "$i $j $k $l $m->{$i}{$j}{$k}{$l}\n";
                 }
             }
@@ -304,10 +306,10 @@ sub write_4D {
 sub print_4D {
     my ($m, $file)=@_;
 
-    foreach my $i (keys %$m) {
-        foreach my $j (keys %{ $m->{$i} }) {
-            foreach my $k (keys %{ $m->{$i}{$j} }) {
-                foreach my $l (keys %{ $m->{$i}{$j}{$k} }) {
+    foreach my $i ((keys %$m)) {
+        foreach my $j ((keys %{ $m->{$i} })) {
+            foreach my $k ((keys %{ $m->{$i}{$j} })) {
+                foreach my $l ((keys %{ $m->{$i}{$j}{$k} })) {
                     print "$i $j $k $l $m->{$i}{$j}{$k}{$l}\n";
                 }
             }
@@ -348,6 +350,61 @@ sub transpose_4D {
     }
 
     return \%r;
+}
+
+## convert a 2D sparse matrix to an 2D array
+## @param $hash 2D hash
+## @param $matrix if given add to this matrix
+## @return 2D matrix
+sub to_array_2D {
+    my $hash = shift;
+    my $matrix = shift;
+    for my $i (keys %$hash) {
+        for my $j (keys %{ $hash->{$i} }) {
+            $matrix->[$i][$j] = $hash->{$i}{$j};
+        }
+    }
+
+    return $matrix;
+}
+
+## convert a 2D sparse matrix to a symmetric 2D array
+## @param $hash 2D hash
+## @param $matrix if given add to this matrix
+## @return 2D matrix
+sub to_sym_array_2D {
+    my $hash = shift;
+    my $matrix = shift;
+    for my $i (keys %$hash) {
+        for my $j (keys %{ $hash->{$i} }) {
+            $matrix->[$i][$j] = $hash->{$i}{$j};
+            $matrix->[$j][$i] = $hash->{$i}{$j};
+        }
+    }
+
+    return $matrix;
+}
+
+## convert a 2D sparse matrix to a symmetric 2D array
+## @param $hash 2D hash
+## @param $matrix if given add to this matrix
+## @param $overwrite accumulator for overwrite flag
+## @return whether overwrite took place
+sub to_sym_array_check_2D {
+    my $hash = shift;
+    my $matrix = shift;
+    my $overwrite = shift;
+    for my $i (keys %$hash) {
+        for my $j (keys %{ $hash->{$i} }) {
+            $overwrite |= defined $matrix->[$i][$j];
+            $overwrite |= defined $matrix->[$j][$i];
+
+            $matrix->[$i][$j] = $hash->{$i}{$j};
+            $matrix->[$j][$i] = $hash->{$i}{$j};
+        }
+    }
+
+    return $overwrite;
 }
 
 ## ------------------------------------------------------------

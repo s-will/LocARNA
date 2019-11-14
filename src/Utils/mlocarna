@@ -370,7 +370,7 @@ Additional option string for the partition function pairwise alignment tool (def
 
 =over 4
 
-=item  B<--treefile>=file
+=item B<--treefile>=file
 
 File with guide tree in NEWICK format. The given tree is used as guide
 tree for the progressive alignment. This saves the calculation of
@@ -382,12 +382,26 @@ File with similarity matrix. The similarities in the matrix are used
 to construct the guide tree for the progressive alignment. This saves
 the calculation of pairwise all-vs-all similarities.
 
+=item B<--score-lists>
+
+Construct the guide tree from pairwise scores in files scores* in the subdirectory scores of the target directory.
+The scores are typically precomputed, possibly in a distributed way, using --compute-pairwise-scores.
+
+=item B<--compute-pairwise-scores>=k/N
+
+Compute only the pairwise alignments for the guide tree construction. Write
+scores to the file
+$tgtdir/scores/scores-$k
+and terminate. By computing only the k-th fraction of N parts, the option supports
+distributing the computation of the alignments. Before computing the
+pairwise scores, the dot plot files should be precomputed using --only-dps.
+(see also: --score-lists)
 
 =item B<--graphkernel>
 
 Use the graphkernel for constructing the guide tree.
 
-=item B<--svmsgdnspdk>[=program]
+=item B<--svmsgdnspdk>=program
 
 Specify the svmsgdnspdk program (potentially including path). Default:
 use "svmsgdnspdk" in path.
@@ -551,7 +565,7 @@ Use directory <dir> as cache for dot plot or pp files (useful for avoiding multi
 
 =item  B<--only-dps>
 
-Compute only the missing dot plot files, don't align (useful for filling the dp-cache).
+Compute only the missing pair probability / dot plots, don't align (useful for filling the dp-cache).
 
 =item  B<--evaluate>=file
 
@@ -875,10 +889,11 @@ use MLocarna::MatchProbs;
 use MLocarna::Aux;
 use MLocarna::NameNormalizer;
 
-use Cwd 'abs_path';
+use Cwd qw(abs_path);
+use List::Util qw(min max);
 
-use File::Copy;
-use File::Path;
+use File::Copy qw(copy);
+use File::Path qw(rmtree);
 
 ########################################
 ## threading support
@@ -966,6 +981,9 @@ my @options = #options that are not or not automatically passed to locarna
 
      "treefile=s",
      "similarity-matrix=s",
+
+     "compute-pairwise-scores=s",
+     "score-lists",
 
      "graphkernel",
      "svmsgdnspdk=s",
@@ -1380,7 +1398,7 @@ if (defined($opts->{'plfold-span'})) {
         $opts->{'plfold-winsize'} = 2*$opts->{'plfold-span'};
     }
     if (defined($opts->{'stacking'}) || defined($opts->{'new-stacking'})) {
-        printerr "Can't use stacking with plfold.\n";
+        printerr "ERROR: Can't use stacking with plfold.\n";
         exit -1;
     }
 } elsif (defined($opts->{'plfold-winsize'})) {
@@ -1511,7 +1529,7 @@ push @locarna_params, "--alifold-consensus-dp" if ($opts->{'alifold-consensus-dp
 #
 
 if ($opts->{'consistency-transformation'} && !$opts->{'probabilistic'}) {
-    printerr "Consistency transformation is supported only in probabilistic mode. Exit.\n";
+    printerr "ERROR: Consistency transformation is supported only in probabilistic mode. Exit.\n";
     exit -1;
 }
 
@@ -1604,7 +1622,8 @@ printmsg 2,"Locarna parameter for guide tree construction: @locarna_params_tree\
 
 ##------------------------------------------------------------
 
-my $global_tmpname="_tmp_"; # valid file name, at max 12 characters
+use Sys::Hostname qw(hostname);
+my $global_tmpname="_tmp-".hostname."-".$$."_"; # valid file name, at max 12 characters
 my $global_tmpprefix="$global_tmpname"; # could be a absolute path, but there's no need to
 
 ### ============================================================================
@@ -1636,14 +1655,14 @@ sub main {
     if (! -e $opts->{'tgtdir'}) {
         mkdir $opts->{'tgtdir'};
         if (! -e $opts->{'tgtdir'} ) {
-            printerr "Cannot create target directory $opts->{'tgtdir'}. Exit.";
+            printerr "ERROR: Cannot create target directory $opts->{'tgtdir'}. Exit.";
             exit -1;
         }
     } else {
         if ( -d $opts->{'tgtdir'} ) {
-            printerr "Warning: $opts->{'tgtdir'} exists already.\n" if ($opts->{'verbose'});
+            printmsg 3, "Warning: $opts->{'tgtdir'} exists already.\n" if ($opts->{'verbose'});
         } else {
-            printerr $opts->{'tgtdir'}." is not a directory. Exit.\n";
+            printerr "ERROR: ".$opts->{'tgtdir'}." is not a directory. Exit.\n";
             exit -1;
         }
     }
@@ -1695,11 +1714,11 @@ sub main {
 
     ## check input: we need at least two input sequences
     if (@$seqs == 0) {
-        printerr("No input sequences found in $opts->{'input-file'}.\n");
+        printerr("ERROR: No input sequences found in $opts->{'input-file'}.\n");
         exit(-1);
     }
     if (@$seqs == 1) {
-        printerr("Only one input sequence found in $opts->{'input-file'}.\n");
+        printerr("ERROR: Only one input sequence found in $opts->{'input-file'}.\n");
         exit(-1);
     }
 
@@ -1724,10 +1743,40 @@ sub main {
         exit(-1);
     }
 
+    ## check compatibility of options
+    if (defined($opts->{'probabilistic'})
+        and (defined($opts->{'compute-pairwise-scores'}) or defined($opts->{'score-lists'}))) {
+        printerr "ERROR: The precomputation of pairwise alignments using compute-pairwise-scores and score-lists "
+            ."is not yet available in probabilistic alignment mode.";
+        exit -1;
+    }
+
+    ## parse and error check argument of compute-pairwise-scores
+    if (defined($opts->{'compute-pairwise-scores'})) {
+        if ($opts->{'compute-pairwise-scores'} =~ /^(\d+)\/(\d+)$/) {
+            my $k=$1;
+            my $N=$2;
+
+            if ($k<1 or $k>$N) {
+                printerr "Argument parse error: For option --compute-pairwise-scores, k must between 1 and N.";
+                exit(-1)
+            }
+
+            $opts->{'compute-pairwise-scores'} = {
+            'k' => $k,
+            'N' => $N,
+           };
+        } else {
+            printerr "Argument parse error: --compute-pairwise-scores expects argument k/N";
+            exit(-1)
+        }
+    }
+
     ## ----------------------------------------
     ## make target directory the current directory
     ## and make paths to later used files absolute
     ##
+    $opts->{'tgtdir'} = abs_path($opts->{'tgtdir'});
     if (defined($opts->{'treefile'})) { $opts->{'treefile'} = abs_path($opts->{'treefile'}); }
     if (defined($opts->{'similarity-matrix'})) {
         $opts->{'similarity-matrix'} = abs_path($opts->{'similarity-matrix'}); }
@@ -1778,8 +1827,21 @@ sub main {
 
 } ## end main
 
+sub scorelist_dirname {
+    return $opts->{'tgtdir'}."/scores";
+}
 
+sub scorelist_files {
+    opendir(my $dh, scorelist_dirname()) || return ();
+    return map { scorelist_dirname().'/'.$_ }
+        (grep /^scores/, readdir($dh));
+}
 
+sub scorelist_filename {
+    my $k = shift;
+    my $N = shift;
+    return scorelist_dirname()."/scores-".$k;
+}
 
 ## ----------------------------------------
 ## compute and print reliabilities
@@ -2011,13 +2073,12 @@ sub perform_multiple_alignment {
         #print_k_dim_hash($bmprobs,4,"");
     }
 
-
-
     ## ----------------------------------------
     # generate guide tree (if not given)
     #
 
     my $tree;
+    my $score_matrix;
 
     if (defined($opts->{'treefile'})) {
 
@@ -2031,22 +2092,45 @@ sub perform_multiple_alignment {
         $tree = $tree->binarize();
     } elsif (defined($opts->{'similarity-matrix'})) {
 
-        my $score_matrix = read_2D_matrix($opts->{'similarity-matrix'},int(@names),int(@names));
+        $score_matrix = read_2D_matrix($opts->{'similarity-matrix'},int(@names),int(@names));
 
-        write_2D_matrix("$results_dir/result.matrix",$score_matrix);
+    } elsif (defined($opts->{'score-lists'})) {
+        my $N = $opts->{'score-lists'};
+        $score_matrix=[];
 
-        $tree = new MLocarna::Tree("UPGMA", \@names, $score_matrix);
+        my $total = @names * (@names - 1) / 2;
 
+        my $duplicates = 0;
+        foreach my $filename ( scorelist_files() ) {
+            my $m = MLocarna::SparseMatrix::read_2D($filename);
+            $duplicates = MLocarna::SparseMatrix::to_sym_array_check_2D(
+                $m, $score_matrix, $duplicates);
+        }
+        if ($duplicates) {
+            printmsg 3, "\nWarning: duplicates in score lists. Results may be COMPROMISED. Make sure to start from a clean target directory.\n\n";
+        }
+
+        # set diagonal to zero
+        for (my $a=0; $a<@names; $a++) {
+            $score_matrix->[$a][$a] = 0;
+        }
+
+        #check that all matrix elements are defined
+        for (my $a=0; $a<@names; $a++) {
+            for (my $b=0; $b<@names; $b++) {
+                if (!defined($score_matrix->[$a][$b])) {
+                    printerr("ERROR: Missing score for sequence pair ($a,$b) in score lists. Something went wrong in the computation of the pairwise scores.");
+                    exit(-1);
+                }
+            }
+        }
     } elsif (@names == 2) { # for only two sequences, tree is unique
-
         $tree = new MLocarna::Tree(
             [ new MLocarna::Tree( "LEAVE", $names[0] ),
               new MLocarna::Tree( "LEAVE", $names[1] )
             ]
         );
-
     } elsif ($opts->{'graphkernel'}) {
-
         ## RECALL: here the current directory is the target directory
 
         my @cmd=($opts->{'fasta2shrep'}, $opts->{'fasta2shrep-options'},
@@ -2070,8 +2154,7 @@ sub perform_multiple_alignment {
         system "bzcat graphkernel/*.bz2 > graphkernel/gspan";
         system "rm graphkernel/*.bz2";
 
-# note: the gspan format defines graphs
-
+        # note: the gspan format defines graphs
         @cmd = ("$opts->{'svmsgdnspdk'}", "-i" => "graphkernel/gspan",
                 "-r" => "$opts->{'svmsgdnspdk-radius'}", "-d" => "$opts->{'svmsgdnspdk-distance'}",
                 "-gt" => "DIRECTED", "-a" => "MATRIX");
@@ -2087,7 +2170,7 @@ sub perform_multiple_alignment {
         my $matrix_filename="graphkernel/gspan.mtx";
 
         ## read matrix file
-        my $score_matrix = read_2D_matrix($matrix_filename,int(@names),int(@names));
+        $score_matrix = read_2D_matrix($matrix_filename,int(@names),int(@names));
 
         ## convert it
         for my $i (0..@$score_matrix-1) {
@@ -2096,23 +2179,44 @@ sub perform_multiple_alignment {
 	        $score_matrix->[$i][$j] *= 10000;
             }
         }
+    } elsif (defined($opts->{'compute-pairwise-scores'})) {
+        # --------------------------------------------------
+        # Compute a fraction of the scores for the guide tree and write to score list k/N
+        #
+        my $k = $opts->{'compute-pairwise-scores'}{'k'};
+        my $N = $opts->{'compute-pairwise-scores'}{'N'};
 
-        ## write it to results directory
-        write_2D_matrix("$results_dir/result.matrix",$score_matrix);
+        my $total = @names * (@names - 1) / 2;
+        if ($k > $total) {
+            printmsg 2,"Compute pairwise alignments, skip empty fraction $k of $N ... \n";
+            exit 0;
+        }
 
-        $tree = new MLocarna::Tree("UPGMA",\@names,$score_matrix);
+        printmsg 3,"Compute pairwise alignments, fraction $k of $N ... \n";
 
+        my $score_hash = compute_all_pairwise_alignments(\@names, $bmprobs, $amprobs, $opts->{'threads'}, $k, $N);
+
+        if ( ! -d scorelist_dirname() ) {
+            mkdir scorelist_dirname();
+        }
+        MLocarna::SparseMatrix::write_2D($score_hash, scorelist_filename($k,$N));
+
+        printmsg 2, "... finish after partial precomputation, as requested by --compute-pairwise-scores.\n";
+        exit 0;
     } else {
         # --------------------------------------------------
         # compute score matrix for guide tree
-        # compute pairwise scores in @score_matrix
         #
 
         printmsg 3,"Compute pairwise alignments ... \n";
- 
-        my $score_matrix = compute_all_pairwise_alignments(\@names, $bmprobs, $amprobs, $opts->{'threads'});
 
-        write_2D_matrix("$results_dir/result.matrix",$score_matrix);
+        my $score_hash = compute_all_pairwise_alignments(\@names, $bmprobs, $amprobs, $opts->{'threads'});
+        $score_matrix = MLocarna::SparseMatrix::to_sym_array_2D($score_hash);
+
+        # set diagonal to zero
+        for (my $a=0; $a<@names; $a++) {
+            $score_matrix->[$a][$a] = 0;
+        }
 
 	# this did never really work. Here is the removed man page text:
 	# =item  B<--extlib>
@@ -2123,9 +2227,21 @@ sub perform_multiple_alignment {
 	# if ($opts->{'extlib'}) {
         #     extend_library($pairwise_alns);
         # }
+    }
 
+    if (defined($score_matrix)) {
+        ## write score matrix to the results directory
+        write_2D_matrix("$results_dir/result.matrix",$score_matrix);
+    }
+    if (!defined($tree)) {
+        if (!defined($score_matrix)) {
+            printerr "ERROR: Don't know how to produce guide tree.";
+            exit -1;
+        }
+        # compute tree from the score matrix
         $tree = new MLocarna::Tree("UPGMA",\@names,$score_matrix);
-    } # end generation of tree
+    }
+    # end generation of tree
 
 
     open(my $TREE,">","$results_dir/result.tree");
@@ -2374,7 +2490,7 @@ sub get_symmetric_match_probs {
 ## @param[out] $bmprobs hash of all base match probs (for all pairwise alignments)
 ## @param[out] $amprobs hash of all arc match probs (for all pairwise alignments)
 ##
-## calls binary (locarna_p, or locarna if fastmea) to compute and write probabilities to files. The files are read again and 
+## calls binary (locarna_p, or locarna if fastmea) to compute and write probabilities to files. The files are read again and
 ## probabilities are written into the hashs $bmprobs, $amprobs
 ##
 sub compute_match_probs {
@@ -3248,7 +3364,7 @@ sub compute_dotplot {
 ########################################
 ## extract_score_from_alignment
 ##
-## get the alignment score from the output of locarna (or a similar pairwise aligner) 
+## get the alignment score from the output of locarna (or a similar pairwise aligner)
 ##
 ## @param $alntext text output of locarna
 ##
@@ -3283,23 +3399,49 @@ sub extract_score_from_alignment {
 ## @param $bmprobs     base match probs in case of probabilistic alignment
 ## @param $amprobs     arc  match probs in case of probabilistic alignment
 ## @param $thread_num         number of threads (default 1)
+## @param[optional] $k compute only k-th fraction of $N
+## @param[optional] $N total number of fractions
 ##
-## @return 2D-array of locarna scores
+## @return hash of scores s at indices {a}{b},where a and b are input sequence
+## indices and s is the score of aligning the sequences a and b
 sub compute_all_pairwise_alignments {
-    my ($names,$bmprobs,$amprobs,$thread_num) = @_;
+    my ($names,$bmprobs,$amprobs,$thread_num,$k,$N) = @_;
 
     if (!defined($thread_num)) { $thread_num=1; }
 
     my @argument_lists;
 
-    my @pairwise_alns : shared;
+    my $scores : shared;
+    $scores = share({});
 
-    my $num_names = scalar(@$names);
+    # calculate number of pairwise alignments
+    my $total = @$names * (@$names - 1) / 2;
+    if ($k > $total) {
+        return undef;
+    }
+    if ($N > $total) {
+        $N = $total;
+    }
+
+    ## if $k and $N are defined, compute only the alignments, where
+    ## $num is in the range
+    ## [ floor(($k-1)*$total/$N), floor($k*$total/$N) [
 
     ## collect arguments for function calls (=jobs)
     my $num=0;
-    for (my $a=0; $a<$num_names; $a++) {
+    my $idx=0;
+    for (my $a=0; $a<@$names; $a++) {
         for (my $b=0; $b<$a; $b++) {
+            $idx++;
+
+            if (defined $k) {
+                if ( $idx-1 < int( ($k-1) * $total / $N ) ) {
+                    next;
+                }
+                if ( $idx-1 >= int( $k * $total / $N ) ) {
+                    last;
+                }
+            }
             $num++;
 
             if ( $opts->{'probabilistic'} ) {
@@ -3324,10 +3466,9 @@ sub compute_all_pairwise_alignments {
         sub {
             my ($num,$a,$b,@arg_list)=@_;
 
-
             printmsg 2, sprintf(
 	        "Align %d/%d : $names->[$a] and %d/%d: $names->[$b] (%d/%d)\n",
-	        $a+1,$num_names,$b+1,$a,$num,($num_names*($num_names-1))/2);
+	        $a+1,scalar(@$names),$b+1,$a,$num,scalar(@argument_lists));
 
             my @aln;
 
@@ -3348,30 +3489,23 @@ sub compute_all_pairwise_alignments {
 					          );
             }
 
-            $pairwise_alns[$a*$num_names + $b] = "@aln";
+            if (!exists $scores->{$a}) {
+                $scores->{$a} = share({});
+            }
+            $scores->{$a}{$b} = extract_score_from_alignment("@aln");
 
         },
         \@argument_lists,
         $thread_num
         );
 
-    ## convert result for returning
-    my $score_matrix;
 
-    for (my $a=0; $a<$num_names; $a++) {
-        $score_matrix->[$a][$a] = 0; 
-        for (my $b=0; $b<$a; $b++) {
-            $score_matrix->[$a][$b] = extract_score_from_alignment( $pairwise_alns[$a*$num_names + $b] );
-            $score_matrix->[$b][$a] = $score_matrix->[$a][$b];
-	}
-    }
-
-    return $score_matrix;
+    return $scores;
 }
 
 
 ## ----------------------------------------
-## perform the progressive steps
+## perform the progressive
 ## to compute the multiple alignment
 ##
 ## @param $tree the guide tree
