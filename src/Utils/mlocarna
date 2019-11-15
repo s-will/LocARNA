@@ -1652,6 +1652,11 @@ exit(0);
 
 sub main {
 
+    # activate skip-pp when mlocarna is used for distributed computation
+    if (defined($opts->{'compute-pairwise-scores'}) or defined($opts->{'score-lists'})) {
+        $opts->{'skip-pp'} = 1;
+    }
+
     if (! -e $opts->{'tgtdir'}) {
         mkdir $opts->{'tgtdir'};
         if (! -e $opts->{'tgtdir'} ) {
@@ -1660,7 +1665,8 @@ sub main {
         }
     } else {
         if ( -d $opts->{'tgtdir'} ) {
-            printmsg 3, "Warning: $opts->{'tgtdir'} exists already.\n" if ($opts->{'verbose'});
+            printmsg 2, "Warning: $opts->{'tgtdir'} exists already.\n"
+                unless defined($opts->{'skip-pp'});
         } else {
             printerr "ERROR: ".$opts->{'tgtdir'}." is not a directory. Exit.\n";
             exit -1;
