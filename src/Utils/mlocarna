@@ -565,7 +565,7 @@ Use directory <dir> as cache for dot plot or pp files (useful for avoiding multi
 
 =item  B<--only-dps>
 
-Compute only the missing pair probability / dot plots, don't align (useful for filling the dp-cache).
+Compute only the pair probability files / dot plots, don't align (useful for filling the dp-cache).
 
 =item  B<--evaluate>=file
 
@@ -1657,6 +1657,21 @@ sub main {
         $opts->{'skip-pp'} = 1;
     }
 
+    if (defined($opts->{'compute-pairwise-scores'}) and ! -d $opts->{'tgtdir'}."/input" ) {
+        printerr "ERROR: Option --compute-pairwise-scores requires precomputed\n"
+                ."       dot plots in the target directory.\n"
+                ."       Compute these data by mlocarna with --only-dps.\n";
+        exit -1;
+    }
+    if (defined($opts->{'score-lists'})
+            and (! -d $opts->{'tgtdir'}."/input"
+                 or ! -d $opts->{'tgtdir'}."/scores")) {
+        printerr "ERROR: Option --score-lists requires precomputed dot plots\n"
+                ."       and score lists in the target directory.\n"
+                ."       Please consult the documentation (e.g. mlocarna --man).\n";
+        exit -1;
+    }
+
     if (! -e $opts->{'tgtdir'}) {
         mkdir $opts->{'tgtdir'};
         if (! -e $opts->{'tgtdir'} ) {
@@ -2026,7 +2041,7 @@ sub perform_multiple_alignment {
 
     ## exit here if only dps shall be computed
     if ($opts->{'only-dps'}) {
-        printmsg 3,"Computed only the missing dotplots (results written to $opts->{'tgtdir'}).\n";
+        printmsg 3,"Computed only the dotplots (results written to $opts->{'tgtdir'}).\n";
         exit 0;
     }
 
