@@ -3437,11 +3437,13 @@ sub compute_all_pairwise_alignments {
 
     # calculate number of pairwise alignments
     my $total = @$names * (@$names - 1) / 2;
-    if ($k > $total) {
-        return undef;
-    }
-    if ($N > $total) {
-        $N = $total;
+    if (defined $k) {
+        if ($k > $total) {
+            return undef;
+        }
+        if ($N > $total) {
+            $N = $total;
+        }
     }
 
     ## if $k and $N are defined, compute only the alignments, where
