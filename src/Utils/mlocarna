@@ -1506,7 +1506,7 @@ if ($opts->{'local-progressive'}) {
     if ($opts->{'global-progressive'}) {
         printerr "Warning: local overrides global progressive alignment!\n"
     }
-    push @locarna_params, "--local-file-output", "--local-output";
+    push @locarna_params, "--local-file-output";
 }
 
 
