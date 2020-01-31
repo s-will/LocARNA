@@ -239,16 +239,6 @@ fi
 dnl  CPPFLAGS="$CPPFLAGS -Wno-deprecated"
 
 dnl --------------------
-dnl add linker options for POSIX threads
-dnl (necessary for linking Gecode)
-dnl AX_PTHREAD
-dnl AC_MSG_NOTICE([pthread: $PTHREAD_CFLAGS, $PTHREAD_LIBS])
-dnl LIBS="$PTHREAD_LIBS $LIBS"
-dnl dnl CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-dnl LDFLAGS="$PTHREAD_CFLAGS $LDFLAGS"
-
-
-dnl --------------------
 dnl check for quadmath and add linker flag
 dnl
 has_quadmath="no"
