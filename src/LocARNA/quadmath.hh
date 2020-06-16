@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <memory>
+#include <cmath>
 #include <quadmath.h>
 
 //! @brief write __float128 number to stream
@@ -35,21 +36,27 @@ operator << (std::ostream &out, __float128 x) {
 // compiler errors when using other math functions
 
 namespace std {
+
 //! @brief quadmath exp
 inline
-__float128 exp(__float128 x) {return expq(x);}
+__float128
+exp(__float128 x) {return expq(x);}
 
 // @brief quadmath log
 inline
-__float128 log(__float128 x) {return logq(x);}
+__float128
+log(__float128 x) {return logq(x);}
 
 // @brief quadmath isinf
 inline
-__float128 isinf(__float128 x) {return isinfq(x);}
+bool
+isinf(__float128 x) {return isinfq(x);}
 
 // @brief quadmath isnan
 inline
-__float128 isnan(__float128 x) {return isnanq(x);}
+bool
+isnan(__float128 x) {return isnanq(x);}
+
 }
 
 #endif
