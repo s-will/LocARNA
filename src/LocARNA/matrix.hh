@@ -140,7 +140,7 @@ namespace LocARNA {
          *
          * @return entry (i,j)
          */
-        const elem_t
+        const elem_t &
         get(size_type i, size_type j) const {
             return mat_[addr(i, j)];
         }
