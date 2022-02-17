@@ -523,7 +523,7 @@ namespace LocARNA {
             size_t u = MCm->a2s(s, j - 1) - MCm->a2s(s, i);
             if (MCm->a2s(s, i) < 1)
                 continue;
-            char loopseq[10];
+            char loopseq[11];
             if (u < 7) {
                 strncpy(loopseq, MCm->Ss(s) + MCm->a2s(s, i) - 1, 10);
             }
