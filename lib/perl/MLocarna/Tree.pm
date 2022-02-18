@@ -176,7 +176,7 @@ sub _unquote_newick_label {
 ## should be unique and indices in $@names and matrix @$dist_matrix
 ## should correspond
 ##
-## @return tree as string in NEWICK tree format
+## @return tree as object of Tree
 ########################################
 sub _upgma_dist {
     my ($names, $dist_matrix) = @_;
@@ -190,7 +190,8 @@ sub _upgma_dist {
 
     for (my $i=0; $i<@$names; $i++) {
         $clusters[$i] = $i;
-        $trees[$i]    = new MLocarna::Tree( $names->[$i] );
+        my $quoted_name = _quote_newick_label($names->[$i]);
+        $trees[$i]    = new MLocarna::Tree($quoted_name);
         $cluster_sizes[$i] = 1;
         $heights[$i]  = 0;
     }
