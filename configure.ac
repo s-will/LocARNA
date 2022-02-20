@@ -2,7 +2,7 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([LocARNA], [2.0.0RC10a], [will@informatik.uni-freiburg.de], [locarna],
+AC_INIT([LocARNA], [2.0.0RC10], [will@informatik.uni-freiburg.de], [locarna],
         [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 dnl special dir for aux config files
@@ -38,7 +38,7 @@ AC_SUBST([PACKAGE_SOURCES_URL], ["http://www.bioinf.uni-freiburg.de/Software/Loc
 
 
 dnl minimally required ViennaRNA version
-VRNA_VERSION=2.4.0
+VRNA_VERSION=2.5.0
 
 AC_CONFIG_MACRO_DIR([m4])
 
