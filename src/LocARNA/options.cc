@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
+#include <cstring>
 
 #include <sstream>
 
@@ -38,6 +39,7 @@
 #include <vector>
 
 #include "package_constants.hh"
+
 
 namespace LocARNA {
 
@@ -628,7 +630,7 @@ namespace LocARNA {
     }
 
     void
-    print_wrapped(std::string s, size_t offset, size_t width) {
+    print_wrapped(std::string s, size_t next_offset, size_t offset, size_t width) {
         static const size_t tolerance = 16;
 
         std::string t;
@@ -664,8 +666,8 @@ namespace LocARNA {
 
         if (s.length() > 0) {
             fputs("\n", stdout);
-            fputs(std::string(offset, ' ').c_str(), stdout);
-            print_wrapped(s, offset, width);
+            fputs(std::string(next_offset, ' ').c_str(), stdout);
+            print_wrapped(s, next_offset, next_offset, width);
         }
         return;
     }
@@ -685,6 +687,12 @@ namespace LocARNA {
         int i;
         int num_opts = count_opts(options);
 
+        // get program base name
+        char *p = strrchr(progname,'/');
+        if (p!=NULL) {
+            progname = p+1;
+        }
+
         print_usage(progname, options, true);
 
         fputs("\nOptions:\n", stdout);
@@ -692,19 +700,20 @@ namespace LocARNA {
         for (i = 0; i < num_opts; i++) {
             if (options[i].arg_type > O_SECTION) {
                 if (!hide_options && !positional(options, i)) {
-                    size_t offset = 4;
+                    size_t offset = 38;
+                    size_t first_offset = 0;
                     if (options[i].arg_type != O_TEXT) {
-                        printf("  %-5s",
-                               sprint_option_name(options, i).c_str());
-                        fputs("\n", stdout);
-                        fputs(std::string(offset, ' ').c_str(), stdout);
+                        std::string name = sprint_option_name(options, i);
+                        printf("  %-32s    ", name.c_str());
+                        //fputs("\n", stdout);
+                        first_offset = name.length()>38?name.length():38;
                     } else {
                         // fputs("\n",stdout);
                         offset = 2;
                         fputs(std::string(offset, ' ').c_str(), stdout);
                     }
                     if (options[i].description != "") {
-                        print_wrapped(options[i].description, offset, width);
+                        print_wrapped(options[i].description, offset, first_offset, width);
                     }
                     fputs("\n\n", stdout);
                 }
@@ -730,7 +739,7 @@ namespace LocARNA {
         if (options[i].shortname)
             s << "-" << options[i].shortname;
         if (options[i].shortname && (options[i].longname != ""))
-            s << ",";
+            s << ", ";
         if (options[i].longname != "")
             s << "--" << options[i].longname;
 
@@ -804,7 +813,7 @@ namespace LocARNA {
         if (options[i].shortname)
             s << "-" << options[i].shortname;
         if (options[i].shortname && (options[i].longname != ""))
-            s << ",";
+            s << ", ";
         if (options[i].longname != "")
             s << "--" << options[i].longname.c_str();
 
