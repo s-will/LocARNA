@@ -28,7 +28,7 @@ namespace LocARNA {
                                const RnaStructure &ref) {
         std::vector<bool> ref_free(ref.length() + 1, true);
 
-        for (const auto bp : ref) {
+        for (const auto &bp : ref) {
             if (filter_(bp)) {
                 ref_free[bp.first] = false;
                 ref_free[bp.second] = false;
