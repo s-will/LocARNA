@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-MLocARNA - multiple alignment of RNA
+B<MLocARNA> - multiple alignment of RNA
 
 =head1 SYNOPSIS
 
@@ -56,14 +56,12 @@ comments are ignored.
 
 =head2 Major alignment modes
 
-=over 4
-
-=item B<>
-
 By default, mlocarna performs progressive alignment, where the
 progressive alignment steps are computed by the pairwise aligner
 locarna based on sequences and dot plots (RNAfold -p); subsequently,
 partial alignmetns and their consensus dot plots.
+
+=over 4
 
 =item B<--probabilistic>
 
@@ -131,7 +129,7 @@ Type of consensus structures written to screen and stockholm output
 [alifold|mea|none] (default: none). Unless explicitly specified,
 the option alifold-consensus-dp implicitly sets this to alifold.
 
-=item B<-w,--width>=columns(120)
+=item B<-w, --width>=columns (120)
 
 Output width for sequences in clustal-like and stockholm output; note
 that the clustalw standard format requires 60 or less.
@@ -165,7 +163,7 @@ Allow free endgaps 3'.
 
 Allow free endgaps 5'.
 
-=item B<--sequ-local>=bool(false)
+=item B<--sequ-local>=bool (false)
 
 Turns on/off sequence locality [def=off]. Sequence locality refers to
 the usual form of local alignment. If on, mlocarna bases all
@@ -175,7 +173,7 @@ ends). Note that truely local structure alignments as well as local
 multiple alignments are still a matter of research; so don't expect
 perfect results in all instances.
 
-=item B<--struct-local>=bool(false)
+=item B<--struct-local>=bool (false)
 
 Turns on/off structure locality [def=off]. Structural locality enables
 skipping entire substructures in alignments. In pairwise alignments,
@@ -198,25 +196,25 @@ alignment. [Experimental]
 =over 4
 
 
-=item B<--indel=score>(-350)
+=item B<--indel=score> (-150)
 
 Score of each single base insertion or deletion.
 
-=item B<--indel-opening>=score(-500)
+=item B<--indel-opening>=score (-750)
 
 Score of opening an insertion or deletion, i.e. score for a
 consecutive run of deletions or insertions. Indel opening score and
 indel score define the affine scoring of gaps.
 
-=item B<-m,--match>=score(50)
+=item B<-m, --match>=score (50)
 
 Score of a base match (unless ribosum-based scoring)
 
-=item B<-M,--mismatch>=score(0)
+=item B<-M, --mismatch>=score (0)
 
 Score of a base mismatch (unless ribosum-based scoring)
 
-=item B<--use-ribosum>=bool(true)
+=item B<--use-ribosum>=bool (true)
 
 Use ribosum scores for scoring base matches and base pair matches;
 note that tau=0 suppresses any effect on the latter.
@@ -225,7 +223,7 @@ note that tau=0 suppresses any effect on the latter.
 
 File specifying the Ribosum base and base-pair similarities. [default: use RIBOSUM85_60 without requiring a Ribosum file.]
 
-=item B<-s,--struct-weight>=score(200)
+=item B<-s, --struct-weight>=score (200)
 
 Maximum weight of one predicted arc, aka base pair. Note that this
 means that the maximum weight of an arc match is twice as high. The
@@ -235,16 +233,16 @@ scores. The struct-weight factor balances the score contribution from
 structure to the score contribution from base similarity scores
 (e.g. ribosum scores).
 
-=item B<-e,--exp-prob>=prob
+=item B<-e, --exp-prob>=prob
 
 Expected probability of a base pair.
 
-=item B<-t,--tau>=factor(0)
+=item B<-t, --tau>=factor (0)
 
 Tau factor in percent. The tau factor controls the contribution of
 sequence-dependent scores to the score of arc matches.
 
-=item B<-E,--exclusion>=<score>(0)
+=item B<-E, --exclusion>=<score> (0)
 
 Weight of an exclusion, i.e. an ommitted subsequence in a loop, which
 applies only to structural local alignment.
@@ -271,7 +269,7 @@ especially for large alignment instances.
 
 =over 4
 
-=item B<-p,--min-prob>=probability(0.001)
+=item B<-p, --min-prob>=probability (0.001)
 
 Minimum base pair / arc probability. Arc with lower probability in the
 input RNA structure ensembles are ignored.
@@ -282,19 +280,19 @@ Minimal prob for constructing guide tree. This probability can be set
 separately for the all-2-all comparison for constructing the guide
 tree and the progressive/iterative alignment steps.
 
-=item B<--max-bps-length-ratio>=factor(0.0)
+=item B<--max-bps-length-ratio>=factor (0.0)
 
 Maximal ratio of the number of base pairs divided by sequence length
 (default: no effect)
 
-=item B<-D,--max-diff-am>=difference
+=item B<-D, --max-diff-am>=difference
 
 Maximal difference for lengths of matched arcs. Two arcs that have a
 higher difference of their lengths are ignored. This speeds up the
 alignment, since less arc comparisons (i.e. less DP matrices) have to
 be computed. [def: off/-1]
 
-=item B<-d,--max-diff>=difference
+=item B<-d, --max-diff>=difference
 
 Maximal difference of the positions of any two bases that are
 considered to be aligned. Bases with higher difference are generally
@@ -332,11 +330,11 @@ Relax deviation constraints (cf. --max-diff-aln) in multiple
 aligmnent. This option is useful if the default strategy for
 realignment fails.
 
-=item B<-a,--min-am-prob>=probability(0.001)
+=item B<-a, --min-am-prob>=probability (0.001)
 
 Minimum arc-match probability (filters output of locarna-p)
 
-=item B<-b,--min-bm-prob>=probability(0.001)
+=item B<-b, --min-bm-prob>=probability (0.001)
 
 Minimum base-match probability (filters output of locarna-p)
 
@@ -710,15 +708,32 @@ examples in Data/Examples.]
 
 Sequences are typically given in plain fasta format like
 
-  example.fa:
-  ----------------------------------------
-  >fruA
-  CCUCGAGGGGAACCCGAAAGGGACCCGAGAGG
-  >fdhA
-  CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG
-  >vhuU
-  AGCUCACAACCGAACCCAUUUGGGAGGUUGUGAGCU
-  ----------------------------------------
+=begin roff
+
+.nf
+.ft CW
+
+=end roff
+
+
+    example.fa
+    ----------------------------------------
+    >fruA
+    CCUCGAGGGGAACCCGAAAGGGACCCGAGAGG
+    >fdhA
+    CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAGGUGGCG
+    >vhuU
+    AGCUCACAACCGAACCCAUUUGGGAGGUUGUGAGCU
+    ----------------------------------------
+
+
+=begin roff
+
+.ft
+.fi
+
+=end roff
+
 
 To align these sequences, simply call
 
@@ -728,28 +743,57 @@ Usually, it makes sense to set additional options; this is either done
 on the command line or via configuration files. A reasonable
 small configuration for global alignment of large instances would be
 
-  short-example.cfg
-  ----------------------------------------
-  max-diff-am: 25
-  max-diff:    60
-  min-prob:    0.01
-  plfold-span: 100
-  indel:       -50
-  indel-open:  -750
-  threads:     8   # <- adapt to your hardware
-  alifold-consensus-dp
-  ----------------------------------------
+=begin roff
+
+.nf
+.ft CW
+
+=end roff
+
+    short-example.cfg
+    ----------------------------------------
+    max-diff-am: 25
+    max-diff:    60
+    min-prob:    0.01
+    plfold-span: 100
+    indel:       -50
+    indel-open:  -750
+    threads:     8   # <- adapt to your hardware
+    alifold-consensus-dp
+    ----------------------------------------
+
+=begin roff
+
+.ft
+.fi
+
+=end roff
+
 
 To use it, call
 
-  mlocarna --config short-example.cfg example.fa
+    mlocarna --config short-example.cfg example.fa
 
 which is equivalent to
 
-  mlocarna --max-diff-am 25 --max-diff 60 --min-prob 0.01 \
-           --indel -50 --indel-open -750 \
-           --plfold-span 100 --threads 8 --alifold-consensus-dp \
-           example.fa
+=begin roff
+
+.nf
+.ft CW
+
+=end roff
+
+    mlocarna --max-diff-am 25 --max-diff 60 --min-prob 0.01 \
+             --indel -50 --indel-open -750 \
+             --plfold-span 100 --threads 8 --alifold-consensus-dp \
+             example.fa
+
+=begin roff
+
+.ft
+.fi
+
+=end roff
 
 For  probabilistic alignment with consistency transformation, call
 
@@ -767,30 +811,60 @@ constraints for alignment. Both types of constraints can be specified
 in extension of the standard fasta format via 'constraint
 lines'. Fasta-ish input with constraints looks like this
 
-  example-w-constraints.fa
-  ----------------------------------------
-  >A
-  GACCCUGGGAACAUUAACUACUCUCGUUGGUGAUAAGGAACA
-  ..((.(....xxxxxx...................))).xxx #S
-  ..........000000.......................111 #1
-  ..........123456.......................123 #2
-  >B
-  ACGGAGGGAAAGCAAGCCUUCUGCGACA
-  .(((....xxxxxx.......))).xxx #S
-  ........000000...........111 #1
-  ........123456...........123 #2
-  ----------------------------------------
+=begin roff
+
+.nf
+.ft CW
+
+=end roff
+
+
+    example-w-constraints.fa
+    ----------------------------------------
+    >A
+    GACCCUGGGAACAUUAACUACUCUCGUUGGUGAUAAGGAACA
+    ..((.(....xxxxxx...................))).xxx #S
+    ..........000000.......................111 #1
+    ..........123456.......................123 #2
+    >B
+    ACGGAGGGAAAGCAAGCCUUCUGCGACA
+    .(((....xxxxxx.......))).xxx #S
+    ........000000...........111 #1
+    ........123456...........123 #2
+    ----------------------------------------
+
+
+=begin roff
+
+.ft
+.fi
+
+=end roff
 
 The same anchor constraints (like by the lines tagged #1, #2) can
 alternatively be specified in bed format by the entries
 
-  example-anchors.bed
-  ----------------------------------------
-  A	10	16	first_box
-  B	8	14	first_box
-  A	39	42	ACA-box
-  B	25	28	ACA-box
-  ----------------------------------------
+=begin roff
+
+.nf
+.ft CW
+
+=end roff
+
+    example-anchors.bed
+    ----------------------------------------
+    A	10	16	first_box
+    B	8	14	first_box
+    A	39	42	ACA-box
+    B	25	28	ACA-box
+    ----------------------------------------
+
+=begin roff
+
+.ft
+.fi
+
+=end roff
 
 where anchor regions (boxes) have arbitrary but matching names
 and contig/sequence names correspond to the sequence names
@@ -798,15 +872,29 @@ of the fasta(-like) input.
 
 Given, e.g.
 
-  example-wo-anchors.fa
-  ----------------------------------------
-  >A
-  GACCCUGGGAACAUUAACUACUCUCGUUGGUGAUAAGGAACA
-  ..((.(....xxxxxx...................))).xxx #S
-  >B
-  ACGGAGGGAAAGCAAGCCUUCUGCGACA
-  .(((....xxxxxx.......))).xxx #S
-  ----------------------------------------
+=begin roff
+
+.nf
+.ft CW
+
+=end roff
+
+    example-wo-anchors.fa
+    ----------------------------------------
+    >A
+    GACCCUGGGAACAUUAACUACUCUCGUUGGUGAUAAGGAACA
+    ..((.(....xxxxxx...................))).xxx #S
+    >B
+    ACGGAGGGAAAGCAAGCCUUCUGCGACA
+    .(((....xxxxxx.......))).xxx #S
+    ----------------------------------------
+
+=begin roff
+
+.ft
+.fi
+
+=end roff
 
 once calls
 
@@ -821,14 +909,28 @@ input alignment in clustal format, e.g.
 
 This allows to define constraints as 'consensus constraints' in the input, e.g.
 
-  example-realign.aln
-  ----------------------------------------
-  fruA               --CCUCGAGGGGAACCCGAA-------------AGGGACCCGAGAGG--
-  vhuU               AGCUCACAACCGAACCCAUU-------------UGGGAGGUUGUGAGCU
-  fdhA               CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAG-GUGGCG
-  #A1                ..*...........CCC.............................5..
-  #S                 ((((((.((((...(((.................))).)))).))))))
-  ----------------------------------------
+=begin roff
+
+.nf
+.ft CW
+
+=end roff
+
+    example-realign.aln
+    ----------------------------------------
+    fruA               --CCUCGAGGGGAACCCGAA-------------AGGGACCCGAGAGG--
+    vhuU               AGCUCACAACCGAACCCAUU-------------UGGGAGGUUGUGAGCU
+    fdhA               CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAG-GUGGCG
+    #A1                ..*...........CCC.............................5..
+    #S                 ((((((.((((...(((.................))).)))).))))))
+    ----------------------------------------
+
+=begin roff
+
+.ft
+.fi
+
+=end roff
 
 Note that anchor names are arbitrary and the consensus structure is
 'projected' to the single sequences.  Moreover, the input alignment
