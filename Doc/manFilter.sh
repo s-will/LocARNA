@@ -3,6 +3,10 @@
 file="$1"
 
 ext="${file##*.}"
+
+echo [TOC]
+echo
+
 echo "#" $(basename "$file" ".$ext")
 echo
 
