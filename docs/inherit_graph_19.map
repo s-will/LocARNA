@@ -1,0 +1,7 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classLocARNA_1_1BasePairFilter_1_1Filter.html" title="basic class for base pair filters (no filtering)" alt="" coords="5,104,176,145"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1BasePairFilter_1_1BPMinLoopSize.html" title="loop size base pair filter" alt="" coords="224,5,395,47"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1BasePairFilter_1_1Canonical.html" title="base pair filter to allow only canonical base pairs" alt="" coords="224,71,395,112"/>
+<area shape="rect" id="node4" href="$classLocARNA_1_1BasePairFilter_1_1Combined.html" title=" " alt="" coords="224,136,395,177"/>
+<area shape="rect" id="node5" href="$classLocARNA_1_1BasePairFilter_1_1SpanRange.html" title="base pair range filter" alt="" coords="224,201,395,243"/>
+</map>

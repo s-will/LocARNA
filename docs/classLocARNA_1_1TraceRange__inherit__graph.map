@@ -1,0 +1,5 @@
+<map id="LocARNA::TraceRange" name="LocARNA::TraceRange">
+<area shape="rect" id="node1" title="Represents a range of traces." alt="" coords="35,5,195,32"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1TraceController.html" title="Controls the matrix cells valid for traces." alt="" coords="25,80,204,107"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1SparseTraceController.html" title="combines the TraceController with the Mapper for both sequences" alt="" coords="5,155,224,181"/>
+</map>

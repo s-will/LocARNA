@@ -1,0 +1,5 @@
+<map id="LocARNA::PairHMMMatchProbs" name="LocARNA::PairHMMMatchProbs">
+<area shape="rect" id="node1" title=" " alt="" coords="5,155,220,181"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1MatchProbs.html" title="Provide match probabilities." alt="" coords="33,80,192,107"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1EdgeProbs.html" title="Provides probabilities for alignment egdes (match or trace probabilities etc)." alt="" coords="36,5,189,32"/>
+</map>

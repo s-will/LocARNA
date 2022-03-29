@@ -1,0 +1,8 @@
+<map id="LocARNA::EdgeProbs" name="LocARNA::EdgeProbs">
+<area shape="rect" id="node1" title="Provides probabilities for alignment egdes (match or trace probabilities etc)." alt="" coords="5,101,159,127"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1MatchProbs.html" title="Provide match probabilities." alt="" coords="207,71,365,98"/>
+<area shape="rect" id="node5" href="$classLocARNA_1_1TraceProbs.html" title="Provide trace probabilities." alt="" coords="208,126,364,153"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1PFMatchProbs.html" title="Provide match probabilities calculated by pf approach." alt="" coords="433,5,609,47"/>
+<area shape="rect" id="node4" href="$classLocARNA_1_1PairHMMMatchProbs.html" title=" " alt="" coords="413,71,628,98"/>
+<area shape="rect" id="node6" href="$classLocARNA_1_1PFTraceProbs.html" title="Provide match probabilities calculated by pf approach." alt="" coords="434,123,607,164"/>
+</map>

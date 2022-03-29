@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['f1_5fscore_1404',['f1_score',['../classLocARNA_1_1ConfusionMatrix.html#a007c6aeb7eac2091f3ba642df883bb73',1,'LocARNA::ConfusionMatrix']]],
+  ['failure_1405',['failure',['../classLocARNA_1_1failure.html#afbb326abd40d3505ce03d9d43aa4904d',1,'LocARNA::failure::failure(const std::string &amp;msg)'],['../classLocARNA_1_1failure.html#a379e840cc59b71689bc6d2f7f6dfc5f3',1,'LocARNA::failure::failure()']]],
+  ['fill_1406',['fill',['../classLocARNA_1_1RMatrix.html#a377b345afb85971635c9e0b947e1de95',1,'LocARNA::RMatrix::fill()'],['../classLocARNA_1_1Matrix.html#a17a8970e346575fa5b75c8b576fef8d2',1,'LocARNA::Matrix::fill()']]],
+  ['fill_5fd_1407',['fill_D',['../classLocARNA_1_1AlignerP.html#a496d18c2023f6488c41b98878855fbc0',1,'LocARNA::AlignerP']]],
+  ['fill_5fd_5fentries_1408',['fill_D_entries',['../classLocARNA_1_1AlignerImpl.html#ab269d6f6bc6acafbd961311012038f7b',1,'LocARNA::AlignerImpl::fill_D_entries()'],['../classLocARNA_1_1AlignerN.html#a4f5c47da138cc284ad6a3603e7f150fd',1,'LocARNA::AlignerN::fill_D_entries()']]],
+  ['fill_5fd_5fentries_5fnolp_1409',['fill_D_entries_noLP',['../classLocARNA_1_1AlignerImpl.html#ae7aea6dba9299d00cf832cd08bf79ff3',1,'LocARNA::AlignerImpl']]],
+  ['fill_5fdprime_1410',['fill_Dprime',['../classLocARNA_1_1AlignerP.html#a43f5d8d5da17a1a92db193347500eeb8',1,'LocARNA::AlignerP']]],
+  ['fill_5fia_5fentries_1411',['fill_IA_entries',['../classLocARNA_1_1AlignerN.html#a563165c1c73b3d3f7dffbb3865994d0c',1,'LocARNA::AlignerN']]],
+  ['fill_5fib_5fentries_1412',['fill_IB_entries',['../classLocARNA_1_1AlignerN.html#aaaed233b9a30ece29e287e0528fc04f4',1,'LocARNA::AlignerN']]],
+  ['fill_5fm_5fentries_1413',['fill_M_entries',['../classLocARNA_1_1AlignerN.html#aaf63ac5048d656e3e0dbc65d1c98bfa2',1,'LocARNA::AlignerN']]],
+  ['finite_5fvalue_1414',['finite_value',['../classLocARNA_1_1TaintedInftyInt.html#ae72676600e24bd6112c551fa37787cb7',1,'LocARNA::TaintedInftyInt::finite_value()'],['../classLocARNA_1_1FiniteInt.html#a4167d052bba2d12876e5ddee0282f6a2',1,'LocARNA::FiniteInt::finite_value() const']]],
+  ['finiteint_1415',['FiniteInt',['../classLocARNA_1_1FiniteInt.html#a62c877dbb75b6f2667048aaaff485cb6',1,'LocARNA::FiniteInt::FiniteInt()'],['../classLocARNA_1_1FiniteInt.html#a5588b8a0a9ab4695522ffb39aced3778',1,'LocARNA::FiniteInt::FiniteInt(base_type x)']]],
+  ['first_5fvalid_5fmat_5fpos_5fbefore_1416',['first_valid_mat_pos_before',['../classLocARNA_1_1SparsificationMapper.html#a46a57852efdb1d2f7b494afc1f9a039c',1,'LocARNA::SparsificationMapper']]],
+  ['first_5fvalid_5fmat_5fpos_5fbefore_5feq_1417',['first_valid_mat_pos_before_eq',['../classLocARNA_1_1SparsificationMapper.html#af31507c7d30fb11260f00d8f0eca1bdb',1,'LocARNA::SparsificationMapper']]],
+  ['fitonoff_1418',['FitOnOff',['../classLocARNA_1_1FitOnOff.html#a427f7f742771c1385d1bffd44d7c15c0',1,'LocARNA::FitOnOff']]],
+  ['fitonoffvarpenalty_1419',['FitOnOffVarPenalty',['../classLocARNA_1_1FitOnOffVarPenalty.html#a4d7b3cb098f672c371b5698ff1443569',1,'LocARNA::FitOnOffVarPenalty']]],
+  ['fn_1420',['fn',['../classLocARNA_1_1ConfusionMatrix.html#ae122c3ee73591bcee4dfbf949323ab7d',1,'LocARNA::ConfusionMatrix']]],
+  ['format_5fprob_1421',['format_prob',['../namespaceLocARNA.html#aeb880aac9263bb594e56d7578c8a60c6',1,'LocARNA']]],
+  ['forward_1422',['forward',['../classLocARNA_1_1FitOnOff.html#ac00514532546e97d2c6a64e77261476b',1,'LocARNA::FitOnOff']]],
+  ['fp_1423',['fp',['../classLocARNA_1_1ConfusionMatrix.html#ac78cd3691756e87e1205f9b152878ac8',1,'LocARNA::ConfusionMatrix']]],
+  ['frag_5flen_1424',['frag_len',['../namespaceLocARNA.html#a8c9b2f6d07c363d6808cf464b4ca643d',1,'LocARNA']]],
+  ['frag_5flen_5fgeq_1425',['frag_len_geq',['../namespaceLocARNA.html#add5961aaef0d385dc289f57853502a51',1,'LocARNA']]],
+  ['freed_1426',['freeD',['../classLocARNA_1_1AlignerP.html#a916be6365b1cb4953f92dde0f3626baa',1,'LocARNA::AlignerP']]],
+  ['freeendgaps_1427',['FreeEndgaps',['../classLocARNA_1_1FreeEndgaps.html#ab3a090007d063360034ff945d2c7b28f',1,'LocARNA::FreeEndgaps']]],
+  ['freemprime_1428',['freeMprime',['../classLocARNA_1_1AlignerP.html#a704c4704b2f6b0784afeb5005ece6469',1,'LocARNA::AlignerP']]]
+];

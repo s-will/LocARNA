@@ -1,0 +1,11 @@
+<map id="LocARNA::RnaDataImpl" name="LocARNA::RnaDataImpl">
+<area shape="rect" id="node1" title="Implementation of RnaData." alt="" coords="935,78,1101,105"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1RnaData.html" title="represent sparsified data of RNA ensemble" alt="" coords="637,14,779,41"/>
+<area shape="rect" id="node3" title=" " alt="" coords="284,5,463,47"/>
+<area shape="rect" id="node4" href="$classLocARNA_1_1SparseMatrix.html" title=" " alt="" coords="625,71,791,112"/>
+<area shape="rect" id="node5" href="$classLocARNA_1_1SparseVectorBase.html" title="Base class template for sparse vector and matrix." alt="" coords="264,71,483,112"/>
+<area shape="rect" id="node6" title=" " alt="" coords="5,71,155,112"/>
+<area shape="rect" id="node7" href="$classLocARNA_1_1MultipleAlignment.html" title="Represents a multiple alignment." alt="" coords="612,137,804,163"/>
+<area shape="rect" id="node8" title=" " alt="" coords="291,137,456,163"/>
+<area shape="rect" id="node9" title=" " alt="" coords="285,187,462,214"/>
+</map>

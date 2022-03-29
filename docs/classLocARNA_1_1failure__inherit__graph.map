@@ -1,0 +1,6 @@
+<map id="LocARNA::failure" name="LocARNA::failure">
+<area shape="rect" id="node1" title="Simple exception class that supports a text message." alt="" coords="119,80,243,107"/>
+<area shape="rect" id="node3" href="$structLocARNA_1_1syntax__error__failure.html" title="thrown, when the format is recognized but syntax is incorrect" alt="" coords="5,155,167,196"/>
+<area shape="rect" id="node4" href="$structLocARNA_1_1wrong__format__failure.html" title="thrown, when reading data that is not in the supposed format" alt="" coords="191,155,359,196"/>
+<area shape="rect" id="node2" title=" " alt="" coords="129,5,233,32"/>
+</map>

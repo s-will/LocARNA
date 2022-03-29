@@ -1,0 +1,10 @@
+<map id="LocARNA::ExtRnaDataImpl" name="LocARNA::ExtRnaDataImpl">
+<area shape="rect" id="node1" title="Implementation of ExtRnaData." alt="" coords="924,78,1111,105"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1SparseMatrix.html" title=" " alt="" coords="561,5,728,47"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1SparseVectorBase.html" title="Base class template for sparse vector and matrix." alt="" coords="293,51,512,92"/>
+<area shape="rect" id="node5" href="$classLocARNA_1_1SparseMatrix.html" title=" " alt="" coords="561,71,728,112"/>
+<area shape="rect" id="node4" title=" " alt="" coords="20,51,169,92"/>
+<area shape="rect" id="node6" href="$classLocARNA_1_1ExtRnaData.html" title="represent sparsified data of RNA ensemble extended by in loop probabilities" alt="" coords="564,137,725,163"/>
+<area shape="rect" id="node7" href="$classLocARNA_1_1RnaData.html" title="represent sparsified data of RNA ensemble" alt="" coords="332,137,473,163"/>
+<area shape="rect" id="node8" title=" " alt="" coords="5,129,184,171"/>
+</map>

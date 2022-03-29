@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classLocARNA_1_1EdgeProbs.html" title="Provides probabilities for alignment egdes (match or trace probabilities etc)." alt="" coords="5,71,159,97"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1MatchProbs.html" title="Provide match probabilities." alt="" coords="209,12,368,39"/>
+<area shape="rect" id="node5" href="$classLocARNA_1_1TraceProbs.html" title="Provide trace probabilities." alt="" coords="211,129,367,156"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1PFMatchProbs.html" title="Provide match probabilities calculated by pf approach." alt="" coords="438,57,614,98"/>
+<area shape="rect" id="node4" href="$classLocARNA_1_1PairHMMMatchProbs.html" title=" " alt="" coords="419,5,633,32"/>
+<area shape="rect" id="node6" href="$classLocARNA_1_1PFTraceProbs.html" title="Provide match probabilities calculated by pf approach." alt="" coords="439,122,613,163"/>
+<area shape="rect" id="node7" href="$classLocARNA_1_1PFGotoh.html" title="Provide Gotoh partition functions." alt="" coords="207,63,371,105"/>
+</map>

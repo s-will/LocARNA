@@ -1,0 +1,5 @@
+<map id="LocARNA::AlignerParams" name="LocARNA::AlignerParams">
+<area shape="rect" id="node1" title="Parameter for alignment by Aligner." alt="" coords="122,5,297,32"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1AlignerNParams.html" title="parameters for AlignerN" alt="" coords="5,80,189,107"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1AlignerPParams.html" title="parameters for AlignerP" alt="" coords="214,80,429,107"/>
+</map>

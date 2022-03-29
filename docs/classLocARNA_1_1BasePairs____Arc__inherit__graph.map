@@ -1,0 +1,5 @@
+<map id="LocARNA::BasePairs__Arc" name="LocARNA::BasePairs__Arc">
+<area shape="rect" id="node1" title="Represents a base pair." alt="" coords="75,5,258,32"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1BasePairs_1_1LeftAdjEntry.html" title="Entry in a left adjacency list." alt="" coords="5,80,155,121"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1BasePairs_1_1RightAdjEntry.html" title="Entry in a right adjacency list." alt="" coords="179,80,328,121"/>
+</map>

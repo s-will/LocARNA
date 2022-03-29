@@ -1,0 +1,4 @@
+<map id="LocARNA::Ribosum" name="LocARNA::Ribosum">
+<area shape="rect" id="node1" title="Represents ribosum similarity matrices." alt="" coords="18,5,159,32"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1RibosumFreq.html" title="Represents ribosum similarity matrices including raw frequencies." alt="" coords="5,80,172,107"/>
+</map>

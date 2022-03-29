@@ -1,0 +1,11 @@
+<map id="LocARNA::Ribosum" name="LocARNA::Ribosum">
+<area shape="rect" id="node1" title="Represents ribosum similarity matrices." alt="" coords="720,131,861,157"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1Matrix.html" title=" " alt="" coords="325,7,512,33"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1Alphabet.html" title=" " alt="" coords="345,58,493,99"/>
+<area shape="rect" id="node4" title=" " alt="" coords="158,131,267,157"/>
+<area shape="rect" id="node8" href="$classLocARNA_1_1Alphabet.html" title=" " alt="" coords="345,123,493,165"/>
+<area shape="rect" id="node9" href="$classLocARNA_1_1Alphabet.html" title=" " alt="" coords="345,189,493,230"/>
+<area shape="rect" id="node5" title=" " alt="" coords="5,131,44,157"/>
+<area shape="rect" id="node6" title=" " alt="" coords="379,255,459,281"/>
+<area shape="rect" id="node7" title=" " alt="" coords="149,247,276,289"/>
+</map>

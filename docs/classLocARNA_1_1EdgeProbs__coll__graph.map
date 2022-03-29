@@ -1,0 +1,4 @@
+<map id="LocARNA::EdgeProbs" name="LocARNA::EdgeProbs">
+<area shape="rect" id="node1" title="Provides probabilities for alignment egdes (match or trace probabilities etc)." alt="" coords="22,95,175,121"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1Matrix.html" title=" " alt="" coords="5,5,192,32"/>
+</map>

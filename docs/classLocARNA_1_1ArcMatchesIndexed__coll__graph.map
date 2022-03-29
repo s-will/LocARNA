@@ -1,0 +1,13 @@
+<map id="LocARNA::ArcMatchesIndexed" name="LocARNA::ArcMatchesIndexed">
+<area shape="rect" id="node1" title="class ArcMatches with additional mapping" alt="" coords="851,210,1056,237"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1ArcMatches.html" title="Maintains the relevant arc matches and their scores." alt="" coords="643,210,801,237"/>
+<area shape="rect" id="node3" title=" " alt="" coords="279,5,430,47"/>
+<area shape="rect" id="node4" href="$classLocARNA_1_1AnchorConstraints.html" title="Represents anchor constraints between two sequences." alt="" coords="256,71,453,98"/>
+<area shape="rect" id="node5" title=" " alt="" coords="273,122,436,149"/>
+<area shape="rect" id="node6" href="$classLocARNA_1_1ArcMatch.html" title="Represents a match of two base pairs (arc match)" alt="" coords="5,122,151,149"/>
+<area shape="rect" id="node7" href="$classLocARNA_1_1Matrix.html" title=" " alt="" coords="259,173,451,215"/>
+<area shape="rect" id="node8" title=" " alt="" coords="279,239,430,266"/>
+<area shape="rect" id="node9" href="$classLocARNA_1_1MatchController.html" title="abstract class that declares the method is_valid_match()" alt="" coords="264,290,445,317"/>
+<area shape="rect" id="node10" href="$classLocARNA_1_1BasePairs.html" title="Describes sequence and structure ensemble of an RNA." alt="" coords="280,342,429,369"/>
+<area shape="rect" id="node11" title=" " alt="" coords="293,446,416,473"/>
+</map>

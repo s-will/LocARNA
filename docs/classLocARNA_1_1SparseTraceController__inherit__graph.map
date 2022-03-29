@@ -1,0 +1,6 @@
+<map id="LocARNA::SparseTraceController" name="LocARNA::SparseTraceController">
+<area shape="rect" id="node1" title="combines the TraceController with the Mapper for both sequences" alt="" coords="73,155,292,181"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1TraceController.html" title="Controls the matrix cells valid for traces." alt="" coords="93,80,272,107"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1TraceRange.html" title="Represents a range of traces." alt="" coords="5,5,165,32"/>
+<area shape="rect" id="node4" href="$classLocARNA_1_1MatchController.html" title="abstract class that declares the method is_valid_match()" alt="" coords="189,5,371,32"/>
+</map>

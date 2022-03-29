@@ -1,0 +1,5 @@
+<map id="LocARNA::syntax_error_failure" name="LocARNA::syntax_error_failure">
+<area shape="rect" id="node1" title="thrown, when the format is recognized but syntax is incorrect" alt="" coords="5,155,167,196"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1failure.html" title="Simple exception class that supports a text message." alt="" coords="24,80,148,107"/>
+<area shape="rect" id="node3" title=" " alt="" coords="34,5,138,32"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="LocARNA::PFGotoh&lt; pf_score_t &gt;" name="LocARNA::PFGotoh&lt; pf_score_t &gt;">
+<area shape="rect" id="node1" title="Provide Gotoh partition functions." alt="" coords="110,5,274,47"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1PFMatchProbs.html" title="Provide match probabilities calculated by pf approach." alt="" coords="5,95,181,136"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1PFTraceProbs.html" title="Provide match probabilities calculated by pf approach." alt="" coords="205,95,379,136"/>
+</map>

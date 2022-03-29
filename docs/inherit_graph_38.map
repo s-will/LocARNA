@@ -1,0 +1,6 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" title=" " alt="" coords="5,46,109,73"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1failure.html" title="Simple exception class that supports a text message." alt="" coords="157,46,281,73"/>
+<area shape="rect" id="node3" href="$structLocARNA_1_1syntax__error__failure.html" title="thrown, when the format is recognized but syntax is incorrect" alt="" coords="333,5,494,47"/>
+<area shape="rect" id="node4" href="$structLocARNA_1_1wrong__format__failure.html" title="thrown, when reading data that is not in the supposed format" alt="" coords="329,71,497,112"/>
+</map>

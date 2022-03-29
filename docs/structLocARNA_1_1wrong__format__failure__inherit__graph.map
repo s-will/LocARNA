@@ -1,0 +1,5 @@
+<map id="LocARNA::wrong_format_failure" name="LocARNA::wrong_format_failure">
+<area shape="rect" id="node1" title="thrown, when reading data that is not in the supposed format" alt="" coords="5,155,173,196"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1failure.html" title="Simple exception class that supports a text message." alt="" coords="27,80,151,107"/>
+<area shape="rect" id="node3" title=" " alt="" coords="37,5,141,32"/>
+</map>

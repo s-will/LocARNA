@@ -1,0 +1,8 @@
+<map id="LocARNA::PFTraceProbs&lt; pf_score_t &gt;" name="LocARNA::PFTraceProbs&lt; pf_score_t &gt;">
+<area shape="rect" id="node1" title="Provide match probabilities calculated by pf approach." alt="" coords="103,363,276,404"/>
+<area shape="rect" id="node2" href="$classLocARNA_1_1TraceProbs.html" title="Provide trace probabilities." alt="" coords="21,279,177,306"/>
+<area shape="rect" id="node3" href="$classLocARNA_1_1EdgeProbs.html" title="Provides probabilities for alignment egdes (match or trace probabilities etc)." alt="" coords="22,102,175,129"/>
+<area shape="rect" id="node4" href="$classLocARNA_1_1Matrix.html" title=" " alt="" coords="5,5,192,32"/>
+<area shape="rect" id="node5" href="$classLocARNA_1_1PFGotoh.html" title="Provide Gotoh partition functions." alt="" coords="201,272,365,313"/>
+<area shape="rect" id="node6" href="$classLocARNA_1_1Matrix.html" title=" " alt="" coords="209,95,357,136"/>
+</map>

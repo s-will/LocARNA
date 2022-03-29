@@ -1,0 +1,12 @@
+<map id="LocARNA::AlignmentImpl" name="LocARNA::AlignmentImpl">
+<area shape="rect" id="node1" title="Implementation of Alignment." alt="" coords="139,289,311,316"/>
+<area shape="rect" id="node2" title=" " alt="" coords="29,185,109,212"/>
+<area shape="rect" id="node3" title=" " alt="" coords="5,95,132,136"/>
+<area shape="rect" id="node4" href="$classLocARNA_1_1AlignmentEdges.html" title=" " alt="" coords="133,185,317,212"/>
+<area shape="rect" id="node5" title=" " alt="" coords="167,102,283,129"/>
+<area shape="rect" id="node6" title=" " alt="" coords="205,5,244,32"/>
+<area shape="rect" id="node7" href="$classLocARNA_1_1Sequence.html" title="&quot;Sequence View&quot; of multiple alignment as array of column vectors" alt="" coords="341,185,487,212"/>
+<area shape="rect" id="node8" href="$classLocARNA_1_1MultipleAlignment.html" title="Represents a multiple alignment." alt="" coords="318,102,510,129"/>
+<area shape="rect" id="node9" title=" " alt="" coords="299,5,465,32"/>
+<area shape="rect" id="node10" title=" " alt="" coords="489,5,667,32"/>
+</map>
