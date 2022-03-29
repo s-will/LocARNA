@@ -154,16 +154,10 @@ For additional functionality and special purposes, see
   pairwise ones.
 
 
--------------------------------------------
-Online information, download and web server
--------------------------------------------
 
-Further information is provided online at
-
-   http://www.bioinf.uni-freiburg.de/Software/LocARNA/
-
-The most recent versions of the package will be made available through
-this page.
+----------
+Web server
+----------
 
 
 The core functionality of the package is accessible through a web
