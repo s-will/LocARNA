@@ -115,7 +115,7 @@ typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aad6ed7c08f67428a43a41f58b93710bc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1RnaData.html#aad6ed7c08f67428a43a41f58b93710bc">RnaData</a> (const <a class="el" href="classLocARNA_1_1RnaEnsemble.html">RnaEnsemble</a> &amp;rna_ensemble, double p_bpcut, double max_bps_length_ratio, const <a class="el" href="classLocARNA_1_1PFoldParams.html">PFoldParams</a> &amp;pfoldparams)</td></tr>
-<tr class="memdesc:aad6ed7c08f67428a43a41f58b93710bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct from <a class="el" href="classLocARNA_1_1RnaEnsemble.html" title="Represents the raw structure ensemble data for an RNA.">RnaEnsemble</a> with cutoff probability.  <a href="classLocARNA_1_1RnaData.html#aad6ed7c08f67428a43a41f58b93710bc">More...</a><br /></td></tr>
+<tr class="memdesc:aad6ed7c08f67428a43a41f58b93710bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct from RnaEnsemble with cutoff probability.  <a href="classLocARNA_1_1RnaData.html#aad6ed7c08f67428a43a41f58b93710bc">More...</a><br /></td></tr>
 <tr class="separator:aad6ed7c08f67428a43a41f58b93710bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e3be30becd2a752eccafdaf901dad6f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1RnaData.html#a9e3be30becd2a752eccafdaf901dad6f">RnaData</a> (const std::string &amp;filename, double p_bpcut, double max_bps_length_ratio, const <a class="el" href="classLocARNA_1_1PFoldParams.html">PFoldParams</a> &amp;pfoldparams)</td></tr>
 <tr class="memdesc:a9e3be30becd2a752eccafdaf901dad6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct from file.  <a href="classLocARNA_1_1RnaData.html#a9e3be30becd2a752eccafdaf901dad6f">More...</a><br /></td></tr>
@@ -224,7 +224,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>ExtRnaDataImpl</b></
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>represent sparsified data of RNA ensemble </p>
 <p>knows sequence, cutoff probability and base pair probabilities greater than the cutoff probability; potentially knows stacking probabilities</p>
-<dl class="section note"><dt>Note</dt><dd>This class knows the cutoff probability <em>of its data</em>. This cutoff can be different from the cutoff in classes like <a class="el" href="classLocARNA_1_1BasePairs.html" title="Describes sequence and structure ensemble of an RNA.">BasePairs</a> which defines the structure elements that are considered by algorithms.</dd>
+<dl class="section note"><dt>Note</dt><dd>This class knows the cutoff probability <em>of its data</em>. This cutoff can be different from the cutoff in classes like BasePairs which defines the structure elements that are considered by algorithms.</dd>
 <dd>
 the class guarantees that sequences are normalized (uppercase, T-&gt;U) even when read in unnormalized form, e.g. from file or stream </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -266,7 +266,7 @@ the class guarantees that sequences are normalized (uppercase, T-&gt;U) even whe
       </table>
 </div><div class="memdoc">
 
-<p>Construct from <a class="el" href="classLocARNA_1_1RnaEnsemble.html" title="Represents the raw structure ensemble data for an RNA.">RnaEnsemble</a> with cutoff probability. </p>
+<p>Construct from RnaEnsemble with cutoff probability. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">rna_ensemble</td><td>RNA ensemble data </td></tr>
@@ -276,7 +276,7 @@ the class guarantees that sequences are normalized (uppercase, T-&gt;U) even whe
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd><a class="el" href="classLocARNA_1_1RnaData.html" title="represent sparsified data of RNA ensemble">RnaData</a> copies all required data from rna_ensemble and does not keep a reference; if pfoldparams.stacking is true, copy stacking terms </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>RnaData copies all required data from rna_ensemble and does not keep a reference; if pfoldparams.stacking is true, copy stacking terms </dd></dl>
 
 </div>
 </div>
@@ -388,7 +388,7 @@ the class guarantees that sequences are normalized (uppercase, T-&gt;U) even whe
   <table class="params">
     <tr><td class="paramname">rna_dataA</td><td>RNA ensemble data A </td></tr>
     <tr><td class="paramname">rna_dataB</td><td>RNA ensemble data B </td></tr>
-    <tr><td class="paramname">alignment</td><td><a class="el" href="classLocARNA_1_1Alignment.html" title="Represents a structure-annotated sequence alignment.">Alignment</a> of A and B </td></tr>
+    <tr><td class="paramname">alignment</td><td>Alignment of A and B </td></tr>
     <tr><td class="paramname">p_expA</td><td>background probability for A </td></tr>
     <tr><td class="paramname">p_expB</td><td>background probability for B </td></tr>
     <tr><td class="paramname">only_local</td><td>if true, construct only local alignment</td></tr>
@@ -652,7 +652,7 @@ this method <em>never</em> removes lonely or too long base pairs (according to n
 
 <p>check in loop probabilities </p>
 <dl class="section return"><dt>Returns</dt><dd>true iff loop probabilities are available or not required </dd></dl>
-<dl class="section note"><dt>Note</dt><dd>use to indicate the need for recomputation in <a class="el" href="classLocARNA_1_1RnaData.html#abc8dc4764022d497ffe3a5e022b2b428" title="read and initialize from file, autodetect format">read_autodetect()</a>; always true in <a class="el" href="classLocARNA_1_1RnaData.html" title="represent sparsified data of RNA ensemble">RnaData</a> </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>use to indicate the need for recomputation in read_autodetect(); always true in RnaData </dd></dl>
 
 <p>Reimplemented in <a class="el" href="classLocARNA_1_1ExtRnaData.html#a81716aee7418662fdea271192278c533">LocARNA::ExtRnaData</a>.</p>
 
@@ -810,7 +810,7 @@ this method <em>never</em> removes lonely or too long base pairs (according to n
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>probability that a position i is paired with a position j&lt;i (downstream) </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>O(sequence.length()) implementation </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1RnaData.html#a34118bdb6453420670529c2b1d5bb60e" title="Probability that a position is paired upstream.">prob_paired_upstream</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>prob_paired_upstream </dd></dl>
 
 </div>
 </div>
@@ -839,7 +839,7 @@ this method <em>never</em> removes lonely or too long base pairs (according to n
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>probability that a position i is paired with a position j&gt;i (upstream) </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>O(sequence.length()) implementation </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1RnaData.html#a0ef723aa0e004d40b4a5ee12ee473b59" title="Probability that a position is paired downstream.">prob_paired_downstream</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>prob_paired_downstream </dd></dl>
 
 </div>
 </div>
@@ -918,9 +918,9 @@ this method <em>never</em> removes lonely or too long base pairs (according to n
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>whether probabilities were read completely</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>: this method is designed such that it can be used for <a class="el" href="classLocARNA_1_1RnaData.html" title="represent sparsified data of RNA ensemble">RnaData</a> and <a class="el" href="classLocARNA_1_1ExtRnaData.html" title="represent sparsified data of RNA ensemble extended by in loop probabilities">ExtRnaData</a></dd>
+<dl class="section note"><dt>Note</dt><dd>: this method is designed such that it can be used for RnaData and ExtRnaData</dd>
 <dd>
-the method delegates actual reading to methods <a class="el" href="classLocARNA_1_1RnaData.html#a7f86b92c313ab50bee0bca506f811aa8">read_pp()</a>, <a class="el" href="classLocARNA_1_1RnaData.html#a3435bf3b2250a255920786917f34d0ec">read_old_pp()</a>, <a class="el" href="classLocARNA_1_1RnaData.html#ae884d5413c877c5ae7f90526ff2e2187">read_ps()</a>, and the <a class="el" href="classLocARNA_1_1MultipleAlignment.html" title="Represents a multiple alignment.">MultipleAlignment</a> class.</dd>
+the method delegates actual reading to methods read_pp(), read_old_pp(), read_ps(), and the MultipleAlignment class.</dd>
 <dd>
 when reading in, base pairs exceeding max_bp_span_ or structure information below the probability thresholds are ignored (which is -in part- job of the delegates). </dd></dl>
 
@@ -996,7 +996,7 @@ handling of stacking: after the call, has_stacking_ is true only if the file spe
 <p>Reads only base pairs with probabilities greater than p_bpcut_; reads stacking probabilities only if has_stacking_ is true</p>
 <dl class="section note"><dt>Note</dt><dd>can be overloaded to read extension sections</dd>
 <dd>
-pp is a proprietary format of <a class="el" href="namespaceLocARNA.html">LocARNA</a>. In its simplest version, it starts with the sequence/alignment and then simply lists the arcs (i,j) with their probabilities p and optionally stacking probabilities p2. pp-files contain entries i j p [p2]. p denotes the probabilitiy of base pair (i,j). The optional stacking probability p2 is the joint probability of base pairs (i,j) and (i+1,j+1).</dd>
+pp is a proprietary format of LocARNA. In its simplest version, it starts with the sequence/alignment and then simply lists the arcs (i,j) with their probabilities p and optionally stacking probabilities p2. pp-files contain entries i j p [p2]. p denotes the probabilitiy of base pair (i,j). The optional stacking probability p2 is the joint probability of base pairs (i,j) and (i+1,j+1).</dd>
 <dd>
 handling of stacking: after the call, has_stacking_ is true only if the file specified the STACK keyword and has_stacking_ was true before. </dd></dl>
 
@@ -1119,7 +1119,7 @@ throws wrong_format exception if not in ps format</dd></dl>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1MultipleAlignment.html#a19f1ac249d29f90314f561127dccfd70" title="Write access to annotation.">MultipleAlignment::set_annotation()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>MultipleAlignment::set_annotation() </dd></dl>
 
 </div>
 </div>
@@ -1233,7 +1233,7 @@ throws wrong_format exception if not in ps format</dd></dl>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:22 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -263,8 +263,8 @@ std::vector&lt; <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Maintains the relevant arc matches and their scores. </p>
-<p>It works as an interface between the source of arc match scoring information, i.e. dot plots of the single sequences or explicit listing of all arc matches, and the use of this information in the class <a class="el" href="classLocARNA_1_1Scoring.html" title="Provides methods for the scoring of alignments.">Scoring</a> and in the alignment algorithm. For the latter purpose, it allows to generate the necessary objects of class <a class="el" href="classLocARNA_1_1BasePairs.html" title="Describes sequence and structure ensemble of an RNA.">BasePairs</a> for the iteration of base pairs in the single structures.</p>
-<p><a class="el" href="classLocARNA_1_1ArcMatches.html" title="Maintains the relevant arc matches and their scores.">ArcMatches</a> knows about all arc matches that shall be considered for the alignment. Each arc match gets an index between 0..(number of arc_matches-1). The index is used to access the arc match score, the single arcs of the match, the matrix D, ...</p>
+<p>It works as an interface between the source of arc match scoring information, i.e. dot plots of the single sequences or explicit listing of all arc matches, and the use of this information in the class Scoring and in the alignment algorithm. For the latter purpose, it allows to generate the necessary objects of class BasePairs for the iteration of base pairs in the single structures.</p>
+<p>ArcMatches knows about all arc matches that shall be considered for the alignment. Each arc match gets an index between 0..(number of arc_matches-1). The index is used to access the arc match score, the single arcs of the match, the matrix D, ...</p>
 <p>The object offers iteration over 1.) all arc matches 2.) all arc matches that share left ends/right ends (i,j) During iteration the index of the current arc match is known, thus one never needs to infer the arc match index from the arc ends or arc indices! (This could be done in constant time using an O(n^2) lookup table.) </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a33bdb04b2849e29f7e86a0dadd591404"></a>
@@ -404,7 +404,7 @@ std::vector&lt; <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2
 </div><div class="memdoc">
 
 <p>construct from single base pair probabilities. </p>
-<p>In this case, the object filters for relevant base pairs/arcs by min_prob. Registers constraints and heuristics and then calls read_arcmatch_scores. Constructs <a class="el" href="classLocARNA_1_1BasePairs.html" title="Describes sequence and structure ensemble of an RNA.">BasePairs</a> objects for each single object and registers them. Generates adjacency lists of arc matches for internal use and sorts them. Lists contain only valid arc matches according to constraints and heuristics (see <a class="el" href="classLocARNA_1_1ArcMatches.html#a5fb38faa2b641b9c2ea62901a0fd1bd6">is_valid_arcmatch()</a>). The constructed object does not explicitely represent/maintain the scores of arc matchs.</p>
+<p>In this case, the object filters for relevant base pairs/arcs by min_prob. Registers constraints and heuristics and then calls read_arcmatch_scores. Constructs BasePairs objects for each single object and registers them. Generates adjacency lists of arc matches for internal use and sorts them. Lists contain only valid arc matches according to constraints and heuristics (see is_valid_arcmatch()). The constructed object does not explicitely represent/maintain the scores of arc matchs.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">rnadataA</td><td>data for RNA A </td></tr>
@@ -571,7 +571,7 @@ std::vector&lt; <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2
         </tr>
       </table>
 </div><div class="memdoc">
-<p>get the minimal right ends of any arc match with left ends (al,bl). pre: min_ar, min_br are initialized with largest possible values returns result in out parameters min_ar, min_br </p><dl class="section note"><dt>Note</dt><dd>Does not support noLP like <a class="el" href="classLocARNA_1_1ArcMatches.html#adbf777659ed15ce6c2cf6cd5d40b2e72" title="get the maximal right ends of any arc match with left ends (al,bl).">get_max_right_ends()</a> yet </dd></dl>
+<p>get the minimal right ends of any arc match with left ends (al,bl). pre: min_ar, min_br are initialized with largest possible values returns result in out parameters min_ar, min_br </p><dl class="section note"><dt>Note</dt><dd>Does not support noLP like get_max_right_ends() yet </dd></dl>
 
 </div>
 </div>
@@ -740,7 +740,7 @@ std::vector&lt; <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>All registered arc matches are valid (<a class="el" href="classLocARNA_1_1ArcMatches.html#a5fb38faa2b641b9c2ea62901a0fd1bd6">is_valid_arcmatch()</a>). </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>All registered arc matches are valid (is_valid_arcmatch()). </dd></dl>
 
 </div>
 </div>
@@ -914,7 +914,7 @@ std::vector&lt; <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

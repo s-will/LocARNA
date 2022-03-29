@@ -141,7 +141,7 @@ Code improvements/Maintenance</h2>
 <ul>
 <li>Update travis CI script</li>
 <li>Fix initialization order [FitOnOff]</li>
-<li>Fix missing and superfluous headers [<a class="el" href="alphabet_8hh_source.html">alphabet.hh</a>/icc]</li>
+<li>Fix missing and superfluous headers [alphabet.hh/icc]</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md138"></a>
 Experimental Feature</h2>
@@ -222,7 +222,7 @@ Features / Improvements</h2>
 <li>set the default to extended precision</li>
 <li>recognize failing partition function calculation</li>
 <li>(for sequence trace and match probabilities)</li>
-<li>extend <a class="el" href="namespaceLocARNA.html">LocARNA</a>'s <a class="el" href="quadmath_8hh_source.html">quadmath.hh</a> header and simplify its use</li>
+<li>extend LocARNA's quadmath.hh header and simplify its use</li>
 <li>use templates for partition function type</li>
 <li>support extended (long double) and quad precision (float128)</li>
 </ul>
@@ -333,7 +333,7 @@ Bugfixes</h2>
 <p>change semantics w.r.t. constraints + local folding: constraints turn off local folding reformat change log support generating doxygen documentation from distribution by make doxygen-doc penalized alignment experimental galaxy wrapper generation </p>
 <h2><a class="anchor" id="autotoc_md175"></a>
 1.8.1</h2>
-<p>implement ribofit Bugfix in OMatrix: incorrect address calculation Bugfix: <a class="el" href="namespaceLocARNA.html">LocARNA</a> crashed while writing the result pp file if alignments of zero length are computed with options local file output and alifold consensus dp (alifold workaround) bugfixes (OMatrix, alifold len 0 bug) implement slide rule and conflict rule for f1 and mcc calculation; also use default minimal base pair length 3 in class ConfusionMatrix; class interface changes slightly</p>
+<p>implement ribofit Bugfix in OMatrix: incorrect address calculation Bugfix: LocARNA crashed while writing the result pp file if alignments of zero length are computed with options local file output and alifold consensus dp (alifold workaround) bugfixes (OMatrix, alifold len 0 bug) implement slide rule and conflict rule for f1 and mcc calculation; also use default minimal base pair length 3 in class ConfusionMatrix; class interface changes slightly</p>
 <hr  />
 <h1><a class="anchor" id="autotoc_md177"></a>
 2014</h1>
@@ -437,7 +437,7 @@ Dec 2011</h2>
 <p>Bug-fixes: treefile regexp, LARGE_PF name clash mit Vienna package (1.6.2.1) add script to translate to normalized names for mlocarna</p>
 <p>Add options pw-aligner-options and pw-aligner-p-options, to mlocarna to pass option strings to the pairwise aligner. This is useful in combination with specifying non-standard pairwise alignment programs.</p>
 <p>Support generation of pp files from dp2.ps and dp.ps files when skipping dot plot computation with &ndash;skip-pp (keep name for legacy). This allows the combine user-defined dotplots with anchor constraints from the mfasta input file.</p>
-<p>Support fixed structures (with pseudoknots) in the fasta input of mlocarna as structure constraint string with tag #FS All base pairs in the fix structure receive a probability of 1. (1.6.2.2)</p>
+<p>Support fixed structures (with pseudoknots) in the fasta input of mlocarna as structure constraint string with tag FS All base pairs in the fix structure receive a probability of 1. (1.6.2.2)</p>
 <hr  />
 <h1><a class="anchor" id="autotoc_md212"></a>
 2010</h1>
@@ -452,7 +452,7 @@ Mar 2010</h2>
 <h2><a class="anchor" id="autotoc_md215"></a>
 May 2010</h2>
 <p>Introduce new representation of fasta data Major restructuring/refactorization of mlocarna.in and MLocarna.pm Move many functions of mlocarna.in to packages and introduce several new packages to group functions thematically (locarna-1.5.3)</p>
-<p>Resolve a bug that made <a class="el" href="namespaceLocARNA.html">LocARNA</a> handle Ts as unknown characters. <a class="el" href="namespaceLocARNA.html">LocARNA</a> now automatically transforms Ts to Us in input sequences. The bug did not affect input sequences without Ts. For matchs involving Ts, <a class="el" href="namespaceLocARNA.html">LocARNA</a> wrongly used an ad-hoc score instead of the ribosum score for matches involving 'U', as one would expect.</p>
+<p>Resolve a bug that made LocARNA handle Ts as unknown characters. LocARNA now automatically transforms Ts to Us in input sequences. The bug did not affect input sequences without Ts. For matchs involving Ts, LocARNA wrongly used an ad-hoc score instead of the ribosum score for matches involving 'U', as one would expect.</p>
 <h2><a class="anchor" id="autotoc_md216"></a>
 Oct 2010</h2>
 <p>Add EdgeController: adds feature to constrain (max-diff-match) alignment relative to a given alignment. Change handling of max-diff-match in case of unequal length: instead of relaxing constraint, change constraint to |i*(lenB/lenA)-j|&lt;=max-diff Add multiple alignment class to support construction of EdgeController.</p>
@@ -572,7 +572,7 @@ Dez 2005</h2>
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

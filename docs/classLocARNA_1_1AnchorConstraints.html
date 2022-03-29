@@ -171,7 +171,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <p>Relaxed semantics (originally, the only implemented semantics):</p>
 <p>a) Positions with equal names must be matched (aligned to each other) Consequently, positions with names that occur also in the other sequence cannot be deleted. b) Names that occur in only one sequence, do not impose any constraints. Therefore, names can occur in arbitrary order.</p>
 <p>Strict (ordered) semantics:</p>
-<p>a) Names must be strictly lexicographically ordered in the annotation of each sequence b) Positions of equal names must be matched. c) <a class="el" href="classLocARNA_1_1Alignment.html" title="Represents a structure-annotated sequence alignment.">Alignment</a> columns must not violate the lex order, in the following sense: each alignment column, where at least one position is named, receives this name; the names of alignment columns must be lex-ordered (in the order of the columns). </p>
+<p>a) Names must be strictly lexicographically ordered in the annotation of each sequence b) Positions of equal names must be matched. c) Alignment columns must not violate the lex order, in the following sense: each alignment column, where at least one position is named, receives this name; the names of alignment columns must be lex-ordered (in the order of the columns). </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aed43bc58db910402d5410bb41fbd3833"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aed43bc58db910402d5410bb41fbd3833">&#9670;&nbsp;</a></span>AnchorConstraints() <span class="overload">[1/2]</span></h2>
@@ -339,7 +339,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>whether it is allowed to delete i immediately right of j </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1AnchorConstraints.html#a264c89d040d67223ccbf60cdd49e50f5" title="is deletion allowed? (unoptimized)">allowed_del_unopt()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>allowed_del_unopt() </dd></dl>
 
 </div>
 </div>
@@ -386,7 +386,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>whether it is allowed to delete i immediately right of j </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1AnchorConstraints.html#a48db6a9f418118a59541643baee61a20" title="is match allowed">allowed_match()</a>, <a class="el" href="classLocARNA_1_1AnchorConstraints.html#a9ef126ad9d8a87920537a07aa00506da" title="is insertion allowed?">allowed_ins()</a></dd></dl>
+<dl class="section see"><dt>See also</dt><dd>allowed_match(), allowed_ins()</dd></dl>
 <p>Definition (strict semantics): allowed_del(i, j) iff (! is_anchored(i) &amp;&amp; names_a_[ max { i'&lt;=i | named(i') ] &lt; names_b_[ min { j'&gt;=j+1 | named(j') ] &amp;&amp; names_a_[ min { i'&gt;=i | named(i') ] &gt; names_b_[ max { j'&lt;=j | named(j') ])</p>
 <p>Definition (relaxed semantics): allowed_del(i,j) iff i~"j+0.5" does not cross (or touch) any edge i'~j', where name_a_[i']=name_b_[j']  </p>
 
@@ -435,7 +435,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>whether it is allowed to insert j immediately right of i </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1AnchorConstraints.html#a48db6a9f418118a59541643baee61a20" title="is match allowed">allowed_match()</a>, <a class="el" href="classLocARNA_1_1AnchorConstraints.html#a6109506dd6c263285167ef75646fca53" title="is deletion allowed?">allowed_del()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>allowed_match(), allowed_del() </dd></dl>
 
 </div>
 </div>
@@ -482,7 +482,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>whether it is allowed to insert j immediately right of i </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1AnchorConstraints.html#a48db6a9f418118a59541643baee61a20" title="is match allowed">allowed_match()</a>, <a class="el" href="classLocARNA_1_1AnchorConstraints.html#a6109506dd6c263285167ef75646fca53" title="is deletion allowed?">allowed_del()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>allowed_match(), allowed_del() </dd></dl>
 
 </div>
 </div>
@@ -595,7 +595,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><div class="memdoc">
 
 <p>Is position in B anchored? </p>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1AnchorConstraints.html#afbe7051bae03d53eefd54a2ab2d2b7ba" title="Is position in A anchored?">is_anchored_a</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>is_anchored_a </dd></dl>
 
 </div>
 </div>
@@ -658,7 +658,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><div class="memdoc">
 
 <p>Is position in B named? </p>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1AnchorConstraints.html#a320cc4cb65c79d26ab4442949e361717" title="Is position in A named?">is_named_a</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>is_named_a </dd></dl>
 
 </div>
 </div>
@@ -727,7 +727,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

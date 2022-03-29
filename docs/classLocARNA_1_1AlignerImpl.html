@@ -77,7 +77,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Implementation of <a class="el" href="classLocARNA_1_1Aligner.html" title="Implements locarna alignment algorithm.">Aligner</a>.  
+<p>Implementation of Aligner.  
  <a href="classLocARNA_1_1AlignerImpl.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="aligner__impl_8hh_source.html">aligner_impl.hh</a>&gt;</code></p>
@@ -292,7 +292,7 @@ const <a class="el" href="classLocARNA_1_1AlignerImpl_1_1UnmodifiedScoringView.h
 <tr class="separator:a3ec487068f8edc6c9050a71520cc339d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Implementation of <a class="el" href="classLocARNA_1_1Aligner.html" title="Implements locarna alignment algorithm.">Aligner</a>. </p>
+<div class="textblock"><p>Implementation of Aligner. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a5a3171ba8911268bcfb100c7373560f2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5a3171ba8911268bcfb100c7373560f2">&#9670;&nbsp;</a></span>M_matrix_t</h2>
@@ -347,7 +347,7 @@ const <a class="el" href="classLocARNA_1_1AlignerImpl_1_1UnmodifiedScoringView.h
 <p>copy constructor </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">a</td><td><a class="el" href="classLocARNA_1_1Aligner.html" title="Implements locarna alignment algorithm.">Aligner</a> implementation </td></tr>
+    <tr><td class="paramname">a</td><td>Aligner implementation </td></tr>
   </table>
   </dd>
 </dl>
@@ -438,7 +438,7 @@ const <a class="el" href="classLocARNA_1_1AlignerImpl_1_1UnmodifiedScoringView.h
         </tr>
       </table>
 </div><div class="memdoc">
-<p>create the entries in the D matrix This function is called by <a class="el" href="classLocARNA_1_1AlignerImpl.html#a0b6b6316c6528d5e8b2908f7d147da0b" title="compute the alignment score">align()</a> (unless D_created) </p>
+<p>create the entries in the D matrix This function is called by align() (unless D_created) </p>
 
 </div>
 </div>
@@ -841,7 +841,7 @@ template&lt;class ScoringView &gt; </div>
     <tr><td class="paramname">exclA</td><td>allow deletion of prefix of sequence A with cost exclusion() </td></tr>
     <tr><td class="paramname">globalB</td><td>analogous for sequence B </td></tr>
     <tr><td class="paramname">exclB</td><td>analogous for sequence B </td></tr>
-    <tr><td class="paramname">sv</td><td><a class="el" href="classLocARNA_1_1Scoring.html" title="Provides methods for the scoring of alignments.">Scoring</a> view </td></tr>
+    <tr><td class="paramname">sv</td><td>Scoring view </td></tr>
   </table>
   </dd>
 </dl>
@@ -884,7 +884,7 @@ template&lt;class ScoringView &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>do the trace back through the alignment matrix with partial recomputation pre: call <a class="el" href="classLocARNA_1_1AlignerImpl.html#a0b6b6316c6528d5e8b2908f7d147da0b" title="compute the alignment score">align()</a> to fill the top-level matrix </p>
+<p>do the trace back through the alignment matrix with partial recomputation pre: call align() to fill the top-level matrix </p>
 
 </div>
 </div>
@@ -1145,8 +1145,8 @@ template&lt;class ScoringView &gt; </div>
 </div><div class="memdoc">
 
 <p>restriction of alignment for k-best </p>
-<p>The <a class="el" href="classLocARNA_1_1AlignerRestriction.html" title="Restricts range of an alignment in Aligner.">AlignerRestriction</a> r is used for the k-best local alignments.</p>
-<p><a class="el" href="classLocARNA_1_1Aligner.html" title="Implements locarna alignment algorithm.">Aligner</a> always works on sub-sequences/structures of seqA and seqB. These are specified by r.</p>
+<p>The AlignerRestriction r is used for the k-best local alignments.</p>
+<p>Aligner always works on sub-sequences/structures of seqA and seqB. These are specified by r.</p>
 <p>In the standard case, i.e. align the whole sequences, the values are set to startA=1 and endA=seqA.length() and analogously for B</p>
 <p>The constructor initializes to the above standard values methods provide possibility to restriction. </p>
 
@@ -1159,7 +1159,7 @@ template&lt;class ScoringView &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -111,7 +111,7 @@ DESCRIPTION</h1>
 <p><b>MLocarna</b> computes a multiple sequence-structure alignment of RNA sequences. The structure of these sequences does not have to be known but is inferred based in simultaneous alignment and folding.</p>
 <p>Generally, mlocarna takes multiple sequences as input, given in a fasta file. The fasta file can be extended to specify structure and anchor constraints that respectively control the possible foldings and possible alignments. The main outcome is a multiple alignment together with a consensus structure.</p>
 <p>Technically, mlocarna works as front end to the pairwise alignment tools locarna, locarna_p, and sparse (and even carna), which are employed to construct the multiple alignment progressively.</p>
-<p>Going beyond the basic progressive alignment scheme, Mlocarna implements probabilistic consistency transformation and iterative alignment, which are available in probabilistic mode. Moreover, the <a class="el" href="namespaceLocARNA.html">LocARNA</a> package provides an alternative multiple alignment tool "locarnate", which generates alignments based on T-Coffee using (non-probabilistic) consistency transformation.</p>
+<p>Going beyond the basic progressive alignment scheme, Mlocarna implements probabilistic consistency transformation and iterative alignment, which are available in probabilistic mode. Moreover, the LocARNA package provides an alternative multiple alignment tool "locarnate", which generates alignments based on T-Coffee using (non-probabilistic) consistency transformation.</p>
 <h1><a class="anchor" id="autotoc_md17"></a>
 OPTIONS</h1>
 <h2><a class="anchor" id="autotoc_md18"></a>
@@ -381,7 +381,7 @@ Further options for probabilistic mode</h2>
 Miscallaneous modes of operation</h2>
 <ul>
 <li><p class="startli"><b>&ndash;realign</b></p>
-<p class="startli">Realignment mode. In this mode, the input must be in clustal format and is interpreted as alignment of the input sequences; the sequences are obtained by removing all gap symbols. Moreover, the given alignment is set as reference alignment for &ndash;max-diff-aln. Structure and anchor constraints can be specified as consensus constraints in the input; constraints are specified as 'alignment strings' with names '#A1', '#S', or '#FS' for anchor, structure, or fixed structure constraints, respectively. Characters in the '#A1' anchor specification other than '-' and '.' constrain the aligned residues in the respective column to remain aligned (blanks are disallowed; annotations '#A2', '#A3', ... are ignored). The consensus structure constraint is equivalent to constraining each single sequence by the projection of the consensus constraint to the sequence (removing all base pairs with at least one gapped end).</p>
+<p class="startli">Realignment mode. In this mode, the input must be in clustal format and is interpreted as alignment of the input sequences; the sequences are obtained by removing all gap symbols. Moreover, the given alignment is set as reference alignment for &ndash;max-diff-aln. Structure and anchor constraints can be specified as consensus constraints in the input; constraints are specified as 'alignment strings' with names 'A1', 'S', or 'FS' for anchor, structure, or fixed structure constraints, respectively. Characters in the 'A1' anchor specification other than '-' and '.' constrain the aligned residues in the respective column to remain aligned (blanks are disallowed; annotations 'A2', 'A3', ... are ignored). The consensus structure constraint is equivalent to constraining each single sequence by the projection of the consensus constraint to the sequence (removing all base pairs with at least one gapped end).</p>
 </li>
 <li><p class="startli"><b>&ndash;dp-cache</b>=directory</p>
 <p class="startli">Use directory &lt;dir&gt; as cache for dot plot or pp files (useful for avoiding multiple computation).</p>
@@ -465,7 +465,7 @@ Getting Help</h2>
 EXAMPLES</h1>
 <h2><a class="anchor" id="autotoc_md34"></a>
 Calling mlocarna</h2>
-<p>[Note that the <a class="el" href="namespaceLocARNA.html">LocARNA</a> distribution provides files of the following and other examples in Data/Examples.]</p>
+<p>[Note that the LocARNA distribution provides files of the following and other examples in Data/Examples.]</p>
 <p>Sequences are typically given in plain fasta format like </p><pre class="fragment">example.fa
 ----------------------------------------
 &gt;fruA
@@ -555,7 +555,7 @@ REFERENCES</h1>
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

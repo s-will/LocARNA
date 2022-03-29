@@ -190,8 +190,8 @@ Public Member Functions</h2></td></tr>
 <p>Computes ensemble partition functions and probabilities using McCaskill's algorithm. Optionally computes additional matrices required for in-loop probabilities.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">ma</td><td>the RNA sequence or alignment as <a class="el" href="classLocARNA_1_1MultipleAlignment.html" title="Represents a multiple alignment.">MultipleAlignment</a> object; the object holds a copy of ma </td></tr>
-    <tr><td class="paramname">params</td><td>pfolding parameters; implicitely, the object holds a copy of the model details in <a class="el" href="classLocARNA_1_1PFoldParams.html" title="Parameters for partition folding.">PFoldParams</a> </td></tr>
+    <tr><td class="paramname">ma</td><td>the RNA sequence or alignment as MultipleAlignment object; the object holds a copy of ma </td></tr>
+    <tr><td class="paramname">params</td><td>pfolding parameters; implicitely, the object holds a copy of the model details in PFoldParams </td></tr>
     <tr><td class="paramname">inLoopProbs</td><td>whether in loop probabilities should be made available </td></tr>
     <tr><td class="paramname">use_alifold</td><td>whether alifold should be used</td></tr>
   </table>
@@ -305,7 +305,7 @@ Public Member Functions</h2></td></tr>
 <dd>
 For computing these unpaired probabilities we need access to the dynamic programming matrices of the McCaskill algorithm</dd></dl>
 <dl class="section pre"><dt>Precondition</dt><dd>McCaskill matrices are computed and generated. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd>compute_McCaskill_matrices(), <a class="el" href="classLocARNA_1_1RnaEnsemble.html" title="Represents the raw structure ensemble data for an RNA.">RnaEnsemble</a>(const <a class="el" href="classLocARNA_1_1MultipleAlignment.html" title="Represents a multiple alignment.">MultipleAlignment</a> &amp;sequence_, bool keepMcC)</dd></dl>
+<dl class="section see"><dt>See also</dt><dd>compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &amp;sequence_, bool keepMcC)</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>if in loop probs are unavailable, return probability 1.0 </dd></dl>
 
 </div>
@@ -364,7 +364,7 @@ For computing these unpaired probabilities we need access to the dynamic program
 <dd>
 For computing these unpaired probabilities we need access to the dynamic programming matrices of the McCaskill algorithm</dd></dl>
 <dl class="section pre"><dt>Precondition</dt><dd>McCaskill matrices are computed and generated. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd>compute_McCaskill_matrices(), <a class="el" href="classLocARNA_1_1RnaEnsemble.html" title="Represents the raw structure ensemble data for an RNA.">RnaEnsemble</a>(const <a class="el" href="classLocARNA_1_1MultipleAlignment.html" title="Represents a multiple alignment.">MultipleAlignment</a> &amp;sequence_, bool keepMcC)</dd></dl>
+<dl class="section see"><dt>See also</dt><dd>compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &amp;sequence_, bool keepMcC)</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>if in loop probs are unavailable, return probability 1.0 </dd></dl>
 
 </div>
@@ -700,7 +700,7 @@ For computing these unpaired probabilities we need access to the dynamic program
 <dd>
 For computing these unpaired probabilities we need access to the dynamic programming matrices of the McCaskill algorithm</dd></dl>
 <dl class="section pre"><dt>Precondition</dt><dd>McCaskill matrices are computed and generated. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd>compute_McCaskill_matrices(), <a class="el" href="classLocARNA_1_1RnaEnsemble.html" title="Represents the raw structure ensemble data for an RNA.">RnaEnsemble</a>(const <a class="el" href="classLocARNA_1_1MultipleAlignment.html" title="Represents a multiple alignment.">MultipleAlignment</a> &amp;sequence_, bool keepMcC)</dd></dl>
+<dl class="section see"><dt>See also</dt><dd>compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &amp;sequence_, bool keepMcC)</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>if in loop probs are unavailable, return probability 1.0 </dd></dl>
 
 </div>
@@ -752,7 +752,7 @@ For computing these unpaired probabilities we need access to the dynamic program
 <dd>
 For computing these unpaired probabilities we need access to the dynamic programming matrices of the McCaskill algorithm</dd></dl>
 <dl class="section pre"><dt>Precondition</dt><dd>McCaskill matrices are computed and generated. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd>compute_McCaskill_matrices(), <a class="el" href="classLocARNA_1_1RnaEnsemble.html" title="Represents the raw structure ensemble data for an RNA.">RnaEnsemble</a>(const <a class="el" href="classLocARNA_1_1MultipleAlignment.html" title="Represents a multiple alignment.">MultipleAlignment</a> &amp;sequence_, bool keepMcC)</dd></dl>
+<dl class="section see"><dt>See also</dt><dd>compute_McCaskill_matrices(), RnaEnsemble(const MultipleAlignment &amp;sequence_, bool keepMcC)</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>if in loop probs are unavailable, return probability 1.0 </dd></dl>
 
 </div>
@@ -792,7 +792,7 @@ For computing these unpaired probabilities we need access to the dynamic program
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:22 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

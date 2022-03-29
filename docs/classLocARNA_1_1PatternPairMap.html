@@ -75,7 +75,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>manage a set of EPMs (<a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a>)  
+<p>manage a set of EPMs (PatternPair)  
  <a href="classLocARNA_1_1PatternPairMap.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="exact__matcher_8hh_source.html">exact_matcher.hh</a>&gt;</code></p>
@@ -84,11 +84,11 @@ $(function() {
 Public Types</h2></td></tr>
 <tr class="memitem:a211bff5858f5705be26300fde705ac48"><td class="memItemLeft" align="right" valign="top"><a id="a211bff5858f5705be26300fde705ac48"></a>
 typedef <a class="el" href="classLocARNA_1_1PatternPair.html">PatternPair</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#a211bff5858f5705be26300fde705ac48">selfValueTYPE</a></td></tr>
-<tr class="memdesc:a211bff5858f5705be26300fde705ac48"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a>. <br /></td></tr>
+<tr class="memdesc:a211bff5858f5705be26300fde705ac48"><td class="mdescLeft">&#160;</td><td class="mdescRight">PatternPair. <br /></td></tr>
 <tr class="separator:a211bff5858f5705be26300fde705ac48"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a195f4c19caa4b083ae5f17b1179303fc"><td class="memItemLeft" align="right" valign="top"><a id="a195f4c19caa4b083ae5f17b1179303fc"></a>
 typedef <a class="el" href="classLocARNA_1_1PatternPair.html">PatternPair</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#a195f4c19caa4b083ae5f17b1179303fc">SelfValuePTR</a></td></tr>
-<tr class="memdesc:a195f4c19caa4b083ae5f17b1179303fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">pointer to <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> <br /></td></tr>
+<tr class="memdesc:a195f4c19caa4b083ae5f17b1179303fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">pointer to PatternPair <br /></td></tr>
 <tr class="separator:a195f4c19caa4b083ae5f17b1179303fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a769230faf78789be38993ad436dd7d8f"><td class="memItemLeft" align="right" valign="top"><a id="a769230faf78789be38993ad436dd7d8f"></a>
 typedef std::multimap&lt; int, <a class="el" href="classLocARNA_1_1PatternPairMap.html#a195f4c19caa4b083ae5f17b1179303fc">SelfValuePTR</a>, std::greater&lt; int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#a769230faf78789be38993ad436dd7d8f">orderedMapTYPE</a></td></tr>
@@ -116,7 +116,7 @@ typedef patListTYPE::const_iterator&#160;</td><td class="memItemRight" valign="b
 <tr class="separator:a50cedf394dc720c5c541fad65949394a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39d231f7eeacb95e74a1f2891ae63c88"><td class="memItemLeft" align="right" valign="top"><a id="a39d231f7eeacb95e74a1f2891ae63c88"></a>
 typedef std::unordered_map&lt; std::string, <a class="el" href="classLocARNA_1_1PatternPairMap.html#a195f4c19caa4b083ae5f17b1179303fc">SelfValuePTR</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#a39d231f7eeacb95e74a1f2891ae63c88">PatternIdMapTYPE</a></td></tr>
-<tr class="memdesc:a39d231f7eeacb95e74a1f2891ae63c88"><td class="mdescLeft">&#160;</td><td class="mdescRight">map type patternId -&gt; pointer to <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> <br /></td></tr>
+<tr class="memdesc:a39d231f7eeacb95e74a1f2891ae63c88"><td class="mdescLeft">&#160;</td><td class="mdescRight">map type patternId -&gt; pointer to PatternPair <br /></td></tr>
 <tr class="separator:a39d231f7eeacb95e74a1f2891ae63c88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -133,20 +133,20 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="c
 <tr class="memdesc:a55820b00dff963085bd38e5d30a6d74c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
 <tr class="separator:a55820b00dff963085bd38e5d30a6d74c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af05aa07c1891b4837ad3f4a409eabce3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#af05aa07c1891b4837ad3f4a409eabce3">add</a> (const std::string &amp;id, const <a class="el" href="classLocARNA_1_1SinglePattern.html">SinglePattern</a> &amp;first, const <a class="el" href="classLocARNA_1_1SinglePattern.html">SinglePattern</a> &amp;second, const std::string &amp;structure, int score)</td></tr>
-<tr class="memdesc:af05aa07c1891b4837ad3f4a409eabce3"><td class="mdescLeft">&#160;</td><td class="mdescRight">adds a <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> consisting of two SinglePatterns to the <a class="el" href="classLocARNA_1_1PatternPairMap.html" title="manage a set of EPMs (PatternPair)">PatternPairMap</a>  <a href="classLocARNA_1_1PatternPairMap.html#af05aa07c1891b4837ad3f4a409eabce3">More...</a><br /></td></tr>
+<tr class="memdesc:af05aa07c1891b4837ad3f4a409eabce3"><td class="mdescLeft">&#160;</td><td class="mdescRight">adds a PatternPair consisting of two SinglePatterns to the PatternPairMap  <a href="classLocARNA_1_1PatternPairMap.html#af05aa07c1891b4837ad3f4a409eabce3">More...</a><br /></td></tr>
 <tr class="separator:af05aa07c1891b4837ad3f4a409eabce3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23cf10ba38361b88142c3bb931958c23"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#a23cf10ba38361b88142c3bb931958c23">add</a> (const <a class="el" href="classLocARNA_1_1PatternPairMap.html#a195f4c19caa4b083ae5f17b1179303fc">SelfValuePTR</a> value)</td></tr>
-<tr class="memdesc:a23cf10ba38361b88142c3bb931958c23"><td class="mdescLeft">&#160;</td><td class="mdescRight">adds a <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> to the <a class="el" href="classLocARNA_1_1PatternPairMap.html" title="manage a set of EPMs (PatternPair)">PatternPairMap</a>  <a href="classLocARNA_1_1PatternPairMap.html#a23cf10ba38361b88142c3bb931958c23">More...</a><br /></td></tr>
+<tr class="memdesc:a23cf10ba38361b88142c3bb931958c23"><td class="mdescLeft">&#160;</td><td class="mdescRight">adds a PatternPair to the PatternPairMap  <a href="classLocARNA_1_1PatternPairMap.html#a23cf10ba38361b88142c3bb931958c23">More...</a><br /></td></tr>
 <tr class="separator:a23cf10ba38361b88142c3bb931958c23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad15d1f8b1b5de21edf7fd9599c803de1"><td class="memItemLeft" align="right" valign="top"><a id="ad15d1f8b1b5de21edf7fd9599c803de1"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#ad15d1f8b1b5de21edf7fd9599c803de1">makeOrderedMap</a> ()</td></tr>
 <tr class="memdesc:ad15d1f8b1b5de21edf7fd9599c803de1"><td class="mdescLeft">&#160;</td><td class="mdescRight">creates the ordered Map <br /></td></tr>
 <tr class="separator:ad15d1f8b1b5de21edf7fd9599c803de1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e585b7228c4c4467e40f05ff3be90dd"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classLocARNA_1_1PatternPair.html">PatternPair</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#a1e585b7228c4c4467e40f05ff3be90dd">getPatternPair</a> (const std::string &amp;id) const</td></tr>
-<tr class="memdesc:a1e585b7228c4c4467e40f05ff3be90dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">gets the <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> with the Id id  <a href="classLocARNA_1_1PatternPairMap.html#a1e585b7228c4c4467e40f05ff3be90dd">More...</a><br /></td></tr>
+<tr class="memdesc:a1e585b7228c4c4467e40f05ff3be90dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">gets the PatternPair with the Id id  <a href="classLocARNA_1_1PatternPairMap.html#a1e585b7228c4c4467e40f05ff3be90dd">More...</a><br /></td></tr>
 <tr class="separator:a1e585b7228c4c4467e40f05ff3be90dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afdb9d84b86b19b91bd5fa8fdba5a5d25"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classLocARNA_1_1PatternPairMap.html#a195f4c19caa4b083ae5f17b1179303fc">SelfValuePTR</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#afdb9d84b86b19b91bd5fa8fdba5a5d25">getPatternPairPTR</a> (const std::string &amp;id) const</td></tr>
-<tr class="memdesc:afdb9d84b86b19b91bd5fa8fdba5a5d25"><td class="mdescLeft">&#160;</td><td class="mdescRight">gets the pointer to the <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> with the Id id  <a href="classLocARNA_1_1PatternPairMap.html#afdb9d84b86b19b91bd5fa8fdba5a5d25">More...</a><br /></td></tr>
+<tr class="memdesc:afdb9d84b86b19b91bd5fa8fdba5a5d25"><td class="mdescLeft">&#160;</td><td class="mdescRight">gets the pointer to the PatternPair with the Id id  <a href="classLocARNA_1_1PatternPairMap.html#afdb9d84b86b19b91bd5fa8fdba5a5d25">More...</a><br /></td></tr>
 <tr class="separator:afdb9d84b86b19b91bd5fa8fdba5a5d25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a020d9c48741cc1ba24a69995bb1cff79"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classLocARNA_1_1PatternPairMap.html#ac35aacb26084ef20b173d0d6ffc24f84">patListTYPE</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1PatternPairMap.html#a020d9c48741cc1ba24a69995bb1cff79">getList</a> () const</td></tr>
 <tr class="separator:a020d9c48741cc1ba24a69995bb1cff79"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -166,7 +166,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="separator:a5b8fd9e2e0ca71e069374f094beb732a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>manage a set of EPMs (<a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a>) </p>
+<div class="textblock"><p>manage a set of EPMs (PatternPair) </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a23cf10ba38361b88142c3bb931958c23"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a23cf10ba38361b88142c3bb931958c23">&#9670;&nbsp;</a></span>add() <span class="overload">[1/2]</span></h2>
@@ -184,10 +184,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
       </table>
 </div><div class="memdoc">
 
-<p>adds a <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> to the <a class="el" href="classLocARNA_1_1PatternPairMap.html" title="manage a set of EPMs (PatternPair)">PatternPairMap</a> </p>
+<p>adds a PatternPair to the PatternPairMap </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">value</td><td>pointer to the <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> </td></tr>
+    <tr><td class="paramname">value</td><td>pointer to the PatternPair </td></tr>
   </table>
   </dd>
 </dl>
@@ -238,14 +238,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
       </table>
 </div><div class="memdoc">
 
-<p>adds a <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> consisting of two SinglePatterns to the <a class="el" href="classLocARNA_1_1PatternPairMap.html" title="manage a set of EPMs (PatternPair)">PatternPairMap</a> </p>
+<p>adds a PatternPair consisting of two SinglePatterns to the PatternPairMap </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">id</td><td>Id of the <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> </td></tr>
+    <tr><td class="paramname">id</td><td>Id of the PatternPair </td></tr>
     <tr><td class="paramname">first</td><td>first pattern </td></tr>
     <tr><td class="paramname">second</td><td>second pattern </td></tr>
-    <tr><td class="paramname">structure</td><td>structure of the <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> </td></tr>
-    <tr><td class="paramname">score</td><td>score of the <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> </td></tr>
+    <tr><td class="paramname">structure</td><td>structure of the PatternPair </td></tr>
+    <tr><td class="paramname">score</td><td>score of the PatternPair </td></tr>
   </table>
   </dd>
 </dl>
@@ -388,14 +388,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
       </table>
 </div><div class="memdoc">
 
-<p>gets the <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> with the Id id </p>
+<p>gets the PatternPair with the Id id </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">id</td><td>Id of <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> </td></tr>
+    <tr><td class="paramname">id</td><td>Id of PatternPair </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> with Id id </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>PatternPair with Id id </dd></dl>
 
 </div>
 </div>
@@ -415,14 +415,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
       </table>
 </div><div class="memdoc">
 
-<p>gets the pointer to the <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> with the Id id </p>
+<p>gets the pointer to the PatternPair with the Id id </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">id</td><td>Id of <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> </td></tr>
+    <tr><td class="paramname">id</td><td>Id of PatternPair </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>pointer to the <a class="el" href="classLocARNA_1_1PatternPair.html" title="is able to manage an EPM, consists of 2 singlepatterns, one in each RNA">PatternPair</a> with Id id </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to the PatternPair with Id id </dd></dl>
 
 </div>
 </div>
@@ -451,7 +451,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -179,7 +179,7 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="c
 <tr class="memdesc:af4af0cd0b5d9c630d6e28b0e2295d9e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct as pairwise alignment from names and alignment strings.  <a href="classLocARNA_1_1MultipleAlignment.html#af4af0cd0b5d9c630d6e28b0e2295d9e6">More...</a><br /></td></tr>
 <tr class="separator:af4af0cd0b5d9c630d6e28b0e2295d9e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09ec2e76ef72761b2c795b45962928fb"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1MultipleAlignment.html#a09ec2e76ef72761b2c795b45962928fb">MultipleAlignment</a> (const <a class="el" href="classLocARNA_1_1Alignment.html">Alignment</a> &amp;alignment, bool only_local=false, bool special_gap_symbols=false)</td></tr>
-<tr class="memdesc:a09ec2e76ef72761b2c795b45962928fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct from <a class="el" href="classLocARNA_1_1Alignment.html" title="Represents a structure-annotated sequence alignment.">Alignment</a> object.  <a href="classLocARNA_1_1MultipleAlignment.html#a09ec2e76ef72761b2c795b45962928fb">More...</a><br /></td></tr>
+<tr class="memdesc:a09ec2e76ef72761b2c795b45962928fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct from Alignment object.  <a href="classLocARNA_1_1MultipleAlignment.html#a09ec2e76ef72761b2c795b45962928fb">More...</a><br /></td></tr>
 <tr class="separator:a09ec2e76ef72761b2c795b45962928fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac90a4e9382027d9a1d2666f7597eace3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1MultipleAlignment.html#ac90a4e9382027d9a1d2666f7597eace3">MultipleAlignment</a> (const <a class="el" href="classLocARNA_1_1AlignmentEdges.html">AlignmentEdges</a> &amp;edges, const <a class="el" href="classLocARNA_1_1Sequence.html">Sequence</a> &amp;seqA, const <a class="el" href="classLocARNA_1_1Sequence.html">Sequence</a> &amp;seqB)</td></tr>
 <tr class="memdesc:ac90a4e9382027d9a1d2666f7597eace3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct from alignment edges and sequences.  <a href="classLocARNA_1_1MultipleAlignment.html#ac90a4e9382027d9a1d2666f7597eace3">More...</a><br /></td></tr>
@@ -306,7 +306,7 @@ Protected Member Functions</h2></td></tr>
 <p>Supports traversal of name/sequence pairs. The sequence entries support mapping from columns to positions and back.</p>
 <p>Names are unique in a multiple alignment object.</p>
 <p>Sequences positions and column indices are 1..len.</p>
-<p><a class="el" href="classLocARNA_1_1MultipleAlignment.html" title="Represents a multiple alignment.">MultipleAlignment</a> can have anchor and structure annotation and can read and write them.</p>
+<p>MultipleAlignment can have anchor and structure annotation and can read and write them.</p>
 <dl class="section note"><dt>Note</dt><dd>this class is agnostic of the type of sequences in the alignment; it does not check for 'allowed characters' nor transform characters. However, normalize_rna_bases() is provided to perform a normalization in the case of RNAs, which is generally assumed by the alignment engines and Vienna folding routines.</dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a7fc15eb5eaf65bb5ed461a71f65822c4"></a>
@@ -412,7 +412,7 @@ Protected Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1MultipleAlignment.html#a3cc694a18f204ea3360fda2250e0c327" title="file format type for multiple alignments">FormatType</a>) </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>FormatType) </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">failure</td><td>on read problems </td></tr>
@@ -457,7 +457,7 @@ Protected Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1MultipleAlignment.html#a3cc694a18f204ea3360fda2250e0c327" title="file format type for multiple alignments">FormatType</a>) </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>FormatType) </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">failure</td><td>on read errors </td></tr>
@@ -588,16 +588,16 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Construct from <a class="el" href="classLocARNA_1_1Alignment.html" title="Represents a structure-annotated sequence alignment.">Alignment</a> object. </p>
+<p>Construct from Alignment object. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">alignment</td><td>object of type <a class="el" href="classLocARNA_1_1Alignment.html" title="Represents a structure-annotated sequence alignment.">Alignment</a> </td></tr>
+    <tr><td class="paramname">alignment</td><td>object of type Alignment </td></tr>
     <tr><td class="paramname">only_local</td><td>if true, construct only local alignment </td></tr>
     <tr><td class="paramname">special_gap_symbols</td><td>if true, use special distinct gap symbols for gaps due to loop deletion '_' or sparsification '~'</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>Automatically computes a consensus anchor string if anchors are available. Consensus anchors containing duplicate names are cleared. Does not compute some kind of consensus structure, even if structure annotation of sequences A and B in <a class="el" href="classLocARNA_1_1Alignment.html" title="Represents a structure-annotated sequence alignment.">Alignment</a> is available. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Automatically computes a consensus anchor string if anchors are available. Consensus anchors containing duplicate names are cleared. Does not compute some kind of consensus structure, even if structure annotation of sequences A and B in Alignment is available. </dd></dl>
 
 </div>
 </div>
@@ -1179,7 +1179,7 @@ template&lt;size_t N&gt; </div>
 </div><div class="memdoc">
 
 <p>normalize rna symbols </p>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="namespaceLocARNA.html#a1ec4b9da4789fd38379743edb18be34e" title="Transform an RNA sequence string.">normalize_rna_sequence()</a></dd></dl>
+<dl class="section see"><dt>See also</dt><dd>normalize_rna_sequence()</dd></dl>
 <p>Normalize the symbols in all aligned sequences assuming that they code for RNA </p>
 
 </div>
@@ -1510,7 +1510,7 @@ template&lt;size_t N&gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1MultipleAlignment.html#a3cc694a18f204ea3360fda2250e0c327" title="file format type for multiple alignments">FormatType</a>)</dd></dl>
+<dl class="section see"><dt>See also</dt><dd>FormatType)</dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>output stream</dd></dl>
 <p>Writes one line "&lt;name&gt; &lt;seq&gt;" for each sequence; moereover, writes annotations.</p>
 <dl class="section note"><dt>Note</dt><dd>does not write format header </dd></dl>
@@ -1558,7 +1558,7 @@ template&lt;size_t N&gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1MultipleAlignment.html#a3cc694a18f204ea3360fda2250e0c327" title="file format type for multiple alignments">FormatType</a>)</dd></dl>
+<dl class="section see"><dt>See also</dt><dd>FormatType)</dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>output stream</dd></dl>
 <p>Writes lines "&lt;name&gt; &lt;seq&gt;" per sequence, wraps lines at width</p>
 <dl class="section note"><dt>Note</dt><dd>: do not write format header </dd></dl>
@@ -1614,7 +1614,7 @@ template&lt;size_t N&gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classLocARNA_1_1MultipleAlignment.html#a3cc694a18f204ea3360fda2250e0c327" title="file format type for multiple alignments">FormatType</a>)</dd></dl>
+<dl class="section see"><dt>See also</dt><dd>FormatType)</dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>output stream </dd></dl>
 
 </div>
@@ -1771,7 +1771,7 @@ template&lt;size_t N&gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

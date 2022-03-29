@@ -75,7 +75,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>combines the <a class="el" href="classLocARNA_1_1TraceController.html" title="Controls the matrix cells valid for traces.">TraceController</a> with the Mapper for both sequences  
+<p>combines the TraceController with the Mapper for both sequences  
  <a href="classLocARNA_1_1SparseTraceController.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="exact__matcher_8hh_source.html">exact_matcher.hh</a>&gt;</code></p>
@@ -116,7 +116,7 @@ typedef std::pair&lt; seqpos_t, seqpos_t &gt;&#160;</td><td class="memItemRight"
 <tr class="inherit_header pub_types_classLocARNA_1_1TraceRange"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classLocARNA_1_1TraceRange')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classLocARNA_1_1TraceRange.html">LocARNA::TraceRange</a></td></tr>
 <tr class="memitem:a00c41a3281a142d3e8ffbc6c52bcae33 inherit pub_types_classLocARNA_1_1TraceRange"><td class="memItemLeft" align="right" valign="top"><a id="a00c41a3281a142d3e8ffbc6c52bcae33"></a>
 typedef <a class="el" href="classLocARNA_1_1MultipleAlignment_1_1SeqEntry.html">MultipleAlignment::SeqEntry</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1TraceRange.html#a00c41a3281a142d3e8ffbc6c52bcae33">SeqEntry</a></td></tr>
-<tr class="memdesc:a00c41a3281a142d3e8ffbc6c52bcae33 inherit pub_types_classLocARNA_1_1TraceRange"><td class="mdescLeft">&#160;</td><td class="mdescRight">alias for <a class="el" href="classLocARNA_1_1MultipleAlignment_1_1SeqEntry.html" title="A row in a multiple alignment.">MultipleAlignment::SeqEntry</a> <br /></td></tr>
+<tr class="memdesc:a00c41a3281a142d3e8ffbc6c52bcae33 inherit pub_types_classLocARNA_1_1TraceRange"><td class="mdescLeft">&#160;</td><td class="mdescRight">alias for MultipleAlignment::SeqEntry <br /></td></tr>
 <tr class="separator:a00c41a3281a142d3e8ffbc6c52bcae33 inherit pub_types_classLocARNA_1_1TraceRange"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a197238142997c9e481ad2c2b75f92f38 inherit pub_types_classLocARNA_1_1TraceRange"><td class="memItemLeft" align="right" valign="top"><a id="a197238142997c9e481ad2c2b75f92f38"></a>
 typedef std::pair&lt; <a class="el" href="classLocARNA_1_1TraceRange.html#a00c41a3281a142d3e8ffbc6c52bcae33">SeqEntry</a>, <a class="el" href="classLocARNA_1_1TraceRange.html#a00c41a3281a142d3e8ffbc6c52bcae33">SeqEntry</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1TraceRange.html#a197238142997c9e481ad2c2b75f92f38">seqentry_pair_t</a></td></tr>
@@ -148,7 +148,7 @@ const <a class="el" href="classLocARNA_1_1SparsificationMapper.html">Sparsificat
 <tr class="memdesc:a4da034e55c4c5de73a6b2c9aa13c2c35"><td class="mdescLeft">&#160;</td><td class="mdescRight">maps the matrix position cur_pos to the corresponding pair of positions in sequence A and B  <a href="classLocARNA_1_1SparseTraceController.html#a4da034e55c4c5de73a6b2c9aa13c2c35">More...</a><br /></td></tr>
 <tr class="separator:a4da034e55c4c5de73a6b2c9aa13c2c35"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a710146019aa3ab2c598eae1e8acd7e56"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1SparseTraceController.html#a710146019aa3ab2c598eae1e8acd7e56">matching_wo_gap</a> (index_t idxA, index_t idxB, const <a class="el" href="classLocARNA_1_1SparseTraceController.html#ac7111466c6e8fa617f2e5d64c6d7944c">matpos_t</a> &amp;idx_pos_diag, <a class="el" href="classLocARNA_1_1SparseTraceController.html#ae561328718a016306ae0e8539e8e2f8b">pair_seqpos_t</a> seq_pos_to_be_matched) const</td></tr>
-<tr class="memdesc:a710146019aa3ab2c598eae1e8acd7e56"><td class="mdescLeft">&#160;</td><td class="mdescRight">is a <a class="el" href="classLocARNA_1_1EPM.html" title="a class for the representation of exact pattern matches (EPM)">EPM</a> without a gap in between possible  <a href="classLocARNA_1_1SparseTraceController.html#a710146019aa3ab2c598eae1e8acd7e56">More...</a><br /></td></tr>
+<tr class="memdesc:a710146019aa3ab2c598eae1e8acd7e56"><td class="mdescLeft">&#160;</td><td class="mdescRight">is a EPM without a gap in between possible  <a href="classLocARNA_1_1SparseTraceController.html#a710146019aa3ab2c598eae1e8acd7e56">More...</a><br /></td></tr>
 <tr class="separator:a710146019aa3ab2c598eae1e8acd7e56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a61d639c66f47f050dd60305904a42a6a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1SparseTraceController.html#a61d639c66f47f050dd60305904a42a6a">pos_unpaired</a> (index_t idxA, index_t idxB, <a class="el" href="classLocARNA_1_1SparseTraceController.html#ac7111466c6e8fa617f2e5d64c6d7944c">matpos_t</a> pos) const</td></tr>
 <tr class="memdesc:a61d639c66f47f050dd60305904a42a6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">checks whether the matrix position pos can be unpaired in both sequences  <a href="classLocARNA_1_1SparseTraceController.html#a61d639c66f47f050dd60305904a42a6a">More...</a><br /></td></tr>
@@ -238,7 +238,7 @@ idx_vec_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href=
 <tr class="separator:a17cfd75aa8007bbf09c3e1e31c19d7f0 inherit pro_attribs_classLocARNA_1_1TraceRange"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>combines the <a class="el" href="classLocARNA_1_1TraceController.html" title="Controls the matrix cells valid for traces.">TraceController</a> with the Mapper for both sequences </p>
+<div class="textblock"><p>combines the TraceController with the Mapper for both sequences </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a063a0d4bbc65e55e30ccdd9ab368e26a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a063a0d4bbc65e55e30ccdd9ab368e26a">&#9670;&nbsp;</a></span>SparseTraceController()</h2>
@@ -545,7 +545,7 @@ idx_vec_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href=
 </table>
 </div><div class="memdoc">
 
-<p>is a <a class="el" href="classLocARNA_1_1EPM.html" title="a class for the representation of exact pattern matches (EPM)">EPM</a> without a gap in between possible </p>
+<p>is a EPM without a gap in between possible </p>
 <p>returns true iff the corresponding sequence position of the position idx_pos_diag is directly left adjacent to the sequence position pair seq_pos_to_be_matched, i.e. a continuative matching in matrix LR is possible without switching to a gap matrix </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">idxA</td><td>index that is used for sequence A </td></tr>
@@ -727,7 +727,7 @@ idx_vec_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href=
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

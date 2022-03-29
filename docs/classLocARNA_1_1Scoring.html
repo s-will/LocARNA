@@ -245,7 +245,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="separator:a4e20f880c35895e25c0f5a715dd6fed3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae66c45251ae8083fd4f15772a3672380"><td class="memItemLeft" align="right" valign="top"><a id="ae66c45251ae8083fd4f15772a3672380"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1Scoring.html#ae66c45251ae8083fd4f15772a3672380">subtract</a> (<a class="el" href="classLocARNA_1_1Matrix.html">Matrix</a>&lt; <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2e9a1e3746ea">score_t</a> &gt; &amp;m, <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2e9a1e3746ea">score_t</a> x) const</td></tr>
-<tr class="memdesc:ae66c45251ae8083fd4f15772a3672380"><td class="mdescLeft">&#160;</td><td class="mdescRight">subtract from each element of a score_t <a class="el" href="classLocARNA_1_1Matrix.html" title="simple 2D matrix class, provides access via operator (int,int)">Matrix</a> m a value x <br /></td></tr>
+<tr class="memdesc:ae66c45251ae8083fd4f15772a3672380"><td class="mdescLeft">&#160;</td><td class="mdescRight">subtract from each element of a score_t Matrix m a value x <br /></td></tr>
 <tr class="separator:ae66c45251ae8083fd4f15772a3672380"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
@@ -311,7 +311,7 @@ std::vector&lt; <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Provides methods for the scoring of alignments. </p>
-<p>Maintains and provides the scores for the alignment of two specific Rnas. Configurable via class <a class="el" href="classLocARNA_1_1ScoringParams.html" title="Parameters for scoring.">ScoringParams</a>, supports the classic LocARNA-score as well as the <a class="el" href="namespaceLocARNA.html">LocARNA</a> MEA-Score. for "Classic Score" it supports</p><ul>
+<p>Maintains and provides the scores for the alignment of two specific Rnas. Configurable via class ScoringParams, supports the classic LocARNA-score as well as the LocARNA MEA-Score. for "Classic Score" it supports</p><ul>
 <li>match/mismatch cost or RIBOSUM for bases</li>
 <li>linear or affine gap cost</li>
 <li>arc match scores build of arc probabilitiesmatch_probs and optionally base match contribution or RIBOSUM for the "MEA Score" it supports</li>
@@ -321,7 +321,7 @@ std::vector&lt; <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2
 <li>weighting of single score contributions</li>
 </ul>
 <p>The scoring class supports only characters ACGU, gap -, and N for ribosum scoring. ALL other characters are treated as unknown characters and are basically ignored. In consequence, IUPAC codes are handled badly. Even more important, for ribosum scoring, sequences have to be upper case and Ts should be converted to Us!!!</p>
-<dl class="section note"><dt>Note</dt><dd>The class implements two versions of the stacking score (controlled by <a class="el" href="classLocARNA_1_1ScoringParams.html" title="Parameters for scoring.">ScoringParams</a> flags stacking and new_stacking. The first flag lets the class derive the arc weights for stacked arcs from the conditional probability of the base pair (i,j) if (i+1,j-1) exists. The new_stacking flag adds a log odd contribution derived from the joint probability of (i,j) and (i+1,j-1) to the weight of (i,j).</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>The class implements two versions of the stacking score (controlled by ScoringParams flags stacking and new_stacking. The first flag lets the class derive the arc weights for stacked arcs from the conditional probability of the base pair (i,j) if (i+1,j-1) exists. The new_stacking flag adds a log odd contribution derived from the joint probability of (i,j) and (i+1,j-1) to the weight of (i,j).</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>holds only pointers and references to passed objects; since no copies are made, the caller is responsible to keep the objects alive</dd>
 <dd>
 the set of possible arc matches is considered part of the scoring information for alignments </dd></dl>
@@ -886,7 +886,7 @@ template&lt;bool gapInA&gt; </div>
 </div><div class="memdoc">
 
 <p>modify scoring by a parameter lambda. </p>
-<p>Used in the computational of normalized local alignment by fractional programming in the form of the Dinkelbach algorithm. The modification is destructive. modify_by_parameter(0) results in unmodified scoring. Repeated modifications are valid. The Outcome is <em>undefined</em> when the <a class="el" href="classLocARNA_1_1Scoring.html" title="Provides methods for the scoring of alignments.">Scoring</a> object is used to obtain exponentiated scores (methods exp_...) as in partition function alignment.</p>
+<p>Used in the computational of normalized local alignment by fractional programming in the form of the Dinkelbach algorithm. The modification is destructive. modify_by_parameter(0) results in unmodified scoring. Repeated modifications are valid. The Outcome is <em>undefined</em> when the Scoring object is used to obtain exponentiated scores (methods exp_...) as in partition function alignment.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">lambda</td><td>the parameter </td></tr>
@@ -1291,7 +1291,7 @@ template&lt;bool gapInA&gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:22 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:19 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

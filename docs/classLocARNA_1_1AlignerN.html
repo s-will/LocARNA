@@ -176,7 +176,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a69b8c4b452acb70a3bc379b7f6d8921d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abae5f2bce23076fab8b62d3f5b2a6a94"><td class="memItemLeft" align="right" valign="top"><a id="abae5f2bce23076fab8b62d3f5b2a6a94"></a>
 <a class="el" href="classLocARNA_1_1Alignment.html">Alignment</a> const  &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1AlignerN.html#abae5f2bce23076fab8b62d3f5b2a6a94">get_alignment</a> () const</td></tr>
-<tr class="memdesc:abae5f2bce23076fab8b62d3f5b2a6a94"><td class="mdescLeft">&#160;</td><td class="mdescRight">return the alignment that was computed by <a class="el" href="classLocARNA_1_1AlignerN.html#a706346eb3e18745a36c0897b606bb30e" title="offer trace as public method. Calls trace(def_scoring_view).">trace()</a> <br /></td></tr>
+<tr class="memdesc:abae5f2bce23076fab8b62d3f5b2a6a94"><td class="mdescLeft">&#160;</td><td class="mdescRight">return the alignment that was computed by trace() <br /></td></tr>
 <tr class="separator:abae5f2bce23076fab8b62d3f5b2a6a94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acc28fbab6f55103a04eb9bfc734f559f"><td class="memItemLeft" align="right" valign="top"><a id="acc28fbab6f55103a04eb9bfc734f559f"></a>
 <a class="el" href="namespaceLocARNA.html#ae111d1cda0f077827bd2e90d6b14cff3">infty_score_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1AlignerN.html#acc28fbab6f55103a04eb9bfc734f559f">align</a> ()</td></tr>
@@ -317,7 +317,7 @@ const <a class="el" href="classLocARNA_1_1BasePairs.html">BasePairs</a> &amp;&#1
 <tr class="separator:a96cce8fa87b07acb044a27f152918a98"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf5827bab0b7055e5db75f8f0ffa7be7"><td class="memItemLeft" align="right" valign="top"><a id="acf5827bab0b7055e5db75f8f0ffa7be7"></a>
 <a class="el" href="classLocARNA_1_1AlignerRestriction.html">AlignerRestriction</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1AlignerN.html#acf5827bab0b7055e5db75f8f0ffa7be7">r</a></td></tr>
-<tr class="memdesc:acf5827bab0b7055e5db75f8f0ffa7be7"><td class="mdescLeft">&#160;</td><td class="mdescRight">restriction of <a class="el" href="classLocARNA_1_1AlignerN.html" title="Implements SPARSE, next generation alignment algorithm for locarna.">AlignerN</a> <br /></td></tr>
+<tr class="memdesc:acf5827bab0b7055e5db75f8f0ffa7be7"><td class="mdescLeft">&#160;</td><td class="mdescRight">restriction of AlignerN <br /></td></tr>
 <tr class="separator:acf5827bab0b7055e5db75f8f0ffa7be7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89f0a2d54c79c75cfa17d34f49336636"><td class="memItemLeft" align="right" valign="top"><a id="a89f0a2d54c79c75cfa17d34f49336636"></a>
 <a class="el" href="namespaceLocARNA.html#aac2fbd82542fdaf224e9dec48faca81f">ScoreMatrix</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1AlignerN.html#a89f0a2d54c79c75cfa17d34f49336636">Dmat</a></td></tr>
@@ -435,7 +435,7 @@ for implicit type cast </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>create the entries in the D matrix This function is called by <a class="el" href="classLocARNA_1_1AlignerN.html#acc28fbab6f55103a04eb9bfc734f559f" title="compute the alignment score">align()</a> (unless D_created) </p>
+<p>create the entries in the D matrix This function is called by align() (unless D_created) </p>
 
 </div>
 </div>
@@ -1255,7 +1255,7 @@ template&lt;class ScoringView &gt; </div>
     <tr><td class="paramname">ar</td><td>right end of arc a </td></tr>
     <tr><td class="paramname">bl</td><td>left end of arc b </td></tr>
     <tr><td class="paramname">br</td><td>right end of arc b </td></tr>
-    <tr><td class="paramname">sv</td><td><a class="el" href="classLocARNA_1_1Scoring.html" title="Provides methods for the scoring of alignments.">Scoring</a> view </td></tr>
+    <tr><td class="paramname">sv</td><td>Scoring view </td></tr>
   </table>
   </dd>
 </dl>
@@ -1421,7 +1421,7 @@ template&lt;class ScoringView &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>do the trace back through the alignment matrix with partial recomputation pre: call <a class="el" href="classLocARNA_1_1AlignerN.html#acc28fbab6f55103a04eb9bfc734f559f" title="compute the alignment score">align()</a> to fill the top-level matrix </p>
+<p>do the trace back through the alignment matrix with partial recomputation pre: call align() to fill the top-level matrix </p>
 
 </div>
 </div>
@@ -2049,7 +2049,7 @@ template&lt;class ScoringView &gt; </div>
 </div><div class="memdoc">
 
 <p>M matrix. </p>
-<p>use only one M matrix (unlike in <a class="el" href="classLocARNA_1_1Aligner.html" title="Implements locarna alignment algorithm.">Aligner</a>), since we don't handle structure locality </p>
+<p>use only one M matrix (unlike in Aligner), since we don't handle structure locality </p>
 
 </div>
 </div>
@@ -2106,7 +2106,7 @@ template&lt;class ScoringView &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

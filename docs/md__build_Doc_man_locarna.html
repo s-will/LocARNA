@@ -101,21 +101,21 @@ $(function() {
 locarna</h1>
 <h1><a class="anchor" id="autotoc_md41"></a>
 NAME</h1>
-<p><a class="el" href="namespaceLocARNA.html">LocARNA</a> - manual page for <a class="el" href="namespaceLocARNA.html">LocARNA</a> 2.0.0RC10</p>
+<p>LocARNA - manual page for LocARNA 2.0.0RC10</p>
 <h1><a class="anchor" id="autotoc_md42"></a>
 DESCRIPTION</h1>
 <p>locarna - pairwise (global and local) alignment of RNA.</p>
 <p>USAGE: locarna [options] &lt;Input 1&gt; &lt;Input 2&gt;</p>
-<p>locarna is the pairwise alignment tool of the <a class="el" href="namespaceLocARNA.html">LocARNA</a> package, which performs fast simultaneous folding and alignment based on two RNA sequences (or alignments).</p>
+<p>locarna is the pairwise alignment tool of the LocARNA package, which performs fast simultaneous folding and alignment based on two RNA sequences (or alignments).</p>
 <h2><a class="anchor" id="autotoc_md43"></a>
 Input</h2>
-<p>Input consists of two sequences or alignments, which are specified in fasta, clustal, stockholm, or <a class="el" href="namespaceLocARNA.html">LocARNA</a> pp format. Optionally, structure and anchor constraints can be specified in the input files. If alignments are given in the input, they are aligned without revising the gap structure within the given alignments. Unless specified, base pair probabilities of the input sequences or alignments are predicted using the ViennaRNA package. Optionally, base pair probability information can be passed for one or both input sequences (or alignments) using the input formats <a class="el" href="namespaceLocARNA.html">LocARNA</a> PP 2.0 or ViennaRNA postscript dotplot format.</p>
+<p>Input consists of two sequences or alignments, which are specified in fasta, clustal, stockholm, or LocARNA pp format. Optionally, structure and anchor constraints can be specified in the input files. If alignments are given in the input, they are aligned without revising the gap structure within the given alignments. Unless specified, base pair probabilities of the input sequences or alignments are predicted using the ViennaRNA package. Optionally, base pair probability information can be passed for one or both input sequences (or alignments) using the input formats LocARNA PP 2.0 or ViennaRNA postscript dotplot format.</p>
 <h2><a class="anchor" id="autotoc_md44"></a>
 Constraints</h2>
 <p>Anchor and structure constraints can be specified in the input files. Anchor constraints for sequences (alignments) are defined by assigning names to sequence positions (alignment columns), respectively. The exact semantics is either strict or relaxed (controled by **&ndash;relaxed-anchors). In strict semantics, anchor names have to be sorted lexicographically in the input as well as in the result alignment (in the sense that result columns receive inherit the name from one or both input positions, where conflicts are disallowed). In relaxed semantics, anchors of the same name are forced into the same alignment column. The actual syntax of the constraint specification depends on the file format (see Constraint Examples below).</p>
 <h2><a class="anchor" id="autotoc_md45"></a>
 Output</h2>
-<p>The final pairwise alignment is reported in standard and/or variants of the clustal and stockholm format, as well as <a class="el" href="namespaceLocARNA.html">LocARNA</a>\'s own pp format.</p>
+<p>The final pairwise alignment is reported in standard and/or variants of the clustal and stockholm format, as well as LocARNA\'s own pp format.</p>
 <h1><a class="anchor" id="autotoc_md46"></a>
 OPTIONS</h1>
 <p><b>-h</b>, <b>&ndash;help</b></p>
@@ -273,11 +273,11 @@ Constraints:</h2>
 <h2><a class="anchor" id="autotoc_md55"></a>
 Input files:</h2>
 <blockquote class="doxtable">
-<p>The tool is called with two input files &lt;Input 1&gt; and &lt;Input 2&gt;, which specify the two input sequences or input alignments. Different input formats (Fasta, Clustal, Stockholm, <a class="el" href="namespaceLocARNA.html">LocARNA</a> PP, ViennaRNA postscript dotplots) are accepted and automatically recognized (by file content); the two input files can be in different formats. Extended variants of the Clustal and Stockholm formats enable specifying anchor and structure constraints. </p>
+<p>The tool is called with two input files &lt;Input 1&gt; and &lt;Input 2&gt;, which specify the two input sequences or input alignments. Different input formats (Fasta, Clustal, Stockholm, LocARNA PP, ViennaRNA postscript dotplots) are accepted and automatically recognized (by file content); the two input files can be in different formats. Extended variants of the Clustal and Stockholm formats enable specifying anchor and structure constraints. </p>
 </blockquote>
 <h1><a class="anchor" id="autotoc_md56"></a>
 DISCLAIMER</h1>
-<p>For many purposes, it is more convenient to use the multiple alignment tool mlocarna (even for pairwise alignment). However, certain tasks <b>&ndash;like aligning two specific alignments</b>&ndash; are supported only by the pairwise tool or can be better controlled. Note that the performance of locarna (as well as basically all tools in the <a class="el" href="namespaceLocARNA.html">LocARNA</a> package) is often significantly improved by the use of suitable application-specific options, deviating from the default settings.</p>
+<p>For many purposes, it is more convenient to use the multiple alignment tool mlocarna (even for pairwise alignment). However, certain tasks <b>&ndash;like aligning two specific alignments</b>&ndash; are supported only by the pairwise tool or can be better controlled. Note that the performance of locarna (as well as basically all tools in the LocARNA package) is often significantly improved by the use of suitable application-specific options, deviating from the default settings.</p>
 <h1><a class="anchor" id="autotoc_md57"></a>
 REFERENCES</h1>
 <p>If you use locarna please cite us:</p>
@@ -285,7 +285,7 @@ REFERENCES</h1>
 <p>Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler, and Rolf Backofen. LocARNA-P: Accurate boundary prediction and improved detection of structural RNAs. RNA, 18(5):900???14, 2012. doi:10.1261/rna.029041.111</p>
 <h1><a class="anchor" id="autotoc_md58"></a>
 AVAILABILITY</h1>
-<p>The latest <a class="el" href="namespaceLocARNA.html">LocARNA</a> package release is available online at at Github <a href="https://github.com/s-will/LocARNA">https://github.com/s-will/LocARNA</a> and <a href="http://www.bioinf.uni-freiburg.de/Software/LocARNA/">http://www.bioinf.uni-freiburg.de/Software/LocARNA/</a></p>
+<p>The latest LocARNA package release is available online at at Github <a href="https://github.com/s-will/LocARNA">https://github.com/s-will/LocARNA</a> and <a href="http://www.bioinf.uni-freiburg.de/Software/LocARNA/">http://www.bioinf.uni-freiburg.de/Software/LocARNA/</a></p>
 <h1><a class="anchor" id="autotoc_md59"></a>
 EXAMPLES</h1>
 <p>In the simplest case, the tool is called with two sequences in fasta format or two alignments in multiple fasta, clustal or stockholm format like</p>
@@ -296,7 +296,7 @@ EXAMPLES</h1>
 <p>locarna file1.aln file2.stk</p>
 <h2><a class="anchor" id="autotoc_md60"></a>
 Constraint Examples</h2>
-<p>Anchor and structure constraints can be specified in extended versions of the Clustal format, in the <a class="el" href="namespaceLocARNA.html">LocARNA</a> PP 2.0 format, as well as in Stockholm format. Currently, the pairwise alignment tools of the package do not support constraints in fasta-like input. Here is an example of constraints in Clustal format: </p><pre class="fragment">CLUSTAL W
+<p>Anchor and structure constraints can be specified in extended versions of the Clustal format, in the LocARNA PP 2.0 format, as well as in Stockholm format. Currently, the pairwise alignment tools of the package do not support constraints in fasta-like input. Here is an example of constraints in Clustal format: </p><pre class="fragment">CLUSTAL W
 
 vhuU            AGCUCACAACCGAACCCAUUUGGGAGGUUGUGAGCU
 fruA            CC-UCGAGGG-GAACCCGAAA-GGGACCCGAGA-GG
@@ -315,21 +315,21 @@ fruA            CC-UCGAGGG-GAACCCGAAA-GGGACCCGAGA-GG
 </pre><p> The prefix for fixed structures is \'#=GC cFS\'.</p>
 <h1><a class="anchor" id="autotoc_md61"></a>
 AUTHOR</h1>
-<p>This man page is written and maintained by Sebastian Will. It is part of the <a class="el" href="namespaceLocARNA.html">LocARNA</a> package.</p>
+<p>This man page is written and maintained by Sebastian Will. It is part of the LocARNA package.</p>
 <h1><a class="anchor" id="autotoc_md62"></a>
 REPORTING BUGS</h1>
 <p>Report bugs to &lt;will (at) informatik.uni-freiburg.de&gt;.</p>
 <h1><a class="anchor" id="autotoc_md63"></a>
 COPYRIGHT</h1>
-<p>Copyright 2005- Sebastian Will. The <a class="el" href="namespaceLocARNA.html">LocARNA</a> package is released under GNU Public License v3.0</p>
+<p>Copyright 2005- Sebastian Will. The LocARNA package is released under GNU Public License v3.0</p>
 <h1><a class="anchor" id="autotoc_md64"></a>
 SEE ALSO</h1>
-<p>The <a class="el" href="namespaceLocARNA.html">LocARNA</a> PP 2.0 format is described online at <a href="http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/">http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/</a> </p>
+<p>The LocARNA PP 2.0 format is described online at <a href="http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/">http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/</a> </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -96,7 +96,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a7ded09229dd5386c903cc73b4a07e32f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e8e37bbdca34561fe844c802bc1e03f"><td class="memItemLeft" align="right" valign="top"><a id="a0e8e37bbdca34561fe844c802bc1e03f"></a>
 <a class="el" href="classLocARNA_1_1Alignment.html">Alignment</a> const  &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1Aligner.html#a0e8e37bbdca34561fe844c802bc1e03f">get_alignment</a> () const</td></tr>
-<tr class="memdesc:a0e8e37bbdca34561fe844c802bc1e03f"><td class="mdescLeft">&#160;</td><td class="mdescRight">return the alignment that was computed by <a class="el" href="classLocARNA_1_1Aligner.html#a509e9439515c04e0921bb3081f2614e4" title="offer trace as public method. Calls trace(def_scoring_view).">trace()</a> <br /></td></tr>
+<tr class="memdesc:a0e8e37bbdca34561fe844c802bc1e03f"><td class="mdescLeft">&#160;</td><td class="mdescRight">return the alignment that was computed by trace() <br /></td></tr>
 <tr class="separator:a0e8e37bbdca34561fe844c802bc1e03f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9b75e39da6e5cfcfd74869af3f13340"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1Aligner.html#ac9b75e39da6e5cfcfd74869af3f13340">set_alignment</a> (const <a class="el" href="classLocARNA_1_1Alignment.html">Alignment</a> &amp;alignment)</td></tr>
 <tr class="memdesc:ac9b75e39da6e5cfcfd74869af3f13340"><td class="mdescLeft">&#160;</td><td class="mdescRight">set the alignment  <a href="classLocARNA_1_1Aligner.html#ac9b75e39da6e5cfcfd74869af3f13340">More...</a><br /></td></tr>
@@ -114,7 +114,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a9327af44d882c34cf75fc98eb480b670"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classLocARNA_1_1AlignerRestriction.html">AlignerRestriction</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1Aligner.html#a9327af44d882c34cf75fc98eb480b670">get_restriction</a> () const</td></tr>
 <tr class="separator:a9327af44d882c34cf75fc98eb480b670"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af255b19eda2c3eb3990d9333a03fa092"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1Aligner.html#af255b19eda2c3eb3990d9333a03fa092">suboptimal</a> (int k, <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2e9a1e3746ea">score_t</a> threshold, bool normalized, <a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2e9a1e3746ea">score_t</a> normalized_L, size_t output_width, bool verbose, bool opt_local_out, bool opt_pos_output, bool opt_write_structure)</td></tr>
-<tr class="memdesc:af255b19eda2c3eb3990d9333a03fa092"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classLocARNA_1_1Enumerate.html">Enumerate</a> suboptimal local alignments.  <a href="classLocARNA_1_1Aligner.html#af255b19eda2c3eb3990d9333a03fa092">More...</a><br /></td></tr>
+<tr class="memdesc:af255b19eda2c3eb3990d9333a03fa092"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumerate suboptimal local alignments.  <a href="classLocARNA_1_1Aligner.html#af255b19eda2c3eb3990d9333a03fa092">More...</a><br /></td></tr>
 <tr class="separator:af255b19eda2c3eb3990d9333a03fa092"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a71636d64db5c202b7c760b13bd57cc9f"><td class="memItemLeft" align="right" valign="top"><a id="a71636d64db5c202b7c760b13bd57cc9f"></a>
 <a class="el" href="namespaceLocARNA.html#ae111d1cda0f077827bd2e90d6b14cff3">infty_score_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLocARNA_1_1Aligner.html#a71636d64db5c202b7c760b13bd57cc9f">normalized_align</a> (<a class="el" href="namespaceLocARNA.html#ae4e0c4dfec0e83ac075b2e9a1e3746ea">score_t</a> L, bool verbose)</td></tr>
@@ -134,7 +134,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <p>Performs the alignment of two sequences and their associated sets of weighted basepairs</p>
 <p>An object always knows about the two sequences and the two weighted base pair sets</p>
 <p>usage: construct, align, trace, get_alignment</p>
-<dl class="section note"><dt>Note</dt><dd>Idea "NICE TO HAVE": score matrices should be as small as possible and have offsets. The M-Matrix can be smaller if the maximal arc len is limited. The D-matrix may be smaller if the number of simultaneously needed arc-pairs is limited, due to limit on the local sub-sequence lengths. A special cyclically rotatable matrix would be required for alignment on the top-level. Such matrices are implemented in <a class="el" href="matrix_8hh_source.html">matrix.hh</a> but currently not used. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Idea "NICE TO HAVE": score matrices should be as small as possible and have offsets. The M-Matrix can be smaller if the maximal arc len is limited. The D-matrix may be smaller if the number of simultaneously needed arc-pairs is limited, due to limit on the local sub-sequence lengths. A special cyclically rotatable matrix would be required for alignment on the top-level. Such matrices are implemented in matrix.hh but currently not used. </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a82feb76f33c60ce8cf3ea78c4a5152c9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a82feb76f33c60ce8cf3ea78c4a5152c9">&#9670;&nbsp;</a></span>Aligner() <span class="overload">[1/2]</span></h2>
@@ -185,7 +185,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>ap is copied to new <a class="el" href="classLocARNA_1_1AlignerParams.html" title="Parameter for alignment by Aligner.">AlignerParams</a> object (by impl class) to allow reference to a temporary </dd>
+<dl class="section note"><dt>Note</dt><dd>ap is copied to new AlignerParams object (by impl class) to allow reference to a temporary </dd>
 <dd>
 used with implicit type cast (for cleaner syntax) </dd></dl>
 
@@ -314,11 +314,11 @@ used with implicit type cast (for cleaner syntax) </dd></dl>
 <p>set the alignment </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">alignment</td><td>the alignment to be stored in the <a class="el" href="classLocARNA_1_1Aligner.html" title="Implements locarna alignment algorithm.">Aligner</a> object</td></tr>
+    <tr><td class="paramname">alignment</td><td>the alignment to be stored in the Aligner object</td></tr>
   </table>
   </dd>
 </dl>
-<p>This sets the result of the aligner object / trace; it is useful to evaluate given alignments (where it is used in place of a computation by <a class="el" href="classLocARNA_1_1Aligner.html#a49a89aa973f2c3f15f73828bffe41e59" title="compute the alignment score">align()</a>/trace()). </p>
+<p>This sets the result of the aligner object / trace; it is useful to evaluate given alignments (where it is used in place of a computation by align()/trace()). </p>
 
 </div>
 </div>
@@ -409,8 +409,8 @@ used with implicit type cast (for cleaner syntax) </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p><a class="el" href="classLocARNA_1_1Enumerate.html">Enumerate</a> suboptimal local alignments. </p>
-<p>special operation mode for computing the k best alignments. Used in place of calls to <a class="el" href="classLocARNA_1_1Aligner.html#a49a89aa973f2c3f15f73828bffe41e59" title="compute the alignment score">align()</a> and <a class="el" href="classLocARNA_1_1Aligner.html#a509e9439515c04e0921bb3081f2614e4" title="offer trace as public method. Calls trace(def_scoring_view).">trace()</a></p>
+<p>Enumerate suboptimal local alignments. </p>
+<p>special operation mode for computing the k best alignments. Used in place of calls to align() and trace()</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">k</td><td>number of suboptimals to be generated (k==-1 means unlimited) </td></tr>
@@ -435,7 +435,7 @@ used with implicit type cast (for cleaner syntax) </dd></dl>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:02:21 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>
