@@ -67,56 +67,56 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#autotoc_md40">locarna</a></li>
-<li class="level1"><a href="#autotoc_md41">NAME</a></li>
-<li class="level1"><a href="#autotoc_md42">DESCRIPTION</a><ul><li class="level2"><a href="#autotoc_md43">Input</a></li>
-<li class="level2"><a href="#autotoc_md44">Constraints</a></li>
-<li class="level2"><a href="#autotoc_md45">Output</a></li>
+<ul><li class="level1"><a href="#autotoc_md44">locarna</a></li>
+<li class="level1"><a href="#autotoc_md45">NAME</a></li>
+<li class="level1"><a href="#autotoc_md46">DESCRIPTION</a><ul><li class="level2"><a href="#autotoc_md47">Input</a></li>
+<li class="level2"><a href="#autotoc_md48">Constraints</a></li>
+<li class="level2"><a href="#autotoc_md49">Output</a></li>
 </ul>
 </li>
-<li class="level1"><a href="#autotoc_md46">OPTIONS</a><ul><li class="level2"><a href="#autotoc_md47">Scoring parameters:</a></li>
-<li class="level2"><a href="#autotoc_md48">Partition function representation (for sequence envelopes):</a></li>
-<li class="level2"><a href="#autotoc_md49">Locality:</a></li>
-<li class="level2"><a href="#autotoc_md50">Output:</a></li>
-<li class="level2"><a href="#autotoc_md51">Heuristics for speed accuracy trade off:</a></li>
-<li class="level2"><a href="#autotoc_md52">Special sauce options:</a></li>
-<li class="level2"><a href="#autotoc_md53">MEA score:</a></li>
-<li class="level2"><a href="#autotoc_md54">Constraints:</a></li>
-<li class="level2"><a href="#autotoc_md55">Input files:</a></li>
+<li class="level1"><a href="#autotoc_md50">OPTIONS</a><ul><li class="level2"><a href="#autotoc_md51">Scoring parameters:</a></li>
+<li class="level2"><a href="#autotoc_md52">Partition function representation (for sequence envelopes):</a></li>
+<li class="level2"><a href="#autotoc_md53">Locality:</a></li>
+<li class="level2"><a href="#autotoc_md54">Output:</a></li>
+<li class="level2"><a href="#autotoc_md55">Heuristics for speed accuracy trade off:</a></li>
+<li class="level2"><a href="#autotoc_md56">Special sauce options:</a></li>
+<li class="level2"><a href="#autotoc_md57">MEA score:</a></li>
+<li class="level2"><a href="#autotoc_md58">Constraints:</a></li>
+<li class="level2"><a href="#autotoc_md59">Input files:</a></li>
 </ul>
 </li>
-<li class="level1"><a href="#autotoc_md56">DISCLAIMER</a></li>
-<li class="level1"><a href="#autotoc_md57">REFERENCES</a></li>
-<li class="level1"><a href="#autotoc_md58">AVAILABILITY</a></li>
-<li class="level1"><a href="#autotoc_md59">EXAMPLES</a><ul><li class="level2"><a href="#autotoc_md60">Constraint Examples</a></li>
+<li class="level1"><a href="#autotoc_md60">DISCLAIMER</a></li>
+<li class="level1"><a href="#autotoc_md61">REFERENCES</a></li>
+<li class="level1"><a href="#autotoc_md62">AVAILABILITY</a></li>
+<li class="level1"><a href="#autotoc_md63">EXAMPLES</a><ul><li class="level2"><a href="#autotoc_md64">Constraint Examples</a></li>
 </ul>
 </li>
-<li class="level1"><a href="#autotoc_md61">AUTHOR</a></li>
-<li class="level1"><a href="#autotoc_md62">REPORTING BUGS</a></li>
-<li class="level1"><a href="#autotoc_md63">COPYRIGHT</a></li>
-<li class="level1"><a href="#autotoc_md64">SEE ALSO</a></li>
+<li class="level1"><a href="#autotoc_md65">AUTHOR</a></li>
+<li class="level1"><a href="#autotoc_md66">REPORTING BUGS</a></li>
+<li class="level1"><a href="#autotoc_md67">COPYRIGHT</a></li>
+<li class="level1"><a href="#autotoc_md68">SEE ALSO</a></li>
 </ul>
 </div>
-<div class="textblock"><h1><a class="anchor" id="autotoc_md40"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md44"></a>
 locarna</h1>
-<h1><a class="anchor" id="autotoc_md41"></a>
+<h1><a class="anchor" id="autotoc_md45"></a>
 NAME</h1>
 <p>LocARNA - manual page for LocARNA 2.0.0RC10</p>
-<h1><a class="anchor" id="autotoc_md42"></a>
+<h1><a class="anchor" id="autotoc_md46"></a>
 DESCRIPTION</h1>
 <p>locarna - pairwise (global and local) alignment of RNA.</p>
 <p>USAGE: locarna [options] &lt;Input 1&gt; &lt;Input 2&gt;</p>
 <p>locarna is the pairwise alignment tool of the LocARNA package, which performs fast simultaneous folding and alignment based on two RNA sequences (or alignments).</p>
-<h2><a class="anchor" id="autotoc_md43"></a>
+<h2><a class="anchor" id="autotoc_md47"></a>
 Input</h2>
 <p>Input consists of two sequences or alignments, which are specified in fasta, clustal, stockholm, or LocARNA pp format. Optionally, structure and anchor constraints can be specified in the input files. If alignments are given in the input, they are aligned without revising the gap structure within the given alignments. Unless specified, base pair probabilities of the input sequences or alignments are predicted using the ViennaRNA package. Optionally, base pair probability information can be passed for one or both input sequences (or alignments) using the input formats LocARNA PP 2.0 or ViennaRNA postscript dotplot format.</p>
-<h2><a class="anchor" id="autotoc_md44"></a>
+<h2><a class="anchor" id="autotoc_md48"></a>
 Constraints</h2>
 <p>Anchor and structure constraints can be specified in the input files. Anchor constraints for sequences (alignments) are defined by assigning names to sequence positions (alignment columns), respectively. The exact semantics is either strict or relaxed (controled by **&ndash;relaxed-anchors). In strict semantics, anchor names have to be sorted lexicographically in the input as well as in the result alignment (in the sense that result columns receive inherit the name from one or both input positions, where conflicts are disallowed). In relaxed semantics, anchors of the same name are forced into the same alignment column. The actual syntax of the constraint specification depends on the file format (see Constraint Examples below).</p>
-<h2><a class="anchor" id="autotoc_md45"></a>
+<h2><a class="anchor" id="autotoc_md49"></a>
 Output</h2>
 <p>The final pairwise alignment is reported in standard and/or variants of the clustal and stockholm format, as well as LocARNA\'s own pp format.</p>
-<h1><a class="anchor" id="autotoc_md46"></a>
+<h1><a class="anchor" id="autotoc_md50"></a>
 OPTIONS</h1>
 <p><b>-h</b>, <b>&ndash;help</b></p>
 <p>: Print this help.</p>
@@ -128,7 +128,7 @@ OPTIONS</h1>
 <p>: Be verbose. Prints input parameters, sequences and size information.</p>
 <p><b>-q</b>, <b>&ndash;quiet</b></p>
 <p>: Be quiet.</p>
-<h2><a class="anchor" id="autotoc_md47"></a>
+<h2><a class="anchor" id="autotoc_md51"></a>
 Scoring parameters:</h2>
 <p><b>-i</b>, <b>&ndash;indel=</b>&lt;score&gt;(<b>-150</b>)</p>
 <p>: Indel score. Score contribution of each single base insertion or deletion. Indel opening score and indel score define the affine scoring of gaps.</p>
@@ -156,13 +156,13 @@ Scoring parameters:</h2>
 <p>: Use stacking terms (requires stack-probs by RNAfold <b>-p2</b>)</p>
 <p><b>&ndash;new-stacking</b></p>
 <p>: Use new stacking terms (requires stack-probs by RNAfold <b>-p2</b>)</p>
-<h2><a class="anchor" id="autotoc_md48"></a>
+<h2><a class="anchor" id="autotoc_md52"></a>
 Partition function representation (for sequence envelopes):</h2>
 <p><b>&ndash;extended-pf</b></p>
 <p>: Use extended precision for the computation of sequence envelopes. This enables handling significantly larger instances. [default]</p>
 <p><b>&ndash;quad-pf</b></p>
 <p>: Use quad precision for partition function values. Even more precision than extended pf, but usually much slower (overrides extended-pf).</p>
-<h2><a class="anchor" id="autotoc_md49"></a>
+<h2><a class="anchor" id="autotoc_md53"></a>
 Locality:</h2>
 <p><b>&ndash;struct-local=</b>&lt;bool&gt;(false)</p>
 <p>: Turn on/off structure locality. Allow exclusions in alignments of connected substructures.</p>
@@ -174,7 +174,7 @@ Locality:</h2>
 <p>: Perform normalized local alignment with parameter L. This causes locarna to compute the best local alignment according to \'Score\' / ( L + \'length\' ), where length is the sum of the lengths of the two locally aligned subsequences. Thus, the larger L, the larger the local alignment; the size of value L is in the order of local alignment lengths. Verbose yields info on the iterative optimizations.</p>
 <p><b>&ndash;penalized=</b>&lt;PP&gt;(0)</p>
 <p>: Penalized local alignment with penalty PP</p>
-<h2><a class="anchor" id="autotoc_md50"></a>
+<h2><a class="anchor" id="autotoc_md54"></a>
 Output:</h2>
 <p><b>-w</b>, <b>&ndash;width=</b>&lt;columns&gt;(120)</p>
 <p>: Width of alignment output.</p>
@@ -202,7 +202,7 @@ Output:</h2>
 <p>: Output components of the score (experimental).</p>
 <p><b>&ndash;stopwatch</b></p>
 <p>: Print run time informations.</p>
-<h2><a class="anchor" id="autotoc_md51"></a>
+<h2><a class="anchor" id="autotoc_md55"></a>
 Heuristics for speed accuracy trade off:</h2>
 <p><b>-p</b>, <b>&ndash;min-prob=</b>&lt;probability&gt;(0.001)</p>
 <p>: Minimal probability. Only base pairs of at least this probability are taken into account.</p>
@@ -222,13 +222,13 @@ Heuristics for speed accuracy trade off:</h2>
 <p>: Relax deviation constraints in multiple aligmnent</p>
 <p><b>&ndash;min-trace-probability=</b>&lt;probability&gt;(1e-4)</p>
 <p>: Minimal sequence alignment probability of potential traces (probability-based sequence alignment envelope) [default=1e-4].</p>
-<h2><a class="anchor" id="autotoc_md52"></a>
+<h2><a class="anchor" id="autotoc_md56"></a>
 Special sauce options:</h2>
 <p><b>&ndash;kbest=</b>&lt;k&gt;(<b>-1</b>)</p>
 <p>: Enumerate k-best alignments</p>
 <p><b>&ndash;better=</b>&lt;t&gt;(<b>-1000000</b>)</p>
 <p>: Enumerate alignments better threshold t</p>
-<h2><a class="anchor" id="autotoc_md53"></a>
+<h2><a class="anchor" id="autotoc_md57"></a>
 MEA score:</h2>
 <p><b>&ndash;mea-alignment</b></p>
 <p>: Perform maximum expected accuracy alignment (instead of using the default similarity scoring).</p>
@@ -262,7 +262,7 @@ MEA score:</h2>
 <p>: Read arcmatch scores.</p>
 <p><b>&ndash;read-arcmatch-probs=</b>&lt;file&gt;</p>
 <p>: Read arcmatch probabilities (weighted by factor mea_beta/100)</p>
-<h2><a class="anchor" id="autotoc_md54"></a>
+<h2><a class="anchor" id="autotoc_md58"></a>
 Constraints:</h2>
 <p><b>&ndash;noLP</b></p>
 <p>: Disallow lonely pairs in prediction and alignment.</p>
@@ -270,23 +270,23 @@ Constraints:</h2>
 <p>: Limit maximum base pair span [default=off].</p>
 <p><b>&ndash;relaxed-anchors</b></p>
 <p>: Use relaxed semantics of anchor constraints [default=strict semantics].</p>
-<h2><a class="anchor" id="autotoc_md55"></a>
+<h2><a class="anchor" id="autotoc_md59"></a>
 Input files:</h2>
 <blockquote class="doxtable">
 <p>The tool is called with two input files &lt;Input 1&gt; and &lt;Input 2&gt;, which specify the two input sequences or input alignments. Different input formats (Fasta, Clustal, Stockholm, LocARNA PP, ViennaRNA postscript dotplots) are accepted and automatically recognized (by file content); the two input files can be in different formats. Extended variants of the Clustal and Stockholm formats enable specifying anchor and structure constraints. </p>
 </blockquote>
-<h1><a class="anchor" id="autotoc_md56"></a>
+<h1><a class="anchor" id="autotoc_md60"></a>
 DISCLAIMER</h1>
 <p>For many purposes, it is more convenient to use the multiple alignment tool mlocarna (even for pairwise alignment). However, certain tasks <b>&ndash;like aligning two specific alignments</b>&ndash; are supported only by the pairwise tool or can be better controlled. Note that the performance of locarna (as well as basically all tools in the LocARNA package) is often significantly improved by the use of suitable application-specific options, deviating from the default settings.</p>
-<h1><a class="anchor" id="autotoc_md57"></a>
+<h1><a class="anchor" id="autotoc_md61"></a>
 REFERENCES</h1>
 <p>If you use locarna please cite us:</p>
 <p>Sebastian Will, Kristin Reiche, Ivo L. Hofacker, Peter F. Stadler, and Rolf Backofen. Inferring non-coding RNA families and classes by means of genome-scale structure-based clustering. PLOS Computational Biology, 3 no. 4 pp. e65, 2007. doi:10.1371/journal.pcbi.0030065</p>
 <p>Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler, and Rolf Backofen. LocARNA-P: Accurate boundary prediction and improved detection of structural RNAs. RNA, 18(5):900???14, 2012. doi:10.1261/rna.029041.111</p>
-<h1><a class="anchor" id="autotoc_md58"></a>
+<h1><a class="anchor" id="autotoc_md62"></a>
 AVAILABILITY</h1>
 <p>The latest LocARNA package release is available online at at Github <a href="https://github.com/s-will/LocARNA">https://github.com/s-will/LocARNA</a> and <a href="http://www.bioinf.uni-freiburg.de/Software/LocARNA/">http://www.bioinf.uni-freiburg.de/Software/LocARNA/</a></p>
-<h1><a class="anchor" id="autotoc_md59"></a>
+<h1><a class="anchor" id="autotoc_md63"></a>
 EXAMPLES</h1>
 <p>In the simplest case, the tool is called with two sequences in fasta format or two alignments in multiple fasta, clustal or stockholm format like</p>
 <p>locarna file1.fa file2.fa</p>
@@ -294,7 +294,7 @@ EXAMPLES</h1>
 <p>locarna file1.aln file2.aln</p>
 <p>Note that input formats can be mixed like in</p>
 <p>locarna file1.aln file2.stk</p>
-<h2><a class="anchor" id="autotoc_md60"></a>
+<h2><a class="anchor" id="autotoc_md64"></a>
 Constraint Examples</h2>
 <p>Anchor and structure constraints can be specified in extended versions of the Clustal format, in the LocARNA PP 2.0 format, as well as in Stockholm format. Currently, the pairwise alignment tools of the package do not support constraints in fasta-like input. Here is an example of constraints in Clustal format: </p><pre class="fragment">CLUSTAL W
 
@@ -313,23 +313,23 @@ fruA            CC-UCGAGGG-GAACCCGAAA-GGGACCCGAGA-GG
 #=GC cA1        .............AAABB..................
 #=GC cA2        .............12312..................
 </pre><p> The prefix for fixed structures is \'#=GC cFS\'.</p>
-<h1><a class="anchor" id="autotoc_md61"></a>
+<h1><a class="anchor" id="autotoc_md65"></a>
 AUTHOR</h1>
 <p>This man page is written and maintained by Sebastian Will. It is part of the LocARNA package.</p>
-<h1><a class="anchor" id="autotoc_md62"></a>
+<h1><a class="anchor" id="autotoc_md66"></a>
 REPORTING BUGS</h1>
 <p>Report bugs to &lt;will (at) informatik.uni-freiburg.de&gt;.</p>
-<h1><a class="anchor" id="autotoc_md63"></a>
+<h1><a class="anchor" id="autotoc_md67"></a>
 COPYRIGHT</h1>
 <p>Copyright 2005- Sebastian Will. The LocARNA package is released under GNU Public License v3.0</p>
-<h1><a class="anchor" id="autotoc_md64"></a>
+<h1><a class="anchor" id="autotoc_md68"></a>
 SEE ALSO</h1>
 <p>The LocARNA PP 2.0 format is described online at <a href="http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/">http://www.bioinf.uni-freiburg.de/Software/LocARNA/PP/</a> </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 30 2022 08:25:12 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

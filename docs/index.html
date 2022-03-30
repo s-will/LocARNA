@@ -67,16 +67,20 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#autotoc_md0">LocARNA: Alignment of RNAs</a><ul><li class="level2"><a href="#autotoc_md2">Installation</a><ul><li class="level3"><a href="#autotoc_md3">Installation from Conda package (recommended)</a></li>
-<li class="level3"><a href="#autotoc_md4">Alternative installation from source</a><ul><li class="level4"><a href="#autotoc_md5">Installation from source distribution</a></li>
-<li class="level4"><a href="#autotoc_md6">Installation from the git repository</a></li>
+<ul><li class="level1"><a href="#autotoc_md0">LocARNA: Alignment of RNAs</a><ul><ul><li class="level3"><a href="#autotoc_md1">Example of standard usage</a></li>
+<li class="level3"><a href="#autotoc_md2">More on features and alignment variants</a></li>
+</ul>
+<li class="level2"><a href="#autotoc_md4">Installation</a><ul><li class="level3"><a href="#autotoc_md5">Installation from Conda package (recommended)</a></li>
+<li class="level3"><a href="#autotoc_md6">Alternative installation from source</a><ul><li class="level4"><a href="#autotoc_md7">Installation from source distribution</a></li>
+<li class="level4"><a href="#autotoc_md8">Installation from the git repository</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="level2"><a href="#autotoc_md8">Usage</a></li>
-<li class="level2"><a href="#autotoc_md10">Web server</a></li>
-<li class="level2"><a href="#autotoc_md12">Contact</a></li>
+<li class="level2"><a href="#autotoc_md10">Usage</a></li>
+<li class="level2"><a href="#autotoc_md12">Web server</a></li>
+<li class="level2"><a href="#autotoc_md14">Contact</a></li>
+<li class="level2"><a href="#autotoc_md16">References</a></li>
 </ul>
 </li>
 </ul>
@@ -84,9 +88,19 @@ $(function() {
 <div class="textblock"><p><a class="anchor" id="md_README"></a></p>
 <h1><a class="anchor" id="autotoc_md0"></a>
 LocARNA: Alignment of RNAs</h1>
-<p>LocARNA is a collection of alignment tools for the structural analysis of RNA. Given a set of RNA sequences, LocARNA simultaneously aligns and predicts common structures for your RNAs. In this way, LocARNA performs Sankoff-like alignment and is in particular suited for analyzing sets of related RNAs without known common structure.</p>
-<p>LocARNA distinguishes itself from many other Sankoff-style multiple alignment programs by its performance and low memory complexity, high accuracy, and richness of features. As unique features, it offers structure-local alignment, flexible structure and anchor constraints, and provides efficient computation of reliabilities in sequence-structure alignment. The package offers a robust core of features and is used as experimental platform for the incorporation of new features in RNA sequence-structure alignment.</p>
-<p>At its core, the package offers global and local multiple alignment of RNAs.</p>
+<p>The LocARNA package provides several tools for the structural analysis of RNA. LocARNA's main functionality is to align a set of a priori unaligned RNAs sequences and at the same time predict their common structure. In this way, LocARNA performs simultaneous alignment and folding in the spirit of the classical Sankoff algorithm, but implements strategies to perform this computationally challenging task efficiently and comparably fast.</p>
+<p>Due to the central ability to simultaneously assess sequence similarity and the similarity of predicted structure, LocARNA is recommends itself for the analysis of RNAs in the twilight zone (around or below 60% sequence identity), where alignments based on only sequence similarity are unreliable. Thus, it could be sometimes easier and typically faster to align highly similar RNAs using pure sequence alignment tools; similarily, RNAs with existing trusted alignments can be more efficiently analyzed based on specialized tools like RNAalifold, R-scape, or Infernal.</p>
+<h3><a class="anchor" id="autotoc_md1"></a>
+Example of standard usage</h3>
+<p>Most of the package's functionality is accessible via the command-line tool <a href="https://s-will.github.io/LocARNA/md_src_Utils_mlocarna.html"><code>mlocarna</code></a> through its various options. In the simplest case, we provide the input sequences in a fasta file.</p>
+<div class="fragment"><div class="line">$ mlocarna archaea.fa</div>
+</div><!-- fragment --><p>yields text output and writes results (and intermediary results) to disk; here to folder <code>archaea.out</code>.</p>
+<p>As main result, it produces the alignment of the seven short RNA sequences in <a href="https://raw.githubusercontent.com/s-will/LocARNA/master/Data/Examples/archaea.fa"><code>archaea.fa</code></a> together with a consensus structure:</p>
+<p><img src="https://raw.githubusercontent.com/s-will/LocARNA/master/Data/Examples/archaea-aln.png" alt="" class="inline"/></p>
+<p>The graphical RNAalifold-generated output shows the aligned RNAs (with gaps), the consensus structure as dot-bracket string on top, and the column similarities by bars at the bottom. In the way of alifold, columns are color-coded to visualize compensatory and incompatible mutations at predicted base pairs.</p>
+<h3><a class="anchor" id="autotoc_md2"></a>
+More on features and alignment variants</h3>
+<p>LocARNA distinguishes itself from many other Sankoff-style multiple alignment programs by its high performance (strongly improved in the 2.x line) and low memory complexity, high accuracy, and a broad set of features. As unique features, it offers structure-local alignment, flexible structure constraints and anchor constraints, specialized realignment modes for refining existing alignments, and provides efficient computation of reliabilities in sequence-structure alignment. The package offers a robust core of features and is used as experimental platform for new RNA alignment related methods.</p>
 <p>Multiple alignment can be performed in one of several different ways:</p>
 <ul>
 <li>progressive alignment using sequence-structure alignment of profiles</li>
@@ -96,18 +110,17 @@ LocARNA: Alignment of RNAs</h1>
 <p>Besides of global alignment, LocARNA supports two kinds of locality. Local alignment as it is known from sequence alignment, identifies and aligns the best matching subsequences. This form of locality is called sequence local to distinguish it from structural locality. When performing structure local alignment, LocARNA identifies and aligns the best matching substructures in the RNAs. The sequences of those substructures can be discontinuous on the sequence level, but remain connected via structural bonds.</p>
 <p>Alignment Reliabilities (LocARNA-P). In this special, probabilistic mode of operation LocARNA supports the efficient computation of match probabilities, probabilistic consistency transformation for more accurate multiple alignment, and generates reliability profiles of multiple alignments.</p>
 <hr  />
- <h2><a class="anchor" id="autotoc_md2"></a>
+ <h2><a class="anchor" id="autotoc_md4"></a>
 Installation</h2>
-<p>The software can be installed on recent Linux or MacOS X systems. Windows is untested but should be supported via Linux extensions.</p>
-<h3><a class="anchor" id="autotoc_md3"></a>
+<p>The software can be installed on recent Linux or MacOSX systems; Windows is untested but should be supported via WSL.</p>
+<h3><a class="anchor" id="autotoc_md5"></a>
 Installation from Conda package (recommended)</h3>
-<p>On Mac/Linux, LocARNA is installed mosteasily via Conda from a pre-compiled package. For this purpose, install Conda and run</p>
+<p>On Mac/Linux, LocARNA is installed most easily via Conda from a pre-compiled package. For this purpose, install Conda and run from the command line:</p>
 <div class="fragment"><div class="line">conda install -c bioconda locarna</div>
-</div><!-- fragment --><p>from the command line.</p>
-<h3><a class="anchor" id="autotoc_md4"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md6"></a>
 Alternative installation from source</h3>
-<p>Installing from source requires a C++ build system: typically, g++ or clang and autotools. Moreover, it depends on the Vienna RNA package.</p>
-<h4><a class="anchor" id="autotoc_md5"></a>
+<p>Installing from source requires a C++ compiler (GNU C++, Clang, ...) and Autotools. Moreover, it depends on the Vienna RNA package.</p>
+<h4><a class="anchor" id="autotoc_md7"></a>
 Installation from source distribution</h4>
 <p>Obtain the tar.gz source distribution, e.g. from Github</p>
 <p><a href="https://github.com/s-will/LocARNA/releases">https://github.com/s-will/LocARNA/releases</a></p>
@@ -119,44 +132,53 @@ Installation from source distribution</h4>
 <div class="line">make install</div>
 </div><!-- fragment --><p>Is Vienna RNA installed in a non-standard location, this has to be specified by configure option `<code>--with-vrna=path-to-vrna</code>.</p>
 <p>Installing from source furthermore allows testing via</p>
-<div class="fragment"><div class="line">make test</div>
+<div class="fragment"><div class="line">make check</div>
 </div><!-- fragment --><p>and building documentation locally by</p>
 <div class="fragment"><div class="line">make doxygen-doc</div>
 </div><!-- fragment --><p>Building documentation requires additional tools: doxygen, pod2markdown and pandoc.</p>
-<h4><a class="anchor" id="autotoc_md6"></a>
+<h4><a class="anchor" id="autotoc_md8"></a>
 Installation from the git repository</h4>
 <p>Installing from repository is possible after cloning and setting up the autotools suite. This is most easily achieved by running</p>
 <div class="fragment"><div class="line">autoreconf -i</div>
 </div><!-- fragment --><p>in the cloned repository. Then, the installation essentially works like installing from source distribution. Note that, we will however require additional tools to build the documentation: help2man, pod2man.</p>
 <hr  />
- <h2><a class="anchor" id="autotoc_md8"></a>
+ <h2><a class="anchor" id="autotoc_md10"></a>
 Usage</h2>
 <p>For instructions on the use of the tools, please see the documentation / man pages of the single tools</p>
 <ul>
-<li><a href="md_src_Utils_mlocarna.html">mlocarna</a> &mdash; for multiple alignment of RNAs. This program supports most of the functionality of the package via a high level interface.</li>
-<li><a href="md__build_Doc_man_locarna.html">locarna</a> &mdash; for pairwise alignment</li>
-<li><a href="md__build_Doc_man_locarna_p.html">locarna_p</a> &mdash; for pairwise computation of alignment partition function and (sequence and structure) match probabilities</li>
-<li><a href="md__build_Doc_man_sparse.html">sparse</a> &mdash; for structurally stronger sparsified pairwise alignment</li>
+<li><a href="https://s-will.github.io/LocARNA/md_src_Utils_mlocarna.html">mlocarna</a> &mdash; for multiple alignment of RNAs. This program supports most of the functionality of the package via a high level interface.</li>
+<li><a href="https://s-will.github.io/LocARNA/md__build_Doc_man_locarna.html">locarna</a> &mdash; for pairwise alignment</li>
+<li><a href="https://s-will.github.io/LocARNA/md__build_Doc_man_locarna_p.html">locarna_p</a> &mdash; for pairwise computation of alignment partition function and (sequence and structure) match probabilities</li>
+<li><a href="https://s-will.github.io/LocARNA/md__build_Doc_man_sparse.html">sparse</a> &mdash; for structurally stronger sparsified pairwise alignment</li>
 </ul>
 <p>For additional functionality and special purposes, see</p>
 <ul>
-<li><a href="md__build_Doc_man_exparna_p.html">exparna_p</a> &mdash; for generating exact matches from the ensembles of two RNAs</li>
-<li><a href="md_src_Utils_locarnate.html">locarnate</a> &mdash; for multiple alignment of RNAs via T-Coffee. This script offers multiple alignment of RNAs that is performed by sequence-structurally aligning all pairs of RNAs and then using T-Coffee to construct a common multiple alignment out of all pairwise ones.</li>
+<li><a href="https://s-will.github.io/LocARNA/md__build_Doc_man_exparna_p.html">exparna_p</a> &mdash; for generating exact matches from the ensembles of two RNAs</li>
+<li><a href="https://s-will.github.io/LocARNA/md_src_Utils_locarnate.html">locarnate</a> &mdash; for multiple alignment of RNAs via T-Coffee. This script offers multiple alignment of RNAs that is performed by sequence-structurally aligning all pairs of RNAs and then using T-Coffee to construct a common multiple alignment out of all pairwise ones.</li>
 </ul>
 <hr  />
- <h2><a class="anchor" id="autotoc_md10"></a>
+ <h2><a class="anchor" id="autotoc_md12"></a>
 Web server</h2>
 <p>The core functionality of the package is accessible through a web interface at</p>
 <p><a href="http://rna.informatik.uni-freiburg.de">http://rna.informatik.uni-freiburg.de</a></p>
 <hr  />
- <h2><a class="anchor" id="autotoc_md12"></a>
+ <h2><a class="anchor" id="autotoc_md14"></a>
 Contact</h2>
-<p>Main author and contact: Sebastian Will sebastian.will (at) polytechnique.edu </p>
+<p>Main author and contact: Sebastian Will sebastian.will (at) polytechnique.edu</p>
+<hr  />
+ <h2><a class="anchor" id="autotoc_md16"></a>
+References</h2>
+<ul>
+<li>Sebastian Will, Kristin Reiche, Ivo L. Hofacker, Peter F. Stadler, and Rolf Backofen. Inferring non-coding RNA families and classes by means of genome-scale structure-based clustering. PLOS Computational Biology, 3 no. 4 pp. e65, 2007. doi:10.1371/journal.pcbi.0030065</li>
+<li>Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler, and Rolf Backofen. LocARNA-P: Accurate boundary prediction and improved detection of structural RNAs. RNA, 18 no. 5 pp. 900-914, 2012. doi:10.1261/rna.029041.111</li>
+<li>Sebastian Will, Michael Yu, and Bonnie Berger. Structure-based Whole Genome Realignment Reveals Many Novel Non-coding RNAs. Genome Research, no. 23 pp. 1018-1027, 2013. doi:10.1101/gr.137091.111</li>
+<li>Sebastian Will, Christina Otto, Milad Miladi, Mathias Mohl, and Rolf Backofen. SPARSE: quadratic time simultaneous alignment and folding of RNAs without sequence-based heuristics. Bioinformatics, 31(15):2489–2496, 2015. doi:10.1093/bioinformatics/btv185 </li>
+</ul>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:18:19 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 30 2022 08:25:12 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -67,48 +67,48 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#autotoc_md83">locarna_p</a></li>
-<li class="level1"><a href="#autotoc_md84">NAME</a></li>
-<li class="level1"><a href="#autotoc_md85">DESCRIPTION</a><ul><li class="level2"><a href="#autotoc_md86">Input and Constraints</a></li>
-<li class="level2"><a href="#autotoc_md87">Output</a></li>
+<ul><li class="level1"><a href="#autotoc_md87">locarna_p</a></li>
+<li class="level1"><a href="#autotoc_md88">NAME</a></li>
+<li class="level1"><a href="#autotoc_md89">DESCRIPTION</a><ul><li class="level2"><a href="#autotoc_md90">Input and Constraints</a></li>
+<li class="level2"><a href="#autotoc_md91">Output</a></li>
 </ul>
 </li>
-<li class="level1"><a href="#autotoc_md88">OPTIONS</a><ul><li class="level2"><a href="#autotoc_md89">Scoring parameters:</a></li>
-<li class="level2"><a href="#autotoc_md90">Partition function representation:</a></li>
-<li class="level2"><a href="#autotoc_md91">Output:</a></li>
-<li class="level2"><a href="#autotoc_md92">Heuristics for speed accuracy trade off:</a></li>
-<li class="level2"><a href="#autotoc_md93">Computed probabilities:</a></li>
-<li class="level2"><a href="#autotoc_md94">Constraints:</a></li>
-<li class="level2"><a href="#autotoc_md95">Input files:</a></li>
+<li class="level1"><a href="#autotoc_md92">OPTIONS</a><ul><li class="level2"><a href="#autotoc_md93">Scoring parameters:</a></li>
+<li class="level2"><a href="#autotoc_md94">Partition function representation:</a></li>
+<li class="level2"><a href="#autotoc_md95">Output:</a></li>
+<li class="level2"><a href="#autotoc_md96">Heuristics for speed accuracy trade off:</a></li>
+<li class="level2"><a href="#autotoc_md97">Computed probabilities:</a></li>
+<li class="level2"><a href="#autotoc_md98">Constraints:</a></li>
+<li class="level2"><a href="#autotoc_md99">Input files:</a></li>
 </ul>
 </li>
-<li class="level1"><a href="#autotoc_md96">DISCLAIMER</a></li>
-<li class="level1"><a href="#autotoc_md97">AVAILABILITY</a></li>
-<li class="level1"><a href="#autotoc_md98">COPYING (LICENSE)</a></li>
-<li class="level1"><a href="#autotoc_md99">REFERENCES</a></li>
-<li class="level1"><a href="#autotoc_md100">EXAMPLES</a></li>
-<li class="level1"><a href="#autotoc_md101">AUTHOR</a></li>
-<li class="level1"><a href="#autotoc_md102">REPORTING BUGS</a></li>
+<li class="level1"><a href="#autotoc_md100">DISCLAIMER</a></li>
+<li class="level1"><a href="#autotoc_md101">AVAILABILITY</a></li>
+<li class="level1"><a href="#autotoc_md102">COPYING (LICENSE)</a></li>
+<li class="level1"><a href="#autotoc_md103">REFERENCES</a></li>
+<li class="level1"><a href="#autotoc_md104">EXAMPLES</a></li>
+<li class="level1"><a href="#autotoc_md105">AUTHOR</a></li>
+<li class="level1"><a href="#autotoc_md106">REPORTING BUGS</a></li>
 </ul>
 </div>
-<div class="textblock"><h1><a class="anchor" id="autotoc_md83"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md87"></a>
 locarna_p</h1>
-<h1><a class="anchor" id="autotoc_md84"></a>
+<h1><a class="anchor" id="autotoc_md88"></a>
 NAME</h1>
 <p>locarna_p - manual page for locarna_p (LocARNA 2.0.0RC10)</p>
-<h1><a class="anchor" id="autotoc_md85"></a>
+<h1><a class="anchor" id="autotoc_md89"></a>
 DESCRIPTION</h1>
 <p>locarna_p - pairwise partition function of RNA alignments.</p>
 <p>Computes base and base pair match probabilities from alignment partitition functions.</p>
 <p>USAGE: locarna_p [options] &lt;Input 1&gt; &lt;Input 2&gt;</p>
 <p>locarna_p computes sequence and structure match probabilities from partition functions of locarna pairwise alignments, i.e. from fast simultaneous folding and alignment based on two RNA sequences (or alignments).</p>
-<h2><a class="anchor" id="autotoc_md86"></a>
+<h2><a class="anchor" id="autotoc_md90"></a>
 Input and Constraints</h2>
 <p>Please see the documentation of locarna for inputs and the possible constraints specifications.</p>
-<h2><a class="anchor" id="autotoc_md87"></a>
+<h2><a class="anchor" id="autotoc_md91"></a>
 Output</h2>
 <p>Probabilities of base and base pair matches can be written to files. (The total partition function is reported to standard out.)</p>
-<h1><a class="anchor" id="autotoc_md88"></a>
+<h1><a class="anchor" id="autotoc_md92"></a>
 OPTIONS</h1>
 <p><b>-h</b>, <b>&ndash;help</b></p>
 <p>: Print this help.</p>
@@ -118,7 +118,7 @@ OPTIONS</h1>
 <p>: Be verbose. Prints input parameters, sequences and size information.</p>
 <p><b>-q</b>, <b>&ndash;quiet</b></p>
 <p>: Be quiet.</p>
-<h2><a class="anchor" id="autotoc_md89"></a>
+<h2><a class="anchor" id="autotoc_md93"></a>
 Scoring parameters:</h2>
 <p><b>-i</b>, <b>&ndash;indel=</b>&lt;score&gt;(<b>-150</b>)</p>
 <p>: Indel score. Score contribution of each single base insertion or deletion. Indel opening score and indel score define the affine scoring of gaps.</p>
@@ -140,7 +140,7 @@ Scoring parameters:</h2>
 <p>: Tau factor. Factor for contribution of sequence similarity in an arc match (in percent). tau=0 does not penalize any sequence information including compensatory mutations at arc matches, while tau=100 scores sequence similarity at ends of base matches (if a scoring matrix like ribosum is used, this adds the contributions for base pair match from the matrix). [default tau=0!]</p>
 <p><b>&ndash;temperature-alipf=</b>&lt;int&gt;(300)</p>
 <p>: Temperature for the */sequence* alignment/ partition functions used by the probcons-like sequence-based match/trace probability computation (this temperature is different from the \'physical\' temperature of RNA folding!).</p>
-<h2><a class="anchor" id="autotoc_md90"></a>
+<h2><a class="anchor" id="autotoc_md94"></a>
 Partition function representation:</h2>
 <p><b>&ndash;pf-scale=</b>&lt;scale&gt;(1.0)</p>
 <p>: Factor for scaling the partition functions. Use in order to avoid overflow.</p>
@@ -148,7 +148,7 @@ Partition function representation:</h2>
 <p>: Use extended precision for partition function values. This increases run-time and space (less than 2x), however enables handling significantly larger instances.</p>
 <p><b>&ndash;quad-pf</b></p>
 <p>: Use quad precision for partition function values. Even more precision than extended pf, but usually much slower (overrides extended-pf).</p>
-<h2><a class="anchor" id="autotoc_md91"></a>
+<h2><a class="anchor" id="autotoc_md95"></a>
 Output:</h2>
 <p><b>&ndash;write-arcmatch-probs=</b>&lt;file&gt;</p>
 <p>: Write arcmatch probabilities</p>
@@ -162,7 +162,7 @@ Output:</h2>
 <p>: Include arc match cases in base match probabilities</p>
 <p><b>&ndash;stopwatch</b></p>
 <p>: Print run time informations.</p>
-<h2><a class="anchor" id="autotoc_md92"></a>
+<h2><a class="anchor" id="autotoc_md96"></a>
 Heuristics for speed accuracy trade off:</h2>
 <p><b>-p</b>, <b>&ndash;min-prob=</b>&lt;prob&gt;(0.001)</p>
 <p>: Minimal probability. Only base pairs of at least this probability are taken into account.</p>
@@ -182,48 +182,48 @@ Heuristics for speed accuracy trade off:</h2>
 <p>: Relax deviation constraints in multiple aligmnent</p>
 <p><b>&ndash;min-trace-probability=</b>&lt;probability&gt;(1e-5)</p>
 <p>: Minimal sequence alignment probability of potential traces (probability-based sequence alignment envelope) [default=1e-4].</p>
-<h2><a class="anchor" id="autotoc_md93"></a>
+<h2><a class="anchor" id="autotoc_md97"></a>
 Computed probabilities:</h2>
 <p><b>&ndash;fragment-match-probs=</b>&lt;"i j k l"&gt;()</p>
 <p>: Requests probabilities for the match of fragments [i..j] and [k..l]. Accepts a \';\' separated list of ranges.</p>
-<h2><a class="anchor" id="autotoc_md94"></a>
+<h2><a class="anchor" id="autotoc_md98"></a>
 Constraints:</h2>
 <p><b>&ndash;maxBPspan=</b>&lt;span&gt;(<b>-1</b>)</p>
 <p>: Limit maximum base pair span [default=off].</p>
 <p><b>&ndash;relaxed-anchors</b></p>
 <p>: Use relaxed semantics of anchor constraints [default=strict semantics].</p>
-<h2><a class="anchor" id="autotoc_md95"></a>
+<h2><a class="anchor" id="autotoc_md99"></a>
 Input files:</h2>
 <blockquote class="doxtable">
 <p>The tool is called with two input files &lt;Input 1&gt; and &lt;Input 2&gt;, which specify the two input sequences or input alignments. Different input formats (Fasta, Clustal, Stockholm, LocARNA PP, ViennaRNA postscript dotplots) are accepted and automatically recognized (by file content); the two input files can be in different formats. Extended variants of the Clustal and Stockholm formats enable specifying anchor and structure constraints. </p>
 </blockquote>
-<h1><a class="anchor" id="autotoc_md96"></a>
+<h1><a class="anchor" id="autotoc_md100"></a>
 DISCLAIMER</h1>
 <p>locarna_p is a low level tool; most often this tool is used indirectly, by calling mlocarna with **&ndash;probabilistic. Note that the performance of locarna_p (as well as basically all tools in the LocARNA package) is often significantly improved by the use of suitable application-specific options, deviating from the default settings.</p>
-<h1><a class="anchor" id="autotoc_md97"></a>
+<h1><a class="anchor" id="autotoc_md101"></a>
 AVAILABILITY</h1>
 <p>The latest LocARNA package release is available online at at Github <a href="https://github.com/s-will/LocARNA">https://github.com/s-will/LocARNA</a> and <a href="http://www.bioinf.uni-freiburg.de/Software/LocARNA/">http://www.bioinf.uni-freiburg.de/Software/LocARNA/</a></p>
-<h1><a class="anchor" id="autotoc_md98"></a>
+<h1><a class="anchor" id="autotoc_md102"></a>
 COPYING (LICENSE)</h1>
 <p>Copyright 2005- Sebastian Will. The LocARNA package is released under GNU Public License v3.0</p>
-<h1><a class="anchor" id="autotoc_md99"></a>
+<h1><a class="anchor" id="autotoc_md103"></a>
 REFERENCES</h1>
 <p>Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler, and Rolf Backofen. LocARNA-P: Accurate boundary prediction and improved detection of structural RNAs. RNA, 18 no. 5 pp. 900-914, 2012. doi: 10.1261/rna.029041.111</p>
-<h1><a class="anchor" id="autotoc_md100"></a>
+<h1><a class="anchor" id="autotoc_md104"></a>
 EXAMPLES</h1>
 <p>Please see the documentation of locarna for call and input constraint examples.</p>
-<h1><a class="anchor" id="autotoc_md101"></a>
+<h1><a class="anchor" id="autotoc_md105"></a>
 AUTHOR</h1>
 <p>This man page is written and maintained by Sebastian Will it is part of the LocARNA package.</p>
 <p>First versions of locarna_p and its aligner class were written by Tejal Joshi.</p>
-<h1><a class="anchor" id="autotoc_md102"></a>
+<h1><a class="anchor" id="autotoc_md106"></a>
 REPORTING BUGS</h1>
 <p>Report bugs to &lt;will (at) informatik.uni-freiburg.de&gt;. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 30 2022 08:25:12 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

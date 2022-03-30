@@ -66,9 +66,9 @@ $(function() {
 <div class="title">ChangeLog </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md129"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md133"></a>
 2.0.0RC9</h1>
-<h2><a class="anchor" id="autotoc_md130"></a>
+<h2><a class="anchor" id="autotoc_md134"></a>
 MLocarna functionality</h2>
 <ul>
 <li>The calculation of the guide tree is rewritten; in consequence mlocarna is now more useful for clustering RNAs, since score distances are reported in the tree output (as well as names that correspond to intermediate alignments of subsets of the input sequences in subtrees)</li>
@@ -98,7 +98,7 @@ MLocarna functionality</h2>
 <p class="startli">All of them default to 'no-write'</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md131"></a>
+<h2><a class="anchor" id="autotoc_md135"></a>
 Documentation improvements</h2>
 <ul>
 <li>Improve man pages (add dois, slightly edit)</li>
@@ -106,13 +106,13 @@ Documentation improvements</h2>
 <li>Improve documentation of small tools (add missing man page includes)</li>
 <li>Add locarna_mcc man page</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md132"></a>
+<h2><a class="anchor" id="autotoc_md136"></a>
 Fixes</h2>
 <ul>
 <li>Fix quoting in newick trees</li>
 <li>Update script mlocarna_nnames</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md133"></a>
+<h2><a class="anchor" id="autotoc_md137"></a>
 MLocarna minor or internal changes</h2>
 <ul>
 <li>Refactorize guide tree computation.</li>
@@ -121,42 +121,42 @@ MLocarna minor or internal changes</h2>
 <li>Avoid unnecessary cloning of hashs; cleanup shared cloning</li>
 <li>factorize: introduce name normalizer class</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md134"></a>
+<h2><a class="anchor" id="autotoc_md138"></a>
 Other internal changes</h2>
 <ul>
 <li>Remove obsolete script to label trees</li>
 <li>Update CARNA server related scripts</li>
 <li>Slightly simplify make of man pages (require man_include files)</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md135"></a>
+<h1><a class="anchor" id="autotoc_md139"></a>
 2.0.0RC8</h1>
-<h2><a class="anchor" id="autotoc_md136"></a>
+<h2><a class="anchor" id="autotoc_md140"></a>
 Bugfixes</h2>
 <ul>
 <li>Fix bug in sequence trace probability computation, which was potentially critical for large instances (e.g. aligning sequences with ~1000 length difference)</li>
 <li>Remove superfluous output of alignments in probabilistic mode</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md137"></a>
+<h2><a class="anchor" id="autotoc_md141"></a>
 Code improvements/Maintenance</h2>
 <ul>
 <li>Update travis CI script</li>
 <li>Fix initialization order [FitOnOff]</li>
 <li>Fix missing and superfluous headers [alphabet.hh/icc]</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md138"></a>
+<h2><a class="anchor" id="autotoc_md142"></a>
 Experimental Feature</h2>
 <ul>
 <li>experimental extension of boundary prediction by position wise penalties, can use consistency file information [reliability-profile.pl, locarnap_fit]</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md140"></a>
+<h1><a class="anchor" id="autotoc_md144"></a>
 2.0.0RC7</h1>
 <ul>
 <li>Accept empty sequences in input</li>
 <li>Re-enable computing consensus structures in mlocarna output and stk-files</li>
 <li>Remove perl prototype specs to avoid perl 5.18 incompatibility</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md141"></a>
+<h1><a class="anchor" id="autotoc_md145"></a>
 2.0.0RC6</h1>
 <ul>
 <li>Adjust behavior of locarna and mlocarna for pairwise alignments<ul>
@@ -166,48 +166,48 @@ Experimental Feature</h2>
 </ul>
 </li>
 </ul>
-<h1><a class="anchor" id="autotoc_md142"></a>
+<h1><a class="anchor" id="autotoc_md146"></a>
 2.0.0RC5 (2018-05-08)</h1>
 <ul>
 <li>Allow penalized in global alignment</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md143"></a>
+<h1><a class="anchor" id="autotoc_md147"></a>
 2.0.0RC4 (2018-05-04)</h1>
-<h2><a class="anchor" id="autotoc_md144"></a>
+<h2><a class="anchor" id="autotoc_md148"></a>
 Bugfixes</h2>
 <ul>
 <li>Fix kbest HIT line</li>
 <li>Fix static linking (with gomp)</li>
 <li>Remove one extra line after CLUSTAL header (which used to be written by mlocarna)</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md145"></a>
+<h1><a class="anchor" id="autotoc_md149"></a>
 2.0.0RC3 (2018-04-30)</h1>
-<h2><a class="anchor" id="autotoc_md146"></a>
+<h2><a class="anchor" id="autotoc_md150"></a>
 Bugfixes</h2>
 <ul>
 <li>Fix kbest alignment (allow and detect empty alignments)</li>
 <li>Fix local end output (HIT line) for non-local alignments</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md147"></a>
+<h2><a class="anchor" id="autotoc_md151"></a>
 Features / Improvements</h2>
 <ul>
 <li>Add stopwatch (for consensus computation)</li>
 <li>Introduce parameter &ndash;consensus-gamma for mea consensus 'gamma'</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md148"></a>
+<h2><a class="anchor" id="autotoc_md152"></a>
 API</h2>
 <ul>
 <li>Class Alignment handles start and end position for non-local alignments; methods local_start(), local_end() of Alignment are replaced by start_positions(), end_positions()</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md149"></a>
+<h1><a class="anchor" id="autotoc_md153"></a>
 2.0.0RC2 (2018-04-16)</h1>
-<h2><a class="anchor" id="autotoc_md150"></a>
+<h2><a class="anchor" id="autotoc_md154"></a>
 Bugfixes</h2>
 <ul>
 <li>Fix free endgaps bug (negative alignment scores were handled incorrectly)</li>
 <li>Fix empty anchor constraint (correctly recognize/report when anchors are specified)</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md151"></a>
+<h2><a class="anchor" id="autotoc_md155"></a>
 Features / Improvements</h2>
 <p>Both improvements were introduced to handle large instances</p>
 <ul>
@@ -228,9 +228,9 @@ Features / Improvements</h2>
 </ul>
 </li>
 </ul>
-<h1><a class="anchor" id="autotoc_md152"></a>
+<h1><a class="anchor" id="autotoc_md156"></a>
 2.0.0RC1 (2017-12-13)</h1>
-<h2><a class="anchor" id="autotoc_md153"></a>
+<h2><a class="anchor" id="autotoc_md157"></a>
 Features / functionality</h2>
 <ul>
 <li>Sequence envelopes for locarna, locarna_p and sparse;<ul>
@@ -249,12 +249,12 @@ Features / functionality</h2>
 <li>Support caching of pp files (&ndash;dp-cache)</li>
 <li>Support in-package benchmarking (measuring sps, sci, and mcc)</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md154"></a>
+<h2><a class="anchor" id="autotoc_md158"></a>
 Security</h2>
 <ul>
 <li>Avoid shell evaluation in mlocarna system calls</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md155"></a>
+<h2><a class="anchor" id="autotoc_md159"></a>
 Optimizations and code improvements</h2>
 <ul>
 <li>Modernize and restructure code Transition to C++14 standard: use of unique_ptr, auto types, range loops, template meta programmin using type_traits, ... Systematic clean up of the library classes Introduce named arguments; zip and enumerate iterators Improved organization of command line help; reduce redundancies Improve handling of format and annotation types in MultipleAlignment</li>
@@ -265,7 +265,7 @@ Optimizations and code improvements</h2>
 <li>Use locarna_rnafold_pp for constrained folding [mlocarna]</li>
 <li>Update travis CI test</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md156"></a>
+<h2><a class="anchor" id="autotoc_md160"></a>
 Bugfixes</h2>
 <ul>
 <li>Fix specifying anchor constraints via bed file [mlocarna] allow arbitrary order of entries in bed input</li>
@@ -273,306 +273,306 @@ Bugfixes</h2>
 <li>Fix confusion matrix: count_common_bps()</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md158"></a>
+<h1><a class="anchor" id="autotoc_md162"></a>
 1.9.2 (2017-07-04)</h1>
 <p>Improve consensus dotplot computation (avoid accumulation of low probability base pairs) Some cleanup</p>
 <p>1.9.2pre4 Fix left and rightmost anchors (fixed local alignment); add unit tests Optimize maximization in innermost loop Add unit and program tests</p>
 <p>1.9.2pre3 Make consensus structure / dotplot types independent [option &ndash;consensus-structure alifold (current default) used to also determine the computation of consensus dotplots. The consensus dot plot is now independent (new default: no alifold consensus dot plot).]</p>
 <p>fix strict semantics for anchor constraints fix compatibility '&ndash;keep-sequence-order' with anchor constraints</p>
 <p>1.9.2pre2 mlocarna: write ps files (aln.ps, alirna.ps and if probabilistic, alidot.ps) from alifold call on result alignment to the results output directory; use alifold options &ndash;aln &ndash;color &ndash;mis fix mlocarna: find pw-aligner and pw-aligner-p executables in PATH</p>
-<h1><a class="anchor" id="autotoc_md159"></a>
+<h1><a class="anchor" id="autotoc_md163"></a>
 1.9.1 (2017-01-22)</h1>
 <p>improve help and man pages for locarna, locarna_p, sparse; refactor code for help text (string map for help text) write text inserts for man pages, which are autogenerated from help fix bug in reading stockholm anchors remove parameters min_am_prob and min_bm_prob from locarna and sparse CLIs; they are useful only for locarna_p introduce strict semantics for anchor constraints and make default (see mlocarna &ndash;relaxed-anchors) fix exparna_p output add mlocarna option to realign; support 'consensus' constraint specifications</p>
-<h1><a class="anchor" id="autotoc_md160"></a>
+<h1><a class="anchor" id="autotoc_md164"></a>
 1.9.0 (2016-Dec-26)</h1>
 <p>add mlocarna option to load (default) configuration from file add mlocarna option to read anchor constraints from bed-format specification add option &ndash;maxBPspan (analogous to ViennaRNA's maxBPspan) activate penalized option for mlocarna update documentation of mlocarna update reliability-profile.pl: suppress too verbose output; improve behavior of subseq option Tests: introduce mlocarna test with comparison to reference results</p><ul>
 <li>generate reference results with make gen-test-results add stockholm writing test Bug fixes: catch empty sequence case for alifold fix error message concerning max-diff-aln in mlocarna fix mlocarna bug: write stockholm also in probabilistic mode fix mlocarna error handling when running multithreaded fix doxygen/docu generation</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md161"></a>
+<h1><a class="anchor" id="autotoc_md165"></a>
 1.8.12 (2016-Dec-1)</h1>
 <p>Add checks: multi-threaded mlocarna, locarnate Fix severe problem with threads in mlocarna, which caused hangs Fix mlocarna with sparse (precomputation of inloop probs) Update VRNA/C11 configuration (adapts automatically; remove &ndash;enable-STDC ) Require ViennaRNA &gt;=2.3.1 Improved options help Cleanup some files in the repository and distribution </p>
-<h1><a class="anchor" id="autotoc_md162"></a>
+<h1><a class="anchor" id="autotoc_md166"></a>
 1.8.11 (2016-Aug-15)</h1>
 <p>Add configure flag &ndash;enable-STDC; set default to C11 (RNAlib compatibility) Fix output order of reliable structures in mlocarna Migrate to new vrna api; fix pf_scale bug </p>
-<h1><a class="anchor" id="autotoc_md163"></a>
+<h1><a class="anchor" id="autotoc_md167"></a>
 1.8.10  (2016-Jul-15)</h1>
 <p>Improve input checking in mlocarna Increase API version to 1.5 Wrap long alifold consensus output in mlocarna Add consensus structure in locarna output, selectable types mea|alifold|none Add optional stockholm output to mlocarna Introduce quiet switch for locarna, locarna_p, sparse, and exparna_p Code cleanup in driver programs Handle sequence name clashes by systematic renaming Read stockholm format Factorize common code in locarna, locarna_p and sparse (MainHelper) Add stockholm support input and output to locarna Fix bug occuring with empty input sequences Call alifold with /best/ parameters (from perl /and/ c++) Fix locarnate (compatibility to current locarna); add unit test</p>
-<h1><a class="anchor" id="autotoc_md164"></a>
+<h1><a class="anchor" id="autotoc_md168"></a>
 1.8.9   (2016-21-04)</h1>
 <p>improve configuration improve ubuntu packaging fix anchor constraint check in mlocarna fasta input allow ribofit for mea - e.g. for probabilistic; this used to require ribosum</p>
-<h1><a class="anchor" id="autotoc_md165"></a>
+<h1><a class="anchor" id="autotoc_md169"></a>
 1.8.8   (2016-15-04)</h1>
 <p>adapt to and require ViennaRNA &gt;=2.2.4 fix all static linking link binaries statically to libLocARNA by default; otherwise use &ndash;enable-dynamic-binaries fix &amp; clean up code (after cppcheck static analysis) prepare for rpm packaging</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md167"></a>
+<h1><a class="anchor" id="autotoc_md171"></a>
 2015</h1>
-<h2><a class="anchor" id="autotoc_md168"></a>
+<h2><a class="anchor" id="autotoc_md172"></a>
 1.8.7    (2015-11-12)</h2>
 <p>prepare for Ubuntu packaging fix man pages</p><ul>
 <li>update generation (add missing man pages)</li>
 <li>fix program names</li>
 <li>improve/fix help/man of binaries and locarnate clean exploc_p (get rid of "in"-mechanism) fix problems in tests (make check) w/o enable-debug remove wrong MultipleAlignment format check remove locarna.pl from distribution (functionally replaced by binary) </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md169"></a>
+<h2><a class="anchor" id="autotoc_md173"></a>
 1.8.6   (2015-10-31)</h2>
 <p>remove unused parameter "width" from locarna_rnafold_pp Increase API version to 1.4 Get rid of locarna.hh In clustal(-like) alignment output, adapt formatting to long names Improve libRNA config, in cases where pkg-config does not work: allow compiling without libgomp, if libgomp is unavailable and is not used by libRNA </p>
-<h2><a class="anchor" id="autotoc_md170"></a>
+<h2><a class="anchor" id="autotoc_md174"></a>
 1.8.5a</h2>
 <p>Fix behavior in case structure constraints + local folding (see 1.8.2)</p>
-<h2><a class="anchor" id="autotoc_md171"></a>
+<h2><a class="anchor" id="autotoc_md175"></a>
 1.8.5   (2015-10-10)</h2>
 <p>allow empty input sequences/alignments and fix related problems fix score of local alignment w/ empty input sequences</p>
-<h2><a class="anchor" id="autotoc_md172"></a>
+<h2><a class="anchor" id="autotoc_md176"></a>
 1.8.4   (2015-10-6)</h2>
 <p>fix potential overwriting of parameters in classes Aligner*, which was observed only with gcc-5.2 fix bug that crashed printing string options in verbose mode </p>
-<h2><a class="anchor" id="autotoc_md173"></a>
+<h2><a class="anchor" id="autotoc_md177"></a>
 1.8.3</h2>
 <p>improve portability for easier installation on recent MacOS X: compile without openmp; handle VRNA w/o pkgconf file fix c++11 warnings; fix incompatibility with libc++ fix incompatibility with clang (now used by MacOS X); fix warnings of clang remove g++ warnings </p>
-<h2><a class="anchor" id="autotoc_md174"></a>
+<h2><a class="anchor" id="autotoc_md178"></a>
 1.8.2</h2>
 <p>change semantics w.r.t. constraints + local folding: constraints turn off local folding reformat change log support generating doxygen documentation from distribution by make doxygen-doc penalized alignment experimental galaxy wrapper generation </p>
-<h2><a class="anchor" id="autotoc_md175"></a>
+<h2><a class="anchor" id="autotoc_md179"></a>
 1.8.1</h2>
 <p>implement ribofit Bugfix in OMatrix: incorrect address calculation Bugfix: LocARNA crashed while writing the result pp file if alignments of zero length are computed with options local file output and alifold consensus dp (alifold workaround) bugfixes (OMatrix, alifold len 0 bug) implement slide rule and conflict rule for f1 and mcc calculation; also use default minimal base pair length 3 in class ConfusionMatrix; class interface changes slightly</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md177"></a>
+<h1><a class="anchor" id="autotoc_md181"></a>
 2014</h1>
-<h2><a class="anchor" id="autotoc_md178"></a>
+<h2><a class="anchor" id="autotoc_md182"></a>
 1.8.0</h2>
 <p>Remove absolute path dependencies in scripts. This changes the behavior, since paths are not fixed at compile time. For example, the Vienna RNA programs are located via PATH environment variable. Require linking to VRNA. Remove configure options. Disallow renaming of Vienna RNA tools RNAfold, etc.; expect them in path. Always compile SPARSE/ExpaRNA-P. Don't pass mlocarna script through configure anymore. Add option &ndash;sparse to mlocarna Add rnafold-temperature option to mlocarna Use rnafold temperature and parameter files for alifold Warn if used with alifold-consensus-dp Add unit tests for mlocarna calls (standard, prob, sparse) Align alifold structure to alignment in mlocarna output Add Example gcvT.fa for SPARSE sparse: &ndash;special-gap-symbols option added (default is false)</p>
-<h2><a class="anchor" id="autotoc_md179"></a>
+<h2><a class="anchor" id="autotoc_md183"></a>
 1.7.17</h2>
 <p>max-bps/uil/bpil-length-ratio for SPARSE/ExparnaP Second type of stacking terms: new-stacking Add heuristic to restrict maximum number of "significant" base pairs: max-bps-length-ratio Add max-diff restriction at arc match ends: &ndash;max-diff-at-am Restructure parameter passing to Aligner* classes: use "named
     argument" idiom </p>
-<h2><a class="anchor" id="autotoc_md180"></a>
+<h2><a class="anchor" id="autotoc_md184"></a>
 1.7.16</h2>
 <p>ExpaRNA-P rename of tools </p>
-<h2><a class="anchor" id="autotoc_md181"></a>
+<h2><a class="anchor" id="autotoc_md185"></a>
 1.7.15</h2>
 <p>Fix bug concerning iterative alignment and alignment evaluation Rename locarna_X to exparna_p ExpaRNA-P code "publication ready"</p>
-<h2><a class="anchor" id="autotoc_md182"></a>
+<h2><a class="anchor" id="autotoc_md186"></a>
 1.7.14</h2>
 <p>Handle inconsistencies due to anchor constraints in conflict with other constraints/heuristics, e.g. max-diff: 1) accept -inf pairwise similarities for guide tree construction; 2) clear consensus anchor strings with duplicate names</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md184"></a>
+<h1><a class="anchor" id="autotoc_md188"></a>
 2013</h1>
-<h2><a class="anchor" id="autotoc_md185"></a>
+<h2><a class="anchor" id="autotoc_md189"></a>
 Jan 2013</h2>
 <p>Fix bug. Quotes in fasta-names caused failure when generating pps via locarna_rnafold_pp in mlocarna. (1.7.3.1)</p>
 <p>Resolve rnalib dependency. New configure option with-sparse is now required to compile with ExpARNA-P and SPARSE functionality. (1.7.5)</p>
-<h2><a class="anchor" id="autotoc_md186"></a>
+<h2><a class="anchor" id="autotoc_md190"></a>
 Mar 2013</h2>
 <p>Merge in new sparsification related code. Added fasta input check in mlocarna. (1.7.6) Small bug fixes Fix memory leaks Prepare alignment evaluation functionality Code cleanup/refactorizations (1.7.6.9) Introduce configuration header config.h Fix man page dependency problem</p>
-<h2><a class="anchor" id="autotoc_md187"></a>
+<h2><a class="anchor" id="autotoc_md191"></a>
 May/Jun 2013</h2>
 <p>Make sure that make check and make distcheck work Split RnaData into RnaData and RnaEnsemble Introduce new version of pp format (2.0) Read/write of inloop probabilities Cleaner separation of reading/writing of alignments/probability data v.s. computation; in particulare remove I/O from Alignment class Cleaner handling of gaps, alignment edges, and gap symbols in I/O New option &ndash;stopwatch (in locarna*) to turn on detailed internal timing Change class Sequence to be a mere interface to MultipleAlignment that allows operator [] for column access Make constraints optional part of multiple alignments; make write/readable with the alignment in clustal and pp format Remove options anchorA, anchorB from locarna and locarna_X Support anchor and structure annotation in MultipleAlignment RnaEnsemble constrains the folding by structure annotation of Multiple Alignment (if given) (Release 1.7.7) </p>
-<h2><a class="anchor" id="autotoc_md188"></a>
+<h2><a class="anchor" id="autotoc_md192"></a>
 Jul 2013</h2>
 <p>Support precomputing in loop probabilities for SPARSE Fixed reading of PP 2.0 (Release 1.7.8) </p>
-<h2><a class="anchor" id="autotoc_md189"></a>
+<h2><a class="anchor" id="autotoc_md193"></a>
 Sep 2013</h2>
 <p>LocARNATE: new code, improvements Exparna-P: Suboptimal traceback and improvements Change default behavior of mlocarna for sequence-local alignment: proceed with only-local subalignments; options local-progressive and global-progressive control behavior, where &ndash;global-progressive reactivates the previous one. (Release 1.7.9) </p>
-<h2><a class="anchor" id="autotoc_md190"></a>
+<h2><a class="anchor" id="autotoc_md194"></a>
 Oct 2013</h2>
 <p>Newick bugfix Small modifications for library use (e.g. for carna) (Release 1.7.10) </p>
-<h2><a class="anchor" id="autotoc_md191"></a>
+<h2><a class="anchor" id="autotoc_md195"></a>
 Nov 2013</h2>
 <p>Improve max-diff heuristic (without reference alignment): make symmetric and always allow sufficiently large deviation (Release 1.7.11) Fix bug in locarna_rnafold_pp (reading clustalw from stdin) Fix bug concerning structure constraints Update format conversions in mlocarna to pp 2.0 format Support for fixed structure constraints (directly in C++) (Release 1.7.12) Fix bug that compromised LocARNA-P w/ anchor-constraints in 1.7.12 In-loop support for fixed structure constraints (Release 1.7.13) Bugfix: computation of consensus anchor constraints could fail; now resolve name clashs by selecting lexicographically smaller name. (Release 1.7.13.1)</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md193"></a>
+<h1><a class="anchor" id="autotoc_md197"></a>
 2012</h1>
-<h2><a class="anchor" id="autotoc_md194"></a>
+<h2><a class="anchor" id="autotoc_md198"></a>
 Jan 2012</h2>
 <p>fix bugs in reliability plotting and "fitting" (1.6.2.3) New tool locarna-mea for computing the max. expected accuracy structure from a dot plot (1.6.2.4) New features for pp2dot script New script for generating average pp-files In combination, generate nice colored dot plots; used first for the output of the carna server (1.6.3) </p>
-<h2><a class="anchor" id="autotoc_md195"></a>
+<h2><a class="anchor" id="autotoc_md199"></a>
 Mar 2012</h2>
 <p>Merge with recent Exparna-P/locarna_X code (1.7) New classes for infinite integers (this is used for scores, which can be -infty, i.e. undefined). The new mechanism automatizes normalization of infinity using the type system and avoids wrong usage by the type system. Consequently, it is more flexible. It avoids a bug in normalized alignment and helps to clean up the Exparna-P code. (1.7.1) </p>
-<h2><a class="anchor" id="autotoc_md196"></a>
+<h2><a class="anchor" id="autotoc_md200"></a>
 Apr/May 2012</h2>
 <p>Add reading of score matrix in mlocarna Fix bug in probabilistic mode, which did not allow '#' in sequence names Fix bugs in output of score matrix Fix drawdplin </p>
-<h2><a class="anchor" id="autotoc_md197"></a>
+<h2><a class="anchor" id="autotoc_md201"></a>
 June 2012</h2>
 <p>Fix bug in trace controller (1.7.2) Add locarna_n code, alpha status </p>
-<h2><a class="anchor" id="autotoc_md198"></a>
+<h2><a class="anchor" id="autotoc_md202"></a>
 Aug 2012</h2>
 <p>Fix a bug related to use of trace controller (max-diff) with free endgaps. Fix autodetection of input multiple alignment file format, i.e. FASTA vs. CLUSTAL. Change interface of scoring such that gapA (gapB) depends on only positions in sequence A (B), resp. (1.7.2.1) Major improvements of the RnaData class and its interface Some clean up (1.7.2.5) Some bug fixes, support for graph kernel guide tree (1.7.2.6) Include graph kernel guide tree support in mlocarna (1.7.2.7) Some cleanup, release. Fix bug (missing initialization) in RnaData (1.7.3)</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md200"></a>
+<h1><a class="anchor" id="autotoc_md204"></a>
 2011</h1>
-<h2><a class="anchor" id="autotoc_md201"></a>
+<h2><a class="anchor" id="autotoc_md205"></a>
 Jan 2011</h2>
 <p>Alignment in limited deviation to a reference alignment program deviation computes deviation of alignment to reference Deactivate max-diff-aln for &ndash;probabilistic/locarna_p (Version 1.6)</p>
-<h2><a class="anchor" id="autotoc_md202"></a>
+<h2><a class="anchor" id="autotoc_md206"></a>
 Feb 2011</h2>
 <p>Restructure code library libLocARNA is generated and is used as library by executables</p>
 <p>Fix name normalization bug in mlocarna.in (Version 1.6.1) </p>
-<h2><a class="anchor" id="autotoc_md203"></a>
+<h2><a class="anchor" id="autotoc_md207"></a>
 Mar 2011</h2>
 <p>Doxygen compiles without warning and produces useful documentation of the library</p>
 <p>Vienna RNA library is now required for compilation and will be linked</p>
 <p>Locarna accepts clustal files as input and then computes base pair probabilities via pf_fold of the Vienna RNA lib. Currently this is limited to single sequence clustal files. Implement reading of mfasta files (still switched off).</p>
-<h2><a class="anchor" id="autotoc_md204"></a>
+<h2><a class="anchor" id="autotoc_md208"></a>
 Apr 2011</h2>
 <p>Implement several alignment comparison measures (and use in locarna_deviation) (EXPERIMENTAL)</p>
 <p>Make linking to Vienna librna configurable, default=off! Activate by calling ./configure with &ndash;enable-librna.</p>
 <p>New strategy for consensus dot plot generation: employ RNAalifold -p. Enable via mlocarna's option &ndash;alifold-consensus-dp Note: the default consensus dot plot computation seems to be flawed! The new tool pp2dot allows to visualize consensus dot plots (by converting pp to Vienna-like dot plot postscript files) and should help to improve the default strategy (otherwise we are going to replace it!)</p>
 <p>mlocarna accepts via &ndash;tree-file a super-tree as guide tree and automatically projects to the taxa in the input.</p>
 <p>Allow quotation in newick trees (using Text::ParseWords) and use quotations when generating newick trees</p>
-<h2><a class="anchor" id="autotoc_md205"></a>
+<h2><a class="anchor" id="autotoc_md209"></a>
 May 2011</h2>
 <p>Fix a problem with compiling on case-insensitive file systems (generate locarna.bin instead of locarna executable in src, rename at install)</p>
 <p>add alifold-consensus-dp option for mlocarna</p>
-<h2><a class="anchor" id="autotoc_md206"></a>
+<h2><a class="anchor" id="autotoc_md210"></a>
 Aug 2011: Add code for 'locarna_X'</h2>
-<h2><a class="anchor" id="autotoc_md207"></a>
+<h2><a class="anchor" id="autotoc_md211"></a>
 Sep 2011: Adding Exparna-P code for "in loop" probabilities</h2>
-<h2><a class="anchor" id="autotoc_md208"></a>
+<h2><a class="anchor" id="autotoc_md212"></a>
 Oct 2011: pre-release 1.6.2</h2>
-<h2><a class="anchor" id="autotoc_md209"></a>
+<h2><a class="anchor" id="autotoc_md213"></a>
 Nov 2011:</h2>
 <p>Add mlocarna options (pw-aligner and pw-aligner-p) to run specified binaries in place of locarna and locarna_p. This can be used to plug in compatible programs like carna</p>
 <p>Bug fix; compilation without linking libRNA was broken. release (1.6.2)</p>
-<h2><a class="anchor" id="autotoc_md210"></a>
+<h2><a class="anchor" id="autotoc_md214"></a>
 Dec 2011</h2>
 <p>Bug-fixes: treefile regexp, LARGE_PF name clash mit Vienna package (1.6.2.1) add script to translate to normalized names for mlocarna</p>
 <p>Add options pw-aligner-options and pw-aligner-p-options, to mlocarna to pass option strings to the pairwise aligner. This is useful in combination with specifying non-standard pairwise alignment programs.</p>
 <p>Support generation of pp files from dp2.ps and dp.ps files when skipping dot plot computation with &ndash;skip-pp (keep name for legacy). This allows the combine user-defined dotplots with anchor constraints from the mfasta input file.</p>
 <p>Support fixed structures (with pseudoknots) in the fasta input of mlocarna as structure constraint string with tag FS All base pairs in the fix structure receive a probability of 1. (1.6.2.2)</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md212"></a>
+<h1><a class="anchor" id="autotoc_md216"></a>
 2010</h1>
-<h2><a class="anchor" id="autotoc_md213"></a>
+<h2><a class="anchor" id="autotoc_md217"></a>
 Jan 2010</h2>
 <p>new tool Utils/reliability-profile.pl generates nice profile plots from mlocarna &ndash;probabilistic output directories</p>
 <p>stacking turned off, unless exp-prob option used</p>
 <p>(locarna-1.5a)</p>
-<h2><a class="anchor" id="autotoc_md214"></a>
+<h2><a class="anchor" id="autotoc_md218"></a>
 Mar 2010</h2>
 <p>Add normalized local alignment, proof of concept (locarna-1.5.1) Combine normalized alignment and kbest Introduce option better to enumerate suboptimal solution better than given threshold &ndash;kbest and &ndash;better can be used together (locarna-1.5.2) Fix build in separate build directory</p>
-<h2><a class="anchor" id="autotoc_md215"></a>
+<h2><a class="anchor" id="autotoc_md219"></a>
 May 2010</h2>
 <p>Introduce new representation of fasta data Major restructuring/refactorization of mlocarna.in and MLocarna.pm Move many functions of mlocarna.in to packages and introduce several new packages to group functions thematically (locarna-1.5.3)</p>
 <p>Resolve a bug that made LocARNA handle Ts as unknown characters. LocARNA now automatically transforms Ts to Us in input sequences. The bug did not affect input sequences without Ts. For matchs involving Ts, LocARNA wrongly used an ad-hoc score instead of the ribosum score for matches involving 'U', as one would expect.</p>
-<h2><a class="anchor" id="autotoc_md216"></a>
+<h2><a class="anchor" id="autotoc_md220"></a>
 Oct 2010</h2>
 <p>Add EdgeController: adds feature to constrain (max-diff-match) alignment relative to a given alignment. Change handling of max-diff-match in case of unequal length: instead of relaxing constraint, change constraint to |i*(lenB/lenA)-j|&lt;=max-diff Add multiple alignment class to support construction of EdgeController.</p>
-<h2><a class="anchor" id="autotoc_md217"></a>
+<h2><a class="anchor" id="autotoc_md221"></a>
 Nov 2010</h2>
 <p>Change Copyright to GPL v2 and update README</p>
 <p>rename max-diff-match to max-diff heuristic.</p>
 <p>replace EdgeController by TraceController use the max-diff delta ( TraceController ) to restrict alignment of paired and unpaired positions (not only ends of arcs) in Aligner. Semantics is given by restriction of alignment cuts/matrix cells!</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md219"></a>
+<h1><a class="anchor" id="autotoc_md223"></a>
 2009</h1>
-<h2><a class="anchor" id="autotoc_md220"></a>
+<h2><a class="anchor" id="autotoc_md224"></a>
 Jan 2009 (v1.42)</h2>
 <p>iterative alignment using SCI as optimization criterion</p>
-<h2><a class="anchor" id="autotoc_md221"></a>
+<h2><a class="anchor" id="autotoc_md225"></a>
 Feb 2009 (v1.4.4alpha)</h2>
 <p>cleanup mlocarna code cleanup mlocarna output (inclusive output modes -v, &ndash;moreverbose) improve reliability computation multi-threaded mlocarna, new option &ndash;cpus &lt;n&gt;: use n threads more structure for mlocarna output to file system (distribute files to subdirs) introduce &ndash;pf-scale parameter to locarna_p and mlocarna</p>
 <p>precompute exp base match similarity and gap cost for partition function =&gt; significant speed up of locarna_p change handling of max_diff: guarantee at least |lenA-lenB| improve outside algorithm in locarna_p (reduce sizes of Mrev-matrices) =&gt; with prior optimization massive speedup of locarna_p</p>
 <p>add probability filtering after cbt further improvement of outside (cheaper computation of certain Mprime entries) iteration with reliable structure as constraints (option &ndash;it-reliable-structure)</p>
 <p>support for non-threaded perl</p>
-<h2><a class="anchor" id="autotoc_md222"></a>
+<h2><a class="anchor" id="autotoc_md226"></a>
 Mar 2009</h2>
 <p>fix some problems with the option parsing (e.g. now -p=0.1 is correct and -p=a throws an error) fix bug in initialization for structure locality change semantics of constraints in the context of locality: anchor constraints (i,j) now enforce that edge (i,j) is part of the local alignment (for sequence and structure locality) </p>
-<h2><a class="anchor" id="autotoc_md223"></a>
+<h2><a class="anchor" id="autotoc_md227"></a>
 Apr 2009</h2>
 <p>add missing options to mlocarna, fix bug in locarnate (thanks to Wolfgang) fix bug with sharing/threads in mlocarna (v1.4.6) locarna_p computes probabilities for matching fragments </p>
-<h2><a class="anchor" id="autotoc_md224"></a>
+<h2><a class="anchor" id="autotoc_md228"></a>
 May 2009</h2>
 <p>clean manpage of mlocarna </p>
-<h2><a class="anchor" id="autotoc_md225"></a>
+<h2><a class="anchor" id="autotoc_md229"></a>
 Jun 2009</h2>
 <p>offer large data type "long double" for partition function computation. this is available when configuring through option &ndash;enable-large-pf. Use this in case of long alignments, where the partition function exceeds the range of type "double". Although &ndash;pf-scale sometimes provides a workaround, for multiple alignment of large sequences it is often the only viable choice.</p>
-<h2><a class="anchor" id="autotoc_md226"></a>
+<h2><a class="anchor" id="autotoc_md230"></a>
 Jul 2009</h2>
 <p>add free endgaps via option &ndash;free-endgaps "----", for locarna gaps at all for ends can be allowed for free independently. For mlocarna, &ndash;free-endgaps will allow free end gaps at any end.</p>
-<h2><a class="anchor" id="autotoc_md227"></a>
+<h2><a class="anchor" id="autotoc_md231"></a>
 Sep 2009</h2>
 <p>fixed serious bugs concerning stacking: due to these bugs, mlocarna did not profit from stacking and locarna could get wrong results with stacking turned on.</p>
 <p>Change base pair filtering by probability for stacking: ignore stacking probability, filter only by base pair probability.</p>
 <p>(locarna-1.4.9alpha)</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md229"></a>
+<h1><a class="anchor" id="autotoc_md233"></a>
 2008</h1>
-<h2><a class="anchor" id="autotoc_md230"></a>
+<h2><a class="anchor" id="autotoc_md234"></a>
 Feb 2008</h2>
 <p>remove bug in anchor constraints Ribosum-85-60 compiled in changed default parameters to something reasonable</p>
-<h2><a class="anchor" id="autotoc_md231"></a>
+<h2><a class="anchor" id="autotoc_md235"></a>
 Mar 2008</h2>
 <p>remove bug in rna_data.cc reading dp.ps, v 1.2.4</p>
-<h2><a class="anchor" id="autotoc_md232"></a>
+<h2><a class="anchor" id="autotoc_md236"></a>
 Jun 2008</h2>
 <p>change char * to std::string in options module (the g++-compiler does not like it anymore :))</p>
-<h2><a class="anchor" id="autotoc_md233"></a>
+<h2><a class="anchor" id="autotoc_md237"></a>
 Jul 2008</h2>
 <p>integrate locarnate - a tool for multiple alignment that uses locarna in combination with tcoffee (Version 1.3)</p>
-<h2><a class="anchor" id="autotoc_md234"></a>
+<h2><a class="anchor" id="autotoc_md238"></a>
 Aug 2008</h2>
 <p>partition function version of locarna (locarna_p) experimental support for multiple alignment using basematch probabilities and probabilistic consistency transformation (Version 1.3.2)</p>
 <p>mlocarna can write basematch probabilities for plotting plotting of basematch probs (Utils/plot-bmprobs)</p>
 <p>mlocarna now correctly accepts input trees in newick-format that are terminated by ";". However, it does not enforce the ";"-termination mlocarna now writes the result.tree in ";"-terminated newick-format</p>
 <p>use rounding (instead of truncate) in scoring module, when converting from double to score_t. This fixes some inconsistency between 32/64bit and is the correct thing to do anyway</p>
-<h2><a class="anchor" id="autotoc_md235"></a>
+<h2><a class="anchor" id="autotoc_md239"></a>
 Oct 2008</h2>
 <p>improve speed up gained from using anchor constraints</p>
-<h2><a class="anchor" id="autotoc_md236"></a>
+<h2><a class="anchor" id="autotoc_md240"></a>
 Nov 2008 (v1.4)</h2>
 <p>add probabilistic scoring with consistency transformation with structural scoring in progressive alignment steps</p>
 <p>change options of mlocarna for probabilistic/mea-type alignment</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md238"></a>
+<h1><a class="anchor" id="autotoc_md242"></a>
 2007</h1>
-<h2><a class="anchor" id="autotoc_md239"></a>
+<h2><a class="anchor" id="autotoc_md243"></a>
 Sept 2007 (1.0alpha)</h2>
 <p>refactoring; new classes Scoring, RnaData, ... preparations for better scoring: reading Ribosum-Data, new class Ribosum computing match probabilities in sequence alignment (Gotoh): Implemented methods: pairHMM, partition function, local pf new class MatchProbs improve option parser: introduce sections and section hiding integrate new scoring scheme: maximum expected accuracy significant speed-up due to re-organization of the recursion equations: redefine D to already contain the score contribution of the arcmatch. This reduces these computations by orders of magnitude!</p>
-<h2><a class="anchor" id="autotoc_md240"></a>
+<h2><a class="anchor" id="autotoc_md244"></a>
 Nov 2007</h2>
 <p>add constraints to pairwise and multiple alignment. This means for locarna: integrate anchor constraints for mlocarna: read and pass structure constraints to RNAfold -p, read and pass sequence constraints to locarna The pp-format is redefined in order to pass constraint information from mlocarna to locarna. New class for representing and calculating with infinite scores changed default sequ-local=on to off increased min_prob in mlocarna.pl</p>
 <p>bug fix in computation of consensus probs</p>
 <p>rewrite noLP add (pseudo)affine gap penalties make mea working change default output width to 120 ribosum scoring for classic score change handling of options in mlocarna</p>
 <p>mlocarna learns iterative refinement mlocarna learns conistency based transformation</p>
-<h2><a class="anchor" id="autotoc_md241"></a>
+<h2><a class="anchor" id="autotoc_md245"></a>
 Dec 2007</h2>
 <p>true affine gap cost (implemented using additional vectors E and F) implemented stacking (v_1_2alpha) removed bugs in traceback cleaned options include version name in output (v_1_2_1a) add man pages add Ribosum85-60 matrix in distribution avoid writing to global /tmp directory (v_1_2_2a) avoid potential file name conflicts in mlocarna accept duplicate (or not prefix unique) names in mfasta input</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md243"></a>
+<h1><a class="anchor" id="autotoc_md247"></a>
 2006</h1>
-<h2><a class="anchor" id="autotoc_md244"></a>
+<h2><a class="anchor" id="autotoc_md248"></a>
 Jan 2006:</h2>
 <p>add support for aligning alignments (used for multiple progressive alignment)</p>
-<h2><a class="anchor" id="autotoc_md245"></a>
+<h2><a class="anchor" id="autotoc_md249"></a>
 Aug 2006:</h2>
 <p>Lower memory consumption of locarna.</p>
 <p>In particular important in case of scanning (target against genome)</p>
 <p>Add some options/features that are useful for scanning option &ndash;kbest option &ndash;max-diff-am option &ndash;ungappedA option &ndash;local-output handling of nucleotide-symbol N for unknown in input</p>
-<h2><a class="anchor" id="autotoc_md246"></a>
+<h2><a class="anchor" id="autotoc_md250"></a>
 Oct 2006</h2>
 <p>add support for stacking alignment, not finished </p>
-<h2><a class="anchor" id="autotoc_md247"></a>
+<h2><a class="anchor" id="autotoc_md251"></a>
 May 2006 (0.991)</h2>
 <p>small changes, rename mlocarna-p to mlocarna</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md249"></a>
+<h1><a class="anchor" id="autotoc_md253"></a>
 2005</h1>
-<h2><a class="anchor" id="autotoc_md250"></a>
+<h2><a class="anchor" id="autotoc_md254"></a>
 Mai 2005</h2>
 <p>global alignment </p>
-<h2><a class="anchor" id="autotoc_md251"></a>
+<h2><a class="anchor" id="autotoc_md255"></a>
 June 2005</h2>
 <p>extension to local alignment (sequence+structure locality), no_lonely_pairs option </p>
-<h2><a class="anchor" id="autotoc_md252"></a>
+<h2><a class="anchor" id="autotoc_md256"></a>
 Nov 2005</h2>
 <p>command line options </p>
-<h2><a class="anchor" id="autotoc_md253"></a>
+<h2><a class="anchor" id="autotoc_md257"></a>
 Dez 2005</h2>
 <p>recognize and read dot.ps files (in add to formerly used pp-files) </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 30 2022 08:25:12 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

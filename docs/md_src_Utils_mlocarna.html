@@ -67,61 +67,61 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#autotoc_md13">mlocarna</a></li>
-<li class="level1"><a href="#autotoc_md14">NAME</a></li>
-<li class="level1"><a href="#autotoc_md15">SYNOPSIS</a></li>
-<li class="level1"><a href="#autotoc_md16">DESCRIPTION</a></li>
-<li class="level1"><a href="#autotoc_md17">OPTIONS</a><ul><li class="level2"><a href="#autotoc_md18">Load configurations from file</a></li>
-<li class="level2"><a href="#autotoc_md19">Major alignment modes</a></li>
-<li class="level2"><a href="#autotoc_md20">Controlling Output</a></li>
-<li class="level2"><a href="#autotoc_md21">Locality</a></li>
-<li class="level2"><a href="#autotoc_md22">Pairwise alignment and scoring</a></li>
-<li class="level2"><a href="#autotoc_md23">Alignment heuristics</a></li>
-<li class="level2"><a href="#autotoc_md24">Low-level selection of pairwise alignment tools and options</a></li>
-<li class="level2"><a href="#autotoc_md25">Controlling the guide tree construction</a></li>
-<li class="level2"><a href="#autotoc_md26">Controlling multiple alignment construction</a></li>
-<li class="level2"><a href="#autotoc_md27">Further options for probabilistic mode</a></li>
-<li class="level2"><a href="#autotoc_md28">Miscallaneous modes of operation</a></li>
-<li class="level2"><a href="#autotoc_md29">Constraints</a></li>
-<li class="level2"><a href="#autotoc_md30">Rna folding (RNAfold/RNAplfold)</a></li>
-<li class="level2"><a href="#autotoc_md31">Multithreading</a></li>
-<li class="level2"><a href="#autotoc_md32">Getting Help</a></li>
+<ul><li class="level1"><a href="#autotoc_md17">mlocarna</a></li>
+<li class="level1"><a href="#autotoc_md18">NAME</a></li>
+<li class="level1"><a href="#autotoc_md19">SYNOPSIS</a></li>
+<li class="level1"><a href="#autotoc_md20">DESCRIPTION</a></li>
+<li class="level1"><a href="#autotoc_md21">OPTIONS</a><ul><li class="level2"><a href="#autotoc_md22">Load configurations from file</a></li>
+<li class="level2"><a href="#autotoc_md23">Major alignment modes</a></li>
+<li class="level2"><a href="#autotoc_md24">Controlling Output</a></li>
+<li class="level2"><a href="#autotoc_md25">Locality</a></li>
+<li class="level2"><a href="#autotoc_md26">Pairwise alignment and scoring</a></li>
+<li class="level2"><a href="#autotoc_md27">Alignment heuristics</a></li>
+<li class="level2"><a href="#autotoc_md28">Low-level selection of pairwise alignment tools and options</a></li>
+<li class="level2"><a href="#autotoc_md29">Controlling the guide tree construction</a></li>
+<li class="level2"><a href="#autotoc_md30">Controlling multiple alignment construction</a></li>
+<li class="level2"><a href="#autotoc_md31">Further options for probabilistic mode</a></li>
+<li class="level2"><a href="#autotoc_md32">Miscallaneous modes of operation</a></li>
+<li class="level2"><a href="#autotoc_md33">Constraints</a></li>
+<li class="level2"><a href="#autotoc_md34">Rna folding (RNAfold/RNAplfold)</a></li>
+<li class="level2"><a href="#autotoc_md35">Multithreading</a></li>
+<li class="level2"><a href="#autotoc_md36">Getting Help</a></li>
 </ul>
 </li>
-<li class="level1"><a href="#autotoc_md33">EXAMPLES</a><ul><li class="level2"><a href="#autotoc_md34">Calling mlocarna</a></li>
-<li class="level2"><a href="#autotoc_md35">Use of constraints</a></li>
-<li class="level2"><a href="#autotoc_md36">Realignment</a></li>
+<li class="level1"><a href="#autotoc_md37">EXAMPLES</a><ul><li class="level2"><a href="#autotoc_md38">Calling mlocarna</a></li>
+<li class="level2"><a href="#autotoc_md39">Use of constraints</a></li>
+<li class="level2"><a href="#autotoc_md40">Realignment</a></li>
 </ul>
 </li>
-<li class="level1"><a href="#autotoc_md37">AUTHORS</a></li>
-<li class="level1"><a href="#autotoc_md38">ONLINE INFORMATION</a></li>
-<li class="level1"><a href="#autotoc_md39">REFERENCES</a></li>
+<li class="level1"><a href="#autotoc_md41">AUTHORS</a></li>
+<li class="level1"><a href="#autotoc_md42">ONLINE INFORMATION</a></li>
+<li class="level1"><a href="#autotoc_md43">REFERENCES</a></li>
 </ul>
 </div>
-<div class="textblock"><h1><a class="anchor" id="autotoc_md13"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md17"></a>
 mlocarna</h1>
-<h1><a class="anchor" id="autotoc_md14"></a>
+<h1><a class="anchor" id="autotoc_md18"></a>
 NAME</h1>
 <p><b>MLocARNA</b> - multiple alignment of RNA</p>
-<h1><a class="anchor" id="autotoc_md15"></a>
+<h1><a class="anchor" id="autotoc_md19"></a>
 SYNOPSIS</h1>
 <p>mlocarna [options] &lt;fasta file&gt;</p>
-<h1><a class="anchor" id="autotoc_md16"></a>
+<h1><a class="anchor" id="autotoc_md20"></a>
 DESCRIPTION</h1>
 <p><b>MLocarna</b> computes a multiple sequence-structure alignment of RNA sequences. The structure of these sequences does not have to be known but is inferred based in simultaneous alignment and folding.</p>
 <p>Generally, mlocarna takes multiple sequences as input, given in a fasta file. The fasta file can be extended to specify structure and anchor constraints that respectively control the possible foldings and possible alignments. The main outcome is a multiple alignment together with a consensus structure.</p>
 <p>Technically, mlocarna works as front end to the pairwise alignment tools locarna, locarna_p, and sparse (and even carna), which are employed to construct the multiple alignment progressively.</p>
 <p>Going beyond the basic progressive alignment scheme, Mlocarna implements probabilistic consistency transformation and iterative alignment, which are available in probabilistic mode. Moreover, the LocARNA package provides an alternative multiple alignment tool "locarnate", which generates alignments based on T-Coffee using (non-probabilistic) consistency transformation.</p>
-<h1><a class="anchor" id="autotoc_md17"></a>
+<h1><a class="anchor" id="autotoc_md21"></a>
 OPTIONS</h1>
-<h2><a class="anchor" id="autotoc_md18"></a>
+<h2><a class="anchor" id="autotoc_md22"></a>
 Load configurations from file</h2>
 <ul>
 <li><p class="startli"><b>&ndash;configure</b>=file</p>
 <p class="startli">Load a parameter set from a configuration file of options and option value pairs. This enables specifying (sets of) default parameters for mlocarna, which can still be modified by other options to mlocarna. Command line arguments always take precedence over this configuration. Options are specified as single entries per line; option value pairs, like option: value. Whitespace and '#'-prefixed comments are ignored.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md19"></a>
+<h2><a class="anchor" id="autotoc_md23"></a>
 Major alignment modes</h2>
 <p>By default, mlocarna performs progressive alignment, where the progressive alignment steps are computed by the pairwise aligner locarna based on sequences and dot plots (RNAfold -p); subsequently, partial alignmetns and their consensus dot plots.</p>
 <ul>
@@ -132,7 +132,7 @@ Major alignment modes</h2>
 <p class="startli">Apply the sparsified alignment algorithm SPARSE for all pairwise alignments (instead of the default pairwise aligner locarna). SPARSE supports stronger sparsification for faster alignment computation and increases the structure prediction capabilities over locarna.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md24"></a>
 Controlling Output</h2>
 <ul>
 <li><p class="startli"><b>&ndash;tgtdir</b></p>
@@ -163,7 +163,7 @@ Controlling Output</h2>
 <p class="startli">Write guidance structure in output to stdout. This provides some insight into the influence of structure into the generated pairwise alignments. The guidance structure shows the base pairs 'predicted' by each pairwise locarna (or sparse) alignment. These structures should not be mistaken as predicted consensus structures of multiple alignments. Consensus structures can be more adequately derived from the multiple alignment. For this reason, mlocarna reports the consensus structure by RNAalifold.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md21"></a>
+<h2><a class="anchor" id="autotoc_md25"></a>
 Locality</h2>
 <ul>
 <li><p class="startli"><b>&ndash;free-endgaps</b></p>
@@ -185,7 +185,7 @@ Locality</h2>
 <p class="startli">Variant of sequence local alignment (cf. &ndash;sequ-local), where the specified penalty score is subtracted for each base in the local alignment. [Experimental]</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md22"></a>
+<h2><a class="anchor" id="autotoc_md26"></a>
 Pairwise alignment and scoring</h2>
 <ul>
 <li><p class="startli"><b>&ndash;indel=score</b> (-150)</p>
@@ -225,7 +225,7 @@ Pairwise alignment and scoring</h2>
 <p class="startli">Use new stacking terms; cf. &ndash;stacking. These terms directly award bonuses to stacking. [Experimental]</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md27"></a>
 Alignment heuristics</h2>
 <p>Several parameters are available to speed up the pairwise alignment computations heuristically. Choosing these parameters reasonably is necessary to achieve good trade-off between speed and accuracy, especially for large alignment instances.</p>
 <ul>
@@ -263,7 +263,7 @@ Alignment heuristics</h2>
 <p class="startli">Minimum base-match probability (filters output of locarna-p)</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md24"></a>
+<h2><a class="anchor" id="autotoc_md28"></a>
 Low-level selection of pairwise alignment tools and options</h2>
 <ul>
 <li><p class="startli"><b>&ndash;pw-aligner</b></p>
@@ -279,7 +279,7 @@ Low-level selection of pairwise alignment tools and options</h2>
 <p class="startli">Additional option string for the partition function pairwise alignment tool (def="").</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md25"></a>
+<h2><a class="anchor" id="autotoc_md29"></a>
 Controlling the guide tree construction</h2>
 <ul>
 <li><p class="startli"><b>&ndash;treefile</b>=file</p>
@@ -308,7 +308,7 @@ Controlling the guide tree construction</h2>
     \-stack -t 3 -M 3".</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md26"></a>
+<h2><a class="anchor" id="autotoc_md30"></a>
 Controlling multiple alignment construction</h2>
 <ul>
 <li><p class="startli"><b>&ndash;alifold-consensus-dp</b></p>
@@ -336,7 +336,7 @@ Controlling multiple alignment construction</h2>
 <p class="startli">Iterate alignment &lt;num&gt; times with reliable structure. This works only in probabilistic mode, when reliabilities can be computed.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md27"></a>
+<h2><a class="anchor" id="autotoc_md31"></a>
 Further options for probabilistic mode</h2>
 <ul>
 <li><p class="startli"><b>&ndash;pf-only-basematch-probs</b></p>
@@ -377,7 +377,7 @@ Further options for probabilistic mode</h2>
 <p class="startli">Don't write / Write arc match probabilities to files in target dir (default: don't write).</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md28"></a>
+<h2><a class="anchor" id="autotoc_md32"></a>
 Miscallaneous modes of operation</h2>
 <ul>
 <li><p class="startli"><b>&ndash;realign</b></p>
@@ -396,7 +396,7 @@ Miscallaneous modes of operation</h2>
 <p class="startli">Assume that alignment for evaluation (cf. &ndash;evaluate) is in fasta format.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md29"></a>
+<h2><a class="anchor" id="autotoc_md33"></a>
 Constraints</h2>
 <ul>
 <li><p class="startli"><b>&ndash;anchor-constraints=&lt;file</b>&gt;</p>
@@ -408,7 +408,7 @@ Constraints</h2>
 <p class="startli">Ignore all constraints (anchor and structure constraints) even if given.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md30"></a>
+<h2><a class="anchor" id="autotoc_md34"></a>
 Rna folding (RNAfold/RNAplfold)</h2>
 <ul>
 <li><p class="startli"><b>&ndash;noLP</b> / <b>&ndash;LP</b></p>
@@ -442,7 +442,7 @@ Rna folding (RNAfold/RNAplfold)</h2>
 <p class="startli">Turn on precomputation of in loop probabilties. For use with special pairwise aligners (e.g. locarna_n) that use such probabilities.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md31"></a>
+<h2><a class="anchor" id="autotoc_md35"></a>
 Multithreading</h2>
 <ul>
 <li><p class="startli"><b>&ndash;threads, &ndash;cpus</b>=number</p>
@@ -450,7 +450,7 @@ Multithreading</h2>
 <p class="startli">Be aware: mlocarna seems not to scale well for more than a few threads (often only 2 or 3). Using more threads is often detrimental, since it strongly increases memory consumption due to the current perl threading implementation. This unfortunate behavior seems hard to improve without major rewrite of the software.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md32"></a>
+<h2><a class="anchor" id="autotoc_md36"></a>
 Getting Help</h2>
 <ul>
 <li><p class="startli"><b>&ndash;help</b></p>
@@ -461,9 +461,9 @@ Getting Help</h2>
 </li>
 </ul>
 <p>The sequences are given in input file &lt;file&gt; in mfasta format. All results are written to a target directory &lt;dir&gt;. If the file tree is given, contained tree (in NEWICK-tree format) is used as guide tree for the progressive alignment. The final results are collected in &lt;tgtdir&gt;/results. The final multiple alignment is &lt;tgtdir&gt;/results/result.aln.</p>
-<h1><a class="anchor" id="autotoc_md33"></a>
+<h1><a class="anchor" id="autotoc_md37"></a>
 EXAMPLES</h1>
-<h2><a class="anchor" id="autotoc_md34"></a>
+<h2><a class="anchor" id="autotoc_md38"></a>
 Calling mlocarna</h2>
 <p>[Note that the LocARNA distribution provides files of the following and other examples in Data/Examples.]</p>
 <p>Sequences are typically given in plain fasta format like </p><pre class="fragment">example.fa
@@ -494,7 +494,7 @@ alifold-consensus-dp
          example.fa
 </pre><p> For probabilistic alignment with consistency transformation, call </p><pre class="fragment">mlocarna --probabilistic --consistency-transform example.fa
 </pre><p> In both cases, mlocarna writes the main results to stdout and more detailed results to the target directory example.out. The results directory is overwritten if it exists already. To avoid this, one can specify the target directory (&ndash;tgtdir).</p>
-<h2><a class="anchor" id="autotoc_md35"></a>
+<h2><a class="anchor" id="autotoc_md39"></a>
 Use of constraints</h2>
 <p>Mlocarna supports structure constraints for folding and anchor constraints for alignment. Both types of constraints can be specified in extension of the standard fasta format via 'constraint lines'. Fasta-ish input with constraints looks like this </p><pre class="fragment">example-w-constraints.fa
 ----------------------------------------
@@ -527,7 +527,7 @@ ACGGAGGGAAAGCAAGCCUUCUGCGACA
 .(((....xxxxxx.......))).xxx #S
 ----------------------------------------
 </pre><p> once calls </p><pre class="fragment">mlocarna --anchor-constraints example-anchors.bed  example-wo-anchors.fa
-</pre> <h2><a class="anchor" id="autotoc_md36"></a>
+</pre> <h2><a class="anchor" id="autotoc_md40"></a>
 Realignment</h2>
 <p>In realignment mode (option &ndash;realign), mlocarna is called with an input alignment in clustal format, e.g. </p><pre class="fragment">mlocarna --realign example-realign.aln
 </pre><p> This allows to define constraints as 'consensus constraints' in the input, e.g. </p><pre class="fragment">example-realign.aln
@@ -539,14 +539,14 @@ fdhA               CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAG-GUGGCG
 #S                 ((((((.((((...(((.................))).)))).))))))
 ----------------------------------------
 </pre><p> Note that anchor names are arbitrary and the consensus structure is 'projected' to the single sequences. Moreover, the input alignment can be used as reference for fast limited realignment, e.g. call to realign in distance 5 of the reference alignment: </p><pre class="fragment">mlocarna --realign example-realign.aln --max-diff 5 --max-diff-aln .
-</pre> <h1><a class="anchor" id="autotoc_md37"></a>
+</pre> <h1><a class="anchor" id="autotoc_md41"></a>
 AUTHORS</h1>
 <p>Sebastian Will Christina Otto (ExpaRNA-P, sparsification classes for ExpaRNA-P and SPARSE) Milad Miladi (SPARSE)</p>
-<h1><a class="anchor" id="autotoc_md38"></a>
+<h1><a class="anchor" id="autotoc_md42"></a>
 ONLINE INFORMATION</h1>
 <p>For download and online information, see <a href="https://github.com/s-will/LocARNA">https://github.com/s-will/LocARNA</a> and <a href="http://www.bioinf.uni-freiburg.de/Software/LocARNA">http://www.bioinf.uni-freiburg.de/Software/LocARNA</a>.</p>
 <p>Latest releases are available as source code on Github at <a href="https://github.com/s-will/LocARNA/releases">https://github.com/s-will/LocARNA/releases</a>.</p>
-<h1><a class="anchor" id="autotoc_md39"></a>
+<h1><a class="anchor" id="autotoc_md43"></a>
 REFERENCES</h1>
 <p>Sebastian Will, Kristin Reiche, Ivo L. Hofacker, Peter F. Stadler, and Rolf Backofen. Inferring non-coding RNA families and classes by means of genome-scale structure-based clustering. PLOS Computational Biology, 3 no. 4 pp. e65, 2007. doi:10.1371/journal.pcbi.0030065</p>
 <p>Sebastian Will, Tejal Joshi, Ivo L. Hofacker, Peter F. Stadler, and Rolf Backofen. LocARNA-P: Accurate boundary prediction and improved detection of structural RNAs. RNA, 18 no. 5 pp. 900-914, 2012. doi:10.1261/rna.029041.111</p>
@@ -555,7 +555,7 @@ REFERENCES</h1>
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 29 2022 16:18:18 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 30 2022 08:25:12 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>
