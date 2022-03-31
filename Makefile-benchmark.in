@@ -8,8 +8,12 @@
 # default, a 'quick' stress test is performed. For more extensive
 # benchmarking, e.g use BENCHMARK_SETS="k2-all k10-all"
 #
-# Additional DEPENDENCIES: compalignp, parallel, R
-#
+# Additional DEPENDENCIES:
+#   * compalignp
+#   * parallel
+#   * R
+#   * pdfjam
+#   * inkscape
 
 ########################################
 # preliminaries
@@ -83,6 +87,15 @@ summary: $(BENCHMARK_SETS:%=$(BIDDIR)/%.done-eval)
 
 # generate benchmark plots
 plots: $(BENCHMARK_SETS:%=$(BIDDIR)/%-plots.pdf)
+
+plots-svg: $(BENCHMARK_SETS:%=$(BIDDIR)/%-sps.svg) \
+  $(BENCHMARK_SETS:%=$(BIDDIR)/%-sci.svg) \
+  $(BENCHMARK_SETS:%=$(BIDDIR)/%-mcc.svg)
+
+plots-png: $(BENCHMARK_SETS:%=$(BIDDIR)/%-sps.png) \
+  $(BENCHMARK_SETS:%=$(BIDDIR)/%-sci.png) \
+  $(BENCHMARK_SETS:%=$(BIDDIR)/%-mcc.png)
+
 
 # view plots (using PDFVIEWER)
 view: $(BENCHMARK_SETS:%=view-%)
@@ -181,7 +194,7 @@ $(BIDDIR)/%.done-eval: $(abs_top_srcdir)/Data/Bralibase2.1/instances.% $(BIDDIR)
 	    printf \"{}\\t\"; \
 	    RNAalifold $(ALIFOLD_OPTIONS) --sci \
 	      $$benchmarkdir/{}/results/result.fa 2>/dev/null \
-	      | grep sci | sed 's/.*\[sci = \([0123456789.]*\)\]/\1/' \
+	      | grep sci | sed 's/.*\[sci = \([0123456789.-]*\)\]/\1/' \
 	    " \
 	  | tee $$scitab \
 	  | awk '\
@@ -201,13 +214,28 @@ $(BIDDIR)/%.done-eval: $(abs_top_srcdir)/Data/Bralibase2.1/instances.% $(BIDDIR)
 	touch $@
 
 $(BIDDIR)/%-plots.pdf: $(BIDDIR)/%-sps.pdf $(BIDDIR)/%-mcc.pdf $(BIDDIR)/%-sci.pdf
-	pdfjoin $^ -o $@
+	pdfjam $^ -o $@
 
+## SVGs
+$(BIDDIR)/%-sps.svg: $(BIDDIR)/%.done-eval
+	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-sps.tab $* SPS 1 svg
+
+$(BIDDIR)/%-sci.svg: $(BIDDIR)/%.done-eval
+	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-sci.tab  $* SCI 1 svg
+
+$(BIDDIR)/%-mcc.svg: $(BIDDIR)/%.done-eval
+	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-mcc.tab $* MCC 7 svg
+
+## PDFs
 $(BIDDIR)/%-sps.pdf: $(BIDDIR)/%.done-eval
-	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-sps.tab $* SPS 1
+	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-sps.tab $* SPS 1 pdf
 
 $(BIDDIR)/%-sci.pdf: $(BIDDIR)/%.done-eval
-	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-sci.tab  $* SCI 1
+	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-sci.tab  $* SCI 1 pdf
 
 $(BIDDIR)/%-mcc.pdf: $(BIDDIR)/%.done-eval
-	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-mcc.tab $* MCC 7
+	Rscript $(top_srcdir)/src/Utils/benchmark-plot.R $(BIDDIR)/$*-mcc.tab $* MCC 7 pdf
+
+# use inkscape to generate png from svg
+%.png: %.svg
+	inkscape -o $@ $<

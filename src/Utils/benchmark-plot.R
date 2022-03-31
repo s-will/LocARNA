@@ -18,8 +18,13 @@ if (length(args) >= 2) {
     title <- args[2]
 }
 
+outformat <- "pdf"
+if (length(args) >= 5) {
+    outformat <- args[5]
+}
+
 if (length(args) == 0) {
-    cat("USAGE: benchmark-plot.R <file_name> <title> <feature_name> <index>\n")
+    cat("USAGE: benchmark-plot.R <file_name> <title> <feature_name> <index> <out-format>\n")
     quit()
 }
 
@@ -32,8 +37,15 @@ fval <- xs[[idx]]
 
 lowess <- lowess(refapsi,fval,f=1/3)
 
-outfilename <- paste(gsub(".tab$","",filename),"pdf",sep=".")
+outfilename <- paste(gsub(".tab$","",filename),outformat,sep=".")
 
-pdf(outfilename,width=6,height=6)
+if (outformat == "pdf") {
+    pdf(outfilename,width=6,height=6)
+} else if (outformat == "svg") {
+    svg(outfilename,width=6,height=6)
+} else if (outformat == "png") {
+    png(outfilename,width=6,height=6)
+}
+
 plot(refapsi,fval,xlab="APSI",ylab=feature,main=title,col=rgb(0.2,0.8,1,0.1),pch=16)
 lines(lowess,lwd=3,col=rgb(0,0.2,0.8,0.8))
