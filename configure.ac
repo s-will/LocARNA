@@ -145,6 +145,12 @@ AS_IF([test "$PKG_CONFIG_AVAILABLE" = "true"],[
     fi
     dnl call pkg-config (macro PKG_CHECK_MODULES) to set VRNA_LIBS and VRNA_CFLAGS
     PKG_CHECK_MODULES([VRNA],[RNAlib2 >= $VRNA_VERSION],[VRNALIB_OK=true],[VRNALIB_OK=false])
+
+    AC_MSG_NOTICE([Get Vienna RNA configuration from pkg-config and remove -fno-lto.])
+
+    ## strip -fno-lto from VRNA_LIBS
+    VRNA_LIBS="`AS_ECHO("$VRNA_LIBS") | sed 's/-Wl,-fno-lto//g'`"
+    VRNA_LIBS="`AS_ECHO("$VRNA_LIBS") | sed 's/-fno-lto//g'`"
 ])
 dnl if pkg-config is not available or something else went wrong with pkg-config,
 dnl then guess the configuration
