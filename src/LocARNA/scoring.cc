@@ -40,17 +40,6 @@ namespace LocARNA {
           seqA(seqA_),
           seqB(seqB_),
           lambda_(0) {
-#ifndef NDEBUG
-        if (params->ribofit_ != nullptr || params->ribosum_ != nullptr) {
-            // check sequences
-            if (!seqA.checkAlphabet(Alphabet<char,6>("ACGUN-")) ||
-                !seqB.checkAlphabet(Alphabet<char,6>("ACGUN-"))) {
-                std::cerr << "WARNING: unsupported sequence characters found."
-                          << std::endl;
-            }
-        }
-#endif
-
         if (params->ribofit_ != nullptr) {
             precompute_sequence_identities();
         }
