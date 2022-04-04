@@ -70,6 +70,8 @@ all: benchmark
 # run benchmark
 benchmark: parameters summary plots
 
+alignments: $(BENCHMARK_SETS:%=$(BIDDIR)/%.done)
+
 # show parameters
 parameters:
 	@echo LOCARNA_VERSION = $(LOCARNA_VERSION)
