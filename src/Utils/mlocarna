@@ -1796,7 +1796,7 @@ sub main {
     # read input sequences from file
     #
     if ($opts->{'realign'}) {
-        $refaln = read_clustalw_alnloh($opts->{'input-file'});
+        $refaln = read_clustalw_alnloh($opts->{'input-file'}, 1);
         $refaln_filename = abs_path($opts->{'input-file'});
         $seqs = project_sequences_for_realign($refaln);
     } else {

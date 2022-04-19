@@ -1585,13 +1585,19 @@ sub read_clustalw_alnloh {
 
     my $fh;
 
-    open($fh, "$aln_filename")
-	|| die "Can not read alignment file $aln_filename\n";
+    if (!open($fh, "$aln_filename")) {
+        printerr "Can not read alignment file $aln_filename\n";
+        exit -1;
+    }
+
     my ($aln, $names, $header) =
 	read_clustalw_alignment($fh);
     close $fh;
 
-    if ($strict and !$header) { die "Missing CLUSTAL header in $aln_filename."; }
+    if ($strict and !$header) {
+        printerr "Missing CLUSTAL header in $aln_filename.\n";
+        exit -1;
+    }
 
     ## generate list of hash alignment
     my @alnloh;
