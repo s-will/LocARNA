@@ -177,15 +177,9 @@ sub read_fasta {
 
 	    ## check for duplicate names in fasta
 	    if (exists $seen_names{$name}) {
-		printerr "Duplicate name \"$name\" in fasta input. ";
-		my $bar="some text here";
-		if (length($description)>0) {
-		    $bar=$description;
-		}
-		printerr "Note that in \">$name $bar\", only \"$name\" is the name, ";
-		printerr "whereas the rest of the line \"$bar\" (after the blank)"
-                  ." is interpreted as description.\n";
-		exit(-1);
+		printerr "ERROR: Duplicate name \"$name\" in fasta file. ";
+		printerr "Note that only the first word of each fasta header is interpreted as sequence name and has to be unique in each fasta file.\n";
+		exit -1;
 	    }
 	    $seen_names{$name}=1;
 
@@ -204,7 +198,11 @@ sub read_fasta {
 	    }
 
 	    push @fasta, $seq;
-	} else {
+        } elsif ($line=~/^>\s*$/) {
+            ## catch empty names in fasta
+            printerr "ERROR: fasta file contains entry with empty name.\n";
+            exit -1;
+        } else {
 	    $line=<$fh>;
 	}
     }
