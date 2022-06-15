@@ -1408,7 +1408,6 @@ $|=1;
 
 printmsg 3,"mLocARNA --- multiple Local (and global) Alignment of RNA --- ";
 printmsg 3,readpipe("$bindir/locarna --version");
-printmsg 3,"Copyright Sebastian Will\n\n";
 
 
 ## target/output directory
@@ -2140,7 +2139,7 @@ sub perform_multiple_alignment {
         printmsg 3,"Skip precomputation of dot plots.\n";
         generate_input_files_without_bpps($seqs);
     } else {
-        printmsg 3,"Compute pair probs ...\n";
+        printmsg 2,"Compute pair probs ...\n";
         compute_all_dotplots($seqs,$opts->{'threads'});
     }
 
@@ -2157,7 +2156,7 @@ sub perform_multiple_alignment {
 
     if ($opts->{'probabilistic'}) {
 
-        printmsg 3,"Compute match probabilities ...\n";
+        printmsg 2,"Compute match probabilities ...\n";
 
         # compute the base match probabilites
         # either use full partition function locarna_p
@@ -2180,7 +2179,7 @@ sub perform_multiple_alignment {
         if ($opts->{'consistency-transformation'}) {
             ## store untransformed probabilities
 
-            printmsg 3, "Consistency transform match probabilities ...\n";
+            printmsg 2, "Consistency transform match probabilities ...\n";
 
             $bmprobs = MLocarna::MatchProbs::consistency_transform_bm($bmprobs_nocbt,\@names, $nnorm);
             $amprobs = MLocarna::MatchProbs::consistency_transform_am($amprobs_nocbt,\@names, $nnorm);
@@ -2318,7 +2317,7 @@ sub perform_multiple_alignment {
             exit 0;
         }
 
-        printmsg 3,"Compute pairwise alignments, fraction $k of $N ... \n";
+        printmsg 2,"Compute pairwise alignments, fraction $k of $N ... \n";
 
         my $score_hash = compute_all_pairwise_alignments(\@names, $bmprobs, $amprobs, $opts->{'threads'}, $k, $N);
 
@@ -2334,7 +2333,7 @@ sub perform_multiple_alignment {
         # compute score matrix for guide tree
         #
 
-        printmsg 3,"Compute pairwise alignments ... \n";
+        printmsg 2,"Compute pairwise alignments ... \n";
 
         my $score_hash = compute_all_pairwise_alignments(\@names, $bmprobs, $amprobs, $opts->{'threads'});
         $score_matrix = MLocarna::SparseMatrix::to_sym_array_2D($score_hash);
@@ -2391,7 +2390,7 @@ sub perform_multiple_alignment {
     ## ----------------------------------------
     # progressive alignment along the guide tree
     #
-    printmsg 3, "Perform progressive alignment ...\n";
+    printmsg 2, "Perform progressive alignment ...\n";
 
     my $intermediate_name_data = {}; # a hash of already assigned intermediary names
     my $current_alignment_name =
@@ -2453,7 +2452,7 @@ sub perform_multiple_alignment {
     }
 
     if (defined($opts->{'iterations'}) && ($opts->{'iterations'}>0)) {
-         printmsg 3, "Perform iterative refinement ...\n";
+         printmsg 2, "Perform iterative refinement ...\n";
 
         $current_alignment_name =
             perform_iterative_refinement($current_alignment_name,$tree,\@names,$bmprobs,$amprobs,$intermediate_name_data);
