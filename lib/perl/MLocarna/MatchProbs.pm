@@ -888,13 +888,14 @@ sub write_am_reliabilities {
 ## note column indices 1..'alignment length'
 ##
 sub write_reliability_bars {
-    my ($bmrels_seq, $bmrels_str) = @_;
+    my ($bmrels_seq, $bmrels_str, $namewidth, $width) = @_;
 
     ## compute a sum of pairs of the base match probabilities for each alignment column in result.aln
 
     my $reso=10;
     for (my $i=0;$i<$reso; $i++) {
-        print sprintf("-%3d%%              ",100*($i+1)/$reso);
+        print sprintf("-%3d%%",100*($i+1)/$reso);
+        print " "x($namewidth-4);
         my $aln_length=@$bmrels_seq-1; # (!)
         for (my $j=1; $j<=$aln_length; $j++) {
             my $b=$bmrels_seq->[$j];

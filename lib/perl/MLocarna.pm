@@ -26,9 +26,9 @@ our @EXPORT      =
         alifold_mfe
         alifold_pf
         alifold_structure
-        aln_h2loh
         aln_length_atleastonematch
         aln_to_alnloh
+        aln_namewidth
         anchor_constraint_string
         compute_alignment_from_seqs
         compute_alignment_score
@@ -67,7 +67,6 @@ our @EXPORT      =
         write_2D_matrix
         write_aln
         write_clustalw_alnloh
-        write_clustalw_loh
         write_pp
    );
 
@@ -1643,16 +1642,63 @@ sub read_clustalw_aln {
 
 
 ########################################
-## write_clustalw_alnloh($fh, $seqs, $width)
+## aln_namewidth($names)
+##
+## Width of names in alignment
+##
+## $names    names of sequences
+##
+## @return $namewidth width of sequence names,
+##   for output in clustal-like format
+########################################
+sub aln_namewidth {
+    my $names = shift;
+
+    my $maxlen=0;
+    ## determine longest name
+    foreach my $name (@$names) {
+	my $len = length($name);
+	if ($len>$maxlen) {$maxlen=$len;}
+    }
+    if ($maxlen < 18) {
+	$maxlen = 18;
+    }
+
+    return $maxlen;
+}
+
+########################################
+## namewidth_alnloh($aln)
+##
+## Width of names in alignment, where
+## the alignment is given in list of hash format.
+##
+## $aln    loh representation of alignment
+##
+## @return $namewidth width of sequence names
+########################################
+sub namewidth_alnloh {
+    my $aln   = shift;
+
+    my @names;
+    foreach my $seq (@$aln) {
+	push @names, $seq->{name};
+    }
+    return aln_namewidth(\@names);
+}
+
+########################################
+## write_clustalw_alnloh($fh, $aln, $width, $write_header)
 ##
 ## Writes alignment $aln to filehandle $fh, where
 ## the alignment is given in list of hash format.
 ## Breaks lines to restrict maximal line width
 ## Write in CLUSTALW format!
 ##
-## $fh filehandle open for writing
-## $seqs loh representation of alignment
-## $width line width
+## $fh           filehandle, open for writing
+## $aln          loh representation of alignment
+## $width        line width
+## $write_header flag, whether to write clustal header
 ##
 ## @return $namewidth width of sequence names
 ########################################
@@ -1670,15 +1716,7 @@ sub write_clustalw_alnloh {
 	print $fh "CLUSTAL W --- $PACKAGE_STRING\n\n\n"; #  - Local Alignment of RNA
     }
 
-    my $maxlen=0;
-    ## determine longest name
-    foreach my $seq (@$aln) {
-	my $len = length($seq->{name});
-	if ($len>$maxlen) {$maxlen=$len;}
-    }
-    if ($maxlen < 18) {
-	$maxlen = 18;
-    }
+    my $maxlen = namewidth_alnloh($aln);
 
     my $offset=0;
     while(1) {

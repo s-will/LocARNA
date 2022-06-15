@@ -1989,15 +1989,18 @@ sub compute_and_write_reliabilities {
             = MLocarna::MatchProbs::compute_reliability($aln,$bmprobs,$amprobs,$nnorm);
     }
 
-    printmsg 3, "reliability\n";
+    my $width = $opts->{'width'};
+    my $namewidth = aln_namewidth(\@names);
 
     # compute and print a maximum reliability structure for the consensus reliabilities
     my @empty=();
     my ($score,$rel_str)=MLocarna::MatchProbs::max_weight_structure(aln_length($aln),\@empty,$amrels,1,0.125);
-    printmsg 3, "max. reliability   $rel_str\n";
+    printmsg 3, sprintf("\n%-".$namewidth."s %s\n","max. reliability",$rel_str);
 
     if (3 >= $MLocarna::Aux::verbosemode) {
-        MLocarna::MatchProbs::write_reliability_bars($bmrels_seq, $bmrels_str);
+        printmsg 3, "reliability\n";
+        MLocarna::MatchProbs::write_reliability_bars($bmrels_seq, $bmrels_str,
+                                                     $namewidth, $width);
     }
 
     MLocarna::MatchProbs::write_bm_reliabilities($opts->{'tgtdir'}."/$results_dir/result.bmreliability",
@@ -2014,7 +2017,8 @@ sub compute_and_write_reliabilities {
         if ($opts->{'verbose'}) {
             printmsg 3, "reliability (cbt)\n";
             if (3 >= $MLocarna::Aux::verbosemode) {
-	        write_reliability_bars($bmrels_seq, $bmrels_str);
+	        MLocarna::MatchProbs::write_reliability_bars($bmrels_seq, $bmrels_str,
+                                                             $namewidth, $width);
             }
         }
 
@@ -2057,7 +2061,7 @@ sub compute_and_write_reliabilities {
             my @empty=();
             my ($score,$rel_str)=MLocarna::MatchProbs::max_weight_structure(length($aln->{$name}),\@empty,$amrels,1,0.125);
 
-            printmsg 3,sprintf("%-18s ",$name).$rel_str."\n";
+            printmsg 3,sprintf("%-".$namewidth."s ",$name).$rel_str."\n";
 
             $rel_str = project_structure_to_alignment_sequence($rel_str,
                                                                $aln->{$name},
