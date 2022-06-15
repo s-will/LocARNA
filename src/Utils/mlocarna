@@ -125,9 +125,12 @@ addition to CLUSTALW files).
 
 =item B<--consensus-structure>
 
-Type of consensus structures written to screen and stockholm output
-[alifold|mea|none] (default: none). Unless explicitly specified,
-the option alifold-consensus-dp implicitly sets this to alifold.
+Type of consensus structures written to stockholm output (and screen in
+verbose modes) [alifold|mea|none] (default: none).  This includes
+intermediate alignments of the progressive multiple alignment. If not
+explicitly specified othwise, the option alifold-consensus-dp implicitly
+sets this to alifold.  Note that the alifold consenus of the final
+alignment is computed and printed, regardless of this option.
 
 =item B<-w, --width>=columns (120)
 
@@ -1507,7 +1510,7 @@ if (defined($opts->{'plfold-span'})) {
     printerr "Warning: winsize for plfold given, but no span. Winsize ignored.\n";
 }
 
-push @locarna_params, "-v" if ($opts->{'verbose'});
+push @locarna_params, "-v" if ($opts->{'moreverbose'});
 
 # ----------------------------------------
 # handle autopass options
@@ -2680,7 +2683,7 @@ sub call_locarna {
 
     push @cmd, reference_alignment_option($refaln_filename);
 
-    push @cmd, "-q" unless $opts->{'moreverbose'};
+    push @cmd, "-q" unless $opts->{'verbose'} or $opts->{'moreverbose'};
 
     printmsg 1, "@cmd\n\n";
     system(@cmd)==0 || die "Command @cmd failed: $!";
@@ -2689,12 +2692,13 @@ sub call_locarna {
         die "Pairwise aligner ($opts->{'pw-aligner'}) failed to write alignment to file";
     }
 
-    if ($opts->{'verbose'} and not $opts->{'moreverbose'}) {
-        open(my $alnfh, "<", "$tgt.aln");
-        while(<$alnfh>) { if (!/^CLUSTAL/) { print $_; } }
-        close $alnfh;
-        print "\n";
-    }
+    ## print the output alignment
+    #if ($opts->{'verbose'} and not $opts->{'moreverbose'}) {
+    #    open(my $alnfh, "<", "$tgt.aln");
+    #    while(<$alnfh>) { if (!/^CLUSTAL/) { print $_; } }
+    #    close $alnfh;
+    #    print "\n";
+    #}
 }
 
 
