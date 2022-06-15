@@ -1533,15 +1533,15 @@ foreach my $opt (@autopass_noarg_options) {
 # ----------------------------------------
 
 
+push @locarna_p_params, @locarna_params;
+
+## options only passed to locarna (not to locarna_p)
 if (defined($opts->{'width'})) {
     push @locarna_params, "--width" => $opts->{'width'};
 } else {
     $opts->{'width'}=120;
 }
 
-push @locarna_p_params, @locarna_params;
-
-## options only passed to locarna (not to locarna_p)
 push @locarna_params, "--noLP" if ($opts->{'noLP'});
 
 if ($opts->{'probabilistic'}) {
