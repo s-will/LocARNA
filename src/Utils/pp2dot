@@ -193,5 +193,5 @@ if (!defined($colors2)) {
     $colortab2=$colortabs{$colors2};
 }
 
-write_dotplot_extended("$outputfile",consensus_sequence(\%aln),\%pairprobinfo,$colortab1,$colortab2);
+MLocarna::MatchProbs::write_dotplot_extended("$outputfile",consensus_sequence(\%aln),\%pairprobinfo,$colortab1,$colortab2);
 
