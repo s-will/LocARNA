@@ -1917,7 +1917,15 @@ sub main {
 
     mkdir $opts->{'tgtdir'}."/$results_dir";
 
-    copy($opts->{'input-file'}, $opts->{'tgtdir'}."/$input_dir/input.fa");
+    ## keep the input file in input_dir
+    {
+        my $inputsuffix = "fa";
+        if ($opts->{'realign'}) {
+            # in realignment, mode use suffix '.aln'
+            $inputsuffix = 'aln';
+        }
+        copy($opts->{'input-file'}, $opts->{'tgtdir'}."/$input_dir/input.$inputsuffix");
+    }
 
     ## ----------------------------------------
     # perform multiple alignment
