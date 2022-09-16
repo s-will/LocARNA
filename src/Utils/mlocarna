@@ -899,7 +899,7 @@ Given, e.g.
 
 =end roff
 
-once calls
+one calls
 
   mlocarna --anchor-constraints example-anchors.bed  example-wo-anchors.fa
 
