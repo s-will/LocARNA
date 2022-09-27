@@ -921,6 +921,8 @@ This allows to define constraints as 'consensus constraints' in the input, e.g.
 
     example-realign.aln
     ----------------------------------------
+    CLUSTAL W
+
     fruA               --CCUCGAGGGGAACCCGAA-------------AGGGACCCGAGAGG--
     vhuU               AGCUCACAACCGAACCCAUU-------------UGGGAGGUUGUGAGCU
     fdhA               CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAG-GUGGCG
