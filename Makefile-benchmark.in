@@ -31,7 +31,7 @@ prefix = @prefix@
 SHELL = /bin/sh
 .SUFFIXES:
 
-.PHONY: benchmark eval summary clean short long parameters plots view list
+.PHONY: all input aligmnents benchmark summary clean clean-all parameters plots plots-pdf plots-svg view list
 
 ########################################
 # user configurable settings
@@ -134,11 +134,13 @@ $(BIDDIR)/README:
 
 benchmark/input: $(abs_top_srcdir)/Data/Bralibase2.1/all.tgz
 	@inputdir=$@; \
-	if [ ! -d "$$inputdir" ] ; then \
-	  mkdir -p $$inputdir ;\
-	  cd $$inputdir ;\
-	  tar xzf $< ;\
-	fi
+	if [ -d "$$inputdir" ] ; then \
+	  rm -rf "$$inputdir" ;\
+	fi ;\
+	mkdir -p "$$inputdir" ;\
+	cd "$$inputdir" ;\
+	tar xzf $<
+	@touch -r $< $@
 
 $(BIDDIR)/%.done: $(abs_top_srcdir)/Data/Bralibase2.1/instances.% \
                   $(BIDDIR)/README benchmark/input
