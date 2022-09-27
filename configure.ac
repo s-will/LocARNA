@@ -1,9 +1,8 @@
 dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.59)
-AC_INIT([LocARNA], [2.0.0RC10], [will@informatik.uni-freiburg.de], [locarna],
-        [http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
+AC_PREREQ([2.71])
+AC_INIT([LocARNA],[2.0.0RC10],[will@informatik.uni-freiburg.de],[locarna],[http://www.bioinf.uni-freiburg.de/Software/LocARNA/])
 
 dnl special dir for aux config files
 AC_CONFIG_AUX_DIR(config)
@@ -48,7 +47,7 @@ dnl include libtool
 LT_INIT
 
 dnl deprecated; left for backward compatibility
-AC_PROG_LIBTOOL
+LT_INIT
 
 AM_INIT_AUTOMAKE
 
@@ -58,7 +57,7 @@ AC_PROG_CXXCPP
 AC_PROG_CC
 AC_PROG_CPP
 
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
 
 dnl require c++14
 AX_CXX_COMPILE_STDCXX_14([noext],[mandatory])
@@ -118,10 +117,8 @@ dnl Vienna RNA package library path support, if not installed in standard direct
 VRNA_OK=true
 
 AC_ARG_WITH([vrna],
-    AC_HELP_STRING(
-        [--with-vrna=PREFIX],
-        [Installation directory of the Vienna RNA library]
-      )
+    AS_HELP_STRING([--with-vrna=PREFIX],[Installation directory of the Vienna RNA library
+      ])
 )
 
 dnl require rna lib linking
@@ -219,19 +216,14 @@ dnl finally, set CPPFLAGS
 CPPFLAGS="$VRNA_CFLAGS $CPPFLAGS"
 
 
-dnl Checks for header files.
-AC_HEADER_STDC
-
 dnl --------------------
 dnl Debug option
 dnl
 AC_MSG_CHECKING([whether to build with debug information])
 debug_it=no
 AC_ARG_ENABLE([debug],
-    AC_HELP_STRING(
-        [--enable-debug],
-        [enable debug data generation (def=no)]
-    ),
+    AS_HELP_STRING([--enable-debug],[enable debug data generation (def=no)
+    ]),
     debug_it="$enableval"
 )
 AC_MSG_RESULT([$debug_it])
@@ -265,10 +257,8 @@ dnl
 AC_MSG_CHECKING([whether to link statically])
 link_statically=no
 AC_ARG_ENABLE([link-static],
-    AC_HELP_STRING(
-        [--enable-link-static],
-        [link statically (def=no)]
-    ),
+    AS_HELP_STRING([--enable-link-static],[link statically (def=no)
+    ]),
     link_statically="$enableval"
 )
 
@@ -282,10 +272,8 @@ dnl Static/Dynamic linking to libLocARNA
 dnl
 AC_MSG_CHECKING([whether to link binaries dynamically to libLocARNA])
 AC_ARG_ENABLE([dynamic-liblocarna],
-    AC_HELP_STRING(
-        [--enable-dynamic-liblocarna],
-        [link binaries dynamically to libLocARNA (def=no)]
-    ),
+    AS_HELP_STRING([--enable-dynamic-liblocarna],[link binaries dynamically to libLocARNA (def=no)
+    ]),
     [dynamic_liblocarna="$enableval"],
     [dynamic_liblocarna="no"]
 )
