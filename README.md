@@ -97,7 +97,7 @@ On Mac/Linux, LocARNA is installed most easily via Conda from a pre-compiled
 package. For this purpose, install Conda and run from the command line:
 
 ```
-conda install -c bioconda locarna
+conda install -c conda-forge -c bioconda locarna
 ```
 
 
