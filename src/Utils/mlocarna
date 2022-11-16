@@ -1444,7 +1444,7 @@ if (defined($opts->{'LP'})) {
 ## if option sparse is given, then use sparse as pairwise aligner
 if ($opts->{'sparse'}) {
     $opts->{'pw-aligner'} = "$bindir/sparse";
-    $opts->{'in-loop-robabilities'}=1;
+    $opts->{'in-loop-probabilities'}=1;
 }
 
 ## construct parameter string for locarna
@@ -3154,7 +3154,7 @@ sub compute_dotplot_rnafold_pp {
         push @fold_cmd, "--noLP";
     }
 
-    if ($opts->{'in-loop-robabilities'}) {
+    if ($opts->{'in-loop-probabilities'}) {
         push @fold_cmd, "--in-loop";
     }
     if ( $opts->{'stacking'} || $opts->{'new-stacking'} ) {
