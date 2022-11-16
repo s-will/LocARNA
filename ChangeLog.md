@@ -1,6 +1,78 @@
 # ChangeLog
 
 
+## 2.0.0
+
+Version 2 of LocARNA introduces several improvements that make LocARNA
+faster and easier to use. Most prominently, it features a novel sequence
+envelope heuristic in all major alignment modes, which significantly
+improves over less sophisticated banding heuristics (in terms of speed,
+robustness, /and/ flexibility). Most directly notable for users, it changes
+the default parameters to more appropriate settings. In addition to
+various detailed improvements of the LocARNA tools, there are significant
+changes under the hood: the C++-code of the LocARNA library was simplified
+and modernized making use of C++-14 features. These changes make the
+library easier to use, maintain and extend.
+
+The development of version 2 extended over numerous 'release candidates'
+that not only fixed bugs and stabilized features, but - despite their RC
+designation - also introduced some new functionality e.g. (for
+clustering and benchmarking). Comprehensive change
+log is therefore provided for the sinlge release candidate releases.
+
+---
+
+## 2.0.0RC10
+
+### Documentation and examples
+
+* Improve readme
+* Update doxygen documentation
+* Fix: add conda-forge channel in conda install
+* Add CLUSTAL-header in realign example
+* Use full names in tRNA_5 example
+* use doxygen awesome style
+* use REAMDE.md as main page in docu
+* Reformat changelog and include in docu
+* include man pages from perl scripts and C++ programs
+* Reformat help output of C++ programs
+* Activate doxygen pdf docu
+* Reformatting in mlocarna pod
+* Update email address
+* Remove build status
+
+### Improvements of functionality / usability
+
+* Make mlocarna less chatty
+* mlocarna: Catch empty names in fasta input + modify output in case of duplicate names
+* mlocarna: Catch missing clustal header in realignment input
+* turn off warning about unsupported nucleotides
+* Add benchmark plot script to compare multiple experiments
+* Add alignments target in benchmark Makefile
+
+### Fixes
+
+* Keep input file in realignment mode as input.aln
+* Fix pp2dot
+* Fix reliability output (aligned offsets/name widths)
+* Fix mlocarna option width in probabilistic mode
+* Fix dependency in benchmark makefile
+* Fix behavior of verbose mode / printing of consensus structure
+* fix and support png/svg output in benchmarking
+* Fix: use reference type for loop var
+* Fix bug: quote names in newick trees
+* Fix buffer size
+
+### Internal changes:
+
+* Update configure.ac by autoupdate
+* Strip -fno-lto from Vienna RNA configured VRNA_LIBS
+* doxygen: Turn off autolink support
+* Require Vienna RNA 2.5.1
+* Update tests
+
+---
+
 ## 2.0.0RC9
 
 ### MLocarna functionality
