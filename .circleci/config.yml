@@ -2,25 +2,108 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
-jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
+executors:
+  my-executor:
     docker:
-      - image: cimg/base:stable
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+      - image: ubuntu:jammy
+
+jobs:
+  build:
+    executor: my-executor
     steps:
       - checkout
       - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+          name: "Setup environment"
+          command: |
+            # install via apt
+            apt update
+            apt install --yes \
+              build-essential libtool automake \
+              pkg-config \
+              texlive-latex-base texlive-binaries \
+              wget zip
+            #
+            # set up conda
+            wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+            chmod +x miniconda.sh
+            ./miniconda.sh -b
 
-# Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
+            # install via conda
+            export PATH="/root/miniconda3/bin:$PATH"
+            conda init bash
+            conda update --yes -n base -c defaults conda
+            conda create -n locarna-build --yes -c conda-forge -c bioconda viennarna t_coffee doxygen graphviz help2man perl
+
+      - run:
+          name: "Build"
+          command: |
+            . ~/miniconda3/etc/profile.d/conda.sh
+            . ~/.bashrc
+            conda activate locarna-build
+            autoreconf -i
+            ./configure --with-vrna=$CONDA_PREFIX
+            make -j
+
+      - run:
+          name: "Run checks"
+          command: |
+            . ~/miniconda3/etc/profile.d/conda.sh
+            . ~/.bashrc
+            conda activate locarna-build
+            make check
+
+      - store_artifacts:
+          path: src/Tests/test-suite.log
+
+      - run:
+          name: "Build packages"
+          command: |
+            make dist-gzip
+            make dist-zip
+            mkdir dist
+            mv locarna-*.tar.gz dist
+            mv locarna-*.zip dist
+
+      - store_artifacts:
+          path: dist
+
+#      - run:
+#          name: "Generate documentation"
+#          command: |
+#            make doxygen
+#            tar cvzf documentation.tar.gz Doxy
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  deploy:
+    executor: my-executor
+
+    environment: GITHUB_CREDS
+
+    steps:
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: "Upload to github release"
+          command: |
+            export VERSION=${CIRCLE_TAG#v}
+            gh release upload -t $GITHUB_TOKEN -R s-will/LocARNA dist/*
+#      - add_ssh_keys:
+#          finger-prints:
+#            - "68:43:6b:07:26:ac:bc:96:50:1f:1e:c3:b2:13:03:3d"
+
+
 workflows:
-  say-hello-workflow:
+  build-test-deploy:
     jobs:
-      - say-hello
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^v\d+\.\d+.*/
