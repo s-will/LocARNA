@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>LocARNA-2.0.0RC10: mlocarna</title>
+<title>LocARNA-2.0.0: mlocarna</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -22,7 +22,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">LocARNA-2.0.0RC10
+   <div id="projectname">LocARNA-2.0.0
    </div>
   </td>
  </tr>
@@ -154,7 +154,7 @@ Controlling Output</h2>
 <p class="startli">Write STOCKHOLM files of all final and intermediate alignments (in addition to CLUSTALW files).</p>
 </li>
 <li><p class="startli"><b>&ndash;consensus-structure</b></p>
-<p class="startli">Type of consensus structures written to screen and stockholm output [alifold|mea|none] (default: none). Unless explicitly specified, the option alifold-consensus-dp implicitly sets this to alifold.</p>
+<p class="startli">Type of consensus structures written to stockholm output (and screen in verbose modes) [alifold|mea|none] (default: none). This includes intermediate alignments of the progressive multiple alignment. If not explicitly specified othwise, the option alifold-consensus-dp implicitly sets this to alifold. Note that the alifold consenus of the final alignment is computed and printed, regardless of this option.</p>
 </li>
 <li><p class="startli"><b>-w, &ndash;width</b>=columns (120)</p>
 <p class="startli">Output width for sequences in clustal-like and stockholm output; note that the clustalw standard format requires 60 or less.</p>
@@ -526,12 +526,14 @@ GACCCUGGGAACAUUAACUACUCUCGUUGGUGAUAAGGAACA
 ACGGAGGGAAAGCAAGCCUUCUGCGACA
 .(((....xxxxxx.......))).xxx #S
 ----------------------------------------
-</pre><p> once calls </p><pre class="fragment">mlocarna --anchor-constraints example-anchors.bed  example-wo-anchors.fa
+</pre><p> one calls </p><pre class="fragment">mlocarna --anchor-constraints example-anchors.bed  example-wo-anchors.fa
 </pre> <h2><a class="anchor" id="autotoc_md40"></a>
 Realignment</h2>
 <p>In realignment mode (option &ndash;realign), mlocarna is called with an input alignment in clustal format, e.g. </p><pre class="fragment">mlocarna --realign example-realign.aln
 </pre><p> This allows to define constraints as 'consensus constraints' in the input, e.g. </p><pre class="fragment">example-realign.aln
 ----------------------------------------
+CLUSTAL W
+
 fruA               --CCUCGAGGGGAACCCGAA-------------AGGGACCCGAGAGG--
 vhuU               AGCUCACAACCGAACCCAUU-------------UGGGAGGUUGUGAGCU
 fdhA               CGCCACCCUGCGAACCCAAUAUAAAAUAAUACAAGGGAGCAG-GUGGCG
@@ -555,7 +557,7 @@ REFERENCES</h1>
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Mar 30 2022 08:25:12 for LocARNA-2.0.0RC10 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Sat Nov 19 2022 11:24:47 for LocARNA-2.0.0 by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>
