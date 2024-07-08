@@ -54,11 +54,11 @@ namespace LocARNA {
     void
     Scoring::subtract(std::vector<score_t> &v, score_t x) const {
         std::transform(v.begin(), v.end(), v.begin(),
-                       std::bind2nd(std::minus<score_t>(), x));
+                       [&] (score_t y) {return y - x;});
     }
     void
     Scoring::subtract(Matrix<score_t> &m, score_t x) const {
-        m.transform(std::bind2nd(std::minus<score_t>(), x));
+        m.transform([&] (score_t y) {return y - x;});
     }
 
     void
