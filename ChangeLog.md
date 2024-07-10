@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 2.0.1
+Maintenance updates
+
+* Update the Catch testing framework to version 2.13.10
+* Replace deprecated use of bind2nd to support recent C++ compilers
+
 
 ## 2.0.0
 
