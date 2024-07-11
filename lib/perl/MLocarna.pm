@@ -1355,6 +1355,7 @@ sub readpipe_list_open {
 ## returns the alifold structure for the given aln file
 ## as side effect write alirna.ps and aln.ps to current dir
 ##
+## If filename is empty, then return the command list up to filename
 ########################################
 sub alifold_structure {
     my ($filename,@RNAfold_args)=@_;
@@ -1369,8 +1370,15 @@ sub alifold_structure {
 
     push @options, @RNAfold_args;
 
+    my @cmdlist;
+    @cmdlist = ("$RNAalifold", @options);
+
+    if ($filename eq "") {
+        return @cmdlist;
+    }
+
     my @aliout = @{
-        readpipe_list("$RNAalifold", @options, "$filename")
+        readpipe_list(@cmdlist, "$filename")
     };
 
     if ($#aliout>=1) {

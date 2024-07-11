@@ -128,9 +128,18 @@ addition to CLUSTALW files).
 Type of consensus structures written to stockholm output (and screen in
 verbose modes) [alifold|mea|none] (default: none).  This includes
 intermediate alignments of the progressive multiple alignment. If not
-explicitly specified othwise, the option alifold-consensus-dp implicitly
-sets this to alifold.  Note that the alifold consenus of the final
+explicitly specified otherwise, the option alifold-consensus-dp implicitly
+sets this to alifold. Note that the alifold consensus of the final
 alignment is computed and printed, regardless of this option.
+
+=item B<--no-result-structure>
+
+Turn off the default behavior of mlocarna to compute a 'predicted'
+consensus structure of the final result alignment. Given this option,
+mlocarna stops after producing the result alignment. No RNAalifold
+structure is shown, and no RNAalifold generated figures are generated.
+Note that this information can still be computed from the result alignment
+by a call to RNAalifold with LocARNA's specific RNAalifold parameters.
 
 =item B<-w, --width>=columns (120)
 
@@ -1155,6 +1164,7 @@ my @options = #options that are not or not automatically passed to locarna
 
      "stockholm",
      "consensus-structure=s",
+     "no-result-structure",
 
      "local-progressive",
      "global-progressive",
@@ -1625,7 +1635,6 @@ push @locarna_params_tree, "--new-stacking" if ($opts->{'new-stacking'});
 
 ## pass alifold-consensus-dp
 push @locarna_params, "--alifold-consensus-dp" if ($opts->{'alifold-consensus-dp'});
-# push @locarna_params_tree, "--alifold-consensus-dp" if ($opts->{'alifold-consensus-dp'});
 
 
 ######## ------------------------------------------------------------
@@ -2507,33 +2516,39 @@ sub perform_multiple_alignment {
     close $alnfh;
 
     ## ----------------------------------------
-    ## compute and show alifold prediction
+    ## compute and show alifold prediction unless
+    ## argument no-result-structure
 
-    my $alistr = alifold_structure("$results_dir/result.aln", @RNAfold_args);
-    chomp $alistr;
+    if (! $opts->{'no-result-structure'}) {
+        my $alistr = alifold_structure("$results_dir/result.aln", @RNAfold_args);
+        chomp $alistr;
 
-    if ($alistr eq "") {
-        printmsg 3, "\nWARNING: cannot report consensus structure (RNAalifold call failed).\n";
-    }
-
-    if ($alistr=~/([^\s]*)\s(.*)/) {
-        my $name="alifold";
-        for my $s (chop_string($1,$opts->{'width'})) {
-            printmsg 3, sprintf("\n%-".$namewidth."s %s",$name,$s);
-            $name="";
+        if ($alistr eq "") {
+            printmsg 3, "\nWARNING: cannot report consensus structure (RNAalifold call failed).\n";
         }
-        printmsg 3, " ".$2."\n";
+
+        if ($alistr=~/([^\s]*)\s(.*)/) {
+            my $name="alifold";
+            for my $s (chop_string($1,$opts->{'width'})) {
+                printmsg 3, sprintf("\n%-".$namewidth."s %s",$name,$s);
+                $name="";
+            }
+            printmsg 3, " ".$2."\n";
+        }
+
+        # in probabilistic mode compute and store alifold dotplot
+        if ($opts->{'probabilistic'}) {
+            alifold_pf("$results_dir/result.aln", @RNAfold_args);
+            rename "alidot.ps", "$results_dir/alidot.ps";
+        }
+
+        rename "alirna.ps", "$results_dir/alirna.ps";
+        rename "aln.ps", "$results_dir/aln.ps";
+    } elsif ($opts->{'verbose'}) {
+        print "\nNo result structure computed; suppressed call:\n";
+        my @cmdlist = alifold_structure("", @RNAfold_args);
+        print ("  ", "@cmdlist", " $opts->{tgtdir}/$results_dir/result.aln", "\n");
     }
-
-    # in probabilistic mode compute and store alifold dotplot
-    if ($opts->{'probabilistic'}) {
-        alifold_pf("$results_dir/result.aln", @RNAfold_args);
-        rename "alidot.ps", "$results_dir/alidot.ps";
-    }
-
-    rename "alirna.ps", "$results_dir/alirna.ps";
-    rename "aln.ps", "$results_dir/aln.ps";
-
     chdir $current_dir;
 }
 
