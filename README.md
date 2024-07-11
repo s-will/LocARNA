@@ -104,12 +104,50 @@ conda install -c conda-forge -c bioconda locarna
 
 ### Alternative installation from source
 
-Installing from source requires a C++ compiler (GNU C++,
-Clang, ...) and Autotools. Moreover, it depends on the Vienna RNA package.
+Consider this only if other options are not available, e.g. currently there
+are no Conda packages for MacOSX arm64 or Windows. Compilation from source
+was tested on Linux and MacOSX, including arm64.
+
+Installing from source requires a C++ compiler (GNU C++, Clang, ...) and
+Autotools, as well we need the ViennaRNA library, doxygen for building
+documentation, and multi-precision libraries.
+
+
+#### Specific dependencies and building the Vienna RNA package
+
+* the Vienna RNA package is required for running /and/ building LocARNA.
+
+  - If available, it is possible to use a conda installation of the Vienna RNA package.
+
+  - Alternatively, the Vienna package can be compiled using the same
+    compiler version or --disable-lto and installed to an arbitrary
+    location.
+
+  - To avoid problems with specific parts of the Vienna package, turn them
+    off. For example, on **MacOS** one might have to use
+    ```
+    ./configure --without-perl
+    ```
+
+  - LocARNA must be told the location of the Vienna package using option --with-vrna.
+
+
+* LocARNA and the Vienna package depend on multi-precision libraries;
+  moreover they use doxygen. These dependencies can typically be installed from binary packages.
+
+  - For example, on **Ubuntu/Debian**, use
+  ```
+  apt install libgsl-dev libgmp-dev libmpfr-dev doxygen
+  ```
+
+  - On **MacOS**, we recommend to install via brew (https://brew.sh/)
+  ```
+  brew install gsl mpfr gmp doxygen
+  ```
 
 #### Installation from source distribution
 
-Obtain the tar.gz source distribution, e.g. from Github
+Obtain the tar.gz source distribution from Github
 
 [https://github.com/s-will/LocARNA/releases](https://github.com/s-will/LocARNA/releases)
 
@@ -118,13 +156,21 @@ Then, build and install like
 ```
 tar xzf locarna-xxx.tar.gz
 cd locarna-xxx
-./configure --prefix=/usr/local
+./configure --prefix=$HOME/locarna
 make
 make install
 ```
 
+Using prefix, one controls the installation directory; you may want to set
+the search path accordingly, e.g.
+```
+export PATH=$HOME/locarna:$PATH.
+```
+
 Is Vienna RNA installed in a non-standard location, this has to be
-specified by configure option ```--with-vrna=path-to-vrna``.
+specified by configure option ```--with-vrna=path-to-vrna``. For example,
+use ```--with-vrna=$CONDA_PREFIX``` if it was installed via Conda.
+
 
 Installing from source furthermore allows testing via
 
@@ -153,8 +199,7 @@ autoreconf -i
 
 in the cloned repository. Then, the installation essentially works like
 installing from source distribution. Note that, we will however require
-additional tools to build the documentation: help2man, pod2man.
-
+additional tools to build the documentation: notably, `help2man` and Perl's `pod2man`.
 
 
 -----
