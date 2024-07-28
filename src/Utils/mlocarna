@@ -501,13 +501,13 @@ Use only base match probabilities (no base pair match probabilities).
 
 =item  B<--quad-pf>
 
- Use quadmath's quad precision for partition function values. Even more precision
+ Use quad precision for partition function values. Even more precision
  than extended pf, but usually much slower (overrides extended-pf).
+ Prefer quadmath over mpfr if available.
 
-=item  B<--mpfr-pf>
+=item  B<--mpfr-pf=<bits>>
 
- Use mpfr's quad precision for partition function values. Even more precision
- than extended pf, but usually much slower (overrides extended-pf).
+ Use mpfr's multiple precision with arbitrary bits for partition function values. Overrides quad-pf.
 
 =item  B<--pf-scale=<scale>>
 
@@ -1134,7 +1134,7 @@ my @options = #options that are not or not automatically passed to locarna
      "sparse",
      "extended-pf",
      "quad-pf",
-     "mpfr-pf",
+     "mpfr-pf=i",
      "pf-scale=f",
      "only-basematch-probs",
      "fast-mea",
@@ -1505,7 +1505,8 @@ if (defined($opts->{'extended-pf'})) {
 }
 
 if (defined($opts->{'mpfr-pf'})) {
-    push @locarna_p_params, "--mpfr-pf";
+    push @locarna_p_params, "--mpfr-pf" => $opts->{'mpfr-pf'};
+;
 }
 
 if (defined($opts->{'quad-pf'})) {

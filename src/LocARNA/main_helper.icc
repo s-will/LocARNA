@@ -103,6 +103,7 @@ namespace LocARNA {
              * function values (pf_score_t).
              */
             bool mpfr_pf;
+            int mpfr_pf_bits;
 
             // ----------------------------------------
             // Locality
@@ -244,8 +245,9 @@ namespace LocARNA {
         };
 
         //! initialize mpfr mpreal floating point type
-        void init_mpreal() {
-            mpfr::mpreal::set_default_prec(128); // Set default precision
+        template <class CLP>
+        void init_mpreal(const CLP &clp) {
+            mpfr::mpreal::set_default_prec(clp.mpfr_pf_bits); // Set default precision
         }
 
         //! @brief write input summary

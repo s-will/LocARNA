@@ -191,18 +191,13 @@
      "Use extended precision for the computation of sequence envelopes. "
      "This enables handling significantly larger instances."},
     {"quad_pf",
-     "Use 128 bit precision for partition function values using quad lib. Even more "
+     "Use 128 bit precision for partition function values. Even more "
      "precision than extended pf, but usually much slower (overrides extended-pf). "
-     "Option mpfr-pf is a more portable alternative."},
+     "Quadmath is preferred over mpfr, if available."},
     {"mpfr_pf",
-     "Use 128 bit precision for partition function values using mpfr. This "
-     "increases run-time and space (less than 2x), however enables "
-     "handling significantly larger instances. This is similar but more portable "
-     "compared to quad-pf."},
-    {"mpfr_pf_sequence_only",
-     "Use 128 bit precision for partition function values using the mpfr library"
-     "for the computation of sequence envelopes. This is similar but more portable "
-     "compared to quad-pf."},
+     "Use multiple precision floats with arbitrary given precision in bits. This uses the mpfr library. "
+     "It overrides quadmath."
+     },
 {"temperature_alipf",
         "Temperature for the /alignment/ partition functions (this "
         "temperature different from the 'physical' temperature of RNA "

@@ -134,8 +134,8 @@ option_def my_options[] = {
      +" Quad precision (128 bit, __float128) is not available for your binary. Falls back to extended-pf."
 #endif
     },
-    {"mpfr-pf", 0, &clp.mpfr_pf, O_NO_ARG, 0, O_NODEFAULT, "",
-      clp.help_text["mpfr_pf_sequence_only"]},
+    {"mpfr-pf", 0, &clp.mpfr_pf, O_ARG_INT, &clp.mpfr_pf_bits, "128", "bits",
+      clp.help_text["mpfr_pf"]},
 
 
     {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Controlling_output"},
@@ -415,7 +415,7 @@ main(int argc, char **argv) {
     }
 
     clp.extended_pf = 1; //default on
-    MainHelper::init_mpreal();
+    MainHelper::init_mpreal(clp);
 
     if (clp.mpfr_pf) {
         return
@@ -429,6 +429,7 @@ main(int argc, char **argv) {
         return
             run_and_report<quad_pf_score_t>();
 #endif
+
     } else if (clp.extended_pf) {
         return
             run_and_report<extended_pf_score_t>();

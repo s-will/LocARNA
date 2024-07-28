@@ -126,11 +126,8 @@ option_def my_options[] =
       clp.help_text["extended_pf"]},
      {"quad-pf", 0, &clp.quad_pf, O_NO_ARG, 0, O_NODEFAULT, "",
       clp.help_text["quad_pf"]
-#if !defined(_GLIBCXX_USE_FLOAT128) || defined(__clang__)
-      +" Quad precision (128 bit, __float128) is not available for your binary. Falls back to extended-pf."
-#endif
      },
-     {"mpfr-pf", 0, &clp.mpfr_pf, O_NO_ARG, 0, O_NODEFAULT, "",
+     {"mpfr-pf", 0, &clp.mpfr_pf, O_ARG_INT, &clp.mpfr_pf_bits, "128", "bits",
       clp.help_text["mpfr_pf"]},
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Output"},
@@ -280,8 +277,7 @@ main(int argc, char **argv) {
         clp.use_ribosum = false;
     }
 
-    //clp.extended_pf = 1; //default off!!
-    MainHelper::init_mpreal();
+    MainHelper::init_mpreal(clp);
 
     if (clp.mpfr_pf) {
         return
