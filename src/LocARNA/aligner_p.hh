@@ -50,12 +50,12 @@ namespace LocARNA {
        The class knows about the two sequences and the two weighted
        base pair sets.
     */
-    template <typename T>
+    template <typename FLOAT>
     class AlignerP {
     public:
-        using pf_score_t = typename PFScoring<T>::pf_score_t;
-        using PFScoreMatrix = typename PFScoring<T>::PFScoreMatrix;
-        using PFScoreVector = typename PFScoring<T>::PFScoreVector;
+        using pf_score_t = typename PFScoring<FLOAT>::pf_score_t;
+        using PFScoreMatrix = typename PFScoring<FLOAT>::PFScoreMatrix;
+        using PFScoreVector = typename PFScoring<FLOAT>::PFScoreVector;
 
         //! sparse matrix for storing partition functions
         typedef SparseMatrix<pf_score_t> SparsePFScoreMatrix;
@@ -66,9 +66,9 @@ namespace LocARNA {
 
         typedef BasePairs__Arc Arc; //!< arc
     protected:
-        const std::unique_ptr<AlignerPParams<T>> params; //!< the parameter for the alignment
+        const std::unique_ptr<AlignerPParams<FLOAT>> params; //!< the parameter for the alignment
 
-        const PFScoring<T> *scoring; //!< the scores
+        const PFScoring<FLOAT> *scoring; //!< the scores
 
         const Sequence &seqA;  //!< sequence A
         const BasePairs &bpsA; //!< base pairs A
@@ -205,12 +205,12 @@ namespace LocARNA {
         SparseProbMatrix am_prob;
 
         /**
-         * probabilities of base matchs, as computed by the algo.
+         * Probabilities of base matchs, as computed by the algo.
          * Because we use bm_prob to accumulate conditional partition functions
          * before dividing by the total partition function to obtain
          * probabilities,
-         * use PFScoreMatrix. We assume that the type is more general than
-         * ProbMatrix
+         * use PFScoreMatrix, since this has to hold partition functions
+         * before we divide by total partition function.
          */
         SparsePFScoreMatrix bm_prob;
 
@@ -498,7 +498,7 @@ namespace LocARNA {
          * @note ap is copied to allow reference to a temporary
          * @note allow implicit conversion for named parameter idiom
          */
-        AlignerP(const AlignerPParams<T> &ap);
+        AlignerP(const AlignerPParams<FLOAT> &ap);
 
         /** @brief copy constructor
          * @params p AlignerP object to be copied
@@ -514,9 +514,9 @@ namespace LocARNA {
          * @brief create with named parameters
          * @return parameter object
          */
-        static AlignerPParams<T>
+        static AlignerPParams<FLOAT>
         create() {
-            return AlignerPParams<T>();
+            return AlignerPParams<FLOAT>();
         }
 
         /**

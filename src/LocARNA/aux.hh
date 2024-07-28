@@ -36,15 +36,33 @@ namespace std
 
 #include "quadmath.hh"
 
+#include "mpreal.h"
+
+namespace std {
+    inline
+    mpfr::mpreal
+    isnan(const mpfr::mpreal &x) {
+        return mpfr::isnan(x);
+    }
+
+    inline
+    mpfr::mpreal
+    isinf(const mpfr::mpreal &x) {
+        return mpfr::isinf(x);
+    }
+}
+
+
 namespace LocARNA {
 
     using standard_pf_score_t = double;
     using extended_pf_score_t = long double;
+    using mpfr_pf_score_t = mpfr::mpreal;
 
 #if defined(_GLIBCXX_USE_FLOAT128) && ! defined(__clang__)
     using quad_pf_score_t = __float128;
 #else
-    using quad_pf_score_t = long double;
+    using quad_pf_score_t = mpfr_pf_score_t;
 #endif
 
     template <typename T>
@@ -68,6 +86,17 @@ namespace LocARNA {
                           << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
                           <<std::endl
                           << "This issue is system and compiler dependent."
+                          <<std::endl;
+            }
+        }
+    };
+
+    template <>
+    struct check_score_t<mpfr_pf_score_t> {
+        template <class CLP>
+        check_score_t(const CLP &clp) {
+            if (clp.verbose) {
+                std::cout << "Use mpfr quad precision for partition functions (128 bits)."
                           <<std::endl;
             }
         }
@@ -98,18 +127,12 @@ namespace LocARNA {
 
 #if defined( _GLIBCXX_USE_FLOAT128 ) && ! defined( __clang__ )
     template <>
-    struct check_score_t<quad_pf_score_t> {
+    struct check_score_t<__float128> {
         template <class CLP>
         check_score_t(const CLP &clp) {
             if (clp.verbose) {
-                std::cout << "Use quad precision for partition functions ("
+                std::cout << "Use libquad's quad precision for partition functions ("
                           << sizeof(quad_pf_score_t) << " bytes; 128bit precision)."
-                          <<std::endl;
-            }
-            if (!(sizeof(quad_pf_score_t) > sizeof(standard_pf_score_t))) {
-                std::cerr << "WARNING: the quad precision type (__float128) "
-                          << "is not larger than the standard precision "
-                          << "( double, "<<sizeof(standard_pf_score_t)<<" bytes )."
                           <<std::endl;
             }
         }

@@ -2,7 +2,7 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.71])
-AC_INIT([LocARNA],[2.0.1],[sebastian.will@polytechnique.edu],[locarna],[https://s-will.github.io/LocARNA])
+AC_INIT([LocARNA],[2.1.0beta],[sebastian.will@polytechnique.edu],[locarna],[https://s-will.github.io/LocARNA])
 
 dnl special dir for aux config files
 AC_CONFIG_AUX_DIR(config)

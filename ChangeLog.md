@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 2.1.0
+
+* Add multiple precision floating point numbers using mpfr, which offers
+  more portable support of multiple precision floats; e.g. important for
+  osx/arm64.
+
 ## 2.0.1
 Maintenance updates
 

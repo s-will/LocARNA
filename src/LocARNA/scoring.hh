@@ -856,7 +856,7 @@ namespace LocARNA {
 
         pf_score_t
         boltzmann_weight(score_t s) const {
-            return std::exp(s / (pf_score_t)params->temperature_alipf_);
+            return exp(s / (pf_score_t)params->temperature_alipf_);
         }
 
 

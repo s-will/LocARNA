@@ -130,6 +130,8 @@ option_def my_options[] =
       +" Quad precision (128 bit, __float128) is not available for your binary. Falls back to extended-pf."
 #endif
      },
+     {"mpfr-pf", 0, &clp.mpfr_pf, O_NO_ARG, 0, O_NODEFAULT, "",
+      clp.help_text["mpfr_pf"]},
 
      {"", 0, 0, O_SECTION, 0, O_NODEFAULT, "", "Output"},
 
@@ -278,9 +280,22 @@ main(int argc, char **argv) {
         clp.use_ribosum = false;
     }
 
-    if (clp.quad_pf) {
+    //clp.extended_pf = 1; //default off!!
+    MainHelper::init_mpreal();
+
+    if (clp.mpfr_pf) {
+        return
+            run_and_report<mpfr_pf_score_t>();
+    } else if (clp.quad_pf) {
+#if !defined(_GLIBCXX_USE_FLOAT128) || defined(__clang__)
+        // automatically use mpfr
+        return
+            run_and_report<mpfr_pf_score_t>();
+#else
         return
             run_and_report<quad_pf_score_t>();
+#endif
+
     } else if (clp.extended_pf) {
         return
             run_and_report<extended_pf_score_t>();
@@ -288,6 +303,7 @@ main(int argc, char **argv) {
         return
             run_and_report<standard_pf_score_t>();
     }
+
 }
 
 
