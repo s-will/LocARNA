@@ -5,8 +5,7 @@
 *
 * LocARNA-P: global and LOCal Alignment of RNA - Partitition function variant
 *
-* Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de>
-*               2005-
+* Copyright (C) Sebastian Will 2005-
 *
 */
 
@@ -247,9 +246,6 @@ main(int argc, char **argv) {
 
         print_help(argv[0], my_options);
 
-        cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
-             << std::endl
-             << std::endl;
         return 0;
     }
 

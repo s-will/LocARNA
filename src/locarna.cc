@@ -5,7 +5,7 @@
  *
  * LocARNA: global and LOCal Alignment of RNA
  *
- * Copyright (C) Sebastian Will <will(@)informatik.uni-freiburg.de>
+ * Copyright (C) Sebastian Will
  *
  */
 
@@ -311,9 +311,6 @@ main(int argc, char **argv) {
 
         print_help(argv[0], my_options);
 
-        std::cout << "Report bugs to <will (at) informatik.uni-freiburg.de>."
-                  << std::endl
-                  << std::endl;
         return 0;
     }
 

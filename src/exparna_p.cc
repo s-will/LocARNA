@@ -3,7 +3,7 @@
  * Exparna-P: Exact Pattern Matching for RNA Structure Ensembles
  * fast structure local exact matching
  *
- * Copyright (C) Christina Otto <schmiedc(@)informatik.uni-freiburg.de>
+ * Copyright (C) Christina Otto
  *
  **********************************************************************/
 
@@ -283,9 +283,6 @@ main(int argc, char **argv) {
 
         print_help(argv[0], my_options);
 
-        cout << "Report bugs to <schmiedc (at) informatik.uni-freiburg.de>."
-             << endl
-             << endl;
         return 0;
     }
 

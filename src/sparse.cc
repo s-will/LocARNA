@@ -3,7 +3,7 @@
  *
  * \brief Defines main function of SPARSE
  *
- * Copyright (C) Milad Miladi <miladim(@)informatik.uni-freiburg.de>
+ * Copyright (C) Milad Miladi
  */
 
 #include <iostream>
@@ -316,9 +316,6 @@ main(int argc, char **argv) {
 
         print_help(argv[0], my_options);
 
-        cout << "Report bugs to <miladim (at) informatik.uni-freiburg.de>."
-             << endl
-             << endl;
         return 0;
     }
 

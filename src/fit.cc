@@ -98,8 +98,6 @@ main(int argc, char **argv) {
 
         print_help(argv[0], my_options);
 
-        cout << "Report bugs to <will (at) informatik.uni-freiburg.de>." << endl
-             << endl;
         return 0;
     }
 
